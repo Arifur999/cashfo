@@ -2,10 +2,8 @@
 // payout methods' names and marks, the withdrawals' notes, the amount
 // chips, the working days a payout takes, the invite and share links.
 // Pure, so the pages and the tests agree.
-import { format } from "date-fns";
-import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
-import type { Locale } from "@/lib/i18n/translate";
+import { formatDay, toDateInputValue } from "@/lib/date";
+import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { FriendStatus, MethodSnapshot, PayoutMethodType, PayoutStatus, ReferralFriend, ReferralProgramInfo } from "./referralTypes";
 
 // A "YYYY-MM-DD" day as the page writes it, in the reader's language: "14
@@ -13,12 +11,8 @@ import type { FriendStatus, MethodSnapshot, PayoutMethodType, PayoutStatus, Refe
 // Built from the day's own parts, never a timezone, and `today` is the
 // app's day, read once on the server, so both renders print the same.
 // Anything that isn't a day comes back as it was, rather than throwing.
-export function friendDay(day: string, today: string, locale: Locale): string {
-  const [year, month, date] = day.split("-").map(Number);
-  if (!year || !month || !date) return day;
-  const sameYear = day.slice(0, 4) === today.slice(0, 4);
-  if (locale === "bn") return sameYear ? banglaDayMonth(day) : `${banglaDayMonth(day)} ${toBanglaDigits(year)}`;
-  return format(new Date(year, month - 1, date), sameYear ? "d MMM" : "d MMM yyyy");
+export function friendDay(day: string, today: string, locale: FormatLocale): string {
+  return formatDay(day, day.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy", locale);
 }
 
 // An API time as the day it fell on, on the app's calendar; "" for none.

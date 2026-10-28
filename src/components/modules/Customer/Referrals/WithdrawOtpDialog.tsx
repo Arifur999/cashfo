@@ -43,7 +43,7 @@ const CODE_REASONS = new Set([...CODE_GONE, "CODE_WRONG", "RESEND_TOO_SOON", "CO
 // a wrong code with the tries left, an expired or used-up one with a way to
 // get a new one.
 export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, onBack, onConfirmed, onRestart, onRefused }: WithdrawOtpDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
@@ -83,7 +83,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
       if (left === 0) {
         setGone(true);
         setError(t("Too many wrong codes. Start again to get a new one."));
-      } else setError(left === undefined ? t(result.message ?? "That code is not right.") : t(left === 1 ? "That code is not right. {count} try left." : "That code is not right. {count} tries left.", { count: formatCount(left, locale) }));
+      } else setError(left === undefined ? t(result.message ?? "That code is not right.") : t(left === 1 ? "That code is not right. {count} try left." : "That code is not right. {count} tries left.", { count: formatCount(left, fmt) }));
       setCode("");
       inputRef.current?.focus();
     } else if (CODE_GONE.has(reason)) {
@@ -187,7 +187,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
                       gone && "opacity-50",
                     )}
                   >
-                    {code[index] ? toLocaleDigits(code[index], locale) : ""}
+                    {code[index] ? toLocaleDigits(code[index], fmt) : ""}
                   </span>
                 );
               })}
@@ -220,7 +220,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
               <span className="text-ink-muted">
-                {t("Didn't get it?")} {waiting ? <span className="text-ink-faint">{t("Resend in {time}", { time: toLocaleDigits(countdownText(waitLeft), locale) })}</span> : t("Check your spam folder too.")}
+                {t("Didn't get it?")} {waiting ? <span className="text-ink-faint">{t("Resend in {time}", { time: toLocaleDigits(countdownText(waitLeft), fmt) })}</span> : t("Check your spam folder too.")}
               </span>
               <button type="button" onClick={resend} disabled={waiting || busy || (!gone && challenge?.sendsLeft === 0)} className="flex min-h-9 items-center gap-1.5 font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
                 {isResending ? <Loader size={14} label={t("Loading...")} /> : gone ? <RefreshCw className="size-3.5" aria-hidden="true" /> : null}

@@ -57,7 +57,7 @@ type Problem = { field: "amount" | "method" | "income" | "form"; message: string
 // beside it. Continue emails a one-time code; the code makes the request,
 // and the page turns into the request sent.
 export function WithdrawPageClient({ info, methods: initialMethods, businessId, wallets, savingsWallets, currency, userName, email, today }: WithdrawPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const words = useMethodWords();
   const program = info ? programOf(info) : null;
@@ -91,7 +91,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
     );
   }
 
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const amount = Number(amountText || "0");
   const method = methods.find((m) => m.id === methodId) ?? null;
   const wallet = allWallets.find((w) => w.id === walletId) ?? null;
@@ -99,7 +99,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
   const receive = Math.max(0, amount - fee);
   const amountIssue = amountProblem(amount, available, minimum, fee);
   const payBy = addWorkingDays(today, program.payWithinDays);
-  const payByText = formatDate(`${payBy}T06:00:00Z`, "EEE, d MMM", payBy, locale);
+  const payByText = formatDate(`${payBy}T06:00:00Z`, "EEE, d MMM", payBy, fmt);
   const destination = method ? (method.type === "BANK" ? (method.bankName ?? t("Bank")) : METHOD_BRANDS[method.type].name) : "";
   const destinationNumber = method ? (method.type === "BANK" ? maskAccount(method.accountNumber) : maskWallet(method.walletNumber)) : "";
   const chips = amountChips(available, minimum);
@@ -193,7 +193,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
   }
 
   const facts = [
-    { icon: Clock, text: t("Paid by {date} ({days} working days; Friday and Saturday are off).", { date: payByText, days: formatCount(program.payWithinDays, locale) }) },
+    { icon: Clock, text: t("Paid by {date} ({days} working days; Friday and Saturday are off).", { date: payByText, days: formatCount(program.payWithinDays, fmt) }) },
     { icon: X, text: t("You can cancel the request until it is approved.") },
     { icon: ShieldCheck, text: t("We email a 6-digit code to {email} before anything is sent.", { email: maskEmail(email) }) },
   ];
@@ -207,7 +207,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
       </Link>
       <div className="flex flex-col gap-1">
         <h1 className="text-page-title text-ink">{t("Withdraw your earnings")}</h1>
-        <p className="text-body text-ink-muted">{t("The money goes to your bKash, Nagad, Rocket or bank account, usually within {days} working days.", { days: formatCount(program.payWithinDays, locale) })}</p>
+        <p className="text-body text-ink-muted">{t("The money goes to your bKash, Nagad, Rocket or bank account, usually within {days} working days.", { days: formatCount(program.payWithinDays, fmt) })}</p>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -308,7 +308,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
                         {!m.nameMatches && <span className="text-caption leading-normal text-warning">{t("The name on this account isn't {name}. The payment may be rejected.", { name: userName })}</span>}
                       </span>
                       <span className="shrink-0 text-[12.5px] text-ink-muted max-sm:hidden">
-                        {off ? t("Not available right now") : t("{from}–{to} working days", { from: formatCount(speed.from, locale), to: formatCount(speed.to, locale) })}
+                        {off ? t("Not available right now") : t("{from}–{to} working days", { from: formatCount(speed.from, fmt), to: formatCount(speed.to, fmt) })}
                       </span>
                     </label>
                   );

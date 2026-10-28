@@ -59,7 +59,7 @@ export function useMethodWords() {
 // with why and the money back), and the saved payout methods beside it,
 // each one to edit, with Add another.
 export function WithdrawalsTab({ withdrawals, methods: initialMethods, currency, today, userName, allowed, pageSize }: WithdrawalsTabProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const copy = useCopy();
   const words = useMethodWords();
@@ -69,8 +69,8 @@ export function WithdrawalsTab({ withdrawals, methods: initialMethods, currency,
   const [cancelling, setCancelling] = useState<PayoutRequest | null>(null);
   const [isCancelling, startCancel] = useTransition();
   const [drawer, setDrawer] = useState<{ open: boolean; method: PayoutMethod | null }>({ open: false, method: null });
-  const money = (value: string | number) => formatCurrency(value, currency, locale);
-  const day = (at: string | null) => friendDay(dayOf(at), today, locale);
+  const money = (value: string | number) => formatCurrency(value, currency, fmt);
+  const day = (at: string | null) => friendDay(dayOf(at), today, fmt);
 
   // The server's newer read wins (after a refresh).
   const [seen, setSeen] = useState({ withdrawals, initialMethods });
@@ -109,7 +109,7 @@ export function WithdrawalsTab({ withdrawals, methods: initialMethods, currency,
 
   // What happened to a request, in a sentence.
   function noteOf(request: PayoutRequest): string {
-    const expected = formatDate(`${request.expectedBy}T06:00:00Z`, "EEE, d MMM", request.expectedBy, locale);
+    const expected = formatDate(`${request.expectedBy}T06:00:00Z`, "EEE, d MMM", request.expectedBy, fmt);
     switch (request.status) {
       case "REQUESTED":
         return t("Waiting for approval. Expected by {date}.", { date: expected });
@@ -194,7 +194,7 @@ export function WithdrawalsTab({ withdrawals, methods: initialMethods, currency,
                       {request.displayId}
                     </span>
                     <span role="cell" className="text-ink-soft max-md:order-3 max-md:text-caption">
-                      {formatDate(request.createdAt, "d MMM yyyy", "", locale)}
+                      {formatDate(request.createdAt, "d MMM yyyy", "", fmt)}
                     </span>
                     <span role="cell" className="text-right font-bold text-ink max-md:order-2">
                       {money(request.amount)}

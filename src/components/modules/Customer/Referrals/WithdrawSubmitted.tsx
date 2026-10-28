@@ -35,19 +35,19 @@ export const WITHDRAWALS_TAB = "/referrals?tab=withdrawals";
 // should be paid by), what is left, and the way to cancel it while nobody
 // has approved it.
 export function WithdrawSubmitted({ request, left, pending, pendingNextAt, incomeWallet, currency, today }: WithdrawSubmittedProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [isCancelling, startCancel] = useTransition();
-  const money = (value: string | number) => formatCurrency(value, currency, locale);
+  const money = (value: string | number) => formatCurrency(value, currency, fmt);
   const method = request.method;
   const service = method.type === "BANK" ? (method.bankName ?? t("Bank")) : METHOD_BRANDS[method.type].name;
   const number = method.type === "BANK" ? maskAccount(method.accountNumber) : maskWallet(method.walletNumber);
-  const expected = formatDate(`${request.expectedBy}T06:00:00Z`, "EEE, d MMM", request.expectedBy, locale);
+  const expected = formatDate(`${request.expectedBy}T06:00:00Z`, "EEE, d MMM", request.expectedBy, fmt);
   const pendingDay = dayOf(pendingNextAt);
 
   const steps = [
-    { title: t("Requested@@payout"), body: t("{when}. You can still cancel.", { when: formatDate(request.createdAt, "EEE, d MMM · h:mm aaa", "", locale) }), done: true },
+    { title: t("Requested@@payout"), body: t("{when}. You can still cancel.", { when: formatDate(request.createdAt, "EEE, d MMM · h:mm aaa", "", fmt) }), done: true },
     { title: t("Approved@@payout"), body: t("We check the request, usually within 1 working day."), done: false },
     { title: t("Paid@@payout"), body: t("By {date}. You get the {service} transaction ID here and by email.", { date: expected, service }), done: false },
   ];
@@ -113,7 +113,7 @@ export function WithdrawSubmitted({ request, left, pending, pendingNextAt, incom
           </div>
           {pending > 0 && (
             <div className="flex justify-between gap-3">
-              <span className="text-ink-soft">{pendingDay ? t("Pending (ready on {date})", { date: friendDay(pendingDay, today, locale) }) : t("Pending")}</span>
+              <span className="text-ink-soft">{pendingDay ? t("Pending (ready on {date})", { date: friendDay(pendingDay, today, fmt) }) : t("Pending")}</span>
               <b className="font-bold text-ink">{money(pending)}</b>
             </div>
           )}

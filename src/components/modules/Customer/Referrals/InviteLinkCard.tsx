@@ -44,7 +44,7 @@ function MessengerIcon({ className }: { className?: string }) {
 // squares (Messenger, Copy link, QR code, and More for the phone's own
 // share sheet).
 export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct, holdDays, paused }: InviteLinkCardProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const copy = useCopy();
   const [qrOpen, setQrOpen] = useState(false);
   const link = inviteLink(origin, code);
@@ -52,7 +52,7 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
   const share = shareLinks(link, message, t("Try Smartly"));
   // A second tap while the first still waits shouldn't stack a second toast.
   const watching = useRef(false);
-  const pct = (value: number) => `${formatCount(value, locale)}%`;
+  const pct = (value: number) => `${formatCount(value, fmt)}%`;
 
   async function shareNatively() {
     if (!navigator.share) {
@@ -181,7 +181,7 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
               {fillNodes(t("{friends} their first plan with your link. You get {commission} of what they pay, {days} days after they pay."), {
                 friends: bold(t("Friends get {pct} off", { pct: pct(friendDiscountPct) })),
                 commission: pct(commissionPct),
-                days: formatCount(holdDays, locale),
+                days: formatCount(holdDays, fmt),
               })}
             </span>
           </>

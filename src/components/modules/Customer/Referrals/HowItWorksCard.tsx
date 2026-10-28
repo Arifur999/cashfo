@@ -13,10 +13,10 @@ type Program = ReturnType<typeof programOf>;
 // filled in (what the admin set: the commission, the discount, the hold,
 // the smallest withdrawal, the fee and the working days).
 export function useProgramWords(program: Program, currency: string) {
-  const { t, locale } = useLocale();
-  const pct = (value: number) => `${formatCount(value, locale)}%`;
-  const days = formatCount(program.holdDays, locale);
-  const min = formatCurrency(program.minWithdrawal, currency, locale);
+  const { t, fmt } = useLocale();
+  const pct = (value: number) => `${formatCount(value, fmt)}%`;
+  const days = formatCount(program.holdDays, fmt);
+  const min = formatCurrency(program.minWithdrawal, currency, fmt);
   return {
     pct,
     steps: [
@@ -28,8 +28,8 @@ export function useProgramWords(program: Program, currency: string) {
       program.whoCanEarn === "EVERYONE" ? t("You earn on any plan, the Free plan too.") : t("You earn while your own plan is active."),
       t("Money becomes available {days} days after your friend pays. If they get a refund, it is cancelled.", { days }),
       program.fee > 0
-        ? t("Withdraw from {min}. A {fee} fee. Paid within {days} working days.", { min, fee: formatCurrency(program.fee, currency, locale), days: formatCount(program.payWithinDays, locale) })
-        : t("Withdraw from {min}. No fee. Paid within {days} working days.", { min, days: formatCount(program.payWithinDays, locale) }),
+        ? t("Withdraw from {min}. A {fee} fee. Paid within {days} working days.", { min, fee: formatCurrency(program.fee, currency, fmt), days: formatCount(program.payWithinDays, fmt) })
+        : t("Withdraw from {min}. No fee. Paid within {days} working days.", { min, days: formatCount(program.payWithinDays, fmt) }),
       t("Signing up again with your own link does not count."),
       t("Invite as many friends as you like."),
     ],

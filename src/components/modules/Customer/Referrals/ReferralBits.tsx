@@ -61,10 +61,10 @@ export function MethodTile({ method, size = "md", className }: { method: Pick<Me
 
 // The withdraw page's numbered step heads.
 export function StepNumber({ n }: { n: number }) {
-  const { locale } = useLocale();
+  const { fmt } = useLocale();
   return (
     <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald text-caption font-bold text-on-action">
-      {formatCount(n, locale)}
+      {formatCount(n, fmt)}
     </span>
   );
 }

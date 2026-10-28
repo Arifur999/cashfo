@@ -35,11 +35,11 @@ const ON_FOREST =
 // Withdraw (ReferralMobile). Withdraw opens the withdraw page; below the
 // smallest withdrawal it rests, and the line under the amount says so.
 export function EarningsHero({ info, friends, currency, today }: EarningsHeroProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const reasonId = useId();
   const program = programOf(info);
   const balances = balancesOf(info);
-  const money = (value: number) => formatCurrency(value, currency, locale);
+  const money = (value: number) => formatCurrency(value, currency, fmt);
   const canWithdraw = balances.available >= program.minWithdrawal && balances.available > 0;
   const pendingFriends = friends.filter((friend) => friend.status === "PENDING").length;
   const since = earningSince(friends);
@@ -60,11 +60,11 @@ export function EarningsHero({ info, friends, currency, today }: EarningsHeroPro
         balances.pending <= 0
           ? t("Nothing waiting")
           : pendingNext
-            ? t(pendingFriends === 1 ? "{count} friend · ready on {date}" : "{count} friends · ready on {date}", { count: formatCount(pendingFriends, locale), date: friendDay(pendingNext, today, locale) })
-            : t(pendingFriends === 1 ? "{count} friend" : "{count} friends", { count: formatCount(pendingFriends, locale) }),
+            ? t(pendingFriends === 1 ? "{count} friend · ready on {date}" : "{count} friends · ready on {date}", { count: formatCount(pendingFriends, fmt), date: friendDay(pendingNext, today, fmt) })
+            : t(pendingFriends === 1 ? "{count} friend" : "{count} friends", { count: formatCount(pendingFriends, fmt) }),
     },
-    { label: t("Total earned"), value: money(balances.totalEarned), sub: since ? t("Since {month}", { month: formatDate(`${since}T06:00:00Z`, since.slice(0, 4) === today.slice(0, 4) ? "MMMM" : "MMMM yyyy", "", locale) }) : t("Nothing yet") },
-    { label: t("Paid out@@referral"), value: money(balances.paidOut), sub: lastPaid ? t("Last paid on {date}", { date: friendDay(lastPaid, today, locale) }) : t("Nothing paid out yet") },
+    { label: t("Total earned"), value: money(balances.totalEarned), sub: since ? t("Since {month}", { month: formatDate(`${since}T06:00:00Z`, since.slice(0, 4) === today.slice(0, 4) ? "MMMM" : "MMMM yyyy", "", fmt) }) : t("Nothing yet") },
+    { label: t("Paid out@@referral"), value: money(balances.paidOut), sub: lastPaid ? t("Last paid on {date}", { date: friendDay(lastPaid, today, fmt) }) : t("Nothing paid out yet") },
   ];
 
   const withdraw = (phone: boolean) => {

@@ -52,7 +52,7 @@ const REFERRALS_ROUTE = "/referrals";
 // and refresh keep it. A member who can't earn yet and has nothing from the
 // program sees the Free-plan page instead.
 export function ReferralsPageClient({ businessId, info, methods, withdrawals, withdrawalsPageSize, currency, canManage, workspaceName, userName, origin, today }: ReferralsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = tabFromQuery(searchParams.get("tab"));
@@ -79,7 +79,7 @@ export function ReferralsPageClient({ businessId, info, methods, withdrawals, wi
   }
 
   const program = programOf(info);
-  const pct = (value: number) => `${formatCount(value, locale)}%`;
+  const pct = (value: number) => `${formatCount(value, fmt)}%`;
   const description = t("Share Smartly with friends and family. When they buy a plan, you earn {pct} of what they pay.", { pct: pct(program.commissionPct) });
 
   if (showsLockedPage(info)) {
@@ -94,7 +94,7 @@ export function ReferralsPageClient({ businessId, info, methods, withdrawals, wi
 
   const balances = balancesOf(info);
   const friends = info.friends ?? [];
-  const money = (value: number | string) => formatCurrency(value, currency, locale);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const bonusLeft = legacyBonusLeft(friends);
   const lastPayout = info.lastPayout;
 
@@ -182,7 +182,7 @@ export function ReferralsPageClient({ businessId, info, methods, withdrawals, wi
                   <span className="text-body font-semibold text-ink">{t("Withdrawals")}</span>
                   <span className="truncate text-caption text-ink-muted">
                     {lastPayout?.amount && lastPayout.paidAt
-                      ? t("Last: {amount} paid to {service} on {date}", { amount: money(lastPayout.amount), service: lastPayout.methodType === "BANK" ? t("your bank") : METHOD_BRANDS[lastPayout.methodType].name, date: friendDay(dayOf(lastPayout.paidAt), today, locale) })
+                      ? t("Last: {amount} paid to {service} on {date}", { amount: money(lastPayout.amount), service: lastPayout.methodType === "BANK" ? t("your bank") : METHOD_BRANDS[lastPayout.methodType].name, date: friendDay(dayOf(lastPayout.paidAt), today, fmt) })
                       : t("Requests and where you receive money")}
                   </span>
                 </span>

@@ -20,10 +20,10 @@ const EXAMPLE_FRIENDS = 5;
 // plan; "See plans" opens the plans. While the admin has paused the program
 // it says that instead, with no plans to buy.
 export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; currency: string }) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const program = programOf(info);
   const { pct, lockedSteps } = useProgramWords(program, currency);
-  const money = (value: string | number) => formatCurrency(value, currency, locale);
+  const money = (value: string | number) => formatCurrency(value, currency, fmt);
   const paused = info.lockedReason === "PROGRAM_OFF";
   // Cheapest first, as the board lists them.
   const examples = [...program.examples].sort((a, b) => Number(a.price) - Number(b.price));
@@ -81,7 +81,7 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
             ))}
             {best && (
               <div className="flex items-center justify-between gap-3 rounded-field bg-emerald-soft px-3.5 py-3 text-[13.5px]">
-                <span className="text-ink">{t("{count} friends on {plan}", { count: formatCount(EXAMPLE_FRIENDS, locale), plan: best.planName })}</span>
+                <span className="text-ink">{t("{count} friends on {plan}", { count: formatCount(EXAMPLE_FRIENDS, fmt), plan: best.planName })}</span>
                 <b className="text-title font-bold text-emerald tabular-nums">{money(Number(best.youEarn) * EXAMPLE_FRIENDS)}</b>
               </div>
             )}

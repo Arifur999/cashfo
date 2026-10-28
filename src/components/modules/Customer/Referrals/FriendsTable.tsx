@@ -43,7 +43,7 @@ const PHONE_FIRST = 5;
 // Phones get the board's short list (ReferralMobile): five rows, then
 // "See all".
 export function FriendsTable({ info, friends, currency, today, canRemind }: FriendsTableProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [tab, setTab] = useState<FriendTab>("ALL");
   const [showAll, setShowAll] = useState(false);
   const [reminded, setReminded] = useState(false);
@@ -51,8 +51,8 @@ export function FriendsTable({ info, friends, currency, today, canRemind }: Frie
   const { page, setPage } = usePageParam();
   const counts = friendTabCounts(info, friends);
   const list = paginate(filterFriends(friends, tab), page, PAGE_SIZE);
-  const count = (value: number) => formatCount(value, locale);
-  const money = (value: string | number) => formatCurrency(value, currency, locale);
+  const count = (value: number) => formatCount(value, fmt);
+  const money = (value: string | number) => formatCurrency(value, currency, fmt);
   const waiting = notBought(friends);
   const line = notBoughtLine(waiting);
   const bought = friends.filter((friend) => friend.filter === "BOUGHT").length;
@@ -84,14 +84,14 @@ export function FriendsTable({ info, friends, currency, today, canRemind }: Frie
   // The line under the chip, in the reader's words.
   const noteOf = (friend: ReferralFriend) => {
     const note = friendNote(friend);
-    return t(note.note, { ...(note.day && { date: friendDay(note.day, today, locale) }), ...(note.plan && { plan: note.plan }) });
+    return t(note.note, { ...(note.day && { date: friendDay(note.day, today, fmt) }), ...(note.plan && { plan: note.plan }) });
   };
 
   // The phone row's second line: "Joined 30 Sep · Free plan", "Yearly Pro ·
   // ready on 5 Oct".
   const phoneSub = (friend: ReferralFriend) => {
     const plan = friend.planName ?? (friend.kind === "SIGNUP_BONUS" ? t("Sign-up bonus") : null);
-    const at = (value: string | null) => friendDay(dayOf(value), today, locale);
+    const at = (value: string | null) => friendDay(dayOf(value), today, fmt);
     switch (friend.status) {
       case "JOINED":
         return friend.currentPlanName ? t("Joined {date} · {plan} plan", { date: at(friend.joinedAt), plan: friend.currentPlanName }) : t("Joined {date}", { date: at(friend.joinedAt) });
@@ -213,12 +213,12 @@ export function FriendsTable({ info, friends, currency, today, canRemind }: Frie
                   <PersonAvatar name={friend.name} size={32} coloured className="text-[11.5px]" />
                   <span className="flex min-w-0 flex-col gap-px">
                     <span className="truncate leading-normal font-medium text-ink">{friend.name}</span>
-                    <span className="truncate text-caption leading-normal text-ink-muted">{t("Joined {date}", { date: friendDay(dayOf(friend.joinedAt), today, locale) })}</span>
+                    <span className="truncate text-caption leading-normal text-ink-muted">{t("Joined {date}", { date: friendDay(dayOf(friend.joinedAt), today, fmt) })}</span>
                   </span>
                 </span>
                 <span role="cell" className="flex min-w-0 flex-col gap-px">
                   <span className={cn("truncate leading-normal", plan ? "font-medium text-ink" : "text-ink-faint")}>{plan ?? t("Not yet@@friend")}</span>
-                  {friend.boughtAt && <span className="truncate text-caption leading-normal text-ink-muted">{t("Bought {date}", { date: friendDay(dayOf(friend.boughtAt), today, locale) })}</span>}
+                  {friend.boughtAt && <span className="truncate text-caption leading-normal text-ink-muted">{t("Bought {date}", { date: friendDay(dayOf(friend.boughtAt), today, fmt) })}</span>}
                 </span>
                 <span role="cell" className={cn("text-right", friend.paidAmount ? "text-ink-2" : "text-input")}>
                   {friend.paidAmount ? money(friend.paidAmount) : "—"}

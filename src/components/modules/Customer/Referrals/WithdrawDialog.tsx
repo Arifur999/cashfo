@@ -40,7 +40,7 @@ interface WalletLoad {
 // hold into one of the user's own wallets or savings wallets, in one
 // posting, as Referral income.
 export function WithdrawDialog({ open, onClose, businessId, amount, currency, workspaceName }: WithdrawDialogProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   // The wallets, fetched each time the dialog opens (and on Try again);
   // null while they load.
@@ -96,7 +96,7 @@ export function WithdrawDialog({ open, onClose, businessId, amount, currency, wo
       try {
         const result = await withdrawReferralEarningsAction(businessId, target.id);
         if (result.success && result.data) {
-          const moved = formatCurrency(result.data.withdrawnAmount, currency, locale);
+          const moved = formatCurrency(result.data.withdrawnAmount, currency, fmt);
           // Named as the picker names it, in the language on screen.
           toast.success(t("{amount} moved to {wallet}", { amount: moved, wallet: accountDisplayName(target, displayLanguage(locale)) }));
           onClose();
@@ -129,7 +129,7 @@ export function WithdrawDialog({ open, onClose, businessId, amount, currency, wo
           <div className="flex flex-col gap-4 px-6 py-4">
             <div className="flex items-baseline justify-between rounded-md bg-mint-50 px-4 py-3">
               <span className="text-small font-medium text-ink-2">{t("Sign-up bonus")}</span>
-              <span className="text-h3 font-bold text-emerald tabular-nums">{formatCurrency(amount, currency, locale)}</span>
+              <span className="text-h3 font-bold text-emerald tabular-nums">{formatCurrency(amount, currency, fmt)}</span>
             </div>
             {/* No error of its own for an empty list: the picker then says
                 "No wallet yet" with its link to add one. */}
@@ -159,7 +159,7 @@ export function WithdrawDialog({ open, onClose, businessId, amount, currency, wo
             </Button>
             <Button type="submit" variant="action" disabled={!target || amount <= 0 || isPending} className="px-5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Withdraw {amount}", { amount: formatCurrency(amount, currency, locale) })}
+              {t("Withdraw {amount}", { amount: formatCurrency(amount, currency, fmt) })}
             </Button>
           </div>
         </form>
