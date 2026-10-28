@@ -39,7 +39,8 @@ export interface IRevenueOverview {
   mrr: number;
   arr: number;
   mrrChangePct: number | null;
-  paidPeople: { now: number; joinedThisMonth: number; leftThisMonth: number };
+  // joinedFromReferral: of joinedThisMonth, how many a friend brought in.
+  paidPeople: { now: number; joinedThisMonth: number; joinedFromReferral?: number; leftThisMonth: number };
   churn: IChurnData;
   mrrHistory: IMrrHistoryPoint[];
   byPlan: IRevenueByPlanMonth[];

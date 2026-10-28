@@ -9,7 +9,7 @@ import { paymentsMrrNow } from "./revenueDisplay";
 
 // Three facts under the charts: what a paid person brings, what coupons
 // cost, and how many new paid people came from a friend (what went back,
-// when the referrals couldn't be read; the by-plan card says it too).
+// from a backend without that count; the by-plan card says it too).
 const RevenueFacts = async ({ overview, fromReferrals }: { overview: IRevenueOverview; fromReferrals: number | null }) => {
   const { t, locale } = await getTranslator("admin");
   const month = t(formatMonthName(overview.month));
@@ -32,7 +32,7 @@ const RevenueFacts = async ({ overview, fromReferrals }: { overview: IRevenueOve
         }
       : {
           label: "From referrals",
-          value: t("{count} of {total}", { count: formatCount(fromReferrals, locale), total: formatCount(Math.max(fromReferrals, overview.paidPeople.joinedThisMonth), locale) }),
+          value: t("{count} of {total}", { count: formatCount(fromReferrals, locale), total: formatCount(overview.paidPeople.joinedThisMonth, locale) }),
           sub: t("New paid people in {month} who came from a friend", { month }),
         },
   ];

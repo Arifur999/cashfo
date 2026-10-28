@@ -1,5 +1,4 @@
-import { formatMonthKey, toDateInputValue } from "@/lib/date";
-import type { IAdminReferralRow } from "@/types/referral.types";
+import { formatMonthKey } from "@/lib/date";
 import type { IMrrHistoryPoint } from "@/types/revenue.types";
 
 // Plain helpers for the Revenue page and the plans' chart. Pure, so they
@@ -24,12 +23,3 @@ export const shortMonthKey = (month: string): string => `${formatMonthKey(month,
 // The MRR the payments say there is now: the history's last month, which
 // ends at this moment. The same people the paid-people count is made of.
 export const paymentsMrrNow = (history: IMrrHistoryPoint[]): number => history[history.length - 1]?.mrr ?? 0;
-
-// "2026-10": the platform's month an instant falls in.
-export const dhakaMonthKey = (at: string | Date): string => toDateInputValue(at).slice(0, 7);
-
-// How many friends paid their first plan in this month: the commissions
-// the referrals list shows with a payment made then (a refunded one still
-// counts, as the paid-people figure does).
-export const referredPaidThisMonth = (referrals: Pick<IAdminReferralRow, "kind" | "payment">[], month: string): number =>
-  referrals.filter((referral) => referral.kind === "COMMISSION" && referral.payment?.paidAt && (referral.payment.status === "SUCCESS" || referral.payment.status === "REFUNDED") && dhakaMonthKey(referral.payment.paidAt) === month).length;
