@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getAdminAccounts } from "@/services/adminAccount.services";
+import { getAdminAccounts, getAdminInvites } from "@/services/adminAccount.services";
 import { getAuditLogs, getLoginAttempts, getLoginAttemptsSummary, getSecurityFlags, getSecurityFlagsSummary } from "@/services/security.services";
 
 // The log, a page at a time. A single entry is read through
@@ -42,4 +42,12 @@ export const adminAccountsQuery = () =>
   queryOptions({
     queryKey: queryKeys.admins.list(),
     queryFn: () => getAdminAccounts(),
+  });
+
+// Invites still open, under admins.all, so whatever refreshes the team
+// refreshes them too.
+export const adminInvitesQuery = () =>
+  queryOptions({
+    queryKey: [...queryKeys.admins.all, "invites"] as const,
+    queryFn: () => getAdminInvites(),
   });

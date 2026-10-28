@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { activateAdminAction, resetAdminPasswordAction, suspendAdminAction } from "@/app/(dashboardLayout)/admin/security/(sections)/admins/_action";
+import {
+  activateAdminAction,
+  disableAdminTwoStepAction,
+  resetAdminPasswordAction,
+  suspendAdminAction,
+} from "@/app/(dashboardLayout)/admin/security/(sections)/admins/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import FormDialog from "@/components/shared/dialog/FormDialog";
 import TemporaryPasswordDialog from "@/components/shared/dialog/TemporaryPasswordDialog";
@@ -12,7 +17,7 @@ import type { IAdminAccount } from "@/types/adminAccount.types";
 import EditAdminForm from "./EditAdminForm";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
-export type AdminDialog = "edit" | "resetPassword" | "suspend" | "activate";
+export type AdminDialog = "edit" | "resetPassword" | "twoStepOff" | "suspend" | "activate";
 
 interface AdminDialogsProps {
   admin: IAdminAccount | null;
@@ -25,11 +30,18 @@ interface AdminDialogsProps {
 const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDialogsProps) => {
   const { translate } = useLocale();
   const [revealed, setRevealed] = useState<{ name: string; password: string } | null>(null);
+  const name = admin?.name ?? "";
 
   const resetPassword = useActionMutation({
     action: resetAdminPasswordAction,
     successMessage: "Password reset",
-    onSuccess: ({ temporaryPassword }) => setRevealed({ name: admin?.name ?? "", password: temporaryPassword }),
+    onSuccess: ({ temporaryPassword }) => setRevealed({ name, password: temporaryPassword }),
+    refreshRoute: false,
+  });
+  const twoStepOff = useActionMutation({
+    action: disableAdminTwoStepAction,
+    successMessage: translate("Two-step sign-in is off for {name}", { name }),
+    invalidateKeys: [queryKeys.admins.all],
     refreshRoute: false,
   });
   const suspend = useActionMutation({
@@ -57,16 +69,16 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
 
   return (
     <>
-      {/* Another admin's name and role are both edited here, so the title
-          says Edit, as the row's button does. */}
-      <FormDialog title={isSelf ? "Edit your name" : translate("Edit {name}", { name: admin?.name ?? "" })} description={admin?.email} size="sm" {...dialogProps("edit")}>
+      {/* Change role: the role as the invite drawer asks it, and the name.
+          Your own role is locked, so there it only renames. */}
+      <FormDialog title={isSelf ? "Edit your name" : translate("Change {name}'s role", { name })} description={admin?.email} size={isSelf ? "sm" : undefined} {...dialogProps("edit")}>
         {admin && <EditAdminForm admin={admin} isSelf={isSelf} onDone={onClose} />}
       </FormDialog>
 
       <ConfirmDialog
         {...dialogProps("resetPassword")}
         title="Reset password"
-        description={translate("{name}'s current password stops working and a new temporary one is generated. You'll see it once.", { name: admin?.name ?? "" })}
+        description={translate("{name}'s current password stops working and a new temporary one is generated. You'll see it once.", { name })}
         confirmLabel="Reset password"
         pendingLabel="Resetting..."
         isPending={resetPassword.isPending}
@@ -76,9 +88,24 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
       />
 
       <ConfirmDialog
+        {...dialogProps("twoStepOff")}
+        title="Turn off two-step sign-in"
+        description={translate(
+          "For when {name} lost their phone. They are signed out everywhere and sign in with their password alone until they set it up again.",
+          { name },
+        )}
+        confirmLabel="Turn it off"
+        pendingLabel="Turning off..."
+        isPending={twoStepOff.isPending}
+        onConfirm={async () => {
+          if (admin && (await twoStepOff.run(admin.id))) onClose();
+        }}
+      />
+
+      <ConfirmDialog
         {...dialogProps("suspend")}
         title="Suspend admin"
-        description={translate("{name} is signed out everywhere and can't sign in until reactivated.", { name: admin?.name ?? "" })}
+        description={translate("{name} is signed out everywhere and can't sign in until reactivated.", { name })}
         variant="destructive"
         confirmLabel="Suspend"
         pendingLabel="Suspending..."
@@ -93,8 +120,8 @@ const AdminDialogs = ({ admin, activeDialog, currentAdminId, onClose }: AdminDia
 
       <ConfirmDialog
         {...dialogProps("activate")}
-        title={translate("Turn {name} back on", { name: admin?.name ?? "" })}
-        description={translate("{name} can sign in again with their current password, with the same role.", { name: admin?.name ?? "" })}
+        title={translate("Turn {name} back on", { name })}
+        description={translate("{name} can sign in again with their current password, with the same role.", { name })}
         confirmLabel="Turn back on"
         pendingLabel="Turning on..."
         isPending={activate.isPending}

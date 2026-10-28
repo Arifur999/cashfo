@@ -13,7 +13,31 @@ export interface IAdminAccount {
   status: AdminStatus;
   lastLoginAt: string | null;
   createdAt: string;
+  // Two-step sign-in is on (GET /admin/admins only; a write answers without it).
+  twoFactorEnabled?: boolean;
 }
+
+// An invite not yet accepted or cancelled: PENDING while its link works,
+// EXPIRED after its seven days (it can still be sent again).
+export interface IAdminInvite {
+  id: string;
+  email: string;
+  name: string | null;
+  role: AdminRole;
+  status: "PENDING" | "EXPIRED";
+  invitedBy: { id: string; name: string } | null;
+  createdAt: string;
+  lastSentAt: string;
+  expiresAt: string;
+}
+
+export interface ICreateAdminInvitePayload {
+  name?: string;
+  email: string;
+  role: AdminRole;
+}
+
+export type ICreatedAdminInvite = Pick<IAdminInvite, "id" | "email" | "name" | "role" | "expiresAt">;
 
 export interface ICreateAdminPayload {
   name: string;
