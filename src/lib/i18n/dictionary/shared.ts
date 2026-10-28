@@ -192,4 +192,19 @@ export const sharedDictionary: Record<string, string> = {
   "Skip to main content": "মূল অংশে যান",
   // attempt()'s answer when a server action belongs to an older build.
   "Smartly was just updated. Reload the page and try again.": "Smartly এইমাত্র আপডেট হয়েছে। পেজটি আবার লোড করে চেষ্টা করুন।",
+  // Six-digit codes sent by SMS (CodeStep, codeProblem, the vault reset, the withdrawal).
+  "We sent a 6-digit code by SMS to {phone}. It works for 10 minutes.": "{phone}-এ ৬ সংখ্যার একটি কোড SMS করেছি। এটি ১০ মিনিট কাজ করবে।",
+  "We sent a new code to {phone}.": "{phone}-এ নতুন কোড পাঠিয়েছি।",
+  "Text messages cannot be sent right now. Please try again later.": "এখন SMS পাঠানো যাচ্ছে না। পরে আবার চেষ্টা করুন।",
+  "We couldn't send the code. Please try again in a minute.": "কোড পাঠানো যায়নি। এক মিনিট পরে আবার চেষ্টা করুন।",
+  "We couldn't send the code. Please try again.": "কোড পাঠানো যায়নি। আবার চেষ্টা করুন।",
+  "We couldn't check the code. Please try again.": "কোড মেলানো যায়নি। আবার চেষ্টা করুন।",
+  "Use a Bangladeshi mobile number, like 01712-345678.": "বাংলাদেশের মোবাইল নম্বর দিন, যেমন 01712-345678।",
+  "This number is already verified on another account.": "এই নম্বর অন্য একটি অ্যাকাউন্টে আগেই যাচাই করা আছে।",
+  "The number changed after the code was sent. Start again.": "কোড পাঠানোর পর নম্বর বদলেছে। আবার শুরু করুন।",
+  "This number is already verified.": "এই নম্বর আগেই যাচাই করা আছে।",
+  "Add your phone number first.": "আগে আপনার ফোন নম্বর যোগ করুন।",
+  "Code from the SMS": "SMS-এর কোড",
+  "We sent a 6-digit code by SMS to {phone}. Enter it to finish. It works for 10 minutes.": "{phone}-এ ৬ সংখ্যার একটি কোড SMS করেছি। শেষ করতে কোডটি দিন। এটি ১০ মিনিট কাজ করবে।",
+  "We sent a 6-digit code by SMS to {email}. Enter it to send {amount} to {destination}.": "{email}-এ ৬ সংখ্যার একটি কোড SMS করেছি। {destination}-এ {amount} পাঠাতে কোডটি দিন।",
 };

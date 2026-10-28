@@ -20,6 +20,7 @@ import { formatRelativeDateTime } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ChangeAvatarDialog } from "./ChangeAvatarDialog";
+import { VerifyPhoneDialog } from "./VerifyPhoneDialog";
 import { useVerifyEmail } from "./useVerifyEmail";
 
 interface ProfileSectionProps {
@@ -37,6 +38,7 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(cleanLocalPhone(user.phone ?? ""));
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [verifyPhoneOpen, setVerifyPhoneOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const verify = useVerifyEmail();
   const readOnly = Boolean(user.impersonatedBy);
@@ -79,6 +81,9 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
   }
 
   const verified = user.emailVerified ?? Boolean(user.emailVerifiedAt);
+  // The saved number's state; nothing while the field holds an unsaved one.
+  const savedPhone = Boolean(user.phone) && !phoneChanged;
+  const phoneVerified = Boolean(user.phoneVerifiedAt);
   const facts = [
     { label: t("Member since"), value: user.createdAt ? formatDate(user.createdAt, "MMMM yyyy", fmt) : "—" },
     { label: t("Last sign-in"), value: lastSignIn ? formatRelativeDateTime(lastSignIn, { t, locale: fmt }) : "—" },
@@ -157,7 +162,40 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
               >
                 <Input id="pf-email" size="md" value={user.email} readOnly aria-describedby="pf-email-hint" className="text-[14.5px] text-ink-soft" frameClassName="border-line bg-strip" />
               </Field>
-              <Field htmlFor="pf-phone" label={<span>{t("Phone")} <span className="font-normal text-ink-muted">({t("optional")})</span></span>} hint={<span className="text-[12.5px]">{t("Used for withdrawal codes and group statements.")}</span>}>
+              <Field
+                htmlFor="pf-phone"
+                label={
+                  <span className="flex items-center gap-2">
+                    <span>
+                      {t("Phone")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+                    </span>
+                    {savedPhone && (
+                      <Chip tone={phoneVerified ? "income" : "warning"} size="sm" className="h-4.5 px-2 text-[11.5px]">
+                        {phoneVerified ? t("Verified") : t("Not verified")}
+                      </Chip>
+                    )}
+                  </span>
+                }
+                hint={
+                  <span className="text-[12.5px]">
+                    {savedPhone && phoneVerified ? (
+                      t("Codes come here by SMS. You can reset your password with it too.")
+                    ) : savedPhone ? (
+                      <>
+                        <button type="button" onClick={() => setVerifyPhoneOpen(true)} disabled={readOnly} className="font-semibold text-emerald hover:underline disabled:opacity-60 pointer-coarse:min-h-11">
+                          {t("Verify by SMS")}
+                        </button>
+                        {" · "}
+                        {t("to get codes by SMS and reset your password with it.")}
+                      </>
+                    ) : phoneChanged && phone ? (
+                      t("Save the number, then verify it by SMS.")
+                    ) : (
+                      t("Used for withdrawal codes and group statements.")
+                    )}
+                  </span>
+                }
+              >
                 <Input
                   id="pf-phone"
                   size="md"
@@ -205,6 +243,7 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
       </Card>
 
       <ChangeAvatarDialog open={avatarOpen} onClose={() => setAvatarOpen(false)} />
+      <VerifyPhoneDialog open={verifyPhoneOpen} phone={`+880 ${cleanLocalPhone(user.phone ?? "")}`} onClose={() => setVerifyPhoneOpen(false)} onVerified={() => router.refresh()} />
     </div>
   );
 }

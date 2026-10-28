@@ -37,6 +37,9 @@ export interface CurrentUser {
   name: string;
   email: string;
   phone: string | null;
+  // When the phone was proved with an SMS code; codes go there by SMS then.
+  // Absent from an older backend.
+  phoneVerifiedAt?: string | null;
   avatarUrl: string | null;
   preferredLanguage: LanguagePreference;
   emailVerifiedAt: string | null;
