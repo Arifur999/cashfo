@@ -15,6 +15,7 @@ import { getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
+import { getFmt } from "@/lib/customer/fmt";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { walletShares } from "@/lib/customer/walletShares";
 import { WALLET_TYPE_META, walletIcon, walletPalette, walletType } from "@/lib/customer/walletVisuals";
@@ -40,6 +41,7 @@ type Totals = Record<"opening" | "in" | "out" | "savings" | "adjustment" | "curr
 // wallets, and how each one got to its balance. Rows open the statement.
 export default async function BalanceOverviewPage() {
   const { locale, t } = await getTranslator();
+  const fmt = await getFmt();
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -74,11 +76,11 @@ export default async function BalanceOverviewPage() {
     if (amount === 0) return <span className="text-ink-faint">—</span>;
     const sign = kind === "in" || (kind === "transfer" && amount > 0) ? "+" : "−";
     const tone = kind === "in" ? "text-income" : kind === "out" ? "text-expense" : kind === "savings" ? "text-ink-2" : "text-info";
-    return <span className={tone}>{`${sign} ${formatCurrency(Math.abs(amount), currency, locale)}`}</span>;
+    return <span className={tone}>{`${sign} ${formatCurrency(Math.abs(amount), currency, fmt)}`}</span>;
   };
   // An overdrawn balance takes the true minus the figures beside it use
   // (the cell turns expense red), not a hyphen against the symbol.
-  const balance = (value: number | string) => balanceText(value, currency, locale);
+  const balance = (value: number | string) => balanceText(value, currency, fmt);
 
   return (
     <PageFrame className="gap-6">
@@ -104,19 +106,19 @@ export default async function BalanceOverviewPage() {
             <span className="text-small font-medium text-ink-muted">{t("Available balance")}</span>
             <AmountText value={overview.availableBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em] wrap-anywhere leading-[1.1]" />
             <span className="text-small text-ink-muted">
-              {t("Total balance {amount}", { amount: formatCurrency(overview.totalBalance, currency, locale) })}
+              {t("Total balance {amount}", { amount: formatCurrency(overview.totalBalance, currency, fmt) })}
               {inArchived !== 0 && (
                 <>
                   {" · "}
-                  <span className="text-ink-2">{t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, locale) })}</span>
+                  <span className="text-ink-2">{t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, fmt) })}</span>
                 </>
               )}
             </span>
           </div>
           {/* Rows on a phone (label left, figure right); three columns from sm, as Savings summary sets them. */}
           <dl className="grid grid-cols-1 sm:grid-cols-3">
-            <HeroStat first label={t("Accounts")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, locale) }) : undefined}>
-              {formatCount(activeCount, locale)}
+            <HeroStat first label={t("Accounts")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, fmt) }) : undefined}>
+              {formatCount(activeCount, fmt)}
             </HeroStat>
             <HeroStat label={t("Money in@@wallet")}>{figure(totals.in, "in")}</HeroStat>
             <HeroStat label={t("Money out@@wallet")} last>
@@ -192,7 +194,7 @@ export default async function BalanceOverviewPage() {
                     </span>
                   </ListCell>
                   <ListCell align="end" className={cn("text-ink-2", MOVEMENT)}>
-                    {formatCurrency(account.openingBalance, currency, locale)}
+                    {formatCurrency(account.openingBalance, currency, fmt)}
                   </ListCell>
                   <ListCell align="end" className={MOVEMENT}>
                     {figure(account.totalIn, "in")}
@@ -215,7 +217,7 @@ export default async function BalanceOverviewPage() {
             <ListTotalRow columns={COLUMNS} className="min-h-14 tabular-nums">
               <ListCell>{t("Total")}</ListCell>
               <ListCell align="end" className={MOVEMENT}>
-                {formatCurrency(totals.opening, currency, locale)}
+                {formatCurrency(totals.opening, currency, fmt)}
               </ListCell>
               <ListCell align="end" className={MOVEMENT}>
                 {figure(totals.in, "in")}
@@ -227,7 +229,7 @@ export default async function BalanceOverviewPage() {
                 {figure(totals.savings, "savings")}
               </ListCell>
               <ListCell align="end" className={MOVEMENT}>
-                {totals.adjustment === 0 ? <span className="text-ink-muted">{formatCurrency(0, currency, locale)}</span> : figure(totals.adjustment, "transfer")}
+                {totals.adjustment === 0 ? <span className="text-ink-muted">{formatCurrency(0, currency, fmt)}</span> : figure(totals.adjustment, "transfer")}
               </ListCell>
               <ListCell align="end" className={cn("text-[15px] font-bold", CURRENT, totals.current < 0 && "text-expense")}>
                 {balance(totals.current)}

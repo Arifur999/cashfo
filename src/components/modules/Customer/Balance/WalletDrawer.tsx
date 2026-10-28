@@ -44,7 +44,7 @@ const NUMBER_PLACEHOLDER: Record<Exclude<WalletType, "cash">, string> = {
 // number, and -- for a new one -- what it holds right now (an edit shows it,
 // since it can't change). The type goes to the API as accountSubtype.
 export function WalletDrawer({ open, onClose, businessId, editing, currency, paletteIndex, savings = false }: WalletDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   // Offline, Save waits for the connection instead of failing on send.
   const online = useOnline();
@@ -141,7 +141,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
             <span className="truncate text-title">{name.trim() || t("New wallet")}</span>
             <span className="text-caption font-normal tracking-[0.08em] text-white/75 tabular-nums">{(numbered && maskAccountNumber(accountNumber)) || t("No account number")}</span>
           </span>
-          <span className="text-h2 tabular-nums">{formatCurrency(previewAmount, currency, locale)}</span>
+          <span className="text-h2 tabular-nums">{formatCurrency(previewAmount, currency, fmt)}</span>
         </div>
       </div>
 
@@ -192,7 +192,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
         // it and say how a wrong one is put right.
         <div className="flex min-w-0 flex-col gap-1.5">
           <span className="text-body leading-[normal] font-medium text-ink">{t("Opening balance")}</span>
-          <div className="flex h-11 items-center rounded-field border border-line bg-strip px-3.5 text-body font-semibold text-ink tabular-nums">{formatCurrency(editing.openingBalance, currency, locale)}</div>
+          <div className="flex h-11 items-center rounded-field border border-line bg-strip px-3.5 text-body font-semibold text-ink tabular-nums">{formatCurrency(editing.openingBalance, currency, fmt)}</div>
           <p className="text-caption font-normal text-ink-muted">{t("It can't be changed. To fix the balance, add an income or expense for the difference.")}</p>
         </div>
       ) : (

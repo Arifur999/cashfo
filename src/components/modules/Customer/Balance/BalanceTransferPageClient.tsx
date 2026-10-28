@@ -87,7 +87,7 @@ const CANCELLED_ROW = "[&>[role=cell]:not([data-slot=list-row-actions])]:graysca
 // in the period, the note that it is never income or expense, and the
 // history, 25 to a page, with a void action on each standing transfer.
 export function BalanceTransferPageClient({ businessId, transfers, meta, totals, complete, wallets, currency, canManage, range, periodFrom, periodTo, excludeSavings, today, pageSizes, defaultPageSize }: BalanceTransferPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -190,7 +190,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
         ? t("No transfer yet")
         : t("No transfers in this period")
       : totals.voided > 0
-        ? plural(t, totals.voided, "{count} voided transfer isn't counted", "{count} voided transfers aren't counted", undefined, locale)
+        ? plural(t, totals.voided, "{count} voided transfer isn't counted", "{count} voided transfers aren't counted", undefined, fmt)
         : t("Only transfers that still stand are counted");
 
   return (
@@ -219,12 +219,12 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
 
       {/* On paper the period switch is gone, so this line says what was printed. */}
       <p className="hidden text-small text-ink-2 print:block">
-        {`${periodText(t, periodFrom, periodTo, locale)} · ${t("Printed {date}", { date: formatDate(today, undefined, locale) })}`}
-        {paged && !printed && ` · ${t("Page {page} of {total}", { page: formatCount(meta.page, locale), total: formatCount(meta.totalPages, locale) })}`}
+        {`${periodText(t, periodFrom, periodTo, fmt)} · ${t("Printed {date}", { date: formatDate(today, undefined, fmt) })}`}
+        {paged && !printed && ` · ${t("Page {page} of {total}", { page: formatCount(meta.page, fmt), total: formatCount(meta.totalPages, fmt) })}`}
       </p>
       {printed && !printed.complete && (
         <p className="hidden text-small font-semibold text-ink print:block">
-          {t("Only the latest {count} transfers are printed -- pick a shorter period to print them all.", { count: formatCount(printed.transfers.length, locale) })}
+          {t("Only the latest {count} transfers are printed -- pick a shorter period to print them all.", { count: formatCount(printed.transfers.length, fmt) })}
         </p>
       )}
 
@@ -239,12 +239,12 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
           <span className="text-small font-medium text-ink-muted">{t("Moved in this period")}</span>
           <AmountText value={totals.moved} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
           <span className="text-caption font-normal text-ink-muted">
-            {totals.savings > 0 ? t("Not counting {amount} put into savings goals", { amount: formatCurrency(totals.savings, currency, locale) }) : plural(t, totals.standing, "Across {count} transfer", "Across {count} transfers", undefined, locale)}
+            {totals.savings > 0 ? t("Not counting {amount} put into savings goals", { amount: formatCurrency(totals.savings, currency, fmt) }) : plural(t, totals.standing, "Across {count} transfer", "Across {count} transfers", undefined, fmt)}
           </span>
         </Card>
         <Card className="flex min-w-0 flex-col gap-2">
           <span className="text-small font-medium text-ink-muted">{t("Transfers")}</span>
-          <span className="text-h1 leading-[normal] text-ink tabular-nums">{formatCount(totals.standing, locale)}</span>
+          <span className="text-h1 leading-[normal] text-ink tabular-nums">{formatCount(totals.standing, fmt)}</span>
           <span className="text-caption font-normal text-ink-muted">{countCaption}</span>
         </Card>
         <div className="flex gap-3.5 rounded-md border border-info-line bg-info-50 p-5 md:col-span-2 xl:col-span-1">
@@ -269,7 +269,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
           // page size worth choosing); otherwise the pager.
           (!paged && meta.total <= Math.min(...pageSizes) ? (
             <ListFooter className="flex-row items-center justify-between gap-3 py-3.5 print:hidden">
-              <span>{plural(t, meta.total, "Showing {count} transfer", "Showing {count} transfers", undefined, locale)}</span>
+              <span>{plural(t, meta.total, "Showing {count} transfer", "Showing {count} transfers", undefined, fmt)}</span>
               <span>{t("Newest first")}</span>
             </ListFooter>
           ) : (
@@ -329,13 +329,13 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
               const cancelled = cancelledLabel(transfer);
               const voided = isCancelled(transfer);
               const savings = isSavingsTransfer(transfer);
-              const amount = formatCurrency(transferAmount(transfer), currency, locale);
+              const amount = formatCurrency(transferAmount(transfer), currency, fmt);
               const href = transactionHref(transfer.id, here);
               return (
                 // Phones: From → To and the amount, then the date and the
                 // actions, then the note.
                 <ListRow key={transfer.id} columns={COLUMNS} muted={voided} className={cn("md:min-h-15", voided && CANCELLED_ROW)}>
-                  <ListCell className="text-caption text-ink-soft max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.transactionDate, undefined, locale)}</ListCell>
+                  <ListCell className="text-caption text-ink-soft max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.transactionDate, undefined, fmt)}</ListCell>
                   <ListCell className="max-md:col-start-1 max-md:row-start-1">
                     <ListRowLink href={href} aria-label={t("{from} to {to}, {amount}", { from: parties.from, to: parties.to, amount })} className="flex min-w-0 items-center gap-2.5">
                       <Party name={parties.from} savings={parties.fromSavings} found={parties.fromId ? walletById.get(parties.fromId) : undefined} />
@@ -403,8 +403,8 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                 <span className="truncate">{voidingParties.to}</span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-px">
-                <span className="font-bold text-info tabular-nums">{formatCurrency(transferAmount(voiding), currency, locale)}</span>
-                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, locale)}</span>
+                <span className="font-bold text-info tabular-nums">{formatCurrency(transferAmount(voiding), currency, fmt)}</span>
+                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, fmt)}</span>
               </span>
             </div>
           }

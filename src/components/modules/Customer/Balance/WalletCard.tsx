@@ -40,7 +40,7 @@ const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-2.5 rounded-[6px] px
 // the statement, a chevron (or the actions menu, for a manager) on the
 // right, and the board's natural line heights.
 export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggleArchive, onRemove, savings = false, busy = false, offline = false }: WalletCardProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   // The name in the reader's language ("নগদ" for Cash), as Balance and the
   // Statement show it.
   const name = accountDisplayName(wallet, displayLanguage(locale));
@@ -121,9 +121,9 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
       <div className="relative flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 flex-col gap-3 md:gap-0.5">
           <span className="hidden text-caption font-normal text-white/78 md:block">{savings ? t("Balance") : t("Current balance")}</span>
-          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-[26px] xl:tracking-[-0.02em]">{balanceText(wallet.currentBalance, currency, locale)}</span>
+          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-[26px] xl:tracking-[-0.02em]">{balanceText(wallet.currentBalance, currency, fmt)}</span>
           <span className="text-caption font-normal text-white/78 tabular-nums max-md:leading-[normal]">
-            {t("Opening")} {formatCurrency(wallet.openingBalance, currency, locale)}
+            {t("Opening")} {formatCurrency(wallet.openingBalance, currency, fmt)}
           </span>
         </div>
         <Link href={statementHref} className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-white/16 px-2.5 py-1.5 text-caption font-semibold text-white hover:bg-white/24 max-md:hidden">

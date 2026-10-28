@@ -41,7 +41,7 @@ const sum = (wallets: Account[], pick: (wallet: Account) => string) => wallets.r
 // actions, and a dashed card to add the next one. Archived wallets wait on
 // their own tab.
 export function WalletPageClient({ businessId, wallets, canManage, currency }: WalletPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -86,7 +86,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   const totalOpening = sum(active, (wallet) => wallet.openingBalance);
   const editing = typeof drawer === "object" ? drawer : null;
   const busy = isPending ? busyId : null;
-  const archivedNote = inArchived !== 0 ? t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, locale) }) : null;
+  const archivedNote = inArchived !== 0 ? t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, fmt) }) : null;
 
   // One action on one wallet at a time: its card dims and its menu waits
   // until the answer comes back.
@@ -206,7 +206,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
 
       {/* Phone: the total, the share bar and the add button in one card. */}
       <Card padding="sm" elevated={false} className="flex flex-col gap-3 md:hidden">
-        <span className="text-small leading-[normal] text-ink-muted">{plural(t, active.length, "Available across {count} wallet", "Available across {count} wallets", undefined, locale)}</span>
+        <span className="text-small leading-[normal] text-ink-muted">{plural(t, active.length, "Available across {count} wallet", "Available across {count} wallets", undefined, fmt)}</span>
         <AmountText value={available} currency={currency} size="display" className="wrap-anywhere" />
         {archivedNote && <span className="-mt-2 text-caption text-ink-muted">{archivedNote}</span>}
         <WalletShareBar slices={walletShares(wallets.map((wallet) => ({ ...wallet, name: nameOf(wallet) })))} size="sm" label={t("Share of balance by wallet")} />
@@ -227,7 +227,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
           <span className="text-small font-medium text-ink-muted">{t("Total balance")}</span>
           <AmountText value={available} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
           <span className="text-caption font-normal text-ink-muted">
-            {plural(t, active.length, "Across {count} active wallet", "Across {count} active wallets", undefined, locale)}
+            {plural(t, active.length, "Across {count} active wallet", "Across {count} active wallets", undefined, fmt)}
             {archivedNote && ` · ${archivedNote}`}
           </span>
         </Card>
