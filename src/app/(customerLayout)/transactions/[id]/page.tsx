@@ -20,6 +20,7 @@ import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { getBudgetCategoryNames } from "@/lib/customer/budgets";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatCurrency } from "@/lib/customer/currency";
+import { getFmt } from "@/lib/customer/fmt";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { TRANSACTION_TYPE_LABELS, transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
 import { categoryIndex, categoryLabel, describeTransaction, editableEntry, type OwningFeature, owningFeature, recordTimeLabel, reversalTitle, rowTitle, systemText, transactionDayLabel } from "@/lib/customer/transactionRows";
@@ -79,6 +80,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
   if (!activeBusinessId) redirect("/dashboard");
 
   const { t, locale } = await getTranslator();
+  const fmt = await getFmt();
   const [transaction, incomeCategories, expenseCategories, wallets] = await Promise.all([
     getTransaction(activeBusinessId, id),
     getBudgetCategoryNames(activeBusinessId, "INCOME"),
@@ -154,7 +156,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
       <>
         {/* A phone stacks the entry: its one figure says which side it is on. */}
         <span className="block text-caption font-normal text-ink-muted md:hidden">{t(side === "DEBIT" ? "Debit" : "Credit")}</span>
-        {formatCurrency(entry.amount, currency, locale)}
+        {formatCurrency(entry.amount, currency, fmt)}
       </>
     ) : (
       <span className="font-normal text-ink-muted">—</span>
@@ -190,7 +192,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
                     {t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}
                   </Chip>
                   {/* A transaction's date is a day; it has no time of its own. */}
-                  <span className="text-small text-ink-muted">{transactionDayLabel(toDateInputValue(transaction.transactionDate), locale)}</span>
+                  <span className="text-small text-ink-muted">{transactionDayLabel(toDateInputValue(transaction.transactionDate), fmt)}</span>
                 </span>
                 <h1 className={cn("text-h2 text-ink", row.cancelled && "line-through")}>{title}</h1>
               </div>
@@ -247,10 +249,10 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
                   <ListCell>{t("Total")}</ListCell>
                   <ListCell align="end" className="tabular-nums">
                     <span className="block text-caption font-normal text-ink-muted md:hidden">{t("Debit and credit")}</span>
-                    {formatCurrency(debitTotal, currency, locale)}
+                    {formatCurrency(debitTotal, currency, fmt)}
                   </ListCell>
                   <ListCell align="end" className="tabular-nums max-md:hidden">
-                    {formatCurrency(debitTotal, currency, locale)}
+                    {formatCurrency(debitTotal, currency, fmt)}
                   </ListCell>
                 </ListTotalRow>
               </div>
@@ -264,19 +266,19 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
             {transaction.correctedFrom ? (
               <HistoryRow
                 tone="bg-info"
-                title={t("Corrected from {amount}", { amount: formatCurrency(Number(transaction.correctedFrom.amount), currency, locale) })}
-                when={recordTimeLabel(transaction.createdAt, locale, t)}
+                title={t("Corrected from {amount}", { amount: formatCurrency(Number(transaction.correctedFrom.amount), currency, fmt) })}
+                when={recordTimeLabel(transaction.createdAt, fmt, t)}
                 link={{ href: transactionPageHref(transaction.correctedFrom.id, back), label: t("See the original") }}
               />
             ) : (
-              <HistoryRow tone="bg-emerald" title={t("Added")} when={recordTimeLabel(transaction.createdAt, locale, t)} />
+              <HistoryRow tone="bg-emerald" title={t("Added")} when={recordTimeLabel(transaction.createdAt, fmt, t)} />
             )}
             {transaction.voidedAt && (
               <HistoryRow
                 tone="bg-expense-fill"
                 title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`}
-                when={recordTimeLabel(transaction.voidedAt, locale, t)}
-                link={transaction.correctedBy ? { href: transactionPageHref(transaction.correctedBy.id, back), label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency, locale) }) } : undefined}
+                when={recordTimeLabel(transaction.voidedAt, fmt, t)}
+                link={transaction.correctedBy ? { href: transactionPageHref(transaction.correctedBy.id, back), label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency, fmt) }) } : undefined}
               />
             )}
           </Card>

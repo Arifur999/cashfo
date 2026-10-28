@@ -1,9 +1,10 @@
 import type { Transaction, TransactionEntry } from "./api";
 import { formatDate, timeLabel } from "./date";
+import { formatDay } from "@/lib/date";
 import { isIsoDay } from "./dateRangePresets";
 import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "./transactionDisplay";
 import { toDateInputValue } from "@/lib/date";
-import { banglaDayMonth, banglaShortDay, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { type FormatLocale, langOf, numericDates } from "@/lib/i18n/formatPrefs";
 import { localName, type Translate } from "@/lib/i18n/message";
 
 export interface CategoryMeta {
@@ -184,9 +185,10 @@ export function relativeDayKey(day: string, today: string): "Today" | "Yesterday
 }
 
 // "Yesterday · Thu, 1 Oct" or "Wed, 30 Sep", the way the list heads a day.
-export function dayHeading(day: string, today: string, t: (key: string) => string, locale: "en" | "bn" = "en"): string {
-  // "Wed, 30 Sep", or "বুধ, ৩০ সেপ্টে" in the Bangla board's own words.
-  const short = locale === "bn" ? banglaShortDay(day) : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM");
+export function dayHeading(day: string, today: string, t: (key: string) => string, locale: FormatLocale = "en"): string {
+  // "Wed, 30 Sep", or "বুধ, ৩০ সেপ্টে" in the Bangla board's own words
+  // ("Wed, 30/09/2026" in a numbered date style).
+  const short = formatDay(day, numericDates(locale) ? "EEE, d MMM yyyy" : "EEE, d MMM", locale);
   const relative = relativeDayKey(day, today);
   return relative ? `${t(relative)} · ${short}` : short;
 }
@@ -194,16 +196,15 @@ export function dayHeading(day: string, today: string, t: (key: string) => strin
 // "Thu, 1 Oct 2026" (or "বৃহস্পতি, ১ অক্টো ২০২৬"): a transaction's day. Its
 // date is a day with no time of its own (stored at UTC midnight), so it is
 // never shown with one.
-export function transactionDayLabel(day: string, locale: "en" | "bn"): string {
-  return locale === "bn" ? `${banglaShortDay(day)} ${toBanglaDigits(day.slice(0, 4))}` : formatDate(`${day}T00:00:00.000Z`, "EEE, d MMM yyyy");
+export function transactionDayLabel(day: string, locale: FormatLocale): string {
+  return formatDay(day, "EEE, d MMM yyyy", locale);
 }
 
 // "1 Oct 2026, 5:30 pm" (or "১ অক্টো ২০২৬, ৫:৩০ অপরাহ্ণ"): when something
 // happened to a record, to the minute, in the platform timezone.
-export function recordTimeLabel(value: string, locale: "en" | "bn", t: Translate): string {
-  if (locale === "en") return formatDate(value, "d MMM yyyy, h:mm a");
-  const day = toDateInputValue(value);
-  return `${banglaDayMonth(day)} ${toBanglaDigits(day.slice(0, 4))}, ${toBanglaDigits(timeLabel(formatDate(value, "HH:mm"), t))}`;
+export function recordTimeLabel(value: string, locale: FormatLocale, t: Translate): string {
+  if (langOf(locale) === "en") return formatDate(value, "d MMM yyyy, h:mm a", locale);
+  return `${formatDay(toDateInputValue(value), "d MMM yyyy", locale)}, ${timeLabel(formatDate(value, "HH:mm"), t, locale)}`;
 }
 
 // What Edit opens a saved entry with (decision D2): the wallet the money

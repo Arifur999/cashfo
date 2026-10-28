@@ -95,7 +95,7 @@ const NO_FAILURES = { wallets: false, expenseAccounts: false, INCOME: false, EXP
 // the day side by side. Enter saves; "Save & add another" keeps it open and
 // clears the amount and note.
 export function TransactionDrawer({ open, onClose, businessId, currency, initialKind = "EXPENSE", editing = null }: TransactionDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { user } = useAuth();
   const wide = useMediaQuery("(min-width: 768px)");
@@ -319,7 +319,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     <Field htmlFor="txn-date" label={<span className={PHONE_LABEL}>{t("Date")}</span>}>
       <span className="relative flex h-13 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]">
         <CalendarDays className="size-4.5 shrink-0 text-ink-2" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{dayWord ? t(dayWord) : formatDate(`${date}T00:00:00.000Z`, "d MMM", locale)}</span>
+        <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{dayWord ? t(dayWord) : formatDate(`${date}T00:00:00.000Z`, "d MMM", fmt)}</span>
         <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         <input id="txn-date" type="date" value={date} onChange={(event) => event.target.value && setDate(event.target.value)} max={getAppToday()} className="absolute inset-0 opacity-0" />
       </span>
@@ -400,13 +400,13 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </div>
         {!wide && showBudget && (
           <span className="self-center text-small text-ink-muted">
-            {fillNodes(t("{category}: {amount} left after this"), { category, amount: <b className={hint.figure}>{formatCurrency(budgetLeft - value, currency, locale)}</b> })}
+            {fillNodes(t("{category}: {amount} left after this"), { category, amount: <b className={hint.figure}>{formatCurrency(budgetLeft - value, currency, fmt)}</b> })}
           </span>
         )}
         {editing && value !== editing.amount && (
           <span className={cn("flex items-center gap-1.5 text-small font-semibold text-expense", !wide && "self-center")}>
             <Undo2 className="size-3.5" aria-hidden="true" />
-            {t("Was {amount}", { amount: formatCurrency(editing.amount, currency, locale) })}
+            {t("Was {amount}", { amount: formatCurrency(editing.amount, currency, fmt) })}
           </span>
         )}
       </div>
@@ -476,9 +476,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           <span>
             {fillNodes(t("{category} has {left} left this month. After this, {after} of {limit} will be left."), {
               category,
-              left: <b className="font-semibold">{formatCurrency(budgetLeft, currency, locale)}</b>,
-              after: <b className={cn("font-semibold", hint.figure)}>{formatCurrency(budgetLeft - value, currency, locale)}</b>,
-              limit: formatCurrency(budgetLimit, currency, locale),
+              left: <b className="font-semibold">{formatCurrency(budgetLeft, currency, fmt)}</b>,
+              after: <b className={cn("font-semibold", hint.figure)}>{formatCurrency(budgetLeft - value, currency, fmt)}</b>,
+              limit: formatCurrency(budgetLimit, currency, fmt),
             })}
           </span>
         </div>
@@ -523,7 +523,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
 
   const footer = editing ? (
     <div className={cn("flex items-center gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-8")}>
-      <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, locale)}</span>
+      <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, fmt)}</span>
       <Button type="button" variant="ghost" onClick={onClose} disabled={isPending} className="px-2.5">
         {t("Cancel")}
       </Button>
@@ -592,7 +592,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             <span className="flex min-w-0 flex-col gap-1">
               <SheetTitle className="text-h3 text-ink">{t("Edit transaction")}</SheetTitle>
               <span className="truncate text-small text-ink-muted">
-                {editing.title} · {formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", locale)}
+                {editing.title} · {formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", fmt)}
               </span>
             </span>
           ) : (

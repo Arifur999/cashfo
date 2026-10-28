@@ -73,7 +73,7 @@ const ROW_ACTION = "flex size-8 items-center justify-center rounded-full bg-surf
 // Transactions: the filters, the totals strip, and the list grouped by
 // day with each day's net, newest first.
 export function TransactionsPageClient({ businessId, transactions, accounts, categories, meta, pageSize, pageSizes, defaultPageSize, currency, today, totals, dayTotals, splitDays, canManage }: TransactionsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -142,7 +142,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
     return { net, note: null };
   };
 
-  const netText = (net: number) => <span className={cn("tabular-nums", net > 0 ? "text-income" : net < 0 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(net, currency, locale)}</span>;
+  const netText = (net: number) => <span className={cn("tabular-nums", net > 0 ? "text-income" : net < 0 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(net, currency, fmt)}</span>;
 
   const pager = (focusTargetId: string) => (
     <Pagination
@@ -199,8 +199,8 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           </TotalCell>
           <TotalCell label={t("Transactions")} divided className="max-md:hidden">
             <span className="text-h3 text-ink tabular-nums md:text-[20px] md:font-bold">
-              {formatCount(totals.count, locale)}
-              {totals.voided > 0 && <span className="text-small font-medium text-ink-muted"> · {t("{count} voided", { count: formatCount(totals.voided, locale) })}</span>}
+              {formatCount(totals.count, fmt)}
+              {totals.voided > 0 && <span className="text-small font-medium text-ink-muted"> · {t("{count} voided", { count: formatCount(totals.voided, fmt) })}</span>}
               {totals.scope === "page" && <span className="text-small font-medium text-ink-muted"> · {t("this page")}</span>}
             </span>
           </TotalCell>
@@ -271,7 +271,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               const band = dayBand(group.day, group.net);
               return (
                 <div key={group.day} role="rowgroup">
-                  <ListGroupRow label={dayHeading(group.day, today, t, locale)} aside={band.note ? <span className="font-medium text-ink-muted">{band.note}</span> : netText(band.net ?? 0)} />
+                  <ListGroupRow label={dayHeading(group.day, today, t, fmt)} aside={band.note ? <span className="font-medium text-ink-muted">{band.note}</span> : netText(band.net ?? 0)} />
                   {group.rows.map((row) => (
                     <DesktopRow key={row.transaction.id} row={row} currency={currency} canManage={canManage} onVoid={() => setVoiding(row)} />
                   ))}
@@ -288,7 +288,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               return (
                 <div key={group.day}>
                   <div className="flex justify-between gap-3 px-1 pt-4 pb-2 text-small font-semibold text-ink-2">
-                    <span>{dayHeading(group.day, today, t, locale)}</span>
+                    <span>{dayHeading(group.day, today, t, fmt)}</span>
                     {band.note ? <span className="font-medium text-ink-muted">{band.note}</span> : netText(band.net ?? 0)}
                   </div>
                   <Card padding="none" elevated={false} className="overflow-hidden">

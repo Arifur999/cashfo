@@ -13,11 +13,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account } from "@/lib/customer/api";
-import { formatDate } from "@/lib/customer/date";
 import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { activeFilterCount, categoryLabel, isReversedRange, readTransactionFilters } from "@/lib/customer/transactionRows";
-import { banglaDayMonth, toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
+import { type FormatLocale, numericDates } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -60,9 +60,9 @@ const MIN_DAY = "2000-01-01";
 
 // "27 Sep – 2 Oct 2026" for a from/to pair; one side alone reads "From …" /
 // "Until …". In Bangla the board's own month names and digits.
-export function dateRangeLabel(from: string | undefined, to: string | undefined, t: Translate, locale: "en" | "bn" = "en"): string | null {
-  const day = (value: string, withYear: boolean) =>
-    locale === "bn" ? `${banglaDayMonth(value)}${withYear ? ` ${toBanglaDigits(value.slice(0, 4))}` : ""}` : formatDate(`${value}T00:00:00.000Z`, withYear ? "d MMM yyyy" : "d MMM");
+export function dateRangeLabel(from: string | undefined, to: string | undefined, t: Translate, locale: FormatLocale = "en"): string | null {
+  // A numbered date style names the year on both sides.
+  const day = (value: string, withYear: boolean) => formatDay(value, withYear || numericDates(locale) ? "d MMM yyyy" : "d MMM", locale);
   if (from && to) return `${day(from, from.slice(0, 4) !== to.slice(0, 4))} – ${day(to, true)}`;
   if (from) return t("From {date}", { date: day(from, true) });
   if (to) return t("Until {date}", { date: day(to, true) });
@@ -116,7 +116,7 @@ function DateFilterInput({ id, value, size, onApply }: { id: string; value: stri
 // comes back on refresh. On phones the search stays and the rest opens in
 // a sheet; chips show what is on, and each one takes its filter off.
 export function TransactionFilters({ accounts, categories, navigate, baseQuery }: TransactionFiltersProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const searchParams = useSearchParams();
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -125,7 +125,7 @@ export function TransactionFilters({ accounts, categories, navigate, baseQuery }
   const categoryId = filters.categoryId ?? "";
   const accountId = filters.accountId ?? "";
   const { dateFrom, dateTo } = filters;
-  const rangeLabel = dateRangeLabel(dateFrom, dateTo, t, locale);
+  const rangeLabel = dateRangeLabel(dateFrom, dateTo, t, fmt);
   const activeCount = activeFilterCount(filters);
   const reversed = isReversedRange(filters);
   const lang = displayLanguage(locale);
@@ -348,13 +348,13 @@ export function TransactionFilters({ accounts, categories, navigate, baseQuery }
             <SheetTrigger asChild>
               <button
                 type="button"
-                aria-label={activeCount ? t("Filters, {count} on", { count: formatCount(activeCount, locale) }) : t("Filters")}
+                aria-label={activeCount ? t("Filters, {count} on", { count: formatCount(activeCount, fmt) }) : t("Filters")}
                 className="relative flex size-12 shrink-0 items-center justify-center rounded-md border border-line-strong bg-surface text-ink"
               >
                 <Filter className="size-4.75" aria-hidden="true" />
                 {activeCount > 0 && (
                   <span aria-hidden="true" className="absolute -top-1 -right-1 flex size-4.5 items-center justify-center rounded-full bg-emerald text-caption font-bold text-white">
-                    {formatCount(activeCount, locale)}
+                    {formatCount(activeCount, fmt)}
                   </span>
                 )}
               </button>
