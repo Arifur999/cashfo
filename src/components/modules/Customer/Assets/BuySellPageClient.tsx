@@ -48,7 +48,7 @@ const RESULT_BOX = { income: "bg-mint-50 text-income", expense: "bg-expense-soft
 // price leaves a wallet) and selling something owned (the price lands in
 // one) -- with the last sale beside them.
 export function BuySellPageClient({ businessId, assets, categories, wallets, currency, canManage }: BuySellPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   // Which way Add asset opens: buying now, or something already owned.
   const [adding, setAdding] = useState<"buy" | "own" | null>(null);
   const [selling, setSelling] = useState<Asset | null>(null);
@@ -88,7 +88,7 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
           header={
             <div className="flex items-center justify-between gap-3 px-4 py-4 md:px-6 md:py-4.5">
               <h2 className="text-title text-ink">{t("Sell an asset")}</h2>
-              <span className="text-small text-ink-muted">{t("{count} you own", { count: formatCount(summary.owned.length, locale) })}</span>
+              <span className="text-small text-ink-muted">{t("{count} you own", { count: formatCount(summary.owned.length, fmt) })}</span>
             </div>
           }
           footer={
@@ -118,15 +118,15 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className="truncate font-medium text-ink">{asset.name}</span>
                       <span className="truncate text-caption font-normal text-ink-muted">
-                        {t(asset.category)} · {t("bought {month}", { month: formatDate(asset.purchaseDate, "MMM yyyy", locale) })}
+                        {t(asset.category)} · {t("bought {month}", { month: formatDate(asset.purchaseDate, "MMM yyyy", fmt) })}
                       </span>
                     </span>
                   </ListCell>
                   <ListCell align="end" className="hidden text-ink-soft tabular-nums md:block">
-                    {formatCurrency(asset.purchasePrice, currency, locale)}
+                    {formatCurrency(asset.purchasePrice, currency, fmt)}
                   </ListCell>
                   <ListCell align="end" className="font-semibold text-ink tabular-nums">
-                    {formatCurrency(asset.currentValue, currency, locale)}
+                    {formatCurrency(asset.currentValue, currency, fmt)}
                   </ListCell>
                   {canManage ? (
                     <ListRowActions className="col-span-2 md:col-span-1">
@@ -160,16 +160,16 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
                     {lastSold.name}
                   </button>
                   <span className="text-caption font-normal text-ink-muted">
-                    {lastSold.soldAt ? t("Sold {date}", { date: formatDate(lastSold.soldAt, "d MMM yyyy", locale) }) : t("Sold")}
+                    {lastSold.soldAt ? t("Sold {date}", { date: formatDate(lastSold.soldAt, "d MMM yyyy", fmt) }) : t("Sold")}
                     {soldInto && ` · ${t("into {wallet}", { wallet: soldInto })}`}
                   </span>
                 </span>
-                <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency, locale)}</span>
+                <span className="text-body font-semibold text-ink tabular-nums">{formatCurrency(lastSold.soldPrice ?? 0, currency, fmt)}</span>
               </div>
               <div className={cn("flex items-center justify-between gap-3 rounded-sm px-3 py-2.5 text-caption", RESULT_BOX[lastChip.tone])}>
-                <span className="font-normal">{t("Paid {amount} in {month}", { amount: formatCurrency(lastSold.purchasePrice, currency, locale), month: formatDate(lastSold.purchaseDate, "MMM yyyy", locale) })}</span>
+                <span className="font-normal">{t("Paid {amount} in {month}", { amount: formatCurrency(lastSold.purchasePrice, currency, fmt), month: formatDate(lastSold.purchaseDate, "MMM yyyy", fmt) })}</span>
                 <span className="font-semibold whitespace-nowrap tabular-nums">
-                  {formatSignedCurrency(lastGain.amount, currency, locale)} ({toLocaleDigits(lastChip.label, locale)})
+                  {formatSignedCurrency(lastGain.amount, currency, fmt)} ({toLocaleDigits(lastChip.label, fmt)})
                 </span>
               </div>
             </Card>

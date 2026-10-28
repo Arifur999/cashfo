@@ -41,7 +41,7 @@ interface SellAssetDrawerProps {
 // the wallet it lands in, and the note that the whole price counts as
 // income and the asset moves to Sold.
 export function SellAssetDrawer({ open, onClose, businessId, asset, categories, currency }: SellAssetDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [price, setPrice] = useState("");
   // A wallet picked by hand; until then the first one.
@@ -81,7 +81,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
     const amount = value - against;
     const percent = against > 0 ? (amount / against) * 100 : 0;
     const sign = amount > 0 ? "+" : amount < 0 ? "−" : "";
-    return { amount, text: `${sign} ${formatCurrency(Math.abs(amount), currency, locale)} · ${toLocaleDigits(`${sign}${Math.abs(percent).toFixed(1)}%`, locale)}`.trim(), tone: amount > 0 ? "income" : amount < 0 ? "expense" : "neutral" };
+    return { amount, text: `${sign} ${formatCurrency(Math.abs(amount), currency, fmt)} · ${toLocaleDigits(`${sign}${Math.abs(percent).toFixed(1)}%`, fmt)}`.trim(), tone: amount > 0 ? "income" : amount < 0 ? "expense" : "neutral" };
   };
   const vsPaid = diff(paid);
   const vsToday = diff(today);
@@ -122,7 +122,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
           </Button>
           <Button type="submit" disabled={!valid || isPending} className="px-4.5">
             {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-            {value > 0 ? t("Sell for {amount}", { amount: formatCurrency(value, currency, locale) }) : t("Sell asset")}
+            {value > 0 ? t("Sell for {amount}", { amount: formatCurrency(value, currency, fmt) }) : t("Sell asset")}
           </Button>
         </>
       }
@@ -135,18 +135,18 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
             <span className="flex min-w-0 flex-col gap-px">
               <span className="truncate text-[15px] leading-[normal] font-semibold text-ink">{asset.name}</span>
               <span className="text-caption font-normal text-ink-muted">
-                {t(asset.category)} · {t("bought {month}", { month: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}
+                {t(asset.category)} · {t("bought {month}", { month: formatDate(asset.purchaseDate, "d MMM yyyy", fmt) })}
               </span>
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3 tabular-nums">
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
               <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-              <span className="text-title text-ink">{formatCurrency(paid, currency, locale)}</span>
+              <span className="text-title text-ink">{formatCurrency(paid, currency, fmt)}</span>
             </span>
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
               <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-              <span className="text-title text-ink">{formatCurrency(today, currency, locale)}</span>
+              <span className="text-title text-ink">{formatCurrency(today, currency, fmt)}</span>
             </span>
           </div>
         </div>
@@ -183,7 +183,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
             <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <span>
               {fillNodes(t("The full {amount} is recorded as income in {wallet}, and {asset} moves to Sold."), {
-                amount: <b className="font-semibold">{formatCurrency(value, currency, locale)}</b>,
+                amount: <b className="font-semibold">{formatCurrency(value, currency, fmt)}</b>,
                 wallet: accountDisplayName(wallet, displayLanguage(locale)),
                 asset: asset.name,
               })}

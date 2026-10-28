@@ -39,7 +39,7 @@ interface SoldAssetDrawerProps {
 // dates, the wallets the money left and reached, its note and its value
 // history. Those who can manage assets may undo a sale recorded by mistake.
 export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, currency, canManage }: SoldAssetDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, locale, fmt } = useLocale();
   const router = useRouter();
   // Only for the wallets' names.
   const { wallets, savingsWallets } = useDrawerWallets(open, businessId);
@@ -56,7 +56,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
   const gain = assetGain(asset);
   const chip = gainChip(gain.percent);
   const visual = categoryVisual(categories, asset.category);
-  const soldOn = asset.soldAt ? formatDate(asset.soldAt, "d MMM yyyy", locale) : null;
+  const soldOn = asset.soldAt ? formatDate(asset.soldAt, "d MMM yyyy", fmt) : null;
   // A purchase from a wallet, where the sale went, and the note; each only
   // when there is one (an asset added as already owned left no wallet).
   const details = [
@@ -66,7 +66,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
   ].filter((detail): detail is { label: string; value: string } => !!detail.value);
   // Names the wallet once the wallets have loaded (and while it is still one).
   const soldInto = walletName(asset.soldAccountId);
-  const soldFor = formatCurrency(asset.soldPrice ?? 0, currency, locale);
+  const soldFor = formatCurrency(asset.soldPrice ?? 0, currency, fmt);
 
   // The sale's income leaves the wallet it reached and the asset is owned
   // again. The question closes either way; on success the drawer does too.
@@ -116,8 +116,8 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
         <div className="grid grid-cols-2 gap-3 rounded-[14px] border border-line bg-strip p-4 tabular-nums">
           <span className="flex flex-col gap-0.5 *:leading-[normal]">
             <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-            <span className="text-title text-ink">{formatCurrency(asset.purchasePrice, currency, locale)}</span>
-            <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
+            <span className="text-title text-ink">{formatCurrency(asset.purchasePrice, currency, fmt)}</span>
+            <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", fmt) })}</span>
           </span>
           <span className="flex flex-col gap-0.5 *:leading-[normal]">
             <span className="text-caption font-normal text-ink-muted">{t("Sale price")}</span>
@@ -129,7 +129,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
         <div className={cn("flex items-center justify-between gap-3 rounded-md p-3 text-small", BOX[chip.tone])}>
           <span className="font-medium">{gain.amount > 0 ? t("Gain on the sale") : gain.amount < 0 ? t("Loss on the sale") : t("Sold for what you paid")}</span>
           <span className="font-semibold tabular-nums">
-            {formatSignedCurrency(gain.amount, currency, locale)} ({toLocaleDigits(chip.label, locale)})
+            {formatSignedCurrency(gain.amount, currency, fmt)} ({toLocaleDigits(chip.label, fmt)})
           </span>
         </div>
 

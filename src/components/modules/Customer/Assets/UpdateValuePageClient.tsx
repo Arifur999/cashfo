@@ -41,7 +41,7 @@ const LIST_ID = "assets-to-update";
 // Update value: every owned asset with when it was last checked, so the
 // ones that have gone unvalued for months stand out.
 export function UpdateValuePageClient({ businessId, assets, categories, currency, canManage, today }: UpdateValuePageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const [onlyStale, setOnlyStale] = useState(false);
   const [valuing, setValuing] = useState<Asset | null>(null);
   const [adding, setAdding] = useState(false);
@@ -71,7 +71,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
             <Clock className="size-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1 text-body text-warning-ink">
-            <b className="font-semibold">{t(stale.length === 1 ? "{count} asset hasn't been checked in over 6 months." : "{count} assets haven't been checked in over 6 months.", { count: formatCount(stale.length, locale) })}</b>{" "}
+            <b className="font-semibold">{t(stale.length === 1 ? "{count} asset hasn't been checked in over 6 months." : "{count} assets haven't been checked in over 6 months.", { count: formatCount(stale.length, fmt) })}</b>{" "}
             {t(stale.length === 1 ? "Its value may be out of date." : "Their values may be out of date.")}
           </span>
           {/* Everyone can list which ones; only the rows' Update buttons
@@ -122,28 +122,28 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
                   </span>
                 </ListCell>
                 <ListCell align="end" className="hidden text-ink-soft tabular-nums md:block">
-                  {formatCurrency(asset.purchasePrice, currency, locale)}
+                  {formatCurrency(asset.purchasePrice, currency, fmt)}
                 </ListCell>
                 <ListCell align="end" className="font-semibold text-ink tabular-nums">
-                  {formatCurrency(asset.currentValue, currency, locale)}
+                  {formatCurrency(asset.currentValue, currency, fmt)}
                 </ListCell>
                 <ListCell className="col-span-2 flex flex-col gap-0.5 md:col-span-1">
                   {/* Out of date says so in words, not colour alone. */}
                   {old ? (
                     <>
                       <span className="text-small font-semibold text-warning">{t("Needs a check")}</span>
-                      <span className="text-caption font-normal text-ink-muted">{last ? t("Not updated since {month}", { month: formatDate(last, "MMM yyyy", locale) }) : t("Not checked since bought")}</span>
+                      <span className="text-caption font-normal text-ink-muted">{last ? t("Not updated since {month}", { month: formatDate(last, "MMM yyyy", fmt) }) : t("Not checked since bought")}</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-small text-ink">{last ? formatDate(last, "d MMM yyyy", locale) : t("Not checked since bought")}</span>
-                      {last && <span className="text-caption font-normal text-ink-muted">{t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, locale) })}</span>}
+                      <span className="text-small text-ink">{last ? formatDate(last, "d MMM yyyy", fmt) : t("Not checked since bought")}</span>
+                      {last && <span className="text-caption font-normal text-ink-muted">{t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, fmt) })}</span>}
                     </>
                   )}
                 </ListCell>
                 <ListCell align="end" className="hidden md:block">
                   <Chip tone={chip.tone} size="sm" className="font-semibold">
-                    {toLocaleDigits(chip.label, locale)}
+                    {toLocaleDigits(chip.label, fmt)}
                   </Chip>
                 </ListCell>
                 {canManage ? (

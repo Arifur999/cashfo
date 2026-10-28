@@ -46,7 +46,7 @@ const CHIP = { income: "bg-mint-50 text-emerald", expense: "bg-expense-soft text
 // purchase date set right, or the asset deleted when it was entered by
 // mistake.
 export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency }: UpdateValueDrawerProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [mode, setMode] = useState<Mode>("value");
@@ -143,7 +143,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     if (isPending || !asset) return;
     const confirmed = await confirm({
       title: t("Delete {name}?", { name: asset.name }),
-      message: fromWallet ? t("The {amount} you paid goes back into the wallet it came from.", { amount: formatCurrency(paid, currency, locale) }) : t("It was added as already owned, so no wallet changes."),
+      message: fromWallet ? t("The {amount} you paid goes back into the wallet it came from.", { amount: formatCurrency(paid, currency, fmt) }) : t("It was added as already owned, so no wallet changes."),
       confirmLabel: "Delete asset",
     });
     if (confirmed) run("delete", () => deleteAssetAction(businessId, asset.id), "Asset deleted", "Failed to delete the asset");
@@ -206,13 +206,13 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
           <div className="grid grid-cols-2 gap-3 rounded-[14px] border border-line bg-strip p-4 tabular-nums">
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
               <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
-              <span className="text-title text-ink">{formatCurrency(current, currency, locale)}</span>
-              <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since, "d MMM yyyy", locale) }) : t("Not checked since bought")}</span>
+              <span className="text-title text-ink">{formatCurrency(current, currency, fmt)}</span>
+              <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since, "d MMM yyyy", fmt) }) : t("Not checked since bought")}</span>
             </span>
             <span className="flex flex-col gap-0.5 *:leading-[normal]">
               <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-              <span className="text-title text-ink">{formatCurrency(paid, currency, locale)}</span>
-              <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", locale) })}</span>
+              <span className="text-title text-ink">{formatCurrency(paid, currency, fmt)}</span>
+              <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", fmt) })}</span>
             </span>
           </div>
 
@@ -224,16 +224,16 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
                 {!backdated && (
                   <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold tabular-nums", CHIP[sinceLast.tone])}>
                     {sinceLast.tone === "income" ? <TrendingUp className="size-3.5" aria-hidden="true" /> : sinceLast.tone === "expense" ? <TrendingDown className="size-3.5" aria-hidden="true" /> : null}
-                    {changed ? t("{change} since the last value", { change: `${next > current ? "+" : "−"} ${formatCurrency(Math.abs(next - current), currency, locale)} (${toLocaleDigits(sinceLast.label, locale)})` }) : t("Same as the last value")}
+                    {changed ? t("{change} since the last value", { change: `${next > current ? "+" : "−"} ${formatCurrency(Math.abs(next - current), currency, fmt)} (${toLocaleDigits(sinceLast.label, fmt)})` }) : t("Same as the last value")}
                   </span>
                 )}
-                <span className="inline-flex items-center rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2 tabular-nums">{t("{change} vs what you paid", { change: toLocaleDigits(vsPaid.label, locale) })}</span>
+                <span className="inline-flex items-center rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2 tabular-nums">{t("{change} vs what you paid", { change: toLocaleDigits(vsPaid.label, fmt) })}</span>
               </div>
             )}
             {backdated && (
               <p className="flex items-start gap-2 text-caption text-ink-muted">
                 <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                {t("An earlier date fills in the history; the value today stays {amount}.", { amount: formatCurrency(current, currency, locale) })}
+                {t("An earlier date fills in the history; the value today stays {amount}.", { amount: formatCurrency(current, currency, fmt) })}
               </p>
             )}
           </Field>
@@ -263,7 +263,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
             hint={
               redate
                 ? boughtMax < today
-                  ? t("It can't be later than the first value recorded after it, on {date}.", { date: formatDate(boughtMax, "d MMM yyyy", locale) })
+                  ? t("It can't be later than the first value recorded after it, on {date}.", { date: formatDate(boughtMax, "d MMM yyyy", fmt) })
                   : undefined
                 : t(fromWallet ? "A purchase paid from a wallet keeps its date. Delete the asset and add it again to change it." : "A sold asset keeps its purchase date. Undo the sale to change it.")
             }
@@ -271,7 +271,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
             {redate ? (
               <DayInput id="upd-bought" size="md" value={bought} onChange={setBought} max={boughtMax} aria-describedby={boughtMax < today ? "upd-bought-hint" : undefined} />
             ) : (
-              <Input id="upd-bought" size="md" value={formatDate(asset.purchaseDate, "d MMM yyyy", locale)} readOnly aria-describedby="upd-bought-hint" className="text-ink-2" frameClassName="border-line bg-strip px-3" />
+              <Input id="upd-bought" size="md" value={formatDate(asset.purchaseDate, "d MMM yyyy", fmt)} readOnly aria-describedby="upd-bought-hint" className="text-ink-2" frameClassName="border-line bg-strip px-3" />
             )}
           </Field>
 

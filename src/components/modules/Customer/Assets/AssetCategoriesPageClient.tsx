@@ -46,7 +46,7 @@ const ICON_BUTTON = "flex size-7.5 items-center justify-center rounded-full text
 // are worth (the card opens My assets on that type), plus the drawer to add
 // or edit one.
 export function AssetCategoriesPageClient({ businessId, categories, assets, currency, canManage }: AssetCategoriesPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [drawer, setDrawer] = useState<"closed" | "create" | AssetCategoryOption>("closed");
@@ -101,7 +101,7 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
           const value = owned.reduce((sum, asset) => sum + Number(asset.currentValue), 0);
           const share = totalValue > 0 ? (value / totalValue) * 100 : 0;
           const busy = busyId === category.id;
-          const countText = owned.length === 0 && sold === 0 ? t("No assets yet") : t(owned.length === 1 ? "{count} asset" : "{count} assets", { count: formatCount(owned.length, locale) });
+          const countText = owned.length === 0 && sold === 0 ? t("No assets yet") : t(owned.length === 1 ? "{count} asset" : "{count} assets", { count: formatCount(owned.length, fmt) });
           return (
             <Card key={category.id} padding="none" interactive aria-busy={busy || undefined} className={cn("relative flex flex-col gap-3.5 p-4.5", CARD_FOCUS)}>
               <div className="flex items-start justify-between">
@@ -130,19 +130,19 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, curr
                 <span className="text-title text-ink">{name}</span>
                 <span className="text-small text-ink-muted">
                   {countText}
-                  {sold > 0 && ` · ${t("{count} sold", { count: formatCount(sold, locale) })}`}
+                  {sold > 0 && ` · ${t("{count} sold", { count: formatCount(sold, fmt) })}`}
                 </span>
               </Link>
               {/* What it holds today, and its share of everything owned. */}
               <div className="flex flex-col gap-2 rounded-[14px] bg-strip px-3.5 py-3">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-                  <span className={cn("text-title font-bold tabular-nums", value > 0 ? "text-ink" : "text-ink-muted")}>{formatCurrency(value, currency, locale)}</span>
+                  <span className={cn("text-title font-bold tabular-nums", value > 0 ? "text-ink" : "text-ink-muted")}>{formatCurrency(value, currency, fmt)}</span>
                 </div>
                 <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-line-card">
                   <div className="h-full rounded-full" style={{ width: `${share}%`, background: visual.color }} />
                 </div>
-                <span className="text-caption font-normal text-ink-muted">{value > 0 ? t("{percent} of everything you own", { percent: toLocaleDigits(`${Math.round(share)}%`, locale) }) : t("Nothing in it yet")}</span>
+                <span className="text-caption font-normal text-ink-muted">{value > 0 ? t("{percent} of everything you own", { percent: toLocaleDigits(`${Math.round(share)}%`, fmt) }) : t("Nothing in it yet")}</span>
               </div>
             </Card>
           );

@@ -18,7 +18,7 @@ interface AssetValueHistoryProps {
 // Every value an asset was recorded at, as a timeline: the value about to
 // be saved (dashed), the checks, and the purchase at the bottom.
 export function AssetValueHistory({ entries, currency, today }: AssetValueHistoryProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const id = useId();
   return (
     <section aria-labelledby={id} className="flex flex-col">
@@ -27,11 +27,11 @@ export function AssetValueHistory({ entries, currency, today }: AssetValueHistor
       </h3>
       <ol className="flex flex-col">
         {entries.map((entry, index) => {
-          const date = formatDate(entry.date, "d MMM yyyy", locale);
+          const date = formatDate(entry.date, "d MMM yyyy", fmt);
           const label = entry.kind === "new" ? t(entry.date === today ? "Today, {date} · new" : "{date} · new", { date }) : date;
           // The backend's own first-row notes read as "Bought".
           const note = entry.kind === "new" ? entry.note || t("This update") : isInitialValueNote(entry.note) || (entry.kind === "first" && !entry.note) ? t("Bought") : entry.note || t("Checked");
-          return <HistoryRow key={entry.id} date={label} note={note} value={formatCurrency(entry.value, currency, locale)} kind={entry.kind} line={index < entries.length - 1} />;
+          return <HistoryRow key={entry.id} date={label} note={note} value={formatCurrency(entry.value, currency, fmt)} kind={entry.kind} line={index < entries.length - 1} />;
         })}
       </ol>
     </section>

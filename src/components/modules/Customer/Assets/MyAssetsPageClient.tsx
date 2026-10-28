@@ -43,7 +43,7 @@ const CARD_FOCUS = [
 // My assets: everything owned as cards, each with today's value, how it
 // has moved since purchase, and the line of values it went through.
 export function MyAssetsPageClient({ businessId, assets, categories, currency, canManage }: MyAssetsPageClientProps) {
-  const { t, locale } = useLocale();
+  const { t, fmt } = useLocale();
   const searchParams = useSearchParams();
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [search, setSearch] = useState("");
@@ -69,8 +69,8 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
         eyebrow={`${t("Money")} · ${t("Assets")}`}
         title={t("Current assets")}
         description={fillNodes(t(assets.length === 1 ? "{count} thing you own · {amount} today" : "{count} things you own · {amount} today"), {
-          count: formatCount(assets.length, locale),
-          amount: <b className="font-semibold text-ink">{formatCurrency(total, currency, locale)}</b>,
+          count: formatCount(assets.length, fmt),
+          amount: <b className="font-semibold text-ink">{formatCurrency(total, currency, fmt)}</b>,
         })}
         actions={
           <>
@@ -91,11 +91,11 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
       ) : (
         <>
           <div role="group" aria-label={t("Filter by category")} className="flex flex-wrap gap-2">
-            <FilterChip on={active === ""} onClick={() => setCategory("")} count={formatCount(assets.length, locale)}>
+            <FilterChip on={active === ""} onClick={() => setCategory("")} count={formatCount(assets.length, fmt)}>
               {t("All")}
             </FilterChip>
             {chips.map((name) => (
-              <FilterChip key={name} on={active === name} onClick={() => setCategory(name)} count={formatCount(counts.get(name) ?? 0, locale)} dot={categoryVisual(categories, name).color}>
+              <FilterChip key={name} on={active === name} onClick={() => setCategory(name)} count={formatCount(counts.get(name) ?? 0, fmt)} dot={categoryVisual(categories, name).color}>
                 {t(name)}
               </FilterChip>
             ))}
@@ -122,7 +122,7 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
               const gain = assetGain(asset);
               const chip = gainChip(gain.percent);
               const updates = updateCount(asset);
-              const since = formatDate(asset.purchaseDate, "MMM yyyy", locale);
+              const since = formatDate(asset.purchaseDate, "MMM yyyy", fmt);
               return (
                 <Card key={asset.id} padding="none" interactive={canManage} className={cn("group relative flex flex-col gap-4 p-4.5", canManage && CARD_FOCUS)}>
                   <div className="flex items-start gap-3">
@@ -140,25 +140,25 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
                       <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{t("{type} · since {month}", { type: t(asset.category), month: since })}</span>
                     </span>
                     <Chip tone={chip.tone} size="sm" className="font-semibold">
-                      {toLocaleDigits(chip.label, locale)}
+                      {toLocaleDigits(chip.label, fmt)}
                     </Chip>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-caption font-normal text-ink-muted">{t("Value today")}</span>
-                    <span className="text-[26px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency, locale)}</span>
+                    <span className="text-[26px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{formatCurrency(asset.currentValue, currency, fmt)}</span>
                     <span className={cn("text-[12.5px] leading-[normal] font-semibold tabular-nums", gain.amount > 0 ? "text-income" : gain.amount < 0 ? "text-expense" : "text-ink-muted")}>
-                      {gain.amount === 0 ? t("Same as you paid") : t("{amount} since you bought it", { amount: formatSignedCurrency(gain.amount, currency, locale) })}
+                      {gain.amount === 0 ? t("Same as you paid") : t("{amount} since you bought it", { amount: formatSignedCurrency(gain.amount, currency, fmt) })}
                     </span>
                   </div>
                   {/* Two cells on a hairline grid: what was paid, and how often the value was checked since. */}
                   <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[14px] bg-line-card">
                     <div className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
                       <dt className="text-[11.5px] leading-[normal] text-ink-muted">{t("You paid")}</dt>
-                      <dd className="text-[13.5px] leading-[normal] font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency, locale)}</dd>
+                      <dd className="text-[13.5px] leading-[normal] font-semibold text-ink-2 tabular-nums">{formatCurrency(asset.purchasePrice, currency, fmt)}</dd>
                     </div>
                     <div className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
                       <dt className="text-[11.5px] leading-[normal] text-ink-muted">{t("Value updates")}</dt>
-                      <dd className="text-[13.5px] leading-[normal] font-semibold text-ink-2">{updates === 0 ? t("None yet") : t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, locale) })}</dd>
+                      <dd className="text-[13.5px] leading-[normal] font-semibold text-ink-2">{updates === 0 ? t("None yet") : t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, fmt) })}</dd>
                     </div>
                   </dl>
                   {asset.notes && (
