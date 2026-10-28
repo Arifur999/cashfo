@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Account, type AccountType } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Account, type AccountLedger, type AccountType, type LedgerRow } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -92,5 +92,34 @@ export async function removeAccountAction(businessId: string, id: string): Promi
       headers: await authHeaders(),
     });
     return response.data;
+  });
+}
+
+// Rows fetched per request, and the most a printed statement holds (25
+// requests). The ledger API allows 200 to a page.
+const STATEMENT_PAGE = 200;
+const STATEMENT_MAX_PAGES = 25;
+
+export interface StatementRows {
+  rows: LedgerRow[];
+  // False when the period has more rows than one printout takes.
+  complete: boolean;
+}
+
+// Every ledger row in the period, oldest first, for Print / PDF: the screen
+// shows 50 to a page, a printed statement shows the whole period.
+export async function getStatementRowsAction(businessId: string, accountId: string, period: { dateFrom?: string; dateTo?: string }): Promise<ActionResult<StatementRows>> {
+  return callApi(async () => {
+    const headers = await authHeaders();
+    const rows: LedgerRow[] = [];
+    for (let page = 1; page <= STATEMENT_MAX_PAGES; page++) {
+      const res = await customerApi.get<AccountLedger>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${accountId}/ledger`, {
+        headers,
+        params: { ...period, page, limit: STATEMENT_PAGE },
+      });
+      rows.push(...res.data.entries);
+      if (page >= res.data.meta.totalPages) return { rows, complete: true };
+    }
+    return { rows, complete: false };
   });
 }

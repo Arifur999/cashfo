@@ -4,6 +4,9 @@ import { ArrowLeft, Printer, ScrollText } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useState } from "react";
+import { flushSync } from "react-dom";
+import { toast } from "sonner";
+import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -15,11 +18,12 @@ import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
+import { getStatementRowsAction, type StatementRows } from "@/lib/customer/accountActions";
 import type { Account, AccountLedger, AccountSummary, LanguagePreference } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { isSettledDay, LEDGER_TYPE_TONE, ledgerDirection, periodText, readsAsMoney, statementBackLabel, type StatementLine, statementPage, transactionHref, voidedNet } from "@/lib/customer/ledger";
+import { isSettledDay, LEDGER_TYPE_TONE, ledgerDirection, readsAsMoney, statementBackLabel, type StatementLine, statementPage, transactionHref, voidedNet } from "@/lib/customer/ledger";
 import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { walletIcon, walletPalette } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
@@ -27,6 +31,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { pageHref } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
 import { AccountPicker } from "./AccountPicker";
+import { LedgerStatement } from "./LedgerStatement";
 
 interface AccountLedgerPageClientProps {
   wallets: Account[];
@@ -59,11 +64,9 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
 ];
 
 // One grid for the heads, the rows and the balance lines. Phones scroll it
-// sideways, as before. Paper gets narrower columns and 12px type, so an A4
-// page holds every column instead of cutting off Out and Balance.
-const COLUMNS =
-  "grid-cols-[28px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px] min-w-240 print:min-w-0 print:grid-cols-[24px_76px_72px_64px_minmax(0,1fr)_88px_88px_96px] print:gap-x-2 print:text-caption";
-const ROW = "tabular-nums md:min-h-14 print:min-h-0 print:py-1";
+// sideways, as before. Paper gets LedgerStatement instead.
+const COLUMNS = "grid-cols-[28px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px] min-w-240";
+const ROW = "tabular-nums md:min-h-14";
 // One half of a void (the voided entry, or the reversal that undid it) is
 // set back as a whole: every cell fades, the chips and figures with it.
 // A faded cell is a layer of its own that would cover the row's stretched
@@ -81,6 +84,10 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
   const searchParams = useSearchParams();
   // Admin > System > Feature Flags: pdf_export off hides Print / PDF.
   const pdfExportOn = useFeature("pdf_export");
+  const { activeBusinessId } = useAuth();
+  // The whole period for the printed statement, loaded on Print / PDF.
+  const [printRows, setPrintRows] = useState<(StatementRows & { key: string }) | null>(null);
+  const [loadingPrint, setLoadingPrint] = useState(false);
 
   // The custom days as typed, loaded once each is a whole date.
   const [draft, setDraft] = useState({ from: customFrom ?? "", to: customTo ?? "" });
@@ -158,6 +165,30 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         )
       : null;
 
+  // Which statement the loaded rows belong to.
+  const printKey = `${accountId}|${periodFrom ?? ""}|${periodTo ?? ""}`;
+  const fullRows = printRows?.key === printKey ? printRows : null;
+
+  // One page is all there is, or the rest is loaded first (pages of 200),
+  // so the paper holds the whole period.
+  async function printStatement() {
+    if (!paged || fullRows) {
+      window.print();
+      return;
+    }
+    if (!activeBusinessId) return;
+    setLoadingPrint(true);
+    const result = await getStatementRowsAction(activeBusinessId, accountId, { dateFrom: periodFrom, dateTo: periodTo });
+    setLoadingPrint(false);
+    if (!result.success || !result.data) {
+      toast.error(t(result.message ?? "Couldn't load the whole statement. Try again."));
+      return;
+    }
+    const rows = result.data;
+    flushSync(() => setPrintRows({ ...rows, key: printKey }));
+    window.print();
+  }
+
   const lineText = (line: StatementLine): { label: string; note?: string } => {
     switch (line.kind) {
       case "opening":
@@ -179,8 +210,23 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
 
   return (
     <PageFrame className="gap-5">
+      {ready && lines && (
+        <LedgerStatement
+          account={account}
+          rows={fullRows ? fullRows.rows : ledger.entries}
+          opening={fullRows || !paged ? ledger.balanceBroughtForward : lines.top.balance}
+          closing={fullRows ? (fullRows.complete ? ledger.closingBalance : (fullRows.rows.at(-1)?.runningBalance ?? ledger.closingBalance)) : lines.bottom.balance}
+          partial={fullRows ? (fullRows.complete ? null : "capped") : paged ? "page" : null}
+          periodFrom={periodFrom}
+          periodTo={periodTo}
+          today={today}
+          currency={currency}
+          preferredLanguage={preferredLanguage}
+        />
+      )}
+      <div className="contents print:hidden">
       {backHref && (
-        <Link href={backHref} className="-mb-2 inline-flex items-center gap-2 self-start text-small font-semibold text-emerald hover:text-emerald-hover print:hidden">
+        <Link href={backHref} className="-mb-2 inline-flex items-center gap-2 self-start text-small font-semibold text-emerald hover:text-emerald-hover">
           <ArrowLeft className="size-3.75" aria-hidden="true" />
           {t(statementBackLabel(backHref))}
         </Link>
@@ -192,24 +238,15 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         actions={
           // Greyed until there is a ledger to print (the empty board).
           pdfExportOn && (
-            <Button variant="secondary" onClick={() => window.print()} disabled={!ready} title={ready ? undefined : t("Pick an account first")} className="disabled:pointer-events-auto disabled:cursor-not-allowed disabled:border-line disabled:text-ink-faint disabled:opacity-100 print:hidden">
+            <Button variant="secondary" onClick={printStatement} disabled={!ready || loadingPrint} title={ready ? undefined : t("Pick an account first")} className="disabled:pointer-events-auto disabled:cursor-not-allowed disabled:border-line disabled:text-ink-faint disabled:opacity-100">
               <Printer className={cn("size-4", ready ? "text-ink-soft" : "text-ink-faint")} />
-              {t("Print / PDF")}
+              {loadingPrint ? t("Preparing...") : t("Print / PDF")}
             </Button>
           )
         }
       />
 
-      {/* On paper the filters are gone, so this line says what was printed. */}
-      {ready && (
-        <p className="hidden text-small text-ink-2 print:block">
-          <span className="font-semibold text-ink">{accountDisplayName(account, preferredLanguage)}</span>
-          {` · ${periodText(t, periodFrom, periodTo, fmt)} · ${t("Printed {date}", { date: formatDate(today, undefined, fmt) })}`}
-          {paged && ` · ${t("Page {page} of {total}", { page: formatCount(ledger.meta.page, fmt), total: formatCount(ledger.meta.totalPages, fmt) })}`}
-        </p>
-      )}
-
-      <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:flex-wrap md:items-end print:hidden">
+      <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:flex-wrap md:items-end">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-72">
           <label id="ledger-account-label" htmlFor="ledger-account" className="text-small leading-[normal] font-medium text-ink-soft">
             {t("Account")}
@@ -310,10 +347,10 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
             id="statement-list"
             label={t("Account ledger")}
             scrollable
-            tableClassName="overflow-x-auto print:overflow-visible"
+            tableClassName="overflow-x-auto"
             footer={
               ledger.meta.total > 0 && (
-                <ListFooter className="print:hidden">
+                <ListFooter>
                   <Pagination page={ledger.meta.page} totalPages={ledger.meta.totalPages} total={ledger.meta.total} pageSize={ledger.meta.limit} hrefFor={(target) => pageHref(pathname, searchParams, target)} focusTargetId="statement-list" />
                 </ListFooter>
               )
@@ -361,9 +398,9 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
                       {t(TRANSACTION_TYPE_LABELS[row.transactionType])}
                     </Chip>
                   </ListCell>
-                  <ListCell className={cn("truncate text-small print:text-caption", row.referenceNo ? "text-ink-2" : "text-ink-faint")}>{row.referenceNo ?? "—"}</ListCell>
+                  <ListCell className={cn("truncate text-small", row.referenceNo ? "text-ink-2" : "text-ink-faint")}>{row.referenceNo ?? "—"}</ListCell>
                   <ListCell className="flex items-center gap-2">
-                    <ListRowLink href={transactionHref(row.transactionId, here)} aria-label={row.description ? undefined : t("View details")} className={cn("truncate print:whitespace-normal", voided && "line-through")}>
+                    <ListRowLink href={transactionHref(row.transactionId, here)} aria-label={row.description ? undefined : t("View details")} className={cn("truncate", voided && "line-through")}>
                       {row.description ?? "—"}
                     </ListRowLink>
                     {cancelled && (
@@ -399,6 +436,7 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
           </ListCard>
         </>
       )}
+      </div>
     </PageFrame>
   );
 }
@@ -420,7 +458,7 @@ interface BalanceLineProps {
 // Balance column. The words start under Date, as the board sets them.
 function BalanceLine({ kind, label, note, value, strong = false, sums }: BalanceLineProps) {
   return (
-    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("min-h-12 text-body print:min-h-0", strong && "min-h-13")}>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("min-h-12 text-body", strong && "min-h-13")}>
       <ListCell aria-hidden="true" />
       <ListCell aria-colspan={sums ? 4 : 6} className={cn("flex flex-col", sums ? "col-span-4" : "col-span-6")}>
         <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-soft")}>{label}</span>
@@ -436,7 +474,7 @@ function BalanceLine({ kind, label, note, value, strong = false, sums }: Balance
           </ListCell>
         </>
       )}
-      <ListCell align="end" className={cn("font-semibold text-ink tabular-nums", strong && "text-[15px] font-bold print:text-small")}>
+      <ListCell align="end" className={cn("font-semibold text-ink tabular-nums", strong && "text-[15px] font-bold")}>
         {value}
       </ListCell>
     </ListSummaryRow>

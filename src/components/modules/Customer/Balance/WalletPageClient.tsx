@@ -270,7 +270,7 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
             />
           ))}
           {current === "active" && canManage && (
-            <button type="button" onClick={() => setDrawer("create")} className="hidden min-h-50 flex-col items-center justify-center gap-2.5 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald md:flex">
+            <button type="button" onClick={() => setDrawer("create")} className="hidden aspect-[1.586/1] flex-col items-center justify-center gap-2.5 rounded-[18px] border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald md:flex">
               <span className="flex size-11 items-center justify-center rounded-field bg-mint-50 text-emerald">
                 <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
               </span>

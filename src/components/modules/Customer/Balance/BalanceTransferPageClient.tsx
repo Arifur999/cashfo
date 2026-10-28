@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, ArrowRight, CircleOff, Eye, Info, PiggyBank, Plus, Printer, TriangleAlert } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Eye, Info, PiggyBank, Plus, Printer, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState } from "react";
@@ -364,8 +364,8 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                       <Eye className="size-4" aria-hidden="true" />
                     </Link>
                     {canManage && transfer.voidable && (
-                      <button type="button" onClick={() => setVoiding(transfer)} aria-label={t("Void transfer")} title={t("Void transfer")} className={cn(ICON_BUTTON, "text-expense hover:bg-expense-soft")}>
-                        <CircleOff className="size-4" aria-hidden="true" />
+                      <button type="button" onClick={() => setVoiding(transfer)} aria-label={t("Delete transfer")} title={t("Delete transfer")} className={cn(ICON_BUTTON, "text-expense hover:bg-expense-soft")}>
+                        <Trash2 className="size-4" aria-hidden="true" />
                       </button>
                     )}
                     {/* A goal's deposit is undone in Savings Goals, not voided here. */}
@@ -390,10 +390,10 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
           businessId={businessId}
           transactionId={voiding.id}
           title={t("Balance transfer")}
-          heading={t("Void this transfer?")}
-          description={t("Both wallets go back to their balances from before this transfer. It stays in your history, marked as voided.")}
-          confirmLabel="Void transfer"
-          doneLabel="Transfer voided"
+          heading={t("Delete this transfer?")}
+          description={t("Both wallets go back to their balances from before this transfer, and it leaves the list. A record of it stays in the ledger, marked as voided.")}
+          confirmLabel="Delete transfer"
+          doneLabel="Transfer deleted"
           reasonHint="At least {count} characters. It's saved with the transfer."
           detail={
             <div className="flex items-center justify-between gap-3 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-body">
