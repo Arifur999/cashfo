@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { createElement } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -40,6 +41,10 @@ interface DrawerProps {
   // The buttons along the bottom: Cancel, then the primary (Button md, the
   // 40px pills).
   footer: React.ReactNode;
+  // From md a 560px popup in the middle of the screen instead of the sheet
+  // (the loan boards: LoanContactDrawer, LoanPrincipalDrawer,
+  // LoanProfitDrawer); a phone keeps the sheet from the bottom.
+  popup?: boolean;
   children: React.ReactNode;
 }
 
@@ -48,9 +53,44 @@ interface DrawerProps {
 // phone), holding a form with the head (18px title, the 13px line under it,
 // the round close button), a scrolling body and the foot with its buttons on
 // the right, each edged by a line.
-export function Drawer({ open, title, description, width = 480, icon, titleAside, actions, onOpenAutoFocus, busy = false, onClose, onSubmit, footer, children }: DrawerProps) {
+export function Drawer({ open, title, description, width = 480, icon, titleAside, actions, onOpenAutoFocus, busy = false, onClose, onSubmit, footer, popup = false, children }: DrawerProps) {
   const { t } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
+  const closeButton = (
+    <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 -mr-1.5 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
+      <X className="size-4.5" aria-hidden="true" />
+    </button>
+  );
+  const body = (padding: string) =>
+    createElement(
+      onSubmit ? "form" : "div",
+      { onSubmit, className: "flex min-h-0 flex-1 flex-col" },
+      <div className={cn("flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto", padding)}>{children}</div>,
+      footer && <div className={cn("flex items-center justify-end gap-2.5 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 py-3")}>{footer}</div>,
+    );
+
+  if (popup && wide) {
+    return (
+      <Dialog open={open} onOpenChange={(next) => !next && !busy && onClose()}>
+        <DialogContent showCloseButton={false} onOpenAutoFocus={onOpenAutoFocus} className="flex max-h-[calc(100dvh-48px)] w-140 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-none">
+          <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-5">
+            {icon}
+            <div className={cn("flex min-w-0 flex-col gap-1", (icon || titleAside || actions) && "mr-auto")}>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <DialogTitle className="truncate text-h3 text-ink">{title}</DialogTitle>
+                {titleAside}
+              </div>
+              <DialogDescription className={description ? "text-small text-ink-muted" : "sr-only"}>{description ?? title}</DialogDescription>
+            </div>
+            {actions}
+            {closeButton}
+          </div>
+          {body("p-6")}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !busy && onClose()}>
       <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} onOpenAutoFocus={onOpenAutoFocus} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? cn(WIDTHS[width], "shadow-drawer") : "rounded-t-xl data-[side=bottom]:h-[92vh]")}>
@@ -70,16 +110,9 @@ export function Drawer({ open, title, description, width = 480, icon, titleAside
           {/* Like Escape and a click outside, refused mid-save: closing then
               would lose what is being saved (a photo half uploaded). */}
           {actions}
-          <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 -mr-1.5 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
-            <X className="size-4.5" aria-hidden="true" />
-          </button>
+          {closeButton}
         </SheetHeader>
-        {createElement(
-          onSubmit ? "form" : "div",
-          { onSubmit, className: "flex min-h-0 flex-1 flex-col" },
-          <div className={cn("flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto", wide ? "p-6" : "px-4 py-3")}>{children}</div>,
-          footer && <div className={cn("flex items-center justify-end gap-2.5 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 py-3")}>{footer}</div>,
-        )}
+        {body(wide ? "p-6" : "px-4 py-3")}
       </SheetContent>
     </Sheet>
   );

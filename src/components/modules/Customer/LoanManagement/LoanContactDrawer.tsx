@@ -171,6 +171,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
     <Drawer
       open={open}
       width={470}
+      popup
       title={editing ? t("Edit contact") : t("Add contact")}
       description={t("A person, bank or NGO you lend to or borrow from.")}
       busy={isPending}
