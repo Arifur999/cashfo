@@ -164,6 +164,8 @@ export const adminMoneyDictionary: Record<string, string> = {
   "{count} refunds this month: {amount}": "এই মাসে {count}টি ফেরত: {amount}",
   "Average per paid person": "প্রতি পেইড ব্যক্তির গড়",
   "{amount} a month": "মাসে {amount}",
+  "{plan} · {amount} a month": "{plan} · মাসে {amount}",
+  "{plan} · {amount} a year": "{plan} · বছরে {amount}",
   "MRR ÷ {count} paid person": "MRR ÷ {count} জন পেইড ব্যক্তি",
   "MRR ÷ {count} paid people": "MRR ÷ {count} জন পেইড ব্যক্তি",
   "Coupons cost": "কুপনের খরচ",

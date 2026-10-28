@@ -7,10 +7,20 @@ import { humanizeEnum } from "@/lib/statusBadge";
 import type { IPaymentDetail } from "@/types/payment.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
+import type { Translate } from "@/lib/i18n/message";
+import type { Locale } from "@/lib/i18n/translate";
 
 // When the money moved, by what happened to it: tried (failed), started
 // (still waiting), or paid.
 const MOMENT_LABEL = { FAILED: "Tried at", PENDING: "Started at", SUCCESS: "Paid at", REFUNDED: "Paid at" } as const;
+
+// "Monthly Pro · ৳ 299 a month": the plan and its list price per cycle;
+// the name alone for a free plan or an older response without the cycle.
+const planPrice = (plan: IPaymentDetail["plan"], t: Translate, locale: Locale) => {
+  const price = Number(plan.price ?? 0);
+  if (!(price > 0) || (plan.billingCycle !== "MONTHLY" && plan.billingCycle !== "YEARLY")) return plan.name;
+  return t(plan.billingCycle === "YEARLY" ? "{plan} · {amount} a year" : "{plan} · {amount} a month", { plan: plan.name, amount: formatAmount(price, undefined, locale) });
+};
 
 // The facts of the payment, as the design lists them: id, the gateway's
 // reference, plan, amount with the coupon, when, the invoice.
@@ -20,7 +30,7 @@ const PaymentDetailsCard = async ({ payment }: { payment: IPaymentDetail }) => {
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: "Payment ID", value: <code className="font-mono">{shortPaymentId(payment.id)}</code> },
     { label: t("{gateway} reference", { gateway: t(humanizeEnum(payment.gateway)) }), value: payment.gatewayReferenceId ? <code className="font-mono">{payment.gatewayReferenceId}</code> : <span className="text-ink-muted"><T>None recorded</T></span> },
-    { label: "Plan", value: payment.plan.name },
+    { label: "Plan", value: planPrice(payment.plan, t, locale) },
     {
       label: "Amount",
       // The paisa only when there are some, the coupon's share included.

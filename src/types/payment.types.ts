@@ -31,7 +31,8 @@ export interface IPayment {
   id: string;
   platformUserId: string;
   planId: string;
-  plan: { id: string; name: string; slug: string };
+  // billingCycle and price come with a single payment (its page).
+  plan: { id: string; name: string; slug: string; billingCycle?: string; price?: string | number };
   platformUser: { id: string; name: string; email: string } | null;
   // The customer who paid (null on an old sandbox payment, which has
   // platformUserId instead).
