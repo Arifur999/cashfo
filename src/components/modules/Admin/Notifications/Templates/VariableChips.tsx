@@ -2,6 +2,7 @@
 
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { VARIABLE_LABELS } from "../notificationOptions";
 
 interface VariableChipsProps {
   variables: string[];
@@ -12,7 +13,8 @@ interface VariableChipsProps {
 
 // The placeholders a template may use, each one tap to add where the caret
 // is in the field last focused -- so typing them by hand (and mistyping
-// them) isn't needed. The hint names that field.
+// them) isn't needed. A chip says what it holds ("Name"); the placeholder it
+// adds is in its title. The hint names that field.
 const VariableChips = ({ variables, targetLabel, onPick }: VariableChipsProps) => {
   const { translate } = useLocale();
   if (variables.length === 0) {
@@ -31,9 +33,12 @@ const VariableChips = ({ variables, targetLabel, onPick }: VariableChipsProps) =
             // The field keeps its caret: the press mustn't take focus first.
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onPick(placeholder)}
-            className="h-7 rounded-full border border-line-strong bg-strip px-3 font-mono text-caption text-ink-2 hover:bg-surface-sunken pointer-coarse:h-11"
+            title={placeholder}
+            aria-label={translate("Add {name}", { name: VARIABLE_LABELS[name] ? translate(VARIABLE_LABELS[name]) : placeholder })}
+            className="flex h-7 items-center gap-1 rounded-full border border-line-strong bg-strip px-3 text-caption font-semibold text-ink-2 hover:bg-surface-sunken pointer-coarse:h-11"
           >
-            {placeholder}
+            <span aria-hidden="true">+</span>
+            {VARIABLE_LABELS[name] ? translate(VARIABLE_LABELS[name]) : placeholder}
           </button>
         );
       })}

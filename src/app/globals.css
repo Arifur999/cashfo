@@ -624,7 +624,7 @@ html:not(.dark) [data-app="habit"] {
   --spacing-control-md: 44px;
   --spacing-control-lg: 52px;
   --spacing-sidebar: 264px;
-  --spacing-sidebar-admin: 240px;
+  --spacing-sidebar-admin: 272px;
   --spacing-topbar: 64px;
   --spacing-topbar-mobile: 56px;
 }

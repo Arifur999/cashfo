@@ -21,7 +21,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { fillPlaceholders, getPlaceholderError } from "@/lib/templatePlaceholders";
 import type { INotificationTemplate } from "@/types/notification.types";
 import { type INotificationTemplateFormValues, notificationTemplateFormZodSchema } from "@/zod/notification.validation";
-import { CHANNEL_META, SAMPLE_VALUES, templateWhen } from "../notificationOptions";
+import { CHANNEL_META, SAMPLE_VALUES, templateName, templateWhen } from "../notificationOptions";
 import { insertAtCaret, sameTemplateText, smsLength } from "./templateText";
 import TemplateTextField, { type TextControl } from "./TemplateTextField";
 import VariableChips from "./VariableChips";
@@ -90,7 +90,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
 
   const { run, isPending } = useActionMutation({
     action: (values: INotificationTemplateFormValues) => updateNotificationTemplateAction(template.id, { ...values, isEmail }),
-    successMessage: (savedTemplate) => translate("Saved {key}", { key: savedTemplate.key }),
+    successMessage: (savedTemplate) => translate("Saved {key}", { key: translate(templateName(savedTemplate.key)) }),
     invalidateKeys: [queryKeys.notificationTemplates.all],
     refreshRoute: false,
   });
@@ -98,7 +98,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
   // The On switch saves at once, apart from the wording, and moves at once.
   const active = useActionMutation({
     action: (nextActive: boolean) => setNotificationTemplateActiveAction(template.id, { isActive: nextActive }),
-    successMessage: (savedTemplate) => translate(savedTemplate.isActive ? "{key} is on" : "{key} is off", { key: savedTemplate.key }),
+    successMessage: (savedTemplate) => translate(savedTemplate.isActive ? "{key} is on" : "{key} is off", { key: translate(templateName(savedTemplate.key)) }),
     invalidateKeys: [queryKeys.notificationTemplates.all],
     refreshRoute: false,
   });
@@ -114,7 +114,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const remove = useActionMutation({
     action: () => deleteNotificationTemplateAction(template.id),
-    successMessage: translate("Deleted {key}", { key: template.key }),
+    successMessage: translate("Deleted {key}", { key: translate(templateName(template.key)) }),
     invalidateKeys: [queryKeys.notificationTemplates.all],
     refreshRoute: false,
     onSuccess: () => setConfirmDelete(false),
@@ -169,11 +169,11 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-4.5 py-3.5">
         <div className="flex grow flex-col gap-0.5">
           {/* Focused when the template is picked on a phone (see TemplatesEditor). */}
-          <h2 id={headingId} tabIndex={-1} className="scroll-mt-4 font-mono text-title text-ink focus-visible:outline-offset-4">
-            {template.key}
+          <h2 id={headingId} tabIndex={-1} className="scroll-mt-4 text-title font-semibold text-ink focus-visible:outline-offset-4">
+            {translate(templateName(template.key))}
           </h2>
           <span className="text-[12.5px] leading-[normal] text-ink-muted">
-            <T>{channel}</T> · <T>{templateWhen(template.key)}</T>
+            <T>{channel}</T> · <T>{templateWhen(template.key)}</T> · <code className="font-mono">{template.key}</code>
           </span>
         </div>
         {/* The design's On switch: an off template can't be sent. Named the
@@ -189,7 +189,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
                 await active.run(checked);
               })
             }
-            aria-label={translate("Send {key}", { key: template.key })}
+            aria-label={translate("Send {key}", { key: translate(templateName(template.key)) })}
             className="data-checked:bg-emerald data-unchecked:bg-line-strong"
           />
         </label>
@@ -285,7 +285,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={(open) => !open && !remove.isPending && setConfirmDelete(false)}
-        title={translate("Delete {key}?", { key: template.key })}
+        title={translate("Delete {key}?", { key: translate(templateName(template.key)) })}
         description={translate("It goes from the list for good. Campaigns already sent with it keep their record.")}
         confirmLabel={translate("Delete template")}
         pendingLabel="Deleting..."

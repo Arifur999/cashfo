@@ -6,7 +6,7 @@ import T from "@/components/shared/T";
 import Chip from "@/components/smartly/Chip";
 import { formatDateTime } from "@/lib/date";
 import type { INotificationLog } from "@/types/notification.types";
-import { CHANNEL_META, LOG_STATUS_LABEL } from "../notificationOptions";
+import { CHANNEL_META, LOG_STATUS_LABEL, templateName } from "../notificationOptions";
 
 // Every message the platform tried to send: when, to whom, which template,
 // how, and whether it went. The design's fixed grid: the recipient (a name
@@ -32,7 +32,11 @@ export const notificationLogsColumns: ColumnDef<INotificationLog>[] = [
     id: "templateKey",
     accessorKey: "templateKey",
     header: "Template",
-    cell: ({ row }) => <code title={row.original.templateKey} className="block truncate font-mono text-small text-ink">{row.original.templateKey}</code>,
+    cell: ({ row }) => (
+      <span title={row.original.templateKey} className="block truncate text-small text-ink">
+        <T>{templateName(row.original.templateKey)}</T>
+      </span>
+    ),
     // The longest seeded key (subscription_expiring) is about 165px; a
     // longer one is cut, with the whole key in its title.
     meta: { width: 180 },
