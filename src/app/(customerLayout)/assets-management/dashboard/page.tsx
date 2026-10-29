@@ -4,6 +4,7 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/assets-management/dashboard");
 
@@ -20,5 +21,5 @@ export default async function AssetsDashboardPage() {
 
   // Keyed by workspace: a switch lands on this same page, and its drawers
   // and filters must not carry the other workspace's choices over.
-  return <AssetsDashboardPageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
+  return <AssetsDashboardPageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} today={getAppToday()} />;
 }

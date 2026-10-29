@@ -226,6 +226,73 @@ export function statementLines(asset: Pick<Asset, "valueHistory">): StatementLin
   });
 }
 
+// A point on the Dashboard's value chart: what the assets were worth on a
+// day against what was paid for them, and the assets added since the point
+// before (by name).
+export interface ValuePoint {
+  // YYYY-MM-DD
+  date: string;
+  value: number;
+  paid: number;
+  added: string[];
+  today: boolean;
+}
+
+// What an asset was worth at the end of a day: its last value recorded by
+// then, or null before it was bought.
+export function valueOn(asset: Pick<Asset, "valueHistory" | "purchaseDate" | "purchasePrice">, day: string): number | null {
+  if (asset.purchaseDate.slice(0, 10) > day) return null;
+  const known = valueTimeline(asset).find((entry) => entry.date.slice(0, 10) <= day);
+  return known ? known.value : Number(asset.purchasePrice);
+}
+
+// The owned assets together: their value at the end of each year since the
+// first was bought, and today. It steps up when an asset is added and moves
+// with every value update.
+export function portfolioSeries(owned: Asset[], today: string): ValuePoint[] {
+  if (owned.length === 0) return [];
+  const firstYear = Math.min(...owned.map((asset) => Number(asset.purchaseDate.slice(0, 4))));
+  const thisYear = Number(today.slice(0, 4));
+  const days = [...Array.from({ length: Math.max(0, thisYear - firstYear) }, (_, i) => `${firstYear + i}-12-31`), today];
+  return days.map((day, index) => {
+    let value = 0;
+    let paid = 0;
+    for (const asset of owned) {
+      const worth = valueOn(asset, day);
+      if (worth === null) continue;
+      value += worth;
+      paid += Number(asset.purchasePrice);
+    }
+    const from = index === 0 ? "" : days[index - 1];
+    const added = owned.filter((asset) => asset.purchaseDate.slice(0, 10) > from && asset.purchaseDate.slice(0, 10) <= day).map((asset) => asset.name);
+    return { date: day, value, paid, added, today: index === days.length - 1 };
+  });
+}
+
+// One asset: every value it was recorded at, against its starting price.
+export function assetSeries(asset: Pick<Asset, "valueHistory">): ValuePoint[] {
+  const lines = statementLines(asset);
+  const start = lines[0]?.value ?? 0;
+  return lines.map((line, index) => ({ date: line.date.slice(0, 10), value: line.value, paid: start, added: [], today: index === lines.length - 1 }));
+}
+
+// The Dashboard table's orders.
+export type AssetSort = "gain" | "loss" | "valueHigh" | "valueLow" | "newest" | "oldest";
+
+export function sortAssets(assets: Asset[], by: AssetSort): Asset[] {
+  const percent = (asset: Asset) => assetGain(asset).percent;
+  const worth = (asset: Asset) => assetWorth(asset);
+  const compare: Record<AssetSort, (a: Asset, b: Asset) => number> = {
+    gain: (a, b) => percent(b) - percent(a),
+    loss: (a, b) => percent(a) - percent(b),
+    valueHigh: (a, b) => worth(b) - worth(a),
+    valueLow: (a, b) => worth(a) - worth(b),
+    newest: (a, b) => b.purchaseDate.localeCompare(a.purchaseDate),
+    oldest: (a, b) => a.purchaseDate.localeCompare(b.purchaseDate),
+  };
+  return [...assets].sort((a, b) => compare[by](a, b) || a.name.localeCompare(b.name));
+}
+
 // The type chips over My assets: every type that holds something, in the
 // types' own order, then names no type carries any more. The type the page
 // was opened for (an Asset types card) stays even while it holds nothing.
