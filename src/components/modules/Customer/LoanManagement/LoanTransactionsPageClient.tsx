@@ -226,8 +226,16 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
 
   return (
     <PageFrame className="gap-5">
-      {/* The board has no title: the topbar names the page. */}
-      <h1 className="sr-only">{t("Loan transactions")}</h1>
+      {/* The board's title line, New loan entry at its end. */}
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-[22px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Loan transactions")}</h1>
+        {canManage && (
+          <Button onClick={() => setDrawerOpen(true)} className="shrink-0 print:hidden">
+            <Plus strokeWidth={2.5} className="size-4" />
+            {t("New loan entry")}
+          </Button>
+        )}
+      </div>
 
       {!complete && (
         <Banner tone="warning" inline icon={<TriangleAlert />}>
@@ -235,22 +243,16 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         </Banner>
       )}
 
-      {/* The two totals, New loan entry beside them. */}
-      <section className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-        <Card padding="none" className="grid min-w-0 flex-1 grid-cols-2">
-          <TotalCell label={`${t("Money in@@loan")} · ${t("loans taken, money back")}`}>
+      {/* The two totals across the page. */}
+      <section>
+        <Card padding="none" className="grid min-w-0 grid-cols-2">
+          <TotalCell label={t("Money in@@loan")}>
             <AmountText value={totals.in} currency={currency} size="h2" tone={totals.in ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.in && "text-ink-muted")} />
           </TotalCell>
-          <TotalCell label={`${t("Money out@@loan")} · ${t("loans given, paid back")}`} className="border-l">
+          <TotalCell label={t("Money out@@loan")} className="border-l">
             <AmountText value={-totals.out} currency={currency} size="h2" tone={totals.out ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.out && "text-ink-muted")} />
           </TotalCell>
         </Card>
-        {canManage && (
-          <Button onClick={() => setDrawerOpen(true)} className="shrink-0 print:hidden">
-            <Plus strokeWidth={2.5} className="size-4" />
-            {t("New loan entry")}
-          </Button>
-        )}
       </section>
 
       <ListCard

@@ -113,9 +113,9 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
       />
       <h1 className="hidden md:block md:sr-only">{t("Loans & Dena-Pawna")}</h1>
 
-      {/* From md the board's three figures, New loan entry beside them. */}
-      <section className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
+      {/* From md the board's three figures across the page. */}
+      <section>
+        <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
           <Card padding="sm" className={PHONE_FIGURE_CARD}>
             <span className={PHONE_FIGURE_LABEL}>
               <span className="md:hidden">{t("Owed to you")}</span>
@@ -140,12 +140,6 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             <AmountText value={net} currency={currency} size="h2" signed className={DESK_FIGURE} />
           </Card>
         </div>
-        {canManage && (
-          <Button onClick={() => setEntry({})} className="shrink-0 max-md:hidden">
-            <Plus strokeWidth={2.5} className="size-4" />
-            {t("New loan entry")}
-          </Button>
-        )}
       </section>
 
       {contacts.length === 0 ? (
