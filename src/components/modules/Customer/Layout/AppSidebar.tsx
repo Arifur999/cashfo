@@ -55,7 +55,9 @@ export function AppSidebar({ initialCollapsed = false }: { initialCollapsed?: bo
       <div
         className={cn(
           "flex flex-col overflow-hidden rounded-panel bg-surface py-3.5 shadow-card transition-[width] duration-200 ease-out motion-reduce:transition-none dark:border dark:border-line",
-          collapsed ? "w-18 px-2.5" : "w-62 px-2.5",
+          // 272px open: room for the longer names (Password Management,
+          // Assets Management) beside their chevrons.
+          collapsed ? "w-18 px-2.5" : "w-68 px-3",
         )}
       >
         <SidebarPanel app="money" collapsed={collapsed} onToggle={toggle} />
