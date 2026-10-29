@@ -100,12 +100,13 @@ export function useNavLocation(): { app: NavApp; location: NavLocation | null } 
   return { app: navAppFor(pathname), location };
 }
 
-// The groups the customer opened with their chevron, by href, kept in this
-// browser so they stay open across pages and reloads (the group of the
-// page on screen is open anyway). One store for the sidebar and the phone
-// drawer. When storage refuses (a private window, blocked site data) the
-// choice lasts until the tab closes.
-const OPEN_GROUPS_KEY = "smartly.sidebar.open";
+// The one group the customer opened or closed, kept in this browser so it
+// stays across pages and reloads: "" leaves the page on screen's group
+// open, "-" closes them all, an href opens that group alone (opening one
+// closes the one before). One store for the sidebar and the phone drawer.
+// When storage refuses (a private window, blocked site data) the choice
+// lasts until the tab closes.
+const OPEN_GROUPS_KEY = "smartly.sidebar.group";
 const openGroupsListeners = new Set<() => void>();
 let openGroupsInMemory = "";
 let storageRefused = false;
@@ -144,34 +145,25 @@ function subscribeOpenGroups(listener: () => void) {
 }
 
 // The server can't see this browser's choice, so the server render and
-// hydration open only the current page's group; the remembered ones open
+// hydration open only the current page's group; the remembered one opens
 // right after.
 const nothingRemembered = () => "";
 
-const parseOpenGroups = (stored: string): string[] => {
-  try {
-    const value: unknown = JSON.parse(stored);
-    return Array.isArray(value) ? value.filter((key): key is string => typeof key === "string") : [];
-  } catch {
-    return [];
-  }
-};
-
-export function useOpenGroups() {
-  const open = parseOpenGroups(useSyncExternalStore(subscribeOpenGroups, readOpenGroups, nothingRemembered));
-  const toggle = (key: string) => {
-    const current = parseOpenGroups(readOpenGroups());
-    writeOpenGroups(JSON.stringify(current.includes(key) ? current.filter((other) => other !== key) : [...current, key]));
-  };
-  return { open, toggle };
-}
-
-// Whether a Money Tracker group shows its pages: the page on screen's group
-// always, the others while the customer keeps them open.
+// Whether a Money Tracker group shows its pages: one group at a time, the
+// page on screen's until the customer opens another or closes it. Moving
+// to a page of another group (or none) starts from that page's group again.
 export function useExpandedGroups(location: NavLocation | null) {
-  const groups = useOpenGroups();
-  const isExpanded = (item: NavItem) => !!item.subs && (location?.item === item || groups.open.includes(item.href));
-  return { isExpanded, toggle: groups.toggle };
+  const chosen = useSyncExternalStore(subscribeOpenGroups, readOpenGroups, nothingRemembered);
+  const current = location?.item.subs ? location.item.href : null;
+  const shownFor = useRef(current);
+  useEffect(() => {
+    if (shownFor.current === current) return;
+    shownFor.current = current;
+    if (readOpenGroups() !== "") writeOpenGroups("");
+  }, [current]);
+  const isExpanded = (item: NavItem) => !!item.subs && (chosen === "" ? current === item.href : chosen === item.href);
+  const toggle = (item: NavItem) => writeOpenGroups(isExpanded(item) ? "-" : item.href);
+  return { isExpanded, toggle };
 }
 
 // Today's habits done out of those planned, for Daily habits' "3/5". Read
@@ -232,10 +224,11 @@ function useCurrentRowInView() {
 
 const SCROLLER = "relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
-// The Money Tracker menu (AppSidebar): section names, rows of 38px, and a
-// group's pages on a line under it, the open one in a tinted pill. A
-// group's name opens its first page; its chevron shows or hides its pages
-// without leaving this one.
+// The Money Tracker menu (AppSidebar): rows of 38px in sections (no names,
+// as the board draws it), and a group's pages on a line under it, the open
+// one in a tinted pill. A closed group's name opens it and its first page;
+// an open group's name, or its chevron, closes it. One group is open at a
+// time.
 export function MoneyMenu({ collapsed = false, touch = false, className, style, navRef }: MenuProps) {
   const { t } = useLocale();
   const sections = menuSections(useNavSections(), "money");
@@ -272,6 +265,12 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
           <Link
             href={leafHref(item)}
             aria-current={self ? "page" : undefined}
+            onClick={(event) => {
+              if (!item.subs) return;
+              // Open: the name folds the group away and stays on this page.
+              if (expanded) event.preventDefault();
+              toggle(item);
+            }}
             className={cn(
               "flex min-w-0 flex-1 items-center gap-2.5 rounded-md pl-3 text-body whitespace-nowrap transition-colors",
               touch ? "h-11" : "h-9.5",
@@ -288,9 +287,8 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
               aria-expanded={expanded}
               aria-controls={subsId}
               aria-label={t("{group} pages", { group: t(item.label) })}
-              disabled={inGroup}
-              onClick={() => toggle(item.href)}
-              className={cn("absolute top-0 right-0 flex w-9 items-center justify-center rounded-md text-ink-faint transition-colors enabled:hover:text-ink", touch ? "h-11" : "h-9.5")}
+              onClick={() => toggle(item)}
+              className={cn("absolute top-0 right-0 flex w-9 items-center justify-center rounded-md text-ink-faint transition-colors hover:text-ink", touch ? "h-11" : "h-9.5")}
             >
               <Chevron className="size-4" strokeWidth={2} aria-hidden="true" />
             </button>
@@ -335,7 +333,8 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
                 </span>
               )
             ) : (
-              <SectionLabel section={section} className="px-3 pb-1" />
+              // The board names no section here: the space between says it.
+              section.label && <span className="sr-only">{t(section.label)}</span>
             )}
             {section.items.map(renderItem)}
           </div>
