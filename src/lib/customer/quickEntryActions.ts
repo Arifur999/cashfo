@@ -131,6 +131,10 @@ export interface AddTransferInput {
   amount: number;
   date: string;
   description?: string;
+  // A bank or ATM charge out of the sending wallet, filed as an expense in
+  // chargeCategory (Bank charge when left out).
+  charge?: number;
+  chargeCategory?: string;
 }
 
 // No fallback: Balance's Move money and Quick entry each word the failure

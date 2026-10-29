@@ -293,4 +293,19 @@ export const balanceDictionary: Record<string, string> = {
 
   // The ledger's round print button
   "Print or save as PDF": "প্রিন্ট বা PDF হিসেবে সেভ করুন",
+
+  // The redesigned Transfer popup and history: charge, edit, before and after
+  "Receiving": "পাচ্ছে",
+  "Transfer amount": "পাঠানোর পরিমাণ",
+  "Amount received": "পাওয়া পরিমাণ",
+  "New balance": "নতুন ব্যালেন্স",
+  "Edit transfer": "ট্রান্সফার বদলান",
+  "Transfer updated": "ট্রান্সফার আপডেট হয়েছে",
+  "Bank charge": "ব্যাংক চার্জ",
+  "An ATM or bank fee, out of the sending wallet.": "ATM বা ব্যাংকের ফি, পাঠানো ওয়ালেট থেকে কাটা হয়।",
+  "Expense category for the charge": "চার্জের খরচের ক্যাটাগরি",
+  "The charge is counted as an expense in this category.": "চার্জটি এই ক্যাটাগরিতে খরচ হিসেবে গোনা হয়।",
+  "e.g. ATM withdrawal": "যেমন ATM থেকে তোলা",
+  "Total balance {before} → {after}: the charge is an expense.": "মোট ব্যালেন্স {before} → {after}: চার্জটি একটি খরচ।",
+  "Total balance {amount} · unchanged": "মোট ব্যালেন্স {amount} · অপরিবর্তিত",
 };

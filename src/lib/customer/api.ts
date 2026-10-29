@@ -579,6 +579,9 @@ export interface Transaction {
   // With withLoanBalance: the contact's loan balance just after this row
   // (positive: they owe you, Pawna; negative: you owe, Dena).
   loanBalanceAfter?: string | null;
+  // With withBalanceAfter: the receiving wallet's balance just after this
+  // row (Balance › Transfer's Balance column).
+  balanceAfter?: string | null;
 }
 
 // The other end of an Edit (decision D2), with its amount.

@@ -13,10 +13,12 @@ import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { createTransferAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { listBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
+import { correctTransactionAction, createTransferAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { transferPair, type TransferPair } from "@/lib/customer/transfers";
 import { getAppToday } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -28,7 +30,13 @@ interface TransferDrawerProps {
   onClose: () => void;
   businessId: string;
   currency: string;
+  // Edit: the transfer to correct, with its charge (voided and posted again
+  // with the corrected one).
+  editing?: { id: string; fromId: string; toId: string; amount: number; date: string; note: string; charge: number } | null;
 }
+
+// The charge's category when none is picked, as the API files it.
+const DEFAULT_CHARGE_CATEGORY = "Bank charge";
 
 // The 36px round and square buttons, 44px under a finger.
 const TOUCH = "pointer-coarse:size-11";
@@ -37,7 +45,7 @@ const TOUCH = "pointer-coarse:size-11";
 // holds) and to where, the round button between them swapping the two; how
 // much, the day and a note; and both wallets after the move -- the total
 // stays the same, since a transfer is never income or expense.
-export function TransferDrawer({ open, onClose, businessId, currency }: TransferDrawerProps) {
+export function TransferDrawer({ open, onClose, businessId, currency, editing = null }: TransferDrawerProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   // Offline, Move money waits for the connection instead of failing on send.
@@ -46,6 +54,9 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(getAppToday());
   const [note, setNote] = useState("");
+  const [charge, setCharge] = useState("");
+  const [chargeCategory, setChargeCategory] = useState(DEFAULT_CHARGE_CATEGORY);
+  const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
   const [wallets, setWallets] = useState<Account[]>([]);
   const [walletsError, setWalletsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,9 +67,12 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setAmount("");
-      setNote("");
-      setDate(getAppToday());
+      setAmount(editing ? String(editing.amount) : "");
+      setNote(editing?.note ?? "");
+      setDate(editing?.date ?? getAppToday());
+      setCharge(editing?.charge ? String(editing.charge) : "");
+      setChargeCategory(DEFAULT_CHARGE_CATEGORY);
+      if (editing) setPair({ fromId: editing.fromId, toId: editing.toId });
       setLoading(true);
     }
   }
@@ -66,6 +80,13 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
   useEffect(() => {
     if (!open) return;
     let current = true;
+    // The expense categories a charge can be filed under; the default
+    // stays when they can't be read.
+    listBudgetCategoryNamesAction(businessId, "EXPENSE")
+      .then((result) => {
+        if (current && result.success) setExpenseCategories((result.data ?? []).map((category) => category.name));
+      })
+      .catch(() => undefined);
     listMoneyAccountsAction(businessId)
       .then((money) => {
         if (!current) return;
@@ -90,15 +111,19 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
   }, [open, businessId]);
 
   const value = Number(amount) || 0;
+  const fee = Number(charge) || 0;
   const from = wallets.find((w) => w.id === fromId);
   const to = wallets.find((w) => w.id === toId);
-  const available = from ? Number(from.currentBalance) : 0;
+  // Editing: the transfer being corrected gives its money back first.
+  const giveBack = (wallet: Account | undefined, side: "from" | "to") =>
+    !editing || !wallet ? 0 : side === "from" && wallet.id === editing.fromId ? editing.amount + editing.charge : side === "to" && wallet.id === editing.toId ? -editing.amount : 0;
+  const available = from ? Number(from.currentBalance) + giveBack(from, "from") : 0;
   const total = wallets.reduce((sum, wallet) => sum + Number(wallet.currentBalance), 0);
   const valid = value > 0 && !!from && !!to && fromId !== toId;
   // One wallet (or none) has nowhere to move money to.
   const tooFew = !loading && !walletsError && wallets.length < 2;
   // The API takes a transfer larger than the wallet holds; say what it does.
-  const overdraws = !!from && value > available;
+  const overdraws = !!from && value + fee > available;
   // The names as the pickers show them: "নগদ" for Cash in Bangla.
   const nameOf = (wallet: Account) => accountDisplayName(wallet, displayLanguage(locale));
 
@@ -111,9 +136,17 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
     if (!valid || isPending || !online) return;
     startTransition(async () => {
       try {
-        const result = await createTransferAction(businessId, { fromAccountId: fromId, toAccountId: toId, amount: value, date, description: note.trim() || undefined });
+        const input = {
+          fromAccountId: fromId,
+          toAccountId: toId,
+          amount: value,
+          date,
+          description: note.trim() || undefined,
+          ...(fee > 0 && { charge: fee, ...(chargeCategory !== DEFAULT_CHARGE_CATEGORY && { chargeCategory }) }),
+        };
+        const result = editing ? await correctTransactionAction(businessId, editing.id, "TRANSFER", input) : await createTransferAction(businessId, input);
         if (result.success) {
-          toast.success(t("Money moved"));
+          toast.success(t(editing ? "Transfer updated" : "Money moved"));
           onClose();
           router.refresh();
         } else {
@@ -132,17 +165,31 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
     </span>
   );
 
-  // One wallet's balance now and after, in the "After this transfer" box. A
-  // wallet left below zero shows in amber.
-  const afterRow = (wallet: Account, change: number) => {
-    const after = Number(wallet.currentBalance) + change;
+  // The board's two boxes: what each wallet holds, what the transfer (and
+  // the charge, on the sending side) does to it, and what it is left with.
+  // A wallet left below zero shows in amber.
+  const sideBox = (wallet: Account, side: "from" | "to") => {
+    const before = Number(wallet.currentBalance) + giveBack(wallet, side);
+    const after = side === "from" ? before - value - fee : before + value;
+    const line = (label: string, figure: string, className?: string) => (
+      <div className="flex justify-between gap-2">
+        <span className="text-ink-muted">{label}</span>
+        <span className={cn("tabular-nums", className)}>{figure}</span>
+      </div>
+    );
     return (
-      <div className="flex justify-between gap-3">
-        <span className="truncate text-ink-2">{nameOf(wallet)}</span>
-        <span>
-          <span className="text-ink-muted">{formatCurrency(wallet.currentBalance, currency, fmt)} → </span>
-          <span className={cn("font-semibold", after < 0 ? "text-warning" : "text-ink")}>{formatCurrency(after, currency, fmt)}</span>
+      <div className="flex min-w-0 flex-col gap-1.5 rounded-[14px] border border-line bg-strip p-3.5 text-small">
+        <span className="flex items-baseline justify-between gap-2">
+          <span className="truncate font-semibold text-ink">{nameOf(wallet)}</span>
+          <span className="shrink-0 text-caption text-ink-muted">{t(side === "from" ? "Sending" : "Receiving")}</span>
         </span>
+        {line(t("Current balance"), formatCurrency(before, currency, fmt))}
+        {line(t(side === "from" ? "Transfer amount" : "Amount received"), `${side === "from" ? "−" : "+"} ${formatCurrency(value, currency, fmt)}`, side === "from" ? "text-expense" : "text-income")}
+        {line(t("Charge"), side === "from" && fee > 0 ? `− ${formatCurrency(fee, currency, fmt)}` : formatCurrency(0, currency, fmt), side === "from" && fee > 0 ? "text-expense" : "text-ink-muted")}
+        <div className="mt-0.5 flex justify-between gap-2 border-t border-line pt-1.5">
+          <span className="font-semibold text-ink">{t("New balance")}</span>
+          <span className={cn("font-bold tabular-nums", after < 0 ? "text-warning" : "text-ink")}>{formatCurrency(after, currency, fmt)}</span>
+        </div>
       </div>
     );
   };
@@ -150,8 +197,9 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
   return (
     <Drawer
       open={open}
+      popup
       width={440}
-      title={t("Move money")}
+      title={t(editing ? "Edit transfer" : "New transfer")}
       description={t("Between your own wallets")}
       busy={isPending}
       onClose={onClose}
@@ -163,7 +211,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
           </Button>
           <Button type="submit" disabled={!valid || isPending || !online} className="px-4.5">
             {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-            {value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency, fmt) }) : t("Move money")}
+            {editing ? t("Save changes") : value > 0 ? t("Move {amount}", { amount: formatCurrency(value, currency, fmt) }) : t("Move money")}
           </Button>
         </>
       }
@@ -240,7 +288,7 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
               {overdraws && (
                 <span className="mt-1 flex items-center gap-1.5 font-medium text-warning">
                   <TriangleAlert className="size-3.5 shrink-0" aria-hidden="true" />
-                  {t("This leaves {wallet} at {amount}.", { wallet: nameOf(from), amount: formatCurrency(available - value, currency, fmt) })}
+                  {t("This leaves {wallet} at {amount}.", { wallet: nameOf(from), amount: formatCurrency(available - value - fee, currency, fmt) })}
                 </span>
               )}
             </>
@@ -252,26 +300,43 @@ export function TransferDrawer({ open, onClose, businessId, currency }: Transfer
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
+        <Field htmlFor="move-charge" label={label(t("Charge"), true)} hint={t("An ATM or bank fee, out of the sending wallet.")}>
+          <AmountInput id="move-charge" value={charge} onChange={setCharge} currency={currency} describedBy="move-charge-hint" />
+        </Field>
         <Field htmlFor="move-date" label={label(t("Date"))}>
           <DayInput id="move-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
         </Field>
-        <Field htmlFor="move-note" label={label(t("Note"), true)}>
-          <Input id="move-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. Card bill")} className="px-0" frameClassName="px-3" />
-        </Field>
       </div>
 
+      {fee > 0 && (
+        <Field htmlFor="move-charge-category" label={label(t("Expense category for the charge"))} hint={t("The charge is counted as an expense in this category.")}>
+          <NativeSelect id="move-charge-category" value={chargeCategory} onChange={(event) => setChargeCategory(event.target.value)} aria-describedby="move-charge-category-hint">
+            {[DEFAULT_CHARGE_CATEGORY, ...expenseCategories.filter((name) => name !== DEFAULT_CHARGE_CATEGORY)].map((name) => (
+              <option key={name} value={name}>
+                {t(name)}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+      )}
+
+      <Field htmlFor="move-note" label={label(t("Note"), true)}>
+        <Input id="move-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. ATM withdrawal")} className="px-0" frameClassName="px-3" />
+      </Field>
+
       {from && to && value > 0 && (
-        <div className="flex flex-col gap-2.5 rounded-[14px] border border-line bg-strip p-4 text-body tabular-nums">
-          <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("After this transfer")}</span>
-          {afterRow(from, -value)}
-          {afterRow(to, value)}
-          <div className="flex justify-between gap-3 border-t border-line pt-2.5 text-small text-ink-muted">
-            {/* Active wallets only, as on Wallets: what can be moved. */}
-            <span>{t("Total balance")}</span>
-            <span>
-              {formatCurrency(total, currency, fmt)} · {t("unchanged")}
-            </span>
+        <div className="flex flex-col gap-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {sideBox(from, "from")}
+            {sideBox(to, "to")}
           </div>
+          {/* Active wallets only, as on Wallets: what can be moved. A charge
+              is the one thing that lowers the total. */}
+          <p className="text-caption text-ink-muted tabular-nums">
+            {fee > 0
+              ? t("Total balance {before} → {after}: the charge is an expense.", { before: formatCurrency(total, currency, fmt), after: formatCurrency(total - fee, currency, fmt) })
+              : t("Total balance {amount} · unchanged", { amount: formatCurrency(total, currency, fmt) })}
+          </p>
         </div>
       )}
     </Drawer>

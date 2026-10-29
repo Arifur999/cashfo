@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, ArrowRight, Eye, Info, PiggyBank, Plus, Printer, Trash2, TriangleAlert } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Eye, Pencil, PiggyBank, Plus, Printer, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState } from "react";
@@ -9,12 +9,10 @@ import { toast } from "sonner";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
 import Loader from "@/components/shared/Loader";
-import AmountText from "@/components/smartly/AmountText";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
 import Chip from "@/components/smartly/Chip";
-import IconTile from "@/components/smartly/IconTile";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
@@ -53,6 +51,8 @@ interface BalanceTransferPageClientProps {
   currency: string;
   canManage: boolean;
   range: DateRangePreset;
+  // The wallet the history is narrowed to (?account=), or "" for all.
+  accountId: string;
   // The period resolved on the server, for the printed copy.
   periodFrom?: string;
   periodTo?: string;
@@ -71,9 +71,9 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
   { value: "this-year", label: "This year" },
 ];
 
-// From → To and the note share the free width, so a long note isn't cut
-// beside an empty stretch of the wallets' column.
-const COLUMNS = "md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_120px_76px] xl:grid-cols-[96px_minmax(0,1fr)_240px_120px_76px]";
+// The board's table: #, Date, From, To, Note, Amount, Charge, Balance,
+// Action. Below xl the note goes under the wallets.
+const COLUMNS = "md:grid-cols-[28px_92px_minmax(0,1fr)_minmax(0,1fr)_104px_72px_104px_76px] xl:grid-cols-[28px_92px_minmax(0,1fr)_minmax(0,1fr)_170px_104px_76px_112px_76px]";
 const ICON_BUTTON = "flex size-8 items-center justify-center rounded-full pointer-coarse:size-11";
 // A voided transfer and the reversal that undid it are set back as a whole,
 // as the board draws them: every cell fades (the wallet tiles, the amount,
@@ -86,7 +86,7 @@ const CANCELLED_ROW = "[&>[role=cell]:not([data-slot=list-row-actions])]:graysca
 // Transfer: money moved between the customer's own wallets -- what moved
 // in the period, the note that it is never income or expense, and the
 // history, 25 to a page, with a void action on each standing transfer.
-export function BalanceTransferPageClient({ businessId, transfers, meta, totals, complete, wallets, currency, canManage, range, periodFrom, periodTo, excludeSavings, today, pageSizes, defaultPageSize }: BalanceTransferPageClientProps) {
+export function BalanceTransferPageClient({ businessId, transfers, meta, complete, wallets, currency, canManage, range, accountId, periodFrom, periodTo, excludeSavings, today, pageSizes, defaultPageSize }: BalanceTransferPageClientProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -95,6 +95,8 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
   const pdfExportOn = useFeature("pdf_export");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [voiding, setVoiding] = useState<Transaction | null>(null);
+  // A row's Edit: the popup filled in with it.
+  const [editing, setEditing] = useState<Transaction | null>(null);
   // Print's copy of the whole period while the print dialog is open; null
   // the rest of the time, when the list shows the page on screen.
   const [printed, setPrinted] = useState<{ transfers: Transaction[]; complete: boolean } | null>(null);
@@ -182,23 +184,15 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
     return { ...parties, from: name(parties.fromId, parties.from), to: name(parties.toId, parties.to) };
   };
   const voidingParties = voiding ? namesOf(voiding) : null;
-  // The card counts the transfers that still stand. "None yet" follows the
-  // history below, so it never sits above a list with rows in it.
-  const countCaption =
-    meta.total === 0
-      ? range === "all"
-        ? t("No transfer yet")
-        : t("No transfers in this period")
-      : totals.voided > 0
-        ? plural(t, totals.voided, "{count} voided transfer isn't counted", "{count} voided transfers aren't counted", undefined, fmt)
-        : t("Only transfers that still stand are counted");
+  const editingParties = editing ? transferParties(editing, locale) : null;
+  // A dash for nothing, as the board's empty Charge cells read.
+  const moneyOrDash = (value: string | null | undefined) => (value && Number(value) !== 0 ? formatCurrency(value, currency, fmt) : "—");
 
   return (
     <PageFrame className="gap-6">
       <PageHeader
         eyebrow={`${t("Money")} · ${t("Wallets")}`}
         title={t("Balance transfer")}
-        description={t("Move money between your own wallets.")}
         actions={
           <>
             {pdfExportOn && meta.total > 0 && (
@@ -208,7 +202,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
               </Button>
             )}
             {canManage && (
-              <Button onClick={() => setDrawerOpen(true)} className="print:hidden">
+              <Button onClick={() => setDrawerOpen(true)} className="rounded-full px-4.5 print:hidden">
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("New transfer")}
               </Button>
@@ -234,35 +228,23 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
         </Banner>
       )}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Card className="flex min-w-0 flex-col gap-2">
-          <span className="text-small font-medium text-ink-muted">{t("Moved in this period")}</span>
-          <AmountText value={totals.moved} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
-          <span className="text-caption font-normal text-ink-muted">
-            {totals.savings > 0 ? t("Not counting {amount} put into savings goals", { amount: formatCurrency(totals.savings, currency, fmt) }) : plural(t, totals.standing, "Across {count} transfer", "Across {count} transfers", undefined, fmt)}
-          </span>
-        </Card>
-        <Card className="flex min-w-0 flex-col gap-2">
-          <span className="text-small font-medium text-ink-muted">{t("Transfers")}</span>
-          <span className="text-h1 leading-[normal] text-ink tabular-nums">{formatCount(totals.standing, fmt)}</span>
-          <span className="text-caption font-normal text-ink-muted">{countCaption}</span>
-        </Card>
-        <div className="flex gap-3.5 rounded-md border border-info-line bg-info-50 p-5 md:col-span-2 xl:col-span-1">
-          <IconTile tone="info">
-            <Info />
-          </IconTile>
-          <div className="flex flex-col gap-1">
-            <span className="text-body font-semibold text-info-ink">{t("Your total balance doesn't change")}</span>
-            <span className="text-small leading-normal text-info-ink">{t("A transfer only moves money between your wallets. It's never counted as income or expense.")}</span>
-          </div>
-        </div>
-      </section>
-
       <ListCard
         id="transfer-list"
         label={t("Transfer history")}
         title={t("Transfer history")}
-        actions={<SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={updateRange} label={t("Period")} className="print:hidden max-md:flex max-md:w-full max-md:[&>button]:flex-1 max-md:[&>button]:px-1.5" />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2.5 print:hidden max-md:w-full">
+            <NativeSelect size="sm" aria-label={t("Account")} value={accountId} onChange={(event) => router.push(hrefWith({ account: event.target.value || undefined }))} frameClassName="w-48 max-md:flex-1" className="h-10">
+              <option value="">{t("All accounts")}</option>
+              {wallets.map((wallet) => (
+                <option key={wallet.id} value={wallet.id}>
+                  {accountDisplayName(wallet, lang)}
+                </option>
+              ))}
+            </NativeSelect>
+            <SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={updateRange} label={t("Period")} className="max-md:flex max-md:w-full max-md:[&>button]:flex-1 max-md:[&>button]:px-1.5" />
+          </div>
+        }
         footer={
           meta.total > 0 &&
           // One short page: the board's count and order (no pager, and no
@@ -316,15 +298,19 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
         ) : (
           <>
             <ListHead columns={COLUMNS}>
+              <ListHeadCell>#</ListHeadCell>
               <ListHeadCell>{t("Date")}</ListHeadCell>
-              <ListHeadCell>{t("From → To")}</ListHeadCell>
-              <ListHeadCell>{t("Note")}</ListHeadCell>
+              <ListHeadCell>{t("From")}</ListHeadCell>
+              <ListHeadCell>{t("To@@wallet")}</ListHeadCell>
+              <ListHeadCell className="hidden xl:block">{t("Note")}</ListHeadCell>
               <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Charge")}</ListHeadCell>
+              <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
               <ListHeadCell align="end" className="print:hidden">
-                {t("Actions")}
+                {t("Action")}
               </ListHeadCell>
             </ListHead>
-            {listed.map((transfer) => {
+            {listed.map((transfer, index) => {
               const parties = namesOf(transfer);
               const cancelled = cancelledLabel(transfer);
               const voided = isCancelled(transfer);
@@ -335,15 +321,21 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                 // Phones: From → To and the amount, then the date and the
                 // actions, then the note.
                 <ListRow key={transfer.id} columns={COLUMNS} muted={voided} className={cn("md:min-h-15", voided && CANCELLED_ROW)}>
-                  <ListCell className="text-caption text-ink-soft max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.transactionDate, undefined, fmt)}</ListCell>
+                  <ListCell className="text-small text-ink-muted tabular-nums max-md:hidden">{formatCount((printed ? 0 : (meta.page - 1) * meta.limit) + index + 1, fmt)}</ListCell>
+                  <ListCell className="text-caption text-ink-soft max-md:col-start-1 max-md:row-start-2 md:text-small">{formatDate(transfer.transactionDate, undefined, fmt)}</ListCell>
                   <ListCell className="max-md:col-start-1 max-md:row-start-1">
-                    <ListRowLink href={href} aria-label={t("{from} to {to}, {amount}", { from: parties.from, to: parties.to, amount })} className="flex min-w-0 items-center gap-2.5">
+                    <ListRowLink href={href} aria-label={t("{from} to {to}, {amount}", { from: parties.from, to: parties.to, amount })} className="flex min-w-0 items-center gap-2">
                       <Party name={parties.from} savings={parties.fromSavings} found={parties.fromId ? walletById.get(parties.fromId) : undefined} />
-                      <ArrowRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
-                      <Party name={parties.to} savings={parties.toSavings} found={parties.toId ? walletById.get(parties.toId) : undefined} />
+                      <ArrowRight className="size-4 shrink-0 text-ink-faint md:hidden" aria-hidden="true" />
+                      <span className="contents md:hidden">
+                        <Party name={parties.to} savings={parties.toSavings} found={parties.toId ? walletById.get(parties.toId) : undefined} />
+                      </span>
                     </ListRowLink>
                   </ListCell>
-                  <ListCell className="flex items-center gap-2 text-small text-ink-muted max-md:col-span-2 max-md:row-start-3 max-md:empty:hidden md:text-body">
+                  <ListCell className="max-md:hidden">
+                    <Party name={parties.to} savings={parties.toSavings} found={parties.toId ? walletById.get(parties.toId) : undefined} />
+                  </ListCell>
+                  <ListCell className="flex items-center gap-2 text-small text-ink-muted max-md:col-span-2 max-md:row-start-3 max-md:empty:hidden md:max-xl:hidden">
                     {transfer.description ? <span className="truncate">{transfer.description}</span> : null}
                     {cancelled && (
                       <Chip tone="expense" size="sm" className="font-semibold">
@@ -359,10 +351,23 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
                   <ListCell align="end" className={cn("font-semibold text-info tabular-nums max-md:col-start-2 max-md:row-start-1", voided && "line-through")}>
                     {amount}
                   </ListCell>
+                  <ListCell align="end" className={cn("text-small tabular-nums max-md:hidden", transfer.charge && Number(transfer.charge) !== 0 ? "text-expense" : "text-ink-faint")}>
+                    {moneyOrDash(transfer.charge)}
+                  </ListCell>
+                  {/* The receiving wallet's balance just after; a voided row moved nothing. */}
+                  <ListCell align="end" className="text-small font-semibold text-ink-2 tabular-nums max-md:hidden">
+                    {voided || !transfer.balanceAfter ? <span className="font-normal text-ink-faint">—</span> : formatCurrency(transfer.balanceAfter, currency, fmt)}
+                  </ListCell>
                   <ListRowActions className="max-md:col-start-2 max-md:row-start-2 print:hidden">
-                    <Link href={href} aria-label={t("View details")} title={t("View details")} className={cn(ICON_BUTTON, "text-ink-soft hover:bg-surface-sunken")}>
-                      <Eye className="size-4" aria-hidden="true" />
-                    </Link>
+                    {canManage && transfer.voidable && !savings ? (
+                      <button type="button" onClick={() => setEditing(transfer)} aria-label={t("Edit transfer")} title={t("Edit")} className={cn(ICON_BUTTON, "text-ink-2 hover:bg-surface-sunken")}>
+                        <Pencil className="size-4" aria-hidden="true" />
+                      </button>
+                    ) : (
+                      <Link href={href} aria-label={t("View details")} title={t("View details")} className={cn(ICON_BUTTON, "text-ink-soft hover:bg-surface-sunken")}>
+                        <Eye className="size-4" aria-hidden="true" />
+                      </Link>
+                    )}
                     {canManage && transfer.voidable && (
                       <button type="button" onClick={() => setVoiding(transfer)} aria-label={t("Delete transfer")} title={t("Delete transfer")} className={cn(ICON_BUTTON, "text-expense hover:bg-expense-soft")}>
                         <Trash2 className="size-4" aria-hidden="true" />
@@ -383,6 +388,23 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, totals,
       </ListCard>
 
       <TransferDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} businessId={businessId} currency={currency} />
+      {editing && editingParties?.fromId && editingParties.toId && (
+        <TransferDrawer
+          open
+          onClose={() => setEditing(null)}
+          businessId={businessId}
+          currency={currency}
+          editing={{
+            id: editing.id,
+            fromId: editingParties.fromId,
+            toId: editingParties.toId,
+            amount: transferAmount(editing),
+            date: editing.transactionDate.slice(0, 10),
+            note: editing.description ?? "",
+            charge: Number(editing.charge ?? 0),
+          }}
+        />
+      )}
       {voiding && voidingParties && (
         <VoidTransactionDialog
           open
