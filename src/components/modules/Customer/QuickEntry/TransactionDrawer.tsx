@@ -393,6 +393,17 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </Banner>
       )}
 
+      {/* The board: the date and the account side by side under the type,
+          then the amount, the category and the note. */}
+      {wide && !isTransfer && (
+        <div className="grid grid-cols-2 gap-3">
+          <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
+            <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
+          </Field>
+          <WalletPicker size="compact" label={t("Account")} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+        </div>
+      )}
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor={amountId} className="hidden text-body font-medium text-ink md:block">
           {t("Amount")}
@@ -513,27 +524,23 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       )}
 
       {wide ? (
-        // The board: the date and the account side by side, the note under
-        // them. A transfer's two wallets come first, then the date and note.
+        // A transfer's two wallets come first, then the date and the note
+        // side by side; an income or expense ends with its note.
         <>
           {isTransfer && (
             <>
               <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
               <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />
+              <div className="grid grid-cols-2 gap-3">
+                <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
+                  <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
+                </Field>
+                <Field htmlFor="txn-note" label={<span className="text-body font-medium text-ink">{t("Note")}</span>}>
+                  <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+                </Field>
+              </div>
             </>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
-              <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
-            </Field>
-            {isTransfer ? (
-              <Field htmlFor="txn-note" label={<span className="text-body font-medium text-ink">{t("Note")}</span>}>
-                <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
-              </Field>
-            ) : (
-              <WalletPicker size="compact" label={t("Account")} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-            )}
-          </div>
           {!isTransfer && (
             <Field
               htmlFor="txn-note"
