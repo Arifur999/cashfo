@@ -20,6 +20,7 @@ export const chromeDictionary: Record<string, string> = {
   Reports: "রিপোর্ট",
   Referrals: "রেফারেল",
   "Password Manager": "পাসওয়ার্ড ম্যানেজার",
+  "Password Management": "পাসওয়ার্ড ব্যবস্থাপনা",
   Settings: "সেটিংস",
 
   // Balance submenu
@@ -32,6 +33,8 @@ export const chromeDictionary: Record<string, string> = {
   "Current Asset list": "বর্তমান সম্পদের তালিকা",
   "Purchase & Sell Asset": "সম্পদ ক্রয় ও বিক্রয়",
   "Asset update": "সম্পদ আপডেট",
+  "Purchase & Sell": "ক্রয় ও বিক্রয়",
+  "All Assets": "সব সম্পদ",
   Category: "ক্যাটাগরি",
 
   // Savings Goals submenu

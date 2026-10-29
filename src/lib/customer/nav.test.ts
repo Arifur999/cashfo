@@ -43,20 +43,20 @@ describe("the two menus", () => {
       [
         "Money",
         [
-          ["Income & Expense", "Overview", "Transactions", "Budget Planning", "Category Set"],
           ["Balance", "Overview", "Balance Transfer", "Ledger", "Wallet"],
+          ["Income & Expense", "Overview", "Transactions", "Budget Planning", "Category Set"],
         ],
       ],
       [
         "Plan & track",
         [
           ["Savings Goals", "Dashboard", "Overview", "Wallet", "Transfer"],
-          ["Assets Management", "Dashboard", "Current Asset list", "Purchase & Sell Asset", "Asset update", "Category"],
+          ["Assets Management", "Dashboard", "Purchase & Sell", "Update", "Category", "All Assets"],
           ["Loan Management", "Dashboard", "Transactions", "Ledger", "Contacts"],
           ["Group Expense"],
         ],
       ],
-      [NAV_FOOT_LABEL, [["Referrals"], ["Password Manager"]]],
+      [NAV_FOOT_LABEL, [["Referrals"], ["Password Management"]]],
     ]);
   });
 
@@ -122,7 +122,7 @@ describe("findNavLocation", () => {
   it("names a Habit Tracker page under its section, and the Money Tracker's pages alone", () => {
     expect(breadcrumbFor(locate("/group-expenses")!)).toEqual({ crumbs: [], heading: "Group Expense", tone: "money" });
     expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: [], heading: "Referral Program", tone: "neutral" });
-    expect(breadcrumbFor(locate("/password-manager")!)).toEqual({ crumbs: [], heading: "Password Manager", tone: "vault" });    expect(breadcrumbFor(locate("/dashboard")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "money" });
+    expect(breadcrumbFor(locate("/password-manager")!)).toEqual({ crumbs: [], heading: "Password Management", tone: "vault" });    expect(breadcrumbFor(locate("/dashboard")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "money" });
     expect(breadcrumbFor(locate("/reports/detailed")!)).toEqual({ crumbs: [], heading: "Reports", tone: "insights" });
     expect(breadcrumbFor(locate("/habit-tracker")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "habits" });
     expect(breadcrumbFor(locate("/habit-tracker/daily")!)).toEqual({ crumbs: ["Habits"], heading: "Daily habits", tone: "habits" });

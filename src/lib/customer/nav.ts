@@ -124,6 +124,18 @@ export const NAV_SECTIONS: NavSection[] = [
     quickAdd: true,
     items: [
       {
+        label: "Balance",
+        href: "/balance/overview",
+        icon: "balance",
+        match: ["/balance"],
+        subs: [
+          { label: "Overview", href: "/balance/overview" },
+          { label: "Balance Transfer", href: "/balance/transfer" },
+          { label: "Ledger", href: "/balance/ledger" },
+          { label: "Wallet", href: "/balance/wallet" },
+        ],
+      },
+      {
         label: "Income & Expense",
         href: "/income-expense",
         icon: "transactions",
@@ -135,18 +147,6 @@ export const NAV_SECTIONS: NavSection[] = [
           // Both kinds of category; the old Income Category and Income
           // planning addresses forward here.
           { label: "Category Set", href: "/category-set", match: ["/income-category", "/income-planning"] },
-        ],
-      },
-      {
-        label: "Balance",
-        href: "/balance/overview",
-        icon: "balance",
-        match: ["/balance"],
-        subs: [
-          { label: "Overview", href: "/balance/overview" },
-          { label: "Balance Transfer", href: "/balance/transfer" },
-          { label: "Ledger", href: "/balance/ledger" },
-          { label: "Wallet", href: "/balance/wallet" },
         ],
       },
     ],
@@ -175,10 +175,10 @@ export const NAV_SECTIONS: NavSection[] = [
         match: ["/assets-management"],
         subs: [
           { label: "Dashboard", href: "/assets-management/dashboard" },
-          { label: "Current Asset list", href: "/assets-management/current" },
-          { label: "Purchase & Sell Asset", href: "/assets-management/purchase-sell" },
-          { label: "Asset update", href: "/assets-management/update" },
+          { label: "Purchase & Sell", href: "/assets-management/purchase-sell" },
+          { label: "Update", heading: "Asset update", href: "/assets-management/update" },
           { label: "Category", href: "/assets-management/category" },
+          { label: "All Assets", href: "/assets-management/current" },
         ],
       },
       {
@@ -205,7 +205,7 @@ export const NAV_SECTIONS: NavSection[] = [
     tone: "neutral",
     items: [
       { label: "Referrals", heading: "Referral Program", href: "/referrals", icon: "gift" },
-      { label: "Password Manager", href: "/password-manager", icon: "vault", tone: "vault" },
+      { label: "Password Management", href: "/password-manager", icon: "vault", tone: "vault" },
     ],
   },
   // Not in the boards' menu: a business workspace's books, and the insights
