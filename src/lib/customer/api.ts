@@ -493,6 +493,13 @@ export interface CategoryBreakdownRow {
   color: string;
 }
 
+// A calendar month with any income or expense in it.
+export interface ActiveMonth {
+  year: number;
+  month: number;
+  count: number;
+}
+
 export interface CategoryBreakdown {
   type: "INCOME" | "EXPENSE";
   total: string;
