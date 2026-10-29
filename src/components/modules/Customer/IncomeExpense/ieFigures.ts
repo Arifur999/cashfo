@@ -36,11 +36,91 @@ export function monthHref(pathname: string, params: Params, month: number, year:
   return text ? `${pathname}?${text}` : pathname;
 }
 
+// Overview's period: a month (?month=&year=, this month when left out), a
+// whole year (?period=year&year=) or the reader's own days (?from=&to=).
+export type Period = { kind: "month"; month: number; year: number } | { kind: "year"; year: number } | { kind: "custom"; from: string; to: string };
+
+const isYear = (value: unknown): value is string => typeof value === "string" && /^\d{4}$/.test(value) && Number(value) >= 2000 && Number(value) <= 2100;
+
+// A real calendar day written YYYY-MM-DD.
+export function isDay(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+// The period the address asks for, or null when it isn't one.
+export function readPeriod(params: Params, current: { month: number; year: number }): Period | null {
+  if (params.from !== undefined || params.to !== undefined) {
+    return isDay(params.from) && isDay(params.to) && params.from <= params.to ? { kind: "custom", from: params.from, to: params.to } : null;
+  }
+  if (params.period === "year") return isYear(params.year) ? { kind: "year", year: Number(params.year) } : null;
+  if (params.period !== undefined) return null;
+  const month = readMonth(params, current);
+  return month && { kind: "month", ...month };
+}
+
+// The period's first and last day, as the API's date filters take them.
+export function periodRange(period: Period): { dateFrom: string; dateTo: string } {
+  if (period.kind === "month") return monthRange(period.year, period.month);
+  if (period.kind === "year") return { dateFrom: `${period.year}-01-01`, dateTo: `${period.year}-12-31` };
+  return { dateFrom: period.from, dateTo: period.to };
+}
+
+// The page's address for a period; this month is the bare page.
+export function periodHref(pathname: string, period: Period, current: { month: number; year: number }): string {
+  const query = new URLSearchParams();
+  if (period.kind === "year") {
+    query.set("period", "year");
+    query.set("year", String(period.year));
+  } else if (period.kind === "custom") {
+    query.set("from", period.from);
+    query.set("to", period.to);
+  } else if (period.month !== current.month || period.year !== current.year) {
+    query.set("month", String(period.month));
+    query.set("year", String(period.year));
+  }
+  const text = query.toString();
+  return text ? `${pathname}?${text}` : pathname;
+}
+
+// A donut's conic-gradient: each slice its share of the total, in order;
+// what the list leaves out (the API sends the top ten) is one "other" slice,
+// so the ring always closes. Nothing at all is one plain ring.
+export function donutGradient(slices: { amount: number; color: string }[], total: number, other: string, empty: string): string {
+  if (!(total > 0)) return empty;
+  const stops: string[] = [];
+  let start = 0;
+  for (const slice of slices) {
+    const end = Math.min(100, start + (Math.max(0, slice.amount) / total) * 100);
+    stops.push(`${slice.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`);
+    start = end;
+  }
+  if (start < 99.99) stops.push(`${other} ${start.toFixed(2)}% 100%`);
+  return `conic-gradient(${stops.join(", ")})`;
+}
+
 // What was kept of the month's income, in percent (one decimal); null when
 // nothing came in, as a rate of nothing means nothing.
 export function savingsRate(income: number, expense: number): number | null {
   if (income <= 0) return null;
   return Math.round(((income - expense) / income) * 1000) / 10;
+}
+
+// Budget Planning's search: a plan matches when every word typed is in its
+// month's name or one of its amounts. Digits match in Latin or Bangla, with
+// or without the thousands commas ("1,20,000", "120000", "১২০০০০").
+export function planMatches(query: string, texts: string[]): boolean {
+  const norm = (text: string) =>
+    text
+      .replace(/[০-৯]/g, (digit) => String(digit.charCodeAt(0) - 0x09e6))
+      .replace(/(\d),(?=\d)/g, "$1")
+      .toLowerCase();
+  const haystack = norm(texts.join(" "));
+  return norm(query)
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => haystack.includes(word));
 }
 
 // How far the month's spending is into its budget.

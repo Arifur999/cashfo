@@ -122,3 +122,11 @@ export async function saveMonthlyPlanAction(businessId: string, input: MonthlyPl
     return res.data;
   }, "Failed to save the budget");
 }
+
+// Budget Planning > Delete: drops a month's plan (its income target and
+// expense budget, one income-goal row); the month's transactions stay.
+export async function deleteMonthlyPlanAction(businessId: string, planId: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/budget/income-goals/${planId}`, { headers: await authHeaders() });
+  }, "Failed to delete the plan");
+}
