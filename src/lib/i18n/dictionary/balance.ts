@@ -286,4 +286,26 @@ export const balanceDictionary: Record<string, string> = {
   "This is a computer-generated statement and needs no signature.": "এটি কম্পিউটারে তৈরি বিবরণী, এতে স্বাক্ষরের প্রয়োজন নেই।",
   "Voided entries and their reversals both stay in the balance, so they cancel out.": "বাতিল এন্ট্রি ও তার রিভার্সাল দুটোই ব্যালেন্সে থাকে, তাই একে অপরকে কাটাকাটি করে।",
   "Couldn't load the whole statement. Try again.": "পুরো বিবরণী লোড করা যায়নি। আবার চেষ্টা করুন।",
+
+  // The redesigned Balance overview's figure cards
+  "Total in": "মোট এসেছে",
+  "Total out": "মোট গেছে",
+
+  // The ledger's round print button
+  "Print or save as PDF": "প্রিন্ট বা PDF হিসেবে সেভ করুন",
+
+  // The redesigned Transfer popup and history: charge, edit, before and after
+  "Receiving": "পাচ্ছে",
+  "Transfer amount": "পাঠানোর পরিমাণ",
+  "Amount received": "পাওয়া পরিমাণ",
+  "New balance": "নতুন ব্যালেন্স",
+  "Edit transfer": "ট্রান্সফার বদলান",
+  "Transfer updated": "ট্রান্সফার আপডেট হয়েছে",
+  "Bank charge": "ব্যাংক চার্জ",
+  "An ATM or bank fee, out of the sending wallet.": "ATM বা ব্যাংকের ফি, পাঠানো ওয়ালেট থেকে কাটা হয়।",
+  "Expense category for the charge": "চার্জের খরচের ক্যাটাগরি",
+  "The charge is counted as an expense in this category.": "চার্জটি এই ক্যাটাগরিতে খরচ হিসেবে গোনা হয়।",
+  "e.g. ATM withdrawal": "যেমন ATM থেকে তোলা",
+  "Total balance {before} → {after}: the charge is an expense.": "মোট ব্যালেন্স {before} → {after}: চার্জটি একটি খরচ।",
+  "Total balance {amount} · unchanged": "মোট ব্যালেন্স {amount} · অপরিবর্তিত",
 };

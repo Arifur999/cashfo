@@ -83,7 +83,6 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
   // What the active wallets hold: the Balance page's "Available balance".
   const available = sum(active, (wallet) => wallet.currentBalance);
   const inArchived = sum(archived, (wallet) => wallet.currentBalance);
-  const totalOpening = sum(active, (wallet) => wallet.openingBalance);
   const editing = typeof drawer === "object" ? drawer : null;
   const busy = isPending ? busyId : null;
   const archivedNote = inArchived !== 0 ? t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, fmt) }) : null;
@@ -188,18 +187,13 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
           </>
         }
         title={t("Wallets")}
-        description={t("The cash, bank and mobile accounts that hold your money.")}
-        hideDescriptionOnPhone
         actions={
-          <>
-            {moveButton("md")}
-            {canManage && (
-              <Button onClick={() => setDrawer("create")}>
-                <Plus strokeWidth={2.5} className="size-4" />
-                {t("Add wallet")}
-              </Button>
-            )}
-          </>
+          canManage && (
+            <Button onClick={() => setDrawer("create")} className="rounded-full px-4.5">
+              <Plus strokeWidth={2.5} className="size-4" />
+              {t("Add wallet")}
+            </Button>
+          )
         }
         hideActionsOnPhone
       />
@@ -220,28 +214,6 @@ export function WalletPageClient({ businessId, wallets, canManage, currency }: W
           )}
         </div>
       </Card>
-
-      {/* Two cards a row until there's room for three, so a lakh figure is never cut short. */}
-      <section className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-3">
-        <Card className="flex min-w-0 flex-col gap-2">
-          <span className="text-small font-medium text-ink-muted">{t("Total balance")}</span>
-          <AmountText value={available} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
-          <span className="text-caption font-normal text-ink-muted">
-            {plural(t, active.length, "Across {count} active wallet", "Across {count} active wallets", undefined, fmt)}
-            {archivedNote && ` · ${archivedNote}`}
-          </span>
-        </Card>
-        <Card className="flex min-w-0 flex-col gap-2">
-          <span className="text-small font-medium text-ink-muted">{t("Opening balances")}</span>
-          <AmountText value={totalOpening} currency={currency} size="h2" className="text-h1 wrap-anywhere leading-[normal]" />
-          <span className="text-caption font-normal text-ink-muted">{t("What the wallets held when you added them")}</span>
-        </Card>
-        <Card className="flex min-w-0 flex-col gap-2 md:col-span-2 xl:col-span-1">
-          <span className="text-small font-medium text-ink-muted">{t("Change since opening")}</span>
-          <AmountText value={available - totalOpening} currency={currency} size="h2" tone="auto" signed className="text-h1 wrap-anywhere leading-[normal]" />
-          <span className="text-caption font-normal text-ink-muted">{t("Current balance minus opening balances")}</span>
-        </Card>
-      </section>
 
       <div className="flex flex-col gap-4">
         <TabBar

@@ -23,6 +23,8 @@ export interface TransactionFilters {
   excludeCharges?: boolean;
   // Add each row's loanBalanceAfter.
   withLoanBalance?: boolean;
+  // Each row's balanceAfter: the receiving wallet's balance just after it.
+  withBalanceAfter?: boolean;
   search?: string;
   page?: number;
   limit?: number;

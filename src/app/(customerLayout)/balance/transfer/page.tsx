@@ -33,7 +33,9 @@ export default async function BalanceTransferPage({ searchParams }: PageProps<"/
   const { dateFrom, dateTo } = resolveDateRange(range);
   const page = readPageParam(params);
   const limit = readPageSizeParam(params, PAGE_SIZES, PAGE_SIZE);
-  const filters = { transactionType: "TRANSFER" as const, dateFrom, dateTo };
+  // One wallet's transfers, in or out (?account=), or every wallet's.
+  const accountId = typeof params.account === "string" && params.account ? params.account : undefined;
+  const filters = { transactionType: "TRANSFER" as const, dateFrom, dateTo, accountId };
   // A savings goal's Add funds is posted as a transfer into a savings
   // wallet. This page is money moved between wallets, so the list and the
   // cards alike leave out what a goal moved.
@@ -43,7 +45,7 @@ export default async function BalanceTransferPage({ searchParams }: PageProps<"/
   // and of the wallet-to-wallet ones (the difference is what the goals
   // moved), and the wallets for the rows' icons.
   const [walletPage, all, walletOnly, wallets] = await Promise.all([
-    getTransactions(activeBusinessId, { ...walletFilters, page, limit }),
+    getTransactions(activeBusinessId, { ...walletFilters, page, limit, withBalanceAfter: true }),
     getTransactionsSummary(activeBusinessId, filters),
     getTransactionsSummary(activeBusinessId, walletFilters),
     getWallets(activeBusinessId),
@@ -55,7 +57,7 @@ export default async function BalanceTransferPage({ searchParams }: PageProps<"/
   // marked as savings, and without the summaries the cards' figures come the
   // old way: every transfer in the range, read 100 at a time.
   const [{ data: transfers, meta }, everyTransfer] = await Promise.all([
-    walletOnly ? walletPage : getTransactions(activeBusinessId, { ...filters, page, limit }),
+    walletOnly ? walletPage : getTransactions(activeBusinessId, { ...filters, page, limit, withBalanceAfter: true }),
     fromSummaries ? null : getAllTransactions(activeBusinessId, filters),
   ]);
   const totals = fromSummaries ?? transferTotals(everyTransfer?.data ?? []);
@@ -76,6 +78,7 @@ export default async function BalanceTransferPage({ searchParams }: PageProps<"/
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
       range={range}
+      accountId={accountId ?? ""}
       periodFrom={dateFrom}
       periodTo={dateTo}
       excludeSavings={!!walletOnly}
