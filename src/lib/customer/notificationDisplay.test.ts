@@ -55,6 +55,8 @@ describe("notificationView", () => {
 
   it("opens the conversation support answered", () => {
     expect(notificationView(row("SUPPORT_REPLY", { ticketId: "t1", subject: "Shop money" }), inEnglish, "en")).toEqual({ kind: "support", title: "Support replied to your message", body: "Shop money", href: "/settings/help?message=t1" });
+    // The admin's Support reply template, when on, words the body.
+    expect(notificationView(row("SUPPORT_REPLY", { ticketId: "t1", subject: "Shop money", body: "সাপোর্ট উত্তর দিয়েছে" }), inEnglish, "en")?.body).toBe("সাপোর্ট উত্তর দিয়েছে");
   });
 
   it("shows an announcement in Bangla when it has Bangla", () => {
