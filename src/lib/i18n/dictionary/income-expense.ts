@@ -36,7 +36,7 @@ export const incomeExpenseDictionary: Record<string, string> = {
   Transactions: "লেনদেন",
   Transaction: "লেনদেন",
   "New transaction": "নতুন লেনদেন",
-  "Every income and expense you've added, newest first.": "আপনার যোগ করা সব আয় ও ব্যয়, নতুনগুলো আগে।",
+  "Every income and expense transaction.": "সব আয় ও ব্যয়ের লেনদেন।",
   "Only an owner or accountant can add transactions": "শুধু মালিক বা হিসাবরক্ষক লেনদেন যোগ করতে পারেন",
   Net: "নিট",
   "{count} voided": "{count}টি বাতিল",

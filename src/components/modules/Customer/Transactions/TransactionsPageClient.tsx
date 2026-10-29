@@ -61,10 +61,10 @@ interface TransactionsPageClientProps {
   canManage: boolean;
 }
 
-// The board's table: Date, Note, Category, Type, Amount, Actions. Below xl
-// the category and the type go under the note, so the note column never
+// The board's table: #, Date, Type, Category, Note, Amount, Actions. Below
+// xl the type and the category go under the note, so the note column never
 // drops under 12rem beside the sidebar (iPads, small laptops).
-const COLUMNS = "md:grid-cols-[100px_minmax(12rem,1fr)_140px_96px] xl:grid-cols-[110px_minmax(12rem,1fr)_190px_110px_150px_96px]";
+const COLUMNS = "md:grid-cols-[40px_100px_minmax(12rem,1fr)_140px_96px] xl:grid-cols-[40px_110px_110px_190px_minmax(12rem,1fr)_150px_96px]";
 const LIST_ID = "transactions-list";
 const PHONE_LIST_ID = "transactions-list-phone";
 
@@ -177,16 +177,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   return (
     <PageFrame>
       {/* On a phone the floating + adds, and the title stands alone. */}
-      <PageHeader
-        title={t("Transactions")}
-        description={t("Every income and expense you've added, newest first.")}
-        hideDescriptionOnPhone
-        actions={addButton}
-        hideActionsOnPhone
-        className="md:mb-1"
-      />
-
-      {!blank && <TransactionFilters accounts={accounts} categories={categories} navigate={navigate} baseQuery={baseQuery} />}
+      <PageHeader title={t("Every income and expense transaction.")} actions={addButton} hideActionsOnPhone className="md:mb-1" />
 
       {/* Two small cards on a phone; the board's strip of three (Income,
           Expense, Net) on wider screens. */}
@@ -214,6 +205,8 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           </TotalCell>
         </Card>
       )}
+
+      {!blank && <TransactionFilters accounts={accounts} categories={categories} navigate={navigate} baseQuery={baseQuery} />}
 
       {transactions.length === 0 ? (
         <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-2.5 p-10 text-center md:min-h-160.5">
@@ -267,16 +260,19 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           >
             {/* Above the rows' buttons (z-10) as they scroll under it. */}
             <ListHead columns={COLUMNS} sticky>
+              <ListHeadCell>#</ListHeadCell>
               <ListHeadCell>{t("Date")}</ListHeadCell>
-              <ListHeadCell>{t("Note")}</ListHeadCell>
-              <ListHeadCell className="hidden xl:block">{t("Category")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Type")}</ListHeadCell>
+              <ListHeadCell className="hidden xl:block">{t("Category")}</ListHeadCell>
+              <ListHeadCell>{t("Note")}</ListHeadCell>
               <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
               <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
             </ListHead>
-            {groups.flatMap((group) => group.rows).map((row) => (
+            {groups.flatMap((group) => group.rows).map((row, index) => (
               <DesktopRow
                 key={row.transaction.id}
+                // Counted across pages: page 2 of 20 starts at 21.
+                number={(meta.page - 1) * meta.limit + index + 1}
                 row={row}
                 currency={currency}
                 canManage={canManage}
@@ -355,7 +351,7 @@ function CategoryTile({ row, size = 36 }: { row: TransactionRow; size?: 36 | 40 
 // (a transfer, a loan or asset posting) plain.
 const TYPE_BADGE: Record<string, string> = { INCOME: "bg-income-soft text-income", EXPENSE: "bg-expense-soft text-expense" };
 
-function DesktopRow({ row, currency, canManage, onVoid, onEdit }: { row: TransactionRow; currency: string; canManage: boolean; onVoid: () => void; onEdit: () => void }) {
+function DesktopRow({ number, row, currency, canManage, onVoid, onEdit }: { number: number; row: TransactionRow; currency: string; canManage: boolean; onVoid: () => void; onEdit: () => void }) {
   const { t, fmt } = useLocale();
   const href = `/transactions/${row.transaction.id}`;
   const kind = row.transaction.transactionType;
@@ -368,19 +364,10 @@ function DesktopRow({ row, currency, canManage, onVoid, onEdit }: { row: Transac
     // A voided row fades to 60% as the board sets it back; its buttons stay
     // solid.
     <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("min-h-16", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
+      <ListCell className="text-small text-ink-muted tabular-nums">{formatCount(number, fmt)}</ListCell>
       <ListCell className="text-small whitespace-nowrap text-ink-2 tabular-nums">{formatDate(row.transaction.transactionDate, "d MMM yyyy", fmt)}</ListCell>
-      <ListCell className="flex min-w-0 flex-col">
-        <span className="flex min-w-0 items-center gap-2">
-          <ListRowLink href={href} className={cn("truncate text-body font-medium text-ink", row.cancelled && "line-through")}>
-            {title}
-          </ListRowLink>
-          {row.cancelled && (
-            <Chip tone="expense" size="sm" className="h-auto py-0.5 text-[11px] font-semibold">
-              {t(row.cancelled)}
-            </Chip>
-          )}
-        </span>
-        <span className="truncate text-caption text-ink-muted xl:hidden">{[category, typeLabel].filter(Boolean).join(" · ")}</span>
+      <ListCell className="hidden xl:block">
+        <span className={cn("inline-flex rounded-full px-2.5 py-0.75 text-caption font-semibold", TYPE_BADGE[kind] ?? "bg-surface-sunken text-ink-2")}>{typeLabel}</span>
       </ListCell>
       <ListCell className="hidden min-w-0 items-center gap-2 text-body text-ink-2 xl:flex">
         {category ? (
@@ -392,8 +379,18 @@ function DesktopRow({ row, currency, canManage, onVoid, onEdit }: { row: Transac
           <span className="text-ink-muted">—</span>
         )}
       </ListCell>
-      <ListCell className="hidden xl:block">
-        <span className={cn("inline-flex rounded-full px-2.5 py-0.75 text-caption font-semibold", TYPE_BADGE[kind] ?? "bg-surface-sunken text-ink-2")}>{typeLabel}</span>
+      <ListCell className="flex min-w-0 flex-col">
+        <span className="flex min-w-0 items-center gap-2">
+          <ListRowLink href={href} className={cn("truncate text-body font-medium text-ink", row.cancelled && "line-through")}>
+            {title}
+          </ListRowLink>
+          {row.cancelled && (
+            <Chip tone="expense" size="sm" className="h-auto py-0.5 text-[11px] font-semibold">
+              {t(row.cancelled)}
+            </Chip>
+          )}
+        </span>
+        <span className="truncate text-caption text-ink-muted xl:hidden">{[typeLabel, category].filter(Boolean).join(" · ")}</span>
       </ListCell>
       <ListCell align="end">
         <AmountText

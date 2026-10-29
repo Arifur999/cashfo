@@ -295,7 +295,8 @@ export function TransactionFilters({ accounts, categories, navigate, baseQuery }
         event.preventDefault();
         update({ search: search.trim() || undefined });
       }}
-      className="min-w-0 flex-1 md:flex-none"
+      // The board's search takes the room the other filters leave.
+      className="min-w-0 flex-1 md:min-w-60"
     >
       <Input
         type="search"
@@ -305,7 +306,7 @@ export function TransactionFilters({ accounts, categories, navigate, baseQuery }
         leading={<Search />}
         placeholder={placeholder}
         aria-label={t("Search transactions")}
-        frameClassName="h-12 md:h-9.5 md:w-65"
+        frameClassName="h-12 md:h-9.5"
       />
     </form>
   );
