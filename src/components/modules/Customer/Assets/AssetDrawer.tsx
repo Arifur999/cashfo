@@ -40,6 +40,10 @@ interface AssetDrawerProps {
   // screen: something already owned, with one value, the date first and
   // its details.
   variant?: "full" | "add";
+  // Above the form (Purchase & Sell's Purchase / Sale tabs), with the
+  // popup's own title.
+  tabs?: React.ReactNode;
+  title?: string;
 }
 
 type Mode = "buy" | "own";
@@ -48,7 +52,7 @@ type Mode = "buy" | "own";
 // something already owned (nothing moves; what was paid, when, and what it
 // is worth today). Name, type, price, the wallet for a purchase, the date
 // and a note.
-export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy", initialCategory, variant = "full" }: AssetDrawerProps) {
+export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy", initialCategory, variant = "full", tabs, title }: AssetDrawerProps) {
   const adding = variant === "add";
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
@@ -139,8 +143,8 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
       open={open}
       width={460}
       popup
-      title={t(adding ? "Add asset" : "Add an asset")}
-      description={t(adding ? "Add something you own to your asset list." : "Something you're buying now, or something you already own.")}
+      title={title ?? t(adding ? "Add asset" : "Add an asset")}
+      description={tabs ? undefined : t(adding ? "Add something you own to your asset list." : "Something you're buying now, or something you already own.")}
       busy={isPending}
       onClose={onClose}
       onSubmit={submit}
@@ -158,12 +162,13 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
     >
       {/* The board's tighter 16px rhythm for this longer form. */}
       <div className="-my-1 flex flex-col gap-4">
+        {tabs}
         {adding && (
           <Field htmlFor="asset-date" label={label(t("Date"))}>
             <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={lastDay} />
           </Field>
         )}
-        {!adding && (
+        {!adding && !tabs && (
         <SegmentedControl
           options={[
             { value: "buy", label: t("Buying it now") },

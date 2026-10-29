@@ -12,6 +12,7 @@ import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { sellAssetAction } from "@/lib/customer/assetActions";
@@ -35,12 +36,17 @@ interface SellAssetDrawerProps {
   asset: Asset | null;
   categories: AssetCategoryOption[];
   currency: string;
+  // With no asset given: the owned assets to pick the one to sell from.
+  choices?: Asset[];
+  // Above the form (Purchase & Sell's Purchase / Sale tabs).
+  tabs?: React.ReactNode;
+  title?: string;
 }
 
 // Sell an asset: the sale price against what was paid and today's value,
 // the wallet it lands in, and the note that the whole price counts as
 // income and the asset moves to Sold.
-export function SellAssetDrawer({ open, onClose, businessId, asset, categories, currency }: SellAssetDrawerProps) {
+export function SellAssetDrawer({ open, onClose, businessId, asset: given, categories, currency, choices, tabs, title }: SellAssetDrawerProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [price, setPrice] = useState("");
@@ -51,18 +57,63 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
   const { wallets, savingsWallets, loading, error: walletsError } = useDrawerWallets(open, businessId);
   const [isPending, startTransition] = useTransition();
 
+  // The asset picked from the choices.
+  const [pickedId, setPickedId] = useState("");
+  const asset = given ?? choices?.find((choice) => choice.id === pickedId) ?? null;
+
   const [prevKey, setPrevKey] = useState("closed");
-  const key = open && asset ? asset.id : "closed";
+  const key = open ? (asset?.id ?? "none") : "closed";
   if (key !== prevKey) {
     setPrevKey(key);
-    if (open && asset) {
-      setPrice(String(Number(asset.currentValue)));
+    if (open && prevKey === "closed") {
+      setPickedId("");
       setDate(getAppToday());
       setNote("");
     }
+    if (open) setPrice(asset ? String(Number(asset.currentValue)) : "");
   }
 
-  if (!asset) return null;
+  if (!asset && !choices) return null;
+  // The Sale tab before an asset is picked: the tabs and the picker.
+  const picker = choices && (
+    <Field htmlFor="sell-asset" label={<span className="text-body font-medium text-ink">{t("Asset to sell")}</span>}>
+      <NativeSelect id="sell-asset" value={asset?.id ?? ""} onChange={(event) => setPickedId(event.target.value)}>
+        <option value="">{t("Select one of your active assets")}</option>
+        {choices.map((choice) => (
+          <option key={choice.id} value={choice.id}>
+            {`${choice.name} · ${t(choice.category)}`}
+          </option>
+        ))}
+      </NativeSelect>
+    </Field>
+  );
+  if (!asset) {
+    return (
+      <Drawer
+        open={open}
+        popup
+        width={460}
+        title={title ?? t("Sell asset")}
+        onClose={onClose}
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {t("Cancel")}
+            </Button>
+            <Button type="button" disabled className="px-4.5">
+              {t("Submit sale")}
+            </Button>
+          </>
+        }
+      >
+        <div className="-my-0.5 flex flex-col gap-4.5">
+          {tabs}
+          {picker}
+          {choices?.length === 0 && <p className="text-small text-ink-muted">{t("You have no active asset to sell.")}</p>}
+        </div>
+      </Drawer>
+    );
+  }
   const value = Number(price) || 0;
   const paid = Number(asset.purchasePrice);
   const today = Number(asset.currentValue);
@@ -112,7 +163,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
       open={open}
       popup
       width={460}
-      title={t("Sell asset")}
+      title={title ?? t("Sell asset")}
       busy={isPending}
       onClose={onClose}
       onSubmit={submit}
@@ -130,6 +181,8 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
     >
       {/* The board's 18px rhythm. */}
       <div className="-my-0.5 flex flex-col gap-4.5">
+        {tabs}
+        {picker}
         <div className="flex flex-col gap-3.5 rounded-[14px] border border-line bg-strip p-4">
           <div className="flex items-center gap-3">
             <AssetTypeTile visual={visual} size="lg" />

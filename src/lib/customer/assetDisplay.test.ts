@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Asset, AssetCategoryOption } from "./api";
 import {
+  tradeRows,
   assetGain,
   assetsSummary,
   biggestChanges,
@@ -241,5 +242,18 @@ describe("sparkline", () => {
   it("centres a single or flat value", () => {
     expect(sparkline([5]).line).toBe("65,20");
     expect(sparkline([5, 5]).line).toBe("4,20 126,20");
+  });
+});
+
+describe("tradeRows", () => {
+  it("lists wallet purchases and sales, newest first, a sale before a purchase on one day", () => {
+    const bought = asset({ id: "a", purchaseDate: "2026-01-05T00:00:00.000Z", purchaseAccountId: "cash", purchasePrice: "100.00" });
+    const owned = asset({ id: "b", purchaseDate: "2026-02-01T00:00:00.000Z", purchaseAccountId: null as unknown as string });
+    const sold = asset({ id: "c", purchaseDate: "2026-03-01T00:00:00.000Z", purchaseAccountId: "bank", status: "SOLD", soldAt: "2026-03-01T00:00:00.000Z", soldPrice: "250.00", soldAccountId: "cash" });
+    expect(tradeRows([bought, owned, sold]).map((row) => [row.key, row.date, row.amount, row.accountId])).toEqual([
+      ["c:sell", "2026-03-01", 250, "cash"],
+      ["c:buy", "2026-03-01", Number(sold.purchasePrice), "bank"],
+      ["a:buy", "2026-01-05", 100, "cash"],
+    ]);
   });
 });

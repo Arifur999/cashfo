@@ -32,6 +32,29 @@ export function categoryVisual(categories: AssetCategoryOption[], name: string):
 // flag: every category is).
 export const isActiveCategory = (category: Pick<AssetCategoryOption, "isActive">): boolean => category.isActive !== false;
 
+// Purchase & Sell: a purchase paid from a wallet, or a sale.
+export interface TradeRow {
+  key: string;
+  kind: "PURCHASE" | "SALE";
+  // YYYY-MM-DD
+  date: string;
+  asset: Asset;
+  amount: number;
+  accountId: string | null;
+}
+
+// Purchase & Sell's list: every purchase paid from a wallet (an asset
+// added as already owned moved no money, so it isn't one) and every sale,
+// newest first; on one day the sale comes before the purchase.
+export function tradeRows(assets: Asset[]): TradeRow[] {
+  const rows: TradeRow[] = [];
+  for (const asset of assets) {
+    if (asset.purchaseAccountId) rows.push({ key: `${asset.id}:buy`, kind: "PURCHASE", date: asset.purchaseDate.slice(0, 10), asset, amount: Number(asset.purchasePrice), accountId: asset.purchaseAccountId });
+    if (asset.status === "SOLD" && asset.soldAt) rows.push({ key: `${asset.id}:sell`, kind: "SALE", date: asset.soldAt.slice(0, 10), asset, amount: Number(asset.soldPrice ?? 0), accountId: asset.soldAccountId });
+  }
+  return rows.sort((a, b) => b.date.localeCompare(a.date) || (a.kind === b.kind ? 0 : a.kind === "SALE" ? -1 : 1));
+}
+
 export function assetWorth(asset: Pick<Asset, "status" | "currentValue" | "soldPrice">): number {
   return Number(asset.status === "SOLD" ? (asset.soldPrice ?? 0) : asset.currentValue);
 }
