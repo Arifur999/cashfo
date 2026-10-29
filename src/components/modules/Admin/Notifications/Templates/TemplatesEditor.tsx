@@ -10,7 +10,8 @@ import ErrorState from "@/components/smartly/ErrorState";
 import { cn } from "@/lib/utils";
 import { notificationTemplatesQuery } from "@/queries/notification.queries";
 import type { INotificationTemplateFormValues } from "@/zod/notification.validation";
-import { CHANNEL_META, templateWhen } from "../notificationOptions";
+import { CHANNEL_META, isAutomaticTemplate, templateName, templateWhen } from "../notificationOptions";
+import type { INotificationTemplate } from "@/types/notification.types";
 import NewTemplateDrawer from "./NewTemplateDrawer";
 import TemplateForm from "./TemplateForm";
 import T from "@/components/shared/T";
@@ -59,7 +60,14 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
       {!canManage && <Callout><T>Only super and content admins can change templates.</T></Callout>}
       <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
         <nav aria-label={translate("Templates")} className="overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
-          {templates.map((template) => {
+          {/* The ones campaigns can send first; the app's own messages after, with why editing them does nothing yet. */}
+          <GroupHead title={translate("For campaigns")} />
+          {[...templates.filter((template) => !isAutomaticTemplate(template.key)), "automatic" as const, ...templates.filter((template) => isAutomaticTemplate(template.key))].map((template: INotificationTemplate | "automatic") => {
+            if (template === "automatic") {
+              return templates.some((item) => isAutomaticTemplate(item.key)) ? (
+                <GroupHead key="automatic" title={translate("Automatic messages")} note={translate("The app sends these on its own, still in its built-in wording, so changes here don't reach people yet.")} />
+              ) : null;
+            }
             const on = template.id === current.id;
             const { label, tone } = CHANNEL_META[template.channel];
             const unsaved = template.id in drafts;
@@ -77,7 +85,9 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
               >
                 <span className="flex items-center justify-between gap-2">
                   <span className="flex min-w-0 items-center gap-2">
-                    <code className="truncate font-mono text-small font-semibold text-ink">{template.key}</code>
+                    <span className="truncate text-body font-semibold text-ink">
+                      <T>{templateName(template.key)}</T>
+                    </span>
                     {unsaved && (
                       <span title={translate("Unsaved changes")} className="size-2 shrink-0 rounded-full bg-warning-fill">
                         <span className="sr-only">{translate("Unsaved changes")}</span>
@@ -98,6 +108,7 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
                 <span className="text-[12.5px] leading-[normal] text-ink-muted">
                   <T>{templateWhen(template.key)}</T>
                 </span>
+                <code className="truncate font-mono text-[11.5px] leading-[normal] text-ink-faint">{template.key}</code>
               </button>
             );
           })}
@@ -124,5 +135,13 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
     </div>
   );
 };
+
+// A heading over one part of the templates list.
+const GroupHead = ({ title, note }: { title: string; note?: string }) => (
+  <div className="flex flex-col gap-0.5 border-b border-divider bg-table-head px-4 py-2">
+    <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{title}</span>
+    {note && <span className="text-[12px] leading-snug text-ink-muted">{note}</span>}
+  </div>
+);
 
 export default TemplatesEditor;

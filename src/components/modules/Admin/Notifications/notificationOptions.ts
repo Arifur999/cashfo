@@ -22,20 +22,56 @@ export const LOG_STATUS_LABEL: Record<NotificationLogStatus, string> = {
 };
 
 // What each built-in template is for, for the templates list. Campaigns
-// send with their template; the system messages (welcome, payments, support
-// replies) still go out in the backend's own wording, so those say so.
+// send with their template; the automatic messages (welcome, payments,
+// support replies) still go out in the backend's own wording.
 const TEMPLATE_WHEN: Record<string, string> = {
-  welcome: "Not used yet: the built-in welcome email goes out at sign-up",
-  subscription_expiring: "Not used yet: meant for 3 days before a paid plan ends",
-  payment_successful: "Not used yet: meant for after each successful payment",
-  payment_failed: "Not used yet: meant for when a payment fails",
-  ticket_reply: "Not used yet: the built-in support-reply email and the bell go out when support replies",
+  welcome: "When someone signs up",
+  subscription_expiring: "3 days before a paid plan ends",
+  payment_successful: "After each successful payment",
+  payment_failed: "When a payment fails",
+  ticket_reply: "When support replies to a ticket",
   feature_announcement: "Sent by hand for big new features",
   promo_offer: "Made for campaigns",
 };
 
 // A template an admin made is for campaigns.
 export const templateWhen = (key: string) => TEMPLATE_WHEN[key] ?? "Made for campaigns";
+
+// The built-in templates' names; an admin-made one reads from its key
+// ("eid_offer" is "Eid offer").
+const TEMPLATE_NAMES: Record<string, string> = {
+  welcome: "Welcome",
+  subscription_expiring: "Plan ending soon",
+  payment_successful: "Payment received",
+  payment_failed: "Payment failed",
+  ticket_reply: "Support reply",
+  feature_announcement: "New feature",
+  promo_offer: "Offer",
+};
+
+export const templateName = (key: string): string => {
+  if (TEMPLATE_NAMES[key]) return TEMPLATE_NAMES[key];
+  const words = key.replace(/[_-]+/g, " ").trim();
+  return words ? words[0].toUpperCase() + words.slice(1) : key;
+};
+
+// The messages the app sends on its own. Campaigns can't use them, and the
+// app still writes them in its built-in wording, so editing one here
+// doesn't change what people get yet.
+const AUTOMATIC = new Set(["welcome", "subscription_expiring", "payment_successful", "payment_failed", "ticket_reply"]);
+export const isAutomaticTemplate = (key: string) => AUTOMATIC.has(key);
+
+// What each placeholder holds, for its chip ("{{userName}}" reads "Name").
+export const VARIABLE_LABELS: Record<string, string> = {
+  userName: "Name",
+  planName: "Plan",
+  expiryDate: "End date",
+  amount: "Amount",
+  invoiceNumber: "Invoice number",
+  ticketSubject: "Ticket subject",
+  code: "Coupon code",
+  featureName: "Feature name",
+};
 
 // What a preview puts in each placeholder.
 export const SAMPLE_VALUES: Record<string, string> = {

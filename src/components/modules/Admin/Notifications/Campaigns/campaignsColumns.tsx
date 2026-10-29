@@ -9,7 +9,7 @@ import type { Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import type { BadgeTone } from "@/lib/statusBadge";
 import type { CampaignStatus, ICampaign } from "@/types/notification.types";
-import { CAMPAIGN_STATUS_LABEL, CHANNEL_META } from "../notificationOptions";
+import { CAMPAIGN_STATUS_LABEL, CHANNEL_META, templateName } from "../notificationOptions";
 import { describeAudience, isPastDue } from "./campaignOptions";
 import { inEnglish } from "@/lib/i18n/message";
 
@@ -77,7 +77,9 @@ export const buildCampaignsColumns = (planNames: Map<string, string>): ColumnDef
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-[13.5px] leading-[normal] font-semibold text-ink">{row.original.title}</span>
-        <code className="truncate font-mono text-caption text-ink-muted">{row.original.templateKey}</code>
+        <span className="truncate text-caption text-ink-muted">
+          <T>{templateName(row.original.templateKey)}</T>
+        </span>
       </span>
     ),
   },

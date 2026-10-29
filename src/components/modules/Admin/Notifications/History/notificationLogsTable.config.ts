@@ -1,6 +1,6 @@
 import type { ServerDataTableConfig } from "@/hooks/useServerDataTable";
 import { type INotificationTemplate, NOTIFICATION_CHANNELS, NOTIFICATION_LOG_STATUSES } from "@/types/notification.types";
-import { CHANNEL_META, LOG_STATUS_LABEL } from "../notificationOptions";
+import { CHANNEL_META, LOG_STATUS_LABEL, templateName } from "../notificationOptions";
 
 // What the page needs to build the identical query string on the server.
 export const NOTIFICATION_LOGS_TABLE_BASE_CONFIG = {
@@ -16,7 +16,7 @@ export const buildNotificationLogsTableConfig = (templates: INotificationTemplat
   filters: [
     { id: "status", type: "single-select", label: "Status", options: NOTIFICATION_LOG_STATUSES.map((status) => ({ value: status, label: LOG_STATUS_LABEL[status] })) },
     { id: "channel", type: "single-select", label: "Channel", options: NOTIFICATION_CHANNELS.map((channel) => ({ value: channel, label: CHANNEL_META[channel].label })) },
-    { id: "templateKey", type: "single-select", label: "Template", options: templates.map((template) => ({ value: template.key, label: template.key })) },
+    { id: "templateKey", type: "single-select", label: "Template", options: templates.map((template) => ({ value: template.key, label: templateName(template.key) })) },
   ],
 });
 
