@@ -296,7 +296,6 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
         eyebrow={t("Loans")}
         tone="loans"
         title={t("Loan statement")}
-        description={t("One bank or person, every entry, with the balance carried forward.")}
         actions={
           ((pdfExportOn && ready) || (canManage && activeContacts.length > 0)) && (
             <>
