@@ -12,6 +12,7 @@ import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
+import Textarea from "@/components/smartly/form/Textarea";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, AssetCategoryOption } from "@/lib/customer/api";
@@ -35,6 +36,14 @@ interface AssetDrawerProps {
   initialMode?: Mode;
   // The type picked when it opens (an empty type's own "Add asset").
   initialCategory?: string;
+  // "add": the All assets board's Add asset popup, in the middle of the
+  // screen: something already owned, with one value, the date first and
+  // its details.
+  variant?: "full" | "add";
+  // Above the form (Purchase & Sell's Purchase / Sale tabs), with the
+  // popup's own title.
+  tabs?: React.ReactNode;
+  title?: string;
 }
 
 type Mode = "buy" | "own";
@@ -43,7 +52,8 @@ type Mode = "buy" | "own";
 // something already owned (nothing moves; what was paid, when, and what it
 // is worth today). Name, type, price, the wallet for a purchase, the date
 // and a note.
-export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy", initialCategory }: AssetDrawerProps) {
+export function AssetDrawer({ open, onClose, businessId, categories, totalValue, currency, initialMode = "buy", initialCategory, variant = "full", tabs, title }: AssetDrawerProps) {
+  const adding = variant === "add";
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -65,7 +75,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setMode(initialMode);
+      setMode(adding ? "own" : initialMode);
       setName("");
       setCategory(categories.some((option) => option.name === initialCategory) ? (initialCategory ?? "") : (categories.find((option) => option.name === "Other")?.name ?? categories[0]?.name ?? ""));
       setPrice("");
@@ -132,8 +142,9 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
     <Drawer
       open={open}
       width={460}
-      title={t("Add an asset")}
-      description={t("Something you're buying now, or something you already own.")}
+      popup
+      title={title ?? t(adding ? "Add asset" : "Add an asset")}
+      description={tabs ? undefined : t(adding ? "Add something you own to your asset list." : "Something you're buying now, or something you already own.")}
       busy={isPending}
       onClose={onClose}
       onSubmit={submit}
@@ -144,13 +155,20 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
           </Button>
           <Button type="submit" disabled={!valid || isPending} className="px-4.5">
             {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-            {buying ? (value > 0 ? t("Buy for {amount}", { amount: formatCurrency(value, currency, fmt) }) : t("Buy asset")) : t("Add asset")}
+            {buying ? (value > 0 ? t("Buy for {amount}", { amount: formatCurrency(value, currency, fmt) }) : t("Buy asset")) : t(adding ? "Save asset" : "Add asset")}
           </Button>
         </>
       }
     >
       {/* The board's tighter 16px rhythm for this longer form. */}
       <div className="-my-1 flex flex-col gap-4">
+        {tabs}
+        {adding && (
+          <Field htmlFor="asset-date" label={label(t("Date"))}>
+            <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={lastDay} />
+          </Field>
+        )}
+        {!adding && !tabs && (
         <SegmentedControl
           options={[
             { value: "buy", label: t("Buying it now") },
@@ -162,6 +180,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
           size="lg"
           stretch
         />
+        )}
 
         <Field htmlFor="asset-name" label={label(t("Asset name"))}>
           <Input id="asset-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("Gold ring, 22K")} />
@@ -169,11 +188,11 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
 
         <TypeChoice categories={categories} value={category} onChange={setCategory} onClose={onClose} />
 
-        <Field htmlFor="asset-price" label={label(buying ? t("Price") : t("What you paid"))}>
+        <Field htmlFor="asset-price" label={label(adding ? t("Value") : buying ? t("Price") : t("What you paid"))}>
           <AmountInput id="asset-price" value={price} onChange={setPrice} currency={currency} />
         </Field>
 
-        {!buying && (
+        {!buying && !adding && (
           <Field htmlFor="asset-worth" label={label(t("Value today"), true)} hint={t("Change it if it's worth more or less now.")}>
             <AmountInput id="asset-worth" value={worth ?? price} onChange={setWorth} currency={currency} describedBy="asset-worth-hint" />
           </Field>
@@ -205,14 +224,20 @@ export function AssetDrawer({ open, onClose, businessId, categories, totalValue,
           </div>
         )}
 
-        <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
-          <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>
-            <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={lastDay} />
+        {adding ? (
+          <Field htmlFor="asset-note" label={label(t("Details"), true)}>
+            <Textarea id="asset-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} rows={3} placeholder={t("e.g. Where it is, purchase date, papers or any notes")} />
           </Field>
-          <Field htmlFor="asset-note" label={label(t("Note"), true)}>
-            <Input id="asset-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
-          </Field>
-        </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
+            <Field htmlFor="asset-date" label={label(buying ? t("Date") : t("Bought on"))}>
+              <DayInput id="asset-date" size="md" value={date} onChange={setDate} max={lastDay} />
+            </Field>
+            <Field htmlFor="asset-note" label={label(t("Note"), true)}>
+              <Input id="asset-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
+            </Field>
+          </div>
+        )}
 
         {value > 0 && (
           <div className="flex flex-col gap-2 rounded-md border border-line bg-strip p-4 text-small tabular-nums">

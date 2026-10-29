@@ -28,6 +28,33 @@ export function categoryVisual(categories: AssetCategoryOption[], name: string):
 }
 
 // What an asset is worth: today's value while owned, the sale price once sold.
+// Whether a category is offered for new assets (an older backend sends no
+// flag: every category is).
+export const isActiveCategory = (category: Pick<AssetCategoryOption, "isActive">): boolean => category.isActive !== false;
+
+// Purchase & Sell: a purchase paid from a wallet, or a sale.
+export interface TradeRow {
+  key: string;
+  kind: "PURCHASE" | "SALE";
+  // YYYY-MM-DD
+  date: string;
+  asset: Asset;
+  amount: number;
+  accountId: string | null;
+}
+
+// Purchase & Sell's list: every purchase paid from a wallet (an asset
+// added as already owned moved no money, so it isn't one) and every sale,
+// newest first; on one day the sale comes before the purchase.
+export function tradeRows(assets: Asset[]): TradeRow[] {
+  const rows: TradeRow[] = [];
+  for (const asset of assets) {
+    if (asset.purchaseAccountId) rows.push({ key: `${asset.id}:buy`, kind: "PURCHASE", date: asset.purchaseDate.slice(0, 10), asset, amount: Number(asset.purchasePrice), accountId: asset.purchaseAccountId });
+    if (asset.status === "SOLD" && asset.soldAt) rows.push({ key: `${asset.id}:sell`, kind: "SALE", date: asset.soldAt.slice(0, 10), asset, amount: Number(asset.soldPrice ?? 0), accountId: asset.soldAccountId });
+  }
+  return rows.sort((a, b) => b.date.localeCompare(a.date) || (a.kind === b.kind ? 0 : a.kind === "SALE" ? -1 : 1));
+}
+
 export function assetWorth(asset: Pick<Asset, "status" | "currentValue" | "soldPrice">): number {
   return Number(asset.status === "SOLD" ? (asset.soldPrice ?? 0) : asset.currentValue);
 }
@@ -175,6 +202,95 @@ export function valueTimeline(asset: Pick<Asset, "valueHistory">, pending?: { da
   const at = entries.findIndex((entry) => entry.date.slice(0, 10) <= pending.date);
   entries.splice(at === -1 ? entries.length : at, 0, { id: "new", date: pending.date, value: pending.value, note: pending.note, kind: "new" });
   return entries;
+}
+
+// One line of an asset's value statement, oldest first: the first is
+// where it started (bought or listed), each later one a value update with
+// what it was before and how far it moved.
+export interface StatementLine {
+  id: string;
+  date: string;
+  value: number;
+  note: string | null;
+  previous: number | null;
+  change: number | null;
+  percent: number | null;
+}
+
+export function statementLines(asset: Pick<Asset, "valueHistory">): StatementLine[] {
+  const oldestFirst = valueTimeline(asset).reverse();
+  return oldestFirst.map((entry, index) => {
+    const previous = index === 0 ? null : oldestFirst[index - 1].value;
+    const change = previous === null ? null : entry.value - previous;
+    return { id: entry.id, date: entry.date, value: entry.value, note: entry.note, previous, change, percent: previous ? ((change ?? 0) / previous) * 100 : null };
+  });
+}
+
+// A point on the Dashboard's value chart: what the assets were worth on a
+// day against what was paid for them, and the assets added since the point
+// before (by name).
+export interface ValuePoint {
+  // YYYY-MM-DD
+  date: string;
+  value: number;
+  paid: number;
+  added: string[];
+  today: boolean;
+}
+
+// What an asset was worth at the end of a day: its last value recorded by
+// then, or null before it was bought.
+export function valueOn(asset: Pick<Asset, "valueHistory" | "purchaseDate" | "purchasePrice">, day: string): number | null {
+  if (asset.purchaseDate.slice(0, 10) > day) return null;
+  const known = valueTimeline(asset).find((entry) => entry.date.slice(0, 10) <= day);
+  return known ? known.value : Number(asset.purchasePrice);
+}
+
+// The owned assets together: their value at the end of each year since the
+// first was bought, and today. It steps up when an asset is added and moves
+// with every value update.
+export function portfolioSeries(owned: Asset[], today: string): ValuePoint[] {
+  if (owned.length === 0) return [];
+  const firstYear = Math.min(...owned.map((asset) => Number(asset.purchaseDate.slice(0, 4))));
+  const thisYear = Number(today.slice(0, 4));
+  const days = [...Array.from({ length: Math.max(0, thisYear - firstYear) }, (_, i) => `${firstYear + i}-12-31`), today];
+  return days.map((day, index) => {
+    let value = 0;
+    let paid = 0;
+    for (const asset of owned) {
+      const worth = valueOn(asset, day);
+      if (worth === null) continue;
+      value += worth;
+      paid += Number(asset.purchasePrice);
+    }
+    const from = index === 0 ? "" : days[index - 1];
+    const added = owned.filter((asset) => asset.purchaseDate.slice(0, 10) > from && asset.purchaseDate.slice(0, 10) <= day).map((asset) => asset.name);
+    return { date: day, value, paid, added, today: index === days.length - 1 };
+  });
+}
+
+// One asset: every value it was recorded at, against its starting price.
+export function assetSeries(asset: Pick<Asset, "valueHistory">): ValuePoint[] {
+  const lines = statementLines(asset);
+  const start = lines[0]?.value ?? 0;
+  return lines.map((line, index) => ({ date: line.date.slice(0, 10), value: line.value, paid: start, added: [], today: index === lines.length - 1 }));
+}
+
+// The Dashboard table's orders.
+export type AssetSort = "gain" | "loss" | "valueHigh" | "valueLow" | "newest" | "oldest";
+
+export function sortAssets(assets: Asset[], by: AssetSort): Asset[] {
+  const percent = (asset: Asset) => assetGain(asset).percent;
+  const worth = (asset: Asset) => assetWorth(asset);
+  const compare: Record<AssetSort, (a: Asset, b: Asset) => number> = {
+    gain: (a, b) => percent(b) - percent(a),
+    loss: (a, b) => percent(a) - percent(b),
+    valueHigh: (a, b) => worth(b) - worth(a),
+    valueLow: (a, b) => worth(a) - worth(b),
+    newest: (a, b) => b.purchaseDate.localeCompare(a.purchaseDate),
+    oldest: (a, b) => a.purchaseDate.localeCompare(b.purchaseDate),
+  };
+  return [...assets].sort((a, b) => compare[by](a, b) || a.name.localeCompare(b.name));
 }
 
 // The type chips over My assets: every type that holds something, in the

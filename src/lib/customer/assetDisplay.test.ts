@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Asset, AssetCategoryOption } from "./api";
 import {
+  portfolioSeries,
+  sortAssets,
+  valueOn,
+  statementLines,
+  tradeRows,
   assetGain,
   assetsSummary,
   biggestChanges,
@@ -241,5 +246,76 @@ describe("sparkline", () => {
   it("centres a single or flat value", () => {
     expect(sparkline([5]).line).toBe("65,20");
     expect(sparkline([5, 5]).line).toBe("4,20 126,20");
+  });
+});
+
+describe("tradeRows", () => {
+  it("lists wallet purchases and sales, newest first, a sale before a purchase on one day", () => {
+    const bought = asset({ id: "a", purchaseDate: "2026-01-05T00:00:00.000Z", purchaseAccountId: "cash", purchasePrice: "100.00" });
+    const owned = asset({ id: "b", purchaseDate: "2026-02-01T00:00:00.000Z", purchaseAccountId: null as unknown as string });
+    const sold = asset({ id: "c", purchaseDate: "2026-03-01T00:00:00.000Z", purchaseAccountId: "bank", status: "SOLD", soldAt: "2026-03-01T00:00:00.000Z", soldPrice: "250.00", soldAccountId: "cash" });
+    expect(tradeRows([bought, owned, sold]).map((row) => [row.key, row.date, row.amount, row.accountId])).toEqual([
+      ["c:sell", "2026-03-01", 250, "cash"],
+      ["c:buy", "2026-03-01", Number(sold.purchasePrice), "bank"],
+      ["a:buy", "2026-01-05", 100, "cash"],
+    ]);
+  });
+});
+
+describe("statementLines", () => {
+  it("starts where the asset started and gives each update its change", () => {
+    const lines = statementLines(
+      asset({
+        valueHistory: [
+          { id: "2", value: "120.00", recordedAt: "2026-05-01T00:00:00.000Z", note: "Checked" },
+          { id: "1", value: "100.00", recordedAt: "2026-01-01T00:00:00.000Z", note: "Initial purchase value" },
+          { id: "3", value: "90.00", recordedAt: "2026-09-01T00:00:00.000Z", note: null },
+        ] as Asset["valueHistory"],
+      }),
+    );
+    expect(lines.map((line) => [line.id, line.previous, line.change, line.percent === null ? null : Math.round(line.percent)])).toEqual([
+      ["1", null, null, null],
+      ["2", 100, 20, 20],
+      ["3", 120, -30, -25],
+    ]);
+  });
+});
+
+describe("the Dashboard's value chart", () => {
+  const land = asset({
+    id: "land",
+    name: "Land",
+    purchaseDate: "2024-03-01T00:00:00.000Z",
+    purchasePrice: "100.00",
+    valueHistory: [
+      { id: "l1", value: "100.00", recordedAt: "2024-03-01T00:00:00.000Z", note: "Initial purchase value" },
+      { id: "l2", value: "150.00", recordedAt: "2025-06-01T00:00:00.000Z", note: null },
+    ] as Asset["valueHistory"],
+  });
+  const car = asset({ id: "car", name: "Car", purchaseDate: "2026-02-01T00:00:00.000Z", purchasePrice: "50.00", currentValue: "50.00", valueHistory: [] });
+
+  it("reads an asset's value on a day, nothing before it was bought", () => {
+    expect(valueOn(land, "2024-01-01")).toBeNull();
+    expect(valueOn(land, "2024-12-31")).toBe(100);
+    expect(valueOn(land, "2025-12-31")).toBe(150);
+    expect(valueOn(car, "2026-03-01")).toBe(50);
+  });
+
+  it("totals each year's end and today, naming what was added", () => {
+    expect(portfolioSeries([land, car], "2026-10-29").map((point) => [point.date, point.value, point.paid, point.added, point.today])).toEqual([
+      ["2024-12-31", 100, 100, ["Land"], false],
+      ["2025-12-31", 150, 100, [], false],
+      ["2026-10-29", 200, 150, ["Car"], true],
+    ]);
+    expect(portfolioSeries([], "2026-10-29")).toEqual([]);
+  });
+
+  it("sorts by gain, value or purchase date", () => {
+    const up = asset({ id: "up", name: "Up", purchasePrice: "100.00", currentValue: "150.00", purchaseDate: "2020-01-01T00:00:00.000Z" });
+    const down = asset({ id: "down", name: "Down", purchasePrice: "100.00", currentValue: "80.00", purchaseDate: "2022-01-01T00:00:00.000Z" });
+    expect(sortAssets([down, up], "gain").map((a) => a.id)).toEqual(["up", "down"]);
+    expect(sortAssets([up, down], "loss").map((a) => a.id)).toEqual(["down", "up"]);
+    expect(sortAssets([up, down], "newest").map((a) => a.id)).toEqual(["down", "up"]);
+    expect(sortAssets([down, up], "valueLow").map((a) => a.id)).toEqual(["down", "up"]);
   });
 });

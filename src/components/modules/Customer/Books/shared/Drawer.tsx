@@ -45,6 +45,8 @@ interface DrawerProps {
   // (the loan boards: LoanContactDrawer, LoanPrincipalDrawer,
   // LoanProfitDrawer); a phone keeps the sheet from the bottom.
   popup?: boolean;
+  // The popup's own width class from md (w-140 by default).
+  popupClassName?: string;
   children: React.ReactNode;
 }
 
@@ -53,7 +55,7 @@ interface DrawerProps {
 // phone), holding a form with the head (18px title, the 13px line under it,
 // the round close button), a scrolling body and the foot with its buttons on
 // the right, each edged by a line.
-export function Drawer({ open, title, description, width = 480, icon, titleAside, actions, onOpenAutoFocus, busy = false, onClose, onSubmit, footer, popup = false, children }: DrawerProps) {
+export function Drawer({ open, title, description, width = 480, icon, titleAside, actions, onOpenAutoFocus, busy = false, onClose, onSubmit, footer, popup = false, popupClassName, children }: DrawerProps) {
   const { t } = useLocale();
   const wide = useMediaQuery("(min-width: 768px)");
   const closeButton = (
@@ -72,7 +74,7 @@ export function Drawer({ open, title, description, width = 480, icon, titleAside
   if (popup && wide) {
     return (
       <Dialog open={open} onOpenChange={(next) => !next && !busy && onClose()}>
-        <DialogContent showCloseButton={false} onOpenAutoFocus={onOpenAutoFocus} className="flex max-h-[calc(100dvh-48px)] w-140 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-none">
+        <DialogContent showCloseButton={false} onOpenAutoFocus={onOpenAutoFocus} className={cn("flex max-h-[calc(100dvh-48px)] w-140 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-none", popupClassName)}>
           <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-5">
             {icon}
             <div className={cn("flex min-w-0 flex-col gap-1", (icon || titleAside || actions) && "mr-auto")}>

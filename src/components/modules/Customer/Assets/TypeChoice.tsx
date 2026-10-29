@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId, useRef } from "react";
 import type { AssetCategoryOption } from "@/lib/customer/api";
-import { categoryVisual } from "@/lib/customer/assetDisplay";
+import { categoryVisual, isActiveCategory } from "@/lib/customer/assetDisplay";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,8 @@ export function TypeChoice({ categories, value, onChange, onClose, keep }: TypeC
   const { t } = useLocale();
   const legendId = useId();
   const chips = useRef<(HTMLButtonElement | null)[]>([]);
-  const names = categories.map((option) => option.name);
+  // Inactive categories are left out, unless already picked or carried.
+  const names = categories.filter((option) => isActiveCategory(option) || option.name === value || option.name === keep).map((option) => option.name);
   if (keep && !names.includes(keep)) names.push(keep);
   const checked = names.indexOf(value);
 
