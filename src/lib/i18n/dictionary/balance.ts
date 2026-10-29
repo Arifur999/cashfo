@@ -290,4 +290,7 @@ export const balanceDictionary: Record<string, string> = {
   // The redesigned Balance overview's figure cards
   "Total in": "মোট এসেছে",
   "Total out": "মোট গেছে",
+
+  // The ledger's round print button
+  "Print or save as PDF": "প্রিন্ট বা PDF হিসেবে সেভ করুন",
 };

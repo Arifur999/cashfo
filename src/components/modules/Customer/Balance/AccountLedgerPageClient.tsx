@@ -232,15 +232,20 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
         </Link>
       )}
       <PageHeader
-        eyebrow={`${t("Money")} · ${t("Wallets")}`}
         title={t("Account ledger")}
-        description={t("Every movement through one account, with a running balance.")}
         actions={
-          // Greyed until there is a ledger to print (the empty board).
+          // The board's round print button, greyed until there is a ledger
+          // to print (the empty board).
           pdfExportOn && (
-            <Button variant="secondary" onClick={printStatement} disabled={!ready || loadingPrint} title={ready ? undefined : t("Pick an account first")} className="disabled:pointer-events-auto disabled:cursor-not-allowed disabled:border-line disabled:text-ink-faint disabled:opacity-100">
-              <Printer className={cn("size-4", ready ? "text-ink-soft" : "text-ink-faint")} />
-              {loadingPrint ? t("Preparing...") : t("Print / PDF")}
+            <Button
+              variant="secondary"
+              onClick={printStatement}
+              disabled={!ready || loadingPrint}
+              aria-label={t("Print or save as PDF")}
+              title={ready ? (loadingPrint ? t("Preparing...") : t("Print or save as PDF")) : t("Pick an account first")}
+              className="size-11 rounded-full p-0 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:border-line disabled:text-ink-faint disabled:opacity-100"
+            >
+              <Printer className={cn("size-4.5", ready ? "text-ink-2" : "text-ink-faint")} />
             </Button>
           )
         }
