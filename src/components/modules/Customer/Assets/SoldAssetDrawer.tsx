@@ -91,6 +91,7 @@ export function SoldAssetDrawer({ open, onClose, businessId, asset, categories, 
     // Nothing to fill in: the frame's form only stops a stray Enter.
     <Drawer
       open={open}
+      popup
       width={460}
       icon={<AssetTypeTile visual={visual} size="lg" className="rounded-field" />}
       title={asset.name}

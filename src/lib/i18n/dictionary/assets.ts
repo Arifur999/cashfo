@@ -286,4 +286,14 @@ export const assetsDictionary: Record<string, string> = {
   "Activate {name}": "{name} সক্রিয় করুন",
   "Shows in dropdowns": "তালিকায় দেখায়",
   "Hidden from dropdowns": "তালিকায় লুকানো",
+
+  // The redesigned All assets page and its Add asset popup
+  "Search assets by name, category or note…": "নাম, ক্যাটাগরি বা নোট দিয়ে সম্পদ খুঁজুন…",
+  "All status": "সব অবস্থা",
+  "See the sale of {name}": "{name}-এর বিক্রি দেখুন",
+  "Sold for": "বিক্রিমূল্য",
+  "{amount} vs what you paid": "যা দিয়েছিলেন তার তুলনায় {amount}",
+  "e.g. Where it is, purchase date, papers or any notes": "যেমন কোথায় আছে, কেনার তারিখ, কাগজপত্র বা যেকোনো নোট",
+  "Add something you own to your asset list.": "আপনার মালিকানার কিছু সম্পদের তালিকায় যোগ করুন।",
+  "Save asset": "সম্পদ সেভ করুন",
 };

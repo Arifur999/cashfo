@@ -7,7 +7,7 @@ import { customerPageMetadata } from "@/lib/customer/pageTitle";
 
 export const generateMetadata = () => customerPageMetadata("/assets-management/current");
 
-// My assets: what is owned right now (a sold asset lives on the overview).
+// All assets: everything owned or sold.
 export default async function MyAssetsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -21,5 +21,5 @@ export default async function MyAssetsPage() {
 
   // Keyed by workspace: a switch lands on this same page, and its drawers
   // and filters must not carry the other workspace's choices over.
-  return <MyAssetsPageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets.filter((a) => a.status === "ACTIVE")} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
+  return <MyAssetsPageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
 }

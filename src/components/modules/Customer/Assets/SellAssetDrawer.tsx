@@ -110,6 +110,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset, categories, 
   return (
     <Drawer
       open={open}
+      popup
       width={460}
       title={t("Sell asset")}
       busy={isPending}

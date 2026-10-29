@@ -158,6 +158,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
   return (
     <Drawer
       open={open}
+      popup
       width={460}
       icon={<AssetTypeTile visual={visual} size="lg" className="rounded-field" />}
       title={mode === "value" ? t("Update value") : t("Edit details")}
