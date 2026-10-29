@@ -969,6 +969,9 @@ export interface AssetCategoryOption {
   icon: string | null;
   color: string;
   displayOrder: number;
+  // Off: left out of the Purchase and Add asset dropdowns. Missing from an
+  // older backend, which means on.
+  isActive?: boolean;
 }
 
 // One point-in-time value the asset was recorded at after purchase (e.g. a

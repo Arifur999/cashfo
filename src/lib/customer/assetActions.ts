@@ -163,6 +163,7 @@ export interface AssetCategoryInput {
   name: string;
   icon?: string | null;
   color: string;
+  isActive?: boolean;
 }
 
 export async function createAssetCategoryAction(businessId: string, input: AssetCategoryInput): Promise<ActionResult<AssetCategoryOption>> {

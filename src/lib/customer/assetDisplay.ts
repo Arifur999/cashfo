@@ -28,6 +28,10 @@ export function categoryVisual(categories: AssetCategoryOption[], name: string):
 }
 
 // What an asset is worth: today's value while owned, the sale price once sold.
+// Whether a category is offered for new assets (an older backend sends no
+// flag: every category is).
+export const isActiveCategory = (category: Pick<AssetCategoryOption, "isActive">): boolean => category.isActive !== false;
+
 export function assetWorth(asset: Pick<Asset, "status" | "currentValue" | "soldPrice">): number {
   return Number(asset.status === "SOLD" ? (asset.soldPrice ?? 0) : asset.currentValue);
 }

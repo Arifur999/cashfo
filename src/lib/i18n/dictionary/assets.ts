@@ -273,4 +273,17 @@ export const assetsDictionary: Record<string, string> = {
   "{percent} of everything you own": "আপনার সব সম্পদের {percent}",
   "Nothing in it yet": "এখনো কিছু নেই",
   "Deleting a category doesn't change the assets already in it.": "ক্যাটাগরি মুছলে তার ভেতরের সম্পদ বদলায় না।",
+
+  // The redesigned Category page (2026-10-29): the table, the Active switch, the name popup
+  "Please enter a category name.": "ক্যাটাগরির নাম লিখুন।",
+  "Category list": "ক্যাটাগরির তালিকা",
+  "Active categories show in the Purchase and Add asset dropdowns. Inactive ones are hidden there; assets already in them stay as they are.": "সক্রিয় ক্যাটাগরিগুলো ক্রয় আর সম্পদ যোগের তালিকায় দেখায়। নিষ্ক্রিয়গুলো সেখানে লুকানো থাকে; সেগুলোর ভেতরের সম্পদ যেমন আছে তেমনই থাকে।",
+  "It will show in the Category dropdown of Purchase and Add asset.": "এটা ক্রয় আর সম্পদ যোগের ক্যাটাগরি তালিকায় দেখাবে।",
+  "Category saved": "ক্যাটাগরি সেভ হয়েছে",
+  "Category is active": "ক্যাটাগরি সক্রিয় হয়েছে",
+  "Category is inactive": "ক্যাটাগরি নিষ্ক্রিয় হয়েছে",
+  "Make {name} inactive": "{name} নিষ্ক্রিয় করুন",
+  "Activate {name}": "{name} সক্রিয় করুন",
+  "Shows in dropdowns": "তালিকায় দেখায়",
+  "Hidden from dropdowns": "তালিকায় লুকানো",
 };
