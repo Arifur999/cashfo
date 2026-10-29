@@ -204,6 +204,28 @@ export function valueTimeline(asset: Pick<Asset, "valueHistory">, pending?: { da
   return entries;
 }
 
+// One line of an asset's value statement, oldest first: the first is
+// where it started (bought or listed), each later one a value update with
+// what it was before and how far it moved.
+export interface StatementLine {
+  id: string;
+  date: string;
+  value: number;
+  note: string | null;
+  previous: number | null;
+  change: number | null;
+  percent: number | null;
+}
+
+export function statementLines(asset: Pick<Asset, "valueHistory">): StatementLine[] {
+  const oldestFirst = valueTimeline(asset).reverse();
+  return oldestFirst.map((entry, index) => {
+    const previous = index === 0 ? null : oldestFirst[index - 1].value;
+    const change = previous === null ? null : entry.value - previous;
+    return { id: entry.id, date: entry.date, value: entry.value, note: entry.note, previous, change, percent: previous ? ((change ?? 0) / previous) * 100 : null };
+  });
+}
+
 // The type chips over My assets: every type that holds something, in the
 // types' own order, then names no type carries any more. The type the page
 // was opened for (an Asset types card) stays even while it holds nothing.

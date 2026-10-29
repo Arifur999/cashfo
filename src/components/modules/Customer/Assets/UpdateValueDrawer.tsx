@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { Info, Minus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -60,6 +60,8 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
   const [bought, setBought] = useState("");
   // Which button waits while a request runs.
   const [running, setRunning] = useState<"save" | "delete">("save");
+  // The value just saved, for the result screen.
+  const [saved, setSaved] = useState<{ before: number; after: number } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -67,6 +69,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
   if (key !== prevKey) {
     setPrevKey(key);
     if (open && asset) {
+      setSaved(null);
       setMode("value");
       setValue(String(Number(asset.currentValue)));
       setDate(getAppToday());
@@ -135,7 +138,22 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     if (mode === "details") {
       if (detailsValid) run("save", () => updateAssetAction(businessId, asset.id, changes), "Changes saved", "Failed to save the changes");
     } else if (valid) {
-      run("save", () => updateAssetValueAction(businessId, asset.id, { value: next, date, note: note.trim() || undefined }), "Value updated", "Failed to update value");
+      // An earlier date fills in the history and leaves today's value, so
+      // only a value for the latest day gets the result screen.
+      if (backdated) {
+        run("save", () => updateAssetValueAction(businessId, asset.id, { value: next, date, note: note.trim() || undefined }), "Value updated", "Failed to update value");
+        return;
+      }
+      setRunning("save");
+      startTransition(async () => {
+        const result = await updateAssetValueAction(businessId, asset.id, { value: next, date, note: note.trim() || undefined }).catch((): ActionResult<unknown> => ({ success: false }));
+        if (result.success) {
+          setSaved({ before: current, after: next });
+          router.refresh();
+        } else {
+          toast.error(t(result.message ?? "Failed to update value"));
+        }
+      });
     }
   }
 
@@ -154,6 +172,46 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
       {text} {optional && <span className="font-normal text-ink-muted">({t("optional")})</span>}
     </span>
   );
+
+  if (saved) {
+    const move = saved.after - saved.before;
+    const movePercent = saved.before > 0 ? (move / saved.before) * 100 : 0;
+    const paidChip = gainChip(paid > 0 ? ((saved.after - paid) / paid) * 100 : 0);
+    const paidMove = saved.after - paid;
+    const Icon = move > 0 ? TrendingUp : move < 0 ? TrendingDown : Minus;
+    return (
+      <Drawer
+        open={open}
+        popup
+        width={460}
+        icon={<AssetTypeTile visual={visual} size="lg" className="rounded-field" />}
+        title={t("Update value")}
+        description={`${asset.name} · ${t(asset.category)}`}
+        onClose={onClose}
+        footer={
+          <Button type="button" onClick={onClose} className="px-5">
+            {t("Done@@sheet")}
+          </Button>
+        }
+      >
+        <div role="status" className="flex flex-col items-center gap-2 py-4 text-center">
+          <span className={cn("flex size-14 items-center justify-center rounded-full", move > 0 ? "bg-income-soft text-income" : move < 0 ? "bg-expense-soft text-expense" : "bg-surface-sunken text-ink-2")}>
+            <Icon className="size-6" aria-hidden="true" />
+          </span>
+          <span className={cn("text-[20px] font-bold", move > 0 ? "text-income" : move < 0 ? "text-expense" : "text-ink")}>
+            {move === 0 ? t("Value unchanged") : t(move > 0 ? "Value went up {percent}" : "Value went down {percent}", { percent: toLocaleDigits(`${Math.abs(movePercent).toFixed(1)}%`, fmt) })}
+          </span>
+          <span className="text-body text-ink-2 tabular-nums">
+            {`${formatCurrency(saved.before, currency, fmt)} → ${formatCurrency(saved.after, currency, fmt)}`}
+            {move !== 0 && ` (${move > 0 ? "+" : "−"} ${formatCurrency(Math.abs(move), currency, fmt)})`}
+          </span>
+          <span className="text-small text-ink-muted tabular-nums">
+            {t("Compared with what you paid: {change}", { change: `${paidMove > 0 ? "+" : paidMove < 0 ? "−" : ""} ${formatCurrency(Math.abs(paidMove), currency, fmt)} · ${toLocaleDigits(paidChip.label, fmt)}`.trim() })}
+          </span>
+        </div>
+      </Drawer>
+    );
+  }
 
   return (
     <Drawer

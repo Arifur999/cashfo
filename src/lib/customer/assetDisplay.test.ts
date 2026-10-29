@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Asset, AssetCategoryOption } from "./api";
 import {
+  statementLines,
   tradeRows,
   assetGain,
   assetsSummary,
@@ -254,6 +255,25 @@ describe("tradeRows", () => {
       ["c:sell", "2026-03-01", 250, "cash"],
       ["c:buy", "2026-03-01", Number(sold.purchasePrice), "bank"],
       ["a:buy", "2026-01-05", 100, "cash"],
+    ]);
+  });
+});
+
+describe("statementLines", () => {
+  it("starts where the asset started and gives each update its change", () => {
+    const lines = statementLines(
+      asset({
+        valueHistory: [
+          { id: "2", value: "120.00", recordedAt: "2026-05-01T00:00:00.000Z", note: "Checked" },
+          { id: "1", value: "100.00", recordedAt: "2026-01-01T00:00:00.000Z", note: "Initial purchase value" },
+          { id: "3", value: "90.00", recordedAt: "2026-09-01T00:00:00.000Z", note: null },
+        ] as Asset["valueHistory"],
+      }),
+    );
+    expect(lines.map((line) => [line.id, line.previous, line.change, line.percent === null ? null : Math.round(line.percent)])).toEqual([
+      ["1", null, null, null],
+      ["2", 100, 20, 20],
+      ["3", 120, -30, -25],
     ]);
   });
 });
