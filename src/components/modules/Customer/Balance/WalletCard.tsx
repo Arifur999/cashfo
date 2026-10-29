@@ -53,9 +53,10 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
     <div
       aria-busy={busy || undefined}
       className={cn(
-        // A real card's shape (ID-1, 85.6 x 54 mm) on wider screens, with room
-        // above and below its lines.
-        "relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white transition-opacity md:aspect-[1.586/1] md:justify-between md:gap-0 md:rounded-[18px] md:px-6 md:py-6 md:shadow-float",
+        // A real card's shape and size (ID-1, 85.6 x 54 mm: about 324 x 204px)
+        // on wider screens, four to a row; its type scales with its own width
+        // (a container), so a narrower card still holds every line.
+        "@container relative flex flex-col gap-3 overflow-hidden rounded-lg p-4 text-white transition-opacity md:aspect-[1.586/1] md:justify-between md:gap-0 md:rounded-2xl md:px-5 md:py-4 md:shadow-float",
         palette.gradient,
         archived && "saturate-50",
         busy && "opacity-70",
@@ -72,7 +73,7 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
             <span className="text-caption leading-[normal] font-normal text-white/75">{archived ? t("Archived@@status") : t(meta.label)}</span>
           </span>
         </span>
-        <span className="hidden items-center gap-2 rounded-full bg-white/16 px-3 py-1 text-caption font-semibold md:inline-flex [&_svg]:size-3.5">
+        <span className="hidden items-center gap-1.5 rounded-full bg-white/16 px-2.5 py-0.5 text-[11px] font-semibold md:inline-flex @xs:text-caption [&_svg]:size-3.5">
           {createElement(meta.icon, { "aria-hidden": true })}
           {t(meta.label)}
           {archived && ` · ${t("Archived@@status")}`}
@@ -113,17 +114,17 @@ export function WalletCard({ wallet, index, currency, canManage, onEdit, onToggl
         )}
       </div>
 
-      <div className="relative hidden flex-col gap-1 md:flex">
-        <span className="truncate text-[17px] leading-[normal] font-semibold tracking-[-0.01em]">{name}</span>
-        <span className="text-small tracking-[0.08em] text-white/75 tabular-nums">{((savings || walletType(wallet) !== "cash") && maskAccountNumber(wallet.accountNumber)) || t("No account number")}</span>
+      <div className="relative hidden flex-col gap-0.5 md:flex">
+        <span className="truncate text-[15px] leading-[normal] font-semibold tracking-[-0.01em] @xs:text-[17px]">{name}</span>
+        <span className="truncate text-caption tracking-[0.08em] text-white/75 tabular-nums @xs:text-small">{((savings || walletType(wallet) !== "cash") && maskAccountNumber(wallet.accountNumber)) || t("No account number")}</span>
       </div>
 
       {/* The figure is never cut short: when it and the link don't fit on
           one line, the link wraps under it. */}
       <div className="relative flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 flex-col gap-3 md:gap-0.5">
-          <span className="hidden text-caption font-normal text-white/78 md:block">{savings ? t("Balance") : t("Current balance")}</span>
-          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-h2 md:font-bold xl:text-[26px] xl:tracking-[-0.02em]">{balanceText(wallet.currentBalance, currency, fmt)}</span>
+          <span className="hidden text-caption font-normal text-white/78 @[18.5rem]:md:block">{savings ? t("Balance") : t("Current balance")}</span>
+          <span className="text-h1 font-extrabold tabular-nums wrap-anywhere max-md:leading-[normal] md:text-[21px] md:leading-tight md:font-bold md:tracking-[-0.02em] @xs:text-[25px]">{balanceText(wallet.currentBalance, currency, fmt)}</span>
           <span className="text-caption font-normal text-white/78 tabular-nums max-md:leading-[normal]">
             {t("Opening")} {formatCurrency(wallet.openingBalance, currency, fmt)}
           </span>

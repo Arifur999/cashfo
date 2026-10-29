@@ -113,7 +113,7 @@ export function SavingsWalletPageClient({ businessId, wallets, canManage, curren
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3 md:gap-5">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3 min-[90rem]:grid-cols-4">
         {ordered.map((wallet) => (
           <WalletCard key={wallet.id} wallet={wallet} index={wallets.indexOf(wallet)} currency={currency} canManage={canManage} savings busy={busy === wallet.id} onEdit={() => setDrawer(wallet)} onToggleArchive={() => toggleArchive(wallet)} onRemove={() => remove(wallet)} />
         ))}
