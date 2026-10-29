@@ -65,7 +65,7 @@ const TemplatesEditor = ({ canManage }: { canManage: boolean }) => {
           {[...templates.filter((template) => !isAutomaticTemplate(template.key)), "automatic" as const, ...templates.filter((template) => isAutomaticTemplate(template.key))].map((template: INotificationTemplate | "automatic") => {
             if (template === "automatic") {
               return templates.some((item) => isAutomaticTemplate(item.key)) ? (
-                <GroupHead key="automatic" title={translate("Automatic messages")} note={translate("The app sends these on its own, still in its built-in wording, so changes here don't reach people yet.")} />
+                <GroupHead key="automatic" title={translate("Automatic messages")} note={translate("The app sends these on its own when something happens. Turn one on to send your wording; while it is off, the app sends its built-in message.")} />
               ) : null;
             }
             const on = template.id === current.id;

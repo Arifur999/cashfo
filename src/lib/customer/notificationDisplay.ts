@@ -354,7 +354,9 @@ function knownView(item: UserNotification, t: Translate, locale: FormatLocale, c
       };
     }
     case "SUPPORT_REPLY":
-      return { kind: "support", title: t("Support replied to your message"), body: text(data.subject), href: `/settings/help?message=${encodeURIComponent(text(data.ticketId))}` };
+      // The body is the admin's Support reply wording when that template is
+      // on (already in the reader's language), else the ticket's subject.
+      return { kind: "support", title: t("Support replied to your message"), body: text(data.body).trim() || text(data.subject), href: `/settings/help?message=${encodeURIComponent(text(data.ticketId))}` };
     case "ANNOUNCEMENT": {
       const bangla = langOf(locale) === "bn";
       return {
