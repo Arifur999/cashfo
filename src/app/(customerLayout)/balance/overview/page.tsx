@@ -1,10 +1,8 @@
-import { ArrowLeftRight, Wallet } from "lucide-react";
+import { Wallet } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createElement } from "react";
 import { HeadHint } from "@/components/modules/Customer/Balance/HeadHint";
-import { WalletShareBar } from "@/components/modules/Customer/Balance/WalletShareBar";
-import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
@@ -17,7 +15,6 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { formatCurrency } from "@/lib/customer/currency";
 import { getFmt } from "@/lib/customer/fmt";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { walletShares } from "@/lib/customer/walletShares";
 import { WALLET_TYPE_META, walletIcon, walletPalette, walletType } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
 import { getTranslator } from "@/lib/i18n/locale";
@@ -84,50 +81,22 @@ export default async function BalanceOverviewPage() {
 
   return (
     <PageFrame className="gap-6">
-      <PageHeader
-        eyebrow={`${t("Money")} · ${t("Wallets")}`}
-        title={t("Balance overview")}
-        description={t("Where your money sits right now, and how each account got there.")}
-        actions={
-          // Straight into the Move money drawer; a viewer, who can't move
-          // money, gets the history instead.
-          <Button variant="secondary" asChild>
-            <Link href={canManage ? "/balance/transfer?new=1" : "/balance/transfer"}>
-              <ArrowLeftRight className="text-ink-2" />
-              {canManage ? t("Move money") : t("Transfer history")}
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader title={t("Balance overview")} />
 
-      <Card padding="lg" className="flex flex-col gap-5">
-        <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-end xl:justify-between">
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-small font-medium text-ink-muted">{t("Available balance")}</span>
-            <AmountText value={overview.availableBalance} currency={currency} size="display" className="font-bold tracking-[-0.02em] wrap-anywhere leading-[1.1]" />
-            <span className="text-small text-ink-muted">
-              {t("Total balance {amount}", { amount: formatCurrency(overview.totalBalance, currency, fmt) })}
-              {inArchived !== 0 && (
-                <>
-                  {" · "}
-                  <span className="text-ink-2">{t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, fmt) })}</span>
-                </>
-              )}
-            </span>
-          </div>
-          {/* Rows on a phone (label left, figure right); three columns from sm, as Savings summary sets them. */}
-          <dl className="grid grid-cols-1 sm:grid-cols-3">
-            <HeroStat first label={t("Accounts")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, fmt) }) : undefined}>
-              {formatCount(activeCount, fmt)}
-            </HeroStat>
-            <HeroStat label={t("Money in@@wallet")}>{figure(totals.in, "in")}</HeroStat>
-            <HeroStat label={t("Money out@@wallet")} last>
-              {figure(totals.out, "out")}
-            </HeroStat>
-          </dl>
-        </div>
-        <WalletShareBar slices={walletShares(rows)} label={t("Share of balance by wallet")} legend currency={currency} />
-      </Card>
+      {/* The board's four figures; an archived wallet's count and money say so under them. */}
+      <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+        <FigureCard label={t("Accounts")} note={archivedCount > 0 ? t("{count} archived", { count: formatCount(archivedCount, fmt) }) : undefined}>
+          {formatCount(activeCount, fmt)}
+        </FigureCard>
+        <FigureCard label={t("Total in")}>{figure(totals.in, "in")}</FigureCard>
+        <FigureCard label={t("Total out")}>{figure(totals.out, "out")}</FigureCard>
+        <FigureCard
+          label={t("Available balance")}
+          note={inArchived !== 0 ? t("{amount} in archived wallets", { amount: formatCurrency(inArchived, currency, fmt) }) : undefined}
+        >
+          <span className={Number(overview.availableBalance) < 0 ? "text-expense" : "text-ink"}>{balance(overview.availableBalance)}</span>
+        </FigureCard>
+      </section>
 
       {/* The rows scroll sideways on narrower screens and their only stop is
           the account's link, so the table takes one of its own: arrow keys
@@ -242,32 +211,14 @@ export default async function BalanceOverviewPage() {
   );
 }
 
-interface HeroStatProps {
-  label: string;
-  // A line under the figure ("1 archived").
-  note?: string;
-  // The first column, which has no rule before it from sm until md.
-  first?: boolean;
-  last?: boolean;
-  children: React.ReactNode;
-}
-
-// Phones: a row, the label left and the figure right, ruled off from the
-// one above. From sm: three columns between vertical rules.
-function HeroStat({ label, note, first = false, last = false, children }: HeroStatProps) {
+// One of the board's figure cards: the label, the 22px figure, and a line
+// under it when there is one.
+function FigureCard({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
   return (
-    <div
-      className={cn(
-        "flex min-w-0 items-baseline justify-between gap-4 py-2.5 sm:flex-col sm:items-start sm:justify-start sm:gap-1 sm:border-l sm:border-line sm:py-0 sm:pl-6",
-        first ? "sm:border-l-0 sm:pl-0 xl:border-l xl:pl-6" : "border-t border-divider sm:border-t-0",
-        !last && "sm:pr-6",
-      )}
-    >
-      <dt className="text-caption font-normal text-ink-muted">{label}</dt>
-      <dd className="flex flex-col items-end sm:items-start">
-        <span className="text-h3 font-bold whitespace-nowrap text-ink tabular-nums">{children}</span>
-        {note && <span className="text-caption text-ink-muted">{note}</span>}
-      </dd>
-    </div>
+    <Card className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-small text-ink-muted">{label}</span>
+      <span className="text-[22px] leading-tight font-bold text-ink tabular-nums wrap-anywhere">{children}</span>
+      {note && <span className="text-caption text-ink-muted">{note}</span>}
+    </Card>
   );
 }

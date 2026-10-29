@@ -286,4 +286,8 @@ export const balanceDictionary: Record<string, string> = {
   "This is a computer-generated statement and needs no signature.": "এটি কম্পিউটারে তৈরি বিবরণী, এতে স্বাক্ষরের প্রয়োজন নেই।",
   "Voided entries and their reversals both stay in the balance, so they cancel out.": "বাতিল এন্ট্রি ও তার রিভার্সাল দুটোই ব্যালেন্সে থাকে, তাই একে অপরকে কাটাকাটি করে।",
   "Couldn't load the whole statement. Try again.": "পুরো বিবরণী লোড করা যায়নি। আবার চেষ্টা করুন।",
+
+  // The redesigned Balance overview's figure cards
+  "Total in": "মোট এসেছে",
+  "Total out": "মোট গেছে",
 };
