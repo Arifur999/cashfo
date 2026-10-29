@@ -110,6 +110,7 @@ export function WalletDrawer({ open, onClose, businessId, editing, currency, pal
 
   return (
     <Drawer
+      popup
       open={open}
       width={440}
       title={savings ? (editing ? t("Edit savings wallet") : t("Add savings wallet")) : editing ? t("Edit wallet") : t("Add wallet")}
