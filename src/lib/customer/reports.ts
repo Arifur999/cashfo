@@ -1,6 +1,6 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
 import { cache } from "react";
-import { API_BASE_URL, type CategoryBreakdown, type IncomeVsSavingsPoint, type MonthlyBreakdown } from "./api";
+import { type ActiveMonth, API_BASE_URL, type CategoryBreakdown, type IncomeVsSavingsPoint, type MonthlyBreakdown } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -43,6 +43,23 @@ export const getMonthlyBreakdown = cache(
     }
   },
 );
+
+// The months with any income or expense, newest first (Overview's period
+// picker greys out the rest); null when the backend can't say, so nothing
+// is greyed out.
+export const getActiveMonths = cache(async (businessId: string): Promise<ActiveMonth[] | null> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const response = await customerApi.get<ActiveMonth[]>(`${API_BASE_URL}/api/businesses/${businessId}/reports/active-months`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
+  }
+});
 
 export const getIncomeVsSavingsTrend = cache(async (businessId: string, months = 6): Promise<IncomeVsSavingsPoint[]> => {
   const accessToken = await getAccessToken();

@@ -28,6 +28,13 @@ export function categoryTone(color: string | null | undefined): CategoryTone {
   return (color && TONES[color]) || NEUTRAL;
 }
 
+// The tone's ink as a CSS colour, for what a class can't paint (a chart's
+// conic-gradient): text-cat-4 is var(--cat-4), the token itself, as the
+// theme's --color-* names live only in the generated classes.
+export function categoryColorVar(color: string | null | undefined): string {
+  return `var(--${categoryTone(color).fg.replace(/^text-/, "")})`;
+}
+
 // The colours a picker offers, in the board's order: every name draws its
 // own dot.
 export const CATEGORY_TONE_COLORS = ["blue", "green", "purple", "orange", "pink", "yellow", "red", "indigo", "teal", "cyan", "violet", "lime"] as const;
