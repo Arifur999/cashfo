@@ -576,6 +576,8 @@ export interface Transaction {
   // The bank or service charge paid with this entry (a loan entry's
   // Charge column); null without one. Missing from an older backend.
   charge?: string | null;
+  // The expense category that charge is filed under (an Edit keeps it).
+  chargeCategory?: string | null;
   // With withLoanBalance: the contact's loan balance just after this row
   // (positive: they owe you, Pawna; negative: you owe, Dena).
   loanBalanceAfter?: string | null;

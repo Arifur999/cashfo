@@ -9,6 +9,7 @@ import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
+import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
@@ -32,7 +33,7 @@ interface TransferDrawerProps {
   currency: string;
   // Edit: the transfer to correct, with its charge (voided and posted again
   // with the corrected one).
-  editing?: { id: string; fromId: string; toId: string; amount: number; date: string; note: string; charge: number } | null;
+  editing?: { id: string; fromId: string; toId: string; amount: number; date: string; note: string; charge: number; chargeCategory: string | null } | null;
 }
 
 // The charge's category when none is picked, as the API files it.
@@ -71,7 +72,8 @@ export function TransferDrawer({ open, onClose, businessId, currency, editing = 
       setNote(editing?.note ?? "");
       setDate(editing?.date ?? getAppToday());
       setCharge(editing?.charge ? String(editing.charge) : "");
-      setChargeCategory(DEFAULT_CHARGE_CATEGORY);
+      // An Edit keeps the category the charge was filed under.
+      setChargeCategory(editing?.chargeCategory || DEFAULT_CHARGE_CATEGORY);
       if (editing) setPair({ fromId: editing.fromId, toId: editing.toId });
       setLoading(true);
     }
@@ -94,8 +96,10 @@ export function TransferDrawer({ open, onClose, businessId, currency, editing = 
         setWallets(list);
         setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
         // The last choice stays while it's still offered; a wallet archived
-        // since then gives way to the first ones.
-        setPair((previous) => transferPair(list.map((wallet) => wallet.id), previous));
+        // since then gives way to the first ones. An Edit keeps its own two
+        // wallets: an archived one is never swapped for another quietly
+        // (the popup says so and won't save).
+        if (!editing) setPair((previous) => transferPair(list.map((wallet) => wallet.id), previous));
         setLoading(false);
       })
       // Offline, or the server out of reach: say so instead of "Loading..."
@@ -108,18 +112,26 @@ export function TransferDrawer({ open, onClose, businessId, currency, editing = 
     return () => {
       current = false;
     };
+    // editing only seeds the popup when it opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, businessId]);
 
   const value = Number(amount) || 0;
   const fee = Number(charge) || 0;
   const from = wallets.find((w) => w.id === fromId);
   const to = wallets.find((w) => w.id === toId);
-  // Editing: the transfer being corrected gives its money back first.
-  const giveBack = (wallet: Account | undefined, side: "from" | "to") =>
-    !editing || !wallet ? 0 : side === "from" && wallet.id === editing.fromId ? editing.amount + editing.charge : side === "to" && wallet.id === editing.toId ? -editing.amount : 0;
-  const available = from ? Number(from.currentBalance) + giveBack(from, "from") : 0;
+  // Editing: the transfer being corrected gives its money back first, to
+  // the wallets it used, whichever side they are on now (a swap, or the old
+  // receiver now sending): its sender gets the amount and the charge back,
+  // its receiver gives the amount back.
+  const giveBack = (wallet: Account | undefined) =>
+    !editing || !wallet ? 0 : wallet.id === editing.fromId ? editing.amount + editing.charge : wallet.id === editing.toId ? -editing.amount : 0;
+  const available = from ? Number(from.currentBalance) + giveBack(from) : 0;
+  // An Edit whose wallet has been archived since: it can't be picked again,
+  // so the transfer can't be corrected until the wallet is active.
+  const archivedWallet = !!editing && !loading && !walletsError && (!wallets.some((wallet) => wallet.id === editing.fromId) || !wallets.some((wallet) => wallet.id === editing.toId));
   const total = wallets.reduce((sum, wallet) => sum + Number(wallet.currentBalance), 0);
-  const valid = value > 0 && !!from && !!to && fromId !== toId;
+  const valid = value > 0 && !!from && !!to && fromId !== toId && !archivedWallet;
   // One wallet (or none) has nowhere to move money to.
   const tooFew = !loading && !walletsError && wallets.length < 2;
   // The API takes a transfer larger than the wallet holds; say what it does.
@@ -165,11 +177,15 @@ export function TransferDrawer({ open, onClose, businessId, currency, editing = 
     </span>
   );
 
+  // What the whole save does to the total: the new charge out, an edited
+  // transfer's old charge back.
+  const totalChange = (editing?.charge ?? 0) - fee;
+
   // The board's two boxes: what each wallet holds, what the transfer (and
   // the charge, on the sending side) does to it, and what it is left with.
   // A wallet left below zero shows in amber.
   const sideBox = (wallet: Account, side: "from" | "to") => {
-    const before = Number(wallet.currentBalance) + giveBack(wallet, side);
+    const before = Number(wallet.currentBalance) + giveBack(wallet);
     const after = side === "from" ? before - value - fee : before + value;
     const line = (label: string, figure: string, className?: string) => (
       <div className="flex justify-between gap-2">
@@ -216,6 +232,12 @@ export function TransferDrawer({ open, onClose, businessId, currency, editing = 
         </>
       }
     >
+      {archivedWallet && (
+        <Banner tone="warning" inline icon={<TriangleAlert />}>
+          {t("A wallet this transfer used has been archived. Activate it in Wallets to edit the transfer.")}
+        </Banner>
+      )}
+
       <div className="flex flex-col gap-2">
         <WalletPicker
           label={t("From")}
@@ -333,8 +355,12 @@ export function TransferDrawer({ open, onClose, businessId, currency, editing = 
           {/* Active wallets only, as on Wallets: what can be moved. A charge
               is the one thing that lowers the total. */}
           <p className="text-caption text-ink-muted tabular-nums">
-            {fee > 0
-              ? t("Total balance {before} → {after}: the charge is an expense.", { before: formatCurrency(total, currency, fmt), after: formatCurrency(total - fee, currency, fmt) })
+            {/* An Edit gives the old charge back before the new one is taken. */}
+            {totalChange !== 0
+              ? t(fee > 0 ? "Total balance {before} → {after}: the charge is an expense." : "Total balance {before} → {after}: the old charge is given back.", {
+                  before: formatCurrency(total, currency, fmt),
+                  after: formatCurrency(total + totalChange, currency, fmt),
+                })
               : t("Total balance {amount} · unchanged", { amount: formatCurrency(total, currency, fmt) })}
           </p>
         </div>

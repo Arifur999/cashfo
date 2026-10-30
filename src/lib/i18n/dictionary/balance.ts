@@ -308,4 +308,8 @@ export const balanceDictionary: Record<string, string> = {
   "e.g. ATM withdrawal": "যেমন ATM থেকে তোলা",
   "Total balance {before} → {after}: the charge is an expense.": "মোট ব্যালেন্স {before} → {after}: চার্জটি একটি খরচ।",
   "Total balance {amount} · unchanged": "মোট ব্যালেন্স {amount} · অপরিবর্তিত",
+
+  // Transfer Edit: an archived wallet, the old charge given back
+  "A wallet this transfer used has been archived. Activate it in Wallets to edit the transfer.": "এই ট্রান্সফারের একটি ওয়ালেট আর্কাইভ করা হয়েছে। ট্রান্সফারটি বদলাতে Wallets থেকে ওয়ালেটটি আবার সক্রিয় করুন।",
+  "Total balance {before} → {after}: the old charge is given back.": "মোট ব্যালেন্স {before} → {after}: আগের চার্জটি ফেরত আসে।",
 };

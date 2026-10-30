@@ -151,7 +151,8 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, complet
     }
     setPreparing(true);
     try {
-      const result = await listTransfersForPrintAction(businessId, { dateFrom: periodFrom, dateTo: periodTo, excludeSavings });
+      // The same rows as the screen: its wallet filter, and each row's balance after.
+      const result = await listTransfersForPrintAction(businessId, { dateFrom: periodFrom, dateTo: periodTo, excludeSavings, accountId: accountId || undefined });
       // The screen has rows, so an empty answer is a failed one.
       if (!result.success || !result.data?.transfers.length) {
         toast.error(t("Couldn't load the transfers to print"));
@@ -185,6 +186,12 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, complet
   };
   const voidingParties = voiding ? namesOf(voiding) : null;
   const editingParties = editing ? transferParties(editing, locale) : null;
+  // Edit only while both wallets are active: an archived one can't be picked
+  // in the popup, so the transfer would land on another wallet.
+  const bothActive = (transfer: Transaction) => {
+    const { fromId, toId } = transferParties(transfer, locale);
+    return [fromId, toId].every((id) => !!id && walletById.get(id)?.wallet.status !== "ARCHIVED" && walletById.has(id));
+  };
   // A dash for nothing, as the board's empty Charge cells read.
   const moneyOrDash = (value: string | null | undefined) => (value && Number(value) !== 0 ? formatCurrency(value, currency, fmt) : "—");
 
@@ -359,7 +366,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, complet
                     {voided || !transfer.balanceAfter ? <span className="font-normal text-ink-faint">—</span> : formatCurrency(transfer.balanceAfter, currency, fmt)}
                   </ListCell>
                   <ListRowActions className="max-md:col-start-2 max-md:row-start-2 print:hidden">
-                    {canManage && transfer.voidable && !savings ? (
+                    {canManage && transfer.voidable && !savings && bothActive(transfer) ? (
                       <button type="button" onClick={() => setEditing(transfer)} aria-label={t("Edit transfer")} title={t("Edit")} className={cn(ICON_BUTTON, "text-ink-2 hover:bg-surface-sunken")}>
                         <Pencil className="size-4" aria-hidden="true" />
                       </button>
@@ -402,6 +409,7 @@ export function BalanceTransferPageClient({ businessId, transfers, meta, complet
             date: editing.transactionDate.slice(0, 10),
             note: editing.description ?? "",
             charge: Number(editing.charge ?? 0),
+            chargeCategory: editing.chargeCategory ?? null,
           }}
         />
       )}
