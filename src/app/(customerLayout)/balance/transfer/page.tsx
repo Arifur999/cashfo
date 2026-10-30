@@ -51,13 +51,17 @@ export default async function BalanceTransferPage({ searchParams }: PageProps<"/
     getWallets(activeBusinessId),
   ]);
   const fromSummaries = all && walletOnly ? summaryTransferTotals(all, walletOnly) : null;
+  // A backend older than withBalanceAfter refuses it (a 400, read as an
+  // empty page) while its summary still counts transfers: ask again without
+  // it, and the Balance column shows dashes.
+  const listed = walletOnly && walletOnly.count > 0 && walletPage.meta.total === 0 ? await getTransactions(activeBusinessId, { ...walletFilters, page, limit }) : walletPage;
 
   // A backend older than excludeSavings refuses it (a 400, read as an empty
   // page and a null summary). Its list then shows every transfer, a goal's
   // marked as savings, and without the summaries the cards' figures come the
   // old way: every transfer in the range, read 100 at a time.
   const [{ data: transfers, meta }, everyTransfer] = await Promise.all([
-    walletOnly ? walletPage : getTransactions(activeBusinessId, { ...filters, page, limit, withBalanceAfter: true }),
+    walletOnly ? listed : getTransactions(activeBusinessId, { ...filters, page, limit }),
     fromSummaries ? null : getAllTransactions(activeBusinessId, filters),
   ]);
   const totals = fromSummaries ?? transferTotals(everyTransfer?.data ?? []);

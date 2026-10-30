@@ -13,12 +13,15 @@ export interface PrintTransfersResult {
 // as the page used to list them). `complete` is false when there were more.
 // excludeSavings follows the page: an older backend refuses it, and its list
 // then shows a goal's transfers too.
-export async function listTransfersForPrintAction(businessId: string, period: { dateFrom?: string; dateTo?: string; excludeSavings: boolean }): Promise<PrintTransfersResult> {
+export async function listTransfersForPrintAction(businessId: string, period: { dateFrom?: string; dateTo?: string; excludeSavings: boolean; accountId?: string }): Promise<PrintTransfersResult> {
   try {
+    // The screen's rows: its wallet filter and each row's balance after.
     const { data, complete } = await getAllTransactions(businessId, {
       transactionType: "TRANSFER",
       dateFrom: period.dateFrom,
       dateTo: period.dateTo,
+      accountId: period.accountId,
+      withBalanceAfter: true,
       ...(period.excludeSavings && { excludeSavings: true }),
     });
     return { success: true, data: { transfers: data, complete } };
