@@ -10,6 +10,8 @@ import {
   type SavingsGoalEntry,
   type SavingsGoalStatus,
   type SavingsReminderChannel,
+  type SavingsStatement,
+  type SavingsWalletHistoryRow,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
@@ -163,26 +165,6 @@ export async function addContributionAction(businessId: string, goalId: string, 
     });
     return res.data;
   }, "Failed to add money");
-}
-
-export interface WithdrawSavingsGoalInput {
-  savingsAccountId: string;
-  expenseAccountId: string;
-  categoryId?: string;
-  date: string;
-  notes?: string;
-}
-
-// "Cash out" a fully (or partially) saved goal -- see SavingsGoalsService.
-// withdraw()'s comment. Always withdraws the goal's entire current saved
-// amount; there's no amount field to send.
-export async function withdrawSavingsGoalAction(businessId: string, goalId: string, input: WithdrawSavingsGoalInput): Promise<ActionResult<SavingsGoalEntry>> {
-  return callApi(async () => {
-    const res = await customerApi.post<SavingsGoalEntry>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/withdraw`, input, {
-      headers: await authHeaders(),
-    });
-    return res.data;
-  }, "Failed to withdraw");
 }
 
 export interface WithdrawToBalanceInput {
