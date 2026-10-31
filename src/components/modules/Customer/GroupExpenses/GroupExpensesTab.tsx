@@ -1,253 +1,258 @@
 "use client";
 
-import { Calendar, Lock, MoreHorizontal, Pencil, Receipt, Trash2, Wallet } from "lucide-react";
+import { Lock, Pencil, Plus, Printer, Receipt, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
-import Chip from "@/components/smartly/Chip";
+import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { GroupExpense } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { countLabel, dayLabel, rangeLabel, shortName, SPLIT_LABELS, splitText } from "@/lib/customer/groupDisplay";
-import { monthName } from "@/lib/customer/insights";
+import { countLabel, dayLabel, isDayClosed, shortName, splitText } from "@/lib/customer/groupDisplay";
+import { accountantsOf } from "@/lib/customer/groupFamily";
+import { type GroupPeriod, periodLabel } from "@/lib/customer/groupPeriod";
+import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
-import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { CategoryTile, MemberAvatar } from "./GroupBits";
+import { CategoryTile, groupLine, MemberAvatar } from "./GroupBits";
+import { GroupPeriodPicker } from "./GroupPeriodPicker";
+import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 interface GroupExpensesTabProps {
   data: GroupPageData;
   view: GroupView;
+  onPeriod: (period: GroupPeriod) => void;
   onAdd: () => void;
   onEdit: (row: GroupExpense) => void;
   onRemove: (row: GroupExpense) => void;
+  busy: boolean;
+  // A paused group takes no new entries.
+  canAdd: boolean;
 }
 
-// Date, category, paid from, amount and the menu; from xl the description
-// and how it is shared get columns of their own (below that they sit under
-// the category), so the money columns never run past the card.
-const COLUMNS = "md:grid-cols-[64px_minmax(0,1fr)_176px_104px_40px] xl:grid-cols-[70px_168px_minmax(0,1fr)_176px_150px_104px_40px]";
-const PAGE = 10;
+const PERIODS = ["today", "week", "month", "year", "custom"] as const;
+// #, date, category, who paid, description, amount, edit, delete.
+const COLUMNS = "md:grid-cols-[36px_64px_168px_160px_minmax(0,1fr)_110px_76px]";
+const PAGE = 25;
 
-// "01 Sep", as the list's date column writes a day.
-const listDay = (day: string, locale: FormatLocale) => (langOf(locale) === "en" ? toLocaleDigits(dayLabel(day, "en").padStart(6, "0"), locale) : dayLabel(day, locale));
-const LIST_ID = "group-expenses-list";
+const SPLIT_WORDS = { EQUAL: "Equally", SHARES: "By cost split", MEALS: "By meals", EXACT: "Exact amounts" } as const;
 
-// Money out: every cost of the month, what it was for, whether it came from
-// the group fund or someone's own pocket (credited to them), and how it is
-// shared.
-export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove }: GroupExpensesTabProps) {
+// Money out (the v7 FamilyExpenses board): every cost in the period with
+// who paid it -- an accountant from the cash they hold, or someone from
+// their own pocket -- found by a search or a category, with a printable
+// statement.
+export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove, busy, canAdd }: GroupExpensesTabProps) {
   const { t, fmt } = useLocale();
-  const { currency } = data;
+  const { currency, startDay } = data;
+  const period = data.period ?? { kind: "month" };
+  const expenses = data.periodExpenses ?? data.expenses;
+  const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
-  // "": anyone; "FUND": the group fund; else a member who paid from their pocket.
-  const [paidBy, setPaidBy] = useState("");
   const [limit, setLimit] = useState(PAGE);
-  // Another month keeps this tab (and its filters) but starts its list from
-  // the top: a month that grew to 60 rows would leave the next one's 8 with
-  // a "Show fewer".
-  const [listMonth, setListMonth] = useState(data.range.key);
-  if (listMonth !== data.range.key) {
-    setListMonth(data.range.key);
-    setLimit(PAGE);
-  }
-  const total = data.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-  const pocket = data.expenses.filter((e) => e.paidFrom === "MEMBER" && e.paidByMemberId);
-  const pocketTotal = pocket.reduce((sum, e) => sum + Number(e.amount), 0);
-  // Who paid from their own pocket, and for what: "Arif ৳ 3,200 (wifi, electricity)".
-  const pockets = [...new Set(pocket.map((e) => e.paidByMemberId as string))].map((id) => {
-    const theirs = pocket.filter((e) => e.paidByMemberId === id);
-    return { id, name: shortName(view.memberById[id]?.name), amount: theirs.reduce((sum, e) => sum + Number(e.amount), 0), what: [...new Set(theirs.map((e) => e.category.toLowerCase()))].join(", ") };
-  });
-  const filtered = !!category || !!paidBy;
-  const rows = [...data.expenses]
-    .filter((e) => (!category || e.category === category) && (!paidBy || (paidBy === "FUND" ? e.paidFrom !== "MEMBER" : e.paidFrom === "MEMBER" && e.paidByMemberId === paidBy)))
+  const [printing, setPrinting] = useState(false);
+  const label = periodLabel(period, data.today, startDay, t, fmt);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
+  const words = query.trim().toLowerCase();
+  const rows = [...expenses]
+    .filter((e) => !category || e.category === category)
+    .filter((e) => !words || [e.description ?? "", e.category, e.paidByMember?.name ?? ""].some((text) => text.toLowerCase().includes(words)))
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shown = rows.slice(0, limit);
-  const shownTotal = rows.reduce((sum, e) => sum + Number(e.amount), 0);
-  const month = monthName(data.range.key, fmt);
-  // The chosen one too, so the select still names it in a month without it.
-  const categoryNames = [...new Set([...data.categories.map((c) => c.name), ...data.expenses.map((e) => e.category), ...(category ? [category] : [])])];
-  const money = (value: number | string) => formatCurrency(value, currency, fmt);
-  // "All 14 entries add up to ৳ 12,000"; with a filter on, "These 3 entries".
-  const sum = rows.length === 1 ? "{count} entry adds up to {amount}" : filtered ? "These {count} entries add up to {amount}" : "All {count} entries add up to {amount}";
+  const total = rows.reduce((sum, e) => sum + Number(e.amount), 0);
+  // The chosen one too, so the select still names it in a period without it.
+  const categoryNames = [...new Set([...data.categories.filter((c) => !c.hidden).map((c) => c.name), ...expenses.map((e) => e.category), ...(category ? [category] : [])])];
+  const accountants = accountantsOf(data.members);
 
-  // A new filter starts from the top of its list.
-  const filter = (apply: () => void) => {
-    apply();
-    setLimit(PAGE);
+  // Who paid an expense: the accountant from their cash, or a member from their pocket.
+  const payerOf = (row: GroupExpense) => (row.paidByMemberId ? view.memberById[row.paidByMemberId] : undefined);
+  const payerText = (row: GroupExpense) => {
+    const payer = payerOf(row);
+    if (row.paidFrom === "MEMBER") return payer ? t("{name}'s pocket", { name: payer.name }) : t("Own pocket");
+    return payer?.name ?? t("Group fund");
+  };
+  const sharedText = (row: GroupExpense) => {
+    const shared = splitText(row, data.members);
+    if (shared.only) return t("Only {name}", { name: shared.only });
+    if (shared.kind === "EQUAL" && !row.splits.length) return null;
+    return `${t(SPLIT_WORDS[shared.kind])}${shared.kind === "EQUAL" && shared.detail ? ` · ${toLocaleDigits(shared.detail, fmt)}` : ""}`;
   };
 
-  const toolbar = (
-    <div className="flex flex-wrap items-center gap-2.5 px-4 py-3 md:px-5">
-      <NativeSelect size="sm" aria-label={t("Category")} value={category} onChange={(event) => filter(() => setCategory(event.target.value))} className="font-medium">
-        <option value="">{t("All categories")}</option>
-        {categoryNames.map((name) => (
-          <option key={name} value={name}>
-            {name}
-          </option>
-        ))}
-      </NativeSelect>
-      <NativeSelect size="sm" aria-label={t("Paid from")} value={paidBy} onChange={(event) => filter(() => setPaidBy(event.target.value))} className="font-medium">
-        <option value="">{t("Paid from: anyone")}</option>
-        <option value="FUND">{t("Group fund")}</option>
-        {data.members.map((member) => (
-          <option key={member.id} value={member.id}>
-            {member.name}
-          </option>
-        ))}
-      </NativeSelect>
-      {/* The month's days: the month is picked in the header, as is Add expense. */}
-      <span className="flex h-9 items-center gap-2 rounded-full border border-input bg-surface px-3 text-small font-medium text-ink">
-        <Calendar className="size-3.5 text-ink-muted" aria-hidden="true" />
-        {rangeLabel(data.range, fmt)}
-      </span>
-      <span className="flex-1" />
-      <span className="text-small text-ink-muted">{countLabel(t, fmt, rows.length, "{count} entry", "{count} entries")}</span>
-    </div>
-  );
+  const statement = (): StatementSpec => {
+    const byCategory = [...new Set(rows.map((row) => row.category))]
+      .map((name) => {
+        const theirs = rows.filter((row) => row.category === name);
+        const amount = theirs.reduce((sum, row) => sum + Number(row.amount), 0);
+        return { name, count: theirs.length, amount };
+      })
+      .sort((a, b) => b.amount - a.amount);
+    const bySpender = [...new Set(rows.map(payerText))].map((name) => ({ name, amount: rows.filter((row) => payerText(row) === name).reduce((sum, row) => sum + Number(row.amount), 0) }));
+    return {
+      title: t("Expense statement"),
+      sub: `${label} · ${category || t("All categories")}`,
+      group: groupLine(t, data.name, data.settings.kind),
+      generated: t("Generated {date}", { date: formatDay(data.today, "d MMM yyyy", fmt) }),
+      meta: [
+        { label: t("Period"), value: label },
+        { label: t("Category"), value: category || t("All categories") },
+        { label: t("Entries"), value: formatCount(rows.length, fmt) },
+        { label: t("Total spent"), value: money(total) },
+      ],
+      blocks: rows.length
+        ? [
+            { title: t("By category"), items: byCategory.map((row) => ({ label: row.name, detail: `· ${formatCount(row.count, fmt)} · ${formatCount(Math.round(total > 0 ? (row.amount / total) * 100 : 0), fmt)}%`, value: money(row.amount) })) },
+            { items: bySpender.map((row) => ({ label: t("Spent by {name}:", { name: row.name }), value: money(row.amount) })) },
+          ]
+        : [],
+      columns: [{ label: "#" }, { label: t("Date") }, { label: t("Category") }, { label: t("Paid by") }, { label: t("Description") }, { label: t("Amount"), end: true }],
+      rows: rows.map((row, i) => [formatCount(i + 1, fmt), formatDay(row.date.slice(0, 10), "d MMM yyyy", fmt), row.category, payerText(row), row.description ?? "—", money(row.amount)]),
+      tail: rows.length ? ["", t("Total"), "", "", "", money(total)] : undefined,
+      empty: t("No expenses in this period."),
+      footer: accountants.length ? t("{name} · expenses paid by the accountants", { name: data.name }) : data.name,
+    };
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      <Card padding="none" className="flex flex-wrap items-center gap-5.5 px-5 py-3">
-        {[
-          { label: t("Spent in {month}", { month }), value: money(total), tone: "text-ink" },
-          { label: t("From the group fund"), value: money(total - pocketTotal), tone: "text-ink" },
-          { label: t("From own pockets · credited back"), value: money(pocketTotal), tone: pocketTotal ? "text-emerald" : "text-ink" },
-        ].map((figure, i) => (
-          <div key={figure.label} className="flex items-center gap-5.5">
-            {i > 0 && <span className="h-8.5 w-px bg-line" aria-hidden="true" />}
-            <div className="flex flex-col gap-0.5">
-              <span className="text-caption text-ink-muted">{figure.label}</span>
-              <span className={cn("text-xl leading-normal font-bold tabular-nums", figure.tone)}>{figure.value}</span>
-            </div>
-          </div>
-        ))}
-        <span className="flex-1" />
-        {pockets.length > 0 && (
-          <span className="flex flex-col text-small leading-normal text-ink-soft md:text-right">
-            {pockets.map((row) => (
-              <span key={row.id}>
-                {row.name} {money(row.amount)} ({row.what})
-              </span>
-            ))}
-          </span>
+      <div className="flex flex-wrap items-center justify-end gap-2.5">
+        <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
+        {canAdd && (
+          <Button onClick={onAdd}>
+            <Plus aria-hidden="true" />
+            {t("Add expense")}
+          </Button>
         )}
-      </Card>
+      </div>
 
       <ListCard
-        id={LIST_ID}
-        label={t("Expenses in {month}", { month })}
-        header={toolbar}
+        label={t("Expenses")}
+        header={
+          <div className="flex flex-wrap items-center gap-2.5 px-4 py-3 md:px-5">
+            <Input
+              type="search"
+              size="sm"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setLimit(PAGE);
+              }}
+              placeholder={t("Search description or category…")}
+              aria-label={t("Search expenses")}
+              leading={<Search className="ml-2.5 size-4 text-ink-muted" aria-hidden="true" />}
+              frameClassName="w-full sm:w-64"
+            />
+            <NativeSelect
+              size="sm"
+              aria-label={t("Category")}
+              value={category}
+              onChange={(event) => {
+                setCategory(event.target.value);
+                setLimit(PAGE);
+              }}
+              className="font-medium"
+            >
+              <option value="">{t("All categories")}</option>
+              {categoryNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </NativeSelect>
+            <span className="ml-auto flex items-center gap-3">
+              <span className="flex flex-col items-end leading-tight">
+                <span className="text-caption text-ink-muted">{t("Total spent · {period}", { period: label })}</span>
+                <span className="text-[18px] font-bold text-ink tabular-nums">{money(total)}</span>
+              </span>
+              <Button variant="outline" size="icon" aria-label={t("Print statement")} onClick={() => setPrinting(true)}>
+                <Printer aria-hidden="true" />
+              </Button>
+            </span>
+          </div>
+        }
         footer={
-          rows.length > 0 && (
-            <ListFooter className="flex-row flex-wrap items-center gap-3 bg-strip md:px-5">
-              {(rows.length > shown.length || limit > PAGE) && (
-                <Button variant="secondary" size="sm" onClick={() => setLimit(rows.length > shown.length ? limit + PAGE : PAGE)} className="h-8.5 pointer-coarse:h-11">
-                  {rows.length > shown.length ? countLabel(t, fmt, Math.min(PAGE, rows.length - shown.length), "Show {count} older entry", "Show {count} older entries") : t("Show fewer")}
-                </Button>
-              )}
-              <p aria-live="polite" className="ml-auto text-ink-soft">
-                {fillNodes(t(sum), { count: formatCount(rows.length, fmt), amount: <b className="font-bold text-ink tabular-nums">{money(shownTotal)}</b> })}
-              </p>
+          rows.length > shown.length || limit > PAGE ? (
+            <ListFooter className="flex-row items-center gap-3 bg-strip md:px-5">
+              <Button variant="secondary" size="sm" onClick={() => setLimit(rows.length > shown.length ? limit + PAGE : PAGE)} className="h-8.5 pointer-coarse:h-11">
+                {rows.length > shown.length ? countLabel(t, fmt, Math.min(PAGE, rows.length - shown.length), "Show {count} older entry", "Show {count} older entries") : t("Show fewer")}
+              </Button>
+              <span className="ml-auto text-ink-soft">{t("{shown} of {count}", { shown: formatCount(shown.length, fmt), count: formatCount(rows.length, fmt) })}</span>
             </ListFooter>
-          )
+          ) : null
         }
       >
-        <ListHead columns={COLUMNS} className="gap-x-3.5 border-t md:px-5">
+        <ListHead columns={COLUMNS} className="gap-x-3 border-t md:px-5">
+          <ListHeadCell>#</ListHeadCell>
           <ListHeadCell>{t("Date")}</ListHeadCell>
           <ListHeadCell>{t("Category")}</ListHeadCell>
-          <ListHeadCell className="hidden xl:block">{t("Description")}</ListHeadCell>
-          <ListHeadCell>{t("Paid from")}</ListHeadCell>
-          <ListHeadCell className="hidden xl:block">{t("Shared")}</ListHeadCell>
+          <ListHeadCell>{accountants.length ? t("Accountant") : t("Paid by")}</ListHeadCell>
+          <ListHeadCell>{t("Description")}</ListHeadCell>
           <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
           <ListHeadCell>
             <span className="sr-only">{t("Actions")}</span>
           </ListHeadCell>
         </ListHead>
         {shown.length === 0 &&
-          (data.expenses.length === 0 ? (
+          (expenses.length === 0 ? (
             <ListEmpty
               icon={<Receipt />}
               tone="neutral"
-              title={t("No expense this month yet.")}
+              title={t("No expenses in this period.")}
               action={
-                <Button size="sm" onClick={onAdd}>
-                  {t("Add expense")}
-                </Button>
+                canAdd && (
+                  <Button size="sm" onClick={onAdd}>
+                    {t("Add expense")}
+                  </Button>
+                )
               }
             />
           ) : (
             <ListEmpty title={t("No entry matches.")} />
           ))}
-        {shown.map((row) => {
-          const payer = row.paidFrom === "MEMBER" && row.paidByMemberId ? view.memberById[row.paidByMemberId] : null;
-          const shared = splitText(row, data.members);
-          const sharedText = shared.only ? t("Only {name}", { name: shared.only }) : `${t(SPLIT_LABELS[shared.kind])}${shared.detail ? ` · ${toLocaleDigits(shared.detail, fmt)}` : ""}`;
-          const day = dayLabel(row.date, fmt);
+        {shown.map((row, index) => {
+          const payer = payerOf(row);
+          const pocket = row.paidFrom === "MEMBER";
+          const shared = sharedText(row);
+          const closed = isDayClosed(data.history, row.date.slice(0, 10));
           return (
-            <ListRow key={row.id} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto_44px] gap-x-3 tabular-nums md:gap-x-3.5 md:px-5 md:py-1">
-              <ListCell className="hidden text-ink-soft md:block">{listDay(row.date, fmt)}</ListCell>
+            <ListRow key={row.id} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto_76px] gap-x-3 tabular-nums md:px-5 md:py-1">
+              <ListCell className="hidden text-ink-muted md:block">{formatCount(index + 1, fmt)}</ListCell>
+              <ListCell className="hidden text-ink-soft md:block">{formatDay(row.date.slice(0, 10), "d MMM", fmt)}</ListCell>
               <ListCell className="flex items-center gap-2">
                 <CategoryTile name={row.category} categories={data.categories} />
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-medium text-ink">{row.category}</span>
-                  {/* What the hidden columns would say: the day and who paid on a phone, the split below xl. */}
-                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">{[day, payer && t("{name}'s pocket", { name: shortName(payer.name) }), row.description].filter(Boolean).join(" · ")}</span>
-                  <span className="hidden truncate text-caption font-normal text-ink-muted md:block xl:hidden">{[sharedText, row.description].filter(Boolean).join(" · ")}</span>
+                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">{[dayLabel(row.date, fmt), payerText(row), row.description].filter(Boolean).join(" · ")}</span>
                 </span>
               </ListCell>
-              <ListCell className={cn("hidden truncate xl:block", row.description ? "text-ink-2" : "text-input")}>{row.description || "—"}</ListCell>
               <ListCell className="hidden items-center gap-1.75 md:flex">
-                {payer ? (
-                  <>
-                    <MemberAvatar member={payer} members={data.members} size={22} className="text-[9px]" />
-                    <span className="flex min-w-0 flex-col leading-tight">
-                      <span className="truncate font-medium text-ink">{t("{name}'s pocket", { name: shortName(payer.name) })}</span>
-                      <span className="truncate text-[11.5px] font-semibold text-emerald">{t("credited {amount}", { amount: money(row.amount) })}</span>
-                    </span>
-                  </>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-ink-soft">
-                    <Wallet className="size-3.75 text-ink-muted" aria-hidden="true" />
-                    {t("Group fund")}
-                  </span>
-                )}
+                {payer && <MemberAvatar member={payer} members={data.members} size={24} />}
+                <span className="flex min-w-0 flex-col leading-tight">
+                  <span className="truncate font-medium text-ink">{pocket ? (payer ? shortName(payer.name) : t("Own pocket")) : (payer?.name ?? t("Group fund"))}</span>
+                  {pocket && <span className="truncate text-[11.5px] font-semibold text-warning">{t("Own pocket · credited")}</span>}
+                </span>
               </ListCell>
-              <ListCell className="hidden xl:block">
-                <Chip tone={shared.kind === "EQUAL" && !shared.only ? "neutral" : "mint"} className={cn("max-w-full truncate", shared.kind === "EQUAL" && !shared.only && "text-ink-soft")}>
-                  {sharedText}
-                </Chip>
+              <ListCell className="hidden min-w-0 flex-col md:flex">
+                <span className={cn("truncate", row.description ? "text-ink-2" : "text-input")}>{row.description || "—"}</span>
+                {shared && <span className="truncate text-[11.5px] text-ink-muted">{shared}</span>}
               </ListCell>
               <ListCell align="end" className="font-semibold text-ink">
                 {money(row.amount)}
               </ListCell>
-              <ListRowActions>
-                <DropdownMenu>
-                  <DropdownMenuTrigger aria-label={t("Actions for this expense")} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
-                    {view.closed ? <Lock className="size-4" aria-hidden="true" /> : <MoreHorizontal className="size-4" strokeWidth={2.5} aria-hidden="true" />}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-                    <DropdownMenuItem onSelect={() => onEdit(row)} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
-                      <Pencil className="size-4" aria-hidden="true" />
-                      {t("Edit")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => onRemove(row)} className="rounded-md px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense">
-                      <Trash2 className="size-4" aria-hidden="true" />
-                      {t("Delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <ListRowActions className="flex justify-end gap-0.5">
+                <button type="button" onClick={() => onEdit(row)} aria-label={closed ? t("Edit expense (closed month)") : t("Edit expense")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                  {closed ? <Lock className="size-4" aria-hidden="true" /> : <Pencil className="size-4" aria-hidden="true" />}
+                </button>
+                <button type="button" onClick={() => onRemove(row)} aria-label={t("Delete expense")} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
+                  <Trash2 className="size-4" aria-hidden="true" />
+                </button>
               </ListRowActions>
             </ListRow>
           );
         })}
       </ListCard>
+
+      <GroupStatement open={printing} onClose={() => setPrinting(false)} spec={printing ? statement() : null} />
     </div>
   );
 }
