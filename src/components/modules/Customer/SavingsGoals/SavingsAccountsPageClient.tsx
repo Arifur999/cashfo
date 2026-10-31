@@ -161,7 +161,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
           const held = goalsOf(row.id);
           const names = held.slice(0, 3).map((goal) => goal.goalName);
           return (
-            <article key={row.id} aria-label={row.name} className={cn("relative flex h-50 flex-col justify-between overflow-hidden rounded-lg p-5 text-white shadow-[0_10px_24px_rgba(18,32,29,0.14)]", palette.gradient, isPending && "opacity-70")}>
+            <article key={row.id} aria-label={row.name} className={cn("relative flex min-h-55 flex-col justify-between gap-3 overflow-hidden rounded-lg p-5 text-white shadow-[0_10px_24px_rgba(18,32,29,0.14)]", palette.gradient, isPending && "opacity-70")}>
               <span aria-hidden="true" className="pointer-events-none absolute -top-22.5 -right-17.5 size-55 rounded-full bg-white/7" />
               <div className="relative flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/16 px-2.5 py-1 text-caption font-semibold">
@@ -199,7 +199,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
               <div className="relative flex min-w-0 flex-col gap-1">
                 <span className="truncate text-[17px] font-semibold">{row.name}</span>
                 <span className="truncate text-small tracking-[0.08em] text-white/75 tabular-nums">{maskAccountNumber(row.accountNumber) ?? t("No account number")}</span>
-                <span className="truncate text-caption text-white/80">
+                <span className="mt-1 truncate text-caption text-white/80">
                   {names.length ? `${names.join(" · ")}${held.length > 3 ? ` · ${t("+{count} more", { count: formatCount(held.length - 3, fmt) })}` : ""}` : t("No goal money here yet")}
                 </span>
               </div>
@@ -217,7 +217,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
           );
         })}
         {canManage ? (
-          <button type="button" onClick={() => setForm("create")} className="flex h-50 flex-col items-center justify-center gap-2.5 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald">
+          <button type="button" onClick={() => setForm("create")} className="flex min-h-55 flex-col items-center justify-center gap-2.5 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald">
             <span className="flex size-11 items-center justify-center rounded-field bg-mint-50 text-emerald">
               <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
             </span>
