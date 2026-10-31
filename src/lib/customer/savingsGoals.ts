@@ -8,6 +8,7 @@ import {
   type SavingsGoalStatus,
   type SavingsOverview,
   type SavingsTransferRow,
+  type SavingsWalletGoals,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
