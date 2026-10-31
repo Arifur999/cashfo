@@ -96,8 +96,8 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
       { label: t("Money out"), value: money(statement.totals.moneyOut), tone: "bg-expense-soft text-expense" },
       { label: t("Current balance"), value: money(statement.totals.balance), tone: "bg-mint-50 text-brand-ink" },
     ];
-    // Every name the PDF would print.
-    const names = [goal.name, person.name, ...statement.rows.flatMap((row) => [row.from ?? "", row.to ?? "", row.notes ?? ""]), ...statement.sources.map((s) => s.name ?? ""), ...statement.now.map((n) => n.name ?? "")];
+    // Every name the PDF would print (it leaves out a Bangla person name by itself).
+    const names = [goal.name, ...statement.rows.flatMap((row) => [row.from ?? "", row.to ?? "", row.notes ?? ""]), ...statement.sources.map((s) => s.name ?? ""), ...statement.now.map((n) => n.name ?? "")];
     return { firstDay, rows, sources, now, info, sums, drawable: names.every((name) => DRAWABLE.test(name)) };
   })();
 
