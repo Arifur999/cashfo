@@ -50,7 +50,7 @@ describe("the two menus", () => {
       [
         "Plan & track",
         [
-          ["Savings Goals", "Dashboard", "Overview", "Wallet", "Transfer"],
+          ["Savings Goals", "Goals", "Savings Accounts"],
           ["Assets Management", "Dashboard", "Purchase & Sell", "Update", "Category", "All Assets"],
           ["Loan Management", "Dashboard", "Transactions", "Ledger", "Contacts"],
           ["Group Expense"],
@@ -217,7 +217,8 @@ describe("titleParts", () => {
   it("tells shared labels apart", () => {
     expect(titleParts(locate("/balance/ledger")!)).toEqual(["Ledger", "Balance"]);
     expect(titleParts(locate("/loan-management/ledger")!)).toEqual(["Ledger", "Loan Management"]);
-    expect(titleParts(locate("/savings-goals/dashboard")!)).toEqual(["Dashboard", "Savings Goals"]);
+    expect(titleParts(locate("/savings-goals/dashboard")!)).toEqual(["Goals", "Savings Goals"]);
+    expect(titleParts(locate("/savings-goals/transfer")!)).toEqual(["Goals", "Savings Goals"]);
     expect(titleParts(locate("/habit-tracker")!)).toEqual(["Dashboard", HABIT_APP_LABEL]);
     expect(titleParts(locate("/reports/overview")!)).toEqual(["Overview", "Insights"]);
   });

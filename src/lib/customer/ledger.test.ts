@@ -154,8 +154,9 @@ describe("statementBackPath", () => {
 
 describe("statementBackLabel", () => {
   it("names a known page, else says Back", () => {
-    expect(statementBackLabel("/savings-goals/overview")).toBe("Back to Savings overview");
-    expect(statementBackLabel("/savings-goals/overview?tab=1")).toBe("Back to Savings overview");
+    expect(statementBackLabel("/savings-goals/wallet")).toBe("Back to Savings accounts");
+    expect(statementBackLabel("/savings-goals/wallet?tab=1")).toBe("Back to Savings accounts");
+    expect(statementBackLabel("/savings-goals/overview")).toBe("Back to Savings accounts");
     expect(statementBackLabel("/balance/transfer")).toBe("Back");
   });
 });

@@ -3,15 +3,13 @@ import { bnDictionary } from "@/lib/i18n/dictionary";
 import { inEnglish } from "@/lib/i18n/message";
 import {
   ENTRY_META,
-  goalBadge,
   goalColor,
   goalTotals,
+  LOOK_META,
   monthsBetween,
   monthsLeft,
   neededPerMonth,
   OTHER_SAVINGS_PALETTE,
-  quickAmounts,
-  remainingOf,
   ringPercent,
   savingsError,
   savingsPalette,
@@ -20,27 +18,11 @@ import {
   timeLeft,
   timeLeftText,
   TREND_META,
-  walletThatCovers,
 } from "./savingsDisplay";
-
-describe("goalBadge", () => {
-  it("reads the pace of an active goal", () => {
-    expect(goalBadge({ status: "ACTIVE", paceStatus: "ON_TRACK" })).toEqual({ label: "On track", chip: "income" });
-    expect(goalBadge({ status: "ACTIVE", paceStatus: "BEHIND" })).toEqual({ label: "Behind", chip: "warning" });
-    expect(goalBadge({ status: "ACTIVE", paceStatus: "WARNING" })).toEqual({ label: "At risk", chip: "expense" });
-    expect(goalBadge({ status: "ACTIVE", paceStatus: null }).label).toBe("On track");
-  });
-
-  it("names any other status", () => {
-    expect(goalBadge({ status: "PAUSED", paceStatus: null })).toEqual({ label: "Paused", chip: "neutral" });
-    expect(goalBadge({ status: "COMPLETED", paceStatus: null })).toEqual({ label: "Completed", chip: "income" });
-    expect(goalBadge({ status: "WITHDRAWN", paceStatus: null })).toEqual({ label: "Withdrawn", chip: "neutral" });
-  });
-});
 
 describe("goalColor", () => {
   it("cycles the ring colours and greys a paused goal", () => {
-    expect(goalColor(0, "ACTIVE")).toBe(goalColor(5, "ACTIVE"));
+    expect(goalColor(0, "ACTIVE")).toBe(goalColor(8, "ACTIVE"));
     expect(goalColor(1, "ACTIVE")).not.toBe(goalColor(2, "ACTIVE"));
     expect(goalColor(0, "PAUSED")).toBe("var(--ink-faint)");
   });
@@ -149,50 +131,6 @@ describe("goalTotals", () => {
   });
 });
 
-describe("quickAmounts", () => {
-  it("offers the monthly target, round figures and the rest, each once", () => {
-    const goal = { targetAmount: "150000", currentAmount: "80000", monthlyTarget: "7777.78" };
-    expect(quickAmounts(goal)).toEqual([
-      { kind: "monthly", amount: 7778 },
-      { kind: "round", amount: 5000 },
-      { kind: "round", amount: 10000 },
-      { kind: "rest", amount: 70000 },
-    ]);
-    expect(remainingOf(goal)).toBe(70000);
-  });
-
-  it("drops zeros and duplicates", () => {
-    expect(quickAmounts({ targetAmount: "10000", currentAmount: "10000", monthlyTarget: "0" })).toEqual([]);
-    expect(quickAmounts({ targetAmount: "15000", currentAmount: "5000", monthlyTarget: "10000" }).filter((q) => q.amount === 10000)).toHaveLength(1);
-  });
-
-  it("never offers more than the goal still needs", () => {
-    expect(quickAmounts({ targetAmount: "50000", currentAmount: "48000", monthlyTarget: "7777.78" })).toEqual([{ kind: "rest", amount: 2000 }]);
-    expect(quickAmounts({ targetAmount: "50000", currentAmount: "42000", monthlyTarget: "4000" })).toEqual([
-      { kind: "monthly", amount: 4000 },
-      { kind: "round", amount: 5000 },
-      { kind: "rest", amount: 8000 },
-    ]);
-  });
-});
-
-describe("walletThatCovers", () => {
-  const wallets = [
-    { id: "small", currentBalance: "2000.00" },
-    { id: "big", currentBalance: "90000.00" },
-  ];
-
-  it("starts on the first wallet holding the whole amount", () => {
-    expect(walletThatCovers(wallets, 5000)).toBe("big");
-    expect(walletThatCovers(wallets, 2000)).toBe("small");
-  });
-
-  it("starts on none when no wallet holds it alone", () => {
-    expect(walletThatCovers(wallets, 95000)).toBe("");
-    expect(walletThatCovers([], 1)).toBe("");
-  });
-});
-
 describe("ENTRY_META", () => {
   it("names the other goal of a move only in its own sentence", () => {
     expect(inEnglish(ENTRY_META.TRANSFER_IN.withGoal ?? "", { goal: "Hajj" })).toBe("Moved in from Hajj");
@@ -223,9 +161,7 @@ describe("savingsError", () => {
 describe("Bangla for what this file hands to t()", () => {
   it("words every badge, trend, history title and time left", () => {
     const labels = [
-      ...(["ACTIVE", "PAUSED", "COMPLETED", "WITHDRAWN"] as const).map((status) => goalBadge({ status, paceStatus: null }).label),
-      goalBadge({ status: "ACTIVE", paceStatus: "BEHIND" }).label,
-      goalBadge({ status: "ACTIVE", paceStatus: "WARNING" }).label,
+      ...Object.values(LOOK_META).map((meta) => meta.label),
       ...Object.values(TREND_META).flatMap((meta) => [meta.label, meta.short]),
       ...Object.values(ENTRY_META).flatMap((meta) => (meta.withGoal ? [meta.title, meta.withGoal] : [meta.title])),
       "{count} month left",

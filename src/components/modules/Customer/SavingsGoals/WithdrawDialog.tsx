@@ -1,26 +1,24 @@
 "use client";
 
-import { RefreshCw, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
-import IconTile from "@/components/smartly/IconTile";
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, SavingsGoal } from "@/lib/customer/api";
-import { listBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { formatCurrency } from "@/lib/customer/currency";
-import { listExpenseAccountsAction } from "@/lib/customer/quickEntryActions";
-import { listActiveSavingsWalletsAction, withdrawSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
-import { savingsError, walletThatCovers } from "@/lib/customer/savingsDisplay";
-import { getAppToday } from "@/lib/date";
-import { fillNodes } from "@/lib/i18n/fill";
+import { withdrawToBalanceAction } from "@/lib/customer/savingsGoalActions";
+import { savingsError } from "@/lib/customer/savingsDisplay";
+import { splitLargestFirst } from "@/lib/customer/savingsPlan";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+import { SavingsDialog } from "./SavingsDialog";
 
 interface WithdrawDialogProps {
   open: boolean;
@@ -28,223 +26,157 @@ interface WithdrawDialogProps {
   businessId: string;
   goal: SavingsGoal | null;
   currency: string;
+  today: string;
+  // The main balance accounts the money can go to.
+  moneyAccounts: Account[];
 }
 
-// Which of the three reads failed (offline, an outage). Each is said so,
-// with Try again, rather than read as "No savings wallet yet", "No expense
-// category yet" or "No expense account exists".
-interface Failed {
-  wallets: boolean;
-  accounts: boolean;
-  categories: boolean;
-}
-
-interface Loaded {
-  wallets: Account[];
-  expenseAccounts: Account[];
-  categories: { name: string }[];
-  failed: Failed;
-}
-
-const ALL_FAILED: Failed = { wallets: true, accounts: true, categories: true };
-
-// Cash a goal out: the whole saved amount leaves a savings wallet and is
-// spent as an expense, and the goal closes for good -- so it asks twice.
-export function WithdrawDialog({ open, onClose, businessId, goal, currency }: WithdrawDialogProps) {
-  const { t, fmt } = useLocale();
+// Take money out of a goal (design: SavingsDashboard's Withdraw popup): any
+// amount up to what is saved, to a main balance account. It comes out of
+// the savings accounts holding the goal's money, largest first; taking all
+// of it closes the goal. Spending is then recorded as an ordinary expense.
+export function WithdrawDialog({ open, onClose, businessId, goal, currency, today, moneyAccounts }: WithdrawDialogProps) {
+  const { t, fmt, locale } = useLocale();
   const router = useRouter();
-  const [walletId, setWalletId] = useState("");
-  const [category, setCategory] = useState("");
-  const [date, setDate] = useState(getAppToday());
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
+  const lang = displayLanguage(locale);
+  const [amount, setAmount] = useState("");
+  const [toId, setToId] = useState("");
+  const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
-  const [confirmed, setConfirmed] = useState(false);
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [attempt, setAttempt] = useState(0);
+  const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-  const goalAmount = goal ? Number(goal.currentAmount) : 0;
 
-  const [prevOpen, setPrevOpen] = useState(false);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
-    if (open) {
-      setDate(getAppToday());
+  const [prevKey, setPrevKey] = useState("closed");
+  const key = open && goal ? goal.id : "closed";
+  if (key !== prevKey) {
+    setPrevKey(key);
+    if (open && goal) {
+      setAmount(String(Number(goal.currentAmount)));
+      setToId(moneyAccounts[0]?.id ?? "");
+      setDate(today);
       setNote("");
-      setConfirmed(false);
-      // Asked every time: an unnoticed default would count the withdrawal
-      // against that category's budget.
-      setCategory("");
-      setLoaded(null);
+      setError("");
     }
   }
 
-  useEffect(() => {
-    if (!open) return;
-    // A late reply (the dialog closed, or a retry started) is dropped; one
-    // that never comes ends as a failure, not a spinner for good.
-    let cancelled = false;
-    Promise.all([listActiveSavingsWalletsAction(businessId), listExpenseAccountsAction(businessId), listBudgetCategoryNamesAction(businessId, "EXPENSE")])
-      .then(([savings, accounts, names]) => {
-        if (cancelled) return;
-        const wallets = savings.data ?? [];
-        setLoaded({
-          wallets,
-          expenseAccounts: accounts.data ?? [],
-          categories: names.data ?? [],
-          failed: { wallets: !savings.success, accounts: !accounts.success, categories: !names.success },
-        });
-        // The whole amount leaves one wallet, so start on one that holds it.
-        setWalletId((current) => (wallets.some((wallet) => wallet.id === current && Number(wallet.currentBalance) >= goalAmount) ? current : walletThatCovers(wallets, goalAmount)));
-      })
-      .catch(() => {
-        if (!cancelled) setLoaded({ wallets: [], expenseAccounts: [], categories: [], failed: ALL_FAILED });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, businessId, attempt, goalAmount]);
-
-  const loading = loaded === null;
-  const wallets = loaded?.wallets ?? [];
-  const expenseAccounts = loaded?.expenseAccounts ?? [];
-  const categories = loaded?.categories ?? [];
-  const failed = loaded?.failed;
-  // One line for each read that failed, above the one Try again.
-  const failures = [
-    failed?.wallets && t("Couldn't load your savings wallets."),
-    failed?.accounts && t("Failed to load your expense accounts"),
-    failed?.categories && t("Failed to load your categories"),
-  ].filter((line): line is string => !!line);
-  const covering = wallets.filter((wallet) => Number(wallet.currentBalance) >= goalAmount);
-  // The expense posts against a real expense account; the category is its
-  // label. Best-effort match by name, else the first one.
-  const expenseAccountId = expenseAccounts.find((account) => account.name.toLowerCase().includes(category.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
-  // A category is needed whenever there are some to pick, and still when
-  // they couldn't be read: an outage can't withdraw into no category.
-  const categoryReady = categories.length > 0 ? category.length > 0 : !failed?.categories;
-  const valid = !!goal && covering.some((wallet) => wallet.id === walletId) && expenseAccountId.length > 0 && categoryReady && confirmed;
-  const amount = goal ? formatCurrency(goal.currentAmount, currency, fmt) : "";
+  if (!goal) return null;
+  const saved = Number(goal.currentAmount);
+  const value = Number(amount) || 0;
+  const to = moneyAccounts.find((account) => account.id === toId);
+  const completed = goal.status === "COMPLETED";
+  const full = value > 0 && value === saved;
+  const parts = value > 0 && value <= saved ? splitLargestFirst(goal.holdings, value) : [];
+  const info = !value
+    ? t("Enter how much to take out.")
+    : value > saved
+      ? t("{name} has only {amount}.", { name: goal.name, amount: money(saved) })
+      : full
+        ? completed
+          ? t("{name} will be marked Achieved and closed.", { name: goal.name })
+          : t("This takes everything out and closes {name} before it reaches the target.", { name: goal.name })
+        : t("{name} stays open with {amount} saved.", { name: goal.name, amount: money(saved - value) });
+  const warn = full && !completed;
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || isPending || !goal) return;
+    if (isPending || !goal) return;
+    if (!value) return setError(t("Enter an amount."));
+    if (value > saved) return setError(t("{name} has only {amount}.", { name: goal.name, amount: money(saved) }));
+    if (!to) return setError(t("Pick the account to send it to."));
     startTransition(async () => {
-      const result = await withdrawSavingsGoalAction(businessId, goal.id, { date, savingsAccountId: walletId, expenseAccountId, categoryId: category || undefined, notes: note.trim() || undefined });
-      if (result.success) {
-        toast.success(t("Withdrawn and recorded as an expense"));
-        onClose();
-        router.refresh();
-      } else {
-        toast.error(savingsError(result.message, "Failed to withdraw", t, currency, fmt));
+      const result = await withdrawToBalanceAction(businessId, goal.id, { amount: value, toAccountId: to.id, date, notes: note.trim() || undefined });
+      if (!result.success) {
+        setError(savingsError(result.message, "Failed to withdraw", t, currency, fmt));
+        return;
       }
+      const toName = accountDisplayName(to, lang);
+      const after = full ? (completed ? t("{name} is marked Achieved.", { name: goal.name }) : t("{name} is closed.", { name: goal.name })) : t("{name} keeps {amount}.", { name: goal.name, amount: money(saved - value) });
+      toast.success(`${t("{amount} moved to {account}.", { amount: money(value), account: toName })} ${after} ${t("Record your spending as an expense from {account}.", { account: toName })}`);
+      onClose();
+      router.refresh();
     });
   }
 
-  const label = (text: string, optional = false) => (
-    <span className="text-body font-medium text-ink">
-      {text} {optional && <span className="font-normal text-ink-muted">({t("optional")})</span>}
-    </span>
-  );
-
-  const retry = () => {
-    setLoaded(null);
-    setAttempt((count) => count + 1);
-  };
-
   return (
-    <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      {/* Scrolls on a short phone or with the keyboard up, so the title and
-          the Withdraw button stay reachable. */}
-      <AlertDialogContent className="max-h-[calc(100dvh-2rem)] w-130 max-w-[calc(100vw-32px)] gap-0 overflow-y-auto rounded-[14px] border border-line bg-surface p-6 shadow-overlay ring-0">
-        <form onSubmit={submit} className="flex flex-col gap-4.5">
-          <div className="flex items-start gap-3.5">
-            <IconTile tone="expense" size={44} className="rounded-field">
-              <TriangleAlert />
-            </IconTile>
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <AlertDialogTitle className="text-h3 text-ink">{t("Withdraw everything from {name}?", { name: goal?.name ?? "" })}</AlertDialogTitle>
-              <AlertDialogDescription className="text-body leading-[1.55] text-ink-soft">
-                {fillNodes(t("The full {amount} leaves your savings wallet and is recorded as an expense. The goal is marked Withdrawn, and {undone}."), {
-                  amount: <b className="font-semibold text-ink">{amount}</b>,
-                  undone: <b className="font-semibold text-ink">{t("this can't be undone")}</b>,
-                })}
-              </AlertDialogDescription>
+    <SavingsDialog
+      open={open}
+      onClose={onClose}
+      width={540}
+      busy={isPending}
+      onSubmit={submit}
+      title={t("Withdraw from {name}", { name: goal.name })}
+      sub={t("The money goes to your main balance. Record what you buy as an expense from there.")}
+      footer={
+        <>
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
+            {t("Cancel")}
+          </Button>
+          <Button type="submit" size="lg" disabled={isPending}>
+            {isPending && <Loader size={16} onDark label={t("Loading...")} />}
+            {value > 0 ? t("Withdraw {amount}", { amount: money(value) }) : t("Withdraw")}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-2">
+        <label htmlFor="wd-amount" className="text-body font-medium text-ink">
+          {t("Amount")}
+        </label>
+        <AmountInput id="wd-amount" value={amount} onChange={setAmount} currency={currency} autoFocus />
+        <div className="flex gap-1.5">
+          <button type="button" onClick={() => setAmount(String(saved))} className="h-8 rounded-full border border-line bg-surface px-3 text-caption font-semibold text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11">
+            {t("All · {amount}", { amount: money(saved) })}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-md border border-line bg-strip px-3.5 py-3 text-small tabular-nums">
+        <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Comes out of")}</span>
+        {parts.length === 0 ? (
+          <span className="text-ink-muted">{t("Enter an amount to see which savings accounts it comes from.")}</span>
+        ) : (
+          parts.map((part, index) => (
+            <div key={`${part.name}-${index}`} className="flex justify-between gap-3">
+              <span className="min-w-0 truncate text-ink-2">{part.name ?? t("Savings account")}</span>
+              <span className="font-semibold">{money(part.amount)}</span>
             </div>
-          </div>
+          ))
+        )}
+      </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <Field htmlFor="wd-from" label={label(t("From savings wallet"))}>
-              <NativeSelect id="wd-from" size="md" value={walletId} onChange={(event) => setWalletId(event.target.value)} disabled={loading}>
-                {loading && <option value="">{t("Loading...")}</option>}
-                {!loading && wallets.length === 0 && <option value="">{failed?.wallets ? t("Couldn't load your savings wallets.") : t("No savings wallet yet")}</option>}
-                {!loading && wallets.length > 0 && covering.length === 0 && <option value="">{t("Pick a savings wallet")}</option>}
-                {wallets.map((wallet) => {
-                  // A withdrawal takes the goal's whole amount from one wallet.
-                  const short = Number(wallet.currentBalance) < goalAmount;
-                  return (
-                    <option key={wallet.id} value={wallet.id} disabled={short}>
-                      {`${wallet.name} · ${formatCurrency(wallet.currentBalance, currency, fmt)}${short ? ` · ${t("not enough")}` : ""}`}
-                    </option>
-                  );
-                })}
-              </NativeSelect>
-            </Field>
-            <Field htmlFor="wd-cat" label={label(t("Spend as"))}>
-              <NativeSelect id="wd-cat" size="md" value={category} onChange={(event) => setCategory(event.target.value)} disabled={loading} required={categories.length > 0}>
-                {categories.length === 0 ? (
-                  <option value="">{loading ? t("Loading...") : failed?.categories ? t("Failed to load your categories") : t("No expense category yet")}</option>
-                ) : (
-                  <option value="" disabled>
-                    {t("Pick a category")}
-                  </option>
-                )}
-                {categories.map((option) => (
-                  <option key={option.name} value={option.name}>
-                    {option.name}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field htmlFor="wd-date" label={label(t("Date"))}>
-              <DayInput id="wd-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
-            </Field>
-            <Field htmlFor="wd-note" label={label(t("Note"), true)}>
-              <Input id="wd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Bought the laptop")} className="px-0" frameClassName="px-3" />
-            </Field>
-          </div>
-          {failures.length > 0 && (
-            <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-small text-ink-2">
-              <span className="flex min-w-0 flex-col gap-0.5">
-                {failures.map((line) => (
-                  <span key={line}>{line}</span>
-                ))}
-              </span>
-              <Button type="button" variant="secondary" size="sm" onClick={retry} className="pointer-coarse:h-11">
-                <RefreshCw aria-hidden="true" />
-                {t("Try again")}
-              </Button>
-            </div>
-          )}
-          {!loading && !failed?.wallets && wallets.length > 0 && covering.length === 0 && (
-            <p className="text-caption text-expense">{t("No savings wallet holds {amount} on its own, so this goal can't be withdrawn yet.", { amount })}</p>
-          )}
-          {!loading && !failed?.accounts && expenseAccounts.length === 0 && <p className="text-caption text-expense">{t("No expense account exists in this workspace yet -- add one in Chart of Accounts first.")}</p>}
+      <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_170px]">
+        <Field htmlFor="wd-to" label={<span className="text-body font-medium text-ink">{t("Send to")}</span>}>
+          <NativeSelect id="wd-to" size="md" value={toId} onChange={(event) => setToId(event.target.value)}>
+            {moneyAccounts.length === 0 && <option value="">{t("No wallet yet")}</option>}
+            {moneyAccounts.map((account) => (
+              <option key={account.id} value={account.id}>{`${accountDisplayName(account, lang)} · ${money(account.currentBalance)}`}</option>
+            ))}
+          </NativeSelect>
+        </Field>
+        <Field htmlFor="wd-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
+          <DayInput id="wd-date" size="md" value={date} onChange={(day) => setDate(day || today)} max={today} />
+        </Field>
+      </div>
 
-          <label className="flex cursor-pointer items-center gap-2.5 rounded-field border border-expense-line bg-expense-soft/50 px-3.5 py-3 text-small text-expense">
-            <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="size-4.5 shrink-0 accent-expense" />
-            {t("I understand {name} will be closed for good.", { name: goal?.name ?? "" })}
-          </label>
+      <Field
+        htmlFor="wd-note"
+        label={
+          <span className="text-body font-medium text-ink">
+            {t("Note")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+          </span>
+        }
+      >
+        <Input id="wd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. Buying the phone this week")} />
+      </Field>
 
-          <div className="flex flex-wrap justify-end gap-2.5">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-              {t("Keep saving")}
-            </Button>
-            <Button type="submit" variant="danger" disabled={!valid || isPending}>
-              {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Withdraw {amount}", { amount })}
-            </Button>
-          </div>
-        </form>
-      </AlertDialogContent>
-    </AlertDialog>
+      <p className={cn("rounded-field px-3 py-2.5 text-small leading-normal", warn ? "bg-warning-soft text-warning-ink" : "bg-mint-50 text-brand-ink")}>{info}</p>
+
+      {error && (
+        <p role="alert" className="text-small text-expense">
+          {error}
+        </p>
+      )}
+    </SavingsDialog>
   );
 }

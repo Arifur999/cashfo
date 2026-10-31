@@ -110,7 +110,7 @@ export function periodText(t: Translate, from?: string, to?: string, locale: For
 // would lead to another site once followed.
 const UNSAFE_PATH_CHARS = /[\s\u0000-\u001f\u007f\\]/;
 
-// The page a Statement was opened from (?from=/savings-goals/overview), for
+// The page a Statement was opened from (?from=/savings-goals/wallet), for
 // its Back link: a path on this site only, never another site's address.
 export function statementBackPath(value: unknown): string | null {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || UNSAFE_PATH_CHARS.test(value)) return null;
@@ -119,7 +119,9 @@ export function statementBackPath(value: unknown): string | null {
 
 // What the Back link says: the page's name where it is known, else "Back".
 const BACK_LABELS: Record<string, string> = {
-  "/savings-goals/overview": "Back to Savings overview",
+  "/savings-goals/wallet": "Back to Savings accounts",
+  // Savings overview became part of Savings accounts; an old link still says where it goes.
+  "/savings-goals/overview": "Back to Savings accounts",
 };
 
 export function statementBackLabel(path: string): string {

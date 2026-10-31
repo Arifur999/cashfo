@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { SavingsGoalsDashboardPageClient } from "@/components/modules/Customer/SavingsGoals/SavingsGoalsDashboardPageClient";
-import { getSavingsWallets } from "@/lib/customer/accounts";
+import { GoalsPageClient } from "@/components/modules/Customer/SavingsGoals/GoalsPageClient";
+import { getMoneyAccounts, getSavingsWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
@@ -19,26 +19,30 @@ export default async function SavingsGoalsDashboardPage() {
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  // Money can only be added once there is a savings wallet to keep it in.
-  const [goals, overview, savingsWallets] = await Promise.all([getSavingsGoals(activeBusinessId), getSavingsOverview(activeBusinessId), getSavingsWallets(activeBusinessId)]);
-  const hasSavingsWallet = savingsWallets.some((wallet) => wallet.status === "ACTIVE");
-
-  // With none active, the archived ones (only Savings summary still lists
-  // them), so the page can offer them back rather than read as a new account.
-  const archivedWallets =
-    hasSavingsWallet || goals.length === 0
-      ? []
-      : (await getSavingsAccountOverview(activeBusinessId)).accounts.filter((row) => row.status === "ARCHIVED").map((row) => ({ id: row.id, name: row.name }));
+  // The active savings wallets take money in; the account overview lists
+  // every one, so with none active the archived ones are offered back
+  // instead of a first-run setup, and a new one can't repeat a name.
+  const [goals, overview, active, moneyAccounts, accounts] = await Promise.all([
+    getSavingsGoals(activeBusinessId),
+    getSavingsOverview(activeBusinessId),
+    getSavingsWallets(activeBusinessId),
+    getMoneyAccounts(activeBusinessId),
+    getSavingsAccountOverview(activeBusinessId),
+  ]);
+  const archived = active.length === 0 ? accounts.accounts.filter((row) => row.status === "ARCHIVED").map((row) => ({ id: row.id, name: row.name })) : [];
 
   return (
-    <SavingsGoalsDashboardPageClient
+    <GoalsPageClient
       businessId={activeBusinessId}
       goals={goals}
       overview={overview}
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
-      hasSavingsWallet={hasSavingsWallet}
-      archivedWallets={archivedWallets}
+      savingsWallets={active}
+      moneyAccounts={moneyAccounts}
+      archivedWallets={archived}
+      walletNames={accounts.accounts.map((row) => ({ id: row.id, name: row.name }))}
+      person={{ name: user.name, email: user.email }}
       today={getAppToday()}
     />
   );

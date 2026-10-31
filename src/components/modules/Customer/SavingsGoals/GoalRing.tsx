@@ -6,6 +6,7 @@ const SIZES = {
   52: { outer: "size-13", inner: "size-10" },
   92: { outer: "size-23", inner: "size-18" },
   96: { outer: "size-24", inner: "size-18.5" },
+  104: { outer: "size-26", inner: "size-20" },
   112: { outer: "size-28", inner: "size-21.5" },
   128: { outer: "size-32", inner: "size-25" },
 } as const;

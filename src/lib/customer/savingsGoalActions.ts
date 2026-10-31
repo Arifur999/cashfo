@@ -10,6 +10,8 @@ import {
   type SavingsGoalEntry,
   type SavingsGoalStatus,
   type SavingsReminderChannel,
+  type SavingsStatement,
+  type SavingsWalletHistoryRow,
 } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
@@ -96,6 +98,29 @@ export async function updateSavingsGoalStatusAction(businessId: string, id: stri
   }, "Failed to update goal");
 }
 
+// Catch up: a fresh plan to the same end date (with a monthly reminder
+// email), or a later end date at the original pace.
+export async function updateSavingsPlanAction(businessId: string, id: string, input: { mode: "RESET" } | { mode: "EXTEND"; targetDate: string }): Promise<ActionResult<SavingsGoal>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<SavingsGoal>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}/plan`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to update goal");
+}
+
+export async function getSavingsStatementAction(businessId: string, id: string): Promise<ActionResult<SavingsStatement>> {
+  return callApi(async () => {
+    const res = await customerApi.get<SavingsStatement>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}/statement`, { headers: await authHeaders() });
+    return res.data;
+  }, "Couldn't load this goal's history.");
+}
+
+export async function getSavingsWalletHistoryAction(businessId: string, accountId: string): Promise<ActionResult<SavingsWalletHistoryRow[]>> {
+  return callApi(async () => {
+    const res = await customerApi.get<SavingsWalletHistoryRow[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/wallets/${accountId}/history`, { headers: await authHeaders() });
+    return res.data;
+  }, "Couldn't load this account's history.");
+}
+
 export async function deleteSavingsGoalAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${id}`, { headers: await authHeaders() });
@@ -142,23 +167,18 @@ export async function addContributionAction(businessId: string, goalId: string, 
   }, "Failed to add money");
 }
 
-export interface WithdrawSavingsGoalInput {
-  savingsAccountId: string;
-  expenseAccountId: string;
-  categoryId?: string;
+export interface WithdrawToBalanceInput {
+  amount: number;
+  toAccountId: string;
   date: string;
   notes?: string;
 }
 
-// "Cash out" a fully (or partially) saved goal -- see SavingsGoalsService.
-// withdraw()'s comment. Always withdraws the goal's entire current saved
-// amount; there's no amount field to send.
-export async function withdrawSavingsGoalAction(businessId: string, goalId: string, input: WithdrawSavingsGoalInput): Promise<ActionResult<SavingsGoalEntry>> {
+// Any amount up to what is saved, to a main balance account; it comes out
+// of the savings wallets holding the goal's money, largest first.
+export async function withdrawToBalanceAction(businessId: string, goalId: string, input: WithdrawToBalanceInput): Promise<ActionResult> {
   return callApi(async () => {
-    const res = await customerApi.post<SavingsGoalEntry>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/withdraw`, input, {
-      headers: await authHeaders(),
-    });
-    return res.data;
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/withdrawals`, input, { headers: await authHeaders() });
   }, "Failed to withdraw");
 }
 
@@ -174,4 +194,11 @@ export async function createSavingsTransferAction(businessId: string, input: Sav
   return callApi(async () => {
     await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfer`, input, { headers: await authHeaders() });
   }, "Failed to move");
+}
+
+// Takes a move back, while the goal it went to still holds the money.
+export async function undoSavingsTransferAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfers/${id}`, { headers: await authHeaders() });
+  }, "Failed to undo the move");
 }
