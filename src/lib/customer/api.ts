@@ -864,11 +864,27 @@ export type SavingsGoalStatus = "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN";
 export type SavingsReminderChannel = "EMAIL" | "PHONE";
 export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN" | "WITHDRAWAL";
 // Only ever set for an ACTIVE goal -- null for Paused/Completed/Withdrawn,
-// where "are you saving fast enough" no longer applies. See
-// SavingsGoalsService.computePaceStatus()/computeTrend()'s comments for
-// exactly how each is derived.
+// where "are you saving fast enough" no longer applies. paceStatus is the
+// older two-way field; pace (backend savings-plan.ts) is the plan line's.
 export type SavingsGoalPaceStatus = "ON_TRACK" | "BEHIND" | "WARNING" | null;
 export type SavingsGoalTrend = "INCREASING" | "DECREASING" | "STABLE" | null;
+export type SavingsPlanState = "AHEAD" | "ON_TRACK" | "BEHIND";
+
+// Where a goal stands against its plan line today: what the line says
+// should be saved by now, and saved minus that (below zero is behind).
+export interface SavingsGoalPace {
+  expected: string;
+  difference: string;
+  state: SavingsPlanState;
+}
+
+// How much of a goal's money sits in one savings wallet. accountId is null
+// for money from an old move whose wallet isn't known.
+export interface SavingsHolding {
+  accountId: string | null;
+  name: string | null;
+  amount: string;
+}
 
 export interface SavingsGoal {
   id: string;
@@ -892,6 +908,26 @@ export interface SavingsGoal {
   monthlyTarget: string;
   paceStatus: SavingsGoalPaceStatus;
   trend: SavingsGoalTrend;
+  // What was already saved when the goal was made.
+  startAmount: string;
+  // The Dhaka day the goal was made ("2026-03-01").
+  startDate: string;
+  // The plan line: from planStartAmount on planStartDate to the target on
+  // targetDate. Catch up and Resume move its start to the day they ran.
+  planStartDate: string;
+  planStartAmount: string;
+  pace: SavingsGoalPace | null;
+  // Money added from an account this Dhaka month.
+  addedThisMonth: string;
+  // Any entry at all: a goal with one can't be deleted.
+  entryCount: number;
+  // Largest first.
+  holdings: SavingsHolding[];
+  // The day it reached its target; on a withdrawn goal, it was Achieved.
+  reachedAt: string | null;
+  // Catch up's monthly reminder email is on.
+  monthlyReminder: boolean;
+  lastWithdrawal: { date: string; accountName: string | null } | null;
 }
 
 export interface SavingsGoalEntry {
@@ -902,6 +938,8 @@ export interface SavingsGoalEntry {
   moneyAccountName: string | null;
   savingsAccountName: string | null;
   relatedGoalName: string | null;
+  // Entries of one move or withdrawal across several wallets share it.
+  groupId: string | null;
   notes: string | null;
 }
 
@@ -931,6 +969,7 @@ export interface SavingsOverview {
 export interface SavingsAccountOverviewRow {
   id: string;
   name: string;
+  accountNumber: string | null;
   status: AccountStatus;
   openingBalance: string;
   totalIn: string;
@@ -955,6 +994,41 @@ export interface SavingsTransferRow {
   toGoalId: string | null;
   toGoalName: string;
   notes: string | null;
+  // A move old enough to have no group can't be undone.
+  canUndo: boolean;
+}
+
+// Which goals a savings wallet's money belongs to (Savings accounts' cards
+// and their By goal tab).
+export interface SavingsWalletGoals {
+  accountId: string;
+  goals: { goalId: string; goalName: string; status: SavingsGoalStatus; amount: string; deposits: number; movedInFrom: string[] }[];
+}
+
+// One line of a savings wallet's goal history, newest first. A move or a
+// withdrawal is this wallet's part of it.
+export interface SavingsWalletHistoryRow {
+  id: string;
+  date: string;
+  kind: "ALREADY_SAVED" | "ADDED" | "MOVED" | "WITHDRAWN";
+  goalName: string;
+  otherGoalName: string | null;
+  accountName: string | null;
+  amount: string;
+  notes: string | null;
+}
+
+export type SavingsStatementKind = "ALREADY_SAVED" | "ADDED" | "MOVED_IN" | "MOVED_OUT" | "WITHDRAWN";
+
+// A goal's statement, oldest first. from/to are names: an account, the
+// savings wallets, or the other goal, as the kind says.
+export interface SavingsStatement {
+  goal: SavingsGoal;
+  today: string;
+  rows: { date: string; kind: SavingsStatementKind; from: string | null; to: string | null; notes: string | null; moneyIn: string | null; moneyOut: string | null; balance: string }[];
+  totals: { opening: string; moneyIn: string; moneyOut: string; balance: string };
+  sources: { kind: "ACCOUNT" | "ALREADY_SAVED" | "GOAL"; name: string | null; amount: string }[];
+  now: SavingsHolding[];
 }
 
 // Assets Management -- long-lived, non-cash things a business owns (a car,

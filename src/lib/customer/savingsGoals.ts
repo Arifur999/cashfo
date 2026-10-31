@@ -97,3 +97,18 @@ export const getSavingsGoal = cache(async (businessId: string, id: string): Prom
     return emptyUnlessOutage(error, null);
   }
 });
+
+// Which goals each savings wallet's money belongs to.
+export const getSavingsWalletGoals = cache(async (businessId: string): Promise<SavingsWalletGoals[]> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const response = await customerApi.get<SavingsWalletGoals[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/wallet-goals`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});
