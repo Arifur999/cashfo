@@ -24,18 +24,23 @@ interface GoalPickerProps {
   // The field's label, which names the button and the list.
   labelId: string;
   disabled?: boolean;
+  // What the line under a name says: what a goal has to give (From), or how
+  // far along it is (To).
+  role?: "from" | "to";
 }
 
 // A goal to move money from or to: its ring, name and where it stands. The
 // list is plain buttons (aria-pressed on the chosen one): a listbox would
 // need arrow keys, and an option can't hold a button.
-export function GoalPicker({ goals, options, value, onChange, currency, id, labelId, disabled = false }: GoalPickerProps) {
+export function GoalPicker({ goals, options, value, onChange, currency, id, labelId, disabled = false, role = "to" }: GoalPickerProps) {
   const { t, fmt } = useLocale();
   const [open, setOpen] = useState(false);
   const selected = goals.find((goal) => goal.id === value);
 
   const standing = (goal: SavingsGoal) =>
-    goal.status === "PAUSED"
+    role === "from"
+      ? t(goal.status === "PAUSED" ? "{amount} saved · paused" : "{amount} saved", { amount: formatCurrency(goal.currentAmount, currency, fmt) })
+      : goal.status === "PAUSED"
       ? t("{amount} saved · paused", { amount: formatCurrency(goal.currentAmount, currency, fmt) })
       : t("{percent}% · {amount} to go", { percent: formatCount(goal.progressPercent, fmt), amount: formatCurrency(remainingOf(goal), currency, fmt) });
   // Decoration: the line under the name already says the percentage.
