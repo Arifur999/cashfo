@@ -11,22 +11,35 @@ import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, Group
 // whom, the budget bar, the spend by category and by month. Pure, so the
 // server page and the tests can both use them.
 
-export const GROUP_TABS = ["dashboard", "meals", "members", "contributions", "expenses", "settlement", "settings"] as const;
+// A group's pages, in the sidebar's order (the AppSidebar board's subs, then
+// Meals for a mess, the Activity log and Settings, which the boards draw but
+// give no link).
+export const GROUP_TABS = ["dashboard", "contributions", "expenses", "cashbook", "settlement", "members", "categories", "budget", "meals", "activity", "settings"] as const;
 export type GroupTab = (typeof GROUP_TABS)[number];
 
-// The tabs a group shows: Meals only for a mess, or a family counting meals.
+// The pages a group shows: Meals only for a mess, or a family counting meals.
 export function groupTabsFor(kind: GroupKind, mealsOn: boolean): GroupTab[] {
   return GROUP_TABS.filter((tab) => tab !== "meals" || kind === "MESS" || mealsOn);
 }
 
 export const GROUP_TAB_LABELS: Record<GroupTab, string> = {
   dashboard: "Dashboard",
-  meals: "Meals",
-  members: "Members",
   contributions: "Contributions",
   expenses: "Expenses",
+  cashbook: "Cash book",
   settlement: "Settlement",
+  members: "Members",
+  categories: "Categories",
+  budget: "Monthly budget",
+  meals: "Meals",
+  activity: "Activity log",
   settings: "Settings",
+};
+
+// A group page's address.
+export const groupTabHref = (businessId: string, tab: GroupTab, extra?: Record<string, string>): string => {
+  const query = new URLSearchParams({ tab, ...extra }).toString();
+  return `/group-expenses/${businessId}?${query}`;
 };
 
 // The ways an expense can be shared, and their words.
@@ -60,9 +73,9 @@ export function categoryMembers(category: Pick<GroupExpenseCategoryOption, "defa
   return chosen.length > 0 ? chosen : null;
 }
 
-// The old ?tab=category lived in the sidebar; categories now sit in Settings.
+// The old ?tab=category (the sidebar's) is the Categories page again.
 export function groupTabFrom(value: unknown): GroupTab {
-  if (value === "category") return "settings";
+  if (value === "category") return "categories";
   return typeof value === "string" && (GROUP_TABS as readonly string[]).includes(value) ? (value as GroupTab) : "dashboard";
 }
 
