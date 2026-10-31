@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { BalanceCell, CategoryTile, categoryBarClass, MemberAvatar } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
-interface GroupDashboardProps {
+interface MessDashboardProps {
   data: GroupPageData;
   view: GroupView;
   onRecordPayment: (transfer: Transfer) => void;
@@ -46,7 +46,7 @@ const dayBefore = (day: string) => new Date(Date.parse(`${day}T00:00:00.000Z`) -
 // member's balance. A mess adds where the money went with its budget and
 // the latest entries; a family who pays whom, where the money went and the
 // last six months against the budget.
-export function GroupDashboard({ data, view, onRecordPayment, onStatement, onSetBudget }: GroupDashboardProps) {
+export function MessDashboard({ data, view, onRecordPayment, onStatement, onSetBudget }: MessDashboardProps) {
   const { t, fmt } = useLocale();
   const { currency, range, settlement } = data;
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
