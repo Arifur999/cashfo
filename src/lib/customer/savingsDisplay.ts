@@ -134,6 +134,9 @@ const PATTERNS: { pattern: RegExp; key: string }[] = [
   { pattern: /^"(.+)" only has (-?[\d.]+) -- cannot withdraw (-?[\d.]+) from it\./, key: "{name} only has {amount}, not the {needed} this goal holds. Pick another savings wallet." },
   { pattern: /^"(.+)" only has (-?[\d.]+) saved -- cannot transfer (-?[\d.]+)/, key: "{name} only has {amount} saved, so {needed} can't be moved." },
   { pattern: /^"(.+)" has been withdrawn -- pick another goal/, key: "{name} has been withdrawn. Pick another goal to move the money to." },
+  { pattern: /^"(.+)" only has (-?[\d.]+) saved -- cannot withdraw (-?[\d.]+)/, key: "{name} only has {amount} saved, so {needed} can't be withdrawn." },
+  { pattern: /^"(.+)" no longer has this money, so the move can't be undone\./, key: "{name} no longer has this money, so the move can't be undone." },
+  { pattern: /^"(.+)" has been withdrawn, so this move can't be undone\./, key: "{name} has been withdrawn, so this move can't be undone." },
 ];
 
 export function savingsError(message: string | undefined, fallback: string, t: Translate, currency: string, locale: FormatLocale = "en"): string {
