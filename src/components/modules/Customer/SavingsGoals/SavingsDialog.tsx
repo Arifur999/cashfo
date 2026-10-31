@@ -1,0 +1,95 @@
+"use client";
+
+import { X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+
+const WIDTHS = { 440: "w-110", 480: "w-120", 520: "w-130", 540: "w-135", 560: "w-140", 620: "w-155", 940: "w-235" } as const;
+
+interface SavingsDialogProps {
+  open: boolean;
+  onClose: () => void;
+  title: React.ReactNode;
+  // The line under the title.
+  sub?: React.ReactNode;
+  // Before the title (a goal's ring).
+  lead?: React.ReactNode;
+  // Beside the title (a status chip).
+  aside?: React.ReactNode;
+  // Icon buttons before the close button (Edit goal).
+  actions?: React.ReactNode;
+  width?: keyof typeof WIDTHS;
+  // The bottom strip; right-aligned unless it lays itself out.
+  footer?: React.ReactNode;
+  footerClassName?: string;
+  children?: React.ReactNode;
+  bodyClassName?: string;
+  // A save is on its way: the popup can't be closed.
+  busy?: boolean;
+  onSubmit?: (event: React.FormEvent) => void;
+  // A plain message (Delete): no head line or strip, just the text and buttons.
+  plain?: boolean;
+  className?: string;
+}
+
+// The Savings boards' centred popup: a head with the title and X over a
+// line, the body, and a grey strip with the buttons. Every savings popup
+// uses it; on a phone it fills the width less a margin and scrolls.
+export function SavingsDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, busy = false, onSubmit, plain = false, className }: SavingsDialogProps) {
+  const { t } = useLocale();
+  const close = (
+    <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11">
+      <X className="size-4.5" aria-hidden="true" />
+    </button>
+  );
+  const inner = plain ? (
+    <div className="flex flex-col gap-3 px-6 py-5.5">
+      <DialogTitle className="text-h3 font-bold text-ink">{title}</DialogTitle>
+      <DialogDescription asChild>
+        <div className="text-body leading-[1.55] text-ink-soft">{sub}</div>
+      </DialogDescription>
+      {children}
+      {footer && <div className={cn("mt-1.5 flex flex-wrap justify-end gap-2.5", footerClassName)}>{footer}</div>}
+    </div>
+  ) : (
+    <>
+      <div className="flex shrink-0 items-start gap-3 border-b border-line px-6 py-4">
+        {lead}
+        <div className="flex min-w-0 flex-1 flex-col gap-1 self-center">
+          <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+            <DialogTitle className="min-w-0 text-[18px] leading-[1.3] font-semibold wrap-break-word text-ink">{title}</DialogTitle>
+            {aside}
+          </div>
+          {sub ? (
+            <DialogDescription asChild>
+              <div className="text-small leading-normal text-ink-muted">{sub}</div>
+            </DialogDescription>
+          ) : (
+            <DialogDescription className="sr-only">{typeof title === "string" ? title : ""}</DialogDescription>
+          )}
+        </div>
+        {actions}
+        {close}
+      </div>
+      <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-4.5", bodyClassName)}>{children}</div>
+      {footer && <div className={cn("flex shrink-0 flex-wrap items-center justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5", footerClassName)}>{footer}</div>}
+    </>
+  );
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && !busy && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className={cn(WIDTHS[width], "flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]", className)}
+      >
+        {onSubmit ? (
+          <form noValidate onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+            {inner}
+          </form>
+        ) : (
+          inner
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
