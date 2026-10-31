@@ -1,5 +1,6 @@
-import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMeal, GroupMember, GroupMonthlyBudget, GroupSettings, GroupSettlementRecord, GroupSettlementResult, WorkspaceListItem } from "@/lib/customer/api";
+import type { GroupActivityAction, GroupActivityPage, GroupCashbook, GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMeal, GroupMember, GroupMonthlyBudget, GroupSettings, GroupSettlementRecord, GroupSettlementResult, WorkspaceListItem } from "@/lib/customer/api";
 import type { BudgetStatus, CategorySpend, GroupTab, MonthRange, Transfer } from "@/lib/customer/groupDisplay";
+import type { GroupPeriod, PeriodRange } from "@/lib/customer/groupPeriod";
 
 // What the groups list knows about each group: the workspace, its
 // members, and its own month's settlement and budget (a group's month can
@@ -28,7 +29,13 @@ export interface GroupPageData {
   currency: string;
   today: string;
   tab: GroupTab;
+  // The day the group's months start on.
+  startDay: number;
   range: MonthRange;
+  // The page's own period (its dropdown) and the days it covers; null on a
+  // page without one.
+  period: GroupPeriod | null;
+  periodRange: PeriodRange | null;
   // The months the picker offers, newest first.
   months: string[];
   closedRecord: GroupSettlementRecord | null;
@@ -47,6 +54,23 @@ export interface GroupPageData {
   settings: GroupSettings;
   // This month's meals.
   meals: GroupMeal[];
+  // Loaded for the page on show only (null on the others):
+  // the period's expenses (Dashboard, Expenses, Categories, Contributions' own-pocket rows),
+  periodExpenses: GroupExpense[] | null;
+  // the period's contributions,
+  periodContributions: GroupContribution[] | null;
+  // the period's balances (Dashboard),
+  periodSettlement: GroupSettlementResult | null;
+  // the expenses of the period's year (Dashboard's year chart),
+  yearExpenses: GroupExpense[] | null;
+  // every expense up to next month (Monthly budget),
+  allExpenses: GroupExpense[] | null;
+  // the Cash book and the accountant it shows (null for all),
+  cashbook: GroupCashbook | null;
+  cashbookAccountant: string | null;
+  // and a page of the Activity log, with its kind filter.
+  activity: GroupActivityPage | null;
+  activityAction: GroupActivityAction | null;
 }
 
 // Figures every tab reads, derived once by the page client.
