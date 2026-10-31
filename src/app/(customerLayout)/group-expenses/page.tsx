@@ -39,5 +39,5 @@ export default async function GroupExpensesPage() {
     }),
   );
 
-  return <GroupListPageClient groups={groups} />;
+  return <GroupListPageClient groups={groups} today={today} />;
 }
