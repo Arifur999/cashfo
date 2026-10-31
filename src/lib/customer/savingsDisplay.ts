@@ -1,41 +1,32 @@
 import { formatCount } from "@/lib/i18n/digits";
 import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { Account, SavingsEntryType, SavingsGoal, SavingsGoalStatus, SavingsGoalTrend } from "./api";
+import type { SavingsEntryType, SavingsGoal, SavingsGoalStatus, SavingsGoalTrend } from "./api";
+import type { GoalLook } from "./savingsPlan";
 import { formatCurrency } from "./currency";
 import type { WalletPalette } from "./walletVisuals";
 
-// The ring colours the design gives goals, cycled by position (the board's
-// first two wear the primary, the third orange); a paused or withdrawn goal
-// goes grey.
-const GOAL_COLORS = ["var(--emerald)", "var(--emerald)", "var(--cat-2)", "var(--cat-3)", "var(--cat-4)"];
+// The colours the design gives goals, cycled by position (green, blue,
+// orange, gold, then the new goals' cyan, violet, pink and teal); a paused
+// or withdrawn goal goes grey.
+const GOAL_COLORS = ["var(--cat-1)", "var(--cat-4)", "var(--cat-2)", "var(--cat-11)", "var(--cat-9)", "var(--cat-3)", "var(--cat-6)", "var(--cat-5)"];
 
 export function goalColor(index: number, status: SavingsGoalStatus): string {
   if (status === "PAUSED" || status === "WITHDRAWN") return "var(--ink-faint)";
   return GOAL_COLORS[((index % GOAL_COLORS.length) + GOAL_COLORS.length) % GOAL_COLORS.length];
 }
 
-export interface GoalBadge {
-  label: string;
-  chip: "income" | "warning" | "expense" | "neutral";
-}
-
-// The chip on a goal card: its pace while active (on track / behind / at
-// risk), else its status.
-export function goalBadge(goal: Pick<SavingsGoal, "status" | "paceStatus">): GoalBadge {
-  switch (goal.status) {
-    case "PAUSED":
-      return { label: "Paused", chip: "neutral" };
-    case "COMPLETED":
-      return { label: "Completed", chip: "income" };
-    case "WITHDRAWN":
-      return { label: "Withdrawn", chip: "neutral" };
-    default:
-      if (goal.paceStatus === "BEHIND") return { label: "Behind", chip: "warning" };
-      if (goal.paceStatus === "WARNING") return { label: "At risk", chip: "expense" };
-      return { label: "On track", chip: "income" };
-  }
-}
+// A goal's status chip (design: Ahead, On track, Behind, Paused, Completed,
+// Withdrawn, Achieved).
+export const LOOK_META: Record<GoalLook, { label: string; chip: "income" | "mint" | "warning" | "neutral" }> = {
+  AHEAD: { label: "Ahead", chip: "income" },
+  ON_TRACK: { label: "On track", chip: "mint" },
+  BEHIND: { label: "Behind", chip: "warning" },
+  PAUSED: { label: "Paused", chip: "neutral" },
+  COMPLETED: { label: "Completed", chip: "income" },
+  WITHDRAWN: { label: "Withdrawn", chip: "neutral" },
+  ACHIEVED: { label: "Achieved", chip: "income" },
+};
 
 export const TREND_META: Record<NonNullable<SavingsGoalTrend>, { label: string; short: string; text: string }> = {
   INCREASING: { label: "↑ Saving more lately", short: "↑ Saving more", text: "text-income" },
@@ -123,34 +114,6 @@ export function goalTotals(goals: Pick<SavingsGoal, "status" | "targetAmount" | 
   const target = open.reduce((sum, goal) => sum + Number(goal.targetAmount), 0);
   const toGo = open.reduce((sum, goal) => sum + remainingOf(goal), 0);
   return { saved, target, toGo, percent: target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0, count: open.length };
-}
-
-// The quick amounts under the Add money field: the monthly target, two round
-// figures, and whatever is left -- each once, zeros dropped. Nothing offered
-// would take the goal past its target (all that's left already fills it),
-// so a goal with ৳2,000 to go is never offered ৳5,000.
-export function quickAmounts(goal: Pick<SavingsGoal, "targetAmount" | "currentAmount" | "monthlyTarget">): { kind: "monthly" | "round" | "rest"; amount: number }[] {
-  const rest = remainingOf(goal);
-  const seen = new Set<number>();
-  const candidates: { kind: "monthly" | "round" | "rest"; amount: number; fits: boolean }[] = [
-    { kind: "monthly", amount: Math.round(Number(goal.monthlyTarget)), fits: Math.round(Number(goal.monthlyTarget)) <= rest },
-    { kind: "round", amount: 5000, fits: 5000 < rest },
-    { kind: "round", amount: 10000, fits: 10000 < rest },
-    { kind: "rest", amount: rest, fits: true },
-  ];
-  return candidates
-    .filter((candidate) => {
-      if (!candidate.fits || candidate.amount <= 0 || seen.has(candidate.amount)) return false;
-      seen.add(candidate.amount);
-      return true;
-    })
-    .map(({ kind, amount }) => ({ kind, amount }));
-}
-
-// The savings wallet a withdrawal starts on: the first that holds the goal's
-// whole amount (a withdrawal takes it all from one wallet), else none.
-export function walletThatCovers(wallets: Pick<Account, "id" | "currentBalance">[], amount: number): string {
-  return wallets.find((wallet) => Number(wallet.currentBalance) >= amount)?.id ?? "";
 }
 
 // What each history entry is called. A move names the other goal when it
