@@ -1,10 +1,24 @@
 import { redirect } from "next/navigation";
 import { GroupPageClient } from "@/components/modules/Customer/GroupExpenses/GroupPageClient";
 import type { GroupPageData } from "@/components/modules/Customer/GroupExpenses/groupTypes";
+import type { GroupActivityAction } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getWorkspace } from "@/lib/customer/businesses";
-import { closedRecordFor, groupPickerMonths, groupTabFrom, inMonth, isNewGroup, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
-import { getGroupContributions, getGroupExpenseCategories, getGroupExpenses, getGroupMeals, getGroupMembers, getGroupMonthBudgets, getGroupSettings, getGroupSettlement, getGroupSettlementHistory } from "@/lib/customer/groupExpenses";
+import { closedRecordFor, groupMonthOf, groupPickerMonths, groupTabFrom, type GroupTab, inMonth, isNewGroup, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
+import {
+  getGroupActivity,
+  getGroupCashbook,
+  getGroupContributions,
+  getGroupExpenseCategories,
+  getGroupExpenses,
+  getGroupMeals,
+  getGroupMembers,
+  getGroupMonthBudgets,
+  getGroupSettings,
+  getGroupSettlement,
+  getGroupSettlementHistory,
+} from "@/lib/customer/groupExpenses";
+import { type GroupPeriod, type GroupPeriodKind, groupPeriodFrom, periodRange } from "@/lib/customer/groupPeriod";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
 
@@ -16,9 +30,25 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/gro
   return customerPageMetadata(`/group-expenses/${businessId}`, { query });
 }
 
-// A group, one month at a time. businessId comes from the URL, not the
+// Each page's own period choices (the v7 boards' dropdowns), and its default.
+const PERIODS: Partial<Record<GroupTab, { options: readonly GroupPeriodKind[]; fallback: GroupPeriod }>> = {
+  dashboard: { options: ["month", "year", "custom"], fallback: { kind: "month" } },
+  expenses: { options: ["today", "week", "month", "year", "custom"], fallback: { kind: "month" } },
+  contributions: { options: ["month", "all", "year", "custom"], fallback: { kind: "month" } },
+  cashbook: { options: ["month", "year", "all", "custom"], fallback: { kind: "month" } },
+  categories: { options: ["month", "year", "custom"], fallback: { kind: "month" } },
+};
+
+// All time: from long before any group's first record.
+const EVER = "2000-01-01";
+
+const ACTIVITY_ACTIONS: readonly GroupActivityAction[] = ["ADDED", "EDITED", "DELETED"];
+
+// A group, one page at a time. businessId comes from the URL, not the
 // active-workspace cookie: groups open from the list, whatever workspace
-// is active.
+// is active. Every page has the group month on show (?month=, this one by
+// default) for its live balances; the pages with a period dropdown also
+// load what their period covers.
 export default async function GroupWorkspacePage({ params, searchParams }: PageProps<"/group-expenses/[businessId]">) {
   const { businessId } = await params;
   const sp = await searchParams;
@@ -31,11 +61,20 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   if (!business || business.type !== "GROUP") redirect("/group-expenses");
 
   const today = getAppToday();
+  const tab = groupTabFrom(sp.tab);
   // The group's month starts on its own day (the 1st unless set).
   const settings = await getGroupSettings(businessId);
   const startDay = settings.monthStartDay;
   const range = monthRangeOf(monthKeyFrom(sp.month, today, startDay), startDay);
   const sixFrom = monthRangeOf(shiftMonth(range.key, -5), startDay).from;
+  const choice = PERIODS[tab];
+  const period = choice ? groupPeriodFrom(sp, choice.options, choice.fallback) : null;
+  const span = period ? periodRange(period, today, startDay, EVER) : null;
+  const yearKey = groupMonthOf(span?.to ?? today, startDay).slice(0, 4);
+  const year = { from: monthRangeOf(`${yearKey}-01`, startDay).from, to: monthRangeOf(`${yearKey}-12`, startDay).to };
+  const activityAction = typeof sp.action === "string" && (ACTIVITY_ACTIONS as readonly string[]).includes(sp.action) ? (sp.action as GroupActivityAction) : undefined;
+  const activityPage = Math.max(1, Math.floor(Number(sp.page)) || 1);
+  const accountantId = typeof sp.accountant === "string" && sp.accountant ? sp.accountant : undefined;
 
   const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals] = await Promise.all([
     getGroupMembers(businessId),
@@ -48,13 +87,27 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     getGroupMeals(businessId, range.from, range.to),
   ]);
 
+  // What the page on show needs beyond the month.
+  const [periodExpenses, periodContributions, periodSettlement, yearExpenses, allExpenses, cashbook, activity] = await Promise.all([
+    span && (tab === "dashboard" || tab === "expenses" || tab === "categories" || tab === "contributions") ? getGroupExpenses(businessId, span) : null,
+    span && tab === "contributions" ? getGroupContributions(businessId, span) : null,
+    span && tab === "dashboard" ? getGroupSettlement(businessId, span.from, span.to) : null,
+    tab === "dashboard" ? getGroupExpenses(businessId, year) : null,
+    tab === "budget" ? getGroupExpenses(businessId, { from: EVER, to: monthRangeOf(shiftMonth(groupMonthOf(today, startDay), 1), startDay).to }) : null,
+    span && tab === "cashbook" ? getGroupCashbook(businessId, accountantId, span.from, span.to) : null,
+    tab === "activity" ? getGroupActivity(businessId, activityAction, activityPage) : null,
+  ]);
+
   const data: GroupPageData = {
     businessId,
     name: business.name,
     currency: business.currency,
     today,
-    tab: groupTabFrom(sp.tab),
+    tab,
+    startDay,
     range,
+    period,
+    periodRange: span,
     // A year back at least, so a group that never closed a month can still
     // open the months before this one.
     months: groupPickerMonths(today, history, range, startDay),
@@ -72,6 +125,15 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     budgets,
     settings,
     meals,
+    periodExpenses,
+    periodContributions,
+    periodSettlement,
+    yearExpenses,
+    allExpenses,
+    cashbook,
+    cashbookAccountant: accountantId ?? null,
+    activity,
+    activityAction: activityAction ?? null,
   };
 
   return <GroupPageClient data={data} />;

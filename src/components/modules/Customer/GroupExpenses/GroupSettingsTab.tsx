@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarClock, Coffee, Moon, Pencil, Sun, Trash2 } from "lucide-react";
+import { CalendarClock, Coffee, Moon, Pencil, Plus, Sun, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -17,36 +18,40 @@ import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt"
 import { updateBusinessAction } from "@/lib/customer/businessActions";
 import { budgetCategoryIcon, budgetCategoryIconLabel, suggestIconForCategoryName } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
-import { formatCurrency, formatGrouped } from "@/lib/customer/currency";
-import { categoryMembers, groupMonthOf, monthRangeOf, poolsMeals, rangeLabel, shortName, SPLIT_LABELS, SPLITS, splitTotals } from "@/lib/customer/groupDisplay";
-import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
+import { categoryMembers, groupMonthOf, groupTabHref, monthRangeOf, rangeLabel, shortName, SPLITS } from "@/lib/customer/groupDisplay";
+import { createGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
+import { costShares, isAccountant } from "@/lib/customer/groupFamily";
 import { mealText, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
-import { toLocaleDigits } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CategoryMembersDialog } from "./CategoryMembersDialog";
 import { CategoryTile, MemberAvatar } from "./GroupBits";
 import type { GroupPageData } from "./groupTypes";
-import { ShareStepper } from "./ShareStepper";
 
 interface GroupSettingsTabProps {
   data: GroupPageData;
-  onEditBudget: () => void;
+  onCostSplit: () => void;
   onEditCategory: (category: GroupExpenseCategoryOption) => void;
   onRemoveCategory: (category: GroupExpenseCategoryOption) => void;
   onDeleteGroup: () => void;
 }
 
-type Section = "general" | "shares" | "categories" | "meals";
-type SettingsInput = Partial<Omit<GroupSettings, "breakfastUnits" | "lunchUnits" | "dinnerUnits">> & { breakfastUnits?: number; lunchUnits?: number; dinnerUnits?: number };
+type Section = "general" | "split" | "budget" | "categories" | "meals";
+type SettingsInput = Partial<Omit<GroupSettings, "breakfastUnits" | "lunchUnits" | "dinnerUnits" | "costSplit" | "pausedAt">> & { breakfastUnits?: number; lunchUnits?: number; dinnerUnits?: number; paused?: boolean };
+
+// A category's ways of sharing, as Settings offers them: "By shares" is
+// the group's cost split now.
+const RULE_LABELS: Record<GroupSplit, string> = { EQUAL: "Equally", SHARES: "By cost split", MEALS: "By meals", EXACT: "Exact amounts" };
+const WARN_CHOICES = ["80", "90", "100", ""] as const;
 
 // "1st", "2nd", "21st"... for the month start picker.
 const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
 const MEAL_STEPS = [0, 0.5, 1, 1.5, 2];
 // The new-category row's quick picks; Edit opens every icon and colour.
-const NEW_ICONS = ["graduation-cap", "zap", "shopping-cart", "house", "heart"];
-const NEW_COLORS = ["yellow", "teal", "blue", "green", "pink"];
+const NEW_ICONS = ["book-open", "bus", "shopping-cart", "house", "pill"];
+const NEW_COLORS = ["amber", "green", "blue", "teal", "pink"];
 // The category selects' own choices beside the ways of sharing.
 const ONLY_SELECTED = "ONLY_SELECTED";
 const CHANGE_MEMBERS = "CHANGE_MEMBERS";
@@ -64,11 +69,11 @@ function SaveStatus({ state }: { state: "saving" | "saved" | null }) {
 }
 
 // The board's group settings: the name, whether it is a family or a mess,
-// when its month starts and who keeps the cash; each member's shares; the
-// monthly budget; how each category is shared; meal counting; and delete.
-// Each change saves as it is made; its card says when, and its controls
-// wait for the save.
-export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveCategory, onDeleteGroup }: GroupSettingsTabProps) {
+// when its month starts and which accountant keeps the cash; how costs are
+// split; the budget warning; how each category is shared; meal counting;
+// and delete. Each change saves as it is made; its card says when, and its
+// controls wait for the save.
+export function GroupSettingsTab({ data, onCostSplit, onEditCategory, onRemoveCategory, onDeleteGroup }: GroupSettingsTabProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState(data.name);
@@ -82,13 +87,13 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
   const settings = data.settings;
   const units = unitsOf(settings);
   const active = data.members.filter((member) => member.status === "ACTIVE");
-  const totalShares = active.reduce((sum, member) => sum + Number(member.shareUnits), 0);
-  // What each member pays of the month's costs shared by shares, expense by expense.
-  const byShares = splitTotals(data.expenses, "SHARES", data.members, data.range, poolsMeals(settings.mealsOn, data.settlement));
-  const sharesTotal = Object.values(byShares).reduce((sum, value) => sum + value, 0);
-  const budget = data.budgets.find((b) => `${b.year}-${String(b.month).padStart(2, "0")}` === data.range.key);
-  const month = monthName(data.range.key, fmt, "long");
-  const money = (value: number | string) => formatCurrency(value, data.currency, fmt);
+  const shares = costShares(data.members, settings);
+  const custom = settings.costSplit === "CUSTOM";
+  const hasAccountants = active.some(isAccountant);
+  const warn = settings.budgetWarnPercent === undefined ? 90 : settings.budgetWarnPercent;
+  // Hidden categories are on the Categories page; old records keep them.
+  const shown = data.categories.filter((category) => !category.hidden);
+  const [adding, setAdding] = useState(false);
   const dayWord = (day: number) => toLocaleDigits(locale === "bn" ? String(day) : ordinal(day), fmt);
   const status = (section: Section) => (saving === section ? "saving" : saved === section ? "saved" : null);
   // The new category being written at the foot of the list.
@@ -106,6 +111,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
   const icon = newIcon ?? suggestIconForCategoryName(newName) ?? NEW_ICONS[0];
   const splitChoices = SPLITS.filter((split) => split !== "EXACT" && (split !== "MEALS" || settings.mealsOn || settings.kind === "MESS"));
   const resetNew = () => {
+    setAdding(false);
     setNewName("");
     setNewSplit("EQUAL");
     setNewIcon(null);
@@ -269,11 +275,11 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                 </NativeSelect>
               </Field>
               <Field htmlFor="gs-cash" label={<span className="text-body font-medium text-ink">{t("Cash kept by")}</span>}>
-                <NativeSelect id="gs-cash" size="md" value={settings.cashHolderMemberId ?? ""} onChange={(event) => save("general", { cashHolderMemberId: event.target.value || null })} frameClassName="w-full" className="font-normal">
-                  <option value="">{t("No one in particular")}</option>
+                <NativeSelect id="gs-cash" size="md" value={settings.cashHolderMemberId ?? ""} onChange={(event) => save("general", { cashHolderMemberId: event.target.value || null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-cash-note">
+                  {(!hasAccountants || !settings.cashHolderMemberId) && <option value="">{t("No one in particular")}</option>}
                   {active.map((member) => (
                     <option key={member.id} value={member.id}>
-                      {member.name}
+                      {isAccountant(member) ? t("{name} (accountant)", { name: member.name }) : member.name}
                     </option>
                   ))}
                 </NativeSelect>
@@ -282,59 +288,58 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
             <span id="gs-start-note" className="text-caption leading-normal text-ink-muted">
               {t("Every month is counted from this day, the open one too. Entries keep their dates, and so do closed records.")}
             </span>
+            <span id="gs-cash-note" className="text-caption leading-normal text-ink-muted">
+              {t("Everyone settles with the one who keeps the cash. Picking someone who isn't an accountant makes them one (up to 2).")}
+            </span>
           </fieldset>
         </Card>
 
         <Card padding="none" className="overflow-hidden">
-          <fieldset disabled={isPending} className="min-w-0">
-            <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
-              <div className="flex flex-col gap-0.75">
-                <h2 className="text-title font-semibold text-ink">{t("Members' shares")}</h2>
-                <span className="text-small leading-normal text-ink-muted">{t('Used for costs shared "by shares". For a family this is usually how many people each brother feeds.')}</span>
-              </div>
-              <SaveStatus state={status("shares")} />
+          <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
+            <div className="flex flex-col gap-0.75">
+              <h2 className="text-title font-semibold text-ink">{t("How costs are split")}</h2>
+              <span className="text-small leading-normal text-ink-muted">{custom ? t('Custom %. Costs shared "by cost split" follow each member\'s percent.') : t('Equal. Costs shared "by cost split" are split the same for everyone.')}</span>
             </div>
-            {active.map((member) => {
-              const shares = Number(member.shareUnits);
-              const theirs = byShares[member.id];
-              return (
-                <div key={member.id} className="flex min-h-14 items-center gap-3 border-t border-divider px-5 py-2">
-                  <MemberAvatar member={member} members={data.members} size={32} className="text-[11px]" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-body font-semibold text-ink" title={member.name}>
-                      {shortName(member.name)}
-                    </span>
-                    {member.phone && <span className="truncate text-caption text-ink-muted">{member.phone}</span>}
-                  </span>
-                  <ShareStepper value={shares} name={member.name} disabled={isPending} onChange={(next) => run("shares", () => updateGroupMemberAction(data.businessId, member.id, { shareUnits: next }), t("Failed to update member"))} />
-                  {/* Their part of the month's by-shares costs, by name, as each expense split it. */}
-                  <span className="flex w-17.5 flex-col items-end text-right tabular-nums">
-                    <span className="text-small text-ink-soft">{totalShares ? toLocaleDigits(`${((shares / totalShares) * 100).toFixed(1)}%`, fmt) : "—"}</span>
-                    {theirs !== undefined && <span className="text-caption text-ink-muted">{money(theirs)}</span>}
-                  </span>
-                </div>
-              );
-            })}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-strip px-5 py-3 text-small">
-              <span className="font-semibold text-ink">{t("{count} shares in total", { count: mealText(totalShares, fmt) })}</span>
-              {/* "September by shares ৳ 24,000 → 9,000 · 3,000 · 12,000" */}
-              {sharesTotal > 0 && (
-                <span className="text-ink-soft tabular-nums">
-                  {t("{month} by shares {amount}", { month, amount: money(sharesTotal) })} → {active.map((member) => formatGrouped(byShares[member.id] ?? 0, data.currency, fmt)).join(" · ")}
+            <Button variant="secondary" size="sm" onClick={onCostSplit} className="h-9.5">
+              {t("Change split")}
+            </Button>
+          </div>
+          {active.map((member) => (
+            <div key={member.id} className="flex min-h-14 items-center gap-3 border-t border-divider px-5 py-2">
+              <MemberAvatar member={member} members={data.members} size={32} className="text-[11px]" />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-body font-semibold text-ink" title={member.name}>
+                  {shortName(member.name)}
                 </span>
-              )}
+                {(member.household || member.phone) && <span className="truncate text-caption text-ink-muted">{member.household || member.phone}</span>}
+              </span>
+              <span className="text-small font-semibold text-ink-2 tabular-nums">{shares[member.id] !== undefined ? `${formatCount(Math.round(shares[member.id] * 10) / 10, fmt)}%` : "—"}</span>
             </div>
-          </fieldset>
+          ))}
         </Card>
 
-        <Card padding="none" className="flex items-center gap-4 px-5 py-4.5">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.75">
-            <h2 className="text-title font-semibold text-ink">{t("Monthly budget")}</h2>
-            <span className="text-small text-ink-muted">{budget ? t("{amount} for {month}. Warns at 90% used.", { amount: money(budget.budgetAmount), month }) : t("No budget for {month} yet. Warns at 90% used.", { month })}</span>
+        <Card padding="none" className="flex flex-col gap-4 px-5 py-4.5">
+          <div className="flex items-center gap-4">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.75">
+              <span className="flex items-center justify-between gap-3">
+                <h2 className="text-title font-semibold text-ink">{t("Monthly budget")}</h2>
+                <SaveStatus state={status("budget")} />
+              </span>
+              <span className="text-small text-ink-muted">{t("Each month's budget is set on the Monthly budget page.")}</span>
+            </div>
+            <Button variant="secondary" size="sm" asChild className="h-9.5">
+              <Link href={groupTabHref(data.businessId, "budget")}>{t("Set budgets")}</Link>
+            </Button>
           </div>
-          <Button variant="secondary" size="sm" onClick={onEditBudget} className="h-9.5">
-            {t("Edit budgets")}
-          </Button>
+          <Field htmlFor="gs-warn" label={<span className="text-body font-medium text-ink">{t("Warn me when this much of the budget is used")}</span>}>
+            <NativeSelect id="gs-warn" size="md" value={warn === null ? "" : String(warn)} disabled={isPending} onChange={(event) => run("budget", () => updateGroupSettingsAction(data.businessId, { budgetWarnPercent: event.target.value ? Number(event.target.value) : null }), t("Failed to save the settings"))} frameClassName="w-full sm:w-60" className="font-normal">
+              {WARN_CHOICES.map((choice) => (
+                <option key={choice || "never"} value={choice}>
+                  {choice ? `${toLocaleDigits(choice, fmt)}%` : t("Never")}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
         </Card>
       </div>
 
@@ -346,10 +351,18 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                 <h2 className="text-title font-semibold text-ink">{t("Categories and how each is shared")}</h2>
                 <span className="text-small text-ink-muted">{t("The default for new expenses. Any single expense can still be changed.")}</span>
               </div>
-              <SaveStatus state={status("categories")} />
+              <span className="flex shrink-0 flex-col items-end gap-1">
+                {!adding && (
+                  <Button variant="secondary" size="sm" onClick={() => setAdding(true)} className="h-9">
+                    <Plus aria-hidden="true" />
+                    {t("Add category")}
+                  </Button>
+                )}
+                <SaveStatus state={status("categories")} />
+              </span>
             </div>
-            {data.categories.length === 0 && <p className="border-t border-divider px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
-            {data.categories.map((category) => {
+            {shown.length === 0 && <p className="border-t border-divider px-5 py-5 text-center text-small text-ink-muted">{t("No category yet. Bazar, rent, bills… add the ones this group uses.")}</p>}
+            {shown.map((category) => {
               const chosen = categoryMembers(category, active);
               return (
               <div key={category.id} className="flex min-h-12 items-center gap-3 border-t border-divider px-5 py-1.5">
@@ -361,12 +374,12 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                   onChange={(event) => pickSplit(category, event.target.value)}
                   aria-label={t("How {name} is shared", { name: category.name })}
                   frameClassName="max-w-48"
-                  className={cn("h-8 truncate border-line text-[12.5px] font-semibold pointer-coarse:h-11", category.defaultSplit === "EQUAL" && !chosen ? "text-ink-2" : "bg-mint-50 text-brand-ink")}
+                  className={cn("h-8 truncate border-line text-[12.5px] font-semibold pointer-coarse:h-11", category.defaultSplit === "EQUAL" && !chosen ? "text-ink-2" : category.defaultSplit === "SHARES" ? "bg-pillar-insights-soft text-pillar-insights" : "bg-mint-50 text-brand-ink")}
                 >
                   {/* By meals stays offered to a category saved that way, and says what it does while meals aren't counted. */}
                   {SPLITS.filter((split) => split !== "EXACT" && (split !== "MEALS" || settings.mealsOn || settings.kind === "MESS" || category.defaultSplit === "MEALS")).map((split) => (
                     <option key={split} value={split}>
-                      {split === "MEALS" && !settings.mealsOn ? t("By meals (shared equally while meal counting is off)") : t(SPLIT_LABELS[split])}
+                      {split === "MEALS" && !settings.mealsOn ? t("By meals (shared equally while meal counting is off)") : t(RULE_LABELS[split])}
                     </option>
                   ))}
                   {(canPick || chosen) && <option value={ONLY_SELECTED}>{onlyLabel(chosen)}</option>}
@@ -381,7 +394,8 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
               </div>
               );
             })}
-            {/* A new category, written in place. */}
+            {/* A new category, written in place once asked for. */}
+            {adding && (
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -393,7 +407,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                 {t("New category")}
               </label>
               <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_210px]">
-                <Input id="gs-new-cat" size="sm" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder={t("Bazar")} maxLength={60} frameClassName="h-10" />
+                <Input id="gs-new-cat" size="sm" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder={t("e.g. Kids' school")} maxLength={60} frameClassName="h-10" autoFocus />
                 <NativeSelect
                   size="sm"
                   value={newMembers.length > 0 ? ONLY_SELECTED : newSplit}
@@ -412,7 +426,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                 >
                   {splitChoices.map((split) => (
                     <option key={split} value={split}>
-                      {t(SPLIT_LABELS[split])}
+                      {t(RULE_LABELS[split])}
                     </option>
                   ))}
                   {canPick && <option value={ONLY_SELECTED}>{onlyLabel(newMembers.length > 0 ? active.filter((member) => newMembers.includes(member.id)) : null)}</option>}
@@ -438,7 +452,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                   })}
                 </div>
                 <span className="flex-1" />
-                <Button type="button" variant="ghost" size="sm" onClick={resetNew} disabled={!newName} className="h-8.5 px-2">
+                <Button type="button" variant="ghost" size="sm" onClick={resetNew} className="h-8.5 px-2">
                   {t("Cancel")}
                 </Button>
                 <Button type="submit" size="sm" disabled={!newName.trim()} className="h-8.5">
@@ -446,6 +460,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                 </Button>
               </div>
             </form>
+            )}
           </fieldset>
         </Card>
 
@@ -460,7 +475,7 @@ export function GroupSettingsTab({ data, onEditBudget, onEditCategory, onRemoveC
                   <SaveStatus state={status("meals")} />
                 </span>
                 <span id="gs-meals-hint" className="text-small leading-normal text-ink-muted">
-                  {settings.mealsOn ? t("On. Bazar shared by meals is split by the meals each person eats, at the month's meal rate.") : t("Off. Turn it on if bazar should be shared by the meals each person eats, like a mess.")}
+                  {settings.mealsOn ? t("On. Bazar is shared by the meals each person eats, like a mess.") : t("Off. Turn it on if bazar should be shared by the meals each person eats, like a mess.")}
                 </span>
               </div>
               <Switch checked={settings.mealsOn} onCheckedChange={(on) => save("meals", { mealsOn: on })} disabled={isPending} aria-labelledby="gs-meals" aria-describedby="gs-meals-hint" />

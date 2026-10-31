@@ -2,6 +2,9 @@
 import { cache } from "react";
 import {
   API_BASE_URL,
+  type GroupActivityAction,
+  type GroupActivityPage,
+  type GroupCashbook,
   type GroupContribution,
   type GroupExpense,
   type GroupExpenseCategory,
@@ -145,6 +148,32 @@ export const getGroupMeals = cache(async (businessId: string, from: string, to: 
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
+  }
+});
+
+const EMPTY_CASHBOOK: GroupCashbook = { accountants: [], cashHolderMemberId: null, opening: "0.00", closing: "0.00", totalIn: "0.00", totalOut: "0.00", inCount: 0, outCount: 0, rows: [] };
+
+// An accountant's money in and out (every accountant's without one).
+export const getGroupCashbook = cache(async (businessId: string, accountantId: string | undefined, from: string, to: string): Promise<GroupCashbook> => {
+  const headers = await authHeaders();
+  if (!headers) return EMPTY_CASHBOOK;
+  try {
+    const res = await customerApi.get<GroupCashbook>(`${API_BASE_URL}/api/businesses/${businessId}/group/cashbook`, { headers, params: { ...(accountantId && { accountantId }), from, to } });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, EMPTY_CASHBOOK);
+  }
+});
+
+export const getGroupActivity = cache(async (businessId: string, action: GroupActivityAction | undefined, page: number, limit = 50): Promise<GroupActivityPage> => {
+  const empty: GroupActivityPage = { data: [], meta: { page, limit, total: 0, totalPages: 0 } };
+  const headers = await authHeaders();
+  if (!headers) return empty;
+  try {
+    const res = await customerApi.get<GroupActivityPage>(`${API_BASE_URL}/api/businesses/${businessId}/group/activity`, { headers, params: { ...(action && { action }), page, limit } });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, empty);
   }
 });
 

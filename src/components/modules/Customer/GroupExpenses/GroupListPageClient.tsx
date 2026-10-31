@@ -1,60 +1,78 @@
 "use client";
 
-import { Building2, House, Plus, Trash2, Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
-import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import EmptyState from "@/components/smartly/EmptyState";
+import Field from "@/components/smartly/form/Field";
+import Input from "@/components/smartly/form/Input";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
-import { deleteBusinessAction } from "@/lib/customer/businessActions";
+import { updateBusinessAction } from "@/lib/customer/businessActions";
+import { updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
 import { GroupCard } from "./GroupCard";
+import { GroupDialog } from "./GroupDialog";
 import type { GroupCardData } from "./groupTypes";
-import { NewGroupDrawer } from "./NewGroupDrawer";
-import { formatCount } from "@/lib/i18n/digits";
+import { NewGroupDialog } from "./NewGroupDialog";
 
 interface GroupListPageClientProps {
   groups: GroupCardData[];
+  today: string;
 }
 
-const STEPS = [
-  { title: "Add the members", body: "Brothers, flatmates or mess members. They don't need a login; you record for them." },
-  { title: "Record money in and out", body: "Contributions, every expense (from the fund or someone's own pocket) and, for a mess, daily meals." },
-  { title: "Settle and close the month", body: "See who gets money back and who has to pay, record the payments, then lock the month." },
-];
-
-// How the two kinds of group differ, under the steps (the cards carry the chips).
-const KINDS = [
-  { title: "Family", body: "brothers or relatives running one home. Bazar can be shared by family size (shares), rent and bills equally.", icon: House, tone: "rounded-[14px] bg-pillar-insights-soft text-ink-2", iconTone: "text-pillar-insights" },
-  { title: "Mess", body: "students or workers sharing a flat. Daily meals are counted, bazar is shared by meal rate, rent and bills equally.", icon: Building2, tone: "rounded-field bg-warning-50 text-warning-ink", iconTone: "text-warning" },
-];
-
-// Money › Group expenses: every group the person is in, with its month's
-// figures, and how a group keeps the account straight.
-export function GroupListPageClient({ groups }: GroupListPageClientProps) {
-  const { t, fmt } = useLocale();
+// Group Expense (the v7 GroupList board): every group the person is in,
+// with its month's budget, spending and who has paid in. Paused groups go
+// last. A group is renamed, paused or resumed from its card's menu, and
+// deleted from its Settings.
+export function GroupListPageClient({ groups, today }: GroupListPageClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
-  const [deleting, setDeleting] = useState<GroupCardData | null>(null);
+  const [renaming, setRenaming] = useState<GroupCardData | null>(null);
+  const [newName, setNewName] = useState("");
+  const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const sorted = [...groups].sort((a, b) => Number(!!a.settings.pausedAt) - Number(!!b.settings.pausedAt));
 
-  function remove() {
-    if (!deleting) return;
-    const target = deleting;
+  function openRename(group: GroupCardData) {
+    setRenaming(group);
+    setNewName(group.workspace.name);
+    setError("");
+  }
+
+  function rename() {
+    if (!renaming) return;
+    const trimmed = newName.trim();
+    const found = !trimmed ? t("Give the group a name.") : groups.some((group) => group.workspace.id !== renaming.workspace.id && group.workspace.name.trim().toLowerCase() === trimmed.toLowerCase()) ? t("Another group already has this name.") : "";
+    setError(found);
+    if (found || isPending) return;
+    const target = renaming;
     startTransition(async () => {
-      const result = await attempt(() => deleteBusinessAction(target.workspace.id), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
+      const result = await attempt(() => updateBusinessAction(target.workspace.id, { name: trimmed }), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
       if (result.success) {
-        toast.success(t("Group deleted"));
-        setDeleting(null);
+        toast.success(t("Group renamed"));
+        setRenaming(null);
         router.refresh();
       } else {
-        toast.error(result.message ?? t("Failed to delete the group"));
+        toast.error(result.message ?? t("Failed to rename the group"));
+      }
+    });
+  }
+
+  function togglePause(group: GroupCardData) {
+    const paused = !group.settings.pausedAt;
+    startTransition(async () => {
+      const result = await attempt(() => updateGroupSettingsAction(group.workspace.id, { paused }), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
+      if (result.success) {
+        toast.success(paused ? t("{name} is paused", { name: group.workspace.name }) : t("{name} is running again", { name: group.workspace.name }));
+        router.refresh();
+      } else {
+        toast.error(result.message ?? t("Failed to save the settings"));
       }
     });
   }
@@ -62,9 +80,8 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
   return (
     <PageFrame className="gap-6">
       <PageHeader
-        eyebrow={t("Money")}
         title={t("Group Expense")}
-        description={t("Shared money for a family or a mess. Each member's share, dues and refunds are worked out for you.")}
+        description={<span className="inline-flex h-6 items-center rounded-full bg-emerald-soft px-3 text-caption font-semibold text-emerald">{t("Free forever · unlimited groups and members")}</span>}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
             <Plus strokeWidth={2.25} />
@@ -77,7 +94,7 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
         <EmptyState
           icon={<Users />}
           title={t("No group yet")}
-          description={t("A family running one home, or a mess sharing a flat: add the members and record who paid what.")}
+          description={t("A family running one home: add the members and record who paid what.")}
           action={
             <Button onClick={() => setCreateOpen(true)}>
               <Plus strokeWidth={2.25} />
@@ -87,48 +104,39 @@ export function GroupListPageClient({ groups }: GroupListPageClientProps) {
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {groups.map((group) => (
-            <GroupCard key={group.workspace.id} group={group} onDelete={() => setDeleting(group)} />
+          {sorted.map((group) => (
+            <GroupCard key={group.workspace.id} group={group} today={today} onRename={() => openRename(group)} onTogglePause={() => togglePause(group)} />
           ))}
         </div>
       )}
 
-      <Card padding="none" className="flex flex-col gap-4 px-6 py-5">
-        <h2 className="text-title font-semibold text-ink">{t("How a group keeps the account straight")}</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          {STEPS.map((step, i) => (
-            <div key={step.title} className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-mint-50 text-small font-bold text-emerald">{formatCount(i + 1, fmt)}</span>
-              <div className="flex flex-col gap-0.75">
-                <span className="text-body font-semibold text-ink">{t(step.title)}</span>
-                <span className="text-small leading-relaxed text-ink-muted">{t(step.body)}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {KINDS.map((kind) => (
-            <div key={kind.title} role="note" className={cn("flex items-start gap-2.5 px-3.5 py-3 text-small leading-normal", kind.tone)}>
-              <kind.icon className={cn("mt-0.5 size-4 shrink-0", kind.iconTone)} aria-hidden="true" />
-              <span>
-                <b className="font-semibold">{t(kind.title)}</b> · {t(kind.body)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <NewGroupDrawer open={createOpen} onClose={() => setCreateOpen(false)} />
-      <ConfirmDialog
-        open={deleting !== null}
-        onClose={() => !isPending && setDeleting(null)}
-        onConfirm={remove}
-        icon={<Trash2 />}
-        title={t("Delete {name}?", { name: deleting?.workspace.name ?? "" })}
-        description={t("Removes the group with every member, entry and closed month. This can't be undone.")}
-        confirmLabel={t("Delete group")}
-        isPending={isPending}
-      />
+      <NewGroupDialog open={createOpen} onClose={() => setCreateOpen(false)} takenNames={groups.map((group) => group.workspace.name)} />
+      <GroupDialog
+        open={renaming !== null}
+        onClose={() => setRenaming(null)}
+        busy={isPending}
+        width={420}
+        title={t("Rename group")}
+        onSubmit={(event) => {
+          event.preventDefault();
+          rename();
+        }}
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={() => setRenaming(null)} disabled={isPending}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader />}
+              {t("Save")}
+            </Button>
+          </>
+        }
+      >
+        <Field htmlFor="rename-group" label={<span className="text-body font-medium text-ink">{t("Group name")}</span>} error={error || undefined}>
+          <Input id="rename-group" size="md" value={newName} onChange={(event) => setNewName(event.target.value)} autoFocus maxLength={80} invalid={!!error} />
+        </Field>
+      </GroupDialog>
     </PageFrame>
   );
 }

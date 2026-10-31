@@ -207,7 +207,7 @@ describe("spend", () => {
   });
 
   it("sends the old category tab to settings", () => {
-    expect(groupTabFrom("category")).toBe("settings");
+    expect(groupTabFrom("category")).toBe("categories");
     expect(groupTabFrom("members")).toBe("members");
     expect(groupTabFrom(undefined)).toBe("dashboard");
   });

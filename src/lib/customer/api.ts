@@ -1077,6 +1077,11 @@ export type GroupSplit = "EQUAL" | "SHARES" | "MEALS" | "EXACT";
 export type GroupKind = "FAMILY" | "MESS";
 export type GroupPaidFrom = "FUND" | "MEMBER";
 export type GroupContributionKind = "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY";
+// Member: gives money to an accountant. Accountant: keeps the cash and does
+// the bazar (up to 2 in a group).
+export type GroupMemberRole = "MEMBER" | "ACCOUNTANT";
+// How costs shared "by cost split" are weighted.
+export type GroupCostSplit = "EQUAL" | "CUSTOM";
 
 export interface GroupExpenseCategoryOption {
   id: string;
@@ -1090,6 +1095,10 @@ export interface GroupExpenseCategoryOption {
   // "Only selected": the members a new expense in it is shared by, equally.
   // Empty (or absent, from an older API) = everyone.
   defaultMemberIds?: string[];
+  // Hidden: not offered for new expenses; old records keep it.
+  hidden?: boolean;
+  // Expenses filed under it, all time (a used one can only be hidden).
+  expenseCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -1106,6 +1115,14 @@ export interface GroupMember {
   // They share only the costs of the days from joinedOn to leftOn.
   joinedOn: string | null;
   leftOn: string | null;
+  // Absent from an older API: a member.
+  role?: GroupMemberRole;
+  // The group's owner (the signed-in customer): can't be removed or made inactive.
+  isOwner?: boolean;
+  // Who their share covers ("Khaled, wife and daughter").
+  household?: string | null;
+  // Their percent when the group's cost split is custom.
+  costPercent?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1121,6 +1138,11 @@ export interface GroupContribution {
   note: string | null;
   createdAt: string;
   groupMember: GroupMember;
+  // The accountant it was given to ("Given to").
+  receivedByMemberId?: string | null;
+  receivedBy?: GroupMember | null;
+  // Both rows of one settle-up share it, so Undo removes the pair.
+  settleGroupId?: string | null;
 }
 
 export interface GroupExpenseSplit {
@@ -1157,6 +1179,11 @@ export interface GroupSettings {
   breakfastUnits: string;
   lunchUnits: string;
   dinnerUnits: string;
+  costSplit?: GroupCostSplit;
+  // Warn once this much of a month's budget is spent; null = never.
+  budgetWarnPercent?: number | null;
+  // Paused: kept out of new entries and listed last.
+  pausedAt?: string | null;
 }
 
 // One member's meals on a day.
@@ -1204,7 +1231,60 @@ export interface GroupSettlementResult {
   mealRate: string;
   // Contributions less the expenses paid from the fund: every balance added up.
   cashInHand: string;
+  // Each accountant's cash at the period's end (the Cash book's figure).
+  accountantCash?: { groupMemberId: string; name: string; cash: string }[];
   members: GroupSettlementMemberRow[];
+}
+
+// One accountant's (or every accountant's) money in and out, oldest first,
+// with the running cash.
+export interface GroupCashbookRow {
+  id: string;
+  source: "CONTRIBUTION" | "EXPENSE";
+  kind: "IN" | "OUT";
+  date: string;
+  accountantId: string;
+  accountantName: string | null;
+  // The member it came from or went back to, or the expense's category.
+  party: string;
+  // A return paid back to a member.
+  returned: boolean;
+  note: string | null;
+  amount: string;
+  balance: string;
+}
+
+export interface GroupCashbook {
+  accountants: { groupMemberId: string; name: string; active: boolean; cash: string }[];
+  cashHolderMemberId: string | null;
+  opening: string;
+  closing: string;
+  totalIn: string;
+  totalOut: string;
+  inCount: number;
+  outCount: number;
+  rows: GroupCashbookRow[];
+}
+
+export type GroupActivityAction = "ADDED" | "EDITED" | "DELETED" | "MONTH";
+
+// One line of a group's activity log: what changed, and from what to what.
+// The text is built in the reader's language from these.
+export interface GroupActivity {
+  id: string;
+  action: GroupActivityAction;
+  // EXPENSE, CONTRIBUTION, SETTLE, MEMBER, CATEGORY, BUDGET, SETTINGS, SPLIT, MEALS, MONTH
+  entity: string;
+  entityId: string | null;
+  summary: Record<string, unknown>;
+  change: { field: string; from: unknown; to: unknown }[] | null;
+  actorName: string | null;
+  createdAt: string;
+}
+
+export interface GroupActivityPage {
+  data: GroupActivity[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export interface GroupSettlementRecordMember {

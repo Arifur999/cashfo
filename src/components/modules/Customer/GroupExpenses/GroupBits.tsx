@@ -96,3 +96,6 @@ export const SETTLE_UP_ID = "group-settle-up";
 // The focus ring of a card that wraps a visually hidden radio or checkbox:
 // the card shows it, since the input itself can't be seen.
 export const FOCUS_WITHIN = "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--focus-ring)";
+
+// A statement's group line: "Mirpur Family · Family group".
+export const groupLine = (t: (key: string, values?: Record<string, string>) => string, name: string, kind: GroupKind): string => t(kind === "MESS" ? "{name} · Mess group" : "{name} · Family group", { name });

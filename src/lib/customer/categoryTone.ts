@@ -20,6 +20,9 @@ const TONES: Record<string, CategoryTone> = {
   cyan: { bg: "bg-pillar-insights-soft", fg: "text-cat-9" },
   violet: { bg: "bg-pillar-habits-soft", fg: "text-cat-3" },
   lime: { bg: "bg-mint-50", fg: "text-cat-10" },
+  // Group Expense's own two (the family boards' Education and Other).
+  amber: { bg: "bg-warning-soft", fg: "text-warning" },
+  gray: { bg: "bg-surface-sunken", fg: "text-ink-2" },
 };
 
 const NEUTRAL: CategoryTone = { bg: "bg-surface-sunken", fg: "text-ink-2" };

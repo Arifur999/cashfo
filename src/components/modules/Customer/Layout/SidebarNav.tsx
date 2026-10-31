@@ -33,6 +33,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { GROUP_NAV_HREF, useGroupPages } from "@/components/modules/Customer/GroupExpenses/groupNav";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
@@ -154,14 +155,17 @@ const nothingRemembered = () => "";
 // to a page of another group (or none) starts from that page's group again.
 export function useExpandedGroups(location: NavLocation | null) {
   const chosen = useSyncExternalStore(subscribeOpenGroups, readOpenGroups, nothingRemembered);
-  const current = location?.item.subs ? location.item.href : null;
+  // Inside a group, Group Expense holds the group's pages.
+  const groupPages = useGroupPages();
+  const current = location?.item.subs ? location.item.href : groupPages && location?.item.href === GROUP_NAV_HREF ? GROUP_NAV_HREF : null;
   const shownFor = useRef(current);
   useEffect(() => {
     if (shownFor.current === current) return;
     shownFor.current = current;
     if (readOpenGroups() !== "") writeOpenGroups("");
   }, [current]);
-  const isExpanded = (item: NavItem) => !!item.subs && (chosen === "" ? current === item.href : chosen === item.href);
+  const hasPages = (item: NavItem) => !!item.subs || (!!groupPages && item.href === GROUP_NAV_HREF);
+  const isExpanded = (item: NavItem) => hasPages(item) && (chosen === "" ? current === item.href : chosen === item.href);
   const toggle = (item: NavItem) => writeOpenGroups(isExpanded(item) ? "-" : item.href);
   return { isExpanded, toggle };
 }
@@ -234,13 +238,17 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
   const sections = menuSections(useNavSections(), "money");
   const { location } = useNavLocation();
   const { isExpanded, toggle } = useExpandedGroups(location);
+  const groupPages = useGroupPages();
   const baseId = useId();
   const rows = useCurrentRowInView();
 
   const renderItem = (item: NavItem) => {
     const Icon = NAV_ICONS[item.icon];
-    const self = location?.item === item && !location.sub;
-    const inGroup = !!item.subs && location?.item === item;
+    // A group's own pages, built from the address (Dashboard, Cash book…).
+    const pages = groupPages && item.href === GROUP_NAV_HREF ? groupPages : null;
+    const subs = pages ? pages.links.map((link) => ({ label: link.label, href: link.href, on: link.tab === pages.current })) : item.subs?.map((sub) => ({ label: sub.label, href: leafHref(sub), on: location?.sub === sub }));
+    const self = location?.item === item && !location.sub && !pages;
+    const inGroup = !!subs && location?.item === item;
     const expanded = isExpanded(item);
     if (collapsed) {
       const lit = self || inGroup;
@@ -266,7 +274,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
             href={leafHref(item)}
             aria-current={self ? "page" : undefined}
             onClick={(event) => {
-              if (!item.subs) return;
+              if (!subs) return;
               // Open: the name folds the group away and stays on this page.
               if (expanded) event.preventDefault();
               toggle(item);
@@ -274,14 +282,14 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
             className={cn(
               "flex min-w-0 flex-1 items-center gap-2.5 rounded-md pl-3 text-body whitespace-nowrap transition-colors",
               touch ? "h-11" : "h-9.5",
-              item.subs ? "pr-9" : "pr-2.5",
+              subs ? "pr-9" : "pr-2.5",
               self ? "bg-emerald-soft font-semibold text-emerald" : inGroup ? "font-semibold text-ink hover:bg-surface-sunken" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
             )}
           >
             <Icon className={cn("size-4.5 shrink-0", self || inGroup ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
           </Link>
-          {item.subs && (
+          {subs && (
             <button
               type="button"
               aria-expanded={expanded}
@@ -294,25 +302,22 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
             </button>
           )}
         </div>
-        {item.subs && (
+        {subs && (
           <div id={subsId} hidden={!expanded} className="mt-0.5 mb-1 ml-5.25 flex flex-col gap-0.5 border-l border-line pl-3">
-            {item.subs.map((sub) => {
-              const on = location?.sub === sub;
-              return (
-                <Link
-                  key={sub.href}
-                  href={leafHref(sub)}
-                  aria-current={on ? "page" : undefined}
-                  className={cn(
-                    "relative flex items-center rounded-[10px] px-2.5 text-[13.5px] whitespace-nowrap transition-colors",
-                    touch ? "h-10" : "h-8",
-                    on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-soft hover:bg-surface-sunken hover:text-ink",
-                  )}
-                >
-                  <span className="min-w-0 truncate">{t(sub.label)}</span>
-                </Link>
-              );
-            })}
+            {subs.map((sub) => (
+              <Link
+                key={sub.href}
+                href={sub.href}
+                aria-current={sub.on ? "page" : undefined}
+                className={cn(
+                  "relative flex items-center rounded-[10px] px-2.5 text-[13.5px] whitespace-nowrap transition-colors",
+                  touch ? "h-10" : "h-8",
+                  sub.on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-soft hover:bg-surface-sunken hover:text-ink",
+                )}
+              >
+                <span className="min-w-0 truncate">{t(sub.label)}</span>
+              </Link>
+            ))}
           </div>
         )}
       </div>

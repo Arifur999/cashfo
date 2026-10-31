@@ -60,7 +60,7 @@ interface Line {
 // cost, what each put in and paid from their pocket -- whether the account
 // checks out, the payments that settle it (through the manager or member to
 // member), and the months already closed.
-export function GroupSettlementTab({ data, view, onRecordPayment, onCloseMonth }: GroupSettlementTabProps) {
+export function MessSettlementTab({ data, view, onRecordPayment, onCloseMonth }: GroupSettlementTabProps) {
   const { t, fmt } = useLocale();
   const { currency, settlement, range, settings } = data;
   const month = monthName(range.key, fmt);

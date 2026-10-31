@@ -11,7 +11,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { SPLIT_WORDS } from "./GroupDashboard";
+import { SPLIT_WORDS } from "./MessDashboard";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 interface GroupSetupProps {
@@ -47,7 +47,7 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMe
   const listed = names.length > 3 ? t("{names} and {count} more", { names: names.slice(0, 3).join(", "), count: formatCount(names.length - 3, fmt) }) : namesList(t, names);
   const mess = data.settings.kind === "MESS";
   const meals = mess || data.settings.mealsOn;
-  // New groups get their bazar rule when created (NewGroupDrawer); say the one it has.
+  // New groups get their bazar rule when created (NewGroupDialog); say the one it has.
   const bazar = data.categories.find((c) => /bazar|grocery/i.test(c.name))?.defaultSplit;
   const rule: BazarRule = bazar === "MEALS" && data.settings.mealsOn ? "MEALS" : bazar === "SHARES" ? "SHARES" : "EQUAL";
   const steps = [
