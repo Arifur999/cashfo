@@ -161,11 +161,11 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/savings-goals/dashboard",
         icon: "savings",
         match: ["/savings-goals"],
+        // Goals and Savings accounts (design v8). All moves opens from Move
+        // money, under Goals; Savings overview became Savings accounts' top.
         subs: [
-          { label: "Dashboard", href: "/savings-goals/dashboard" },
-          { label: "Overview", href: "/savings-goals/overview" },
-          { label: "Wallet", href: "/savings-goals/wallet" },
-          { label: "Transfer", href: "/savings-goals/transfer" },
+          { label: "Goals", href: "/savings-goals/dashboard", match: ["/savings-goals/transfer"] },
+          { label: "Savings Accounts", href: "/savings-goals/wallet", match: ["/savings-goals/overview"] },
         ],
       },
       {
