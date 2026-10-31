@@ -190,7 +190,7 @@ export function splitLargestFirst(holdings: SavingsHolding[], amount: number): {
   return parts;
 }
 
-// The Saved against plan chart (540×150 view box): the plan line from its
+// The Saved against plan chart (540×150 view box, the plot from x 64 to 530): the plan line from its
 // start to the target on the end date, the money saved as steps, and today.
 export interface PlanChart {
   planPoints: string;
@@ -199,8 +199,9 @@ export interface PlanChart {
   now: { x: number; y: number };
 }
 
-const LEFT = 34;
-const WIDTH = 496;
+// Room on the left for the target's label ("৳ 1,50,000").
+const LEFT = 64;
+const WIDTH = 466;
 const BASE = 120;
 const HEIGHT = 100;
 

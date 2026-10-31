@@ -205,12 +205,12 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
           </span>
         </div>
         <svg viewBox="0 0 540 150" className="h-auto w-full" role="img" aria-label={t("Saved {saved} against a plan of {expected} by today", { saved: money(saved), expected: money(pace?.expected ?? saved) })}>
-          <line x1="34" y1="120" x2="530" y2="120" stroke="var(--line)" strokeWidth="1" />
-          <line x1="34" y1="20" x2="530" y2="20" stroke="var(--divider)" strokeWidth="1" />
-          <text x="30" y="24" textAnchor="end" fontSize="10" fill="var(--ink-faint)">
+          <line x1="64" y1="120" x2="530" y2="120" stroke="var(--line)" strokeWidth="1" />
+          <line x1="64" y1="20" x2="530" y2="20" stroke="var(--divider)" strokeWidth="1" />
+          <text x="60" y="24" textAnchor="end" fontSize="10" fill="var(--ink-faint)">
             {money(target)}
           </text>
-          <text x="30" y="124" textAnchor="end" fontSize="10" fill="var(--ink-faint)">
+          <text x="60" y="124" textAnchor="end" fontSize="10" fill="var(--ink-faint)">
             {formatCount(0, fmt)}
           </text>
           <line x1={chart.todayX} y1="14" x2={chart.todayX} y2="120" stroke="var(--line-strong)" strokeWidth="1" strokeDasharray="3 3" />
@@ -220,7 +220,7 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
           <polyline points={chart.planPoints} fill="none" stroke="var(--ink-faint)" strokeWidth="2" strokeDasharray="6 5" />
           <polyline points={chart.savedPoints} fill="none" stroke={color} strokeWidth="2.75" strokeLinejoin="round" strokeLinecap="round" />
           <circle cx={chart.now.x} cy={chart.now.y} r="4.5" fill={color} stroke="var(--surface)" strokeWidth="2" />
-          <text x="34" y="140" fontSize="10" fill="var(--ink-muted)">
+          <text x="64" y="140" fontSize="10" fill="var(--ink-muted)">
             {day(goal.startDate)}
           </text>
           <text x="530" y="140" textAnchor="end" fontSize="10" fill="var(--ink-muted)">

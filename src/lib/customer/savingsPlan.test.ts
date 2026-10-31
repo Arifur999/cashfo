@@ -152,7 +152,7 @@ describe("planChart", () => {
       { type: "CONTRIBUTION", amount: "20000.00", date: "2026-04-30T00:00:00.000Z" },
       { type: "TRANSFER_OUT", amount: "5000.00", date: "2026-09-15T00:00:00.000Z" },
     ], TODAY);
-    expect(chart.planPoints).toBe("34,120 530,20");
+    expect(chart.planPoints).toBe("64,120 530,20");
     expect(chart.savedPoints.split(" ")).toHaveLength(6);
     expect(chart.now).toEqual({ x: chart.todayX, y: 110 });
   });

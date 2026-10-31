@@ -83,7 +83,6 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
   const percentNow = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
   const percentAfter = target > 0 ? Math.min(100, Math.round(((saved + value) / target) * 100)) : 0;
   const month = formatDate(today, "MMMM", fmt);
-  const dayChip = date === today ? t("Today") : formatDate(date, "EEE", fmt);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -157,10 +156,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       }
     >
       <Field htmlFor="add-date" label={<span className={fieldLabel}>{t("Date")}</span>}>
-        <div className="relative">
-          <DayInput id="add-date" size="lg" value={date} onChange={(day) => setDate(day || today)} max={today} />
-          <span className="pointer-events-none absolute top-1/2 right-10 -translate-y-1/2 rounded-full bg-mint-50 px-2.5 py-1 text-caption font-semibold text-brand-ink">{dayChip}</span>
-        </div>
+        <DayInput id="add-date" size="lg" value={date} onChange={(day) => setDate(day || today)} max={today} />
       </Field>
 
       <div className="flex flex-col gap-2">
