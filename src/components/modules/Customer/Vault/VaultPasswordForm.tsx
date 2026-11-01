@@ -36,11 +36,15 @@ interface VaultPasswordFormProps {
   hasAccountPassword?: boolean;
   // The signed-in person's name: a vault password may not contain it.
   userName?: string;
-  // The new password opened the vault straight away: it was typed twice
-  // already, so it isn't asked a third time.
+  // The first password opened the new vault straight away: it was typed
+  // twice already, so it isn't asked a third time.
   onUnlocked: (unlock: VaultUnlock) => void;
-  // Set, but the vault didn't open with it: back to the unlock form.
-  onDone: () => void;
+  // Set up, and the vault wants the emailed code before it opens (an API
+  // that doesn't open a new vault by itself): on to the code step.
+  onCode: (challenge: VaultResetChallenge) => void;
+  // Back to the unlock form: "changed" after a change or reset, which the
+  // form then says.
+  onDone: (reason?: "changed") => void;
   onBack: () => void;
 }
 
@@ -206,7 +210,7 @@ const RULE_MESSAGES: Partial<Record<Rule["key"], string>> = {
   notAccount: "Your vault password must be different from the password you log in with.",
 };
 
-function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, onDone, onBack }: VaultPasswordFormProps) {
+function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, onCode, onDone, onBack }: VaultPasswordFormProps) {
   const { t, fmt } = useLocale();
   const [accountPassword, setAccountPassword] = useState("");
   const [currentVaultPassword, setCurrentVaultPassword] = useState("");
@@ -266,12 +270,17 @@ function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, o
     } else setNotice(message);
   }
 
-  // The new password opened the vault, or back to the unlock form.
+  // A new vault opens with its first password: the API's token, else the
+  // first unlock step (the code step, or an older API's token straight
+  // away), else the unlock form.
   async function openWith(newPassword: string) {
     const opened = await settle(unlockVaultAction(newPassword));
-    if (opened.success && opened.data) {
+    if (opened.success && opened.data?.step === "open") {
       toast.success(t(copy.opened));
       onUnlocked(opened.data);
+    } else if (opened.success && opened.data?.step === "code") {
+      toast.success(t(copy.opened));
+      onCode(opened.data);
     } else {
       toast.success(t(copy.success));
       onDone();
@@ -321,7 +330,16 @@ function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, o
         refused(result);
         return;
       }
-      await openWith(password);
+      // A change or reset locks the vault: the unlock form says to use the new one.
+      if (mode !== "setup") {
+        onDone("changed");
+        return;
+      }
+      const token = result.data && "vaultToken" in result.data ? result.data : null;
+      if (token) {
+        toast.success(t(copy.opened));
+        onUnlocked(token);
+      } else await openWith(password);
     });
   }
 

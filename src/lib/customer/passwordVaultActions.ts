@@ -138,9 +138,13 @@ export async function updateVaultSettingsAction(lockMinutes: number | null): Pro
   }, "Couldn't save the lock time");
 }
 
-export async function setVaultPasswordAction(input: SetVaultPasswordInput): Promise<VaultResult> {
+// The first vault password opens the new, empty vault: the answer carries
+// its token (null after a change, and from an older API).
+export async function setVaultPasswordAction(input: SetVaultPasswordInput): Promise<VaultResult<VaultUnlock | null>> {
   return callApi(async () => {
-    await customerApi.post(`${API_BASE_URL}/api/vault/password`, input, { headers: await authHeaders() });
+    const res = await customerApi.post<Partial<VaultUnlock>>(`${API_BASE_URL}/api/vault/password`, input, { headers: await authHeaders() });
+    const data = res.data ?? {};
+    return data.vaultToken ? { vaultToken: data.vaultToken, expiresIn: data.expiresIn ?? "600s", expiresInSec: data.expiresInSec } : null;
   }, "Failed to set vault password");
 }
 
@@ -155,11 +159,44 @@ export interface VaultUnlock {
   expiresInSec?: number;
 }
 
-export async function unlockVaultAction(vaultPassword: string): Promise<VaultResult<VaultUnlock>> {
+// Unlocking is two steps: the right vault password emails a six-digit code
+// (the challenge), and the code opens the vault. An older API opened it
+// with the password alone, answering the token straight away.
+export type VaultUnlockStep = ({ step: "open" } & VaultUnlock) | ({ step: "code" } & VaultResetChallenge);
+
+export async function unlockVaultAction(vaultPassword: string): Promise<VaultResult<VaultUnlockStep>> {
+  return callApi(async (): Promise<VaultUnlockStep> => {
+    const res = await customerApi.post<Partial<VaultUnlock & VaultResetChallenge>>(`${API_BASE_URL}/api/vault/unlock`, { vaultPassword }, { headers: await authHeaders() });
+    const data = res.data;
+    if (data.vaultToken) return { step: "open", vaultToken: data.vaultToken, expiresIn: data.expiresIn ?? "600s", expiresInSec: data.expiresInSec };
+    return {
+      step: "code",
+      challengeId: data.challengeId ?? "",
+      channel: data.channel ?? "EMAIL",
+      sentTo: data.sentTo ?? "",
+      resendAfterSec: data.resendAfterSec ?? 30,
+      expiresAt: data.expiresAt ?? "",
+      attemptsLeft: data.attemptsLeft ?? 5,
+      sendsLeft: data.sendsLeft ?? 4,
+    };
+  }, "Couldn't open the vault. Please try again.");
+}
+
+// The second step: the emailed code. A wrong one answers CODE_WRONG with the
+// tries left; after five, TOO_MANY_ATTEMPTS, and it's back to step one.
+export async function verifyVaultUnlockAction(challengeId: string, code: string): Promise<VaultResult<VaultUnlock>> {
   return callApi(async () => {
-    const res = await customerApi.post<VaultUnlock>(`${API_BASE_URL}/api/vault/unlock`, { vaultPassword }, { headers: await authHeaders() });
+    const res = await customerApi.post<VaultUnlock>(`${API_BASE_URL}/api/vault/unlock/verify`, { challengeId, code }, { headers: await authHeaders() });
     return { vaultToken: res.data.vaultToken, expiresIn: res.data.expiresIn, expiresInSec: res.data.expiresInSec };
   }, "Couldn't open the vault. Please try again.");
+}
+
+// A new code; the old one stops working.
+export async function resendVaultUnlockCodeAction(challengeId: string): Promise<VaultResult<VaultResetChallenge>> {
+  return callApi(async () => {
+    const res = await customerApi.post<VaultResetChallenge>(`${API_BASE_URL}/api/vault/unlock/${encodeURIComponent(challengeId)}/resend`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "We could not send the code. Please try again in a minute.");
 }
 
 export async function listVaultEntriesAction(vaultToken: string): Promise<ActionResult<VaultEntrySummary[]>> {

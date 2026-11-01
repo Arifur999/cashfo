@@ -146,6 +146,11 @@ export const LOCK_MINUTE_CHOICES = [1, 2, 5, 10, 15, 30] as const;
 // else its span string.
 export const unlockSpanMs = (unlock: { expiresIn: string; expiresInSec?: number }): number => (unlock.expiresInSec && unlock.expiresInSec > 0 ? unlock.expiresInSec * 1000 : parseExpiry(unlock.expiresIn));
 
+// Why the vault is locked, as the unlock form says it: locked by hand, the
+// lock time ran out, the API ended the session, or the vault password was
+// just changed or reset.
+export type LockReason = "manual" | "timeout" | "session" | "changed";
+
 // "8:24" from milliseconds left; never negative.
 export function countdownText(msLeft: number): string {
   const total = Math.max(0, Math.ceil(msLeft / 1000));
@@ -197,19 +202,24 @@ export function normalizeUrl(url: string): string {
   return /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
-export type VaultSort = "az" | "newest" | "updated";
-// "updated" follows updatedAt, which a star or "It's fine" moves too, so it
-// says edited, not changed.
+export type VaultSort = "az" | "updated" | "newest" | "fix";
+// "updated" follows updatedAt (any edit, a star too); "fix" puts the logins
+// with the most problems first, then A to Z.
 export const VAULT_SORTS: { value: VaultSort; label: string }[] = [
   { value: "az", label: "A to Z" },
+  { value: "updated", label: "Recently updated" },
   { value: "newest", label: "Newest first" },
-  { value: "updated", label: "Recently edited" },
+  { value: "fix", label: "Needs a fix first" },
 ];
 
-export function sortEntries(entries: VaultEntrySummary[], sort: VaultSort): VaultEntrySummary[] {
+const byTitle = (a: VaultEntrySummary, b: VaultEntrySummary) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+
+// "fix" needs the checkup's findings; without them it reads as A to Z.
+export function sortEntries(entries: VaultEntrySummary[], sort: VaultSort, checkup: VaultCheckup | null = null): VaultEntrySummary[] {
   const list = [...entries];
-  if (sort === "az") return list.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
+  if (sort === "az") return list.sort(byTitle);
   if (sort === "newest") return list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  if (sort === "fix") return list.sort((a, b) => issuesOf(checkup, b.id).length - issuesOf(checkup, a.id).length || byTitle(a, b));
   return list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
@@ -220,15 +230,23 @@ export function filterEntries(entries: VaultEntrySummary[], query: string, categ
 }
 
 // What the list shows: every login, the starred ones, the ones the checkup
-// flags, or one category.
-export type VaultView = "" | "FAVORITES" | "ATTENTION" | VaultEntryCategory;
+// flags (all of them, or one problem from the health bar's chips), or one
+// category.
+export type SafetyView = "REUSED" | "WEAK" | "OLD";
+export type VaultView = "" | "FAVORITES" | "ATTENTION" | SafetyView | VaultEntryCategory;
 
-const isCategoryView = (view: VaultView): view is VaultEntryCategory => view !== "" && view !== "FAVORITES" && view !== "ATTENTION";
+export const SAFETY_VIEWS: Record<SafetyView, VaultIssue> = { REUSED: "reused", WEAK: "weak", OLD: "old" };
+export const isSafetyView = (view: VaultView): view is SafetyView => view in SAFETY_VIEWS;
+const isCategoryView = (view: VaultView): view is VaultEntryCategory => view !== "" && view !== "FAVORITES" && view !== "ATTENTION" && !isSafetyView(view);
 
-export function entriesInView(entries: VaultEntrySummary[], view: VaultView, flagged: Set<string>): VaultEntrySummary[] {
+export function entriesInView(entries: VaultEntrySummary[], view: VaultView, flagged: Set<string>, checkup: VaultCheckup | null = null): VaultEntrySummary[] {
   if (view === "") return entries;
   if (view === "FAVORITES") return entries.filter((entry) => entry.isFavorite);
   if (view === "ATTENTION") return entries.filter((entry) => flagged.has(entry.id));
+  if (isSafetyView(view)) {
+    const ids = new Set(checkup ? checkup[SAFETY_VIEWS[view]] : []);
+    return entries.filter((entry) => ids.has(entry.id));
+  }
   return entries.filter((entry) => entry.category === view);
 }
 
@@ -239,9 +257,9 @@ export function chipViews(counts: Record<VaultEntryCategory, number>, view: Vaul
   return ["", "FAVORITES", "ATTENTION", ...categories.filter((category) => counts[category] > 0 || view === category)];
 }
 
-// The same rule for the side menu and the chips: pressing the category on
-// show again goes back to every login.
-export const toggledView = (current: VaultView, picked: VaultView): VaultView => (isCategoryView(picked) && picked === current ? "" : picked);
+// The same rule for the side menu and the chips: pressing the category (or
+// the health bar's problem) on show again goes back to every login.
+export const toggledView = (current: VaultView, picked: VaultView): VaultView => ((isCategoryView(picked) || isSafetyView(picked)) && picked === current ? "" : picked);
 
 export type VaultIssue = "reused" | "weak" | "old";
 
@@ -298,6 +316,63 @@ export function checkupBreakdown(entries: VaultEntrySummary[], checkup: VaultChe
   const counts: CheckupBreakdown = { fine: 0, reused: 0, weak: 0, old: 0 };
   for (const entry of entries) counts[issuesOf(checkup, entry.id)[0] ?? "fine"]++;
   return counts;
+}
+
+// A login's badge in the list: its worst problem, or Safe. Unknown (null)
+// while the checkup hasn't answered.
+export type Safety = VaultIssue | "safe";
+export const safetyOf = (checkup: VaultCheckup | null, id: string): Safety | null => (checkup ? (issuesOf(checkup, id)[0] ?? "safe") : null);
+
+export interface VaultHealth {
+  total: number;
+  safe: number;
+  flagged: number;
+  // Share of logins with nothing to fix, 0 to 100 (100 for an empty vault).
+  percent: number;
+  reused: number;
+  weak: number;
+  old: number;
+}
+
+// The health bar over the list: how many logins are safe, and how many
+// have each problem (a login can have more than one).
+export function vaultHealth(entries: VaultEntrySummary[], checkup: VaultCheckup): VaultHealth {
+  const flagged = attentionIds(checkup).size;
+  const total = entries.length;
+  const safe = Math.max(0, total - flagged);
+  return { total, safe, flagged, percent: total ? Math.round((safe / total) * 100) : 100, reused: checkup.reused.length, weak: checkup.weak.length, old: checkup.old.length };
+}
+
+// The password's age as the list says it: Today, 1 month ago, 14 months
+// ago -- a dictionary key and its count.
+export function passwordAge(changedAt: string, now: Date): { key: string; count: number } {
+  const from = new Date(changedAt);
+  const days = Math.floor((now.getTime() - from.getTime()) / 86_400_000);
+  const months = (now.getFullYear() - from.getFullYear()) * 12 + now.getMonth() - from.getMonth() - (now.getDate() < from.getDate() ? 1 : 0);
+  if (months <= 0) return days <= 0 ? { key: "Today", count: 0 } : { key: days === 1 ? "{count} day ago" : "{count} days ago", count: days };
+  return { key: months === 1 ? "{count} month ago" : "{count} months ago", count: months };
+}
+
+// The services the Name box offers as you type (design: the Add login
+// combobox): picking one fills in the name, website and category.
+export const POPULAR_SERVICES: { title: string; category: VaultEntryCategory; website: string; translate?: boolean }[] = [
+  { title: "Facebook", category: "SOCIAL", website: "facebook.com" },
+  { title: "Gmail", category: "EMAIL", website: "mail.google.com" },
+  { title: "bKash", category: "MOBILE_BANKING", website: "bkash.com" },
+  { title: "Nagad", category: "MOBILE_BANKING", website: "nagad.com.bd" },
+  { title: "YouTube", category: "SOCIAL", website: "youtube.com" },
+  { title: "Daraz", category: "SHOPPING", website: "daraz.com.bd" },
+  { title: "WhatsApp", category: "SOCIAL", website: "web.whatsapp.com" },
+  { title: "Home Wi-Fi", category: "WIFI", website: "", translate: true },
+];
+
+// The suggestions for what is typed: all of them on an empty box, else the
+// ones whose name holds it (but not one already typed in full), at most 8.
+export function serviceSuggestions(typed: string, t: Translate = inEnglish) {
+  const q = typed.trim().toLowerCase();
+  return POPULAR_SERVICES.map((service) => ({ ...service, title: service.translate ? t(service.title) : service.title }))
+    .filter((service) => !q || (service.title.toLowerCase().includes(q) && service.title.toLowerCase() !== q))
+    .slice(0, 8);
 }
 
 export function categoryCounts(entries: VaultEntrySummary[]): Record<VaultEntryCategory, number> {
@@ -359,8 +434,11 @@ export interface EntryDraft {
   // Whether the account holder's name field is out.
   holderOpen: boolean;
   favorite: boolean;
-  // Kept through a lock: the drawer says so when the vault opens again.
+  // Kept through a lock: the popup says so when the vault opens again.
   kept: boolean;
+  // Opened by Change (the list, the checkup, a login's warning): the popup
+  // asks for the new password.
+  change?: boolean;
 }
 
 // A fresh draft: the login as saved, a quick-add pick filled in, or blank.

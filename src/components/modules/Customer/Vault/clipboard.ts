@@ -41,3 +41,17 @@ export async function copySecret(secret: Promise<string | null>): Promise<CopyOu
   if (text === null) return "skipped";
   return (await copyText(text)) ? "copied" : "failed";
 }
+
+// A copied password is wiped from the clipboard after 30 seconds (the
+// toast says so). Best effort: the browser allows the write only while the
+// page has focus, and a later copy restarts the wait.
+let clearTimer: ReturnType<typeof setTimeout> | null = null;
+export const CLIPBOARD_CLEAR_MS = 30_000;
+
+export function clearClipboardLater() {
+  if (clearTimer) clearTimeout(clearTimer);
+  clearTimer = setTimeout(() => {
+    clearTimer = null;
+    if (document.hasFocus()) void navigator.clipboard?.writeText("").catch(() => undefined);
+  }, CLIPBOARD_CLEAR_MS);
+}
