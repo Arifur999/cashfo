@@ -172,7 +172,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
   }
 
   const lead = (
-    <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl text-[17px] font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[draft.category]])}>
+    <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] text-[17px] font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[draft.category]])}>
       {letter}
     </span>
   );
@@ -392,7 +392,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
             </span>
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <button type="button" aria-labelledby="ve-cat-l ve-cat-v" className="flex h-11.5 items-center gap-2.5 rounded-xl border border-line-strong bg-surface pr-3 pl-2 text-left text-[14.5px] text-ink data-[state=open]:border-emerald">
+                <button type="button" aria-labelledby="ve-cat-l ve-cat-v" className="flex h-11.5 items-center gap-2.5 rounded-[12px] border border-line-strong bg-surface pr-3 pl-2 text-left text-[14.5px] text-ink data-[state=open]:border-emerald">
                   <span aria-hidden="true" className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-[9px] [&_svg]:size-3.5", SOFT_TONE[VAULT_CATEGORY_TONE[draft.category]])}>
                     <Icon />
                   </span>
@@ -425,7 +425,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
             role="switch"
             aria-checked={draft.favorite}
             onClick={() => set({ favorite: !draft.favorite })}
-            className={cn("flex h-11.5 items-center gap-2.5 rounded-xl border px-3 text-left text-body font-medium text-ink", draft.favorite ? "border-warning-line bg-warning-50" : "border-line-strong bg-surface")}
+            className={cn("flex h-11.5 items-center gap-2.5 rounded-[12px] border px-3 text-left text-body font-medium text-ink", draft.favorite ? "border-warning-line bg-warning-50" : "border-line-strong bg-surface")}
           >
             <Star className={cn("size-4.25", draft.favorite ? "fill-warning-fill text-warning-fill" : "text-ink-faint")} strokeWidth={1.75} aria-hidden="true" />
             <span className="flex-1">{t("Add to Favorites")}</span>

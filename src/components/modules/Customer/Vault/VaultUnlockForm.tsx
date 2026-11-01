@@ -346,7 +346,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                         key={index}
                         aria-hidden="true"
                         className={cn(
-                          "flex h-13.5 items-center justify-center rounded-xl font-mono text-[22px] font-semibold text-ink",
+                          "flex h-13.5 items-center justify-center rounded-[12px] font-mono text-[22px] font-semibold text-ink",
                           current ? "border-2 border-emerald bg-surface" : codeError && !code ? "border-[1.5px] border-expense-line bg-surface" : digit ? "border-[1.5px] border-emerald-line bg-strip" : "border border-line-strong bg-surface",
                         )}
                       >

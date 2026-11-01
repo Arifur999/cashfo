@@ -56,13 +56,13 @@ export function VaultHealthBar({ health, load, view, onFilter, onFix, onRetry }:
         : t("{safe} of {total} logins are safe", { safe: n(health.safe), total: n(health.total) });
 
   return (
-    <section aria-label={t("Vault health")} className={cn("flex min-h-19 flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border py-3 pr-4 pl-3.5 shadow-sm", clean ? "border-emerald-line bg-emerald-soft" : "border-line-card bg-surface")}>
+    <section aria-label={t("Vault health")} className={cn("flex min-h-19 flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border py-3 pr-4 pl-3.5 shadow-sm", clean ? "border-emerald-line bg-emerald-soft" : "border-line-card bg-surface")}>
       <span className="relative size-13 shrink-0">
         <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" className="-rotate-90">
           <circle cx="26" cy="26" r={RADIUS} fill="none" strokeWidth="6" className="stroke-line" />
           {health && <circle cx="26" cy="26" r={RADIUS} fill="none" strokeWidth="6" strokeLinecap="round" className={ring} strokeDasharray={`${((CIRCLE * percent) / 100).toFixed(1)} ${CIRCLE.toFixed(1)}`} />}
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-[13px] font-bold text-ink tabular-nums">{health ? `${n(percent)}%` : "…"}</span>
+        <span className={cn("absolute inset-0 flex items-center justify-center font-bold text-ink tabular-nums", percent >= 100 ? "text-[11px]" : "text-[13px]")}>{health ? `${n(percent)}%` : "…"}</span>
       </span>
       <span role="status" className="flex min-w-0 flex-1 basis-56 flex-col gap-0.5">
         <span className="text-[15.5px] font-semibold text-ink">{title}</span>

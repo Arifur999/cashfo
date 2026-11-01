@@ -131,6 +131,11 @@ export function EntryDetails({ entry, onClose, issues, safety, revealed, busy, c
     <VaultDialog
       open
       onClose={onClose}
+      // Focus goes to the popup itself, not the star (its first button).
+      onOpenAutoFocus={(event) => {
+        event.preventDefault();
+        (event.currentTarget as HTMLElement | null)?.focus();
+      }}
       title={entry.title}
       sub={sub}
       lead={lead}

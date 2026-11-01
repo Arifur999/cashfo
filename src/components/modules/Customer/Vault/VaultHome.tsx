@@ -707,9 +707,9 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
           {/* Phones (VaultMobile): one white band under the bar with the search, the sort and the chips. */}
           <div className="-mx-4 -mt-5 flex flex-col gap-2.5 border-b border-line bg-surface px-4 pt-3 pb-2 md:hidden">
             <div className="flex gap-2">
-              {searchBox("h-11.5 flex-1 rounded-lg bg-strip text-body-lg", "md")}
+              {searchBox("h-11.5 flex-1 rounded-[12px] bg-strip text-body-lg", "md")}
               {/* The select is laid over the icon, so a tap opens the phone's own picker. */}
-              <label className="relative flex size-11.5 shrink-0 items-center justify-center rounded-lg border border-line-strong bg-surface text-ink-2 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring">
+              <label className="relative flex size-11.5 shrink-0 items-center justify-center rounded-[12px] border border-line-strong bg-surface text-ink-2 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring">
                 <ArrowUpDown className="size-5" aria-hidden="true" />
                 {sort !== "az" && <span aria-hidden="true" className="absolute top-2 right-2 size-2 rounded-full bg-emerald" />}
                 <select value={sort} onChange={(event) => setSort(event.target.value as VaultSort)} aria-label={t("Sort")} className="absolute inset-0 cursor-pointer appearance-none text-body-lg opacity-0">
@@ -749,21 +749,21 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
                   aria-expanded={!navHidden}
                   aria-label={t(navHidden ? "Show menu" : "Hide menu")}
                   title={t(navHidden ? "Show menu" : "Hide menu")}
-                  className={cn("hidden size-11 shrink-0 items-center justify-center rounded-xl border lg:flex", navHidden ? "border-emerald-line bg-emerald-soft text-emerald" : "border-line-strong bg-surface text-ink-muted hover:bg-surface-sunken")}
+                  className={cn("hidden size-11 shrink-0 items-center justify-center rounded-[12px] border lg:flex", navHidden ? "border-emerald-line bg-emerald-soft text-emerald" : "border-line-strong bg-surface text-ink-muted hover:bg-surface-sunken")}
                 >
                   {navHidden ? <PanelLeftOpen className="size-4.5" aria-hidden="true" /> : <PanelLeftClose className="size-4.5" aria-hidden="true" />}
                 </button>
-                {searchBox("h-11 flex-1 rounded-xl text-[14.5px]", "md")}
+                {searchBox("h-11 flex-1 rounded-[12px] text-[14.5px]", "md")}
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
-                    <button type="button" className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-line-strong bg-surface px-3.5 text-[13.5px] font-medium whitespace-nowrap text-ink hover:bg-surface-sunken">
+                    <button type="button" className="flex h-11 shrink-0 items-center gap-2 rounded-[12px] border border-line-strong bg-surface px-3.5 text-[13.5px] font-medium whitespace-nowrap text-ink hover:bg-surface-sunken">
                       <ArrowUpDown className="size-3.75 text-ink-muted" aria-hidden="true" />
                       <span className="sr-only">{t("Sort")}: </span>
                       {sortLabel}
                       <ChevronDown className="size-3.5 text-ink-muted" aria-hidden="true" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52.5 rounded-xl p-1.5">
+                  <DropdownMenuContent align="end" className="w-52.5 rounded-[12px] p-1.5">
                     <DropdownMenuRadioGroup value={sort} onValueChange={(value) => setSort(value as VaultSort)}>
                       {VAULT_SORTS.map((option) => (
                         <DropdownMenuRadioItem key={option.value} value={option.value} className={cn("h-9 rounded-lg pr-2.5 pl-2.5 text-[13.5px] [&>span:first-child]:hidden", sort === option.value && "bg-emerald-soft font-semibold")}>
@@ -774,7 +774,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
                     </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <div role="radiogroup" aria-label={t("Layout")} className="flex h-11 shrink-0 gap-0.5 rounded-xl border border-line-strong bg-surface p-0.75">
+                <div role="radiogroup" aria-label={t("Layout")} className="flex h-11 shrink-0 gap-0.5 rounded-[12px] border border-line-strong bg-surface p-0.75">
                   {(["list", "cards"] as const).map((value) => {
                     const on = layout === value;
                     const Icon = value === "list" ? List : LayoutGrid;

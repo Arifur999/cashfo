@@ -46,7 +46,7 @@ export const EntryTableRow = memo(function EntryTableRow({ entry, number, safety
         {formatCount(number, fmt)}
       </span>
       <span role="cell" className="flex min-w-0 items-center gap-3">
-        <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl text-body-lg font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
+        <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] text-body-lg font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
           {avatarLetter(entry.title)}
         </span>
         <span className="flex min-w-0 flex-col gap-0.5">
@@ -105,9 +105,9 @@ export const EntryCard = memo(function EntryCard({ entry, safety, copied, onView
   const { t } = useLocale();
   const age = useAge(entry);
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-line-card bg-surface p-3.5 shadow-card">
+    <div className="flex flex-col gap-3 rounded-lg border border-line-card bg-surface p-3.5 shadow-card">
       <button type="button" onClick={() => onView(entry.id)} className="flex min-w-0 items-center gap-3 rounded-md text-left">
-        <span aria-hidden="true" className={cn("flex size-10.5 shrink-0 items-center justify-center rounded-xl text-[17px] font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
+        <span aria-hidden="true" className={cn("flex size-10.5 shrink-0 items-center justify-center rounded-[12px] text-[17px] font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
           {avatarLetter(entry.title)}
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
