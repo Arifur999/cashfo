@@ -22,14 +22,18 @@ import {
   normalizeUrl,
   NO_CONNECTION_MESSAGE,
   parseExpiry,
+  passwordAge,
   passwordDetail,
   passwordStrength,
   presetTitle,
   QUICK_LOGINS,
   rulesMet,
+  safetyOf,
+  serviceSuggestions,
   settle,
   sortEntries,
   toggledView,
+  vaultHealth,
   vaultRules,
 } from "./vaultDisplay";
 
@@ -260,5 +264,54 @@ describe("saving a login", () => {
     expect(draftProblems(draftFor(null))).toEqual({ title: "Give this login a name", password: "Type or generate a password" });
     expect(draftProblems({ ...draftFor(null), title: "Nagad", password: "4821" })).toEqual({});
     expect(draftProblems({ ...draftFor(saved), title: "  " })).toEqual({ title: "Give this login a name" });
+  });
+});
+
+describe("the redesigned vault (v9)", () => {
+  const entries = [
+    entry({ id: "1", title: "Facebook" }),
+    entry({ id: "2", title: "Instagram" }),
+    entry({ id: "3", title: "Home Wi-Fi" }),
+    entry({ id: "4", title: "Gmail" }),
+  ];
+  const checkup = { reused: ["1", "2"], weak: ["3", "2"], old: ["4"] };
+
+  it("puts the logins with the most problems first", () => {
+    expect(sortEntries(entries, "fix", checkup).map((e) => e.title)).toEqual(["Instagram", "Facebook", "Gmail", "Home Wi-Fi"]);
+    expect(sortEntries(entries, "fix", null).map((e) => e.title)).toEqual(["Facebook", "Gmail", "Home Wi-Fi", "Instagram"]);
+  });
+
+  it("filters by one problem from the health bar, and a second press clears it", () => {
+    expect(entriesInView(entries, "WEAK", attentionIds(checkup), checkup).map((e) => e.id)).toEqual(["2", "3"]);
+    expect(entriesInView(entries, "OLD", attentionIds(checkup), checkup).map((e) => e.id)).toEqual(["4"]);
+    expect(toggledView("REUSED", "REUSED")).toBe("");
+    expect(toggledView("", "REUSED")).toBe("REUSED");
+  });
+
+  it("badges a login by its worst problem, Safe without one, and nothing before the checkup", () => {
+    expect(safetyOf(checkup, "2")).toBe("reused");
+    expect(safetyOf(checkup, "3")).toBe("weak");
+    expect(safetyOf({ reused: [], weak: [], old: [] }, "3")).toBe("safe");
+    expect(safetyOf(null, "3")).toBeNull();
+  });
+
+  it("scores the vault's health", () => {
+    expect(vaultHealth([...entries, entry({ id: "5", title: "Daraz" })], checkup)).toEqual({ total: 5, safe: 1, flagged: 4, percent: 20, reused: 2, weak: 2, old: 1 });
+    expect(vaultHealth([], { reused: [], weak: [], old: [] }).percent).toBe(100);
+  });
+
+  it("says a password's age", () => {
+    const now = new Date("2026-11-01T10:00:00.000Z");
+    expect(passwordAge("2026-11-01T02:00:00.000Z", now)).toEqual({ key: "Today", count: 0 });
+    expect(passwordAge("2026-10-20T02:00:00.000Z", now)).toEqual({ key: "{count} days ago", count: 12 });
+    expect(passwordAge("2026-09-25T02:00:00.000Z", now)).toEqual({ key: "{count} month ago", count: 1 });
+    expect(passwordAge("2025-08-01T02:00:00.000Z", now)).toEqual({ key: "{count} months ago", count: 15 });
+  });
+
+  it("suggests popular services for the Name box", () => {
+    expect(serviceSuggestions("").map((s) => s.title)).toHaveLength(8);
+    expect(serviceSuggestions("na").map((s) => s.title)).toEqual(["Nagad"]);
+    expect(serviceSuggestions("Facebook")).toEqual([]);
+    expect(serviceSuggestions("wi").find((s) => s.category === "WIFI")?.website).toBe("");
   });
 });
