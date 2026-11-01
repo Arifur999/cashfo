@@ -185,7 +185,7 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
     <>
       {/* Phones name the page in the top bar, so the heading is for screen readers there. */}
       <h1 className="sr-only md:hidden">{t("Password Manager")}</h1>
-      <PageHeader className="max-md:hidden" title={t("Password Manager")} description={t("Logins for your other accounts: Facebook, bank, email and more.")} />
+      <PageHeader className="max-md:hidden" title={t("Password Manager")} />
     </>
   );
 
