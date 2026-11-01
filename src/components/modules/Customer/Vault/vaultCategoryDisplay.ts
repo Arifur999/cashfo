@@ -1,6 +1,7 @@
-import { Briefcase, FileText, KeyRound, Landmark, Mail, ShoppingCart, Smartphone, Users, Wifi, type LucideIcon } from "lucide-react";
+import { Briefcase, Check, Clock, FileText, KeyRound, Landmark, Mail, ShoppingCart, Smartphone, TriangleAlert, Users, Wifi, type LucideIcon } from "lucide-react";
 import type { Tone } from "@/components/smartly/tones";
 import type { VaultEntryCategory } from "@/lib/customer/api";
+import type { Safety } from "@/lib/customer/vaultDisplay";
 
 // The categories in the order the page lists them.
 export const VAULT_CATEGORIES: VaultEntryCategory[] = ["SOCIAL", "EMAIL", "BANK", "MOBILE_BANKING", "SHOPPING", "WORK", "WIFI", "GOVERNMENT", "OTHER"];
@@ -54,4 +55,13 @@ export const VAULT_CATEGORY_CHIP: Record<VaultEntryCategory, "habits" | "expense
   WIFI: "insights",
   GOVERNMENT: "income",
   OTHER: "neutral",
+};
+
+// A login's safety badge (the list's Safety column, the details popup):
+// its worst problem, or Safe.
+export const SAFETY_BADGE: Record<Safety, { label: string; className: string; icon: LucideIcon }> = {
+  reused: { label: "Reused", className: "bg-expense-soft text-expense", icon: TriangleAlert },
+  weak: { label: "Weak", className: "bg-orange-soft text-orange", icon: TriangleAlert },
+  old: { label: "Old", className: "bg-warning-soft text-warning", icon: Clock },
+  safe: { label: "Safe", className: "bg-emerald-soft text-brand-ink", icon: Check },
 };
