@@ -415,4 +415,9 @@ export const vaultDictionary: Record<string, string> = {
   "More details: notes and account holder name": "আরও তথ্য: নোট আর অ্যাকাউন্টধারীর নাম",
   "Name on the account": "অ্যাকাউন্টে যে নাম আছে",
   "Anything that helps you, like which email it uses": "যা কাজে লাগে, যেমন কোন ইমেইল ব্যবহার করে",
+  "Account@@vault login": "অ্যাকাউন্ট",
+  "Weak@@password strength": "দুর্বল",
+  "Fair@@password strength": "মাঝারি",
+  "Good@@password strength": "ভালো",
+  "Strong@@password strength": "শক্ত",
 };

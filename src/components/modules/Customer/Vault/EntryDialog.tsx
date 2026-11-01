@@ -217,7 +217,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
 
       <section aria-labelledby="ve-s1" className="flex flex-col gap-3 py-4.5">
         <h3 id="ve-s1" className={SECTION_TITLE}>
-          {t("Account")}
+          {t("Account@@vault login")}
         </h3>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="relative flex flex-col gap-1.5">
@@ -359,7 +359,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
             <span className="min-w-0 flex-1 text-[12.5px] text-ink-muted">
               {draft.password && (
                 <>
-                  <b className={cn("font-semibold", STRENGTH_TEXT[Math.max(1, strength.score)])}>{t(strength.label === "Too short" ? "Weak" : strength.label)}</b>
+                  <b className={cn("font-semibold", STRENGTH_TEXT[Math.max(1, strength.score)])}>{t(`${strength.label === "Too short" ? "Weak" : strength.label}@@password strength`)}</b>
                   {detail && ` · ${t(detail.key, { count: formatCount(detail.count, fmt) })}`}
                 </>
               )}

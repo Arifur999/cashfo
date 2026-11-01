@@ -29,7 +29,7 @@ export function LockCountdown({ expiresAt }: { expiresAt: number }) {
   const time = toLocaleDigits(countdownText(left), fmt);
   const late = left <= LAST_MINUTE_MS;
   return (
-    <span role="timer" aria-label={t("Vault locks in {time}", { time })} className={cn("flex items-center gap-1 text-caption font-normal tabular-nums", late ? "text-warning" : "text-emerald")}>
+    <span role="timer" aria-label={t("Vault locks in {time}", { time })} className={cn("flex items-center gap-1 text-caption font-normal whitespace-nowrap tabular-nums", late ? "text-warning" : "text-emerald")}>
       <span className={cn("size-1.75 rounded-full", late ? "bg-warning" : "bg-emerald")} aria-hidden="true" />
       {t("Unlocked · locks in {time}", { time })}
     </span>
