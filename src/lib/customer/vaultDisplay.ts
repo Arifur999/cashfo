@@ -434,8 +434,11 @@ export interface EntryDraft {
   // Whether the account holder's name field is out.
   holderOpen: boolean;
   favorite: boolean;
-  // Kept through a lock: the drawer says so when the vault opens again.
+  // Kept through a lock: the popup says so when the vault opens again.
   kept: boolean;
+  // Opened by Change (the list, the checkup, a login's warning): the popup
+  // asks for the new password.
+  change?: boolean;
 }
 
 // A fresh draft: the login as saved, a quick-add pick filled in, or blank.
