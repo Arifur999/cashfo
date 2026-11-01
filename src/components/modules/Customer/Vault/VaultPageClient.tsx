@@ -9,8 +9,8 @@ import PageHeader from "@/components/smartly/PageHeader";
 import StatePanel from "@/components/smartly/StatePanel";
 import type { VaultEntrySummary } from "@/lib/customer/api";
 import { listVaultEntriesAction } from "@/lib/customer/passwordVaultActions";
-import type { VaultUnlock } from "@/lib/customer/passwordVaultActions";
-import { draftFor, isLockedMessage, settle, unlockSpanMs } from "@/lib/customer/vaultDisplay";
+import type { VaultResetChallenge, VaultUnlock } from "@/lib/customer/passwordVaultActions";
+import { draftFor, isLockedMessage, settle, unlockSpanMs, type LockReason } from "@/lib/customer/vaultDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,10 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
   // When a vault locked out by wrong tries at page load takes tries again.
   const [lockedUntil] = useState(() => (retryAfterSec > 0 ? Date.now() + retryAfterSec * 1000 : 0));
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
+  // Why the vault is locked (the unlock form's pill), and a code already on
+  // its way for a new vault's first unlock.
+  const [lockReason, setLockReason] = useState<LockReason | null>(null);
+  const [pendingCode, setPendingCode] = useState<VaultResetChallenge | null>(null);
   // The token the answers on their way belong to; a lock in between drops them.
   const live = useRef<string | null>(null);
   // The session whose last minute was already announced.
@@ -117,7 +121,7 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
     if (mode !== "open" && stepInAddress) unwindSteps();
   }, [mode, stepInAddress]);
 
-  function lock(message?: string) {
+  function lock(reason: LockReason) {
     live.current = null;
     setSession(null);
     setEntries([]);
@@ -125,16 +129,14 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
     // What was being typed stays and opens again after the next unlock.
     setDrawer((current) => (current?.open ? { open: true, draft: { ...current.draft, kept: true } } : null));
     setMode("unlock");
-    if (message) toast(message);
+    setLockReason(reason);
+    setPendingCode(null);
   }
 
   // Checked against the clock every second, so a phone woken from sleep
   // locks at once; nothing is drawn again until the warning or the lock
   // (the countdown on screen ticks on its own).
-  const expire = useEffectEvent(() => {
-    const minutes = session ? Math.max(1, Math.round(session.spanMs / 60_000)) : 10;
-    lock(t(minutes === 1 ? "The vault locked itself after {count} minute." : "The vault locked itself after {count} minutes.", { count: formatCount(minutes, fmt) }));
-  });
+  const expire = useEffectEvent(() => lock("timeout"));
   const warn = useEffectEvent(() => toast.warning(t(drawer?.open ? "The vault locks in 1 minute. Save what you're editing." : "The vault locks in 1 minute.")));
   useEffect(() => {
     if (!session) return;
@@ -160,7 +162,7 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
         setEntries(result.data);
         setLoad("ready");
       } else if (isLockedMessage(result.message)) {
-        lock(t("The vault session ended. Unlock it again."));
+        lock("session");
       } else {
         setLoad("failed");
       }
@@ -172,7 +174,11 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
     const spanMs = unlockSpanMs(span);
     setSession({ token, expiresAt: Date.now() + spanMs, spanMs });
     setMode("open");
+    setLockReason(null);
+    setPendingCode(null);
     loadEntries(token);
+    const minutes = Math.max(1, Math.round(spanMs / 60_000));
+    toast.success(t("Vault unlocked"), { description: t(minutes === 1 ? "It locks itself in {count} minute." : "It locks itself in {count} minutes.", { count: formatCount(minutes, fmt) }) });
   }
 
   const header = (
@@ -205,8 +211,8 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
         onEntries={(update) => {
           if (live.current) setEntries(update);
         }}
-        onLock={() => lock()}
-        onLocked={() => lock(t("The vault session ended. Unlock it again."))}
+        onLock={() => lock("manual")}
+        onLocked={() => lock("session")}
         drawer={drawer}
         onDrawer={setDrawer}
       />
@@ -226,7 +232,15 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
             hasAccountPassword={hasAccountPassword}
             userName={userName}
             onUnlocked={unlocked}
-            onDone={() => setMode("unlock")}
+            onCode={(challenge) => {
+              setPendingCode(challenge);
+              setLockReason(null);
+              setMode("unlock");
+            }}
+            onDone={(reason) => {
+              setLockReason(reason ?? null);
+              setMode("unlock");
+            }}
             onBack={() => setMode("unlock")}
           />
         ) : (
@@ -239,6 +253,8 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
             effectiveMinutes={lockTime.effectiveMinutes}
             onLockTime={(next, effective) => setLockTime({ lockMinutes: next, effectiveMinutes: effective })}
             lockedUntil={lockedUntil}
+            reason={lockReason}
+            challenge={pendingCode}
           />
         )}
       </VaultGate>
