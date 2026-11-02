@@ -4,18 +4,18 @@ import { ArrowDownToLine } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
 import { formatCurrency } from "@/lib/customer/currency";
-import { balancesOf, dayOf, earningSince, friendDay, programOf } from "@/lib/customer/referralDisplay";
-import type { ReferralFriend, ReferralProgramInfo } from "@/lib/customer/referralTypes";
+import { balancesOf, dayOf, friendDay, programOf } from "@/lib/customer/referralDisplay";
+import type { ReferralProgramInfo } from "@/lib/customer/referralTypes";
 import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export const WITHDRAW_ROUTE = "/referrals/withdraw";
+export const WITHDRAWALS_ROUTE = "/referrals/withdrawals";
 
 interface EarningsHeroProps {
   info: ReferralProgramInfo;
-  friends: ReferralFriend[];
   currency: string;
   // The app's "YYYY-MM-DD", for the days it names.
   today: string;
@@ -29,22 +29,25 @@ interface EarningsHeroProps {
 const ON_FOREST =
   "bg-white text-emerald hover:bg-mint-50 dark:text-forest dark:hover:bg-mint-200 focus-visible:outline-mint-200 disabled:bg-white/14 disabled:text-white/70 disabled:shadow-none";
 
-// What is ready to withdraw, in the deep green, with what is pending, what
-// was ever earned and what has been paid out (ReferralDashboard); phones
-// get the shorter card with the three on one line and a full-width
-// Withdraw (ReferralMobile). Withdraw opens the withdraw page; below the
-// smallest withdrawal it rests, and the line under the amount says so.
-export function EarningsHero({ info, friends, currency, today }: EarningsHeroProps) {
+const DAY_MS = 86_400_000;
+
+// What is ready to withdraw, in the deep green, with what is on hold, this
+// month's earnings, everything earned and what has been paid to the member
+// (ReferralDashboard); phones get the shorter card with the figures on one
+// line and a full-width Withdraw (ReferralMobile). Below the smallest
+// withdrawal Withdraw rests, and the line under the amount says so.
+export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
   const { t, fmt } = useLocale();
   const reasonId = useId();
   const program = programOf(info);
   const balances = balancesOf(info);
-  const money = (value: number) => formatCurrency(value, currency, fmt);
+  const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const canWithdraw = balances.available >= program.minWithdrawal && balances.available > 0;
-  const pendingFriends = friends.filter((friend) => friend.status === "PENDING").length;
-  const since = earningSince(friends);
-  const lastPaid = dayOf(balances.lastPaidAt);
-  const pendingNext = dayOf(balances.pendingNextAt);
+  const thisMonth = info.months.at(-1);
+  const holdNext = dayOf(balances.onHoldNextAt);
+  const daysToHold = holdNext ? Math.max(0, Math.round((Date.parse(`${holdNext}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / DAY_MS)) : 0;
+  const since = dayOf(info.firstEarnedAt);
+  const monthName = (day: string, withYear: boolean) => formatDate(`${day}T06:00:00Z`, withYear ? "MMMM yyyy" : "MMMM", "", fmt);
 
   const methodsLine = t(program.fee > 0 ? "To bKash, Nagad, Rocket or your bank · from {min} · {fee} fee" : "To bKash, Nagad, Rocket or your bank · from {min} · no fee", {
     min: money(program.minWithdrawal),
@@ -52,19 +55,23 @@ export function EarningsHero({ info, friends, currency, today }: EarningsHeroPro
   });
   const line = canWithdraw ? methodsLine : balances.available > 0 ? t("You can withdraw once you have {min}", { min: money(program.minWithdrawal) }) : t("Nothing to withdraw right now");
 
-  const stats = [
+  const stats: { label: string; value: string; sub: React.ReactNode }[] = [
     {
-      label: t("Pending"),
-      value: money(balances.pending),
-      sub:
-        balances.pending <= 0
-          ? t("Nothing waiting")
-          : pendingNext
-            ? t(pendingFriends === 1 ? "{count} friend · ready on {date}" : "{count} friends · ready on {date}", { count: formatCount(pendingFriends, fmt), date: friendDay(pendingNext, today, fmt) })
-            : t(pendingFriends === 1 ? "{count} friend" : "{count} friends", { count: formatCount(pendingFriends, fmt) }),
+      label: t("On hold"),
+      value: money(balances.onHold),
+      sub: balances.onHold <= 0 ? t("Nothing waiting") : daysToHold <= 1 ? t("Ready tomorrow") : t("Ready in {count} days", { count: formatCount(daysToHold, fmt) }),
     },
-    { label: t("Total earned"), value: money(balances.totalEarned), sub: since ? t("Since {month}", { month: formatDate(`${since}T06:00:00Z`, since.slice(0, 4) === today.slice(0, 4) ? "MMMM" : "MMMM yyyy", "", fmt) }) : t("Nothing yet") },
-    { label: t("Paid out@@referral"), value: money(balances.paidOut), sub: lastPaid ? t("Last paid on {date}", { date: friendDay(lastPaid, today, fmt) }) : t("Nothing paid out yet") },
+    { label: t("This month"), value: money(thisMonth?.amount ?? 0), sub: monthName(`${today.slice(0, 7)}-15`, false) },
+    { label: t("Total earned"), value: money(balances.lifetime), sub: since ? t("Since {month}", { month: monthName(since, since.slice(0, 4) !== today.slice(0, 4)) }) : t("Nothing yet") },
+    {
+      label: t("Paid to you"),
+      value: money(balances.paidOut),
+      sub: (
+        <Link href={WITHDRAWALS_ROUTE} className="underline decoration-white/50 underline-offset-2 hover:decoration-white">
+          {balances.lastPaidAt ? t("Last on {date}", { date: friendDay(dayOf(balances.lastPaidAt), today, fmt) }) : t("See withdrawals")}
+        </Link>
+      ),
+    },
   ];
 
   const withdraw = (phone: boolean) => {
@@ -98,7 +105,7 @@ export function EarningsHero({ info, friends, currency, today }: EarningsHeroPro
       <div className="relative flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-3 md:gap-1">
           <h2 id="rf-earn" className="text-[13px] leading-normal font-medium text-white/86 md:text-body">
-            {t("Available to withdraw")}
+            {t("Ready to withdraw")}
           </h2>
           <span className="text-[32px] leading-normal font-bold tracking-[-0.02em] tabular-nums md:text-[38px]">{money(balances.available)}</span>
           <span id={reasonId} className="hidden text-[13px] leading-normal text-white/84 md:block">
@@ -108,13 +115,13 @@ export function EarningsHero({ info, friends, currency, today }: EarningsHeroPro
         <span className="hidden md:flex">{withdraw(false)}</span>
       </div>
 
-      {/* Phones: the three on one line, then Withdraw across the card. */}
+      {/* Phones: the figures on one line, then Withdraw across the card. */}
       <div className="relative flex flex-wrap gap-x-4.5 gap-y-1 text-[12.5px] leading-normal text-white/86 tabular-nums md:hidden">
         <span>
-          {t("Pending")} <b className="font-bold text-white">{money(balances.pending)}</b>
+          {t("On hold")} <b className="font-bold text-white">{money(balances.onHold)}</b>
         </span>
         <span>
-          {t("Earned")} <b className="font-bold text-white">{money(balances.totalEarned)}</b>
+          {t("Earned")} <b className="font-bold text-white">{money(balances.lifetime)}</b>
         </span>
         <span>
           {t("Paid@@short")} <b className="font-bold text-white">{money(balances.paidOut)}</b>
@@ -123,7 +130,7 @@ export function EarningsHero({ info, friends, currency, today }: EarningsHeroPro
       {!canWithdraw && <p className="relative text-[12.5px] leading-normal text-white/84 md:hidden">{line}</p>}
       <div className="relative md:hidden">{withdraw(true)}</div>
 
-      <div className="relative hidden grid-cols-3 gap-3 border-t border-white/18 pt-4 md:grid">
+      <div className="relative hidden grid-cols-4 gap-3 border-t border-white/18 pt-4 md:grid">
         {stats.map((stat) => (
           <div key={stat.label} className="flex min-w-0 flex-col gap-0.75">
             <span className="text-[12.5px] leading-normal text-white/80">{stat.label}</span>
