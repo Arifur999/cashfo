@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { SavingsDialog } from "@/components/modules/Customer/SavingsGoals/SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import ChoiceCard, { ChoiceCardGroup } from "@/components/smartly/ChoiceCard";
@@ -105,7 +105,7 @@ export function ZakatSettingsDialog({ open, onClose, businessId, summary, curren
   );
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       busy={isPending}
@@ -209,6 +209,6 @@ export function ZakatSettingsDialog({ open, onClose, businessId, summary, curren
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

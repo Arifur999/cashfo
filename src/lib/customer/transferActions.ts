@@ -8,21 +8,19 @@ export interface PrintTransfersResult {
   data?: { transfers: Transaction[]; complete: boolean };
 }
 
-// Wallets › Transfer's Print: the history is paged on screen, so the paper
-// copy loads every transfer in the period first (newest first, up to 1,000,
-// as the page used to list them). `complete` is false when there were more.
-// excludeSavings follows the page: an older backend refuses it, and its list
-// then shows a goal's transfers too.
-export async function listTransfersForPrintAction(businessId: string, period: { dateFrom?: string; dateTo?: string; excludeSavings: boolean; accountId?: string }): Promise<PrintTransfersResult> {
+// Transfers' Print: the history is paged on screen, so the paper copy loads
+// every transfer the screen's filters match first (newest first, up to
+// 1,000). `complete` is false when there were more.
+export async function listTransfersForPrintAction(businessId: string, filters: { dateFrom?: string; dateTo?: string; accountId?: string; search?: string }): Promise<PrintTransfersResult> {
   try {
-    // The screen's rows: its wallet filter and each row's balance after.
     const { data, complete } = await getAllTransactions(businessId, {
       transactionType: "TRANSFER",
-      dateFrom: period.dateFrom,
-      dateTo: period.dateTo,
-      accountId: period.accountId,
-      withBalanceAfter: true,
-      ...(period.excludeSavings && { excludeSavings: true }),
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+      accountId: filters.accountId,
+      search: filters.search,
+      excludeSavings: true,
+      standingOnly: true,
     });
     return { success: true, data: { transfers: data, complete } };
   } catch {

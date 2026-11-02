@@ -56,7 +56,7 @@ export function WalletsCard({ data }: { data: HomeData }) {
     <section className={cn(CARD, "hidden flex-col overflow-hidden md:flex")}>
       <div className="flex items-center justify-between px-6 pt-5 pb-3">
         <h2 className={TITLE}>{t("Wallets")}</h2>
-        <Link href="/balance/wallet" className={LINK}>
+        <Link href="/balance/accounts" className={LINK}>
           {t("Manage")}
         </Link>
       </div>
@@ -83,7 +83,7 @@ export function WalletsCard({ data }: { data: HomeData }) {
         <div className="px-6 pt-2">
           {/* ?new=1 asks My wallets to open its Add wallet drawer straight away. */}
           <Link
-            href="/balance/wallet?new=1"
+            href="/balance/accounts?new=1"
             className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-input text-[13px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
           >
             <Plus className="size-3.5" strokeWidth={2.25} aria-hidden="true" />

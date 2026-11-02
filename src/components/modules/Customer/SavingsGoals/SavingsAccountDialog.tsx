@@ -9,7 +9,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { createAccountAction, updateAccountAction } from "@/lib/customer/accountActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 export interface SavingsAccountRef {
   id: string;
@@ -79,7 +79,7 @@ export function SavingsAccountDialog({ open, onClose, businessId, editing, names
   }
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={480}
@@ -111,6 +111,6 @@ export function SavingsAccountDialog({ open, onClose, businessId, editing, names
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

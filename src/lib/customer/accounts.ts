@@ -1,6 +1,6 @@
 // Server-only helpers, same shape as lib/auth.ts's getCurrentUser().
 import { cache } from "react";
-import { API_BASE_URL, type Account, type AccountGroup, type AccountLedger, type AccountSummary, type WalletsOverview } from "./api";
+import { API_BASE_URL, type Account, type AccountGroup, type AccountLedger, type AccountSummary, type LedgerKind, type WalletsOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -90,6 +90,11 @@ export const getAccount = cache(async (businessId: string, accountId: string): P
 });
 
 export interface LedgerFilters {
+  direction?: "in" | "out";
+  kind?: LedgerKind;
+  search?: string;
+  // Without voided entries and their reversals, balances included.
+  standingOnly?: boolean;
   dateFrom?: string;
   dateTo?: string;
   page?: number;

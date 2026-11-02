@@ -350,6 +350,9 @@ export interface Account {
   name: string;
   nameBn: string | null;
   accountNumber: string | null;
+  // A money account's card colour (one of ACCOUNT_COLORS, balanceDisplay.ts);
+  // null draws its type's own. Missing from a backend older than Balance v12.
+  color?: string | null;
   accountType: AccountType;
   accountSubtype: string | null;
   // Decimal columns arrive as strings over JSON, not numbers -- same
@@ -374,6 +377,12 @@ export interface WalletOverviewRow {
   accountNumber: string | null;
   // cash / bank / mfs, for the row's icon.
   accountSubtype: string | null;
+  // The card colour (see Account.color), the day it last moved money
+  // (YYYY-MM-DD) and how many entries it has: none means it can be deleted.
+  // Missing from a backend older than Balance v12.
+  color?: string | null;
+  lastActivity?: string | null;
+  entryCount?: number;
   status: AccountStatus;
   openingBalance: string;
   totalIn: string;
@@ -418,7 +427,34 @@ export interface LedgerRow {
   // Missing from a backend older than the statement fix.
   counterAccounts?: string[];
   category?: string | null;
+  // Received (in) or sent (out); what kind of row it is and the name its
+  // To / From column shows; the contact, asset and charged transfer it
+  // belongs to. Missing from a backend older than Balance v12.
+  direction?: "in" | "out";
+  kind?: LedgerKind;
+  party?: string | null;
+  contactId?: string | null;
+  assetId?: string | null;
+  chargeForId?: string | null;
+  // A transfer's charge: the account the transfer went to.
+  chargeFor?: string | null;
 }
+
+// What a ledger row is (see the backend's ledger-kind.ts).
+export type LedgerKind =
+  | "INCOME"
+  | "EXPENSE"
+  | "TRANSFER"
+  | "SAVINGS"
+  | "SAVINGS_WITHDRAW"
+  | "LOAN_OUT"
+  | "LOAN_IN"
+  | "PAYMENT_IN"
+  | "PAYMENT_OUT"
+  | "ASSET_PURCHASE"
+  | "ASSET_SALE"
+  | "ADJUSTMENT"
+  | "OTHER";
 
 export interface AccountLedger {
   accountId: string;
@@ -434,6 +470,12 @@ export interface AccountLedger {
   // Missing from a backend older than the paged-ledger fix.
   pageOpeningBalance?: string;
   pageClosingBalance?: string;
+  // Every row of the period, received and sent, and the kinds it has; and
+  // whether direction, kind or search narrowed the rows (meta counts what
+  // they left). Missing from a backend older than Balance v12.
+  counts?: { all: number; in: number; out: number };
+  kinds?: LedgerKind[];
+  filtered?: boolean;
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
 
@@ -478,6 +520,8 @@ export interface TransactionsSummary {
   voided: number;
   // The ones that still stand: neither voided nor a reversal.
   standing?: number;
+  // Transfers only: what the standing ones paid in charges (Balance v12).
+  charges?: string;
   // Debit totals of the standing ones (POSTED, not a reversal), 2dp strings.
   totals: { INCOME: string; EXPENSE: string; TRANSFER: string };
 }
@@ -595,6 +639,10 @@ export interface Transaction {
   // With withBalanceAfter: the receiving wallet's balance just after this
   // row (Balance › Transfer's Balance column).
   balanceAfter?: string | null;
+  // A transfer's sending wallet just after it (and its charge), and its
+  // receiving wallet; with withBalanceAfter, from Balance v12 on.
+  fromBalanceAfter?: string | null;
+  toBalanceAfter?: string | null;
 }
 
 // The other end of an Edit (decision D2), with its amount.

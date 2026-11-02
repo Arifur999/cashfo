@@ -5,9 +5,9 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
-const WIDTHS = { 440: "w-110", 480: "w-120", 520: "w-130", 540: "w-135", 560: "w-140", 620: "w-155", 940: "w-235" } as const;
+const WIDTHS = { 420: "w-105", 440: "w-110", 460: "w-115", 480: "w-120", 500: "w-125", 520: "w-130", 540: "w-135", 560: "w-140", 620: "w-155", 940: "w-235" } as const;
 
-interface SavingsDialogProps {
+interface PopupDialogProps {
   open: boolean;
   onClose: () => void;
   title: React.ReactNode;
@@ -33,10 +33,10 @@ interface SavingsDialogProps {
   className?: string;
 }
 
-// The Savings boards' centred popup: a head with the title and X over a
-// line, the body, and a grey strip with the buttons. Every savings popup
-// uses it; on a phone it fills the width less a margin and scrolls.
-export function SavingsDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, busy = false, onSubmit, plain = false, className }: SavingsDialogProps) {
+// The boards' centred popup (Savings first, then Zakat and Balance): a head
+// with the title and X over a line, the body, and a grey strip with the
+// buttons. On a phone it fills the width less a margin and scrolls.
+export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
   const { t } = useLocale();
   const close = (
     <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11">

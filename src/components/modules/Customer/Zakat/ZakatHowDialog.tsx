@@ -1,6 +1,6 @@
 "use client";
 
-import { SavingsDialog } from "@/components/modules/Customer/SavingsGoals/SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Button from "@/components/smartly/Button";
 import { HOW_STEPS } from "@/lib/customer/zakatDisplay";
 import { formatCount } from "@/lib/i18n/digits";
@@ -16,7 +16,7 @@ interface ZakatHowDialogProps {
 export function ZakatHowDialog({ open, onClose }: ZakatHowDialogProps) {
   const { t, fmt } = useLocale();
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={560}
@@ -44,6 +44,6 @@ export function ZakatHowDialog({ open, onClose }: ZakatHowDialogProps) {
         ))}
       </ol>
       <p className="rounded-xl bg-warning-soft px-3.5 py-3 text-[12.5px] leading-normal text-warning">{t("This is a guide built from your own records. For special cases, like business stock or shared property, ask a scholar you trust.")}</p>
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

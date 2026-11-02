@@ -16,7 +16,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 type Way = "add" | "plan" | "extend";
 
@@ -115,7 +115,7 @@ export function CatchUpDialog({ open, onClose, businessId, goal, currency, today
   }
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={560}
@@ -169,6 +169,6 @@ export function CatchUpDialog({ open, onClose, businessId, goal, currency, today
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

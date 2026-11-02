@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useDrawerWallets } from "@/components/modules/Customer/Assets/useDrawerWallets";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
-import { SavingsDialog } from "@/components/modules/Customer/SavingsGoals/SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
@@ -85,7 +85,7 @@ export function ZakatPayDialog({ open, onClose, businessId, summary, currency, m
   }
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       busy={isPending}
@@ -192,6 +192,6 @@ export function ZakatPayDialog({ open, onClose, businessId, summary, currency, m
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

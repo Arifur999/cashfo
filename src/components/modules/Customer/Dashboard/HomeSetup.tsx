@@ -64,7 +64,7 @@ export function SetupGuide({ data, onAddTransaction }: { data: HomeData; onAddTr
       doneText: firstWallet ? t("{wallet} · {amount} added", { wallet: firstWallet.name, amount: formatCurrency(firstWallet.balance, data.currency, fmt) }) : t("Your wallet is in."),
       cta: "Add wallet",
       // ?new=1 asks My wallets to open its Add wallet drawer straight away.
-      href: "/balance/wallet?new=1",
+      href: "/balance/accounts?new=1",
     },
     { title: "Add your first transaction", text: "Record an income or an expense to start tracking.", done: setup.hasTransaction, doneText: t("Your first one is in."), cta: "Add transaction" },
     { title: "Set a monthly budget", text: "Set this month's income target and expense budget so you're warned early.", done: setup.hasBudget, doneText: t("Your budget is planned"), cta: "Set budget", href: "/categories" },

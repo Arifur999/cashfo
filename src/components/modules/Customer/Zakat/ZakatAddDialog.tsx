@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
-import { SavingsDialog } from "@/components/modules/Customer/SavingsGoals/SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
@@ -100,7 +100,7 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
   const sub = weigh ? t("Its weight values it at today's price. Assets keeps its own value.") : t("For things you have but did not put in the app.");
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open
       onClose={onClose}
       busy={isPending}
@@ -190,6 +190,6 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
       <p className="rounded-xl bg-strip px-3 py-2.5 text-[12.5px] leading-normal text-ink-2">
         {t(weigh ? "This stays only on this page. Assets keeps the value you wrote there." : "This stays only on this page. It does not change your wallets, assets or loans.")}
       </p>
-    </SavingsDialog>
+    </PopupDialog>
   );
 }
