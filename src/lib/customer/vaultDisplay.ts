@@ -195,11 +195,14 @@ export function hostOf(url: string | null): string {
   }
 }
 
-// What the user typed, with a scheme in front when they left it out.
+// What the user typed, with a scheme in front when they left it out. Only
+// a web address: any other scheme (javascript:, data:, file:) is dropped,
+// so Open and the saved link can never run anything.
 export function normalizeUrl(url: string): string {
   const trimmed = url.trim();
   if (!trimmed) return "";
-  return /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(trimmed) || /^[a-z0-9.-]+:\d+(\/|$)/i.test(trimmed)) return `https://${trimmed}`;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : "";
 }
 
 export type VaultSort = "az" | "updated" | "newest" | "fix";
