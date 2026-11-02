@@ -282,6 +282,14 @@ function ideaView(data: UserNotification["data"], { t }: Words): NotificationVie
 
 // Any row the app doesn't know: the words it carries, if any, and the page
 // its type belongs to (or a link it carries), so it still reads and opens.
+// A reminder about a PIN-locked workspace: that there is one, not what it
+// says. Opening it asks for the workspace's PIN.
+const LOCKED_HOME: Partial<Record<string, string>> = { BUDGET: "/budget-planning", LOAN_DUE: "/loan-management", SAVINGS: "/savings-goals/dashboard" };
+
+function lockedView(item: UserNotification, t: Translate): NotificationView {
+  return { kind: "other", title: t("A reminder in a PIN-locked workspace"), body: t("Enter its PIN to see it."), href: LOCKED_HOME[item.type] ?? null };
+}
+
 function otherView(item: UserNotification, t: Translate): NotificationView {
   const data = item.data ?? {};
   const typeHome: Partial<Record<string, string>> = { BILLING: PLANS_PATH, REFERRAL: REFERRALS_PATH, PAYOUT: WITHDRAWALS_PATH, SECURITY: SECURITY_PATH, IDEA: IDEAS_PATH };
@@ -299,6 +307,7 @@ function otherView(item: UserNotification, t: Translate): NotificationView {
 // newer than this build, or data it didn't expect) reads as a plain
 // notification, so one odd row can't take the whole page down.
 export function notificationView(item: UserNotification, t: Translate, locale: FormatLocale, currency = "BDT", now: Date = new Date()): NotificationView {
+  if (item.locked) return lockedView(item, t);
   try {
     return knownView(item, t, locale, currency, now) ?? otherView(item, t);
   } catch {

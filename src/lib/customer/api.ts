@@ -116,6 +116,9 @@ export interface UserNotification {
   businessId: string | null;
   type: UserNotificationType;
   data: Record<string, string | number | null>;
+  // About a PIN-locked workspace not opened on this device: its details
+  // (names, amounts) are left out until it is.
+  locked?: boolean;
   readAt: string | null;
   createdAt: string;
 }
