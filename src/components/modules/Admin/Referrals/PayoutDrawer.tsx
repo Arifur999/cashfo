@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Check, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { approvePayoutAction, markPayoutPaidAction } from "@/app/(dashboardLayout)/admin/referrals/_action";
@@ -20,17 +20,15 @@ import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatCurrency } from "@/lib/currency";
 import { METHOD_BRANDS } from "@/lib/customer/referralDisplay";
 import { formatDate, toDateTimeInputValue } from "@/lib/date";
-import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { payoutDetailQuery } from "@/queries/referral.queries";
 import type { IPayoutDetail } from "@/types/referral.types";
 import { buildMarkPayoutPaidFormZodSchema, type IMarkPayoutPaidFormValues } from "@/zod/referral.validation";
-import { firstName, methodName, owedLines, PAYOUT_STATUS_CHIP, payoutAccountLine, payoutDestination, payoutNumber } from "./payoutsDisplay";
+import { ChecksCard, LinesCard } from "./PayoutLines";
+import { firstName, methodName, PAYOUT_STATUS_CHIP, payoutAccountLine, payoutDestination, payoutNumber } from "./payoutsDisplay";
 import RejectPayoutDialog from "./RejectPayoutDialog";
-
-const MOMENT = "d MMM, h:mm aaa";
 
 // The service's square mark, in its own colour (palette data, like a logo).
 export const MethodMark = ({ method, size = "sm" }: { method: IPayoutDetail["method"]; size?: "sm" | "lg" }) => {
@@ -112,7 +110,7 @@ const SendBox = ({ payout, heading, step }: { payout: IPayoutDetail; heading: st
       </div>
       {Number(payout.fee) > 0 && (
         <span className="text-small text-brand-ink">
-          {translate("{amount} asked for, less the {fee} fee", { amount: formatCurrency(payout.amount, undefined, 0, locale), fee: formatCurrency(payout.fee, undefined, 0, locale) })}
+          {translate("{amount} approved, less the {fee} fee", { amount: formatCurrency(payout.amount, undefined, 2, locale), fee: formatCurrency(payout.fee, undefined, 0, locale) })}
         </span>
       )}
       {payout.status !== "PAID" && (
@@ -122,34 +120,6 @@ const SendBox = ({ payout, heading, step }: { payout: IPayoutDetail; heading: st
           {payout.method.type === "BANK" && payout.method.routingNumber && <CopyPill value={payout.method.routingNumber} label="Copy routing number" />}
         </div>
       )}
-    </section>
-  );
-};
-
-// "Why Nasrin is owed this": the commissions behind the request and the
-// account's checks, warnings in amber.
-const OwedCard = ({ payout, holdDays }: { payout: IPayoutDetail; holdDays: number | null }) => {
-  const { translate, locale } = useLocale();
-  const lines = owedLines(payout, holdDays, {
-    money: (amount) => formatCurrency(amount, undefined, amount % 1 ? 2 : 0, locale),
-    moment: (iso) => formatDate(iso, MOMENT, "—", locale),
-    count: (value) => formatCount(value, locale),
-  });
-  return (
-    <section aria-labelledby="payout-owed" className="flex flex-col gap-2 rounded-xl border border-line px-4 py-3.5">
-      <h3 id="payout-owed" className="text-small font-semibold text-ink-2">
-        {translate("Why {name} is owed this", { name: firstName(payout.user.name) })}
-      </h3>
-      {lines.length === 0 && <span className="text-small text-ink-muted">{translate("No commissions are linked to this request.")}</span>}
-      {lines.map((line, index) => (
-        <span key={index} className="flex items-start justify-between gap-2.5 text-small tabular-nums">
-          <span className={cn("flex items-start gap-1.5", line.ok ? "text-ink-2" : "text-warning")}>
-            {line.ok ? <Check className="mt-0.5 size-3.25 shrink-0 text-emerald" strokeWidth={2.75} aria-hidden="true" /> : <AlertTriangle className="mt-0.5 size-3.25 shrink-0" aria-hidden="true" />}
-            {translate(line.text, line.values)}
-          </span>
-          {line.value && <b className="shrink-0 text-right font-semibold text-ink">{line.value}</b>}
-        </span>
-      ))}
     </section>
   );
 };
@@ -177,7 +147,7 @@ const ViewFoot = ({ left, right }: { left?: React.ReactNode; right?: React.React
 
 // Step 2 of an approved request: the transaction ID, when, how much went,
 // and whether to tell the member.
-const MarkPaidForm = ({ payout, holdDays, onDone, onReject }: { payout: IPayoutDetail; holdDays: number | null; onDone: () => void; onReject: () => void }) => {
+const MarkPaidForm = ({ payout, canManage, onDone, onReject }: { payout: IPayoutDetail; canManage: boolean; onDone: () => void; onReject: () => void }) => {
   const { translate, locale } = useLocale();
   const maxAmount = Number(payout.amount);
   const rules = buildMarkPayoutPaidFormZodSchema(maxAmount).shape;
@@ -203,7 +173,8 @@ const MarkPaidForm = ({ payout, holdDays, onDone, onReject }: { payout: IPayoutD
   return (
     <AppForm onSubmit={form.handleSubmit} className="flex flex-1 flex-col gap-4 space-y-0">
       <SendBox payout={payout} heading="Send this money" step={1} />
-      <OwedCard payout={payout} holdDays={holdDays} />
+      <LinesCard payout={payout} canManage={canManage} />
+      <ChecksCard payout={payout} />
       <section aria-labelledby="payout-record" className="flex flex-col gap-3">
         <StepHeading step={2} id="payout-record" tone="ink">
           {translate("Then record it")}
@@ -270,23 +241,42 @@ const MarkPaidForm = ({ payout, holdDays, onDone, onReject }: { payout: IPayoutD
 };
 
 // A waiting request: what was asked for, the checks, and Approve.
-const ReviewBody = ({ payout, canManage, holdDays, onDone, onReject }: { payout: IPayoutDetail; canManage: boolean; holdDays: number | null; onDone: () => void; onReject: () => void }) => {
-  const { translate } = useLocale();
+const ReviewBody = ({ payout, canManage, onDone, onReject }: { payout: IPayoutDetail; canManage: boolean; onDone: () => void; onReject: () => void }) => {
+  const { translate, locale } = useLocale();
+  // Lines unticked: held back for a second look, not paid.
+  const [excluded, setExcluded] = useState<Set<string>>(() => new Set(payout.lines.filter((line) => line.reached === "REFUNDED").map((line) => line.id)));
   const { run, isPending } = useActionMutation({
-    action: () => approvePayoutAction(payout.id),
+    action: () => approvePayoutAction(payout.id, { excludedIds: [...excluded] }),
     successMessage: "Request approved",
     invalidateKeys: [queryKeys.referrals.all],
   });
+  const allHeld = payout.lines.length > 0 && excluded.size === payout.lines.length;
+  const keptTotal = payout.lines.filter((line) => !excluded.has(line.id)).reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
   return (
-    <AppForm onSubmit={async () => (await run(undefined)) && onDone()} className="flex flex-1 flex-col gap-4 space-y-0">
+    <AppForm onSubmit={async () => !allHeld && (await run(undefined)) && onDone()} className="flex flex-1 flex-col gap-4 space-y-0">
       <SendBox payout={payout} heading="What they asked for" />
-      <OwedCard payout={payout} holdDays={holdDays} />
-      <p className="text-small text-ink-muted">{translate("Approve it once you're happy with the checks. You send the money and record it next.")}</p>
+      <LinesCard
+        payout={payout}
+        canManage={canManage}
+        excluded={canManage ? excluded : undefined}
+        onToggle={(id, keep) =>
+          setExcluded((current) => {
+            const next = new Set(current);
+            if (keep) next.delete(id);
+            else next.add(id);
+            return next;
+          })
+        }
+      />
+      <ChecksCard payout={payout} />
+      <p className="text-small text-ink-muted">
+        {allHeld ? translate("Every payment is unticked. Reject the request instead.") : translate("Match each payment ID with the gateway. Untick anything that did not reach us, then approve; you send the money and record it next.")}
+      </p>
       {canManage ? (
         <FormDialogFooter
           pinned
           isPending={isPending}
-          submitLabel="Approve"
+          submitLabel={excluded.size > 0 && !allHeld ? translate("Approve {amount}", { amount: formatCurrency(keptTotal, undefined, keptTotal % 1 ? 2 : 0, locale) }) : "Approve"}
           pendingLabel="Approving..."
           extra={
             <Button type="button" variant="secondary" size="md" onClick={onReject} className="border-expense-line text-expense hover:bg-expense-soft">
@@ -308,7 +298,7 @@ const ReviewBody = ({ payout, canManage, holdDays, onDone, onReject }: { payout:
 };
 
 // A closed request: what happened to it, and when.
-const ClosedBody = ({ payout, holdDays, onClose }: { payout: IPayoutDetail; holdDays: number | null; onClose: () => void }) => {
+const ClosedBody = ({ payout, canManage, onClose }: { payout: IPayoutDetail; canManage: boolean; onClose: () => void }) => {
   const { translate, locale } = useLocale();
   const moment = (iso: string | null) => formatDate(iso, "d MMM yyyy, h:mm aaa", "—", locale);
   return (
@@ -338,11 +328,11 @@ const ClosedBody = ({ payout, holdDays, onClose }: { payout: IPayoutDetail; hold
           <Fact label="Reason">{payout.rejectReason ?? "—"}</Fact>
           <Fact label="Rejected on">{moment(payout.rejectedAt)}</Fact>
           {payout.processedByName && <Fact label="By">{payout.processedByName}</Fact>}
-          <span className="text-small text-ink-muted">{translate("The money went back to the member's balance.")}</span>
+          <span className="text-small text-ink-muted">{translate("The payments went back to the member's balance.")}</span>
         </dl>
       )}
-      {payout.status === "CANCELLED" && <p className="text-small text-ink-muted">{translate("The member cancelled this request on {date}. The money went back to their balance.", { date: moment(payout.cancelledAt) })}</p>}
-      <OwedCard payout={payout} holdDays={holdDays} />
+      {payout.status === "CANCELLED" && <p className="text-small text-ink-muted">{translate("The member cancelled this request on {date}. The payments went back to their balance.", { date: moment(payout.cancelledAt) })}</p>}
+      <LinesCard payout={payout} canManage={canManage} />
       <ViewFoot
         right={
           <Button type="button" variant="secondary" size="md" onClick={onClose}>
@@ -359,7 +349,6 @@ interface PayoutDrawerProps {
   payoutId: string | null;
   onClose: () => void;
   canManage: boolean;
-  holdDays: number | null;
 }
 
 const titleKey = (payout: IPayoutDetail | undefined, canManage: boolean) => {
@@ -380,7 +369,7 @@ const subtitleKey: Record<IPayoutDetail["status"], string> = {
 // One payout request in the design's right-hand drawer: Pay (an approved
 // request, the Mark paid board), Review (a waiting one), or what happened
 // (a closed one). Opened from a row, or by ?payout=<id>.
-const PayoutDrawer = ({ payoutId, onClose, canManage, holdDays }: PayoutDrawerProps) => {
+const PayoutDrawer = ({ payoutId, onClose, canManage }: PayoutDrawerProps) => {
   const { translate, locale } = useLocale();
   // Kept while the drawer closes, so it doesn't empty out as it slides away.
   const [shownId, setShownId] = useState(payoutId);
@@ -427,11 +416,11 @@ const PayoutDrawer = ({ payoutId, onClose, canManage, holdDays }: PayoutDrawerPr
             </div>
           )
         ) : payout.status === "APPROVED" && canManage ? (
-          <MarkPaidForm key={payout.id} payout={payout} holdDays={holdDays} onDone={onClose} onReject={() => setRejecting(true)} />
+          <MarkPaidForm key={payout.id} payout={payout} canManage={canManage} onDone={onClose} onReject={() => setRejecting(true)} />
         ) : payout.status === "REQUESTED" ? (
-          <ReviewBody key={payout.id} payout={payout} canManage={canManage} holdDays={holdDays} onDone={onClose} onReject={() => setRejecting(true)} />
+          <ReviewBody key={payout.id} payout={payout} canManage={canManage} onDone={onClose} onReject={() => setRejecting(true)} />
         ) : (
-          <ClosedBody payout={payout} holdDays={holdDays} onClose={onClose} />
+          <ClosedBody payout={payout} canManage={canManage} onClose={onClose} />
         )}
       </FormDrawer>
       {payout && (

@@ -15,8 +15,6 @@ import { PAYOUT_STATUS_CHIP, payoutAccountLine, payoutDestination, rowActions, r
 
 export interface PayoutRowHandlers {
   canManage: boolean;
-  isApproving: (id: string) => boolean;
-  onApprove: (row: IPayoutRow) => void;
   onReject: (row: IPayoutRow) => void;
   onOpen: (row: IPayoutRow) => void;
 }
@@ -26,15 +24,28 @@ const Money = ({ value }: { value: string }) => {
   return formatCurrency(value, undefined, Number(value) % 1 ? 2 : 0, locale);
 };
 
+// "of ৳ 1,139": what was asked for, when an admin held some back.
+const OfAmount = ({ value }: { value: string }) => {
+  const { translate, locale } = useLocale();
+  return translate("of {amount}", { amount: formatCurrency(value, undefined, Number(value) % 1 ? 2 : 0, locale) });
+};
+
 // "1 Oct, 11:20 am": when it was asked for.
 const When = ({ value }: { value: string }) => {
   const { locale } = useLocale();
   return formatDate(value, "d MMM, h:mm aaa", "—", locale);
 };
 
-const Friends = ({ count }: { count: number }) => {
+// "6 friend payments": the lines the request is made of.
+const Lines = ({ count }: { count: number }) => {
   const { translate, locale } = useLocale();
-  return countPhrase(translate, locale, count, "{count} paying friend", "{count} paying friends");
+  return countPhrase(translate, locale, count, "{count} friend payment", "{count} friend payments");
+};
+
+// A member's first request: worth a closer look.
+const NewBadge = () => {
+  const { translate } = useLocale();
+  return <span className="shrink-0 rounded-full bg-warning-soft px-1.5 py-px text-[10.5px] font-bold text-warning-ink uppercase">{translate("New@@payout")}</span>;
 };
 
 const Checks = ({ row }: { row: IPayoutRow }) => {
@@ -65,7 +76,6 @@ const Status = ({ row }: { row: IPayoutRow }) => {
 };
 
 const ACTION_BUTTON: Record<RowAction, { label: string; className: string; primary?: boolean }> = {
-  approve: { label: "Approve", className: "", primary: true },
   reject: { label: "Reject", className: "border-expense-line text-expense hover:bg-expense-soft" },
   review: { label: "Review", className: "" },
   pay: { label: "Mark paid", className: "", primary: true },
@@ -74,12 +84,11 @@ const ACTION_BUTTON: Record<RowAction, { label: string; className: string; prima
 
 const Actions = ({ row, handlers }: { row: IPayoutRow; handlers: PayoutRowHandlers }) => {
   const { translate } = useLocale();
-  const busy = handlers.isApproving(row.id);
   return (
     <span className="flex justify-end gap-1.5">
       {rowActions(row, handlers.canManage).map((action) => {
         const look = ACTION_BUTTON[action];
-        const onClick = action === "approve" ? handlers.onApprove : action === "reject" ? handlers.onReject : handlers.onOpen;
+        const onClick = action === "reject" ? handlers.onReject : handlers.onOpen;
         return (
           <Button
             key={action}
@@ -87,14 +96,13 @@ const Actions = ({ row, handlers }: { row: IPayoutRow; handlers: PayoutRowHandle
             size="xs"
             variant={look.primary ? "primary" : "secondary"}
             className={cn("h-8 px-2.75 text-[12.5px]", look.className)}
-            disabled={busy}
             aria-label={`${translate(look.label)} ${row.displayId}`}
             onClick={(event) => {
               event.stopPropagation();
               onClick(row);
             }}
           >
-            {translate(action === "approve" && busy ? "Approving..." : look.label)}
+            {translate(look.label)}
           </Button>
         );
       })}
@@ -127,9 +135,12 @@ export const buildPayoutColumns = (handlers: PayoutRowHandlers): ColumnDef<IPayo
     enableSorting: false,
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate font-semibold text-ink">{row.original.user.name}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate font-semibold text-ink">{row.original.user.name}</span>
+          {row.original.isFirst && row.original.status === "REQUESTED" && <NewBadge />}
+        </span>
         <span className="truncate text-caption text-ink-muted">
-          <Friends count={row.original.payingFriends} />
+          <Lines count={row.original.lineCount} />
         </span>
       </span>
     ),
@@ -140,11 +151,18 @@ export const buildPayoutColumns = (handlers: PayoutRowHandlers): ColumnDef<IPayo
     header: "Amount",
     enableSorting: false,
     cell: ({ row }) => (
-      <span className="font-bold text-ink tabular-nums">
-        <Money value={row.original.amount} />
+      <span className="flex flex-col items-end gap-px tabular-nums">
+        <span className={cn("font-bold", row.original.status === "REJECTED" || row.original.status === "CANCELLED" ? "text-ink-muted line-through" : "text-ink")}>
+          <Money value={row.original.amount} />
+        </span>
+        {row.original.requestedAmount !== row.original.amount && (
+          <span className="text-caption text-ink-muted">
+            <OfAmount value={row.original.requestedAmount} />
+          </span>
+        )}
       </span>
     ),
-    meta: { width: 80, align: "right" },
+    meta: { width: 96, align: "right" },
   },
   {
     id: "sendTo",

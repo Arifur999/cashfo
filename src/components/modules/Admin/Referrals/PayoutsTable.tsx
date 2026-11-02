@@ -4,16 +4,13 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { approvePayoutAction } from "@/app/(dashboardLayout)/admin/referrals/_action";
 import DataTable from "@/components/shared/table/DataTable";
 import type { DataTableSimplePager } from "@/components/shared/table/dataTable.types";
 import ShowingRange from "@/components/shared/table/ShowingRange";
 import Button from "@/components/smartly/Button";
-import { useActionMutation } from "@/hooks/useActionMutation";
 import { type ServerDataTableConfig, useServerDataTable } from "@/hooks/useServerDataTable";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { buildTableQueryString } from "@/lib/queryString";
-import { queryKeys } from "@/lib/queryKeys";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { payoutsListQuery } from "@/queries/referral.queries";
 import type { PaginationMeta } from "@/types/api.types";
@@ -90,13 +87,12 @@ const ExportLink = () => {
 
 interface PayoutsTableProps {
   canManage: boolean;
-  holdDays: number | null;
 }
 
-// The payout desk. Approve goes straight through; Reject asks why; Mark
-// paid, Review and View open the request's drawer (?payout=<id>, so the
+// The payout desk. Reject asks why; Review (approve line by line), Mark
+// paid and View open the request's drawer (?payout=<id>, so the
 // admin bell can link to one).
-const PayoutsTable = ({ canManage, holdDays }: PayoutsTableProps) => {
+const PayoutsTable = ({ canManage }: PayoutsTableProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -117,27 +113,16 @@ const PayoutsTable = ({ canManage, holdDays }: PayoutsTableProps) => {
     [pathname, router, searchParams],
   );
 
-  const [approving, setApproving] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<{ row: IPayoutRow; open: boolean } | null>(null);
-  const { run: approve } = useActionMutation({
-    action: (id: string) => approvePayoutAction(id),
-    successMessage: "Request approved",
-    invalidateKeys: [queryKeys.referrals.all],
-  });
 
   const columns = useMemo(
     () =>
       buildPayoutColumns({
         canManage,
-        isApproving: (id) => approving === id,
-        onApprove: (row) => {
-          setApproving(row.id);
-          void approve(row.id).finally(() => setApproving(null));
-        },
         onReject: (row) => setRejecting({ row, open: true }),
         onOpen: (row) => setOpen(row.id),
       }),
-    [approve, approving, canManage, setOpen],
+    [canManage, setOpen],
   );
 
   return (
@@ -157,7 +142,7 @@ const PayoutsTable = ({ canManage, holdDays }: PayoutsTableProps) => {
         rowClassName={(row) => (row.status === "REQUESTED" && row.checks.some((check) => !check.ok) ? "bg-warning-50 hover:bg-warning-50" : undefined)}
         emptyMessage={searchParams.get("status") || searchParams.get("method") ? "No requests match these filters." : "No payout requests yet."}
       />
-      <PayoutDrawer payoutId={openId} onClose={() => setOpen(null)} canManage={canManage} holdDays={holdDays} />
+      <PayoutDrawer payoutId={openId} onClose={() => setOpen(null)} canManage={canManage} />
       <RejectPayoutDialog payout={rejecting?.row ?? null} open={Boolean(rejecting?.open)} onOpenChange={(open) => !open && setRejecting((current) => current && { ...current, open: false })} />
     </>
   );

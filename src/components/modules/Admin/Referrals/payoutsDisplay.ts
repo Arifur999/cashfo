@@ -1,6 +1,6 @@
 import { METHOD_BRANDS, bankShortName, formatWalletNumber, maskAccount } from "@/lib/customer/referralDisplay";
 import type { BadgeTone } from "@/lib/statusBadge";
-import type { IPayoutCheck, IPayoutDetail, IPayoutMethodSnapshot, IPayoutRow, PayoutCheckKey, PayoutStatus, ReferralStatus } from "@/types/referral.types";
+import type { CommissionStatus, IPayoutCheck, IPayoutDetail, IPayoutMethodSnapshot, IPayoutRow, PayoutCheckKey, PayoutStatus } from "@/types/referral.types";
 
 // Plain helpers for Admin > Referrals & Payouts: how a request's method,
 // checks, status and next step read. Pure, so the table, the drawer and the
@@ -44,6 +44,7 @@ export interface CheckLine {
 const CHECK_WORDS: Record<PayoutCheckKey, { ok: string; fail: string }> = {
   NAME_MATCHES: { ok: "Name matches", fail: "Name doesn't match" },
   CODE_CONFIRMED: { ok: "Code confirmed", fail: "No code confirmed" },
+  HOLDS_OVER: { ok: "Holds over", fail: "Still on hold" },
   NO_REFUNDS: { ok: "No refunds", fail: "A friend was refunded" },
   FRIEND_PAID_FROM_THIS_NUMBER: { ok: "Friends paid from other numbers", fail: "Friend paid from this number" },
   WRONG_NUMBER_FOR_METHOD: { ok: "A {method} number", fail: "Not a {method} number" },
@@ -78,12 +79,14 @@ export const PAYOUT_STATUS_CHIP: Record<PayoutStatus, { label: string; tone: Bad
   CANCELLED: { label: "Cancelled@@referral", tone: "neutral" },
 };
 
-export type RowAction = "approve" | "reject" | "review" | "pay" | "view";
+export type RowAction = "reject" | "review" | "pay" | "view";
 
-// What the Action column offers. Those who can only look get View.
+// What the Action column offers. A waiting request is approved only from
+// its review, where each friend payment is checked. Those who can only
+// look get View.
 export const rowActions = (row: Pick<IPayoutRow, "status" | "checks">, canManage: boolean): RowAction[] => {
   if (!canManage) return ["view"];
-  if (row.status === "REQUESTED") return hasWarnings(row) ? ["review", "reject"] : ["approve", "reject"];
+  if (row.status === "REQUESTED") return ["review", "reject"];
   if (row.status === "APPROVED") return ["pay"];
   return ["view"];
 };
@@ -104,44 +107,50 @@ export const statusNote = (row: Pick<IPayoutRow, "status" | "checks">): { text: 
   }
 };
 
-// --- Every referral ---
+// --- Every commission ---
 
-export const REFERRAL_STATUS_CHIP: Record<ReferralStatus, { label: string; tone: BadgeTone }> = {
-  JOINED: { label: "Joined@@referral", tone: "neutral" },
-  PENDING: { label: "Pending@@referral", tone: "warning" },
+export const COMMISSION_STATUS_CHIP: Record<CommissionStatus, { label: string; tone: BadgeTone }> = {
+  ON_HOLD: { label: "On hold", tone: "warning" },
   AVAILABLE: { label: "Available@@referral", tone: "success" },
+  IN_WITHDRAWAL: { label: "In withdrawal", tone: "info" },
+  UNDER_CHECK: { label: "Under check", tone: "warning" },
   PAID_OUT: { label: "Paid out@@referral", tone: "info" },
-  CANCELLED: { label: "Cancelled@@referral", tone: "danger" },
+  REVERSED: { label: "Reversed", tone: "danger" },
+  CANCELLED: { label: "Not counted", tone: "neutral" },
 };
 
-// Why a commission was cancelled, in words.
+// Why a commission earned nothing or was taken back, in words.
 export const CANCEL_REASON_TEXT: Record<string, string> = {
   FRIEND_REFUNDED: "The friend was refunded",
+  REFERRER_NOT_ON_PAID_PLAN: "The member wasn't on a paid plan",
+  PROGRAM_OFF: "The program was paused",
   ADMIN: "Cancelled by an admin",
 };
 
-// Only a commission that is waiting or ready, with nothing paid out of it,
-// can be cancelled (the API refuses the rest).
-export const canCancelReferral = (row: { status: ReferralStatus; paidOutAmount: string | null }): boolean =>
-  (row.status === "PENDING" || row.status === "AVAILABLE") && !(Number(row.paidOutAmount ?? 0) > 0);
+// What an admin can do with a line (the API refuses the rest): cancel one
+// that isn't in a request being paid, and release one held for a check.
+export const canCancelCommission = (status: CommissionStatus): boolean => status === "ON_HOLD" || status === "AVAILABLE" || status === "UNDER_CHECK";
+export const canReleaseCommission = (status: CommissionStatus): boolean => status === "UNDER_CHECK";
+
+// The payment's gateway as people say it.
+export const GATEWAY_NAMES: Record<string, string> = { BKASH: "bKash", NAGAD: "Nagad", SSLCOMMERZ: "SSLCommerz", CARD: "Card", MANUAL: "Manual" };
 
 // --- The settings' worked example ---
 
 // The friend's discount is whole taka, rounded down; the commission is a
-// share of what the friend paid, rounded down to whole taka -- as the API
+// share of what the friend paid, rounded down to the paisa -- as the API
 // works them out.
 export const referralExample = (price: number, friendDiscountPct: number, commissionPct: number) => {
   const pricePaisa = Math.round(price * 100);
   const discountPaisa = friendDiscountPct > 0 ? Math.min(Math.floor((pricePaisa * friendDiscountPct) / 100 / 100) * 100, pricePaisa) : 0;
   const friendPaysPaisa = pricePaisa - discountPaisa;
-  const commission = commissionPct > 0 ? Math.floor((friendPaysPaisa * Math.round(commissionPct * 100)) / 1_000_000) : 0;
-  const friendPays = friendPaysPaisa / 100;
-  return { price, friendPays, commission, youKeep: friendPays - commission };
+  const commissionPaisa = commissionPct > 0 ? Math.floor((friendPaysPaisa * Math.round(commissionPct * 100)) / 10_000) : 0;
+  return { price, friendPays: friendPaysPaisa / 100, commission: commissionPaisa / 100, youKeep: (friendPaysPaisa - commissionPaisa) / 100 };
 };
 
-// --- "Why this member is owed this" ---
+// --- What the desk checks before paying ---
 
-export interface OwedLine {
+export interface DeskLine {
   ok: boolean;
   // A dictionary key and its values; `value` is the figure on the right.
   text: string;
@@ -149,71 +158,28 @@ export interface OwedLine {
   value?: string;
 }
 
-interface OwedFormat {
-  money: (amount: number) => string;
-  moment: (iso: string) => string;
-  count: (value: number) => string;
-}
-
-// The commissions behind a request, grouped by plan ("4 friends bought
-// Yearly Pro", 4 × ৳ 540), then whether they are all past the refund window
-// and none refunded, then the account's checks: what the admin needs to be
-// sure before sending.
-export const owedLines = (
-  detail: Pick<IPayoutDetail, "owedBecause" | "checks" | "method" | "amount" | "codeConfirmedAt">,
-  holdDays: number | null,
-  format: OwedFormat,
-): OwedLine[] => {
-  const lines: OwedLine[] = [];
-  const groups = new Map<string, IPayoutDetail["owedBecause"]>();
-  for (const part of detail.owedBecause) {
-    const key = part.kind === "SIGNUP_BONUS" ? "SIGNUP_BONUS" : `PLAN:${part.planName ?? ""}`;
-    groups.set(key, [...(groups.get(key) ?? []), part]);
-  }
-  for (const [key, parts] of groups) {
-    const amounts = parts.map((part) => Number(part.amount));
-    const total = amounts.reduce((sum, amount) => sum + amount, 0);
-    const same = amounts.every((amount) => amount === amounts[0]);
-    const value = parts.length > 1 && same ? `${format.count(parts.length)} × ${format.money(amounts[0])}` : format.money(total);
-    if (key === "SIGNUP_BONUS") {
-      lines.push({ ok: true, text: parts.length === 1 ? "{count} sign-up bonus" : "{count} sign-up bonuses", values: { count: format.count(parts.length) }, value });
-    } else {
-      const plan = key.slice(5);
-      lines.push({
-        ok: true,
-        text: plan ? (parts.length === 1 ? "{count} friend bought {plan}" : "{count} friends bought {plan}") : parts.length === 1 ? "{count} friend bought a plan" : "{count} friends bought a plan",
-        values: { count: format.count(parts.length), plan },
-        value,
-      });
+// The request's checks in words, warnings first: the name on the account,
+// the code, the refund windows, refunds, a friend paying from the member's
+// own number, and a number that doesn't fit its service.
+export const deskChecks = (detail: Pick<IPayoutDetail, "checks" | "method" | "codeConfirmedAt" | "lines">, moment: (iso: string) => string): DeskLine[] => {
+  const lines: DeskLine[] = detail.checks.map((check) => {
+    switch (check.key) {
+      case "NAME_MATCHES":
+        return { ok: check.ok, text: check.ok ? "Account name matches the profile" : "Account name differs from the profile", value: detail.method.accountName };
+      case "CODE_CONFIRMED":
+        return check.ok && detail.codeConfirmedAt ? { ok: true, text: "Confirmed with a one-time code", value: moment(detail.codeConfirmedAt) } : { ok: false, text: "No one-time code confirmed" };
+      case "HOLDS_OVER":
+        return { ok: check.ok, text: check.ok ? "All refund holds are over" : "Some payments are still inside the refund hold" };
+      case "NO_REFUNDS": {
+        const refunded = detail.lines.filter((line) => line.reached === "REFUNDED").length;
+        return check.ok ? { ok: true, text: "No refunds on these payments" } : { ok: false, text: refunded === 1 ? "{count} payment was refunded" : "{count} payments were refunded", values: { count: refunded } };
+      }
+      default:
+        return checkLine(check, { type: detail.method.type });
     }
-  }
-  const parts = detail.owedBecause;
-  if (parts.length > 0) {
-    const inside = parts.filter((part) => !part.pastWindow).length;
-    const refunded = parts.filter((part) => part.refunded).length;
-    const total = format.money(parts.reduce((sum, part) => sum + Number(part.amount), 0));
-    if (inside === 0 && refunded === 0) {
-      lines.push(
-        holdDays === null
-          ? { ok: true, text: "All past the refund window, none refunded", value: total }
-          : { ok: true, text: "All past the {days}-day window, none refunded", values: { days: format.count(holdDays) }, value: total },
-      );
-    }
-    if (inside > 0) lines.push({ ok: false, text: "{count} still inside the refund window", values: { count: format.count(inside) } });
-    if (refunded > 0) lines.push({ ok: false, text: refunded === 1 ? "{count} friend was refunded" : "{count} friends were refunded", values: { count: format.count(refunded) } });
-  }
-  const method = methodName(detail.method);
-  for (const check of detail.checks) {
-    if (check.key === "NAME_MATCHES") {
-      lines.push({ ok: check.ok, text: check.ok ? "Name on {method} matches the account" : "Name on {method} doesn't match the account", values: { method }, value: detail.method.accountName });
-    } else if (check.key === "CODE_CONFIRMED") {
-      lines.push(check.ok && detail.codeConfirmedAt ? { ok: true, text: "Confirmed with a one-time code", value: format.moment(detail.codeConfirmedAt) } : { ok: false, text: "No one-time code confirmed" });
-    } else if (!check.ok && check.key !== "NO_REFUNDS") {
-      lines.push(checkLine(check, detail.method));
-    }
-  }
-  return lines;
+  });
+  return [...lines.filter((line) => !line.ok), ...lines.filter((line) => line.ok)];
 };
 
-// "Khaled" from "Khaled Mahmud", for "Why Khaled is owed this".
+// "Khaled" from "Khaled Mahmud".
 export const firstName = (name: string): string => name.trim().split(/\s+/)[0] || name;
