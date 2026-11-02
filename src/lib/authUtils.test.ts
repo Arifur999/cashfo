@@ -14,6 +14,9 @@ describe("auth routes", () => {
     expect(isPublicRoute("/reset-password")).toBe(true);
     expect(isPublicRoute("/login/google")).toBe(true);
     expect(isPublicRoute("/dashboard")).toBe(false);
+    // A shared profile card is for anyone; /card itself is not a page.
+    expect(isPublicRoute("/card/AB12CD34")).toBe(true);
+    expect(isPublicRoute("/card")).toBe(false);
     expect(isPublicRoute("/admin/dashboard")).toBe(false);
   });
 

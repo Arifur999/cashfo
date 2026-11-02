@@ -41,6 +41,13 @@ export interface CurrentUser {
   // Absent from an older backend.
   phoneVerifiedAt?: string | null;
   avatarUrl: string | null;
+  // Settings > Profile: the wide photo over the profile (null: a gradient)
+  // and a one-line address. Absent from an older backend.
+  coverUrl?: string | null;
+  address?: string | null;
+  // The shareable profile card: whether it is on, and its code (the
+  // referral code) for the /card/<code> link.
+  profileCard?: { shared: boolean; code: string | null };
   preferredLanguage: LanguagePreference;
   emailVerifiedAt: string | null;
   // When the password was last set; null for an account that never set one

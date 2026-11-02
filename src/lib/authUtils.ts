@@ -47,7 +47,11 @@ export const guestOnlyRoutes = [LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROU
 export const openRoutes = [RESET_PASSWORD_ROUTE, GOOGLE_SIGN_IN_ROUTE, MAINTENANCE_ROUTE, VERIFY_EMAIL_ROUTE, ADMIN_INVITE_ROUTE, ADMIN_RESET_PASSWORD_ROUTE, ...LEGAL_ROUTES];
 
 export const isGuestOnlyRoute = (pathname: string) => guestOnlyRoutes.includes(pathname);
-export const isPublicRoute = (pathname: string) => isGuestOnlyRoute(pathname) || openRoutes.includes(pathname);
+// A shared profile card (/card/<code>, and its picture for social apps).
+export const PROFILE_CARD_ROUTE = "/card";
+export const profileCardPath = (code: string) => `${PROFILE_CARD_ROUTE}/${encodeURIComponent(code)}`;
+
+export const isPublicRoute = (pathname: string) => isGuestOnlyRoute(pathname) || openRoutes.includes(pathname) || pathname.startsWith(`${PROFILE_CARD_ROUTE}/`);
 
 const isUnder = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 
