@@ -15,6 +15,8 @@ interface GoogleSignInButtonProps {
   // An invite code (?ref= or typed on sign-up), credited to whoever invited
   // them if this creates the account.
   referralCode?: string;
+  // The invite link's &src= tag, when the code is the link's.
+  referralSource?: string;
   // "Continue with Google" on sign-in, "Sign up with Google" on sign-up.
   label?: string;
   // Sign-up matches its 44px Create account button; sign-in keeps 52px.
@@ -40,7 +42,7 @@ const errorReturnPath = (referralCode?: string) => {
 // GOOGLE_SIGN_IN_ROUTE, or to the page it started on with ?error= if it
 // fails. requestSignUp: a Google address with no account yet gets a customer
 // account -- signing in and signing up are the same button.
-const GoogleSignInButton = ({ redirectTo, referralCode, label = "Continue with Google", size = "2xl", className, disabled = false }: GoogleSignInButtonProps) => {
+const GoogleSignInButton = ({ redirectTo, referralCode, referralSource, label = "Continue with Google", size = "2xl", className, disabled = false }: GoogleSignInButtonProps) => {
   const { translate } = useLocale();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ const GoogleSignInButton = ({ redirectTo, referralCode, label = "Continue with G
     const landing = new URLSearchParams();
     if (redirectTo) landing.set("redirect", redirectTo);
     if (referralCode) landing.set("ref", referralCode);
+    if (referralCode && referralSource) landing.set("src", referralSource);
     const callbackURL = landing.size > 0 ? `${GOOGLE_SIGN_IN_ROUTE}?${landing.toString()}` : GOOGLE_SIGN_IN_ROUTE;
     try {
       const response = await fetch("/api/auth/sign-in/social", {

@@ -73,10 +73,16 @@ export type SessionExchangeResult =
 // session cookie its callback just set, and gets the usual token pair back,
 // bound to that same session, for whichever side the account belongs to.
 // Never throws -- the caller only needs to know where to send the browser.
-// referralCode: the invite code a Google sign-up started with (?ref=); the
-// API credits it only when this sign-in creates the account.
+// referralCode: the invite code a Google sign-up started with (?ref=), and
+// referralSource its link's tag (&src=); the API credits them only when this
+// sign-in creates the account.
 // trustedDevices: the x-trusted-device header from the request's cookies.
-export const exchangeSession = async (requestHeaders: Pick<Headers, "get">, referralCode?: string, trustedDevices: Record<string, string> = {}): Promise<SessionExchangeResult> => {
+export const exchangeSession = async (
+  requestHeaders: Pick<Headers, "get">,
+  referralCode?: string,
+  trustedDevices: Record<string, string> = {},
+  referralSource?: string,
+): Promise<SessionExchangeResult> => {
   const cookie = betterAuthCookies(requestHeaders.get("cookie"));
   if (!cookie) {
     return { ok: false, reason: "failed" };
@@ -85,7 +91,7 @@ export const exchangeSession = async (requestHeaders: Pick<Headers, "get">, refe
   try {
     const response = await axios.post<ISignInResponse | ITwoStepPending>(
       `${API_BASE_URL}/api/auth/session/sign-in`,
-      referralCode ? { referralCode } : {},
+      referralCode ? { referralCode, ...(referralSource && { referralSource }) } : {},
       { headers: { Cookie: cookie, ...clientHeaders(requestHeaders), ...trustedDevices } },
     );
     return { ok: true, session: response.data };

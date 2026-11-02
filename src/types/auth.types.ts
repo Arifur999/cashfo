@@ -83,6 +83,8 @@ export interface IRegisterPayload {
   preferredLanguage?: LanguagePreference;
   // From a ?ref= sign-up link; an unknown code is ignored, never an error.
   referralCode?: string;
+  // The link's &src= tag (which of the inviter's links); unknown is ignored.
+  referralSource?: string;
 }
 
 export interface IResetPasswordPayload {

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
-import { normalizeInviteCode } from "@/components/modules/Auth/authFormError";
+import { normalizeInviteCode, normalizeInviteSource } from "@/components/modules/Auth/authFormError";
 import { LOGIN_ROUTE, REGISTER_ROUTE, TWO_STEP_LOGIN_ROUTE } from "@/lib/authUtils";
 import { beginSignInStep, completeSignIn } from "@/lib/completeSignIn";
 import { clearSignInStep, trustedDeviceHeaderFrom } from "@/lib/tokenUtils";
@@ -16,14 +16,16 @@ export const GET = async (request: NextRequest) => {
   const { searchParams } = request.nextUrl;
   // The invite code a Google sign-up began with on /register?ref=.
   const referralCode = normalizeInviteCode(searchParams.get("ref"));
+  const referralSource = referralCode ? normalizeInviteSource(searchParams.get("src")) : undefined;
   const redirectTo = searchParams.get("redirect");
-  const result = await exchangeSession(request.headers, referralCode, trustedDeviceHeaderFrom(request.cookies.getAll()));
+  const result = await exchangeSession(request.headers, referralCode, trustedDeviceHeaderFrom(request.cookies.getAll()), referralSource);
   if (!result.ok) {
     // A sign-up goes back to the sign-up page with its invite code, so the
     // person who invited them still gets the credit on the next try; a
     // sign-in keeps the page it was headed for.
     const back = new URLSearchParams();
     if (referralCode) back.set("ref", referralCode);
+    if (referralSource) back.set("src", referralSource);
     if (redirectTo) back.set("redirect", redirectTo);
     back.set("error", result.reason);
     redirect(`${referralCode ? REGISTER_ROUTE : LOGIN_ROUTE}?${back.toString()}`);
