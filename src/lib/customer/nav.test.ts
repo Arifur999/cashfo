@@ -43,7 +43,7 @@ describe("the two menus", () => {
       [
         "Money",
         [
-          ["Balance", "Overview", "Balance Transfer", "Ledger", "Wallet"],
+          ["Balance", "Accounts@@wallets", "Transfers", "Ledger"],
           ["Income & Expense", "Overview", "Transactions", "Budget Planning", "Category Set"],
         ],
       ],
@@ -113,10 +113,13 @@ describe("findNavLocation", () => {
   it("finds a page inside a group and its detail route", () => {
     expect(breadcrumbFor(locate("/transactions")!)).toEqual({ crumbs: ["Income & Expense"], heading: "Transactions", tone: "money" });
     expect(breadcrumbFor(locate("/transactions/abc123")!).heading).toBe("Transactions");
-    const location = locate("/balance/wallet")!;
+    const location = locate("/balance/transfer")!;
     expect(location.item.label).toBe("Balance");
-    expect(location.sub?.label).toBe("Wallet");
-    expect(breadcrumbFor(location)).toEqual({ crumbs: ["Balance"], heading: "Wallet", tone: "money" });
+    expect(location.sub?.label).toBe("Transfers");
+    expect(breadcrumbFor(location)).toEqual({ crumbs: ["Balance"], heading: "Transfers", tone: "money" });
+    // The old Overview and Wallet addresses still name Accounts while they redirect.
+    expect(locate("/balance/wallet")!.sub?.label).toBe("Accounts@@wallets");
+    expect(breadcrumbFor(locate("/balance/ledger")!).heading).toBe("Account ledger");
   });
 
   it("names a Habit Tracker page under its section, and the Money Tracker's pages alone", () => {
@@ -135,7 +138,7 @@ describe("findNavLocation", () => {
   });
 
   it("names the sub-page that shares its group's link", () => {
-    expect(breadcrumbFor(locate("/balance/overview")!)).toEqual({ crumbs: ["Balance"], heading: "Overview", tone: "money" });
+    expect(breadcrumbFor(locate("/balance/accounts")!)).toEqual({ crumbs: ["Balance"], heading: "Accounts@@wallets", tone: "money" });
   });
 
   it("prefers the most specific entry", () => {
@@ -200,7 +203,7 @@ describe("queryOf", () => {
 
 describe("titleParts", () => {
   it("names a group's page with its group and a page on its own", () => {
-    expect(titleParts(locate("/balance/transfer")!)).toEqual(["Balance Transfer", "Balance"]);
+    expect(titleParts(locate("/balance/transfer")!)).toEqual(["Transfers", "Balance"]);
     expect(titleParts(locate("/transactions")!)).toEqual(["Transactions", "Income & Expense"]);
     expect(titleParts(locate("/dashboard")!)).toEqual(["Dashboard"]);
     expect(titleParts(locate("/settings/security")!)).toEqual(["Security", "Settings"]);
@@ -234,7 +237,7 @@ describe("titleParts", () => {
 describe("titleFor", () => {
   it("translates the menu's words but not the record's name", () => {
     const t = (key: string) => `<${key}>`;
-    expect(titleFor(locate("/balance/transfer")!, t)).toBe("<Balance Transfer> · <Balance>");
+    expect(titleFor(locate("/balance/transfer")!, t)).toBe("<Transfers> · <Balance>");
     expect(titleFor(locate("/group-expenses/b1")!, t, "Rahim")).toBe("Rahim · <Group Expense>");
   });
 

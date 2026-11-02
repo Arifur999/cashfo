@@ -126,14 +126,15 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         label: "Balance",
-        href: "/balance/overview",
+        href: "/balance/accounts",
         icon: "balance",
         match: ["/balance"],
+        // Balance v12: Accounts took in the old Overview and Wallet pages
+        // (their paths redirect there).
         subs: [
-          { label: "Overview", href: "/balance/overview" },
-          { label: "Balance Transfer", href: "/balance/transfer" },
-          { label: "Ledger", href: "/balance/ledger" },
-          { label: "Wallet", href: "/balance/wallet" },
+          { label: "Accounts@@wallets", href: "/balance/accounts", match: ["/balance/overview", "/balance/wallet"] },
+          { label: "Transfers", href: "/balance/transfer" },
+          { label: "Ledger", heading: "Account ledger", href: "/balance/ledger" },
         ],
       },
       {
@@ -370,7 +371,7 @@ export function findNavLocation(pathname: string, query: QueryReader, sections: 
   let best: { score: number; location: NavLocation } | null = null;
   const consider = (score: number, location: NavLocation) => {
     // A sub-page wins a tie with its own group, whose link it shares
-    // (Balance and its Overview both open /balance/overview), so the top
+    // (Balance and its Accounts both open /balance/accounts), so the top
     // bar names the page.
     const current = best as { score: number; location: NavLocation } | null;
     const beatsItsGroup = current !== null && score === current.score && location.sub !== null && current.location.sub === null && current.location.item === location.item;
