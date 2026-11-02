@@ -420,4 +420,13 @@ export const vaultDictionary: Record<string, string> = {
   "Fair@@password strength": "মাঝারি",
   "Good@@password strength": "ভালো",
   "Strong@@password strength": "শক্ত",
+  // The unlock code by SMS, and the API's new refusals
+  "Code sent by SMS to {phone}": "{phone}-এ SMS-এ কোড পাঠানো হয়েছে",
+  "New code sent by SMS to {phone}": "{phone}-এ SMS-এ নতুন কোড পাঠানো হয়েছে",
+  "Check your phone": "আপনার ফোন দেখুন",
+  "We sent a 6-digit code by SMS to": "৬ সংখ্যার একটি কোড SMS-এ পাঠিয়েছি এই নম্বরে:",
+  "The code works for 10 minutes.": "কোডটি ১০ মিনিট কাজ করবে।",
+  "Phone code": "ফোন কোড",
+  "We sent the code five times already. Use the last one, or try again in a few minutes.": "কোডটি এর মধ্যে পাঁচবার পাঠানো হয়েছে। শেষেরটি ব্যবহার করুন, অথবা কয়েক মিনিট পর আবার চেষ্টা করুন।",
+  "Your vault password was just changed somewhere else. Reload the page and try again.": "আপনার ভল্ট পাসওয়ার্ড এইমাত্র অন্য কোথাও বদলানো হয়েছে। পেজটি রিলোড করে আবার চেষ্টা করুন।",
 };
