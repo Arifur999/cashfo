@@ -429,4 +429,7 @@ export const vaultDictionary: Record<string, string> = {
   "Phone code": "ফোন কোড",
   "We sent the code five times already. Use the last one, or try again in a few minutes.": "কোডটি এর মধ্যে পাঁচবার পাঠানো হয়েছে। শেষেরটি ব্যবহার করুন, অথবা কয়েক মিনিট পর আবার চেষ্টা করুন।",
   "Your vault password was just changed somewhere else. Reload the page and try again.": "আপনার ভল্ট পাসওয়ার্ড এইমাত্র অন্য কোথাও বদলানো হয়েছে। পেজটি রিলোড করে আবার চেষ্টা করুন।",
+  "Type all 6 digits from the text message.": "SMS-এর ৬টি সংখ্যাই লিখুন।",
+  "Vault password, then a code by SMS": "ভল্ট পাসওয়ার্ড, তারপর SMS-এ আসা কোড",
+  "Sent 5 times. Use the last code.": "৫ বার পাঠানো হয়েছে। শেষ কোডটি দিন।",
 };
