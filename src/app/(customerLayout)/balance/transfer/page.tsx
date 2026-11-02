@@ -1,24 +1,26 @@
 import { redirect } from "next/navigation";
-import { BalanceTransferPageClient } from "@/components/modules/Customer/Balance/BalanceTransferPageClient";
+import { TransfersPageClient, type TransferPeriod } from "@/components/modules/Customer/Balance/TransfersPageClient";
 import { getWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
+import { isMonthKey, monthRangeDays } from "@/lib/customer/balanceDisplay";
+import { resolveDateRange } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { getAllTransactions, getTransactions, getTransactionsSummary } from "@/lib/customer/transactions";
-import { summaryTransferTotals, transferTotals } from "@/lib/customer/transfers";
+import { getTransactions, getTransactionsSummary } from "@/lib/customer/transactions";
 import { getAppToday } from "@/lib/date";
 import { pageHref, pastEnd, readPageParam, readPageSizeParam } from "@/lib/table/pageParams";
 
 export const generateMetadata = () => customerPageMetadata("/balance/transfer");
 
-const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year"];
-
 // 25 transfers to a page unless the reader picks more.
 const PAGE_SIZES = [25, 50, 100];
 const PAGE_SIZE = 25;
+const SEARCH_MAX = 80;
 
-export default async function BalanceTransferPage({ searchParams }: PageProps<"/balance/transfer">) {
+// Balance › Transfers: money moved between the workspace's own accounts,
+// what it came to and what it cost in charges, and the history -- narrowed
+// to an account, a period (or a run of months) and a search.
+export default async function TransfersPage({ searchParams }: PageProps<"/balance/transfer">) {
   const params = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -28,67 +30,55 @@ export default async function BalanceTransferPage({ searchParams }: PageProps<"/
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
+  const today = getAppToday();
 
-  const range = PRESETS.find((preset) => preset === params.range) ?? "all";
-  const { dateFrom, dateTo } = resolveDateRange(range);
+  // All time, this month, this year, or a run of months (?start=2026-09&end=2026-11).
+  const period: TransferPeriod =
+    params.range === "custom"
+      ? { range: "custom", start: isMonthKey(params.start) ? params.start : today.slice(0, 7), end: isMonthKey(params.end) ? params.end : null }
+      : { range: params.range === "this-month" || params.range === "this-year" ? params.range : "all", start: null, end: null };
+  const { dateFrom, dateTo } = period.range === "custom" ? monthRangeDays(period.start!, period.end) : resolveDateRange(period.range);
   const page = readPageParam(params);
   const limit = readPageSizeParam(params, PAGE_SIZES, PAGE_SIZE);
-  // One wallet's transfers, in or out (?account=), or every wallet's.
   const accountId = typeof params.account === "string" && params.account ? params.account : undefined;
-  const filters = { transactionType: "TRANSFER" as const, dateFrom, dateTo, accountId };
-  // A savings goal's Add funds is posted as a transfer into a savings
-  // wallet. This page is money moved between wallets, so the list and the
-  // cards alike leave out what a goal moved.
-  const walletFilters = { ...filters, excludeSavings: true };
+  const search = typeof params.q === "string" ? params.q.trim().slice(0, SEARCH_MAX) : "";
+  // Money moved between accounts: what a savings goal moved is Savings
+  // Goals' own, and a deleted transfer (voided, with its reversal) is gone.
+  const filters = { transactionType: "TRANSFER" as const, dateFrom, dateTo, accountId, search: search || undefined, excludeSavings: true, standingOnly: true };
 
-  // One round trip: a page of the history, the summary of every transfer
-  // and of the wallet-to-wallet ones (the difference is what the goals
-  // moved), and the wallets for the rows' icons.
-  const [walletPage, all, walletOnly, wallets] = await Promise.all([
-    getTransactions(activeBusinessId, { ...walletFilters, page, limit, withBalanceAfter: true }),
+  const [list, summary, wallets] = await Promise.all([
+    getTransactions(activeBusinessId, { ...filters, page, limit, withBalanceAfter: true }),
     getTransactionsSummary(activeBusinessId, filters),
-    getTransactionsSummary(activeBusinessId, walletFilters),
     getWallets(activeBusinessId),
   ]);
-  const fromSummaries = all && walletOnly ? summaryTransferTotals(all, walletOnly) : null;
-  // A backend older than withBalanceAfter refuses it (a 400, read as an
-  // empty page) while its summary still counts transfers: ask again without
-  // it, and the Balance column shows dashes.
-  const listed = walletOnly && walletOnly.count > 0 && walletPage.meta.total === 0 ? await getTransactions(activeBusinessId, { ...walletFilters, page, limit }) : walletPage;
 
-  // A backend older than excludeSavings refuses it (a 400, read as an empty
-  // page and a null summary). Its list then shows every transfer, a goal's
-  // marked as savings, and without the summaries the cards' figures come the
-  // old way: every transfer in the range, read 100 at a time.
-  const [{ data: transfers, meta }, everyTransfer] = await Promise.all([
-    walletOnly ? listed : getTransactions(activeBusinessId, { ...filters, page, limit }),
-    fromSummaries ? null : getAllTransactions(activeBusinessId, filters),
-  ]);
-  const totals = fromSummaries ?? transferTotals(everyTransfer?.data ?? []);
-  const complete = everyTransfer?.complete ?? true;
-
-  // A page past the end (transfers voided away, an old link) opens the last one.
-  const last = pastEnd(page, meta.totalPages, meta.total);
+  // A page past the end (transfers deleted away, an old link) opens the last one.
+  const last = pastEnd(page, list.meta.totalPages, list.meta.total);
   if (last) redirect(pageHref("/balance/transfer", params, last));
 
+  // "Transfer from here" on Accounts (?new=1&from=<account>) opens New transfer from it.
+  const openNew = canManage && params.new === "1";
+  const fromId = openNew && typeof params.from === "string" ? params.from : null;
+
   return (
-    <BalanceTransferPageClient
+    <TransfersPageClient
       businessId={activeBusinessId}
-      transfers={transfers}
-      meta={meta}
-      totals={totals}
-      complete={complete}
+      transfers={list.data}
+      meta={list.meta}
+      totals={{ moved: Number(summary?.totals.TRANSFER ?? 0), charges: Number(summary?.charges ?? 0), count: summary?.standing ?? list.meta.total }}
       wallets={wallets}
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
-      range={range}
+      period={period}
       accountId={accountId ?? ""}
+      search={search}
       periodFrom={dateFrom}
       periodTo={dateTo}
-      excludeSavings={!!walletOnly}
-      today={getAppToday()}
+      today={today}
       pageSizes={PAGE_SIZES}
       defaultPageSize={PAGE_SIZE}
+      openNew={openNew}
+      fromId={fromId}
     />
   );
 }
