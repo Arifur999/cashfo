@@ -10,6 +10,8 @@ const SIZES = {
   // Settings: the phone menu's card, the profile, the photo dialog's preview.
   48: "size-12 text-body-lg",
   72: "size-18 text-h2",
+  // The shareable profile card, over the edge of its cover.
+  88: "size-22 text-h1",
   120: "size-30 text-display",
 } as const;
 
