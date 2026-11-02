@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, ChevronLeft, CircleAlert, Clock, KeyRound, Lock, LockKeyhole, LockKeyholeOpen, Mail, ShieldCheck, TriangleAlert } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, CircleAlert, Clock, KeyRound, Lock, LockKeyhole, LockKeyholeOpen, Mail, ShieldCheck, Smartphone, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
@@ -136,7 +136,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
         if (result.data.step === "open") onUnlocked(result.data);
         else {
           toCode(result.data);
-          toast.success(t("Code sent to {email}", { email: result.data.sentTo }), { description: t("Type it here to finish unlocking.") });
+          toast.success(t(result.data.channel === "SMS" ? "Code sent by SMS to {phone}" : "Code sent to {email}", { email: result.data.sentTo, phone: result.data.sentTo }), { description: t("Type it here to finish unlocking.") });
         }
       } else if (result.reason === "VAULT_LOCKED_OUT") {
         setNow(Date.now());
@@ -168,6 +168,12 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
       const result = await settle(verifyVaultUnlockAction(asked.challengeId, typed));
       if (result.success && result.data) {
         onUnlocked(result.data);
+      } else if (result.reason === "VAULT_LOCKED_OUT") {
+        // Too many wrong tries (codes count with passwords): back to step
+        // one, which waits out the lockout.
+        back();
+        setNow(Date.now());
+        setLockedUntil(Date.now() + (result.retryAfterSec ?? WAIT_MINUTES * 60) * 1000);
       } else if (result.reason === "CODE_WRONG") {
         const left = result.attemptsLeft ?? 0;
         setCode("");
@@ -196,7 +202,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
       if (result.success && result.data) {
         toCode(result.data);
         codeInput.current?.focus();
-        toast.success(t("New code sent to {email}", { email: result.data.sentTo }), { description: t("The old code no longer works.") });
+        toast.success(t(result.data.channel === "SMS" ? "New code sent by SMS to {phone}" : "New code sent to {email}", { email: result.data.sentTo, phone: result.data.sentTo }), { description: t("The old code no longer works.") });
       } else if (result.reason === "RESEND_TOO_SOON" && result.retryAfterSec) {
         setResendAt(Date.now() + result.retryAfterSec * 1000);
       } else if (result.reason && CODE_GONE.has(result.reason)) {
@@ -237,6 +243,9 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
   const message = lockedOut ? t("Too many tries. You can try again in {time}, or reset your vault password.", { time: wait }) : error;
   const pill = reason ? REASONS[reason] : null;
   const resendLeft = resendAt - now;
+  // The code went to a verified phone (the email couldn't go, or was never
+  // confirmed).
+  const bySms = challenge?.channel === "SMS";
 
   return (
     <div className="flex w-full flex-col items-center gap-4.5 pt-2 max-md:pt-0">
@@ -254,7 +263,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
               <span aria-hidden="true" className={cn("flex size-5 items-center justify-center rounded-full text-[11px] font-bold", step === 2 ? "bg-primary text-primary-foreground" : "bg-surface-sunken text-ink-soft")}>
                 {n(2)}
               </span>
-              {t("Email code")}
+              {t(bySms ? "Phone code" : "Email code")}
             </li>
           </ol>
 
@@ -324,13 +333,13 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
             >
               <div className="flex flex-col items-center gap-2.5 text-center">
                 <span className="flex size-15 items-center justify-center rounded-full bg-emerald-soft text-emerald">
-                  <Mail className="size-6.5" aria-hidden="true" />
+                  {bySms ? <Smartphone className="size-6.5" aria-hidden="true" /> : <Mail className="size-6.5" aria-hidden="true" />}
                 </span>
                 <h2 id="vault-code-title" className="text-[21px] leading-[1.3] font-semibold tracking-[-0.01em] text-ink">
-                  {t("Check your email")}
+                  {t(bySms ? "Check your phone" : "Check your email")}
                 </h2>
                 <p className="text-body leading-normal text-ink-muted">
-                  {t("We sent a 6-digit code to")} <b className="font-semibold break-all text-ink">{challenge?.sentTo}</b>
+                  {t(bySms ? "We sent a 6-digit code by SMS to" : "We sent a 6-digit code to")} <b className="font-semibold break-all text-ink">{challenge?.sentTo}</b>
                 </p>
               </div>
               <div className="flex flex-col gap-2">
@@ -402,7 +411,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                   </button>
                 )}
               </div>
-              <p className="-mt-1.5 text-center text-caption leading-normal text-ink-faint">{t("Can't find it? Check spam. The code works for 10 minutes.")}</p>
+              <p className="-mt-1.5 text-center text-caption leading-normal text-ink-faint">{t(bySms ? "The code works for 10 minutes." : "Can't find it? Check spam. The code works for 10 minutes.")}</p>
             </form>
           )}
         </section>
