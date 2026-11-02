@@ -182,6 +182,10 @@ describe("the list", () => {
     expect(normalizeUrl("rokomari.com")).toBe("https://rokomari.com");
     expect(normalizeUrl("http://x.test")).toBe("http://x.test");
     expect(normalizeUrl("  ")).toBe("");
+    // Only a web address: no other scheme can be opened or saved.
+    expect(normalizeUrl("javascript://%0aalert(1)")).toBe("");
+    expect(normalizeUrl("data:text/html,x")).toBe("");
+    expect(normalizeUrl("localhost:3000/login")).toBe("https://localhost:3000/login");
     expect(avatarLetter("bKash")).toBe("b");
     expect(avatarLetter("e-TIN portal")).toBe("e");
     expect(avatarLetter(" Facebook")).toBe("F");

@@ -81,6 +81,14 @@ export const getWorkspaceUnlock = (businessId: string) => getCookie(workspaceUnl
 
 export const clearWorkspaceUnlock = (businessId: string) => deleteCookie(workspaceUnlockCookie(businessId));
 
+// Every unlock this device holds, comma-joined for a call that reads across
+// workspaces (the bell, Download my data): the backend keeps a PIN-locked
+// workspace shut unless one of them opens it. Undefined when there are none.
+export const getAllWorkspaceUnlocks = async (): Promise<string | undefined> => {
+  const unlocks = (await getAllCookies()).filter((cookie) => isWorkspaceUnlockCookie(cookie.name) && cookie.value).map((cookie) => cookie.value);
+  return unlocks.length > 0 ? unlocks.join(",") : undefined;
+};
+
 // Whether this device holds a live unlock for the workspace: unexpired and
 // made in the current session. Decoded only, like everything here -- the
 // backend checks the signature and the PIN it was made with.

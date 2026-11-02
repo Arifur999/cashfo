@@ -571,4 +571,9 @@ export const settingsDictionary: Record<string, string> = {
   "to get codes by SMS and reset your password with it.": "তাহলে কোড SMS-এ আসবে, আর এটি দিয়ে পাসওয়ার্ড রিসেট করা যাবে।",
   "Save the number, then verify it by SMS.": "নম্বরটি সেভ করুন, তারপর SMS দিয়ে যাচাই করুন।",
   "Email isn't set up on Smartly yet.": "Smartly-তে এখনো ইমেইল চালু হয়নি।",
+  // Security: PIN-locked reminders, email before phone and two-step
+  "A reminder in a PIN-locked workspace": "PIN দিয়ে লক করা ওয়ার্কস্পেসে একটি রিমাইন্ডার",
+  "Enter its PIN to see it.": "দেখতে সেটির PIN দিন।",
+  "Verify your email first, then your phone number.": "আগে আপনার ইমেইল যাচাই করুন, তারপর ফোন নম্বর।",
+  "Verify your email first, then turn on two-step sign-in.": "আগে আপনার ইমেইল যাচাই করুন, তারপর টু-স্টেপ সাইন-ইন চালু করুন।",
 };

@@ -165,9 +165,11 @@ export const MANAGE_ROLES = {
   notificationCampaigns: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
   // Resetting an owner's money data, and the copy of it offered first.
   ownerData: ["SUPER_ADMIN"],
-  // Suspending/activating a customer, a temporary password, signing them
-  // out of every device and cancelling a deletion they asked for.
+  // Suspending/activating a customer, signing them out of every device and
+  // cancelling a deletion they asked for.
   ownerStatus: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
+  // A temporary password, which opens the whole account.
+  ownerPassword: ["SUPER_ADMIN"],
   ownerPlan: ["SUPER_ADMIN", "FINANCE_ADMIN"],
   // "Notes for admins" on a user's page (every admin reads them), and the
   // Users list's CSV export.

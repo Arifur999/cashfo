@@ -2,16 +2,19 @@ import type { NextRequest } from "next/server";
 import { clientHeaders } from "@/lib/axios/clientHeaders";
 import { API_BASE_URL } from "@/lib/customer/api";
 import { getTokenAudience } from "@/lib/tokenAudience";
-import { getAccessToken } from "@/lib/tokenUtils";
+import { getAccessToken, getAllWorkspaceUnlocks } from "@/lib/tokenUtils";
 
 // Settings > Resources > Download my data: the backend's .zip, passed
-// through with the customer's token (the browser never calls the backend).
+// through with the customer's token (the browser never calls the backend)
+// and the unlocks of the PIN-locked workspaces opened on this device: the
+// others are left out of the .zip.
 export async function GET(request: NextRequest) {
   const token = await getAccessToken();
   if (!token || getTokenAudience(token) !== "user") return new Response(null, { status: 401 });
 
+  const unlocks = await getAllWorkspaceUnlocks();
   const upstream = await fetch(`${API_BASE_URL}/api/account/export`, {
-    headers: { Authorization: `Bearer ${token}`, ...clientHeaders(request.headers) },
+    headers: { Authorization: `Bearer ${token}`, ...clientHeaders(request.headers), ...(unlocks && { "x-workspace-unlock": unlocks }) },
     cache: "no-store",
   }).catch(() => null);
   if (!upstream?.ok) return new Response(null, { status: upstream?.status === 429 ? 429 : 502 });

@@ -257,3 +257,10 @@ describe("notificationView for account rows", () => {
     expect(notificationView(account("BILLING", noData), inEnglish, "en")).toMatchObject({ kind: "other", href: "/settings/plans" });
   });
 });
+
+describe("a reminder about a PIN-locked workspace", () => {
+  it("says only that there is one, and opens its page (which asks for the PIN)", () => {
+    const item: UserNotification = { id: "n1", businessId: "b1", type: "LOAN_DUE", data: {}, locked: true, readAt: null, createdAt: "2026-11-02T06:00:00.000Z" };
+    expect(notificationView(item, inEnglish, "en")).toEqual({ kind: "other", title: "A reminder in a PIN-locked workspace", body: "Enter its PIN to see it.", href: "/loan-management" });
+  });
+});

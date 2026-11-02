@@ -446,4 +446,7 @@ export const adminSecurityDictionary: Record<string, string> = {
   "A new invite link is ready": "নতুন আমন্ত্রণ লিংক তৈরি",
   // CopyButton's "Copy {label}".
   link: "লিংক",
+  // A temporary password: super admins only
+  "Give a user a temporary password": "ইউজারকে একটি অস্থায়ী পাসওয়ার্ড দিন",
+  "Opens their whole account": "তাঁর পুরো অ্যাকাউন্ট খুলে যায়",
 };

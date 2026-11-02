@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { API_BASE_URL, getApiErrorMessage, type NotificationFeed, type ReminderPreferences } from "./api";
-import { getAccessToken } from "@/lib/tokenUtils";
+import { getAccessToken, getAllWorkspaceUnlocks } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
 export interface ActionResult<T = void> {
@@ -30,9 +30,15 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 }
 
 // Read by the bell after the shell mounts: the reminder checks behind it
-// may take a moment, and no page should wait for them.
+// may take a moment, and no page should wait for them. The unlocks of the
+// PIN-locked workspaces opened here go along: the others' reminders come
+// back without their details.
 export async function getNotificationsAction(): Promise<ActionResult<NotificationFeed>> {
-  return callApi(async () => (await customerApi.get<NotificationFeed>(`${API_BASE_URL}/api/notifications`, { headers: await authHeaders() })).data, "Failed to load notifications");
+  return callApi(async () => {
+    const unlocks = await getAllWorkspaceUnlocks();
+    const headers = { ...(await authHeaders()), ...(unlocks && { "x-workspace-unlock": unlocks }) };
+    return (await customerApi.get<NotificationFeed>(`${API_BASE_URL}/api/notifications`, { headers })).data;
+  }, "Failed to load notifications");
 }
 
 export async function markNotificationReadAction(id: string): Promise<ActionResult> {
