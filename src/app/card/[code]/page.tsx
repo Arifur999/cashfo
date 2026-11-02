@@ -45,7 +45,8 @@ export default async function ProfileCardPage({ params }: PageProps<"/card/[code
   return (
     <main className="flex min-h-dvh flex-col items-center gap-6 bg-page px-4 py-10">
       <Link href="/" aria-label={BRAND_NAME}>
-        <Logo height={34} alt={BRAND_NAME} />
+        <Logo height={34} alt={BRAND_NAME} className="dark:hidden" />
+        <Logo height={34} alt={BRAND_NAME} onDark className="hidden dark:block" />
       </Link>
       {card ? (
         <ProfileCard

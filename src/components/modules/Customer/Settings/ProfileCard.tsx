@@ -28,7 +28,7 @@ export function ProfileCard({ name, avatarUrl, coverUrl, since, invite, footer, 
         <span className="absolute top-3 right-3 rounded-full bg-black/35 px-2.5 py-1 text-caption font-semibold text-white backdrop-blur-sm">Smartly</span>
       </div>
       <div className="flex flex-col gap-3 px-5 pb-5">
-        <Avatar name={name} src={avatarUrl} size={88} alt="" className="-mt-11 ring-4 ring-surface" />
+        <Avatar name={name} src={avatarUrl} size={88} alt="" className="relative z-10 -mt-11 ring-4 ring-surface" />
         <div className="flex flex-col gap-1">
           <h2 className="text-h3 font-semibold break-words text-ink">{name}</h2>
           <span className="text-small text-ink-muted">{since}</span>
