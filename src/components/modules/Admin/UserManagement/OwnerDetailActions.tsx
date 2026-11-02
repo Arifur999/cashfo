@@ -13,9 +13,8 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
 import type { IOwnerDetail, IOwnerRef, OwnerDialog } from "@/types/owner.types";
 import type { PlanChoice } from "./ChangeOwnerPlanForm";
-import { downloadOwnerCopy } from "./ownerCopy";
+import DownloadOwnerCopyDialog from "./DownloadOwnerCopyDialog";
 import OwnerDialogs from "./OwnerDialogs";
-import ResetOwnerPasswordButton from "./ResetOwnerPasswordButton";
 import ViewAsCustomerDialog from "./ViewAsCustomerDialog";
 
 interface OwnerDetailActionsProps {
@@ -32,8 +31,6 @@ interface OwnerDetailActionsProps {
   canResetData: boolean;
   // MANAGE_ROLES ownerTwoStep: turning off two-step for a lost phone.
   canDisableTwoStep: boolean;
-  // MANAGE_ROLES ownerPassword: a temporary password (super admins only).
-  canResetPassword: boolean;
 }
 
 // The board's 38px pills; 44px under a finger. Suspend outlined in red.
@@ -45,7 +42,7 @@ const DANGER = "border-expense-line text-expense hover:bg-expense-soft";
 // "⋯" -- View as customer, Download a copy, Turn off two-step, Cancel the
 // deletion, Reset data. The dialogs are the ones the users table opens from
 // its row menu, and Reset data the one Owners opens.
-const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canViewAsCustomer, canResetData, canDisableTwoStep, canResetPassword }: OwnerDetailActionsProps) => {
+const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canViewAsCustomer, canResetData, canDisableTwoStep }: OwnerDetailActionsProps) => {
   const { translate } = useLocale();
   const [activeDialog, setActiveDialog] = useState<OwnerDialog | null>(null);
   const [viewing, setViewing] = useState(false);
@@ -75,7 +72,6 @@ const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canV
         </Button>
       )}
       {/* A temporary password opens the whole account: super admins only. */}
-      {canResetPassword && !gone && <ResetOwnerPasswordButton owner={owner} className={BUTTON} />}
       {canChangeStatus && owner.status === "SUSPENDED" && (
         <Button variant="secondary" className={BUTTON} onClick={() => setActiveDialog("activate")}>
           <UserCheck className="size-3.75 text-ink-2" aria-hidden="true" /> <T>Turn back on</T>
@@ -106,14 +102,7 @@ const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canV
               </DropdownMenuItem>
             )}
             {canCopy && (
-              <DropdownMenuItem
-                disabled={copying}
-                onClick={async () => {
-                  setCopying(true);
-                  await downloadOwnerCopy(owner.userId, translate);
-                  setCopying(false);
-                }}
-              >
+              <DropdownMenuItem onClick={() => setCopying(true)}>
                 <Download aria-hidden="true" /> <T>Download a copy</T>
               </DropdownMenuItem>
             )}
@@ -138,6 +127,7 @@ const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canV
       )}
       <OwnerDialogs owner={owner} activeDialog={activeDialog} onClose={() => setActiveDialog(null)} plans={plans} signedInDevices={owner.signedInDevices} />
       <ViewAsCustomerDialog owner={owner} open={viewing} onOpenChange={setViewing} />
+      <DownloadOwnerCopyDialog owner={owner} open={copying} onOpenChange={setCopying} />
       {canReset && <ResetOwnerDataDialog owner={owner} open={resetting} onOpenChange={setResetting} canDownloadCopy={canCopy} />}
       <ConfirmDialog
         open={twoStepOff}

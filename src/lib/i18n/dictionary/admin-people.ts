@@ -297,4 +297,7 @@ export const adminPeopleDictionary: Record<string, string> = {
   "Couldn't load two-step verification": "দুই ধাপে যাচাই লোড করা যায়নি",
   "Couldn't forget your computers": "আপনার কম্পিউটারগুলো ভুলে যাওয়া যায়নি",
   "Couldn't forget that computer": "ওই কম্পিউটারটি ভুলে যাওয়া যায়নি",
+  // Download a copy, only with the customer's support code
+  "A zip of everything {name} keeps in Smartly, except their saved passwords. It needs their support code, and it is recorded in the audit log.": "Smartly-তে {name}-এর রাখা সব কিছুর একটি zip, সংরক্ষিত পাসওয়ার্ড ছাড়া। এর জন্য তাঁর সাপোর্ট কোড লাগবে, আর এটি অডিট লগে লেখা থাকবে।",
+  "Too many tries. Wait a few minutes and try again.": "অনেকবার চেষ্টা হয়েছে। কয়েক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।",
 };
