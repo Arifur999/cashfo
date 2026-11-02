@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Account, type AccountLedger, type AccountType, type LedgerRow } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Account, type AccountLedger, type AccountType, type LedgerKind, type LedgerRow } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -40,6 +40,8 @@ export interface AccountFormInput {
   accountType: AccountType;
   accountSubtype?: string;
   parentId?: string;
+  // A money account's card colour (ACCOUNT_COLORS).
+  color?: string;
   // Create-only, same convention as Contact.openingBalance -- see
   // UpdateAccountDto on the backend for why it's excluded from edits.
   openingBalance?: string;
@@ -61,6 +63,8 @@ export interface AccountUpdateInput {
   accountNumber?: string;
   accountSubtype?: string;
   parentId?: string | null;
+  // null goes back to the type's own colour.
+  color?: string | null;
 }
 
 export async function updateAccountAction(businessId: string, id: string, input: AccountUpdateInput): Promise<ActionResult<Account>> {
@@ -106,9 +110,14 @@ export interface StatementRows {
   complete: boolean;
 }
 
-// Every ledger row in the period, oldest first, for Print / PDF: the screen
-// shows 50 to a page, a printed statement shows the whole period.
-export async function getStatementRowsAction(businessId: string, accountId: string, period: { dateFrom?: string; dateTo?: string }): Promise<ActionResult<StatementRows>> {
+// Every ledger row in the period, oldest first, for Print / PDF and the
+// CSV: the screen shows 50 to a page, these the whole period, with the
+// screen's filters when it has some.
+export async function getStatementRowsAction(
+  businessId: string,
+  accountId: string,
+  period: { dateFrom?: string; dateTo?: string; direction?: "in" | "out"; kind?: LedgerKind; search?: string; standingOnly?: boolean },
+): Promise<ActionResult<StatementRows>> {
   return callApi(async () => {
     const headers = await authHeaders();
     const rows: LedgerRow[] = [];
@@ -121,5 +130,22 @@ export async function getStatementRowsAction(businessId: string, accountId: stri
       if (page >= res.data.meta.totalPages) return { rows, complete: true };
     }
     return { rows, complete: false };
+  });
+}
+
+export interface AdjustResult {
+  // false: the balances already matched, so nothing was posted.
+  adjusted: boolean;
+  // Real balance less what Smartly showed, as the server worked it out.
+  difference: string;
+  transactionId: string | null;
+}
+
+// Match real balance (Balance > Accounts): one adjustment that brings the
+// wallet to what its bank or wallet app shows.
+export async function adjustBalanceAction(businessId: string, accountId: string, input: { realBalance: number; note?: string }): Promise<ActionResult<AdjustResult>> {
+  return callApi(async () => {
+    const res = await customerApi.post<AdjustResult>(`${API_BASE_URL}/api/businesses/${businessId}/accounts/${encodeURIComponent(accountId)}/adjust`, input, { headers: await authHeaders() });
+    return res.data;
   });
 }

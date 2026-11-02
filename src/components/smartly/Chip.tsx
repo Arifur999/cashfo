@@ -19,8 +19,10 @@ const TONES = {
   forest: "bg-forest text-white",
 } as const;
 
+export type ChipTone = keyof typeof TONES;
+
 interface ChipProps extends React.ComponentProps<"span"> {
-  tone?: keyof typeof TONES;
+  tone?: ChipTone;
   size?: "sm" | "md";
 }
 
