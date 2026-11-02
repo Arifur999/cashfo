@@ -3,118 +3,138 @@ import { bnDictionary } from "@/lib/i18n/dictionary";
 import { referralsDictionary } from "@/lib/i18n/dictionary/referrals";
 import { savingsGoalsDictionary } from "@/lib/i18n/dictionary/savings-goals";
 import { translate } from "@/lib/i18n/translate";
-import type { ReferralInfo } from "./api";
 import {
   addWorkingDays,
-  amountChips,
-  amountProblem,
   balancesOf,
   bankShortName,
   CANCEL_NOTES,
+  chartMonths,
+  cleanTag,
+  commissionNote,
+  COMMISSION_STATUS,
   destinationLine,
-  earningSince,
-  filterFriends,
-  FRIEND_STATUS,
+  FRIEND_STANDING,
   FRIEND_TABS,
   friendDay,
-  friendNote,
   friendTabCounts,
+  friendTabOf,
   formatWalletNumber,
   initials,
   inviteLink,
-  legacyBonusLeft,
+  isTag,
+  KIND_LABEL,
   linkText,
   maskEmail,
   maskWallet,
   methodProblem,
   normaliseMobile,
-  notBoughtLine,
+  notPayingLine,
   PAYOUT_STATUS,
+  peopleMix,
   programOf,
   shareLinks,
   showsLockedPage,
   speedOf,
-  tabFromQuery,
 } from "./referralDisplay";
-import type { ReferralFriend, ReferralProgramInfo } from "./referralTypes";
+import type { Earning, ReferralProgramInfo } from "./referralTypes";
 
-const OLD: ReferralInfo = { referralCode: "9AAD7001", totalEarned: "1818.00", pendingEarnings: "540.00", availableBalance: "1224.00", referralCount: 9, rewardAmountPerReferral: "100.00", recentReferrals: [] };
+const INFO: ReferralProgramInfo = {
+  referralCode: "9AAD7001",
+  canEarn: true,
+  lockedReason: null,
+  myPlan: { planId: "p", planName: "Yearly Pro", status: "ACTIVE", isPaid: true },
+  program: { live: true, whoCanEarn: "PAID_PLAN", commissionPct: 20, friendDiscountPct: 10, holdDays: 7, minWithdrawal: "300.00", fee: "0.00", payWithinDays: 3, methods: ["BKASH"], examples: [] },
+  balances: { available: "846.80", onHold: "35.80", onHoldNextAt: null, inWithdrawal: "0.00", underCheck: "0.00", paidOut: "451.20", reversed: "35.80", lifetime: "1333.80", lastPaidAt: null },
+  lastPayout: null,
+  linkCount: 4,
+  months: [],
+  people: { total: 10, PAYING: 6, FREE: 2, STOPPED: 1, REFUNDED: 1, BLOCKED: 0 },
+  expectedNext30Days: "119.40",
+  expectedRenewals: 3,
+  firstEarnedAt: null,
+  topFriends: [],
+  latest: [],
+};
 
-const friend = (over: Partial<ReferralFriend>): ReferralFriend => ({
-  id: "f",
-  name: "Imran Hossain",
-  joinedAt: "2026-09-30T06:00:00.000Z",
-  kind: "COMMISSION",
-  status: "JOINED",
-  filter: "NOT_YET",
-  planName: null,
-  currentPlanName: null,
-  boughtAt: null,
-  paidAmount: null,
-  commissionAmount: null,
-  paidOutAmount: "0.00",
-  availableAt: null,
+const line = (over: Partial<Earning>): Earning => ({
+  id: "c",
+  referralId: "r",
+  friendName: "Sadia Islam",
+  kind: "FIRST",
+  planName: "Monthly Pro",
+  paidAt: "2026-10-27T06:00:00.000Z",
+  paymentDisplayId: "PAY-2QF9X1AB",
+  paidAmount: "179.00",
+  rate: 20,
+  amount: "35.80",
+  status: "ON_HOLD",
+  availableAt: "2026-11-02T20:00:00.000Z",
   cancelReason: null,
-  cancelledAt: null,
   paidOutAt: null,
-  refunded: false,
+  endedAt: null,
+  payout: null,
   ...over,
 });
 
 describe("the program's numbers", () => {
-  it("falls back to the old rule's figures for an older backend", () => {
-    expect(programOf(OLD)).toMatchObject({ live: true, commissionPct: 20, friendDiscountPct: 10, holdDays: 7, minWithdrawal: 500, fee: 0, payWithinDays: 3 });
-    expect(balancesOf(OLD)).toMatchObject({ available: 1224, pending: 540, totalEarned: 1818, paidOut: 594 });
-  });
-
-  it("reads the new balances when sent", () => {
-    const info: ReferralProgramInfo = { ...OLD, balances: { available: "224.00", reserved: "1000.00", pending: "540.00", pendingNextAt: null, totalEarned: "1818.00", paidOut: "594.00", lastPaidAt: null } };
-    expect(balancesOf(info)).toMatchObject({ available: 224, reserved: 1000, paidOut: 594 });
+  it("reads the program and the balance by status", () => {
+    expect(programOf(INFO)).toMatchObject({ commissionPct: 20, minWithdrawal: 300, fee: 0, payWithinDays: 3 });
+    expect(balancesOf(INFO)).toMatchObject({ available: 846.8, onHold: 35.8, paidOut: 451.2, lifetime: 1333.8 });
   });
 
   it("shows the Free-plan page only to a locked member with nothing from the program", () => {
-    const empty = { ...OLD, totalEarned: "0", pendingEarnings: "0", availableBalance: "0", referralCount: 0 };
+    const zero = { ...INFO.balances, available: "0.00", onHold: "0.00", paidOut: "0.00", reversed: "0.00", lifetime: "0.00" };
+    const empty = { ...INFO, balances: zero, people: { ...INFO.people, total: 0 } };
     expect(showsLockedPage({ ...empty, lockedReason: "FREE_PLAN" })).toBe(true);
     expect(showsLockedPage({ ...empty, lockedReason: null })).toBe(false);
     // Money or friends from before keep the dashboard, so it can be withdrawn.
-    expect(showsLockedPage({ ...OLD, lockedReason: "FREE_PLAN" })).toBe(false);
-    expect(showsLockedPage({ ...empty, referralCount: 1, lockedReason: "PROGRAM_OFF" })).toBe(false);
+    expect(showsLockedPage({ ...INFO, lockedReason: "FREE_PLAN" })).toBe(false);
+    expect(showsLockedPage({ ...empty, people: { ...INFO.people, total: 1 }, lockedReason: "PROGRAM_OFF" })).toBe(false);
+  });
+
+  it("charts from the first month with money, at most six", () => {
+    const months = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"].map((month, i) => ({ month, amount: i >= 7 ? "100.00" : "0.00" }));
+    expect(chartMonths(months).map((m) => m.month)).toEqual(["2026-08", "2026-09", "2026-10"]);
+    expect(chartMonths(months.map((m) => ({ ...m, amount: "5.00" }))).length).toBe(6);
+    expect(chartMonths(months.map((m) => ({ ...m, amount: "0.00" }))).map((m) => m.month)).toEqual(["2026-10"]);
+  });
+
+  it("splits the people bar", () => {
+    const mix = peopleMix(INFO.people);
+    expect(mix.map((m) => m.count)).toEqual([6, 2, 1, 1]);
+    expect(mix.reduce((sum, m) => sum + m.pct, 0)).toBeCloseTo(100);
+    expect(peopleMix({ PAYING: 0, FREE: 0, STOPPED: 0, REFUNDED: 0 }).every((m) => m.pct === 0)).toBe(true);
+  });
+});
+
+describe("commission lines", () => {
+  it("dates each note on the app's calendar and names the request", () => {
+    // 20:00 UTC on 2 Nov is 3 Nov in Dhaka.
+    expect(commissionNote(line({}))).toEqual({ note: "Ready {date}", day: "2026-11-03" });
+    expect(commissionNote(line({ status: "IN_WITHDRAWAL", payout: { id: "w", displayId: "WD-1048", status: "REQUESTED" } }))).toEqual({ note: "{request} · being checked", day: null, request: "WD-1048" });
+    expect(commissionNote(line({ status: "UNDER_CHECK", payout: { id: "w", displayId: "WD-1048", status: "APPROVED" } }))).toMatchObject({ note: "Held back from {request}", request: "WD-1048" });
+    expect(commissionNote(line({ status: "PAID_OUT", paidOutAt: "2026-09-21T06:00:00.000Z", payout: { id: "w", displayId: "WD-1032", status: "PAID" } }))).toEqual({
+      note: "Paid in {request} · {date}",
+      day: "2026-09-21",
+      request: "WD-1032",
+    });
+    expect(commissionNote(line({ status: "REVERSED", endedAt: "2026-09-06T06:00:00.000Z" }))).toEqual({ note: "Refunded on {date}", day: "2026-09-06" });
+    expect(commissionNote(line({ status: "CANCELLED", cancelReason: "REFERRER_NOT_ON_PAID_PLAN" }))).toEqual({ note: CANCEL_NOTES.REFERRER_NOT_ON_PAID_PLAN, day: null });
   });
 });
 
 describe("friends", () => {
-  const list = [
-    friend({ id: "a", filter: "NOT_YET" }),
-    friend({ id: "b", name: "Tanvir Islam", filter: "NOT_YET" }),
-    friend({ id: "c", status: "PENDING", filter: "BOUGHT", availableAt: "2026-10-04T20:00:00.000Z", boughtAt: "2026-09-28T06:00:00.000Z", commissionAmount: "540.00" }),
-    friend({ id: "d", status: "CANCELLED", filter: "REFUNDED", cancelReason: "FRIEND_REFUNDED", cancelledAt: "2026-09-06T06:00:00.000Z", refunded: true, boughtAt: "2026-09-03T06:00:00.000Z" }),
-    friend({ id: "e", kind: "SIGNUP_BONUS", status: "AVAILABLE", filter: "OTHER", commissionAmount: "100.00", paidOutAmount: "40.00", joinedAt: "2026-08-02T06:00:00.000Z" }),
-  ];
-
-  it("filters and counts by tab", () => {
-    expect(filterFriends(list, "NOT_YET").map((f) => f.id)).toEqual(["a", "b"]);
-    expect(friendTabCounts(OLD, list)).toEqual({ ALL: 5, BOUGHT: 1, NOT_YET: 2, REFUNDED: 1 });
-    expect(friendTabCounts({ ...OLD, friendCounts: { all: 9, bought: 6, notYet: 2, refunded: 1 } }, list)).toEqual({ ALL: 9, BOUGHT: 6, NOT_YET: 2, REFUNDED: 1 });
+  it("counts the tabs, Stopped or refunded together", () => {
+    expect(friendTabCounts({ ALL: 10, ...INFO.people })).toEqual({ ALL: 10, PAYING: 6, FREE: 2, ENDED: 2 });
+    expect(friendTabOf("ENDED")).toBe("ENDED");
+    expect(friendTabOf("BLOCKED")).toBe("ALL");
+    expect(friendTabOf(null)).toBe("ALL");
   });
 
-  it("dates each note on the app's calendar", () => {
-    // 20:00 UTC on 4 Oct is 5 Oct in Dhaka.
-    expect(friendNote(list[2])).toEqual({ note: "Ready on {date}", day: "2026-10-05" });
-    expect(friendNote(list[3])).toEqual({ note: "Refunded on {date}", day: "2026-09-06" });
-    expect(friendNote(friend({ currentPlanName: "Free" }))).toEqual({ note: "On the {plan} plan", day: null, plan: "Free" });
-    expect(friendNote(friend({ status: "CANCELLED", cancelReason: "SELF_REFERRAL" }))).toEqual({ note: CANCEL_NOTES.SELF_REFERRAL, day: null });
-  });
-
-  it("names the friends who haven't bought", () => {
-    expect(notBoughtLine([])).toBeNull();
-    expect(notBoughtLine(list.slice(0, 2))).toEqual({ key: "{name} and {other} joined but haven't bought a plan yet.", values: { name: "Imran", other: "Tanvir" } });
-    expect(notBoughtLine([...list.slice(0, 2), friend({ name: "Mahin Rahman" }), friend({ name: "Rakib" })])?.values).toEqual({ name: "Imran", other: "Tanvir", count: 2 });
-  });
-
-  it("finds what the old sign-up bonus still holds, and when earning began", () => {
-    expect(legacyBonusLeft(list)).toBe(60);
-    expect(earningSince(list)).toBe("2026-08-02");
-    expect(earningSince(list.slice(0, 2))).toBeNull();
+  it("names the friends who haven't paid", () => {
+    expect(notPayingLine([])).toBeNull();
+    expect(notPayingLine(["Imran Hossain", "Tanvir Islam"])).toEqual({ key: "{name} and {other} signed up but haven't paid yet.", values: { name: "Imran", other: "Tanvir" } });
+    expect(notPayingLine(["Imran Hossain", "Tanvir Islam", "Mahin Rahman", "Rakib"])?.values).toEqual({ name: "Imran", other: "Tanvir", count: 2 });
   });
 
   it("writes days this year without the year", () => {
@@ -160,27 +180,6 @@ describe("payout methods", () => {
 });
 
 describe("withdrawing", () => {
-  it("offers the smallest, a round sum and everything", () => {
-    expect(amountChips(1224, 500)).toEqual([
-      { value: 500, all: false },
-      { value: 1000, all: false },
-      { value: 1224, all: true },
-    ]);
-    expect(amountChips(800, 500)).toEqual([
-      { value: 500, all: false },
-      { value: 800, all: true },
-    ]);
-    expect(amountChips(400, 500)).toEqual([]);
-  });
-
-  it("says what is wrong with an amount", () => {
-    expect(amountProblem(0, 1224, 500, 0)).toBe("EMPTY");
-    expect(amountProblem(499, 1224, 500, 0)).toBe("BELOW_MINIMUM");
-    expect(amountProblem(1300, 1224, 500, 0)).toBe("ABOVE_AVAILABLE");
-    expect(amountProblem(500, 1224, 500, 500)).toBe("FEE_EXCEEDS_AMOUNT");
-    expect(amountProblem(1000, 1224, 500, 0)).toBeNull();
-  });
-
   it("counts working days Sunday to Thursday, as the API does", () => {
     // Thursday 1 Oct + 3 working days = Tuesday 6 Oct.
     expect(addWorkingDays("2026-10-01", 3)).toBe("2026-10-06");
@@ -188,31 +187,40 @@ describe("withdrawing", () => {
     expect(speedOf("BKASH", 3)).toEqual({ from: 1, to: 3 });
     expect(speedOf("BANK", 3)).toEqual({ from: 2, to: 3 });
   });
-
-  it("opens the tab the link asks for", () => {
-    expect(tabFromQuery("withdrawals")).toBe("withdrawals");
-    expect(tabFromQuery(undefined)).toBe("overview");
-    expect(tabFromQuery(["withdrawals"])).toBe("overview");
-  });
 });
 
 describe("links", () => {
-  it("builds the invite link and the share links", () => {
+  it("builds the invite links, tagged ones too, and the share links", () => {
     expect(inviteLink("https://smartly.softech.agency/", "9AAD7001")).toBe("https://smartly.softech.agency/register?ref=9AAD7001");
+    expect(inviteLink("https://smartly.softech.agency", "9AAD7001", "facebook")).toBe("https://smartly.softech.agency/register?ref=9AAD7001&src=facebook");
     expect(linkText("https://smartly.softech.agency/register?ref=9AAD7001")).toBe("smartly.softech.agency/register?ref=9AAD7001");
     const links = shareLinks("https://x.test/register?ref=A1", "Join me on Smartly:", "Try Smartly");
     expect(links.whatsapp).toBe("https://wa.me/?text=Join%20me%20on%20Smartly%3A%20https%3A%2F%2Fx.test%2Fregister%3Fref%3DA1");
     expect(links.messenger).toBe("fb-messenger://share/?link=https%3A%2F%2Fx.test%2Fregister%3Fref%3DA1");
     expect(links.email).toContain("mailto:?subject=Try%20Smartly&body=");
   });
+
+  it("keeps a tag to small letters and numbers", () => {
+    expect(cleanTag("Instagram Bio!")).toBe("instagrambio");
+    expect(isTag("fb")).toBe(true);
+    expect(isTag("f")).toBe(false);
+    expect(isTag("Facebook")).toBe(false);
+  });
 });
 
 describe("the words", () => {
   it("words every status, tab and note in Bangla, in English without the context", () => {
-    const keys = [...FRIEND_TABS.map((tab) => tab.label), ...Object.values(FRIEND_STATUS).flatMap((s) => [s.label, s.short]), ...Object.values(PAYOUT_STATUS).map((s) => s.label), ...Object.values(CANCEL_NOTES)];
+    const keys = [
+      ...FRIEND_TABS.map((tab) => tab.label),
+      ...Object.values(FRIEND_STANDING).map((s) => s.label),
+      ...Object.values(COMMISSION_STATUS).map((s) => s.label),
+      ...Object.values(KIND_LABEL),
+      ...Object.values(PAYOUT_STATUS).map((s) => s.label),
+      ...Object.values(CANCEL_NOTES),
+    ];
     for (const key of keys) expect(bnDictionary[key], key).toBeTruthy();
     expect(translate("en", "Available@@referral")).toBe("Available");
-    expect(translate("en", "Requested@@payout")).toBe("Requested");
+    expect(translate("en", "Paid out@@referral")).toBe("Paid out");
   });
 
   // The keys are one namespace and referrals is spread after savings, so a
@@ -231,7 +239,8 @@ describe("the words", () => {
 
   it("words the API's refusals", () => {
     for (const message of [
-      "No available balance to withdraw.",
+      "Some of these commissions are no longer available. Reload and tick them again.",
+      "You already have a link with this tag",
       "Pick a cash, bank, mobile banking or savings wallet",
       "That wallet was not found in this workspace",
       "Enter the Rocket number: 11 digits starting with 01 (12 with the last digit)",

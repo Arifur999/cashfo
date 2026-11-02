@@ -1,10 +1,10 @@
-// The Referral Program's words and sums: friends' statuses and notes, the
-// payout methods' names and marks, the withdrawals' notes, the amount
-// chips, the working days a payout takes, the invite and share links.
+// The Referral Program's words and sums: commission and friend statuses
+// and their notes, the payout methods' names and marks, the withdrawals'
+// notes, the working days a payout takes, the invite and share links.
 // Pure, so the pages and the tests agree.
 import { formatDay, toDateInputValue } from "@/lib/date";
 import type { FormatLocale } from "@/lib/i18n/formatPrefs";
-import type { FriendStatus, MethodSnapshot, PayoutMethodType, PayoutStatus, ReferralFriend, ReferralProgramInfo } from "./referralTypes";
+import type { CommissionKind, CommissionStatus, Earning, FriendFilter, FriendStanding, MethodSnapshot, PayoutMethodType, PayoutStatus, ReferralProgramInfo } from "./referralTypes";
 
 // A "YYYY-MM-DD" day as the page writes it, in the reader's language: "14
 // Aug" this year, "14 Aug 2025" in another ("১৪ আগস্ট", "১৪ আগস্ট ২০২৫").
@@ -28,36 +28,38 @@ export function initials(name: string): string {
     .join("");
 }
 
-// --- The program's numbers, with an older backend's fallbacks ---
+const firstName = (name: string): string => name.trim().split(/\s+/)[0] ?? name;
 
-// What the page needs from GET /api/referrals, whichever backend answered:
-// the old one sent no program, balances or friends, so the old ৳ 100 rule's
-// figures stand in.
-export function programOf(info: ReferralProgramInfo) {
+// --- The program's numbers ---
+
+export function programOf(info: Pick<ReferralProgramInfo, "program">) {
+  const p = info.program;
   return {
-    live: info.program?.live ?? true,
-    commissionPct: info.program?.commissionPct ?? 20,
-    friendDiscountPct: info.program?.friendDiscountPct ?? 10,
-    holdDays: info.program?.holdDays ?? 7,
-    minWithdrawal: Number(info.program?.minWithdrawal ?? 500),
-    fee: Number(info.program?.fee ?? 0),
-    payWithinDays: info.program?.payWithinDays ?? 3,
-    methods: info.program?.methods ?? (["BKASH", "NAGAD", "ROCKET", "BANK"] as PayoutMethodType[]),
-    whoCanEarn: info.program?.whoCanEarn ?? "PAID_PLAN",
-    examples: info.program?.examples ?? [],
+    live: p.live,
+    commissionPct: p.commissionPct,
+    friendDiscountPct: p.friendDiscountPct,
+    holdDays: p.holdDays,
+    minWithdrawal: Number(p.minWithdrawal),
+    fee: Number(p.fee),
+    payWithinDays: p.payWithinDays,
+    methods: p.methods,
+    whoCanEarn: p.whoCanEarn,
+    examples: p.examples,
   };
 }
 
-export function balancesOf(info: ReferralProgramInfo) {
+export function balancesOf(info: Pick<ReferralProgramInfo, "balances">) {
   const b = info.balances;
   return {
-    available: Number(b?.available ?? info.availableBalance),
-    reserved: Number(b?.reserved ?? 0),
-    pending: Number(b?.pending ?? info.pendingEarnings),
-    pendingNextAt: b?.pendingNextAt ?? null,
-    totalEarned: Number(b?.totalEarned ?? info.totalEarned),
-    paidOut: Number(b?.paidOut ?? Math.max(0, Number(info.totalEarned) - Number(info.availableBalance))),
-    lastPaidAt: b?.lastPaidAt ?? null,
+    available: Number(b.available),
+    onHold: Number(b.onHold),
+    onHoldNextAt: b.onHoldNextAt,
+    inWithdrawal: Number(b.inWithdrawal),
+    underCheck: Number(b.underCheck),
+    paidOut: Number(b.paidOut),
+    reversed: Number(b.reversed),
+    lifetime: Number(b.lifetime),
+    lastPaidAt: b.lastPaidAt,
   };
 }
 
@@ -66,106 +68,117 @@ export function balancesOf(info: ReferralProgramInfo) {
 export function showsLockedPage(info: ReferralProgramInfo): boolean {
   if (!info.lockedReason) return false;
   const b = balancesOf(info);
-  return info.referralCount === 0 && b.totalEarned === 0 && b.available === 0 && b.pending === 0;
+  return info.people.total === 0 && b.lifetime === 0 && b.available === 0;
 }
 
-// --- Friends ---
-
-export type FriendTab = "ALL" | "BOUGHT" | "NOT_YET" | "REFUNDED";
-
-export const FRIEND_TABS: { value: FriendTab; label: string }[] = [
-  { value: "ALL", label: "All" },
-  { value: "BOUGHT", label: "Bought" },
-  { value: "NOT_YET", label: "Not yet@@friend" },
-  { value: "REFUNDED", label: "Refunded" },
-];
-
-export function friendTabCounts(info: ReferralProgramInfo, friends: ReferralFriend[]): Record<FriendTab, number> {
-  const c = info.friendCounts;
-  if (c) return { ALL: c.all, BOUGHT: c.bought, NOT_YET: c.notYet, REFUNDED: c.refunded };
-  return {
-    ALL: friends.length,
-    BOUGHT: friends.filter((f) => f.filter === "BOUGHT").length,
-    NOT_YET: friends.filter((f) => f.filter === "NOT_YET").length,
-    REFUNDED: friends.filter((f) => f.filter === "REFUNDED").length,
-  };
-}
-
-export const filterFriends = (friends: ReferralFriend[], tab: FriendTab): ReferralFriend[] => (tab === "ALL" ? friends : friends.filter((friend) => friend.filter === tab));
+// --- Chips ---
 
 // A chip's look: its tone (tokens) and the dot's.
-export type FriendTone = "neutral" | "warning" | "mint" | "expense" | "paid";
+export type ChipTone = "neutral" | "warning" | "mint" | "expense" | "paid" | "info" | "check";
 
-// Label (a dictionary key), tone, and the phone list's short label.
-export const FRIEND_STATUS: Record<FriendStatus, { label: string; short: string; tone: FriendTone }> = {
-  JOINED: { label: "Not bought yet", short: "Not bought", tone: "neutral" },
-  PENDING: { label: "Pending", short: "Pending", tone: "warning" },
-  AVAILABLE: { label: "Available@@referral", short: "Available@@referral", tone: "mint" },
-  PAID_OUT: { label: "Paid out@@referral", short: "Paid out@@referral", tone: "paid" },
-  CANCELLED: { label: "Cancelled@@referral", short: "Cancelled@@referral", tone: "expense" },
+// --- Commission lines ---
+
+// Label (a dictionary key) and tone.
+export const COMMISSION_STATUS: Record<CommissionStatus, { label: string; tone: ChipTone }> = {
+  ON_HOLD: { label: "On hold", tone: "warning" },
+  AVAILABLE: { label: "Available@@referral", tone: "mint" },
+  IN_WITHDRAWAL: { label: "In withdrawal", tone: "info" },
+  UNDER_CHECK: { label: "Under check", tone: "check" },
+  PAID_OUT: { label: "Paid out@@referral", tone: "paid" },
+  REVERSED: { label: "Reversed", tone: "expense" },
+  CANCELLED: { label: "Not counted", tone: "neutral" },
 };
 
-// Why a commission was cancelled, under its chip.
+// The Earnings filter cards, in the board's order.
+export const EARNING_CARDS: CommissionStatus[] = ["AVAILABLE", "ON_HOLD", "IN_WITHDRAWAL", "PAID_OUT", "REVERSED"];
+
+// Why a line earned nothing or was taken back, under its chip.
 export const CANCEL_NOTES: Record<string, string> = {
-  FRIEND_REFUNDED: "Refunded on {date}",
   REFERRER_NOT_ON_PAID_PLAN: "You weren't on a paid plan",
   PROGRAM_OFF: "The program was paused",
-  SELF_REFERRAL: "Your own sign-up doesn't count",
-  MONTHLY_LIMIT: "Over the monthly limit",
   ADMIN: "Cancelled by support",
 };
 
-// The line under a friend's chip: a dictionary key and the day it names
-// ("YYYY-MM-DD"), or no day. The friend's current plan rides in {plan}.
-export function friendNote(friend: ReferralFriend): { note: string; day: string | null; plan?: string } {
-  switch (friend.status) {
-    case "JOINED":
-      return friend.currentPlanName ? { note: "On the {plan} plan", day: null, plan: friend.currentPlanName } : { note: "Hasn't bought a plan yet", day: null };
-    case "PENDING":
-      return friend.availableAt ? { note: "Ready on {date}", day: dayOf(friend.availableAt) } : { note: "In the refund window", day: null };
+// The line under a commission's chip: a dictionary key, the day it names
+// ("YYYY-MM-DD") and the request it is in.
+export function commissionNote(line: Pick<Earning, "status" | "availableAt" | "paidOutAt" | "endedAt" | "cancelReason" | "payout">): { note: string; day: string | null; request?: string } {
+  switch (line.status) {
+    case "ON_HOLD":
+      return { note: "Ready {date}", day: dayOf(line.availableAt) };
     case "AVAILABLE":
-      return friend.availableAt ? { note: "Since {date}", day: dayOf(friend.availableAt) } : { note: "Ready to withdraw", day: null };
+      return { note: "Since {date}", day: dayOf(line.availableAt) };
+    case "IN_WITHDRAWAL":
+      return line.payout ? { note: "{request} · being checked", day: null, request: line.payout.displayId } : { note: "Being checked", day: null };
+    case "UNDER_CHECK":
+      return line.payout ? { note: "Held back from {request}", day: null, request: line.payout.displayId } : { note: "Held back for a check", day: null };
     case "PAID_OUT":
-      return friend.paidOutAt ? { note: "Withdrawn on {date}", day: dayOf(friend.paidOutAt) } : { note: "Withdrawn", day: null };
-    case "CANCELLED": {
-      const reason = friend.refunded && !friend.cancelReason ? "FRIEND_REFUNDED" : (friend.cancelReason ?? "");
-      const note = CANCEL_NOTES[reason] ?? "Cancelled@@referral";
-      return note.includes("{date}") ? (friend.cancelledAt ? { note, day: dayOf(friend.cancelledAt) } : { note: "Refunded", day: null }) : { note, day: null };
-    }
+      if (line.payout && line.paidOutAt) return { note: "Paid in {request} · {date}", day: dayOf(line.paidOutAt), request: line.payout.displayId };
+      return line.paidOutAt ? { note: "Paid on {date}", day: dayOf(line.paidOutAt) } : { note: "Paid out@@referral", day: null };
+    case "REVERSED":
+      return line.endedAt ? { note: "Refunded on {date}", day: dayOf(line.endedAt) } : { note: "Refunded", day: null };
+    case "CANCELLED":
+      return { note: CANCEL_NOTES[line.cancelReason ?? ""] ?? "Cancelled@@referral", day: null };
   }
 }
 
-// Friends who joined but haven't bought, oldest reminder target first.
-export const notBought = (friends: ReferralFriend[]): ReferralFriend[] => friends.filter((friend) => friend.status === "JOINED");
+// What a payment was ("First payment · 10% off", "Renewal"), as a key.
+export const KIND_LABEL: Record<CommissionKind, string> = {
+  FIRST: "First payment",
+  RENEWAL: "Renewal",
+  BONUS: "Sign-up bonus",
+};
 
-const firstName = (name: string): string => name.trim().split(/\s+/)[0] ?? name;
+// --- Friends ---
 
-// "Imran and Tanvir joined but haven't bought a plan yet." as a dictionary
-// key and its values.
-export function notBoughtLine(friends: ReferralFriend[]): { key: string; values: Record<string, string | number> } | null {
-  const names = friends.map((friend) => firstName(friend.name));
-  if (names.length === 0) return null;
-  if (names.length === 1) return { key: "{name} joined but hasn't bought a plan yet.", values: { name: names[0] } };
-  if (names.length === 2) return { key: "{name} and {other} joined but haven't bought a plan yet.", values: { name: names[0], other: names[1] } };
-  return { key: "{name}, {other} and {count} more joined but haven't bought a plan yet.", values: { name: names[0], other: names[1], count: names.length - 2 } };
+export const FRIEND_STANDING: Record<FriendStanding, { label: string; tone: ChipTone }> = {
+  PAYING: { label: "Paying", tone: "mint" },
+  FREE: { label: "Not paying yet", tone: "neutral" },
+  STOPPED: { label: "Stopped", tone: "warning" },
+  REFUNDED: { label: "Refunded", tone: "expense" },
+  BLOCKED: { label: "Not counted", tone: "neutral" },
+};
+
+export type FriendTab = "ALL" | Extract<FriendFilter, "PAYING" | "FREE" | "ENDED">;
+
+export const FRIEND_TABS: { value: FriendTab; label: string }[] = [
+  { value: "ALL", label: "All" },
+  { value: "PAYING", label: "Paying" },
+  { value: "FREE", label: "Not paying yet" },
+  { value: "ENDED", label: "Stopped or refunded" },
+];
+
+export const friendTabOf = (value: string | null | undefined): FriendTab => (FRIEND_TABS.some((tab) => tab.value === value) ? (value as FriendTab) : "ALL");
+
+export function friendTabCounts(counts: { ALL: number } & Record<FriendStanding, number>): Record<FriendTab, number> {
+  return { ALL: counts.ALL, PAYING: counts.PAYING, FREE: counts.FREE, ENDED: counts.STOPPED + counts.REFUNDED };
 }
 
-// What the old ৳ 100 sign-up bonuses still hold, ready to book into a wallet
-// the old way.
-export function legacyBonusLeft(friends: ReferralFriend[]): number {
-  let paisa = 0;
-  for (const friend of friends) {
-    if (friend.kind !== "SIGNUP_BONUS" || friend.status !== "AVAILABLE") continue;
-    paisa += Math.max(0, Math.round(Number(friend.commissionAmount ?? 0) * 100) - Math.round(Number(friend.paidOutAmount) * 100));
-  }
-  return paisa / 100;
+// "Imran and Tanvir signed up but haven't paid yet." as a dictionary key
+// and its values.
+export function notPayingLine(names: string[]): { key: string; values: Record<string, string | number> } | null {
+  const first = names.map(firstName);
+  if (first.length === 0) return null;
+  if (first.length === 1) return { key: "{name} signed up but hasn't paid yet.", values: { name: first[0] } };
+  if (first.length === 2) return { key: "{name} and {other} signed up but haven't paid yet.", values: { name: first[0], other: first[1] } };
+  return { key: "{name}, {other} and {count} more signed up but haven't paid yet.", values: { name: first[0], other: first[1], count: first.length - 2 } };
 }
 
-// The day the first money was earned ("Since August"): a friend's first
-// payment, or an old bonus's sign-up. null with nothing earned.
-export function earningSince(friends: ReferralFriend[]): string | null {
-  const days = friends.filter((f) => f.status !== "JOINED" && f.status !== "CANCELLED").map((f) => dayOf(f.boughtAt ?? f.joinedAt));
-  return days.filter(Boolean).sort()[0] ?? null;
+// The four shares of "People you brought" (paying, not paying yet,
+// stopped, refunded) as whole percents of the bar that add up to 100.
+export function peopleMix(people: Record<"PAYING" | "FREE" | "STOPPED" | "REFUNDED", number>): { key: "PAYING" | "FREE" | "STOPPED" | "REFUNDED"; count: number; pct: number }[] {
+  const keys = ["PAYING", "FREE", "STOPPED", "REFUNDED"] as const;
+  const total = keys.reduce((sum, key) => sum + people[key], 0);
+  if (total === 0) return keys.map((key) => ({ key, count: 0, pct: 0 }));
+  return keys.map((key) => ({ key, count: people[key], pct: (people[key] / total) * 100 }));
+}
+
+// "Earnings by month": the months from the first one with money (at most
+// the last `max`), so a new member's chart isn't a row of empty bars.
+export function chartMonths(months: { month: string; amount: string }[], max = 6): { month: string; amount: number }[] {
+  const rows = months.map((m) => ({ month: m.month, amount: Number(m.amount) }));
+  const first = rows.findIndex((m) => m.amount > 0);
+  const from = first < 0 ? rows.length - 1 : Math.max(first, rows.length - max);
+  return rows.slice(Math.max(0, from));
 }
 
 // --- Payout methods ---
@@ -298,27 +311,6 @@ export function maskEmail(email: string): string {
 
 // --- Withdrawing ---
 
-// The amount chips under the box: the smallest, a round thousand between
-// it and everything (when there is one), and everything.
-export function amountChips(available: number, minimum: number): { value: number; all: boolean }[] {
-  if (available < minimum) return [];
-  const chips: { value: number; all: boolean }[] = [{ value: minimum, all: false }];
-  const round = Math.floor(available / 1000) * 1000;
-  if (round > minimum && round < available) chips.push({ value: round, all: false });
-  else if (minimum * 2 < available) chips.push({ value: minimum * 2, all: false });
-  if (available > minimum) chips.push({ value: available, all: true });
-  return chips;
-}
-
-// What is wrong with an amount, as a dictionary key; null when it can go.
-export function amountProblem(amount: number, available: number, minimum: number, fee: number): "EMPTY" | "BELOW_MINIMUM" | "ABOVE_AVAILABLE" | "FEE_EXCEEDS_AMOUNT" | null {
-  if (!Number.isFinite(amount) || amount <= 0) return "EMPTY";
-  if (amount < minimum) return "BELOW_MINIMUM";
-  if (amount > available) return "ABOVE_AVAILABLE";
-  if (amount <= fee) return "FEE_EXCEEDS_AMOUNT";
-  return null;
-}
-
 // The Dhaka day `days` working days after `day` (Sunday to Thursday; Friday
 // and Saturday are off), as the API counts a payout's "expected by".
 export function addWorkingDays(day: string, days: number): string {
@@ -338,10 +330,8 @@ export const speedOf = (type: PayoutMethodType, payWithinDays: number): { from: 
 
 // --- Withdrawals ---
 
-export type PayoutTone = "warning" | "info" | "mint" | "expense" | "neutral";
-
-export const PAYOUT_STATUS: Record<PayoutStatus, { label: string; tone: PayoutTone }> = {
-  REQUESTED: { label: "Requested@@payout", tone: "warning" },
+export const PAYOUT_STATUS: Record<PayoutStatus, { label: string; tone: ChipTone }> = {
+  REQUESTED: { label: "Being checked", tone: "warning" },
   APPROVED: { label: "Approved@@payout", tone: "info" },
   PAID: { label: "Paid@@payout", tone: "mint" },
   REJECTED: { label: "Rejected@@payout", tone: "expense" },
@@ -350,7 +340,12 @@ export const PAYOUT_STATUS: Record<PayoutStatus, { label: string; tone: PayoutTo
 
 // --- Links ---
 
-export const inviteLink = (origin: string, code: string): string => `${origin.replace(/\/$/, "")}/register?ref=${encodeURIComponent(code)}`;
+// The invite link, with the tag of the place it is shared (&src=facebook).
+export const inviteLink = (origin: string, code: string, tag = ""): string => `${origin.replace(/\/$/, "")}/register?ref=${encodeURIComponent(code)}${tag ? `&src=${encodeURIComponent(tag)}` : ""}`;
+
+// A new link's tag as typed: small letters and numbers only.
+export const cleanTag = (raw: string): string => raw.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+export const isTag = (tag: string): boolean => /^[a-z0-9]{2,20}$/.test(tag);
 
 // What the link looks like in the box: no scheme, so it reads as an address.
 export const linkText = (link: string): string => link.replace(/^https?:\/\//, "");
@@ -375,8 +370,3 @@ export function shareLinks(link: string, message: string, subject: string): Shar
     email: `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`,
   };
 }
-
-// The tab the page opens on: ?tab=withdrawals (the payout emails and bell
-// rows link there), else the overview.
-export type ReferralTab = "overview" | "withdrawals";
-export const tabFromQuery = (value: string | string[] | undefined | null): ReferralTab => (value === "withdrawals" ? "withdrawals" : "overview");
