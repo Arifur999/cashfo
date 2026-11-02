@@ -1,39 +1,64 @@
 "use client";
 
-import { ArrowLeft, Printer, ScrollText } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowLeft,
+  ArrowUpRight,
+  BookText,
+  CircleCheckBig,
+  Download,
+  Landmark,
+  Package,
+  PiggyBank,
+  Printer,
+  ScrollText,
+  Search,
+  Store,
+  Tag,
+  TrendingUp,
+  UserRound,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { createElement, useState } from "react";
-import { flushSync } from "react-dom";
+import { createElement, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
+import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowLink, ListSummaryRow } from "@/components/smartly/list";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
+import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowButton, ListSummaryRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
+import { getStatementRowsAction } from "@/lib/customer/accountActions";
 import { accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
-import { getStatementRowsAction, type StatementRows } from "@/lib/customer/accountActions";
-import type { Account, AccountLedger, AccountSummary, LanguagePreference } from "@/lib/customer/api";
-import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import type { Account, AccountLedger, AccountSummary, LanguagePreference, LedgerKind, LedgerRow } from "@/lib/customer/api";
+import { accountColor, directionOf, kindOf, LEDGER_KIND_META, ledgerCsv, ledgerFileName, maskedMoney, partyOf, walletColorStyle } from "@/lib/customer/balanceDisplay";
+import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { isSettledDay, LEDGER_TYPE_TONE, ledgerDirection, readsAsMoney, statementBackLabel, type StatementLine, statementPage, transactionHref, voidedNet } from "@/lib/customer/ledger";
-import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { walletIcon, walletPalette } from "@/lib/customer/walletVisuals";
+import { isDebitPositive, isSettledDay, periodText, readsAsMoney, statementBackLabel, type StatementLine, statementPage, voidedNet } from "@/lib/customer/ledger";
+import { walletIcon } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { pageHref } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
 import { AccountPicker } from "./AccountPicker";
+import { HideBalancesButton } from "./HideBalancesButton";
+import { LedgerEntryDialog } from "./LedgerEntryDialog";
 import { LedgerStatement } from "./LedgerStatement";
+import { PrintPreview } from "./PrintPreview";
+import { useBalancesHidden } from "./useBalancesHidden";
 
 interface AccountLedgerPageClientProps {
+  businessId: string;
   wallets: Account[];
   others: Account[];
   account: Account | null;
@@ -41,6 +66,7 @@ interface AccountLedgerPageClientProps {
   summary: AccountSummary | null;
   preferredLanguage: LanguagePreference;
   currency: string;
+  canManage: boolean;
   accountId: string;
   range: DateRangePreset;
   customFrom?: string;
@@ -48,10 +74,10 @@ interface AccountLedgerPageClientProps {
   // The period resolved on the server: "This month" is its first day to today.
   periodFrom?: string;
   periodTo?: string;
-  // Today in the platform timezone, for the printed copy.
+  // What the rows are narrowed to (the URL's dir, kind and q).
+  filters: { direction: "in" | "out" | null; kind: LedgerKind | null; search: string };
   today: string;
-  // The page the statement was opened from (?from=, a path on this site),
-  // for a Back link to it: Savings summary's rows open their wallet here.
+  // The page the ledger was opened from (?from=, a path on this site).
   backHref?: string | null;
 }
 
@@ -63,74 +89,87 @@ const PERIODS: { value: DateRangePreset; label: string }[] = [
   { value: "custom", label: "Custom" },
 ];
 
-// One grid for the heads, the rows and the balance lines. Phones scroll it
-// sideways, as before. Paper gets LedgerStatement instead.
-const COLUMNS = "grid-cols-[28px_104px_96px_104px_minmax(0,1fr)_112px_112px_124px] min-w-240";
-const ROW = "tabular-nums md:min-h-14";
-// One half of a void (the voided entry, or the reversal that undid it) is
-// set back as a whole: every cell fades, the chips and figures with it.
-// A faded cell is a layer of its own that would cover the row's stretched
-// link, so the link's cell is lifted above them (z-index works on a grid
-// item without moving the link's containing block off the row).
-const CANCELLED_ROW = "[&>[role=cell]:not([data-slot=list-row-actions])]:grayscale [&>[role=cell]:has([data-slot=list-row-link])]:z-1";
+// #, Date, Received / Sent, Type, To / From, Note, Amount, Balance; phones
+// scroll it sideways.
+const COLUMNS = "grid-cols-[26px_92px_104px_132px_minmax(0,1.15fr)_minmax(0,1fr)_118px_112px] min-w-250";
+const SEARCH_DELAY = 350;
 
-// Statement: one account, the period, the equation from its opening balance
-// to its closing one, and every movement in between with a running balance,
-// 50 to a page.
-export function AccountLedgerPageClient({ wallets, others, account, ledger, summary, preferredLanguage, currency, accountId, range, customFrom, customTo, periodFrom, periodTo, today, backHref }: AccountLedgerPageClientProps) {
+const KIND_ICON: Record<LedgerKind, LucideIcon> = {
+  INCOME: TrendingUp,
+  EXPENSE: Tag,
+  TRANSFER: Landmark,
+  SAVINGS: PiggyBank,
+  SAVINGS_WITHDRAW: PiggyBank,
+  LOAN_OUT: UserRound,
+  LOAN_IN: UserRound,
+  PAYMENT_IN: Store,
+  PAYMENT_OUT: Store,
+  ASSET_PURCHASE: Package,
+  ASSET_SALE: Package,
+  ADJUSTMENT: CircleCheckBig,
+  OTHER: BookText,
+};
+
+// Account ledger (board: Balance — Ledger): one account over a period, the
+// equation from its opening balance to its closing one, then every entry --
+// received or sent, its kind, with whom, its note and the balance after it
+// -- narrowed by direction, kind and a search, each opening its details.
+// CSV downloads what is shown; Print previews the whole period.
+export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
+  const { businessId, wallets, others, account, ledger, summary, preferredLanguage, currency, canManage, accountId, range, customFrom, customTo, periodFrom, periodTo, filters, today, backHref } = props;
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // Admin > System > Feature Flags: pdf_export off hides Print / PDF.
   const pdfExportOn = useFeature("pdf_export");
-  const { activeBusinessId } = useAuth();
-  // The whole period for the printed statement, loaded on Print / PDF.
-  const [printRows, setPrintRows] = useState<(StatementRows & { key: string }) | null>(null);
-  const [loadingPrint, setLoadingPrint] = useState(false);
+  const { hidden, toggle } = useBalancesHidden();
+  const [opened, setOpened] = useState<{ row: LedgerRow; kind: LedgerKind; direction: "in" | "out" } | null>(null);
+  const [printing, setPrinting] = useState<{ rows: LedgerRow[]; complete: boolean } | null>(null);
+  const [busy, setBusy] = useState<"print" | "csv" | null>(null);
+  const [query, setQuery] = useState(filters.search);
 
   // The custom days as typed, loaded once each is a whole date.
   const [draft, setDraft] = useState({ from: customFrom ?? "", to: customTo ?? "" });
   const [loaded, setLoaded] = useState({ from: customFrom, to: customTo });
-  // Only the side the URL changed is reset: committing one day must not
-  // wipe the other while it is still being typed.
   if (loaded.from !== customFrom || loaded.to !== customTo) {
     setLoaded({ from: customFrom, to: customTo });
-    setDraft((current) => ({
-      from: loaded.from !== customFrom ? (customFrom ?? "") : current.from,
-      to: loaded.to !== customTo ? (customTo ?? "") : current.to,
-    }));
+    setDraft((current) => ({ from: loaded.from !== customFrom ? (customFrom ?? "") : current.from, to: loaded.to !== customTo ? (customTo ?? "") : current.to }));
   }
 
-  function hrefWith(next: Record<string, string | undefined>) {
+  function hrefWith(next: Record<string, string | undefined | null>) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
     params.delete("page");
-    const query = params.toString();
-    return query ? `${pathname}?${query}` : pathname;
+    const rest = params.toString();
+    return rest ? `${pathname}?${rest}` : pathname;
+  }
+  // Another account or period is a step Back can undo; a filter replaces it.
+  const go = (next: Record<string, string | undefined | null>) => router.push(hrefWith(next));
+  const narrow = (next: Record<string, string | undefined | null>) => router.replace(hrefWith(next), { scroll: false });
+
+  // Typing searches once it settles.
+  useEffect(() => {
+    const next = query.trim();
+    if (next === filters.search) return;
+    const timer = window.setTimeout(() => narrow({ q: next || undefined }), SEARCH_DELAY);
+    return () => window.clearTimeout(timer);
+    // narrow reads the current URL each time; filters.search is the URL's own.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+  const [prevSearch, setPrevSearch] = useState(filters.search);
+  if (filters.search !== prevSearch) {
+    setPrevSearch(filters.search);
+    setQuery(filters.search);
   }
 
-  // Another account or period is a step Back can undo.
-  function updateParams(next: Record<string, string | undefined>) {
-    router.push(hrefWith(next));
-  }
-
-  function setRange(value: DateRangePreset) {
-    updateParams(value === "custom" ? { range: value } : { range: value === "all" ? undefined : value, dateFrom: undefined, dateTo: undefined });
-  }
-
-  // A custom day replaces the URL rather than adding to the history, and
-  // only once it's a whole date (or cleared): typing a year no longer loads
-  // four statements for 0002, 0020 and 0202.
   function commitDay(key: "dateFrom" | "dateTo", value: string) {
     if (value && !isSettledDay(value)) return;
     if ((value || undefined) === (key === "dateFrom" ? customFrom : customTo)) return;
     router.replace(hrefWith({ [key]: value || undefined }), { scroll: false });
   }
-
   function typeDay(side: "from" | "to", value: string) {
     setDraft((current) => ({ ...current, [side]: value }));
     if (isSettledDay(value)) commitDay(side === "from" ? "dateFrom" : "dateTo", value);
@@ -138,390 +177,428 @@ export function AccountLedgerPageClient({ wallets, others, account, ledger, summ
 
   const ready = account && ledger && summary;
   const money = account ? readsAsMoney(account) : true;
+  const debitPositive = account ? isDebitPositive(account.accountType) : true;
+  const symbol = currencySymbol(currency);
+  const shown = (value: string | number) => (hidden ? maskedMoney(symbol) : balanceText(value, currency, fmt));
   const lines = ledger ? statementPage(ledger) : null;
-  // Only a backend with page balances sends the period's true closing; an
-  // older one's is the page's own, which no equation could match.
   const residual = ledger && summary && lines?.exact ? voidedNet(ledger, summary) : 0;
-  const adjustment = summary ? Number(summary.adjustment) : 0;
-  // Transfers only ever move money wallets; another account shows the term
-  // only if it somehow has some.
-  const showTransfers = money || adjustment !== 0;
-  // Four terms fit one line on a wide screen; five keep the grid.
-  const oneLine = 3 + (showTransfers ? 1 : 0) + (residual !== 0 ? 1 : 0) <= 4;
-  const openingLabel = periodFrom ? t("Balance on {date}", { date: formatDate(periodFrom, undefined, fmt) }) : t("Opening balance");
-  const here = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
-  const paged = ledger ? ledger.meta.totalPages > 1 : false;
-  // The In and Out columns added up for the closing line, only when the
-  // whole period is on this page (a page's own sums would read as the
-  // period's).
-  const columnSums =
-    ledger && account && !paged && ledger.entries.length > 0
-      ? ledger.entries.reduce(
-          (sum, row) => {
-            const side = ledgerDirection(row.entryType, account.accountType);
-            return { ...sum, [side]: sum[side] + Number(row.amount) };
-          },
-          { in: 0, out: 0 },
-        )
-      : null;
+  const transfers = summary ? Number(summary.adjustment) : 0;
+  const showTransfers = money || transfers !== 0;
+  const accountName = account ? accountDisplayName(account, preferredLanguage) : "";
+  const periodLabel = t(PERIODS.find((period) => period.value === range)?.label ?? "All time");
+  const rangeText = periodText(t, periodFrom, periodTo, fmt);
+  const narrowed = !!(filters.direction || filters.kind || filters.search);
+  const counts = ledger?.counts ?? { all: ledger?.meta.total ?? 0, in: 0, out: 0 };
+  const kinds = ledger?.kinds ?? [];
 
-  // Which statement the loaded rows belong to.
-  const printKey = `${accountId}|${periodFrom ?? ""}|${periodTo ?? ""}`;
-  const fullRows = printRows?.key === printKey ? printRows : null;
-
-  // One page is all there is, or the rest is loaded first (pages of 200),
-  // so the paper holds the whole period.
-  async function printStatement() {
-    if (!paged || fullRows) {
-      window.print();
-      return;
-    }
-    if (!activeBusinessId) return;
-    setLoadingPrint(true);
-    const result = await getStatementRowsAction(activeBusinessId, accountId, { dateFrom: periodFrom, dateTo: periodTo });
-    setLoadingPrint(false);
-    if (!result.success || !result.data) {
-      toast.error(t(result.message ?? "Couldn't load the whole statement. Try again."));
-      return;
-    }
-    const rows = result.data;
-    flushSync(() => setPrintRows({ ...rows, key: printKey }));
-    window.print();
+  // Every row the screen's filters match, across pages.
+  async function allRows(withFilters: boolean) {
+    const result = await getStatementRowsAction(businessId, accountId, {
+      dateFrom: periodFrom,
+      dateTo: periodTo,
+      standingOnly: true,
+      ...(withFilters && { direction: filters.direction ?? undefined, kind: filters.kind ?? undefined, search: filters.search || undefined }),
+    });
+    if (!result.success || !result.data) throw new Error(result.message ?? "");
+    return result.data;
   }
 
-  const lineText = (line: StatementLine): { label: string; note?: string } => {
-    switch (line.kind) {
-      case "opening":
-        return { label: openingLabel };
-      case "brought-forward":
-        return { label: t("Brought forward"), note: t("From the pages before") };
-      case "carried-forward":
-        return { label: t("Carried forward"), note: t("To the next page") };
-      default:
-        // The rows add up to the closing on their own. The note says how
-        // much of it comes from voids or edits split across two periods,
-        // which the equation above shows as a term of its own.
-        return {
-          label: t("Closing balance"),
-          note: residual !== 0 ? t("Includes {amount} from voids or edits whose other half is in another period", { amount: formatSignedCurrency(residual, currency, fmt) }) : undefined,
-        };
+  async function openPrint() {
+    if (!ledger) return;
+    if (ledger.meta.totalPages <= 1 && !narrowed) {
+      setPrinting({ rows: ledger.entries, complete: true });
+      return;
     }
-  };
+    setBusy("print");
+    try {
+      setPrinting(await allRows(false));
+    } catch {
+      toast.error(t("Couldn't load the whole statement. Try again."));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function downloadCsv() {
+    if (!ledger || !account) return;
+    setBusy("csv");
+    try {
+      const { rows, complete } = ledger.meta.totalPages <= 1 ? { rows: ledger.entries, complete: true } : await allRows(true);
+      const plain = (value: string | number) => Number(value).toFixed(2);
+      const body = ledgerCsv({
+        account: accountName,
+        period: `${periodLabel} (${rangeText})`,
+        opening: plain(ledger.balanceBroughtForward),
+        closing: plain(ledger.closingBalance),
+        heads: {
+          account: t("Account"),
+          period: t("Period"),
+          opening: t("Opening balance"),
+          closing: t("Closing balance"),
+          columns: [t("Date"), t("Type"), t("Received or sent"), t("To / From"), t("Note"), t("Reference"), t("In"), t("Out"), t("Balance")],
+        },
+        rows: rows.map((row) => {
+          const kind = kindOf(row);
+          const direction = directionOf(row, debitPositive);
+          const party = partyOf(row, kind);
+          return {
+            date: row.date.slice(0, 10),
+            kind: t(LEDGER_KIND_META[kind].label),
+            direction: t(direction === "in" ? "Received" : "Sent"),
+            party: party ? t(party) : "",
+            note: row.description ? t(row.description) : "",
+            reference: row.referenceNo ?? "",
+            in: direction === "in" ? plain(row.amount) : "",
+            out: direction === "out" ? plain(row.amount) : "",
+            balance: plain(row.runningBalance),
+          };
+        }),
+      });
+      const name = ledgerFileName(account.name, today);
+      const url = URL.createObjectURL(new Blob([body], { type: "text/csv;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast.success(plural(t, rows.length, "Downloaded {name} ({count} entry)", "Downloaded {name} ({count} entries)", { name }, fmt), {
+        // A period longer than one file takes: say so instead of a quiet cut.
+        ...(!complete && { description: t("The file holds the first {count} entries. Pick a shorter period for the rest.", { count: formatCount(rows.length, fmt) }) }),
+      });
+    } catch {
+      toast.error(t("Couldn't download the CSV. Try again."));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const lineLabel = (line: StatementLine) => (line.kind === "brought-forward" ? t("Brought forward") : line.kind === "carried-forward" ? t("Carried forward") : line.kind === "opening" ? t("Opening balance") : t("Closing balance"));
+  // Filtered rows jump between balances, so only the period's own lines stand around them.
+  const topLine = lines && (!narrowed || lines.top.kind === "opening") ? lines.top : null;
+  const bottomLine = lines && (!narrowed || lines.bottom.kind === "closing") ? lines.bottom : null;
+
+  const emptyText = !ledger
+    ? ""
+    : filters.search
+      ? t('Nothing matches "{query}".', { query: filters.search })
+      : filters.direction === "in"
+        ? t("Nothing received in this period.")
+        : filters.direction === "out"
+          ? t("Nothing sent in this period.")
+          : filters.kind
+            ? t("No entries of this type in this period.")
+            : t("No entries for {name} in this period. The balance stays {amount}.", { name: accountName, amount: shown(ledger.closingBalance) });
 
   return (
     <PageFrame className="gap-5">
-      {ready && lines && (
-        <LedgerStatement
-          account={account}
-          rows={fullRows ? fullRows.rows : ledger.entries}
-          opening={fullRows || !paged ? ledger.balanceBroughtForward : lines.top.balance}
-          closing={fullRows ? (fullRows.complete ? ledger.closingBalance : (fullRows.rows.at(-1)?.runningBalance ?? ledger.closingBalance)) : lines.bottom.balance}
-          partial={fullRows ? (fullRows.complete ? null : "capped") : paged ? "page" : null}
-          periodFrom={periodFrom}
-          periodTo={periodTo}
-          today={today}
-          currency={currency}
-          preferredLanguage={preferredLanguage}
-        />
+      {printing && ready && (
+        <PrintPreview subtitle={`A4 · ${accountName} · ${periodLabel}`} onClose={() => setPrinting(null)}>
+          <LedgerStatement
+            account={account}
+            rows={printing.rows}
+            figures={{ opening: ledger.balanceBroughtForward, moneyIn: summary.totalIn, moneyOut: summary.totalOut, transfers: summary.adjustment, closing: ledger.closingBalance }}
+            capped={!printing.complete}
+            periodLabel={periodLabel}
+            range={rangeText}
+            today={today}
+            currency={currency}
+            preferredLanguage={preferredLanguage}
+          />
+        </PrintPreview>
       )}
       <div className="contents print:hidden">
-      {backHref && (
-        <Link href={backHref} className="-mb-2 inline-flex items-center gap-2 self-start text-small font-semibold text-emerald hover:text-emerald-hover">
-          <ArrowLeft className="size-3.75" aria-hidden="true" />
-          {t(statementBackLabel(backHref))}
-        </Link>
-      )}
-      <PageHeader
-        title={t("Account ledger")}
-        actions={
-          // The board's round print button, greyed until there is a ledger
-          // to print (the empty board).
-          pdfExportOn && (
-            <Button
-              variant="secondary"
-              onClick={printStatement}
-              disabled={!ready || loadingPrint}
-              aria-label={t("Print or save as PDF")}
-              title={ready ? (loadingPrint ? t("Preparing...") : t("Print or save as PDF")) : t("Pick an account first")}
-              className="size-11 rounded-full p-0 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:border-line disabled:text-ink-faint disabled:opacity-100"
-            >
-              <Printer className={cn("size-4.5", ready ? "text-ink-2" : "text-ink-faint")} />
-            </Button>
-          )
-        }
-      />
+        {backHref && (
+          <Link href={backHref} className="-mb-2 inline-flex items-center gap-2 self-start text-small font-semibold text-emerald hover:text-emerald-hover">
+            <ArrowLeft className="size-3.75" aria-hidden="true" />
+            {t(statementBackLabel(backHref))}
+          </Link>
+        )}
+        <PageHeader
+          title={t("Account ledger")}
+          actions={
+            <>
+              <HideBalancesButton hidden={hidden} onToggle={toggle} className="size-11" />
+              <Button variant="secondary" onClick={downloadCsv} disabled={!ready || busy !== null} aria-label={t("Download CSV")} title={t("Download CSV")} className="h-11 pr-4 pl-3.5">
+                {busy === "csv" ? <Loader size={16} label={t("Loading...")} /> : <Download className="size-4.25 text-ink-2" />}
+                CSV
+              </Button>
+              {pdfExportOn && (
+                <Button
+                  variant="secondary"
+                  onClick={openPrint}
+                  disabled={!ready || busy !== null}
+                  aria-label={t("Print or save as PDF")}
+                  title={ready ? t("Print or save as PDF") : t("Pick an account first")}
+                  className="size-11 rounded-full p-0 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                >
+                  {busy === "print" ? <Loader size={16} label={t("Loading...")} /> : <Printer className="size-4.5 text-ink-2" />}
+                </Button>
+              )}
+            </>
+          }
+        />
 
-      <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:flex-wrap md:items-end">
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-72">
-          <label id="ledger-account-label" htmlFor="ledger-account" className="text-small leading-[normal] font-medium text-ink-soft">
-            {t("Account")}
-          </label>
-          <AccountPicker id="ledger-account" labelId="ledger-account-label" wallets={wallets} others={others} value={accountId} onChange={(id) => updateParams({ accountId: id })} preferredLanguage={preferredLanguage} currency={currency} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-small leading-[normal] font-medium text-ink-soft">{t("Period")}</span>
-          <SegmentedControl options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))} value={range} onChange={setRange} label={t("Period")} size="lg" className="max-md:grid max-md:w-full max-md:grid-cols-3" />
-        </div>
-        {range === "custom" && (
-          // A line of its own, so the account field keeps its room.
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 md:max-w-120 md:basis-full">
-            <Input
-              size="md"
-              type="date"
-              value={draft.from}
-              onChange={(event) => typeDay("from", event.target.value)}
-              onBlur={() => commitDay("dateFrom", draft.from)}
-              onKeyDown={(event) => event.key === "Enter" && commitDay("dateFrom", draft.from)}
-              aria-label={t("From")}
-              max={draft.to || undefined}
-              frameClassName="w-full min-w-0"
-            />
-            <span className="text-small text-ink-muted">{t("to")}</span>
-            <Input
-              size="md"
-              type="date"
-              value={draft.to}
-              onChange={(event) => typeDay("to", event.target.value)}
-              onBlur={() => commitDay("dateTo", draft.to)}
-              onKeyDown={(event) => event.key === "Enter" && commitDay("dateTo", draft.to)}
-              aria-label={t("To@@date")}
-              min={draft.from || undefined}
-              frameClassName="w-full min-w-0"
+        <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:flex-wrap md:items-end">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-72">
+            <label id="ledger-account-label" htmlFor="ledger-account" className="text-small font-medium text-ink-soft">
+              {t("Account")}
+            </label>
+            <AccountPicker id="ledger-account" labelId="ledger-account-label" wallets={wallets} others={others} value={accountId} onChange={(id) => go({ accountId: id, dir: undefined, kind: undefined, q: undefined })} preferredLanguage={preferredLanguage} currency={currency} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-small font-medium text-ink-soft">{t("Period")}</span>
+            <SegmentedControl
+              options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))}
+              value={range}
+              onChange={(value) => go(value === "custom" ? { range: value } : { range: value === "all" ? undefined : value, dateFrom: undefined, dateTo: undefined })}
+              label={t("Period")}
+              size="lg"
+              className="max-md:grid max-md:w-full max-md:grid-cols-3"
             />
           </div>
-        )}
-      </Card>
-
-      {!ready || !lines ? (
-        <Card padding="none" className="flex flex-col items-center gap-2.5 p-10 text-center">
-          <span className="flex size-14 items-center justify-center rounded-[14px] bg-mint-50 text-emerald">
-            <ScrollText className="size-6" aria-hidden="true" />
-          </span>
-          <h2 className="mt-1.5 text-h3 leading-[normal] tracking-normal text-ink">{t("Pick an account to see its ledger")}</h2>
-          <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{t("You'll see its opening balance, every movement and the running balance, ready to print.")}</p>
-          {wallets.length > 0 && (
-            <>
-              <span className="mt-4.5 text-caption leading-[normal] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Your wallets")}</span>
-              <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto md:grid-cols-4">
-                {wallets.map((wallet, index) => (
-                  <button key={wallet.id} type="button" onClick={() => updateParams({ accountId: wallet.id })} className="flex h-16 items-center gap-2.5 rounded-field border border-line bg-surface px-3.5 text-left shadow-xs transition-colors hover:border-line-strong md:w-50">
-                    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-sm [&_svg]:size-3.75", walletPalette(index).tile)}>{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
-                    <span className="flex min-w-0 flex-col gap-px">
-                      <span className="truncate text-body leading-[normal] font-semibold text-ink">{accountDisplayName(wallet, preferredLanguage)}</span>
-                      <span className={cn("text-caption leading-[normal] font-normal tabular-nums", Number(wallet.currentBalance) < 0 ? "text-expense" : "text-ink-muted")}>{balanceText(wallet.currentBalance, currency, fmt)}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <span className="mt-1.5 text-caption leading-[normal] font-normal text-ink-muted">{t("Income, expense and other accounts are in the search above.")}</span>
         </Card>
-      ) : (
-        <>
-          <Card role="group" aria-label={t("From the opening balance to the closing balance")} className={cn("grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 md:py-4.5", oneLine && "xl:flex xl:items-stretch xl:gap-2.5")}>
-            <EquationCell oneLine={oneLine} label={openingLabel} value={balanceText(ledger.balanceBroughtForward, currency, fmt)} />
-            {oneLine && <Operator>+</Operator>}
-            <EquationCell oneLine={oneLine} op="+" spoken={t("plus@@equation")} label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={formatCurrency(summary.totalIn, currency, fmt)} className={money ? "text-income" : undefined} />
-            {oneLine && <Operator>−</Operator>}
-            <EquationCell oneLine={oneLine} op="−" spoken={t("minus@@equation")} label={money ? t("Money out@@wallet") : t("Decrease@@statement")} value={formatCurrency(summary.totalOut, currency, fmt)} className={money ? "text-expense" : undefined} />
-            {showTransfers && (
-              <>
-                {oneLine && <Operator>±</Operator>}
-                {/* Signed figures: the sign says which way, so no spoken operator. */}
-                <EquationCell oneLine={oneLine} op="±" label={t("Transfers & savings")} value={formatSignedCurrency(adjustment, currency, fmt)} className="text-info" />
-              </>
-            )}
-            {residual !== 0 && (
-              <>
-                {oneLine && <Operator>±</Operator>}
-                <EquationCell oneLine={oneLine} op="±" label={t("Voided & reversed")} value={formatSignedCurrency(residual, currency, fmt)} note={t("From a void or edit whose other half is in another period")} className="text-ink-2" />
-              </>
-            )}
-            {oneLine && <Operator equals>=</Operator>}
-            <div className={cn("col-span-full flex min-w-0 flex-col gap-1 rounded-field bg-mint-50 px-3.5 py-2", oneLine && "xl:col-auto xl:-my-2 xl:-mr-2.5 xl:flex-[1.2]")}>
-              <span className="text-caption font-semibold text-emerald">
-                <span className="sr-only">{t("equals@@equation")} </span>
-                {t("Closing balance")}
-              </span>
-              <span className="text-h3 font-bold text-ink tabular-nums wrap-anywhere sm:text-h2">{balanceText(ledger.closingBalance, currency, fmt)}</span>
-            </div>
+        {range === "custom" && (
+          <Card padding="none" className="-mt-2 flex flex-wrap items-end gap-3 px-5 py-3.5">
+            <label className="flex flex-col gap-1.5 text-small font-medium text-ink-soft">
+              {t("From")}
+              <Input size="md" type="date" value={draft.from} onChange={(event) => typeDay("from", event.target.value)} onBlur={() => commitDay("dateFrom", draft.from)} max={draft.to || undefined} />
+            </label>
+            <label className="flex flex-col gap-1.5 text-small font-medium text-ink-soft">
+              {t("To@@date")}
+              <Input size="md" type="date" value={draft.to} onChange={(event) => typeDay("to", event.target.value)} onBlur={() => commitDay("dateTo", draft.to)} min={draft.from || undefined} />
+            </label>
+            <span className="pb-3 text-small text-ink-muted">{rangeText}</span>
           </Card>
+        )}
 
-          <ListCard
-            id="statement-list"
-            label={t("Account ledger")}
-            scrollable
-            tableClassName="overflow-x-auto"
-            footer={
-              ledger.meta.total > 0 && (
-                <ListFooter>
-                  <Pagination page={ledger.meta.page} totalPages={ledger.meta.totalPages} total={ledger.meta.total} pageSize={ledger.meta.limit} hrefFor={(target) => pageHref(pathname, searchParams, target)} focusTargetId="statement-list" />
-                </ListFooter>
-              )
-            }
-          >
-            <ListHead showOnPhone columns={COLUMNS}>
-              <ListHeadCell>#</ListHeadCell>
-              <ListHeadCell>{t("Date")}</ListHeadCell>
-              <ListHeadCell>{t("Type")}</ListHeadCell>
-              <ListHeadCell>{t("Reference")}</ListHeadCell>
-              <ListHeadCell>{t("Description")}</ListHeadCell>
-              <ListHeadCell align="end">{money ? t("In") : t("Increase@@statement")}</ListHeadCell>
-              <ListHeadCell align="end">{money ? t("Out") : t("Decrease@@statement")}</ListHeadCell>
-              <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
-            </ListHead>
-            <BalanceLine kind={lines.top.kind} {...lineText(lines.top)} value={balanceText(lines.top.balance, currency, fmt)} />
-            {ledger.entries.length === 0 && <ListEmpty title={t("No activity in this range.")} />}
-            {ledger.entries.map((row, index) => {
-              const direction = ledgerDirection(row.entryType, account.accountType);
-              // A voided entry and the reversal that undid it both stay in
-              // the running balance, muted and struck through, each with its
-              // note, as the Transfer list shows them.
-              const cancelled = cancelledLabel({ status: row.transactionStatus, reversalOfId: row.reversalOfId ?? null });
-              const voided = cancelled !== null;
-              // A transfer moves money between the customer's own wallets:
-              // blue either way, never expense red. Other accounts only go
-              // up or down, so their figures stay in ink.
-              const tone = !money ? "text-ink" : row.transactionType === "TRANSFER" ? "text-info" : direction === "in" ? "text-income" : "text-expense";
-              const amount = (side: "in" | "out") =>
-                direction === side ? (
-                  <ListCell align="end" className={cn(tone, voided && "line-through")}>
-                    {formatCurrency(row.amount, currency, fmt)}
-                  </ListCell>
-                ) : (
-                  <ListCell align="end" className="text-ink-faint">
-                    —
-                  </ListCell>
-                );
-              return (
-                <ListRow key={row.entryId} columns={COLUMNS} muted={voided} className={cn(ROW, voided && CANCELLED_ROW)}>
-                  <ListCell className="text-ink-faint">{formatCount(lines.firstRow + index, fmt)}</ListCell>
-                  <ListCell className="text-ink-soft">{formatDate(row.date, undefined, fmt)}</ListCell>
-                  <ListCell>
-                    <Chip tone={LEDGER_TYPE_TONE[row.transactionType]} size="sm" className="font-semibold">
-                      {t(TRANSACTION_TYPE_LABELS[row.transactionType])}
-                    </Chip>
-                  </ListCell>
-                  <ListCell className={cn("truncate text-small", row.referenceNo ? "text-ink-2" : "text-ink-faint")}>{row.referenceNo ?? "—"}</ListCell>
-                  <ListCell className="flex items-center gap-2">
-                    <ListRowLink href={transactionHref(row.transactionId, here)} aria-label={row.description ? undefined : t("View details")} className={cn("truncate", voided && "line-through")}>
-                      {row.description ?? "—"}
-                    </ListRowLink>
-                    {cancelled && (
-                      <Chip tone="expense" size="sm" className="font-semibold">
-                        {t(cancelled)}
-                      </Chip>
+        {!ready || !lines ? (
+          <Card padding="none" className="flex flex-col items-center gap-2.5 p-10 text-center">
+            <span className="flex size-14 items-center justify-center rounded-[14px] bg-mint-50 text-emerald">
+              <ScrollText className="size-6" aria-hidden="true" />
+            </span>
+            <h2 className="mt-1.5 text-h3 text-ink">{t("Pick an account to see its ledger")}</h2>
+            <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{t("You'll see its opening balance, every movement and the running balance, ready to print.")}</p>
+            {wallets.length > 0 && (
+              <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto md:grid-cols-4">
+                {wallets
+                  .filter((wallet) => wallet.status !== "ARCHIVED")
+                  .map((wallet) => (
+                    <button
+                      key={wallet.id}
+                      type="button"
+                      onClick={() => go({ accountId: wallet.id })}
+                      style={walletColorStyle(accountColor(wallet))}
+                      className="flex h-16 items-center gap-2.5 rounded-field border border-line bg-surface px-3.5 text-left transition-colors hover:border-line-strong md:w-50"
+                    >
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg wallet-tile [&_svg]:size-3.75">{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
+                      <span className="flex min-w-0 flex-col gap-px">
+                        <span className="truncate text-body font-semibold text-ink">{accountDisplayName(wallet, preferredLanguage)}</span>
+                        <span className={cn("text-caption tabular-nums", Number(wallet.currentBalance) < 0 ? "text-expense" : "text-ink-muted")}>{shown(wallet.currentBalance)}</span>
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </Card>
+        ) : (
+          <>
+            <Card role="group" aria-label={t("Opening balance plus money in, minus money out, plus transfers, equals closing balance")} className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 md:py-4.5 xl:flex xl:items-stretch xl:gap-2.5">
+              <Term label={t("Opening balance")} value={shown(ledger.balanceBroughtForward)} />
+              <Operator>+</Operator>
+              <Term label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalIn, currency, fmt)} className={money ? "text-emerald" : undefined} />
+              <Operator>−</Operator>
+              <Term label={money ? t("Money out@@wallet") : t("Decrease@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalOut, currency, fmt)} className={money ? "text-expense" : undefined} />
+              {showTransfers && (
+                <>
+                  <Operator>±</Operator>
+                  <Term label={t("Transfers")} value={hidden ? maskedMoney(symbol) : formatSignedCurrency(transfers, currency, fmt)} className="text-info" />
+                </>
+              )}
+              {residual !== 0 && (
+                <>
+                  <Operator>±</Operator>
+                  <Term label={t("Voided & reversed")} value={hidden ? maskedMoney(symbol) : formatSignedCurrency(residual, currency, fmt)} className="text-ink-2" />
+                </>
+              )}
+              <Operator equals>=</Operator>
+              <div className="col-span-full flex min-w-0 flex-col gap-1 rounded-field bg-mint-50 px-3.5 py-2 xl:col-auto xl:-my-2 xl:-mr-2.5 xl:flex-[1.2]">
+                <span className="text-caption font-semibold text-emerald">{t("Closing balance")}</span>
+                <span className="text-h3 font-bold text-ink tabular-nums wrap-anywhere sm:text-[22px]">{shown(ledger.closingBalance)}</span>
+              </div>
+            </Card>
+
+            <ListCard
+              id="statement-list"
+              label={t("Account ledger")}
+              scrollable
+              tableClassName="overflow-x-auto"
+              header={
+                <div className="flex flex-wrap items-center gap-3 border-b border-divider px-4 py-3 md:px-5">
+                  <div role="group" aria-label={t("Show")} className="flex gap-0.5 rounded-full bg-surface-sunken p-0.75">
+                    {(
+                      [
+                        { value: null, label: "All", count: counts.all, icon: null },
+                        { value: "in", label: "Received", count: counts.in, icon: ArrowDownLeft },
+                        { value: "out", label: "Sent", count: counts.out, icon: ArrowUpRight },
+                      ] as const
+                    ).map((option) => {
+                      const on = filters.direction === option.value;
+                      return (
+                        <button
+                          key={option.label}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => narrow({ dir: option.value ?? undefined })}
+                          className={cn("flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold whitespace-nowrap", on ? "bg-surface text-ink shadow-[0_1px_2px_rgba(18,32,29,0.12)] dark:bg-surface-raised" : "text-ink-2 hover:text-ink")}
+                        >
+                          {option.icon && createElement(option.icon, { className: cn("size-3.25", option.value === "in" ? "text-income" : "text-expense"), strokeWidth: 2.5, "aria-hidden": true })}
+                          {t(option.label)}
+                          <span className="text-[11.5px] font-medium text-ink-faint">{formatCount(option.count, fmt)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <NativeSelect size="sm" aria-label={t("Type")} value={filters.kind ?? ""} onChange={(event) => narrow({ kind: event.target.value || undefined })} frameClassName="h-9.5 min-w-37.5 rounded-full">
+                    <option value="">{t("All types")}</option>
+                    {(filters.kind && !kinds.includes(filters.kind) ? [...kinds, filters.kind] : kinds).map((kind) => (
+                      <option key={kind} value={kind}>
+                        {t(LEDGER_KIND_META[kind].label)}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                  <span className="hidden flex-1 md:block" />
+                  <label className="flex h-9.5 min-w-0 flex-1 items-center gap-2 rounded-full border border-input bg-surface pr-1.5 pl-3 focus-within:border-focus-ring focus-within:focus-halo md:max-w-70">
+                    <Search className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
+                    <span className="sr-only">{t("Search entries")}</span>
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      onKeyDown={(event) => event.key === "Escape" && setQuery("")}
+                      maxLength={80}
+                      placeholder={t("Search entries")}
+                      className="h-9 min-w-0 flex-1 bg-transparent text-[13.5px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+                    />
+                    {query && (
+                      <button type="button" onClick={() => setQuery("")} aria-label={t("Clear search")} title={t("Clear search")} className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-2">
+                        <X className="size-3" strokeWidth={2.5} aria-hidden="true" />
+                      </button>
                     )}
-                  </ListCell>
-                  {amount("in")}
-                  {amount("out")}
-                  <ListCell align="end" className="font-semibold">
-                    {balanceText(row.runningBalance, currency, fmt)}
-                  </ListCell>
-                </ListRow>
-              );
-            })}
-            <BalanceLine
-              kind={lines.bottom.kind}
-              {...lineText(lines.bottom)}
-              value={balanceText(lines.bottom.balance, currency, fmt)}
-              strong={lines.bottom.kind === "closing"}
-              sums={
-                columnSums && lines.bottom.kind === "closing"
-                  ? {
-                      in: formatCurrency(columnSums.in, currency, fmt),
-                      out: formatCurrency(columnSums.out, currency, fmt),
-                      inClassName: money ? "text-income" : "text-ink",
-                      outClassName: money ? "text-expense" : "text-ink",
-                    }
-                  : undefined
+                  </label>
+                </div>
               }
-            />
-          </ListCard>
-        </>
-      )}
+              footer={
+                ledger.meta.total > 0 && (
+                  <ListFooter>
+                    <Pagination page={ledger.meta.page} totalPages={ledger.meta.totalPages} total={ledger.meta.total} pageSize={ledger.meta.limit} hrefFor={(target) => pageHref(pathname, searchParams, target)} focusTargetId="statement-list" />
+                  </ListFooter>
+                )
+              }
+            >
+              <ListHead showOnPhone columns={COLUMNS}>
+                <ListHeadCell>#</ListHeadCell>
+                <ListHeadCell>{t("Date")}</ListHeadCell>
+                <ListHeadCell>{t("Received / Sent")}</ListHeadCell>
+                <ListHeadCell>{t("Type")}</ListHeadCell>
+                <ListHeadCell>{t("To / From")}</ListHeadCell>
+                <ListHeadCell>{t("Note")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
+                <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
+              </ListHead>
+              {topLine && <BalanceLine label={lineLabel(topLine)} kind={topLine.kind} value={shown(topLine.balance)} />}
+              {ledger.entries.length === 0 && (
+                <div className="flex flex-col items-center gap-2.5 border-b border-divider px-6 py-7 text-center text-body text-ink-muted">
+                  {emptyText}
+                  {narrowed && (
+                    <Button variant="secondary" size="sm" onClick={() => narrow({ dir: undefined, kind: undefined, q: undefined })}>
+                      {t("Clear filters")}
+                    </Button>
+                  )}
+                </div>
+              )}
+              {ledger.entries.map((row, index) => {
+                const kind = kindOf(row);
+                const meta = LEDGER_KIND_META[kind];
+                const direction = directionOf(row, debitPositive);
+                const isIn = direction === "in";
+                const party = partyOf(row, kind);
+                return (
+                  <ListRow key={row.entryId} columns={COLUMNS} className="tabular-nums md:min-h-15">
+                    <ListCell className="text-small text-ink-faint">{formatCount(lines.firstRow + index, fmt)}</ListCell>
+                    <ListCell className="whitespace-nowrap text-ink-2">{formatDate(row.date, undefined, fmt)}</ListCell>
+                    <ListCell>
+                      <ListRowButton onClick={() => setOpened({ row, kind, direction })} aria-label={t("Open details")} className={cn("inline-flex items-center gap-1.5 text-[13px] font-semibold whitespace-nowrap", isIn ? "text-income" : "text-expense")}>
+                        <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", isIn ? "bg-income-soft" : "bg-expense-soft")}>
+                          {isIn ? <ArrowDownLeft className="size-3.25" strokeWidth={2.5} aria-hidden="true" /> : <ArrowUpRight className="size-3.25" strokeWidth={2.5} aria-hidden="true" />}
+                        </span>
+                        {t(isIn ? "Received" : "Sent")}
+                      </ListRowButton>
+                    </ListCell>
+                    <ListCell>
+                      <Chip tone={meta.tone} size="sm" className="font-semibold">
+                        {t(meta.label)}
+                      </Chip>
+                    </ListCell>
+                    <ListCell className="flex items-center gap-2.5">
+                      <Chip tone={meta.tone} size="sm" className="size-7.5 shrink-0 justify-center rounded-[9px] p-0 [&_svg]:size-3.75">
+                        {createElement(KIND_ICON[kind], { "aria-hidden": true })}
+                      </Chip>
+                      <span className="flex min-w-0 flex-col gap-px">
+                        <span className="text-[11.5px] whitespace-nowrap text-ink-faint">{t(isIn ? meta.kickerIn : meta.kickerOut)}</span>
+                        <span className="truncate font-semibold text-ink">{party ? t(party) : "—"}</span>
+                      </span>
+                    </ListCell>
+                    <ListCell className="flex flex-col gap-px">
+                      <span className="truncate text-ink-2">{row.chargeFor ? t("Transfer fee · {name}", { name: row.chargeFor }) : row.description ? t(row.description) : "—"}</span>
+                      {row.referenceNo && <span className="truncate text-[11.5px] text-ink-faint">{row.referenceNo}</span>}
+                    </ListCell>
+                    <ListCell align="end" className={cn("font-semibold whitespace-nowrap", isIn ? "text-income" : "text-expense")}>
+                      {hidden ? maskedMoney(symbol) : `${isIn ? "+" : "−"} ${formatCurrency(row.amount, currency, fmt)}`}
+                    </ListCell>
+                    <ListCell align="end" className="font-semibold whitespace-nowrap">
+                      {shown(row.runningBalance)}
+                    </ListCell>
+                  </ListRow>
+                );
+              })}
+              {bottomLine && <BalanceLine label={lineLabel(bottomLine)} kind={bottomLine.kind} value={shown(bottomLine.balance)} strong={bottomLine.kind === "closing"} />}
+            </ListCard>
+          </>
+        )}
       </div>
+
+      <LedgerEntryDialog entry={opened} accountName={accountName} accountBalance={account?.currentBalance ?? "0"} businessId={businessId} canManage={canManage} currency={currency} onClose={() => setOpened(null)} />
     </PageFrame>
   );
 }
 
-interface BalanceLineProps {
-  kind: StatementLine["kind"];
-  label: string;
-  note?: string;
-  value: string;
-  // The period's closing, set like a total.
-  strong?: boolean;
-  // The In and Out columns added up, under them on the closing line (the
-  // board's totals), when every row of the period is on this one page.
-  sums?: { in: string; out: string; inClassName?: string; outClassName?: string };
-}
-
-// A balance line on the table-head band: the opening or brought-forward
-// figure above the rows, carried forward or closing below them, under the
-// Balance column. The words start under Date, as the board sets them.
-function BalanceLine({ kind, label, note, value, strong = false, sums }: BalanceLineProps) {
+// A balance line on the table-head band, under the Balance column.
+function BalanceLine({ label, kind, value, strong = false }: { label: string; kind: StatementLine["kind"]; value: string; strong?: boolean }) {
   return (
-    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("min-h-12 text-body", strong && "min-h-13")}>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("min-h-11.5 text-body", strong && "min-h-13.5")}>
       <ListCell aria-hidden="true" />
-      <ListCell aria-colspan={sums ? 4 : 6} className={cn("flex flex-col", sums ? "col-span-4" : "col-span-6")}>
-        <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-soft")}>{label}</span>
-        {note && <span className="text-caption text-ink-muted">{note}</span>}
+      <ListCell aria-colspan={6} className="col-span-6">
+        <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-2")}>{label}</span>
       </ListCell>
-      {sums && (
-        <>
-          <ListCell align="end" className={cn("font-semibold tabular-nums", sums.inClassName)}>
-            {sums.in}
-          </ListCell>
-          <ListCell align="end" className={cn("font-semibold tabular-nums", sums.outClassName)}>
-            {sums.out}
-          </ListCell>
-        </>
-      )}
-      <ListCell align="end" className={cn("font-semibold text-ink tabular-nums", strong && "text-[15px] font-bold")}>
+      <ListCell align="end" className={cn("font-semibold whitespace-nowrap text-ink tabular-nums", strong && "text-[15px] font-bold")}>
         {value}
       </ListCell>
     </ListSummaryRow>
   );
 }
 
-interface EquationCellProps {
-  label: string;
-  value: string;
-  // The operator before the term, drawn beside the label while the terms
-  // sit in a grid (the one-line equation draws it between the terms).
-  op?: string;
-  // The operator as a screen reader says it, where the figure has no sign.
-  spoken?: string;
-  // A line under the figure.
-  note?: string;
-  // The equation runs on one line from xl (see oneLine above).
-  oneLine: boolean;
-  className?: string;
-}
-
-function EquationCell({ label, value, op, spoken, note, oneLine, className }: EquationCellProps) {
+function Term({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1", oneLine && "xl:flex-1")}>
-      <span className="flex items-center gap-1.5 text-caption font-normal text-ink-muted">
-        {op && (
-          <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full bg-surface-sunken font-semibold text-ink-2", oneLine && "xl:hidden")}>
-            {op}
-          </span>
-        )}
-        <span>
-          {spoken && <span className="sr-only">{spoken} </span>}
-          {label}
-        </span>
-      </span>
+    <div className="flex min-w-0 flex-col gap-1 xl:flex-1">
+      <span className="text-caption text-ink-muted">{label}</span>
       <span className={cn("text-h3 font-bold text-ink tabular-nums wrap-anywhere sm:text-[20px]", className)}>{value}</span>
-      {note && <span className="text-caption text-ink-muted">{note}</span>}
     </div>
   );
 }
 
-// The round operator between two terms of the one-line equation.
+// The round operator between two terms, on one line from xl.
 function Operator({ equals = false, children }: { equals?: boolean; children: React.ReactNode }) {
   return (
     <span aria-hidden="true" className={cn("hidden size-6.5 shrink-0 items-center justify-center self-center rounded-full text-body-lg font-semibold xl:flex", equals ? "bg-emerald text-on-action" : "bg-surface-sunken text-ink-2")}>

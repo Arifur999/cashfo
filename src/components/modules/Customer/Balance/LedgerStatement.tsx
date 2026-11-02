@@ -1,207 +1,181 @@
 "use client";
 
-import { useEffect } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Logo from "@/components/smartly/Logo";
 import { ACCOUNT_TYPE_LABELS, accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
 import type { Account, LanguagePreference, LedgerRow } from "@/lib/customer/api";
-import { formatCurrency } from "@/lib/customer/currency";
+import { directionOf, kindOf, LEDGER_KIND_META, partyOf } from "@/lib/customer/balanceDisplay";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { ledgerDirection, periodText, readsAsMoney, statementParty } from "@/lib/customer/ledger";
-import { cancelledLabel, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { isDebitPositive, readsAsMoney } from "@/lib/customer/ledger";
+import { cancelledLabel } from "@/lib/customer/transactionDisplay";
 import { WALLET_TYPE_META, walletType } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
+import { usePrintInLight } from "./usePrintInLight";
 
 interface LedgerStatementProps {
   account: Account;
+  // Every row of the period, oldest first.
   rows: LedgerRow[];
-  // The balance before the first row and after the last.
-  opening: string;
-  closing: string;
-  // Only part of the period: this one page (Ctrl+P before the rest loaded),
-  // or a period longer than one printout takes.
-  partial: "page" | "capped" | null;
-  periodFrom?: string;
-  periodTo?: string;
+  // The period's figures, as the screen's equation has them.
+  figures: { opening: string; moneyIn: string; moneyOut: string; transfers: string; closing: string };
+  // The period has more rows than one printout takes: only the first ones.
+  capped: boolean;
+  // "This month", and the days it covers.
+  periodLabel: string;
+  range: string;
   today: string;
   currency: string;
   preferredLanguage: LanguagePreference;
 }
 
-const CELL = "border-b border-line px-2 py-1.5 align-top";
-const HEAD = "border-b-2 border-ink px-2 py-2 text-left text-caption font-semibold tracking-[0.04em] text-ink uppercase";
+const CELL = "border-b border-line px-2 py-1.75 align-top";
+const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] font-semibold tracking-[0.04em] text-ink-2 uppercase";
 
-// The statement as paper shows it, like a bank's: who and which account at
-// the top, the period's four figures, then every movement with where the
-// money went or came from, a withdrawal or deposit column and the balance
-// after it. Only printed: the screen keeps the ledger above.
-export function LedgerStatement({ account, rows, opening, closing, partial, periodFrom, periodTo, today, currency, preferredLanguage }: LedgerStatementProps) {
+// The ledger on paper (board: Ledger — Print preview): who it is for and
+// which account, the period, its five figures, every entry with its In,
+// Out and running balance, and the closing balance under them.
+export function LedgerStatement({ account, rows, figures, capped, periodLabel, range, today, currency, preferredLanguage }: LedgerStatementProps) {
   const { t, fmt } = useLocale();
-  const { user, activeBusiness } = useAuth();
+  const { user } = useAuth();
+  const debitPositive = isDebitPositive(account.accountType);
   const money = readsAsMoney(account);
 
-  // Paper is white whatever the screen's theme: the dark theme comes off
-  // while the browser prints and goes back on after.
-  useEffect(() => {
-    const root = document.documentElement;
-    let wasDark = false;
-    const before = () => {
-      wasDark = root.classList.contains("dark");
-      root.classList.remove("dark");
-    };
-    const after = () => {
-      if (wasDark) root.classList.add("dark");
-      wasDark = false;
-    };
-    window.addEventListener("beforeprint", before);
-    window.addEventListener("afterprint", after);
-    return () => {
-      window.removeEventListener("beforeprint", before);
-      window.removeEventListener("afterprint", after);
-    };
-  }, []);
+  usePrintInLight();
 
-  const totals = rows.reduce(
-    (sum, row) => {
-      const side = ledgerDirection(row.entryType, account.accountType);
-      return side === "in" ? { ...sum, in: sum.in + Number(row.amount), deposits: sum.deposits + 1 } : { ...sum, out: sum.out + Number(row.amount), withdrawals: sum.withdrawals + 1 };
-    },
-    { in: 0, out: 0, deposits: 0, withdrawals: 0 },
-  );
+  const totals = rows.reduce((sum, row) => (directionOf(row, debitPositive) === "in" ? { ...sum, in: sum.in + Number(row.amount) } : { ...sum, out: sum.out + Number(row.amount) }), { in: 0, out: 0 });
   const kind = money ? WALLET_TYPE_META[walletType(account)].label : ACCOUNT_TYPE_LABELS[account.accountType];
-  const inLabel = money ? t("Deposit@@statement") : t("Increase@@statement");
-  const outLabel = money ? t("Withdrawal@@statement") : t("Decrease@@statement");
+  const digits = (account.accountNumber ?? "").replace(/\D/g, "");
+  const cells = [
+    { label: t("Opening balance"), value: balanceText(figures.opening, currency, fmt), tone: "text-ink" },
+    { label: t("Money in@@wallet"), value: formatCurrency(figures.moneyIn, currency, fmt), tone: "text-income" },
+    { label: t("Money out@@wallet"), value: formatCurrency(figures.moneyOut, currency, fmt), tone: "text-expense" },
+    { label: t("Transfers"), value: formatSignedCurrency(Number(figures.transfers), currency, fmt), tone: "text-info" },
+    { label: t("Closing balance"), value: balanceText(figures.closing, currency, fmt), tone: "text-ink" },
+  ];
 
   return (
-    <section className="hidden text-small text-ink [print-color-adjust:exact] print:block">
-      <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-3">
+    <section className="flex flex-col gap-5.5 text-small text-ink [print-color-adjust:exact]">
+      <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-4.5">
         <div className="flex flex-col gap-1">
-          <Logo height={30} />
-          {activeBusiness && <span className="text-caption text-ink-2">{activeBusiness.name}</span>}
+          <Logo height={28} />
+          <span className="text-[11px] text-ink-muted">{t("Statement for {name}", { name: user.name })}</span>
         </div>
-        <div className="flex flex-col items-end gap-0.5 text-right">
-          <span className="text-h3 font-bold tracking-normal">{t("Account statement")}</span>
-          <span className="text-caption text-ink-2">{t("Statement period: {period}", { period: periodText(t, periodFrom, periodTo, fmt) })}</span>
-          <span className="text-caption text-ink-2">{t("Printed {date}", { date: formatDate(today, undefined, fmt) })}</span>
+        <div className="flex flex-col items-end gap-0.75 text-right">
+          <span className="text-[17px] font-bold tracking-[0.06em] uppercase">{t("Account statement")}</span>
+          <span className="text-[11px] text-ink-muted">{t("Statement no. {number}", { number: `LDG-${account.id.slice(0, 4).toUpperCase()}-${today.slice(0, 7).replace("-", "")}` })}</span>
+          <span className="text-[11px] text-ink-muted">{t("Generated {date}", { date: formatDate(today, undefined, fmt) })}</span>
         </div>
       </header>
 
-      <dl className="mt-3 grid grid-cols-2 gap-x-8 gap-y-1 text-small">
-        <Detail label={t("Account holder")} value={user.name} />
-        <Detail label={t("Account name")} value={accountDisplayName(account, preferredLanguage)} />
-        <Detail label={t("Email")} value={user.email} />
-        <Detail label={t("Account number")} value={account.accountNumber || "—"} />
-        {user.phone ? <Detail label={t("Phone")} value={user.phone} /> : <span />}
-        <Detail label={t("Account type")} value={t(kind)} />
-        <span />
-        <Detail label={t("Currency")} value={currency} />
-      </dl>
-
-      <div className="mt-3 grid grid-cols-4 border border-ink">
-        <Figure label={t("Opening balance")} value={balanceText(opening, currency, fmt)} />
-        <Figure label={money ? t("Total deposits") : t("Total increase")} note={t("{count} entries", { count: formatCount(totals.deposits, fmt) })} value={formatCurrency(totals.in, currency, fmt)} />
-        <Figure label={money ? t("Total withdrawals") : t("Total decrease")} note={t("{count} entries", { count: formatCount(totals.withdrawals, fmt) })} value={formatCurrency(totals.out, currency, fmt)} />
-        <Figure label={t("Closing balance")} value={balanceText(closing, currency, fmt)} last />
+      <div className="grid grid-cols-3 gap-3 text-[11.5px]">
+        <div className="flex flex-col gap-0.75">
+          <span className="text-ink-muted">{t("Account")}</span>
+          <span className="text-[13px] font-semibold">{accountDisplayName(account, preferredLanguage)}</span>
+          <span className="text-ink-muted">{digits ? `${t(kind)} · ${digits.slice(-4)}` : t(kind)}</span>
+        </div>
+        <div className="flex flex-col gap-0.75">
+          <span className="text-ink-muted">{t("Period")}</span>
+          <span className="text-[13px] font-semibold">{periodLabel}</span>
+          <span className="text-ink-muted">{range}</span>
+        </div>
+        <div className="flex flex-col gap-0.75">
+          <span className="text-ink-muted">{t("Entries")}</span>
+          <span className="text-[13px] font-semibold">{plural(t, rows.length, "{count} transaction", "{count} transactions", undefined, fmt)}</span>
+          <span className="text-ink-muted">{t("Currency: {currency}", { currency })}</span>
+        </div>
       </div>
 
-      {partial && (
-        <p className="mt-2 text-caption text-ink-2">
-          {partial === "page" ? t("This copy holds only the page on screen. Use Print / PDF for the whole period.") : t("This copy holds the period's first {count} entries.", { count: formatCount(rows.length, fmt) })}
-        </p>
-      )}
+      <div className="grid grid-cols-5 overflow-hidden rounded-md border border-line-strong">
+        {cells.map((cell, index) => (
+          <div key={cell.label} className={cn("flex flex-col gap-0.75 px-3 py-2.5", index < 4 && "border-r border-line", index === 4 && "bg-strip")}>
+            <span className="text-[10.5px] text-ink-muted">{cell.label}</span>
+            <span className={cn("text-[13.5px] font-bold tabular-nums wrap-anywhere", cell.tone)}>{cell.value}</span>
+          </div>
+        ))}
+      </div>
 
-      <table className="mt-4 w-full table-fixed border-collapse text-caption tabular-nums">
+      {capped && <p className="-mt-2 text-caption text-ink-2">{t("This copy holds the period's first {count} entries.", { count: formatCount(rows.length, fmt) })}</p>}
+
+      <table className="w-full table-fixed border-collapse text-[11.5px] tabular-nums">
         <colgroup>
+          <col className="w-[5%]" />
+          <col className="w-[12%]" />
           <col className="w-[13%]" />
+          <col className="w-[10%]" />
           <col />
-          <col className="w-[11%]" />
-          <col className="w-[14%]" />
-          <col className="w-[14%]" />
-          <col className="w-[15%]" />
+          <col className="w-[12%]" />
+          <col className="w-[12%]" />
+          <col className="w-[13%]" />
         </colgroup>
         <thead>
           <tr>
+            <th className={HEAD}>#</th>
             <th className={HEAD}>{t("Date")}</th>
-            <th className={HEAD}>{t("Particulars")}</th>
+            <th className={HEAD}>{t("Type")}</th>
             <th className={HEAD}>{t("Ref.")}</th>
-            <th className={cn(HEAD, "text-right")}>{outLabel}</th>
-            <th className={cn(HEAD, "text-right")}>{inLabel}</th>
+            <th className={HEAD}>{t("Description")}</th>
+            <th className={cn(HEAD, "text-right")}>{t("In")}</th>
+            <th className={cn(HEAD, "text-right")}>{t("Out")}</th>
             <th className={cn(HEAD, "text-right")}>{t("Balance")}</th>
           </tr>
         </thead>
         <tbody>
-          <tr className="bg-table-head">
-            <td className={CELL}>{periodFrom ? formatDate(periodFrom, undefined, fmt) : ""}</td>
-            <td className={cn(CELL, "font-semibold")} colSpan={4}>
-              {partial === "page" ? t("Brought forward") : t("Opening balance")}
+          <tr>
+            <td className={CELL} />
+            <td className={cn(CELL, "font-semibold")} colSpan={6}>
+              {t("Opening balance")}
             </td>
-            <td className={cn(CELL, "text-right font-semibold")}>{balanceText(opening, currency, fmt)}</td>
+            <td className={cn(CELL, "text-right font-semibold")}>{balanceText(figures.opening, currency, fmt)}</td>
           </tr>
-          {rows.map((row) => {
-            const direction = ledgerDirection(row.entryType, account.accountType);
-            const party = statementParty(row);
+          {rows.map((row, index) => {
+            const direction = directionOf(row, debitPositive);
+            const rowKind = kindOf(row);
+            const meta = LEDGER_KIND_META[rowKind];
+            const party = partyOf(row, rowKind);
             const cancelled = cancelledLabel({ status: row.transactionStatus, reversalOfId: row.reversalOfId ?? null });
-            const detail = [t(TRANSACTION_TYPE_LABELS[row.transactionType]), row.description].filter(Boolean).join(" · ");
+            const kicker = t(direction === "in" ? meta.kickerIn : meta.kickerOut);
+            const description = [party ? `${kicker} ${t(party)}` : null, row.description ? t(row.description) : null, cancelled ? t(cancelled) : null].filter(Boolean).join(" · ");
             return (
               <tr key={row.entryId} className="break-inside-avoid">
+                <td className={cn(CELL, "text-ink-muted")}>{formatCount(index + 1, fmt)}</td>
                 <td className={cn(CELL, "whitespace-nowrap")}>{formatDate(row.date, undefined, fmt)}</td>
-                <td className={CELL}>
-                  <span className="block font-semibold">{party ? (direction === "out" ? t("To: {name}", { name: party }) : t("From: {name}", { name: party })) : (row.description ?? t(TRANSACTION_TYPE_LABELS[row.transactionType]))}</span>
-                  <span className="block text-ink-2">
-                    {party ? detail : null}
-                    {cancelled && <span className="font-semibold">{`${party ? " · " : ""}${t(cancelled)}`}</span>}
-                  </span>
-                </td>
-                <td className={cn(CELL, "break-all text-ink-2")}>{row.referenceNo ?? ""}</td>
-                <td className={cn(CELL, "text-right")}>{direction === "out" ? formatCurrency(row.amount, currency, fmt) : ""}</td>
-                <td className={cn(CELL, "text-right")}>{direction === "in" ? formatCurrency(row.amount, currency, fmt) : ""}</td>
+                <td className={CELL}>{t(meta.label)}</td>
+                <td className={cn(CELL, "break-all text-ink-muted")}>{row.referenceNo ?? ""}</td>
+                <td className={cn(CELL, "wrap-break-word")}>{description || "—"}</td>
+                <td className={cn(CELL, "text-right")}>{direction === "in" ? formatCurrency(row.amount, currency, fmt) : "—"}</td>
+                <td className={cn(CELL, "text-right")}>{direction === "out" ? formatCurrency(row.amount, currency, fmt) : "—"}</td>
                 <td className={cn(CELL, "text-right font-semibold")}>{balanceText(row.runningBalance, currency, fmt)}</td>
               </tr>
             );
           })}
           {rows.length === 0 && (
             <tr>
-              <td className={cn(CELL, "py-4 text-center text-ink-2")} colSpan={6}>
+              <td className={cn(CELL, "py-4 text-center text-ink-muted")} colSpan={8}>
                 {t("No activity in this range.")}
               </td>
             </tr>
           )}
-          <tr className="bg-table-head font-bold">
-            <td className={cn(CELL, "border-b-2 border-ink")} colSpan={3}>
-              {partial === "page" ? t("Carried forward") : t("Closing balance")}
+          <tr className="font-bold">
+            <td className={cn(CELL, "border-b-[1.5px] border-ink")} />
+            <td className={cn(CELL, "border-b-[1.5px] border-ink")} colSpan={4}>
+              {t("Closing balance")}
             </td>
-            <td className={cn(CELL, "border-b-2 border-ink text-right")}>{formatCurrency(totals.out, currency, fmt)}</td>
-            <td className={cn(CELL, "border-b-2 border-ink text-right")}>{formatCurrency(totals.in, currency, fmt)}</td>
-            <td className={cn(CELL, "border-b-2 border-ink text-right")}>{balanceText(closing, currency, fmt)}</td>
+            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right")}>{formatCurrency(totals.in, currency, fmt)}</td>
+            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right")}>{formatCurrency(totals.out, currency, fmt)}</td>
+            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right")}>{balanceText(figures.closing, currency, fmt)}</td>
           </tr>
         </tbody>
       </table>
 
-      <footer className="mt-4 flex justify-between gap-6 text-caption text-ink-2">
-        <span>{t("This is a computer-generated statement and needs no signature.")}</span>
-        <span className="text-right">{t("Voided entries and their reversals both stay in the balance, so they cancel out.")}</span>
+      <footer className="mt-auto border-t border-line-strong pt-3 text-[10.5px] text-ink-muted">
+        {t("In includes transfers received. Out includes expenses and transfer charges.")}
+        <br />
+        {t("This statement is generated from your own records in Smartly.")}
       </footer>
     </section>
-  );
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex min-w-0 gap-2">
-      <dt className="w-28 shrink-0 text-ink-2">{label}</dt>
-      <dd className="min-w-0 font-semibold wrap-break-word">{value}</dd>
-    </div>
-  );
-}
-
-function Figure({ label, value, note, last = false }: { label: string; value: string; note?: string; last?: boolean }) {
-  return (
-    <div className={cn("flex flex-col gap-0.5 px-3 py-2", !last && "border-r border-ink")}>
-      <span className="text-caption text-ink-2">{label}</span>
-      <span className="text-body font-bold">{value}</span>
-      {note && <span className="text-caption text-ink-2">{note}</span>}
-    </div>
   );
 }
