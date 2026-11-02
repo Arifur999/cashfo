@@ -204,7 +204,22 @@ export const NAV_SECTIONS: NavSection[] = [
     label: "Account@@user",
     tone: "neutral",
     items: [
-      { label: "Referrals", heading: "Referral Program", href: "/referrals", icon: "gift" },
+      {
+        label: "Referrals",
+        heading: "Referral Program",
+        href: "/referrals",
+        icon: "gift",
+        match: ["/referrals"],
+        // Referral program v9: six pages, the withdraw form under Withdrawals.
+        subs: [
+          { label: "Dashboard", heading: "Referral dashboard", href: "/referrals" },
+          { label: "Referred users", heading: "People you brought", href: "/referrals/users" },
+          { label: "Earnings", href: "/referrals/earnings" },
+          { label: "Withdrawals", href: "/referrals/withdrawals", match: ["/referrals/withdraw"] },
+          { label: "Invite links", href: "/referrals/links" },
+          { label: "Profile & payouts", heading: "Profile and payouts", href: "/referrals/profile" },
+        ],
+      },
       { label: "Password Management", href: "/password-manager", icon: "vault", tone: "vault" },
     ],
   },
