@@ -440,7 +440,6 @@ export const referralsDictionary: Record<string, string> = {
   "In the next 30 days you should earn about {amount} from {count} renewals, if your friends keep paying.": "বন্ধুরা পেমেন্ট চালিয়ে গেলে আগামী ৩০ দিনে {count}টি নবায়ন থেকে প্রায় {amount} পাবেন।",
   "In withdrawal": "তোলার অনুরোধে",
   "Invite links": "আমন্ত্রণ লিংক",
-  "Joined": "যোগ দিয়েছেন",
   "Last on {date}": "সর্বশেষ {date}",
   "Latest commissions": "সাম্প্রতিক কমিশন",
   "Left after this": "এরপর বাকি থাকবে",
