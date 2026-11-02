@@ -50,6 +50,7 @@ const row = (area: string, rule: AccessRule, note?: string): RolePermissionRow =
 export const ROLE_PERMISSIONS: RolePermissionRow[] = [
   row("Open every page except Security and System", {}, "Users, money, support, content, analytics, settings"),
   row("Suspend a user or turn them back on", { manage: "ownerStatus" }),
+  row("Give a user a temporary password", { manage: "ownerPassword" }, "Opens their whole account"),
   row("Change a user's plan", { manage: "ownerPlan" }),
   row("Reset an owner's data", { manage: "ownerData" }, "Deletes their money records"),
   row("Plans and coupons", { manage: "subscriptions" }),
