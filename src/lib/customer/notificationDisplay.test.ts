@@ -53,6 +53,15 @@ describe("notificationView", () => {
     expect(behind("2026-08-31")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by August 2026.");
   });
 
+  it("says when zakat is due and what is left, counting the days from now", () => {
+    const zakat = (dueDate: string) => notificationView(row("ZAKAT", { dueDate, days: 30, left: "20000.00", zakat: "28548.00" }), inEnglish, "en", "BDT", now);
+    expect(zakat("2026-11-01")).toMatchObject({ kind: "zakat", title: "Your zakat is due in 30 days", href: "/zakat" });
+    expect(zakat("2026-11-01").body).toMatch(/^৳.20,000 left to give by 1 Nov 2026\.$/);
+    expect(zakat("2026-10-03").title).toBe("Your zakat is due tomorrow");
+    expect(zakat("2026-10-02").title).toBe("Your zakat is due today");
+    expect(zakat("2026-09-30").title).toBe("Your zakat date has passed");
+  });
+
   it("opens the conversation support answered", () => {
     expect(notificationView(row("SUPPORT_REPLY", { ticketId: "t1", subject: "Shop money" }), inEnglish, "en")).toEqual({ kind: "support", title: "Support replied to your message", body: "Shop money", href: "/settings/help?message=t1" });
     // The admin's Support reply template, when on, words the body.

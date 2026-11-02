@@ -9,6 +9,7 @@ import {
   CheckCheck,
   CreditCard,
   Gift,
+  HandCoins,
   Lightbulb,
   Megaphone,
   MessageCircle,
@@ -57,6 +58,7 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
   securityAlert: { icon: ShieldAlert, tone: "expense" },
   campaign: { icon: Megaphone, tone: "insights" },
   idea: { icon: Lightbulb, tone: "insights" },
+  zakat: { icon: HandCoins, tone: "money" },
   other: { icon: Bell, tone: "neutral" },
 };
 

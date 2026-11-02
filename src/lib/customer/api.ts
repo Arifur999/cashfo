@@ -115,7 +115,8 @@ export type UserNotificationType =
   | "PAYOUT"
   | "SECURITY"
   | "CAMPAIGN"
-  | "IDEA";
+  | "IDEA"
+  | "ZAKAT";
 
 export interface UserNotification {
   id: string;

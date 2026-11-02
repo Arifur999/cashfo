@@ -29,6 +29,7 @@ export type NotificationKind =
   | "securityAlert"
   | "campaign"
   | "idea"
+  | "zakat"
   | "other";
 
 export interface NotificationView {
@@ -307,7 +308,7 @@ function ideaView(data: UserNotification["data"], { t }: Words): NotificationVie
 // its type belongs to (or a link it carries), so it still reads and opens.
 // A reminder about a PIN-locked workspace: that there is one, not what it
 // says. Opening it asks for the workspace's PIN.
-const LOCKED_HOME: Partial<Record<string, string>> = { BUDGET: "/budget-planning", LOAN_DUE: "/loan-management", SAVINGS: "/savings-goals/dashboard" };
+const LOCKED_HOME: Partial<Record<string, string>> = { BUDGET: "/budget-planning", LOAN_DUE: "/loan-management", SAVINGS: "/savings-goals/dashboard", ZAKAT: "/zakat" };
 
 function lockedView(item: UserNotification, t: Translate): NotificationView {
   return { kind: "other", title: t("A reminder in a PIN-locked workspace"), body: t("Enter its PIN to see it."), href: LOCKED_HOME[item.type] ?? null };
@@ -410,6 +411,24 @@ function knownView(item: UserNotification, t: Translate, locale: FormatLocale, c
       return securityView(data, words);
     case "IDEA":
       return ideaView(data, words);
+    case "ZAKAT": {
+      // 30 and 3 days before the zakat date, while some is left to give.
+      const due = text(data.dueDate);
+      const days = daysUntil(due, now);
+      return {
+        kind: "zakat",
+        title:
+          days < 0
+            ? t("Your zakat date has passed")
+            : days === 0
+              ? t("Your zakat is due today")
+              : days === 1
+                ? t("Your zakat is due tomorrow")
+                : plural(t, days, "Your zakat is due in {count} day", "Your zakat is due in {count} days", undefined, locale),
+        body: t("{amount} left to give by {date}.", { amount: money(data.left), date: words.day(due) }),
+        href: "/zakat",
+      };
+    }
     case "CAMPAIGN":
       // Worded by the team, already in the reader's language.
       return { kind: "campaign", title: text(data.title).trim() || t("You have a new notification"), body: text(data.body), href: appPath(data.url) };
