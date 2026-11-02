@@ -33,6 +33,7 @@ export const queryKeys = {
   errorLogs: createDomainKeys("error-logs"),
   health: createDomainKeys("health"),
   settings: createDomainKeys("settings"),
+  zakatPrices: createDomainKeys("zakat-prices"),
   rateLimits: createDomainKeys("rate-limits"),
   notificationTemplates: createDomainKeys("notification-templates"),
   notificationLogs: createDomainKeys("notification-logs"),

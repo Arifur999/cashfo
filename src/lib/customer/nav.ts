@@ -44,6 +44,7 @@ export type NavIcon =
   | "clock"
   | "journal"
   | "gift"
+  | "zakat"
   | "settings";
 
 export interface NavLeaf {
@@ -221,6 +222,8 @@ export const NAV_SECTIONS: NavSection[] = [
         ],
       },
       { label: "Password Management", href: "/password-manager", icon: "vault", tone: "vault" },
+      // Zakat calculator: the year's zakat from the workspace's own records.
+      { label: "Zakat", heading: "Zakat calculator", href: "/zakat", icon: "zakat" },
     ],
   },
   // Not in the boards' menu: a business workspace's books, and the insights

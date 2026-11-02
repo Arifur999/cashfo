@@ -468,6 +468,13 @@ html:not(.dark) [data-app="habit"] {
   --color-night-insights: #5cccdb;
   --color-night-neutral: #c3d2ca;
   --color-night-marker: #14b57a;
+  /* The Zakat hero's highlights on its always-dark green, the same in
+     either theme: mint for the figure it comes to, the paid bar and its
+     links; sage and mist for its labels and lines. */
+  --color-hero-mint: #8fe3cf;
+  --color-hero-sage: #bbd9d3;
+  --color-hero-mist: #dcede9;
+  --color-hero-ink: #0f3f38;
   /* The grounds and divider: bg-page, bg-table-head, bg-strip, bg-hover,
      border-divider (their jobs are on :root). */
   --color-page: var(--page);
@@ -668,6 +675,10 @@ html:not(.dark) [data-app="habit"] {
 /* The Referral Program's earnings card: the primary, 32% darker at its end. */
 @utility bg-referral-hero {
   background-image: linear-gradient(135deg, #1c7567 0%, #135046 100%);
+}
+/* The Zakat calculator's hero: deep green to deeper. */
+@utility bg-zakat-hero {
+  background-image: linear-gradient(135deg, #155c51 0%, #0f3f38 100%);
 }
 @utility bg-wallet-forest {
   background-image: linear-gradient(135deg, #1c7567 0%, #0f3f38 100%);

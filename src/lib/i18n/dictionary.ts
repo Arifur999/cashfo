@@ -34,6 +34,7 @@ import { sharedDictionary } from "./dictionary/shared";
 import { skillsDictionary } from "./dictionary/skills";
 import { todosDictionary } from "./dictionary/todos";
 import { vaultDictionary } from "./dictionary/vault";
+import { zakatDictionary } from "./dictionary/zakat";
 
 // The admin panel's own chrome.
 const bnAdminDictionary: Record<string, string> = {
@@ -111,6 +112,7 @@ export const bnDictionary: Record<string, string> = {
   ...reportsDictionary,
   ...referralsDictionary,
   ...vaultDictionary,
+  ...zakatDictionary,
   ...settingsWorkspaceDictionary,
   ...settingsDictionary,
   ...groupExpensesDictionary,

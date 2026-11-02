@@ -56,7 +56,7 @@ describe("the two menus", () => {
           ["Group Expense"],
         ],
       ],
-      [NAV_FOOT_LABEL, [["Referrals", "Dashboard", "Referred users", "Earnings", "Withdrawals", "Invite links", "Profile & payouts"], ["Password Management"]]],
+      [NAV_FOOT_LABEL, [["Referrals", "Dashboard", "Referred users", "Earnings", "Withdrawals", "Invite links", "Profile & payouts"], ["Password Management"], ["Zakat"]]],
     ]);
   });
 
@@ -123,6 +123,7 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(locate("/group-expenses")!)).toEqual({ crumbs: [], heading: "Group Expense", tone: "money" });
     expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: ["Referrals"], heading: "Referral dashboard", tone: "neutral" });
     expect(breadcrumbFor(locate("/password-manager")!)).toEqual({ crumbs: [], heading: "Password Management", tone: "vault" });    expect(breadcrumbFor(locate("/dashboard")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "money" });
+    expect(breadcrumbFor(locate("/zakat")!)).toEqual({ crumbs: [], heading: "Zakat calculator", tone: "neutral" });
     expect(breadcrumbFor(locate("/reports/detailed")!)).toEqual({ crumbs: [], heading: "Reports", tone: "insights" });
     expect(breadcrumbFor(locate("/habit-tracker")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "habits" });
     expect(breadcrumbFor(locate("/habit-tracker/daily")!)).toEqual({ crumbs: ["Habits"], heading: "Daily habits", tone: "habits" });
