@@ -47,7 +47,7 @@ const NO_VAULT = "Set up a vault password first";
 // The wait after the tenth wrong try (backend vault-unlock-limit.ts).
 const WAIT_MINUTES = 10;
 // A code that can't be used any more: back to step one for a new one.
-const CODE_GONE = new Set(["CODE_EXPIRED", "TOO_MANY_ATTEMPTS", "CODE_USED", "CHALLENGE_NOT_FOUND", "TOO_MANY_SENDS"]);
+const CODE_GONE = new Set(["CODE_EXPIRED", "TOO_MANY_ATTEMPTS", "CODE_USED", "CHALLENGE_NOT_FOUND"]);
 const CODE_LENGTH = 6;
 
 const FACTS: { icon: typeof KeyRound; title: string; text: string }[] = [
@@ -160,7 +160,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
   function verify(typed = code) {
     if (!challenge || isPending || codeDead) return;
     if (typed.length < CODE_LENGTH) {
-      setCodeError(t("Type all 6 digits from the email."));
+      setCodeError(t(challenge.channel === "SMS" ? "Type all 6 digits from the text message." : "Type all 6 digits from the email."));
       return;
     }
     const asked = challenge;
@@ -205,6 +205,9 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
         toast.success(t(result.data.channel === "SMS" ? "New code sent by SMS to {phone}" : "New code sent to {email}", { email: result.data.sentTo, phone: result.data.sentTo }), { description: t("The old code no longer works.") });
       } else if (result.reason === "RESEND_TOO_SOON" && result.retryAfterSec) {
         setResendAt(Date.now() + result.retryAfterSec * 1000);
+      } else if (result.reason === "TOO_MANY_SENDS") {
+        // The last code still works; only sending again stops.
+        setChallenge({ ...asked, sendsLeft: 0 });
       } else if (result.reason && CODE_GONE.has(result.reason)) {
         setCodeDead(true);
         setCodeError(t(result.message ?? "This code has expired. Start again to get a new one."));
@@ -403,7 +406,9 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                   <ChevronLeft className="size-3.5" aria-hidden="true" />
                   {t("Back")}
                 </button>
-                {resendLeft > 0 ? (
+                {challenge?.sendsLeft === 0 ? (
+                  <span className="text-right text-ink-muted">{t("Sent 5 times. Use the last code.")}</span>
+                ) : resendLeft > 0 ? (
                   <span className="text-ink-muted tabular-nums">{t("Resend code in {time}", { time: toLocaleDigits(countdownText(resendLeft), fmt) })}</span>
                 ) : (
                   <button type="button" onClick={resend} disabled={isResending || codeDead} className="flex min-h-9 items-center rounded-md font-semibold text-emerald hover:underline disabled:text-ink-muted disabled:no-underline pointer-coarse:min-h-11">
@@ -429,7 +434,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
               </span>
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-[13px] leading-normal font-semibold text-ink">{t(fact.title)}</span>
-                <span className="text-caption leading-[1.45] text-ink-muted">{t(fact.text, { count: minutes })}</span>
+                <span className="text-caption leading-[1.45] text-ink-muted">{t(fact.icon === KeyRound && bySms ? "Vault password, then a code by SMS" : fact.text, { count: minutes })}</span>
                 {/* The lock time: changed here, from the next unlock on. */}
                 {fact.icon === Clock && (
                   <label className={cn("relative mt-0.5 flex w-fit items-center gap-0.5 rounded-sm text-caption font-semibold text-emerald hover:underline has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring pointer-coarse:min-h-11", isSaving && "opacity-60")}>
