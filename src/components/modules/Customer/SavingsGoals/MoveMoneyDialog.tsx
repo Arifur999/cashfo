@@ -15,7 +15,7 @@ import { createSavingsTransferAction } from "@/lib/customer/savingsGoalActions";
 import { savingsError } from "@/lib/customer/savingsDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 export interface MoveSetup {
   // The goal the money leaves, and whether it can be picked here.
@@ -97,7 +97,7 @@ export function MoveMoneyDialog({ open, onClose, businessId, goals, setup, curre
   }
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={520}
@@ -193,6 +193,6 @@ export function MoveMoneyDialog({ open, onClose, businessId, goals, setup, curre
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

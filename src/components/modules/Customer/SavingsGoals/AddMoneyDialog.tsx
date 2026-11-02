@@ -22,7 +22,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GoalRing } from "./GoalRing";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 interface AddMoneyDialogProps {
   open: boolean;
@@ -130,7 +130,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
   const fieldLabel = "text-small font-semibold text-ink-2";
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={560}
@@ -256,7 +256,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }
 

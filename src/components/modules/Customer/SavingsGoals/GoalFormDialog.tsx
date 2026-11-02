@@ -21,7 +21,7 @@ import { monthsToGo } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 interface GoalFormDialogProps {
   open: boolean;
@@ -170,7 +170,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
   const savedPercent = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={560}
@@ -292,6 +292,6 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

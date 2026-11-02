@@ -11,7 +11,7 @@ import { getSavingsWalletHistoryAction } from "@/lib/customer/savingsGoalActions
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 export interface WalletView {
   id: string;
@@ -80,7 +80,7 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
   };
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={620}
@@ -195,6 +195,6 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
           )}
         </div>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

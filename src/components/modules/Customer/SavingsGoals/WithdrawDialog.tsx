@@ -18,7 +18,7 @@ import { savingsError } from "@/lib/customer/savingsDisplay";
 import { splitLargestFirst } from "@/lib/customer/savingsPlan";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 interface WithdrawDialogProps {
   open: boolean;
@@ -99,7 +99,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
   }
 
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={540}
@@ -177,6 +177,6 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
           {error}
         </p>
       )}
-    </SavingsDialog>
+    </PopupDialog>
   );
 }

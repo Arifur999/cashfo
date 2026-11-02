@@ -15,7 +15,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { GoalAction } from "./GoalCard";
 import { GoalRing } from "./GoalRing";
-import { SavingsDialog } from "./SavingsDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 interface GoalDetailsDialogProps {
   open: boolean;
@@ -103,7 +103,7 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
 
   const canWithdraw = canManage && !closed && saved > 0;
   return (
-    <SavingsDialog
+    <PopupDialog
       open={open}
       onClose={onClose}
       width={620}
@@ -248,6 +248,6 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
           <ArrowRight className="size-3.25" strokeWidth={2.5} />
         </Button>
       </section>
-    </SavingsDialog>
+    </PopupDialog>
   );
 }
