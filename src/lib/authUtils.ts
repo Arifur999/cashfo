@@ -184,6 +184,8 @@ export const MANAGE_ROLES = {
   // Approving, rejecting and paying referral payouts, and their settings.
   referralPayouts: ["SUPER_ADMIN", "FINANCE_ADMIN"],
   settings: ["SUPER_ADMIN"],
+  // Settings > Zakat prices: the BAJUS gold and silver prices.
+  zakatPrices: ["SUPER_ADMIN", "FINANCE_ADMIN"],
   revenue: ["SUPER_ADMIN", "FINANCE_ADMIN"],
 } satisfies Record<string, AdminRole[]>;
 

@@ -10,6 +10,7 @@ import ConnectedServicesCard from "./ConnectedServicesCard";
 import GeneralSettingsCard from "./GeneralSettingsCard";
 import SettingsSideCards from "./SettingsSideCards";
 import SignupsCard from "./SignupsCard";
+import ZakatPricesCard from "./ZakatPricesCard";
 
 // Settings as the design lays it out: General, New sign-ups and the
 // connected services on the left, the related settings and where to change
@@ -17,7 +18,7 @@ import SignupsCard from "./SignupsCard";
 // place; if they can't be, it says so and offers a retry. Only a super
 // admin changes them -- and only a super admin may read the services'
 // health, so canManage covers both.
-const SettingsBoard = ({ canManage }: { canManage: boolean }) => {
+const SettingsBoard = ({ canManage, canManageZakat }: { canManage: boolean; canManageZakat: boolean }) => {
   const { translate } = useLocale();
   const query = useQuery(platformSettingsQuery());
   const settings = query.data?.data;
@@ -38,6 +39,7 @@ const SettingsBoard = ({ canManage }: { canManage: boolean }) => {
             <SkeletonRows rows={4} avatar={false} />
           </Card>
         )}
+        <ZakatPricesCard canManage={canManageZakat} />
         <ConnectedServicesCard canCheck={canManage} />
       </div>
       <SettingsSideCards canManage={canManage} settings={settings} loadFailed={loadFailed} />
