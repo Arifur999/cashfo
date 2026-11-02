@@ -21,7 +21,8 @@ const PayoutStats = ({ holdDays }: { holdDays: number | null }) => {
     return query.isError ? <LoadError title="Couldn't load these figures" onRetry={() => void query.refetch()} /> : null;
   }
 
-  const money = (value: string) => formatCurrency(value, undefined, 0, locale);
+  // The paisa only when there are some (commissions are to the paisa).
+  const money = (value: string) => formatCurrency(value, undefined, Number(value) % 1 ? 2 : 0, locale);
   const requests = (count: number) => countPhrase(translate, locale, count, "{count} request", "{count} requests");
 
   return (

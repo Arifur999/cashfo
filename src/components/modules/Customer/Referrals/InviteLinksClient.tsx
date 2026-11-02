@@ -173,7 +173,10 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
                   <QrCode className="size-3.75" aria-hidden="true" />
                   <span className="sr-only md:not-sr-only md:ml-1">QR</span>
                 </button>
-                {!link.main && (
+                {link.main ? (
+                  // Keeps the buttons in line with the rows that can be deleted.
+                  <span aria-hidden="true" className="size-8" />
+                ) : (
                   <button type="button" onClick={() => setRemoving(link)} aria-label={t("Delete {name}", { name: link.label })} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-expense-soft hover:text-expense">
                     <Trash2 className="size-3.75" aria-hidden="true" />
                   </button>

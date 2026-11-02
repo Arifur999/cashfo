@@ -422,7 +422,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
               <Button asChild variant="ghost" size="lg" className="h-10.5 px-4 text-ink-soft">
                 <Link href={WITHDRAWALS_ROUTE}>{t("Cancel")}</Link>
               </Button>
-              <Button type="submit" size="lg" disabled={isPending || readyLines.length === 0} className="h-10.5 px-4.5">
+              <Button type="submit" size="lg" disabled={isPending || readyLines.length === 0 || available < minimum} className="h-10.5 px-4.5">
                 {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <ShieldCheck className="size-4" />}
                 {t("Continue · confirm with a code")}
               </Button>
