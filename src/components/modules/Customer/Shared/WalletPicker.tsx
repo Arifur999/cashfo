@@ -144,7 +144,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
       {!loading && !error && all.length === 0 && !emptyMessage && (
         <p className="text-caption text-ink-muted">
           {variant === "savings" ? t("No savings wallet yet.") : t("No wallet yet.")}{" "}
-          <Link href={variant === "savings" ? "/savings-goals/wallet?add=1" : "/balance/wallet"} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+          <Link href={variant === "savings" ? "/savings-goals/wallet?add=1" : "/balance/accounts?new=1"} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
             {variant === "savings" ? t("Add a savings wallet") : t("Add a wallet")}
           </Link>
         </p>

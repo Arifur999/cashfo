@@ -33,7 +33,7 @@ export const STEP_META: Record<ZakatStepId, StepMeta> = {
     tip: "Cash kept at home or with family counts too. Add it if it is not in your wallets.",
     kind: "plus",
     from: "From your Wallets",
-    href: "/balance/wallet",
+    href: "/balance/accounts",
     addLabel: "Add cash or an account not in the app",
     suggestions: ["Cash at home", "Nagad wallet", "Foreign currency"],
   },

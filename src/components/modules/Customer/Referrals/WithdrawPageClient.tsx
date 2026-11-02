@@ -395,7 +395,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                 ) : (
                   <p className="text-small text-ink-muted">
                     {t("No wallet yet.")}{" "}
-                    <Link href="/balance/wallet" className="font-semibold text-emerald hover:underline">
+                    <Link href="/balance/accounts" className="font-semibold text-emerald hover:underline">
                       {t("Add a wallet")}
                     </Link>
                   </p>
