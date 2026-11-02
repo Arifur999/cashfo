@@ -14,6 +14,7 @@ import {
   Clock,
   Gift,
   GraduationCap,
+  HandCoins,
   House,
   KeyRound,
   Landmark,
@@ -75,6 +76,7 @@ export const NAV_ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
   clock: Clock,
   journal: PenLine,
   gift: Gift,
+  zakat: HandCoins,
   settings: Settings,
 };
 
