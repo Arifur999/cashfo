@@ -1105,39 +1105,6 @@ export function getApiErrorMessage(body: unknown, fallback = "Something went wro
   return Array.isArray(err.message) ? err.message.join(", ") : err.message;
 }
 
-// "Referral Program" menu -- referralCode is this user's own shareable
-// code (the frontend builds the actual share link as
-// `${origin}/register?ref=${code}`); status PENDING means the referred
-// friend hasn't been registered 30 days yet (see backend
-// ReferralsService's comment), CONFIRMED means it's counted in
-// availableBalance and withdrawable, WITHDRAWN means it's already been
-// cashed out.
-export type ReferralStatus = "PENDING" | "CONFIRMED" | "WITHDRAWN";
-
-export interface ReferralEntry {
-  id: string;
-  name: string;
-  status: ReferralStatus;
-  rewardAmount: string;
-  createdAt: string;
-  // When the reward was confirmed (30 days after joining) and withdrawn.
-  confirmedAt?: string | null;
-  withdrawnAt?: string | null;
-}
-
-export interface ReferralInfo {
-  referralCode: string;
-  totalEarned: string;
-  pendingEarnings: string;
-  availableBalance: string;
-  referralCount: number;
-  rewardAmountPerReferral: string;
-  // Friends whose reward is still waiting out its 30 days.
-  pendingCount?: number;
-  // Every friend, newest first (an older backend sent the newest 10).
-  recentReferrals: ReferralEntry[];
-}
-
 // "Group Expense" (মেস/যৌথ হিসাব) -- a GROUP-type workspace for a mess or
 // joint family splitting shared costs equally. Deliberately NOT wired into
 // the "active workspace" switcher (see lib/activeBusiness.ts's comment on
