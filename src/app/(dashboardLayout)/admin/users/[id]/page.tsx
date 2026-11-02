@@ -105,7 +105,6 @@ const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/
             canViewAsCustomer={canManage(role, "ownerView")}
             canResetData={canManage(role, "ownerData")}
             canDisableTwoStep={canManage(role, "ownerTwoStep")}
-            canResetPassword={canManage(role, "ownerPassword")}
           />
         }
       />

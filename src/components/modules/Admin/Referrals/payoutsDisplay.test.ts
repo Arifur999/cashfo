@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { IPayoutCheck, IPayoutDetail, IPayoutMethodSnapshot } from "@/types/referral.types";
-import { canCancelReferral, firstName, owedLines, payoutAccountLine, payoutDestination, referralExample, rowActions, rowChecks, statusNote } from "./payoutsDisplay";
+import type { IPayoutCheck, IPayoutLine, IPayoutMethodSnapshot } from "@/types/referral.types";
+import { canCancelCommission, canReleaseCommission, deskChecks, firstName, payoutAccountLine, payoutDestination, referralExample, rowActions, rowChecks, statusNote } from "./payoutsDisplay";
 
 const bkash: IPayoutMethodSnapshot = { type: "BKASH", accountName: "Nasrin Akter", walletNumber: "01819552310", bankName: null, branch: null, bankAccountType: null, accountNumber: null, routingNumber: null };
 const bank: IPayoutMethodSnapshot = { type: "BANK", accountName: "Mitu Das", walletNumber: null, bankName: "BRAC Bank", branch: "Gulshan", bankAccountType: "SAVINGS", accountNumber: "1503204142201", routingNumber: "060261726" };
@@ -40,8 +40,8 @@ describe("rowChecks", () => {
 });
 
 describe("rowActions and statusNote", () => {
-  it("offers Approve, or Review when a check failed, then Mark paid", () => {
-    expect(rowActions({ status: "REQUESTED", checks: [ok("NAME_MATCHES")] }, true)).toEqual(["approve", "reject"]);
+  it("offers Review (approve line by line) on every waiting request, then Mark paid", () => {
+    expect(rowActions({ status: "REQUESTED", checks: [ok("NAME_MATCHES")] }, true)).toEqual(["review", "reject"]);
     expect(rowActions({ status: "REQUESTED", checks: [bad("NAME_MATCHES")] }, true)).toEqual(["review", "reject"]);
     expect(rowActions({ status: "APPROVED", checks: [] }, true)).toEqual(["pay"]);
     expect(rowActions({ status: "PAID", checks: [] }, true)).toEqual(["view"]);
@@ -58,48 +58,47 @@ describe("rowActions and statusNote", () => {
   });
 });
 
-describe("owedLines", () => {
-  const part = (amount: string, planName: string, extra: Partial<IPayoutDetail["owedBecause"][number]> = {}) => ({
-    referralId: Math.random().toString(36),
-    friend: { id: "f", name: "Friend" },
-    kind: "COMMISSION" as const,
-    planName,
-    paidAmount: "2700.00",
-    commissionAmount: amount,
-    amount,
-    availableAt: "2026-09-20T00:00:00.000Z",
-    pastWindow: true,
-    refunded: false,
-    ...extra,
+describe("deskChecks", () => {
+  const line = (reached: IPayoutLine["reached"]): IPayoutLine => ({
+    id: reached,
+    status: "IN_WITHDRAWAL",
+    kind: "FIRST",
+    friend: { id: "f", name: "Nusrat Jahan", email: "n@example.com", phone: null },
+    payment: null,
+    reached,
+    paidAmount: "1719.00",
+    rate: 20,
+    amount: "343.80",
+    availableAt: "2026-10-05T06:00:00.000Z",
+    paidFromMemberNumber: false,
   });
-  const format = { money: (n: number) => `৳ ${n}`, moment: () => "30 Sep, 4:05 pm", count: (n: number) => String(n) };
   const detail = {
-    owedBecause: [part("540.00", "Yearly Pro"), part("540.00", "Yearly Pro"), part("540.00", "Yearly Pro"), part("540.00", "Yearly Pro")],
-    checks: [ok("NAME_MATCHES"), ok("CODE_CONFIRMED"), ok("NO_REFUNDS")],
-    method: { ...bkash, type: "NAGAD" as const },
-    amount: "2160.00",
+    checks: [ok("NAME_MATCHES"), ok("CODE_CONFIRMED"), ok("HOLDS_OVER"), ok("NO_REFUNDS")],
+    method: bkash,
     codeConfirmedAt: "2026-09-30T10:05:00.000Z",
+    lines: [line("RECEIVED"), line("RECEIVED")],
   };
 
-  it("reads as the board's four lines", () => {
-    const lines = owedLines(detail, 7, format);
-    expect(lines.map((line) => [line.text, line.value])).toEqual([
-      ["{count} friends bought {plan}", "4 × ৳ 540"],
-      ["All past the {days}-day window, none refunded", "৳ 2160"],
-      ["Name on {method} matches the account", "Nasrin Akter"],
-      ["Confirmed with a one-time code", "30 Sep, 4:05 pm"],
-    ]);
-    expect(lines.every((line) => line.ok)).toBe(true);
+  it("says what passed, with the name and when the code was confirmed", () => {
+    const lines = deskChecks(detail, () => "30 Sep, 4:05 pm");
+    expect(lines.map((l) => l.text)).toEqual(["Account name matches the profile", "Confirmed with a one-time code", "All refund holds are over", "No refunds on these payments"]);
+    expect(lines[0].value).toBe("Nasrin Akter");
+    expect(lines[1].value).toBe("30 Sep, 4:05 pm");
   });
 
-  it("warns about a commission still inside the window or refunded", () => {
-    const lines = owedLines({ ...detail, owedBecause: [part("540.00", "Yearly Pro", { pastWindow: false }), part("144.00", "Business", { refunded: true })] }, 7, format);
-    expect(lines.filter((line) => !line.ok).map((line) => line.text)).toEqual(["{count} still inside the refund window", "{count} friend was refunded"]);
+  it("puts the warnings first and counts the refunds", () => {
+    const lines = deskChecks({ ...detail, checks: [ok("NAME_MATCHES"), bad("NO_REFUNDS"), bad("HOLDS_OVER")], lines: [line("REFUNDED"), line("RECEIVED")] }, () => "");
+    expect(lines.map((l) => [l.ok, l.text])).toEqual([
+      [false, "{count} payment was refunded"],
+      [false, "Some payments are still inside the refund hold"],
+      [true, "Account name matches the profile"],
+    ]);
   });
 });
 
 describe("referralExample", () => {
-  it("works the board's numbers out as the API does", () => {
+  it("works the board's numbers out as the API does, the commission to the paisa", () => {
+    expect(referralExample(1910, 10, 20)).toEqual({ price: 1910, friendPays: 1719, commission: 343.8, youKeep: 1375.2 });
     expect(referralExample(2999, 10, 20)).toEqual({ price: 2999, friendPays: 2700, commission: 540, youKeep: 2160 });
     expect(referralExample(299, 10, 20)).toEqual({ price: 299, friendPays: 270, commission: 54, youKeep: 216 });
     expect(referralExample(799, 10, 20)).toEqual({ price: 799, friendPays: 720, commission: 144, youKeep: 576 });
@@ -111,10 +110,13 @@ describe("referralExample", () => {
 });
 
 describe("small helpers", () => {
-  it("cancels only a commission that is waiting or ready, untouched", () => {
-    expect(canCancelReferral({ status: "PENDING", paidOutAmount: null })).toBe(true);
-    expect(canCancelReferral({ status: "AVAILABLE", paidOutAmount: "100.00" })).toBe(false);
-    expect(canCancelReferral({ status: "PAID_OUT", paidOutAmount: null })).toBe(false);
+  it("cancels a commission not in a request being paid, and releases one held for a check", () => {
+    expect(canCancelCommission("ON_HOLD")).toBe(true);
+    expect(canCancelCommission("UNDER_CHECK")).toBe(true);
+    expect(canCancelCommission("IN_WITHDRAWAL")).toBe(false);
+    expect(canCancelCommission("PAID_OUT")).toBe(false);
+    expect(canReleaseCommission("UNDER_CHECK")).toBe(true);
+    expect(canReleaseCommission("AVAILABLE")).toBe(false);
   });
 
   it("takes a first name", () => {

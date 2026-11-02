@@ -28,7 +28,7 @@ interface WithdrawSubmittedProps {
   today: string;
 }
 
-export const WITHDRAWALS_TAB = "/referrals?tab=withdrawals";
+export const WITHDRAWALS_TAB = "/referrals/withdrawals";
 
 // Withdrawal requested (WithdrawSubmitted): where the money goes and the
 // request's number, the three steps it goes through (with the day it
@@ -113,7 +113,7 @@ export function WithdrawSubmitted({ request, left, pending, pendingNextAt, incom
           </div>
           {pending > 0 && (
             <div className="flex justify-between gap-3">
-              <span className="text-ink-soft">{pendingDay ? t("Pending (ready on {date})", { date: friendDay(pendingDay, today, fmt) }) : t("Pending")}</span>
+              <span className="text-ink-soft">{pendingDay ? t("On hold (ready on {date})", { date: friendDay(pendingDay, today, fmt) }) : t("On hold")}</span>
               <b className="font-bold text-ink">{money(pending)}</b>
             </div>
           )}

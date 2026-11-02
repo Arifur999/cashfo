@@ -1,7 +1,8 @@
 import AuthAlert from "@/components/modules/Auth/AuthAlert";
 import AuthFooterPrompt from "@/components/modules/Auth/AuthFooterPrompt";
 import AuthHeading from "@/components/modules/Auth/AuthHeading";
-import { normalizeInviteCode } from "@/components/modules/Auth/authFormError";
+import { normalizeInviteCode, normalizeInviteSource } from "@/components/modules/Auth/authFormError";
+import InviteClickCount from "@/components/modules/Auth/InviteClickCount";
 import InviteInvitation from "@/components/modules/Auth/InviteInvitation";
 import RegisterForm from "@/components/modules/Auth/RegisterForm";
 import { publicPageTitle } from "@/components/modules/Legal/publicPageTitle";
@@ -20,8 +21,10 @@ export const generateMetadata = publicPageTitle("Create an account");
 // code still on. While Admin > Settings has sign-ups turned off, the page
 // says so up front and the form stays closed.
 const RegisterPage = async ({ searchParams }: PageProps<"/register">) => {
-  const { ref, error } = await searchParams;
+  const { ref, src, error } = await searchParams;
   const referralCode = normalizeInviteCode(ref);
+  // Which of the inviter's links it was (&src=facebook).
+  const referralSource = referralCode ? normalizeInviteSource(src) : undefined;
   // null when the API couldn't say: the code then goes along as before.
   const [invite, platform] = await Promise.all([referralCode ? getReferralInvite(referralCode) : null, getPublicPlatform()]);
   const signupsClosed = platform.signupsOpen === false;
@@ -30,6 +33,7 @@ const RegisterPage = async ({ searchParams }: PageProps<"/register">) => {
   return (
     <>
       {invite?.valid && !signupsClosed && <InviteInvitation invite={invite} />}
+      {referralCode && <InviteClickCount code={referralCode} source={referralSource ?? null} />}
       <AuthHeading title="Create your account" subtitle="Start managing your money in minutes." />
       {signupsClosed ? (
         <AuthAlert tone="suspended" role="status">
@@ -49,7 +53,7 @@ const RegisterPage = async ({ searchParams }: PageProps<"/register">) => {
       )}
       {/* Maintenance refuses sign-up (the layout's notice says so), so the
           form closes itself from that same read before anything is typed. */}
-      <RegisterForm referralCode={referralCode} inviteUnknown={invite?.valid === false} signupsClosed={signupsClosed} />
+      <RegisterForm referralCode={referralCode} referralSource={referralSource} inviteUnknown={invite?.valid === false} signupsClosed={signupsClosed} />
       <AuthFooterPrompt prompt="Already have an account?" linkLabel="Sign in" href={LOGIN_ROUTE} />
     </>
   );

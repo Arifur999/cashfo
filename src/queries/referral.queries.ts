@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getPayoutById, getPayouts, getReferrals, getReferralSettings } from "@/services/referral.services";
+import { getCommissions, getPayoutById, getPayouts, getReferralSettings } from "@/services/referral.services";
 
 // The four figures over the desk read the menu count's query
 // (navBadge.queries.ts payoutStatsQuery), so the two never disagree.
@@ -20,7 +20,7 @@ export const payoutDetailQuery = (id: string) =>
 export const referralsListQuery = (queryString: string) =>
   queryOptions({
     queryKey: queryKeys.referrals.list(queryString),
-    queryFn: () => getReferrals(queryString),
+    queryFn: () => getCommissions(queryString),
   });
 
 export const referralSettingsQuery = () =>

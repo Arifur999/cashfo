@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { methodColor, methodLogo, methodTile, type FriendTone, type PayoutTone } from "@/lib/customer/referralDisplay";
+import { methodColor, methodLogo, methodTile, type ChipTone } from "@/lib/customer/referralDisplay";
 import type { MethodSnapshot } from "@/lib/customer/referralTypes";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -9,18 +9,20 @@ import { cn } from "@/lib/utils";
 
 // The chips of the referral boards: a pale fill, the tone's words, and a
 // 6px dot in front.
-const CHIP: Record<FriendTone | PayoutTone, { chip: string; dot: string }> = {
+const CHIP: Record<ChipTone, { chip: string; dot: string }> = {
   neutral: { chip: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" },
   warning: { chip: "bg-warning-soft text-warning", dot: "bg-warning-fill" },
   mint: { chip: "bg-mint-50 text-emerald", dot: "bg-emerald" },
   expense: { chip: "bg-expense-soft text-expense", dot: "bg-expense-fill" },
   info: { chip: "bg-info-soft text-info", dot: "bg-info" },
+  // Under check: held back by an admin for a second look.
+  check: { chip: "bg-orange-soft text-orange", dot: "bg-orange-fill" },
   // Paid out: the primary on its faint tint.
   paid: { chip: "bg-emerald-soft text-emerald", dot: "bg-emerald" },
 };
 
 interface StatusChipProps {
-  tone: FriendTone | PayoutTone;
+  tone: ChipTone;
   children: React.ReactNode;
   // The phone list's chip has no dot and 11px words.
   dot?: boolean;

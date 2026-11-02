@@ -47,7 +47,11 @@ export const guestOnlyRoutes = [LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROU
 export const openRoutes = [RESET_PASSWORD_ROUTE, GOOGLE_SIGN_IN_ROUTE, MAINTENANCE_ROUTE, VERIFY_EMAIL_ROUTE, ADMIN_INVITE_ROUTE, ADMIN_RESET_PASSWORD_ROUTE, ...LEGAL_ROUTES];
 
 export const isGuestOnlyRoute = (pathname: string) => guestOnlyRoutes.includes(pathname);
-export const isPublicRoute = (pathname: string) => isGuestOnlyRoute(pathname) || openRoutes.includes(pathname);
+// A shared profile card (/card/<code>, and its picture for social apps).
+export const PROFILE_CARD_ROUTE = "/card";
+export const profileCardPath = (code: string) => `${PROFILE_CARD_ROUTE}/${encodeURIComponent(code)}`;
+
+export const isPublicRoute = (pathname: string) => isGuestOnlyRoute(pathname) || openRoutes.includes(pathname) || pathname.startsWith(`${PROFILE_CARD_ROUTE}/`);
 
 const isUnder = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 
@@ -168,8 +172,6 @@ export const MANAGE_ROLES = {
   // Suspending/activating a customer, signing them out of every device and
   // cancelling a deletion they asked for.
   ownerStatus: ["SUPER_ADMIN", "SUPPORT_ADMIN"],
-  // A temporary password, which opens the whole account.
-  ownerPassword: ["SUPER_ADMIN"],
   ownerPlan: ["SUPER_ADMIN", "FINANCE_ADMIN"],
   // "Notes for admins" on a user's page (every admin reads them), and the
   // Users list's CSV export.

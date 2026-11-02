@@ -38,8 +38,9 @@ const TERMS_LINK = "font-semibold whitespace-nowrap text-brand-ink underline-off
 const CALLOUT_LINK = "inline-flex min-h-11 items-center text-current underline hover:text-current";
 
 interface RegisterFormProps {
-  // From a ?ref= invite link, already trimmed and capped.
+  // From a ?ref= invite link, already trimmed and capped, and its &src= tag.
   referralCode?: string;
+  referralSource?: string;
   // The API knows no such code (the link's code, as given).
   inviteUnknown?: boolean;
   // Admin > Settings has new sign-ups turned off.
@@ -49,7 +50,7 @@ interface RegisterFormProps {
 // A customer account, by the form or with Google; the invite code (from a
 // ?ref= link, or typed from a friend's message) goes with either. The
 // language it is created in becomes the account's preferred language.
-const RegisterForm = ({ referralCode, inviteUnknown = false, signupsClosed = false }: RegisterFormProps) => {
+const RegisterForm = ({ referralCode, referralSource, inviteUnknown = false, signupsClosed = false }: RegisterFormProps) => {
   // Maintenance mode, or sign-ups turned off: the API refuses sign-up, so
   // nothing can be typed and Google can't start one either -- what the
   // notice above says. The same read as that notice; the form waits on it
@@ -68,7 +69,9 @@ const RegisterForm = ({ referralCode, inviteUnknown = false, signupsClosed = fal
       const { inviteCode, ...account } = value;
       // Success redirects away. The server schema drops confirmPassword --
       // the API never sees it.
-      await run({ ...account, preferredLanguage: locale === "bn" ? "BN" : "EN", referralCode: normalizeInviteCode(inviteCode) });
+      const code = normalizeInviteCode(inviteCode);
+      // The link's tag only goes with the link's own code.
+      await run({ ...account, preferredLanguage: locale === "bn" ? "BN" : "EN", referralCode: code, ...(code === referralCode && referralSource && { referralSource }) });
     },
   });
   const inviteCode = useStore(form.store, (state) => normalizeInviteCode(state.values.inviteCode));
@@ -233,7 +236,7 @@ const RegisterForm = ({ referralCode, inviteUnknown = false, signupsClosed = fal
       </AppForm>
       <OrDivider />
       {/* As tall as Create account at every width, not the heavier 52px. */}
-      <GoogleSignInButton referralCode={inviteCode} label="Sign up with Google" size="lg" className="text-[15px] max-md:h-12 max-md:text-body-lg" disabled={closed} />
+      <GoogleSignInButton referralCode={inviteCode} referralSource={inviteCode === referralCode ? referralSource : undefined} label="Sign up with Google" size="lg" className="text-[15px] max-md:h-12 max-md:text-body-lg" disabled={closed} />
     </>
   );
 };

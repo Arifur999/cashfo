@@ -49,7 +49,7 @@ const toFormValues = (settings: IReferralSettings): IReferralSettingsFormValues 
 const CARD = "flex flex-col gap-4 p-5";
 const CHECKBOX = "size-4.5 rounded-[5px] border-line-strong data-checked:border-emerald data-checked:bg-emerald";
 
-// A number with its unit in a grey cell beside it: "20 | %", "৳ | 500".
+// A number with its unit in a grey cell beside it: "20 | %", "৳ | 300".
 const UnitInput = ({
   field,
   label,
@@ -186,7 +186,7 @@ const SettingsFormBody = ({ settings, canManage }: { settings: IReferralSettings
             </form.Field>
             <div className="grid gap-3 sm:grid-cols-3">
               <form.Field name="commissionPct" validators={{ onChange: rules.commissionPct }}>
-                {(field) => <UnitInput field={field} label="Commission" unit="%" hint="Of the friend’s first payment" disabled={disabled} />}
+                {(field) => <UnitInput field={field} label="Commission" unit="%" hint="Of every payment a friend makes" disabled={disabled} />}
               </form.Field>
               <form.Field name="friendDiscountPct" validators={{ onChange: rules.friendDiscountPct }}>
                 {(field) => <UnitInput field={field} label="Friend’s discount" unit="%" hint="Off their first payment" disabled={disabled} />}

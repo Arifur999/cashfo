@@ -3,14 +3,14 @@
 import { httpClient } from "@/lib/axios/httpClient";
 import type { ApiResponse, PaginationMeta } from "@/types/api.types";
 import type {
-  IAdminReferralRow,
+  CommissionStatusCounts,
+  IAdminCommissionRow,
   IMarkPayoutPaidPayload,
   IPayoutDetail,
   IPayoutRow,
   IReferralSettings,
   IReferralSettingsPayload,
   PayoutStatusCounts,
-  ReferralStatusCounts,
 } from "@/types/referral.types";
 
 // The lists bring their tabs' counts beside meta; they ride on meta here,
@@ -32,17 +32,20 @@ export const getPayouts = async (queryString: string) => counted<IPayoutRow, Pay
 
 export const getPayoutById = async (id: string) => httpClient.get<IPayoutDetail>(`/admin/referrals/payouts/${id}`);
 
-export const approvePayout = async (id: string) => httpClient.post<IPayoutDetail>(`/admin/referrals/payouts/${id}/approve`);
+// Lines unticked at review are held back for a second look (Under check).
+export const approvePayout = async (id: string, excludedIds: string[]) => httpClient.post<IPayoutDetail>(`/admin/referrals/payouts/${id}/approve`, excludedIds.length ? { excludedIds } : {});
 
 export const rejectPayout = async (id: string, reason: string) => httpClient.post<IPayoutDetail>(`/admin/referrals/payouts/${id}/reject`, { reason });
 
 export const markPayoutPaid = async (id: string, payload: IMarkPayoutPaidPayload) => httpClient.post<IPayoutDetail>(`/admin/referrals/payouts/${id}/mark-paid`, payload);
 
-// --- Every referral ---
+// --- Every commission ---
 
-export const getReferrals = async (queryString: string) => counted<IAdminReferralRow, ReferralStatusCounts>(`/admin/referrals?${queryString}`);
+export const getCommissions = async (queryString: string) => counted<IAdminCommissionRow, CommissionStatusCounts>(`/admin/referrals/commissions?${queryString}`);
 
-export const cancelReferral = async (id: string, reason: string) => httpClient.post<{ success: boolean }>(`/admin/referrals/${id}/cancel`, { reason });
+export const cancelCommission = async (id: string, reason: string) => httpClient.post<{ success: boolean }>(`/admin/referrals/commissions/${id}/cancel`, { reason });
+
+export const releaseCommission = async (id: string) => httpClient.post<{ success: boolean }>(`/admin/referrals/commissions/${id}/release`);
 
 // --- Settings ---
 

@@ -26,9 +26,6 @@ export const changeOwnerPlan = async (userId: string, payload: IChangeOwnerPlanP
 // contacts, ...) -- the login itself stays intact.
 export const resetOwnerData = async (userId: string) => httpClient.post<void>(`/admin/owners/${userId}/reset`);
 
-// A one-time password for a customer who can't get in; shown once.
-export const resetOwnerPassword = async (userId: string) => httpClient.post<{ temporaryPassword: string }>(`/admin/owners/${userId}/reset-password`);
-
 // Cancels a customer's "Delete my account" inside its 30 days.
 export const restoreOwner = async (userId: string) => httpClient.post<unknown>(`/admin/owners/${userId}/restore`);
 

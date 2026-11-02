@@ -56,7 +56,7 @@ describe("the two menus", () => {
           ["Group Expense"],
         ],
       ],
-      [NAV_FOOT_LABEL, [["Referrals"], ["Password Management"]]],
+      [NAV_FOOT_LABEL, [["Referrals", "Dashboard", "Referred users", "Earnings", "Withdrawals", "Invite links", "Profile & payouts"], ["Password Management"]]],
     ]);
   });
 
@@ -121,7 +121,7 @@ describe("findNavLocation", () => {
 
   it("names a Habit Tracker page under its section, and the Money Tracker's pages alone", () => {
     expect(breadcrumbFor(locate("/group-expenses")!)).toEqual({ crumbs: [], heading: "Group Expense", tone: "money" });
-    expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: [], heading: "Referral Program", tone: "neutral" });
+    expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: ["Referrals"], heading: "Referral dashboard", tone: "neutral" });
     expect(breadcrumbFor(locate("/password-manager")!)).toEqual({ crumbs: [], heading: "Password Management", tone: "vault" });    expect(breadcrumbFor(locate("/dashboard")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "money" });
     expect(breadcrumbFor(locate("/reports/detailed")!)).toEqual({ crumbs: [], heading: "Reports", tone: "insights" });
     expect(breadcrumbFor(locate("/habit-tracker")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "habits" });
@@ -203,7 +203,8 @@ describe("titleParts", () => {
     expect(titleParts(locate("/transactions")!)).toEqual(["Transactions", "Income & Expense"]);
     expect(titleParts(locate("/dashboard")!)).toEqual(["Dashboard"]);
     expect(titleParts(locate("/settings/security")!)).toEqual(["Security", "Settings"]);
-    expect(titleParts(locate("/referrals")!)).toEqual(["Referrals"]);
+    expect(titleParts(locate("/referrals")!)).toEqual(["Dashboard", "Referrals"]);
+    expect(titleParts(locate("/referrals/earnings")!)).toEqual(["Earnings", "Referrals"]);
   });
 
   it("puts a record's name first", () => {

@@ -6,7 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { cancelReferralAction } from "@/app/(dashboardLayout)/admin/referrals/_action";
+import { cancelCommissionAction } from "@/app/(dashboardLayout)/admin/referrals/_action";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import FormDialog from "@/components/shared/dialog/FormDialog";
 import FormDialogFooter from "@/components/shared/dialog/FormDialogFooter";
@@ -23,26 +23,28 @@ import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 import { buildTableQueryString } from "@/lib/queryString";
 import { queryKeys } from "@/lib/queryKeys";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { referralsListQuery } from "@/queries/referral.queries";
 import type { PaginationMeta } from "@/types/api.types";
-import type { IAdminReferralRow, ReferralStatus, ReferralStatusCounts } from "@/types/referral.types";
+import type { CommissionStatus, CommissionStatusCounts, IAdminCommissionRow } from "@/types/referral.types";
 import { referralReasonServerZodSchema } from "@/zod/referral.validation";
-import { CANCEL_REASON_TEXT, canCancelReferral, REFERRAL_STATUS_CHIP } from "./payoutsDisplay";
+import { CANCEL_REASON_TEXT, canCancelCommission, COMMISSION_STATUS_CHIP, GATEWAY_NAMES } from "./payoutsDisplay";
 import { REFERRALS_TABLE_BASE_CONFIG } from "./payoutsTable.config";
 
-
-const STATUS_TABS: { value: ReferralStatus; label: string }[] = [
-  { value: "JOINED", label: "Joined" },
-  { value: "PENDING", label: "Pending" },
+const STATUS_TABS: { value: CommissionStatus; label: string }[] = [
+  { value: "ON_HOLD", label: "On hold" },
   { value: "AVAILABLE", label: "Available" },
+  { value: "IN_WITHDRAWAL", label: "In withdrawal" },
+  { value: "UNDER_CHECK", label: "Under check" },
   { value: "PAID_OUT", label: "Paid out" },
-  { value: "CANCELLED", label: "Cancelled" },
+  { value: "REVERSED", label: "Reversed" },
+  { value: "CANCELLED", label: "Not counted" },
 ];
 
-const buildConfig = (counts: ReferralStatusCounts | undefined): ServerDataTableConfig => ({
+const buildConfig = (counts: CommissionStatusCounts | undefined): ServerDataTableConfig => ({
   ...REFERRALS_TABLE_BASE_CONFIG,
   search: { placeholder: "Member or friend", width: "sm" },
   filters: [{ id: "status", type: "tabs", label: "Status", options: STATUS_TABS.map((tab) => ({ ...tab, count: counts?.[tab.value] })) }],
@@ -53,7 +55,7 @@ const PAGER: DataTableSimplePager = {
   next: "Next",
   summary: (total, { first, last }) => (
     <ShowingRange first={first} last={last} total={total}>
-      {"Showing {range} of {total} referrals"}
+      {"Showing {range} of {total} commissions"}
     </ShowingRange>
   ),
 };
@@ -65,43 +67,47 @@ const Money = ({ value }: { value: string | null }) => {
   return value === null ? "—" : formatCurrency(value, undefined, Number(value) % 1 ? 2 : 0, locale);
 };
 
-const Bought = ({ row }: { row: IAdminReferralRow }) => {
-  const { translate } = useLocale();
-  if (row.kind === "SIGNUP_BONUS") return <span className="text-small text-ink-muted">{translate("Sign-up bonus")}</span>;
-  if (!row.payment) return <span className="text-small text-ink-muted">{translate("Not yet")}</span>;
+// The friend's payment: plan, when, and the gateway's reference to match.
+const Payment = ({ row }: { row: IAdminCommissionRow }) => {
+  const { translate, locale } = useLocale();
+  if (!row.payment) return <span className="text-small text-ink-muted">{translate(row.kind === "BONUS" ? "Sign-up bonus" : "—")}</span>;
   return (
     <span className="flex min-w-0 flex-col gap-0.5">
-      <span className="truncate text-ink">{row.payment.planName}</span>
+      <span className="truncate text-ink">
+        {row.payment.planName} · {translate(row.kind === "FIRST" ? "First payment" : "Renewal")}
+      </span>
       <Link href={`/admin/payments/${row.payment.id}`} className="truncate font-mono text-caption font-semibold text-emerald hover:underline">
-        {row.payment.displayId} · <Money value={row.paidAmount ?? row.payment.amount} />
+        {row.payment.displayId} · <Money value={row.paidAmount} />
       </Link>
+      <span className="truncate text-caption text-ink-muted">
+        {[GATEWAY_NAMES[row.payment.gateway] ?? row.payment.gateway, row.payment.reference, formatDate(row.payment.paidAt, "d MMM yyyy", "", locale)].filter(Boolean).join(" · ")}
+      </span>
     </span>
   );
 };
 
-const Commission = ({ row }: { row: IAdminReferralRow }) => {
+const Commission = ({ row }: { row: IAdminCommissionRow }) => {
   const { translate, locale } = useLocale();
-  if (row.status === "JOINED") return <span className="text-ink-muted">—</span>;
   return (
     <span className="flex flex-col gap-0.5">
-      <b className="font-semibold text-ink tabular-nums">
-        <Money value={row.commissionAmount} />
+      <b className={cn("font-semibold tabular-nums", row.status === "REVERSED" || row.status === "CANCELLED" ? "text-ink-muted line-through" : "text-ink")}>
+        <Money value={row.amount} />
       </b>
-      {row.commissionRate !== null && <span className="text-caption text-ink-muted">{translate("{rate}% of the payment", { rate: toLocaleDigits(String(row.commissionRate), locale) })}</span>}
+      <span className="text-caption text-ink-muted">{translate("{rate}% of the payment", { rate: toLocaleDigits(String(row.rate), locale) })}</span>
     </span>
   );
 };
 
-const Status = ({ row }: { row: IAdminReferralRow }) => {
+const Status = ({ row }: { row: IAdminCommissionRow }) => {
   const { translate, locale } = useLocale();
-  const chip = REFERRAL_STATUS_CHIP[row.status];
+  const chip = COMMISSION_STATUS_CHIP[row.status];
   const day = (value: string | null) => formatDate(value, "d MMM", "—", locale);
   const note =
-    row.status === "PENDING" && row.availableAt
+    row.status === "ON_HOLD"
       ? translate("Ready on {day}", { day: day(row.availableAt) })
-      : row.status === "PAID_OUT" && row.paidOutAt
-        ? translate("On {day}", { day: day(row.paidOutAt) })
-        : row.status === "CANCELLED"
+      : (row.status === "IN_WITHDRAWAL" || row.status === "UNDER_CHECK" || row.status === "PAID_OUT") && row.payout
+        ? row.payout.displayId
+        : row.status === "REVERSED" || row.status === "CANCELLED"
           ? translate(CANCEL_REASON_TEXT[row.cancelReason ?? ""] ?? "Cancelled")
           : null;
   return (
@@ -112,7 +118,7 @@ const Status = ({ row }: { row: IAdminReferralRow }) => {
   );
 };
 
-const buildColumns = (canManage: boolean, onCancel: (row: IAdminReferralRow) => void): ColumnDef<IAdminReferralRow>[] => [
+const buildColumns = (canManage: boolean, onCancel: (row: IAdminCommissionRow) => void): ColumnDef<IAdminCommissionRow>[] => [
   {
     id: "referrer",
     accessorFn: (row) => row.referrer.name,
@@ -137,13 +143,11 @@ const buildColumns = (canManage: boolean, onCancel: (row: IAdminReferralRow) => 
         <Link href={`/admin/users/${row.original.friend.id}`} className="truncate font-semibold text-ink hover:underline">
           {row.original.friend.name}
         </Link>
-        <span className="truncate text-caption text-ink-muted">
-          <JoinedOn value={row.original.joinedAt} />
-        </span>
+        <span className="truncate text-caption text-ink-muted">{row.original.friend.email}</span>
       </span>
     ),
   },
-  { id: "bought", header: "Bought", enableSorting: false, cell: ({ row }) => <Bought row={row.original} />, meta: { width: 190 } },
+  { id: "payment", header: "Payment", enableSorting: false, cell: ({ row }) => <Payment row={row.original} />, meta: { width: 230 } },
   { id: "commission", header: "Commission", enableSorting: false, cell: ({ row }) => <Commission row={row.original} />, meta: { width: 140 } },
   { id: "status", accessorKey: "status", header: "Status", enableSorting: false, cell: ({ row }) => <Status row={row.original} />, meta: { width: 150 } },
   {
@@ -151,17 +155,12 @@ const buildColumns = (canManage: boolean, onCancel: (row: IAdminReferralRow) => 
     header: "Action",
     enableSorting: false,
     cell: ({ row }) =>
-      canManage && canCancelReferral(row.original) ? <CancelButton row={row.original} onCancel={onCancel} /> : null,
+      canManage && canCancelCommission(row.original.status) ? <CancelButton row={row.original} onCancel={onCancel} /> : null,
     meta: { width: 110, align: "right" },
   },
 ];
 
-const JoinedOn = ({ value }: { value: string }) => {
-  const { translate, locale } = useLocale();
-  return translate("Joined {day}", { day: formatDate(value, "d MMM yyyy", "—", locale) });
-};
-
-const CancelButton = ({ row, onCancel }: { row: IAdminReferralRow; onCancel: (row: IAdminReferralRow) => void }) => {
+const CancelButton = ({ row, onCancel }: { row: IAdminCommissionRow; onCancel: (row: IAdminCommissionRow) => void }) => {
   const { translate } = useLocale();
   return (
     <Button type="button" variant="secondary" size="xs" className="h-8 border-expense-line px-2.75 text-[12.5px] text-expense hover:bg-expense-soft" onClick={() => onCancel(row)} aria-label={`${translate("Cancel commission")} ${row.friend.name}`}>
@@ -172,10 +171,10 @@ const CancelButton = ({ row, onCancel }: { row: IAdminReferralRow; onCancel: (ro
 
 // Cancelling a commission: the audit log keeps the reason, and the member
 // is told in the app.
-const CancelForm = ({ row, onDone }: { row: IAdminReferralRow; onDone: () => void }) => {
+const CancelForm = ({ row, onDone }: { row: IAdminCommissionRow; onDone: () => void }) => {
   const { translate, locale } = useLocale();
   const { run, isPending } = useActionMutation({
-    action: (values: { reason: string }) => cancelReferralAction(row.id, values),
+    action: (values: { reason: string }) => cancelCommissionAction(row.id, values),
     successMessage: "Commission cancelled",
     invalidateKeys: [queryKeys.referrals.all],
   });
@@ -190,7 +189,7 @@ const CancelForm = ({ row, onDone }: { row: IAdminReferralRow; onDone: () => voi
       <p className="text-body leading-relaxed text-ink-2">
         {translate("{name} loses the {amount} earned from {friend}, and is told in the app.", {
           name: row.referrer.name,
-          amount: formatCurrency(row.commissionAmount, undefined, 0, locale),
+          amount: formatCurrency(row.amount ?? 0, undefined, Number(row.amount ?? 0) % 1 ? 2 : 0, locale),
           friend: row.friend.name,
         })}
       </p>
@@ -202,18 +201,19 @@ const CancelForm = ({ row, onDone }: { row: IAdminReferralRow; onDone: () => voi
   );
 };
 
-// Every friend who joined with a member's link: what they bought, the
-// commission and where it stands. A waiting or ready commission can be
-// cancelled by those who manage payouts.
+// Every commission line: the member, the friend, the payment it is a share
+// of (with the gateway reference to match), the share and where it stands.
+// One on hold, available or under check can be cancelled by those who
+// manage payouts.
 const ReferralsTable = ({ canManage }: { canManage: boolean }) => {
   const searchParams = useSearchParams();
   const { translate } = useLocale();
   const queryString = buildTableQueryString(searchParams, REFERRALS_TABLE_BASE_CONFIG);
   const query = useQuery({ ...referralsListQuery(queryString), placeholderData: keepPreviousData });
-  const counts = (query.data?.meta as (PaginationMeta & { statusCounts?: ReferralStatusCounts }) | undefined)?.statusCounts;
+  const counts = (query.data?.meta as (PaginationMeta & { statusCounts?: CommissionStatusCounts }) | undefined)?.statusCounts;
   const config = useMemo(() => buildConfig(counts), [counts]);
-  const { dataTableProps } = useServerDataTable<IAdminReferralRow>(config);
-  const { activeRow, openDialog, getDialogProps } = useRowDialogs<IAdminReferralRow, "cancel">();
+  const { dataTableProps } = useServerDataTable<IAdminCommissionRow>(config);
+  const { activeRow, openDialog, getDialogProps } = useRowDialogs<IAdminCommissionRow, "cancel">();
   const columns = useMemo(() => buildColumns(canManage, (row) => openDialog("cancel", row)), [canManage, openDialog]);
   const dialog = getDialogProps("cancel");
 
@@ -222,14 +222,14 @@ const ReferralsTable = ({ canManage }: { canManage: boolean }) => {
       <DataTable
         {...dataTableProps}
         {...toTableQueryProps(query)}
-        errorTitle="Couldn't load referrals"
+        errorTitle="Couldn't load commissions"
         errorDescription="The server didn't answer. Nothing was changed."
         data={query.data?.data}
         columns={columns}
         layout={LAYOUT}
         getRowId={(row) => row.id}
         pager={PAGER}
-        emptyMessage={searchParams.get("status") || searchParams.get("search") ? "No referrals match these filters." : "No one has joined with a link yet."}
+        emptyMessage={searchParams.get("status") || searchParams.get("search") ? "No commissions match these filters." : "No friend has paid yet."}
       />
       <FormDialog {...dialog} title={translate("Cancel the commission for {friend}", { friend: activeRow?.friend.name ?? "" })} size="sm">
         {activeRow && <CancelForm row={activeRow} onDone={() => dialog.onOpenChange(false)} />}

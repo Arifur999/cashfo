@@ -1,6 +1,7 @@
 "use client";
 
 import { Copy, Gift, Mail, MessageCircle, QrCode, Share } from "lucide-react";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
@@ -19,9 +20,10 @@ interface InviteLinkCardProps {
   origin: string;
   commissionPct: number;
   friendDiscountPct: number;
-  holdDays: number;
   // The program is paused: new purchases earn nothing for now.
   paused: boolean;
+  // Every invite link, the main one too (Referrals > Invite links).
+  linkCount: number;
 }
 
 // How long the page waits for the Messenger app to take over before it
@@ -38,12 +40,12 @@ function MessengerIcon({ className }: { className?: string }) {
   );
 }
 
-// The invite link and code, each copied in a tap, with WhatsApp, Messenger,
-// email and a QR code a tap away (ReferralDashboard). Phones get the
+// The main invite link, copied in a tap, with WhatsApp, Messenger, email
+// and a QR code a tap away, and the way to every link (ReferralDashboard). Phones get the
 // board's card (ReferralMobile): the code, one big WhatsApp button and four
 // squares (Messenger, Copy link, QR code, and More for the phone's own
 // share sheet).
-export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct, holdDays, paused }: InviteLinkCardProps) {
+export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct, paused, linkCount }: InviteLinkCardProps) {
   const { t, fmt } = useLocale();
   const copy = useCopy();
   const [qrOpen, setQrOpen] = useState(false);
@@ -107,12 +109,12 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
           <span className="md:hidden">{t("Invite friends")}</span>
           <span className="hidden md:inline">{t("Your invite link")}</span>
         </h2>
-        <span className="flex items-center gap-1.5 text-caption text-ink-muted md:text-[12.5px]">
-          {t("Code")} <b className="font-mono font-bold text-ink md:tracking-[0.04em]">{code}</b>
-          <button type="button" onClick={() => copy(code, t("Code copied"))} aria-label={t("Copy code")} className="hidden size-6.5 items-center justify-center rounded-full bg-surface-sunken text-ink-soft hover:text-ink md:flex">
-            <Copy className="size-3.25" aria-hidden="true" />
-          </button>
+        <span className="flex items-center gap-1.5 text-caption text-ink-muted md:hidden">
+          {t("Code")} <b className="font-mono font-bold text-ink">{code}</b>
         </span>
+        <Link href="/referrals/links" className="hidden rounded-sm text-[13px] font-semibold text-emerald hover:underline md:inline">
+          {t("All links ({count})", { count: formatCount(linkCount, fmt) })}
+        </Link>
       </div>
 
       {/* Phones */}
@@ -176,12 +178,11 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
           <span>{t("The Referral Program is paused. Friends can still sign up with your link, but new purchases don't earn a commission for now.")}</span>
         ) : (
           <>
-            <span className="md:hidden">{fillNodes(t("Friends get {discount}. You get {commission} of what they pay."), { discount: bold(t("{pct} off", { pct: pct(friendDiscountPct) })), commission: bold(pct(commissionPct)) })}</span>
+            <span className="md:hidden">{fillNodes(t("Friends get {discount}. You get {commission} of every payment."), { discount: bold(t("{pct} off", { pct: pct(friendDiscountPct) })), commission: bold(pct(commissionPct)) })}</span>
             <span className="hidden md:inline">
-              {fillNodes(t("{friends} their first plan with your link. You get {commission} of what they pay, {days} days after they pay."), {
-                friends: bold(t("Friends get {pct} off", { pct: pct(friendDiscountPct) })),
+              {t("You get {commission} of every payment your friends make, for as long as they keep paying. Friends get {discount} off their first payment.", {
                 commission: pct(commissionPct),
-                days: formatCount(holdDays, fmt),
+                discount: pct(friendDiscountPct),
               })}
             </span>
           </>

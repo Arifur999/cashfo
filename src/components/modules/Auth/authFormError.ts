@@ -48,6 +48,10 @@ export const INVITE_CODE_MAX_LENGTH = 64;
 // An invite code as the API looks it up: trimmed, capped, and upper-case --
 // every code is upper-case hex (ReferralsService), while one typed from a
 // text message often isn't.
+// An invite link's &src= tag (the place it was shared): small letters and
+// numbers, or nothing.
+export const normalizeInviteSource = (value: unknown): string | undefined => (typeof value === "string" && /^[a-z0-9]{2,20}$/.test(value) ? value : undefined);
+
 export const normalizeInviteCode = (value: unknown): string | undefined => {
   if (typeof value !== "string") {
     return undefined;

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
-import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -17,21 +16,25 @@ import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDispl
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { startWithdrawalAction, type ReferralResult } from "@/lib/customer/referralActions";
-import { addWorkingDays, amountChips, amountProblem, balancesOf, maskAccount, maskEmail, maskWallet, METHOD_BRANDS, programOf, speedOf } from "@/lib/customer/referralDisplay";
-import type { PayoutMethod, PayoutRequest, ReferralProgramInfo, WithdrawalChallenge } from "@/lib/customer/referralTypes";
+import { addWorkingDays, balancesOf, maskAccount, maskWallet, METHOD_BRANDS, programOf, speedOf } from "@/lib/customer/referralDisplay";
+import type { Earning, PayoutMethod, PayoutRequest, ReferralProgramInfo, WithdrawalChallenge } from "@/lib/customer/referralTypes";
 import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { useEarningLine } from "./DashboardCards";
+import { WITHDRAWALS_ROUTE } from "./EarningsHero";
 import { PayoutMethodDrawer } from "./PayoutMethodDrawer";
+import { useMethodWords } from "./PayoutMethodsCard";
 import { MethodTile, StepNumber } from "./ReferralBits";
-import { useMethodWords } from "./WithdrawalsTab";
 import { WithdrawOtpDialog } from "./WithdrawOtpDialog";
 import { WithdrawSubmitted } from "./WithdrawSubmitted";
 
 interface WithdrawPageClientProps {
   info: ReferralProgramInfo | null;
+  // Every line ready to withdraw, oldest first.
+  lines: Earning[] | null;
   methods: PayoutMethod[];
   // The open workspace, when the reader keeps its books (the income step);
   // null hides the step.
@@ -40,7 +43,6 @@ interface WithdrawPageClientProps {
   savingsWallets: Account[];
   currency: string;
   userName: string;
-  email: string;
   today: string;
 }
 
@@ -50,16 +52,17 @@ const clockNow = () => Date.now();
 
 type Problem = { field: "amount" | "method" | "income" | "form"; message: string };
 
-// Withdraw your earnings (WithdrawPage): 1 how much (chips for the
-// smallest, a round sum and everything), 2 where it goes (the saved
+// Withdraw your earnings (WithdrawPage): 1 the payments to withdraw (every
+// ready commission line, all ticked to start), 2 where it goes (the saved
 // accounts, or add one in the drawer), 3 keep your books right (book it as
 // Referral income in a wallet when paid; optional), with the summary
 // beside it. Continue emails a one-time code; the code makes the request,
 // and the page turns into the request sent.
-export function WithdrawPageClient({ info, methods: initialMethods, businessId, wallets, savingsWallets, currency, userName, email, today }: WithdrawPageClientProps) {
+export function WithdrawPageClient({ info, lines, methods: initialMethods, businessId, wallets, savingsWallets, currency, userName, today }: WithdrawPageClientProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const words = useMethodWords();
+  const describe = useEarningLine();
   const program = info ? programOf(info) : null;
   const balances = info ? balancesOf(info) : null;
   const available = balances?.available ?? 0;
@@ -69,7 +72,8 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
   const [methods, setMethods] = useState(initialMethods);
   const usable = (method: PayoutMethod) => !program || program.methods.includes(method.type);
   const [methodId, setMethodId] = useState(() => (initialMethods.find((m) => m.isDefault && usable(m)) ?? initialMethods.find(usable))?.id ?? "");
-  const [amountText, setAmountText] = useState(() => (available >= minimum && available > 0 ? String(available) : ""));
+  const readyLines = lines ?? [];
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(readyLines.map((line) => line.id)));
   const allWallets = [...wallets, ...savingsWallets];
   const [bookIt, setBookIt] = useState(businessId !== null && allWallets.length > 0);
   const [walletId, setWalletId] = useState(allWallets[0]?.id ?? "");
@@ -82,7 +86,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
   const [submitted, setSubmitted] = useState<{ request: PayoutRequest; left: number } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  if (!info || !program || !balances) {
+  if (!info || !program || !balances || !lines) {
     return (
       <PageFrame className="max-md:pt-4 md:gap-5">
         <TopbarExtras record={t("Withdraw@@referral")} />
@@ -92,35 +96,38 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
   }
 
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
-  const amount = Number(amountText || "0");
+  const amount = readyLines.filter((line) => picked.has(line.id)).reduce((sum, line) => Math.round((sum + Number(line.amount)) * 100) / 100, 0);
+  const allPicked = readyLines.length > 0 && picked.size === readyLines.length;
   const method = methods.find((m) => m.id === methodId) ?? null;
   const wallet = allWallets.find((w) => w.id === walletId) ?? null;
   const walletName = (w: Account) => accountDisplayName(w, displayLanguage(locale));
   const receive = Math.max(0, amount - fee);
-  const amountIssue = amountProblem(amount, available, minimum, fee);
+  const amountIssue = picked.size === 0 ? "NO_LINES" : amount < minimum ? "BELOW_MINIMUM" : amount <= fee ? "FEE_EXCEEDS_AMOUNT" : null;
   const payBy = addWorkingDays(today, program.payWithinDays);
   const payByText = formatDate(`${payBy}T06:00:00Z`, "EEE, d MMM", payBy, fmt);
   const destination = method ? (method.type === "BANK" ? (method.bankName ?? t("Bank")) : METHOD_BRANDS[method.type].name) : "";
   const destinationNumber = method ? (method.type === "BANK" ? maskAccount(method.accountNumber) : maskWallet(method.walletNumber)) : "";
-  const chips = amountChips(available, minimum);
   const errorFor = (field: Problem["field"]) => (problem?.field === field ? problem.message : null);
 
-  const amountMessage = (issue: ReturnType<typeof amountProblem>) =>
+  const amountMessage = (issue: NonNullable<typeof amountIssue>) =>
     issue === "BELOW_MINIMUM"
-      ? t("The smallest withdrawal is {amount}.", { amount: money(minimum) })
-      : issue === "ABOVE_AVAILABLE"
-        ? t("You can withdraw up to {amount}.", { amount: money(available) })
-        : issue === "FEE_EXCEEDS_AMOUNT"
-          ? t("The amount must be more than the transfer fee.")
-          : t("Enter how much to withdraw.");
+      ? t("The smallest withdrawal is {amount}. Tick more payments.", { amount: money(minimum) })
+      : issue === "FEE_EXCEEDS_AMOUNT"
+        ? t("The amount must be more than the transfer fee.")
+        : t("Tick the payments you want to withdraw.");
+
+  function pick(ids: string[]) {
+    setPicked(new Set(ids));
+    if (problem?.field === "amount") setProblem(null);
+  }
 
   // The API's refusal, put where it belongs.
   function refused(result: ReferralResult<unknown>) {
     const reason = result.reason ?? "";
     setChallenge(null);
     if (reason === "BELOW_MINIMUM") setProblem({ field: "amount", message: t("The smallest withdrawal is {amount}.", { amount: money(result.minWithdrawal ?? minimum) }) });
-    else if (reason === "ABOVE_AVAILABLE") {
-      setProblem({ field: "amount", message: t("You can withdraw up to {amount}.", { amount: money(result.available ?? available) }) });
+    else if (reason === "LINES_CHANGED" || reason === "NO_LINES") {
+      setProblem({ field: "amount", message: t("Some of these payments are no longer ready. We reloaded the list; tick them again.") });
       router.refresh();
     } else if (reason === "FEE_EXCEEDS_AMOUNT") setProblem({ field: "amount", message: t("The amount must be more than the transfer fee.") });
     else if (reason === "METHOD_NOT_FOUND") {
@@ -135,7 +142,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
 
   async function start(): Promise<void> {
     const result = await startWithdrawalAction({
-      amount,
+      commissionIds: [...picked],
       methodId,
       ...(bookIt && businessId && wallet && { income: { businessId, accountId: wallet.id } }),
     }).catch(() => null);
@@ -156,7 +163,6 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
     if (isPending) return;
     if (amountIssue) {
       setProblem({ field: "amount", message: amountMessage(amountIssue) });
-      document.getElementById("wd-amount")?.focus();
       return;
     }
     if (!method) {
@@ -182,8 +188,8 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
         <WithdrawSubmitted
           request={submitted.request}
           left={submitted.left}
-          pending={balances.pending}
-          pendingNextAt={balances.pendingNextAt}
+          pending={balances.onHold}
+          pendingNextAt={balances.onHoldNextAt}
           incomeWallet={submitted.request.income ? (submitted.request.income.accountName ?? (wallet ? walletName(wallet) : null)) : null}
           currency={currency}
           today={today}
@@ -194,20 +200,20 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
 
   const facts = [
     { icon: Clock, text: t("Paid by {date} ({days} working days; Friday and Saturday are off).", { date: payByText, days: formatCount(program.payWithinDays, fmt) }) },
-    { icon: X, text: t("You can cancel the request until it is approved.") },
-    { icon: ShieldCheck, text: t("We email a 6-digit code to {email} before anything is sent.", { email: maskEmail(email) }) },
+    { icon: X, text: t("You can cancel while we are still checking.") },
+    { icon: ShieldCheck, text: t("We send you a 6-digit code before anything is sent.") },
   ];
 
   return (
     <PageFrame className="max-md:pt-4 md:gap-4.5">
       <TopbarExtras record={t("Withdraw@@referral")} />
-      <Link href="/referrals" className="flex w-fit items-center gap-1.5 rounded-sm text-[13.5px] font-medium text-ink-soft hover:text-ink">
+      <Link href={WITHDRAWALS_ROUTE} className="flex w-fit items-center gap-1.5 rounded-sm text-[13.5px] font-medium text-ink-soft hover:text-ink">
         <ChevronLeft className="size-4" aria-hidden="true" />
-        {t("Referral Program")}
+        {t("Withdrawals")}
       </Link>
       <div className="flex flex-col gap-1">
         <h1 className="text-page-title text-ink">{t("Withdraw your earnings")}</h1>
-        <p className="text-body text-ink-muted">{t("The money goes to your bKash, Nagad, Rocket or bank account, usually within {days} working days.", { days: formatCount(program.payWithinDays, fmt) })}</p>
+        <p className="text-body text-ink-muted">{t("Pick what to withdraw and where to send it. We check each friend's payment, then send the money, usually within {days} working days.", { days: formatCount(program.payWithinDays, fmt) })}</p>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -216,53 +222,57 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
             {available < minimum && (
               <div role="note" className="mx-4 mt-4 flex items-start gap-2.5 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3 text-[13px] leading-normal text-warning-ink md:mx-6 md:mt-5">
                 <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-                <span>{t("You have {amount} to withdraw. You can withdraw once you have {min}.", { amount: money(available), min: money(minimum) })}</span>
+                <span>{t("You have {amount} ready. You can withdraw once you have {min}.", { amount: money(available), min: money(minimum) })}</span>
               </div>
             )}
             <section aria-labelledby="wd-s1" className="flex flex-col gap-3 border-b border-divider px-4 py-5 md:px-6">
-              <h2 id="wd-s1" className="flex items-center gap-2.5 text-title text-ink">
-                <StepNumber n={1} />
-                {t("How much?")}
-              </h2>
-              <AmountInput
-                id="wd-amount"
-                value={amountText}
-                onChange={(value) => {
-                  setAmountText(value);
-                  if (problem?.field === "amount") setProblem(null);
-                }}
-                currency={currency}
-                invalid={!!errorFor("amount")}
-                describedBy="wd-hint"
-              />
-              {errorFor("amount") && (
-                <p id="wd-amount-error" role="alert" className="flex items-center gap-2 text-caption text-expense">
+              <div className="flex items-center justify-between gap-3">
+                <h2 id="wd-s1" className="flex items-center gap-2.5 text-title text-ink">
+                  <StepNumber n={1} />
+                  {t("What you're withdrawing")}
+                </h2>
+                {readyLines.length > 1 && (
+                  <button type="button" onClick={() => pick(allPicked ? [] : readyLines.map((line) => line.id))} className="rounded-sm text-[13px] font-semibold text-emerald hover:underline">
+                    {allPicked ? t("Untick all") : t("Tick all")}
+                  </button>
+                )}
+              </div>
+              {readyLines.length === 0 ? (
+                <p className="rounded-field border border-line px-3.5 py-3 text-small text-ink-muted">{t("Nothing is ready to withdraw yet. Each payment is ready {days} days after your friend pays.", { days: formatCount(program.holdDays, fmt) })}</p>
+              ) : (
+                <div className="overflow-hidden rounded-field border border-line">
+                  <ul aria-labelledby="wd-s1">
+                    {readyLines.map((line) => {
+                      const on = picked.has(line.id);
+                      return (
+                        <li key={line.id} className="border-b border-divider last:border-b-0">
+                          <label className="flex cursor-pointer items-center gap-3 px-3.5 py-2.5 hover:bg-hover">
+                            <Checkbox checked={on} onCheckedChange={(next) => pick(next === true ? [...picked, line.id] : [...picked].filter((id) => id !== line.id))} className="size-4.5 rounded-[5px] border-[1.5px] border-ink-faint" />
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <span className="truncate text-body font-semibold text-ink">{line.friendName}</span>
+                              <span className="truncate text-caption text-ink-muted">{describe(line, today)}</span>
+                            </span>
+                            <span className="text-caption text-ink-muted tabular-nums max-sm:hidden">{Number(line.paidAmount) > 0 ? t("paid {amount}", { amount: money(line.paidAmount) }) : ""}</span>
+                            <span className={cn("w-24 text-right text-body font-bold tabular-nums", on ? "text-ink" : "text-ink-muted")}>{money(line.amount)}</span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <div className="flex items-center justify-between gap-3 border-t border-line bg-strip px-3.5 py-2.5 text-small">
+                    <span className="text-ink-soft">{t("{picked} of {total} payments", { picked: formatCount(picked.size, fmt), total: formatCount(readyLines.length, fmt) })}</span>
+                    <b className="font-bold text-ink tabular-nums">{money(amount)}</b>
+                  </div>
+                </div>
+              )}
+              {errorFor("amount") ? (
+                <p role="alert" className="flex items-center gap-2 text-caption text-expense">
                   <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
                   {errorFor("amount")}
                 </p>
+              ) : (
+                picked.size > 0 && <span className="text-[12.5px] text-ink-muted">{t(picked.size === 1 ? "Our team checks this payment before sending the money." : "Our team checks these {count} payments before sending the money.", { count: formatCount(picked.size, fmt) })}</span>
               )}
-              <div className="flex flex-wrap items-center gap-2">
-                {chips.map((chip) => {
-                  const on = amount === chip.value;
-                  return (
-                    <button
-                      key={`${chip.all}-${chip.value}`}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => {
-                        setAmountText(String(chip.value));
-                        if (problem?.field === "amount") setProblem(null);
-                      }}
-                      className={cn("h-8 shrink-0 rounded-full px-3 text-[13px] font-semibold whitespace-nowrap tabular-nums transition-colors", on ? "border-[1.5px] border-emerald bg-emerald-soft text-emerald" : "border border-input bg-surface text-ink-2 hover:bg-surface-sunken")}
-                    >
-                      {chip.all ? t("All · {amount}", { amount: money(chip.value) }) : money(chip.value)}
-                    </button>
-                  );
-                })}
-                <span id="wd-hint" className="text-[12.5px] text-ink-muted sm:ml-auto">
-                  {t("At least {min} · up to {max}", { min: money(minimum), max: money(available) })}
-                </span>
-              </div>
             </section>
 
             <section aria-labelledby="wd-s2" className="flex flex-col gap-3 border-b border-divider px-4 py-5 md:px-6">
@@ -410,9 +420,9 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
 
             <div className="flex items-center justify-end gap-2.5 rounded-b-card border-t border-line bg-strip px-4 py-3.5 max-sm:flex-col-reverse max-sm:items-stretch md:px-6">
               <Button asChild variant="ghost" size="lg" className="h-10.5 px-4 text-ink-soft">
-                <Link href="/referrals">{t("Cancel")}</Link>
+                <Link href={WITHDRAWALS_ROUTE}>{t("Cancel")}</Link>
               </Button>
-              <Button type="submit" size="lg" disabled={isPending || available < minimum} className="h-10.5 px-4.5">
+              <Button type="submit" size="lg" disabled={isPending || readyLines.length === 0 || available < minimum} className="h-10.5 px-4.5">
                 {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <ShieldCheck className="size-4" />}
                 {t("Continue · confirm with a code")}
               </Button>
@@ -427,7 +437,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
             </h2>
             <dl className="flex flex-col gap-2.5 text-body tabular-nums">
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-soft">{t("Available now")}</dt>
+                <dt className="text-ink-soft">{t("Ready now")}</dt>
                 <dd className="font-semibold text-ink">{money(available)}</dd>
               </div>
               <div className="flex justify-between gap-3">
@@ -449,7 +459,7 @@ export function WithdrawPageClient({ info, methods: initialMethods, businessId, 
               )}
             </div>
             <div className="flex justify-between gap-3 text-body tabular-nums">
-              <span className="text-ink-soft">{t("Left to withdraw later")}</span>
+              <span className="text-ink-soft">{t("Left after this")}</span>
               <b className="font-bold text-ink">{money(Math.max(0, available - (amount || 0)))}</b>
             </div>
             <ul className="flex flex-col gap-2.25 border-t border-divider pt-3">

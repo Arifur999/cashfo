@@ -34,6 +34,7 @@ import {
   isGuestOnlyRoute,
   LOGIN_ROUTE,
   openRoutes,
+  PROFILE_CARD_ROUTE,
   routeAudience,
   SESSION_EXPIRED_REASON,
   sessionFromClaims,
@@ -66,7 +67,8 @@ export async function proxy(request: NextRequest) {
 
   // A reset link works for whoever opens it, and the Google landing route
   // replaces whatever session was there -- neither depends on the current one.
-  if (openRoutes.includes(pathname)) {
+  // A shared profile card is for anyone, signed in or not.
+  if (openRoutes.includes(pathname) || pathname.startsWith(`${PROFILE_CARD_ROUTE}/`)) {
     return NextResponse.next();
   }
 

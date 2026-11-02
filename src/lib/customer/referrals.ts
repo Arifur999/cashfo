@@ -7,39 +7,47 @@ import { getClientHeaders } from "@/lib/axios/clientHeaders";
 import { API_BASE_URL } from "./api";
 import { customerApi } from "./apiClient";
 import { emptyUnlessOutage } from "./readFallback";
-import type { PayoutMethod, ReferralInvite, ReferralProgramInfo, WithdrawalList } from "./referralTypes";
+import type { Earning, EarningList, FriendFilter, FriendList, PayoutMethod, ReferralInvite, ReferralLink, ReferralProfile, ReferralProgramInfo, WithdrawalList } from "./referralTypes";
 
-// How many withdrawals a page of the Withdrawals tab lists.
+// How many rows a page of each list shows.
 export const WITHDRAWALS_PAGE_SIZE = 10;
+export const FRIENDS_PAGE_SIZE = 20;
+export const EARNINGS_PAGE_SIZE = 20;
 
-export const getReferralInfo = cache(async (): Promise<ReferralProgramInfo | null> => {
+// GET with the outage rule; a 4xx reads as `empty`.
+async function read<T>(path: string, empty: T, params?: Record<string, string | number | undefined>): Promise<T> {
   try {
-    const response = await customerApi.get<ReferralProgramInfo>("/api/referrals");
+    const response = await customerApi.get<T>(path, params ? { params } : undefined);
     return response.data;
   } catch (error) {
-    return emptyUnlessOutage(error, null);
+    return emptyUnlessOutage(error, empty);
   }
-});
+}
 
-// Where the member's money can be sent. An older backend without the
-// route answers 404, which reads as none saved.
+export const getReferralInfo = cache(() => read<ReferralProgramInfo | null>("/api/referrals", null));
+
+// Where the member's money can be sent.
 export const getPayoutMethods = cache(async (): Promise<PayoutMethod[]> => {
-  try {
-    const response = await customerApi.get<PayoutMethod[]>("/api/referrals/payout-methods");
-    return Array.isArray(response.data) ? response.data : [];
-  } catch (error) {
-    return emptyUnlessOutage(error, []);
-  }
+  const methods = await read<PayoutMethod[]>("/api/referrals/payout-methods", []);
+  return Array.isArray(methods) ? methods : [];
 });
 
-export const getWithdrawals = cache(async (page: number = 1): Promise<WithdrawalList | null> => {
-  try {
-    const response = await customerApi.get<WithdrawalList>("/api/referrals/withdrawals", { params: { page, limit: WITHDRAWALS_PAGE_SIZE } });
-    return response.data;
-  } catch (error) {
-    return emptyUnlessOutage(error, null);
-  }
-});
+export const getWithdrawals = cache((page: number = 1) => read<WithdrawalList | null>("/api/referrals/withdrawals", null, { page, limit: WITHDRAWALS_PAGE_SIZE }));
+
+export const getReferredFriends = cache((page: number, standing: FriendFilter | undefined, search: string | undefined) =>
+  read<FriendList | null>("/api/referrals/friends", null, { page, limit: FRIENDS_PAGE_SIZE, standing, search: search || undefined }),
+);
+
+export const getEarnings = cache((page: number, status: string | undefined, month: string | undefined, search: string | undefined) =>
+  read<EarningList | null>("/api/referrals/earnings", null, { page, limit: EARNINGS_PAGE_SIZE, status, month, search: search || undefined }),
+);
+
+// Every line ready to withdraw, oldest first.
+export const getAvailableEarnings = cache(async (): Promise<Earning[] | null> => (await read<{ data: Earning[] } | null>("/api/referrals/earnings/available", null))?.data ?? null);
+
+export const getReferralLinks = cache(() => read<ReferralLink[] | null>("/api/referrals/links", null));
+
+export const getReferralProfile = cache(() => read<ReferralProfile | null>("/api/referrals/profile", null));
 
 // The sign-up page waits on this one, so a slow API gets this long.
 const INVITE_READ_TIMEOUT_MS = 3000;

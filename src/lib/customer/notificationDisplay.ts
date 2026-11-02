@@ -118,7 +118,8 @@ const NOT_YOU = "If this wasn't you, change your password now.";
 
 const PLANS_PATH = "/settings/plans";
 const REFERRALS_PATH = "/referrals";
-const WITHDRAWALS_PATH = "/referrals?tab=withdrawals";
+const EARNINGS_PATH = "/referrals/earnings";
+const WITHDRAWALS_PATH = "/referrals/withdrawals";
 const SECURITY_PATH = "/settings/security";
 // Ideas are voted on from Help & support.
 const IDEAS_PATH = "/settings/help";
@@ -180,12 +181,18 @@ function referralView(data: UserNotification["data"], { t, locale, money, day }:
   const name = text(data.friendName).trim() || t("Your friend");
   const plan = text(data.planName).trim();
   const amount = money(data.amount);
-  const view = (kind: NotificationKind, title: string, body: string, href = REFERRALS_PATH): NotificationView => ({ kind, title, body, href });
+  const view = (kind: NotificationKind, title: string, body: string, href = EARNINGS_PATH): NotificationView => ({ kind, title, body, href });
   switch (data.event) {
     case "COMMISSION_PENDING":
       return view(
         "referral",
-        plan ? t("{name} bought {plan}", { name, plan }) : t("{name} bought a plan", { name }),
+        data.kind === "RENEWAL"
+          ? plan
+            ? t("{name} renewed {plan}", { name, plan })
+            : t("{name} renewed their plan", { name })
+          : plan
+            ? t("{name} bought {plan}", { name, plan })
+            : t("{name} bought a plan", { name }),
         t("You earned {amount}. You can withdraw it from {date}.", { amount, date: day(data.availableAt) }),
       );
     case "COMMISSION_AVAILABLE":
@@ -206,6 +213,22 @@ function referralView(data: UserNotification["data"], { t, locale, money, day }:
           ? t("{name}'s payment was refunded, so the {amount} reward was cancelled.", { name, amount })
           : t("The {amount} reward for inviting {name} was cancelled.", { name, amount }),
       );
+    case "COMMISSION_UNDER_CHECK": {
+      // Lines an admin held back from a withdrawal for a second look.
+      const count = Number(data.count ?? 0);
+      const id = text(data.displayId).trim();
+      return view(
+        "referralLost",
+        t("Some payments are being checked"),
+        t(count === 1 ? "We held back {count} payment from {id} to check it. The rest is on its way." : "We held back {count} payments from {id} to check them. The rest is on its way.", {
+          count: formatCount(count, locale),
+          id,
+        }),
+        WITHDRAWALS_PATH,
+      );
+    }
+    case "COMMISSION_RELEASED":
+      return view("referral", t("{amount} is ready to withdraw again", { amount }), t("We checked {name}'s payment. You can withdraw it now.", { name }));
     case "INVITE_REMINDER": {
       // Sent to the invited friend, whose discount is on Plans.
       const referrer = text(data.referrerFirstName).trim() || t("Your friend");

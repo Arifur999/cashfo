@@ -165,9 +165,11 @@ describe("notificationView for account rows", () => {
 
   it("words every referral event", () => {
     const pending = { event: "COMMISSION_PENDING", referralId: "r1", friendName: "Karim", planName: "Pro", amount: 59.8, paidAmount: "299.00", availableAt: "2026-11-01T00:00:00.000Z" };
-    expect(en("REFERRAL", pending)).toEqual({ kind: "referral", title: "Karim bought Pro", body: "You earned ৳ 59.80. You can withdraw it from 1 Nov 2026.", href: "/referrals" });
+    expect(en("REFERRAL", pending)).toEqual({ kind: "referral", title: "Karim bought Pro", body: "You earned ৳ 59.80. You can withdraw it from 1 Nov 2026.", href: "/referrals/earnings" });
     expect(bn("REFERRAL", pending)).toMatchObject({ title: "Karim Pro কিনেছেন", body: "আপনি ৳ ৫৯.৮০ পেয়েছেন। ১ নভে ২০২৬ থেকে তুলতে পারবেন।" });
     expect(en("REFERRAL", { ...pending, planName: null }).title).toBe("Karim bought a plan");
+    expect(en("REFERRAL", { ...pending, kind: "RENEWAL" }).title).toBe("Karim renewed Pro");
+    expect(bn("REFERRAL", { ...pending, kind: "RENEWAL" }).title).toBeTruthy();
 
     const available = { event: "COMMISSION_AVAILABLE", referralId: "r1", friendName: "Karim", amount: "60.00" };
     expect(en("REFERRAL", available)).toMatchObject({ kind: "referral", title: "৳ 60 is ready to withdraw", body: "Your reward for inviting Karim." });
@@ -183,6 +185,17 @@ describe("notificationView for account rows", () => {
     expect(en("REFERRAL", { ...cancelled, reason: "ADMIN" }).body).toBe("The ৳ 60 reward for inviting Karim was cancelled.");
     expect(bn("REFERRAL", cancelled).body).toBe("Karim-এর পেমেন্ট ফেরত দেওয়া হয়েছে, তাই ৳ ৬০ পুরস্কার বাতিল হয়েছে।");
 
+    // Lines held back from a withdrawal for a check, and one let go again.
+    const held = { event: "COMMISSION_UNDER_CHECK", payoutId: "w1", displayId: "WD-1048", count: 2 };
+    expect(en("REFERRAL", held)).toEqual({
+      kind: "referralLost",
+      title: "Some payments are being checked",
+      body: "We held back 2 payments from WD-1048 to check them. The rest is on its way.",
+      href: "/referrals/withdrawals",
+    });
+    const released = { event: "COMMISSION_RELEASED", commissionId: "c1", friendName: "Karim", amount: "35.80" };
+    expect(en("REFERRAL", released)).toMatchObject({ kind: "referral", href: "/referrals/earnings" });
+
     // The invited friend's nudge leads to the plans their discount is on.
     const nudge = { event: "INVITE_REMINDER", referrerFirstName: "Rahim", friendDiscountPct: 10 };
     expect(en("REFERRAL", nudge)).toEqual({ kind: "referral", title: "Rahim invited you to a paid plan", body: "Get 10% off your first plan.", href: "/settings/plans" });
@@ -192,7 +205,7 @@ describe("notificationView for account rows", () => {
 
   it("words every payout event and opens the withdrawals", () => {
     const base = { payoutId: "w1", displayId: "WD-0001", amount: "500.00", methodType: "BKASH" };
-    expect(en("PAYOUT", { ...base, event: "PAYOUT_APPROVED" })).toEqual({ kind: "payout", title: "Withdrawal approved", body: "Your ৳ 500 withdrawal is approved and will be sent soon.", href: "/referrals?tab=withdrawals" });
+    expect(en("PAYOUT", { ...base, event: "PAYOUT_APPROVED" })).toEqual({ kind: "payout", title: "Withdrawal approved", body: "Your ৳ 500 withdrawal is approved and will be sent soon.", href: "/referrals/withdrawals" });
     expect(bn("PAYOUT", { ...base, event: "PAYOUT_APPROVED" }).body).toBe("আপনার ৳ ৫০০ তোলার অনুরোধ অনুমোদিত হয়েছে, শীঘ্রই পাঠানো হবে।");
     const paid = { ...base, event: "PAYOUT_PAID", paidAmount: "490.00", trxId: "BK123", paidAt: "2026-10-02T06:00:00.000Z", incomeWallet: null };
     expect(en("PAYOUT", paid)).toMatchObject({ kind: "payout", title: "Withdrawal sent", body: "৳ 490 was sent to you. Transaction ID: BK123" });
@@ -249,7 +262,7 @@ describe("notificationView for account rows", () => {
     // A known type with a newer event keeps its page.
     expect(en("BILLING", { event: "PLAN_UPGRADED", planName: "Pro" })).toEqual({ kind: "other", title: "You have a new notification", body: "", href: "/settings/plans" });
     expect(en("SECURITY", { event: "PASSKEY_ADDED" })).toMatchObject({ kind: "other", href: "/settings/security" });
-    expect(en("PAYOUT", { event: "PAYOUT_ON_HOLD" })).toMatchObject({ kind: "other", href: "/referrals?tab=withdrawals" });
+    expect(en("PAYOUT", { event: "PAYOUT_ON_HOLD" })).toMatchObject({ kind: "other", href: "/referrals/withdrawals" });
     expect(en("IDEA", { event: "IDEA_COMMENT" })).toMatchObject({ kind: "other", href: "/settings/help" });
     // A row with no data at all.
     const noData = null as unknown as UserNotification["data"];

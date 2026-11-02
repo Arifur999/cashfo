@@ -55,6 +55,9 @@ export const markPayoutPaidServerZodSchema = z
 // shown (a payout) or the audit log keeps (a commission), 5 to 500 letters.
 export const referralReasonServerZodSchema = z.object({ reason: reasonSchema.max(500, "At most 500 characters") });
 
+// Approve: the lines unticked at review, held back for a second look.
+export const approvePayoutServerZodSchema = z.object({ excludedIds: z.array(z.string().min(1).max(64)).max(500).default([]) });
+
 // --- Settings ---
 
 const wholeNumber = (min: number, max: number, message: string) =>

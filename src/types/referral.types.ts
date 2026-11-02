@@ -7,11 +7,6 @@ export type PayoutStatus = (typeof PAYOUT_STATUSES)[number];
 export const PAYOUT_METHOD_TYPES = ["BKASH", "NAGAD", "ROCKET", "BANK"] as const;
 export type PayoutMethodType = (typeof PAYOUT_METHOD_TYPES)[number];
 
-export const REFERRAL_STATUSES = ["JOINED", "PENDING", "AVAILABLE", "PAID_OUT", "CANCELLED"] as const;
-export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
-
-export type ReferralKind = "SIGNUP_BONUS" | "COMMISSION";
-
 // Where the member asked for the money: a copy of the payout method taken
 // when the request was made.
 export interface IPayoutMethodSnapshot {
@@ -25,7 +20,7 @@ export interface IPayoutMethodSnapshot {
   routingNumber: string | null;
 }
 
-export type PayoutCheckKey = "NAME_MATCHES" | "CODE_CONFIRMED" | "NO_REFUNDS" | "FRIEND_PAID_FROM_THIS_NUMBER" | "WRONG_NUMBER_FOR_METHOD";
+export type PayoutCheckKey = "NAME_MATCHES" | "CODE_CONFIRMED" | "HOLDS_OVER" | "NO_REFUNDS" | "FRIEND_PAID_FROM_THIS_NUMBER" | "WRONG_NUMBER_FOR_METHOD";
 
 // What the desk checks on a request; ok = false is a warning, never a block.
 export interface IPayoutCheck {
@@ -41,9 +36,14 @@ export interface IPayoutRow {
   number: number;
   createdAt: string;
   user: { id: string; name: string; email: string };
-  // Friends of the member who paid for a plan.
-  payingFriends: number;
+  // The member's first request: worth a closer look ("NEW").
+  isFirst: boolean;
+  // "6 friend payments" (from this many friends).
+  lineCount: number;
+  friendCount: number;
+  // The lines' total less any held back at approval; what was asked for.
   amount: string;
+  requestedAmount: string;
   fee: string;
   // What the admin sends: the amount less the fee.
   sendAmount: string;
@@ -65,19 +65,28 @@ export interface IPayoutRow {
   incomeTransactionId: string | null;
 }
 
-// One commission behind a request.
-export interface IPayoutOwedPart {
-  referralId: string;
-  friend: { id: string; name: string } | null;
-  kind: ReferralKind | null;
-  planName: string | null;
+export const COMMISSION_STATUSES = ["ON_HOLD", "AVAILABLE", "IN_WITHDRAWAL", "UNDER_CHECK", "PAID_OUT", "REVERSED", "CANCELLED"] as const;
+export type CommissionStatus = (typeof COMMISSION_STATUSES)[number];
+export type CommissionKind = "FIRST" | "RENEWAL" | "BONUS";
+
+// Did the friend's payment reach us: it stands, it was refunded since, or
+// there is no payment to check (an old bonus).
+export type LineReached = "RECEIVED" | "REFUNDED" | "UNKNOWN";
+
+// One friend payment in a request, as the desk checks it.
+export interface IPayoutLine {
+  id: string;
+  status: CommissionStatus;
+  kind: CommissionKind;
+  friend: { id: string; name: string; email: string; phone: string | null };
+  payment: { id: string; displayId: string; planName: string; paidAt: string | null; status: string; gateway: string; reference: string | null; payerAccount: string | null } | null;
+  reached: LineReached;
   paidAmount: string | null;
-  commissionAmount: string | null;
-  // The share of this request it covers.
-  amount: string;
-  availableAt: string | null;
-  pastWindow: boolean;
-  refunded: boolean;
+  rate: number;
+  amount: string | null;
+  availableAt: string;
+  // The friend paid from the member's own phone number.
+  paidFromMemberNumber: boolean;
 }
 
 export interface IPayoutDetail extends IPayoutRow {
@@ -85,33 +94,37 @@ export interface IPayoutDetail extends IPayoutRow {
   approvedByName: string | null;
   processedByName: string | null;
   income: { businessId: string | null; businessName: string | null; accountId: string; accountName: string | null; transactionId: string | null } | null;
+  // About the member: referring since, how many people, paid before.
+  member: { since: string | null; referred: number; paidBefore: string | null };
+  // Every friend payment in it (UNDER_CHECK ones held back at approval).
+  lines: IPayoutLine[];
   // Due by this date (yyyy-MM-dd, working days Sunday to Thursday).
   expectedBy: string;
-  owedBecause: IPayoutOwedPart[];
 }
 
 export type PayoutStatusCounts = Record<"ALL" | PayoutStatus, number>;
 
-export interface IAdminReferralRow {
+// Admin > Referrals & Payouts > Referrals: every commission line.
+export interface IAdminCommissionRow {
   id: string;
   referrer: { id: string; name: string; email: string };
   friend: { id: string; name: string; email: string };
-  joinedAt: string;
-  kind: ReferralKind;
-  status: ReferralStatus;
-  payment: { id: string; displayId: string; planName: string; amount: string | null; status: string; paidAt: string | null; payerAccount: string | null } | null;
+  kind: CommissionKind;
+  status: CommissionStatus;
+  payment: { id: string; displayId: string; planName: string; status: string; paidAt: string | null; gateway: string; reference: string | null } | null;
   paidAmount: string | null;
-  commissionRate: number | null;
-  commissionAmount: string;
-  availableAt: string | null;
-  paidOutAmount: string | null;
-  paidOutAt: string | null;
-  // FRIEND_REFUNDED, ADMIN, ...
+  rate: number;
+  amount: string | null;
+  availableAt: string;
+  payout: { id: string; displayId: string; status: PayoutStatus } | null;
+  // FRIEND_REFUNDED | REFERRER_NOT_ON_PAID_PLAN | PROGRAM_OFF | ADMIN
   cancelReason: string | null;
-  cancelledAt: string | null;
+  paidOutAt: string | null;
+  endedAt: string | null;
+  createdAt: string;
 }
 
-export type ReferralStatusCounts = Record<"ALL" | ReferralStatus, number>;
+export type CommissionStatusCounts = Record<"ALL" | CommissionStatus, number>;
 
 export type WhoCanEarn = "PAID_PLAN" | "EVERYONE";
 

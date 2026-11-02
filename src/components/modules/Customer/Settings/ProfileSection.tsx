@@ -19,7 +19,9 @@ import { cleanLocalPhone, fullPhone, samePhone } from "@/lib/customer/settingsDi
 import { formatRelativeDateTime } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { ChangeAvatarDialog } from "./ChangeAvatarDialog";
+import { ChangePhotoDialog } from "./ChangePhotoDialog";
+import { COVER_FALLBACK } from "./ProfileCard";
+import { ProfileCardShare } from "./ProfileCardShare";
 import { VerifyPhoneDialog } from "./VerifyPhoneDialog";
 import { useVerifyEmail } from "./useVerifyEmail";
 
@@ -29,15 +31,23 @@ interface ProfileSectionProps {
   lastSignIn?: string | null;
 }
 
-// Who you are in Smartly (design-v4 SettingsProfile): photo, name, email
-// and phone, then the account's facts.
+// Who you are in Smartly: the cover with the photo over its edge, then
+// name and email, phone and address; the account's facts; and the
+// shareable profile card.
 export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
   const { t, locale, fmt } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(cleanLocalPhone(user.phone ?? ""));
-  const [avatarOpen, setAvatarOpen] = useState(false);
+  const [address, setAddress] = useState(user.address ?? "");
+  // The picture dialog: which picture (kept while it closes) and whether open.
+  const [picture, setPicture] = useState<"photo" | "cover">("photo");
+  const [pictureOpen, setPictureOpen] = useState(false);
+  const editPicture = (kind: "photo" | "cover") => {
+    setPicture(kind);
+    setPictureOpen(true);
+  };
   const [verifyPhoneOpen, setVerifyPhoneOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const verify = useVerifyEmail();
@@ -49,6 +59,7 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
     setPrevUser(user);
     setName(user.name);
     setPhone(cleanLocalPhone(user.phone ?? ""));
+    setAddress(user.address ?? "");
   }
 
   const nameChanged = name.trim() !== user.name;
@@ -56,19 +67,21 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
   // the field and the account are compared as numbers, not as text: an
   // untouched form is never "changed".
   const phoneChanged = !samePhone(fullPhone(phone), user.phone ?? "");
-  const dirty = nameChanged || phoneChanged;
+  const addressChanged = address.trim() !== (user.address ?? "");
+  const dirty = nameChanged || phoneChanged || addressChanged;
   const nameMissing = name.trim().length === 0;
 
   function discard() {
     setName(user.name);
     setPhone(cleanLocalPhone(user.phone ?? ""));
+    setAddress(user.address ?? "");
   }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!dirty || nameMissing || isPending) return;
     // Only what changed: a number kept as sign-up wrote it stays that way.
-    const changes = { ...(nameChanged && { name: name.trim() }), ...(phoneChanged && { phone: fullPhone(phone) }) };
+    const changes = { ...(nameChanged && { name: name.trim() }), ...(phoneChanged && { phone: fullPhone(phone) }), ...(addressChanged && { address: address.trim() }) };
     startTransition(async () => {
       const result = await updateProfileAction(changes);
       if (result.success) {
@@ -89,7 +102,18 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
     { label: t("Last sign-in"), value: lastSignIn ? formatRelativeDateTime(lastSignIn, { t, locale: fmt }) : "—" },
     { label: t("Language"), value: `${locale === "bn" ? "বাংলা" : "English"} · ${t("change in App preferences")}` },
   ];
-  const status = nameMissing ? t("Enter your name") : !dirty ? t("Nothing changed yet.") : nameChanged && phoneChanged ? t("You changed your name and phone.") : nameChanged ? t("You changed your name.") : t("You changed your phone.");
+  const changedCount = [nameChanged, phoneChanged, addressChanged].filter(Boolean).length;
+  const status = nameMissing
+    ? t("Enter your name")
+    : !dirty
+      ? t("Nothing changed yet.")
+      : changedCount > 1
+        ? t("You changed {count} things.", { count: String(changedCount) })
+        : nameChanged
+          ? t("You changed your name.")
+          : phoneChanged
+            ? t("You changed your phone.")
+            : t("You changed your address.");
   const supportLink = (
     <Link href="/settings/help" className="hover:underline">
       {t("to change it, contact support")}
@@ -100,27 +124,30 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
     <div className="flex flex-col gap-5">
       <Card padding="none" className="overflow-hidden">
         <form onSubmit={submit} noValidate>
-          <div className="flex flex-col gap-0.75 px-6 pt-5">
-            <h2 className="text-h3 text-ink">{t("Profile")}</h2>
-            <span className="text-[13.5px] text-ink-muted">{t("How you appear in Smartly and in the groups you run.")}</span>
+          {/* The cover, its button in the corner; the photo over its edge. */}
+          <div className={cn("relative h-36 bg-cover bg-center @lg:h-44", !user.coverUrl && COVER_FALLBACK)} style={user.coverUrl ? { backgroundImage: `url("${user.coverUrl}")` } : undefined}>
+            <Button type="button" variant="secondary" size="sm" onClick={() => editPicture("cover")} disabled={readOnly} className="absolute top-3 right-3 border-0 bg-surface/90 px-3 text-[13px] shadow-sm backdrop-blur-sm pointer-coarse:h-11">
+              <Camera className="size-3.75 text-ink-soft" />
+              {t(user.coverUrl ? "Change cover" : "Add a cover")}
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-end gap-x-4.5 gap-y-2 px-6">
+            <div className="relative -mt-11 shrink-0">
+              <Avatar name={user.name} src={user.avatarUrl} size={88} tone="soft" alt="" className="tracking-wide ring-4 ring-surface" />
+              <button type="button" onClick={() => editPicture("photo")} disabled={readOnly} aria-label={t("Change photo")} title={t("Change photo")} className="absolute right-0 bottom-0 flex size-8 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground hover:bg-emerald-hover disabled:opacity-60 pointer-coarse:size-11">
+                <Camera className="size-3.75" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5 pb-1">
+              <h2 className="truncate text-h3 text-ink">{user.name}</h2>
+              <span className="text-[13.5px] text-ink-muted">{t("How you appear in Smartly and in the groups you run.")}</span>
+            </div>
           </div>
           <div className="flex flex-col gap-4.5 px-6 py-5">
-            <div className="flex items-center gap-4.5">
-              <Avatar name={user.name} src={user.avatarUrl} size={72} tone="soft" alt="" className="tracking-wide" />
-              <div className="flex min-w-0 flex-col gap-2">
-                <Button type="button" variant="secondary" size="sm" onClick={() => setAvatarOpen(true)} disabled={readOnly} className="w-fit px-3.5 text-[13.5px] pointer-coarse:h-11">
-                  <Camera className="size-3.75 text-ink-soft" />
-                  {t("Change photo")}
-                </Button>
-                <span className="text-[12.5px] text-ink-muted">{t("JPG, PNG, WEBP or GIF, up to 5 MB. A square photo looks best.")}</span>
-              </div>
-            </div>
-
+            <div className="grid gap-3.5 @lg:grid-cols-2">
             <Field htmlFor="pf-name" label={t("Full name")} hint={<span className="text-[12.5px]">{t("Shown on your groups, statements and invites.")}</span>} error={nameMissing ? t("Enter your name") : undefined}>
               <Input id="pf-name" size="md" className="text-[14.5px]" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} autoComplete="name" required invalid={nameMissing} readOnly={readOnly} />
             </Field>
-
-            <div className="grid gap-3.5 @lg:grid-cols-2">
               <Field
                 htmlFor="pf-email"
                 label={
@@ -217,6 +244,9 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
                   readOnly={readOnly}
                 />
               </Field>
+              <Field htmlFor="pf-address" label={<span>{t("Address")} <span className="font-normal text-ink-muted">({t("optional")})</span></span>} hint={<span className="text-[12.5px]">{t("Only you see it. It is never on your profile card.")}</span>}>
+                <Input id="pf-address" size="md" className="text-[14.5px]" value={address} onChange={(event) => setAddress(event.target.value)} maxLength={200} autoComplete="street-address" placeholder={t("House 12, Road 5, Dhanmondi, Dhaka")} aria-describedby="pf-address-hint" readOnly={readOnly} />
+              </Field>
             </div>
           </div>
           {/* The sentence takes the whole line on a narrow card, the buttons
@@ -246,7 +276,9 @@ export function ProfileSection({ lastSignIn = null }: ProfileSectionProps) {
         </dl>
       </Card>
 
-      <ChangeAvatarDialog open={avatarOpen} onClose={() => setAvatarOpen(false)} />
+      <ProfileCardShare />
+
+      <ChangePhotoDialog kind={picture} open={pictureOpen} onClose={() => setPictureOpen(false)} />
       <VerifyPhoneDialog open={verifyPhoneOpen} phone={`+880 ${cleanLocalPhone(user.phone ?? "")}`} onClose={() => setVerifyPhoneOpen(false)} onVerified={() => router.refresh()} />
     </div>
   );

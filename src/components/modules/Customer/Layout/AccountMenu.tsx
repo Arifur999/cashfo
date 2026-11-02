@@ -50,7 +50,7 @@ export function AccountMenu({ className }: { className?: string }) {
     setOpen(next);
     if (!next) return;
     void getReferralInfoAction().then((result) => {
-      if (result.success && result.data) setEarnings(result.data.availableBalance);
+      if (result.success && result.data) setEarnings(result.data.balances.available);
     });
   }
 

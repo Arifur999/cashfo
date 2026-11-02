@@ -41,6 +41,13 @@ export interface CurrentUser {
   // Absent from an older backend.
   phoneVerifiedAt?: string | null;
   avatarUrl: string | null;
+  // Settings > Profile: the wide photo over the profile (null: a gradient)
+  // and a one-line address. Absent from an older backend.
+  coverUrl?: string | null;
+  address?: string | null;
+  // The shareable profile card: whether it is on, and its code (the
+  // referral code) for the /card/<code> link.
+  profileCard?: { shared: boolean; code: string | null };
   preferredLanguage: LanguagePreference;
   emailVerifiedAt: string | null;
   // When the password was last set; null for an account that never set one
@@ -1096,39 +1103,6 @@ export function getApiErrorMessage(body: unknown, fallback = "Something went wro
   const err = body as NestErrorBody | undefined;
   if (!err?.message) return fallback;
   return Array.isArray(err.message) ? err.message.join(", ") : err.message;
-}
-
-// "Referral Program" menu -- referralCode is this user's own shareable
-// code (the frontend builds the actual share link as
-// `${origin}/register?ref=${code}`); status PENDING means the referred
-// friend hasn't been registered 30 days yet (see backend
-// ReferralsService's comment), CONFIRMED means it's counted in
-// availableBalance and withdrawable, WITHDRAWN means it's already been
-// cashed out.
-export type ReferralStatus = "PENDING" | "CONFIRMED" | "WITHDRAWN";
-
-export interface ReferralEntry {
-  id: string;
-  name: string;
-  status: ReferralStatus;
-  rewardAmount: string;
-  createdAt: string;
-  // When the reward was confirmed (30 days after joining) and withdrawn.
-  confirmedAt?: string | null;
-  withdrawnAt?: string | null;
-}
-
-export interface ReferralInfo {
-  referralCode: string;
-  totalEarned: string;
-  pendingEarnings: string;
-  availableBalance: string;
-  referralCount: number;
-  rewardAmountPerReferral: string;
-  // Friends whose reward is still waiting out its 30 days.
-  pendingCount?: number;
-  // Every friend, newest first (an older backend sent the newest 10).
-  recentReferrals: ReferralEntry[];
 }
 
 // "Group Expense" (মেস/যৌথ হিসাব) -- a GROUP-type workspace for a mess or

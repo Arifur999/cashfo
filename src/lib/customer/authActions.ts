@@ -35,6 +35,8 @@ async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promis
 export interface UpdateProfileInput {
   name?: string;
   phone?: string;
+  // One line; an empty string clears it.
+  address?: string;
 }
 
 // Settings > Profile page's "Save Changes" -- name/phone only, email stays
@@ -73,8 +75,25 @@ export async function changePasswordAction(input: ChangePasswordInput): Promise<
 // (web-standard) FormData body the way fetch does automatically. Same
 // reasoning as uploadContactPhotoAction() in contactActions.ts.
 export async function uploadAvatarAction(formData: FormData): Promise<ActionResult<{ id: string; avatarUrl: string }>> {
+  return uploadProfileImage("avatar", formData, "Failed to upload avatar");
+}
+
+// The wide photo over the profile, and taking it off again (back to the
+// gradient).
+export async function uploadCoverAction(formData: FormData): Promise<ActionResult<{ id: string; coverUrl: string }>> {
+  return uploadProfileImage("cover", formData, "Failed to upload the cover");
+}
+
+export async function removeCoverAction(): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/auth/cover`, { headers: await authHeaders() });
+  }, "Failed to remove the cover");
+}
+
+// A profile image (the photo or the cover) as the API's multipart upload.
+async function uploadProfileImage<T>(kind: "avatar" | "cover", formData: FormData, fallback: string): Promise<ActionResult<T>> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/avatar`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/${kind}`, {
       method: "POST",
       // The visitor's address and browser too, like every other call (see
       // apiClient.ts) -- fetch() skips customerApi's interceptor.
@@ -83,12 +102,18 @@ export async function uploadAvatarAction(formData: FormData): Promise<ActionResu
     });
     if (!response.ok) {
       const body = await response.json().catch(() => null);
-      return { success: false, message: getApiErrorMessage(body, "Failed to upload avatar") };
+      return { success: false, message: getApiErrorMessage(body, fallback) };
     }
     return { success: true, data: await response.json() };
   } catch {
-    return { success: false, message: "Failed to upload avatar" };
+    return { success: false, message: fallback };
   }
+}
+
+// Settings > Profile > Share profile card: on (the card page goes up at
+// /card/<code>) or off (it shows nothing).
+export async function setProfileCardSharedAction(shared: boolean): Promise<ActionResult<{ shared: boolean; code: string | null }>> {
+  return callApi(async () => (await customerApi.put(`${API_BASE_URL}/api/profile-card`, { shared }, { headers: await authHeaders() })).data, "Couldn't change the profile card");
 }
 
 // Settings > Security > Device Management's "Devices" list.

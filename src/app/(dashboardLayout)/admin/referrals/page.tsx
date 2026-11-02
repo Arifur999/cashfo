@@ -39,7 +39,7 @@ const ReferralPayoutsPage = async ({ searchParams }: PageProps<"/admin/referrals
         }
       >
         <PayoutStats holdDays={holdDays} />
-        <PayoutsTable canManage={canManage(admin?.role, "referralPayouts")} holdDays={holdDays} />
+        <PayoutsTable canManage={canManage(admin?.role, "referralPayouts")} />
       </QueryPrefetch>
     </div>
   );

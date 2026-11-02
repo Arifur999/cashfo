@@ -3,7 +3,7 @@
 import { Download, Trash2, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { resetOwnerDataAction } from "@/app/(dashboardLayout)/admin/manage-owners/_action";
-import { downloadOwnerCopy } from "@/components/modules/Admin/UserManagement/ownerCopy";
+import DownloadOwnerCopyDialog from "@/components/modules/Admin/UserManagement/DownloadOwnerCopyDialog";
 import { isPersonalWorkspace } from "@/components/modules/Admin/UserManagement/peopleDisplay";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import T from "@/components/shared/T";
@@ -49,6 +49,7 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = tru
   const workspace = owner.businessName && !personal ? owner.businessName : translate("{name}'s personal workspace", { name: owner.name });
 
   return (
+    <>
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
@@ -78,15 +79,11 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = tru
             variant="secondary"
             size="md"
             className="px-3.5"
-            disabled={copying || isPending}
-            onClick={async () => {
-              setCopying(true);
-              await downloadOwnerCopy(owner.userId, translate);
-              setCopying(false);
-            }}
+            disabled={isPending}
+            onClick={() => setCopying(true)}
           >
             <Download className="size-4 text-ink-2" aria-hidden="true" />
-            {translate(copying ? "Preparing..." : "Download a copy")}
+            {translate("Download a copy")}
           </Button>
         )
       }
@@ -101,6 +98,8 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = tru
         <T>This can&apos;t be undone. Download a copy first if the owner might want it back.</T>
       </p>
     </ConfirmDialog>
+    {canDownloadCopy && <DownloadOwnerCopyDialog owner={owner} open={copying} onOpenChange={setCopying} />}
+    </>
   );
 };
 

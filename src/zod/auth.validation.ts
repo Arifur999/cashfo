@@ -75,8 +75,9 @@ export const registerServerZodSchema = z
     password: newPasswordSchema,
     preferredLanguage: z.enum(["EN", "BN"]).optional(),
     referralCode: z.string().trim().max(64).optional(),
+    referralSource: z.string().regex(/^[a-z0-9]{2,20}$/).optional(),
   })
-  .transform(({ referralCode, ...payload }) => ({ ...payload, ...(referralCode ? { referralCode } : {}) })) satisfies z.ZodType<IRegisterPayload>;
+  .transform(({ referralCode, referralSource, ...payload }) => ({ ...payload, ...(referralCode ? { referralCode, ...(referralSource && { referralSource }) } : {}) })) satisfies z.ZodType<IRegisterPayload>;
 
 // Forgot password
 export const forgotPasswordFormZodSchema = z.object({ email: emailSchema });
