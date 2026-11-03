@@ -523,4 +523,8 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "{name} no longer has this money, so the move can't be undone.": "{name}-এ এই টাকা আর নেই, তাই স্থানান্তর ফেরানো যাবে না।",
   "{name} has been withdrawn, so this move can't be undone.": "{name} তোলা হয়ে গেছে, তাই এই স্থানান্তর ফেরানো যাবে না।",
   "{name} only has {amount} saved, so {needed} can't be withdrawn.": "{name}-এ জমা আছে শুধু {amount}, তাই {needed} তোলা যাবে না।",
+  // ---- Goals page, canvas v15: the three cards, the goal card, the table
+  "Saved in {month}": "{month}-এ জমা",
+  behind: "পিছিয়ে",
+  "on pace": "ঠিক পথে",
 };

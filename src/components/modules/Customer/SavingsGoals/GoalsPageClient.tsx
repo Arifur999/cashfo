@@ -1,13 +1,12 @@
 "use client";
 
-import { ArrowLeftRight, ArrowRight, PiggyBank, Plus } from "lucide-react";
+import { ArrowLeftRight, PiggyBank, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
@@ -19,7 +18,6 @@ import { deleteSavingsGoalAction, updateSavingsGoalStatusAction } from "@/lib/cu
 import { goalColor, savingsError } from "@/lib/customer/savingsDisplay";
 import { behindFirst, goalsHero, isBehind, monthlyFromNow } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AddMoneyDialog } from "./AddMoneyDialog";
@@ -28,10 +26,10 @@ import { GoalCard, type GoalAction } from "./GoalCard";
 import { GoalDetailsDialog } from "./GoalDetailsDialog";
 import { GoalFormDialog } from "./GoalFormDialog";
 import { GoalReachedDialog } from "./GoalReachedDialog";
-import { GoalRing } from "./GoalRing";
 import { GoalStatementDialog } from "./GoalStatementDialog";
 import { MoveMoneyDialog, type MoveSetup } from "./MoveMoneyDialog";
 import { RestoreWalletButton } from "./RestoreWalletButton";
+import { SavingsSummary } from "./SavingsSummary";
 import { SavingsAccountDialog } from "./SavingsAccountDialog";
 import { WithdrawDialog } from "./WithdrawDialog";
 
@@ -274,51 +272,14 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         />
       ) : (
         <>
-          <Card padding="none" className="grid md:grid-cols-[1.3fr_1fr_0.8fr]">
-            <div className="flex items-center gap-5 px-6 py-5">
-              <GoalRing percent={hero.percent} color="var(--emerald)" size={112} label={t("{percent}% of all goals saved", { percent: formatCount(hero.percent, fmt) })}>
-                <span className="text-[22px] leading-[normal] font-bold">{formatCount(hero.percent, fmt)}%</span>
-                <span className="text-[11px] font-normal text-ink-muted">{t("of all goals")}</span>
-              </GoalRing>
-              <div className="flex min-w-0 flex-col gap-1.5">
-                <span className="text-small font-medium text-ink-muted">{t("Saved so far")}</span>
-                <span className="text-[28px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{money(hero.saved)}</span>
-                <span className="text-small text-pretty text-ink-muted tabular-nums">
-                  {fillNodes(t("of {total} · {left} to go"), { total: money(hero.target), left: <span className="font-semibold text-ink-2">{money(hero.toGo)}</span> })}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col justify-center gap-2.5 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-small font-medium text-ink-muted">{t("Saved this month")}</span>
-                <span className="text-caption font-semibold text-ink-2">{t("{percent}% of target", { percent: formatCount(hero.monthPercent, fmt) })}</span>
-              </div>
-              <span className="text-body font-medium text-ink-muted tabular-nums">
-                {fillNodes(t("{saved} of {target}"), { saved: <span className="text-[22px] leading-[normal] font-bold text-ink">{money(hero.monthSaved)}</span>, target: money(hero.monthTarget) })}
-              </span>
-              <span aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-surface-sunken">
-                <span className="block h-full rounded-full bg-emerald" style={{ width: `${hero.monthPercent}%` }} />
-              </span>
-              <span className="text-caption text-ink-muted">
-                {hero.active ? t(hero.active === 1 ? "{got} of {count} active goal got money in {month}" : "{got} of {count} active goals got money in {month}", { got: formatCount(hero.gotMoney, fmt), count: formatCount(hero.active, fmt), month }) : t("No active goals yet")}
-                {hasRate && ` · ${t("savings rate {percent}% of income", { percent: formatCount(overview.savingsRatePercent, fmt) })}`}
-              </span>
-            </div>
-            <div className="flex flex-col justify-center gap-1.5 border-t border-line px-6 py-5 md:border-t-0 md:border-l">
-              <span className="text-small font-medium text-ink-muted">{t("On pace")}</span>
-              <span className="text-[28px] leading-[normal] font-bold tracking-[-0.02em] text-ink">
-                {hero.active ? formatCount(hero.active - hero.behind, fmt) : "—"} {hero.active > 0 && <span className="text-body font-medium text-ink-muted">{t("of {count} active", { count: formatCount(hero.active, fmt) })}</span>}
-              </span>
-              {hero.behind > 0 ? (
-                <button type="button" onClick={() => setBehindOnly(true)} className="inline-flex min-h-7 items-center gap-1 self-start text-caption font-semibold text-warning underline underline-offset-3 pointer-coarse:min-h-11">
-                  {t(hero.behind === 1 ? "{count} goal is behind plan" : "{count} goals are behind plan", { count: formatCount(hero.behind, fmt) })}
-                  <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden="true" />
-                </button>
-              ) : (
-                <span className="text-caption font-medium text-income">{hero.active ? t("Every active goal is on plan") : t("No active goals yet")}</span>
-              )}
-            </div>
-          </Card>
+          <SavingsSummary
+            hero={hero}
+            active={goals.filter((goal) => goal.status === "ACTIVE")}
+            month={month}
+            ratePercent={hasRate ? overview.savingsRatePercent : null}
+            money={money}
+            onShowBehind={() => setBehindOnly(true)}
+          />
 
           <TabBar
             options={TABS.map((item) => ({ value: item.value, label: t(item.label), count: tabGoals(item.value).length }))}
