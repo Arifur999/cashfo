@@ -43,7 +43,8 @@ import { formatDate } from "@/lib/customer/date";
 import { periodHref, type PickedPeriod } from "@/lib/customer/period";
 import { isDebitPositive, periodText, readsAsMoney, statementBackLabel, type StatementLine, statementPage, voidedNet } from "@/lib/customer/ledger";
 import { walletIcon } from "@/lib/customer/walletVisuals";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatDay } from "@/lib/date";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { PeriodPicker, periodLabel as periodName } from "../Shared/PeriodPicker";
 import { plural } from "@/lib/i18n/message";
@@ -161,6 +162,19 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
   const showTransfers = money || transfers !== 0;
   const accountName = account ? accountDisplayName(account, preferredLanguage) : "";
   const periodLabel = periodName(period, t, fmt);
+  // Before an account is picked, the line names the chosen period, so the
+  // picker visibly does something.
+  const emptyPeriodText =
+    period.kind === "all"
+      ? t("You'll see its opening balance, every movement and the running balance for all time, ready to print.")
+      : period.kind === "month"
+        ? t("You'll see its opening balance, every movement and the running balance for {period}, ready to print.", { period: periodLabel })
+        : period.kind === "year"
+          ? t("You'll see its opening balance, every movement and the running balance for {year}, ready to print.", { year: toLocaleDigits(String(period.year), fmt) })
+          : t("You'll see its opening balance, every movement and the running balance from {from} to {to}, ready to print.", {
+              from: formatDay(period.from, "d MMM yyyy", fmt),
+              to: formatDay(period.to, "d MMM yyyy", fmt),
+            });
   const rangeText = periodText(t, periodFrom, periodTo, fmt);
   const narrowed = !!(filters.direction || filters.kind || filters.search);
   const counts = ledger?.counts ?? { all: ledger?.meta.total ?? 0, in: 0, out: 0 };
@@ -277,6 +291,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
             capped={!printing.complete}
             periodLabel={periodLabel}
             range={rangeText}
+            month={period.kind === "month" ? `${period.year}-${String(period.month).padStart(2, "0")}` : null}
             today={today}
             currency={currency}
             preferredLanguage={preferredLanguage}
@@ -342,7 +357,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
               <ScrollText className="size-6" aria-hidden="true" />
             </span>
             <h2 className="mt-1.5 text-h3 text-ink">{t("Pick an account to see its ledger")}</h2>
-            <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{t("You'll see its opening balance, every movement and the running balance, ready to print.")}</p>
+            <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{emptyPeriodText}</p>
             {wallets.length > 0 && (
               <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto md:grid-cols-4">
                 {wallets
