@@ -89,7 +89,8 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
       setName(editing?.name ?? "");
       setTargetAmount(editing ? String(Number(editing.targetAmount)) : "");
       setHave("");
-      setAccountId(homeId ?? wallets[0]?.id ?? "");
+      // The customer picks the account, unless there is only one.
+      setAccountId(homeId ?? (wallets.length === 1 ? wallets[0].id : ""));
       setEndDate(editing?.targetDate.slice(0, 10) ?? "");
       setReminderDate(editing?.reminderDate?.slice(0, 10) ?? "");
       setDescription(editing?.description ?? "");
@@ -103,8 +104,9 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
   const leftToSave = Math.max(0, target - saved);
   const months = endDate && endDate > today ? monthsToGo(endDate, today) : 0;
   const perMonth = months > 0 ? Math.ceil(leftToSave / months) : 0;
-  // No account to pick when the form opened: the first one added since.
-  const wallet = wallets.find((item) => item.id === accountId) ?? (accountId ? null : (wallets[0] ?? null));
+  // A new goal with no account picked yet: the only one there is (also one
+  // added since the form opened).
+  const wallet = wallets.find((item) => item.id === accountId) ?? (!editing && wallets.length === 1 ? wallets[0] : null);
   // An edited goal may keep a day that has gone by (an overdue goal, a
   // reminder that went out); a changed one must come after today.
   const keptEnd = !!editing && endDate === editing.targetDate.slice(0, 10);
@@ -119,7 +121,8 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
     if (!target) return t("Enter a target amount.");
     if (editing && target < saved) return t("The target can't be less than what's already saved ({amount}).", { amount: money(saved) });
     if (!editing && saved > target) return t("Already saved can't be more than the target.");
-    if (!editing && saved > 0 && !wallet) return t("Add a savings account to record the money you already have.");
+    if (!editing && wallets.length === 0) return t("Add a savings account first. Every goal keeps its money in one.");
+    if (!editing && !wallet) return t("Pick the savings account for this goal.");
     if (!endDate || (endDate <= today && !keptEnd)) return t("Pick an end date after today.");
     if (reminderDate && !keptReminder && (reminderDate <= today || reminderDate > endDate)) return t("The reminder date has to be between tomorrow and the end date.");
     return null;

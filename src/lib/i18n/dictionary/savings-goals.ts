@@ -358,7 +358,6 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Enter a target amount.": "লক্ষ্যের পরিমাণ লিখুন।",
   "The target can't be less than what's already saved ({amount}).": "লক্ষ্য এ পর্যন্ত জমার ({amount}) চেয়ে কম হতে পারে না।",
   "Already saved can't be more than the target.": "আগে জমানো টাকা লক্ষ্যের চেয়ে বেশি হতে পারে না।",
-  "Add a savings account to record the money you already have.": "যে টাকা আগে থেকে আছে তা লিখতে একটি সঞ্চয়ের হিসাব যোগ করুন।",
   "Pick an end date after today.": "আজকের পরের একটি শেষ তারিখ বেছে নিন।",
   "The reminder date has to be between tomorrow and the end date.": "রিমাইন্ডারের তারিখ আগামীকাল থেকে শেষ তারিখের মধ্যে হতে হবে।",
   "Reminder email on {date}.": "{date}-এ রিমাইন্ডার ইমেইল যাবে।",
@@ -603,4 +602,6 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "{goal} moved here": "{goal} এখানে এসেছে",
   "{goal} moved away": "{goal} অন্য হিসাবে গেছে",
   "{name} now keeps its money in {account}. Move {amount} there from {from}.": "{name}-এর টাকা এখন {account}-এ থাকে। {from} থেকে {amount} সেখানে সরিয়ে নিন।",
+  "Add a savings account first. Every goal keeps its money in one.": "আগে একটা সঞ্চয়ের হিসাব যোগ করুন। প্রতিটি লক্ষ্যের টাকা একটা হিসাবে থাকে।",
+  "Pick the savings account for this goal.": "এই লক্ষ্যের জন্য সঞ্চয়ের হিসাব বেছে নিন।",
 };
