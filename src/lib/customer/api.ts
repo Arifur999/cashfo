@@ -987,6 +987,10 @@ export interface SavingsGoal {
   // Catch up's monthly reminder email is on.
   monthlyReminder: boolean;
   lastWithdrawal: { date: string; accountName: string | null } | null;
+  // The savings account it keeps its money in: every deposit goes here.
+  // Absent from an older API, null before one is chosen.
+  accountId?: string | null;
+  account?: { id: string; name: string | null; accountNumber: string | null } | null;
 }
 
 export interface SavingsGoalEntry {

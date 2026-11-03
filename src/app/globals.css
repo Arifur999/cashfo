@@ -108,6 +108,12 @@
   --gateway-bkash: #e2136e;
   --gateway-nagad: #d9480f;
   --gateway-rocket: #8c3494;
+  /* A plain bright green: a goal on plan or done (Savings Goals' pace bars,
+     "October done", Withdraw to balance). */
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --success-line: #86efac;
+  --success-ink: #166534;
 
   /* Pillars */
   --pillar-money: var(--emerald);
@@ -281,6 +287,10 @@
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
   --gateway-rocket: #c98bd3;
+  --success: #4ade80;
+  --success-soft: #0f2a1a;
+  --success-line: #1f5a35;
+  --success-ink: #86efac;
 
   --pillar-loans: #f0a46a;
   --pillar-loans-soft: #3a2010;
@@ -575,6 +585,10 @@ html:not(.dark) [data-app="habit"] {
   --color-gateway-bkash: var(--gateway-bkash);
   --color-gateway-nagad: var(--gateway-nagad);
   --color-gateway-rocket: var(--gateway-rocket);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-success-ink: var(--success-ink);
   --color-pillar-money: var(--pillar-money);
   --color-pillar-money-soft: var(--pillar-money-soft);
   --color-pillar-loans: var(--pillar-loans);
