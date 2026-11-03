@@ -203,7 +203,9 @@ describe("categoryLabel / systemText / rowTitle", () => {
 
   it("words the backend's own names in the reader's language and leaves a reader's alone", () => {
     expect(categoryLabel("Asset Sale", t)).toBe("bn:Asset Sale");
-    expect(categoryLabel("Food & Dining", t)).toBe("Food & Dining");
+    expect(categoryLabel("Lunch money", t)).toBe("Lunch money");
+    // A starter category keeps the app's wording while it keeps its name.
+    expect(categoryLabel("Food & Dining", t)).toBe("bn:Food & Dining");
     expect(systemText("Referral Program withdrawal", t)).toBe("bn:Referral Program withdrawal");
     expect(systemText("Lunch with team", t)).toBe("Lunch with team");
     expect(systemText("Asset sale: Kitchen fridge", (key, values) => `bn:${key}|${values?.name}`)).toBe("bn:Asset sale: {name}|Kitchen fridge");

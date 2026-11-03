@@ -546,6 +546,10 @@ export interface CategoryBreakdownRow {
   amount: string;
   percent: number;
   color: string;
+  // How many transactions (an older API leaves it out).
+  count?: number;
+  // The money with no category, read as "Uncategorised".
+  uncategorised?: boolean;
 }
 
 // A calendar month with any income or expense in it.

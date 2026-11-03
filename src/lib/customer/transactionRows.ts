@@ -109,10 +109,13 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
   };
 }
 
-// The categories the backend gives a feature's own postings (an asset sale,
-// a referral payout), which no reader named: shown in the reader's
-// language. A category a reader named stays as they wrote it.
-export const SYSTEM_CATEGORIES = new Set(["Asset Sale", "Referral Bonus"]);
+// The categories the app names itself, shown in the reader's language: a
+// feature's own postings (an asset sale, a referral payout, zakat, a
+// charge), the money with no category, and the starter categories a new
+// workspace gets (backend budgets/app-categories.ts) while they keep
+// their names. A category a reader named stays as they wrote it.
+export const STARTER_CATEGORY_NAMES = ["Salary", "Freelance", "Business", "Gift", "Food & Dining", "House Rent", "Transport", "Bills & Utilities", "Health", "Shopping", "Education", "Sales", "Services", "Other income", "Purchases", "Shop rent", "Salaries", "Marketing"];
+export const SYSTEM_CATEGORIES = new Set(["Asset Sale", "Referral Bonus", "Zakat", "Bank charge", "Mobile banking fee", "Service charge", "Uncategorised", ...STARTER_CATEGORY_NAMES]);
 // Those, and the note the backend writes on a referral payout (its title).
 export const SYSTEM_TEXTS = new Set([...SYSTEM_CATEGORIES, "Referral Program withdrawal"]);
 

@@ -23,6 +23,8 @@ const TONES: Record<string, CategoryTone> = {
   // Group Expense's own two (the family boards' Education and Other).
   amber: { bg: "bg-warning-soft", fg: "text-warning" },
   gray: { bg: "bg-surface-sunken", fg: "text-ink-2" },
+  // Income & Expense's Uncategorised: a quiet grey beside the real ones.
+  grey: { bg: "bg-surface-sunken", fg: "text-ink-faint" },
 };
 
 const NEUTRAL: CategoryTone = { bg: "bg-surface-sunken", fg: "text-ink-2" };
