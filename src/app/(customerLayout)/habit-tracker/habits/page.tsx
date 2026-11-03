@@ -8,7 +8,8 @@ import { ChallengesHomePageClient } from "@/components/modules/Customer/HabitTra
 import { RamadanHomePageClient } from "@/components/modules/Customer/HabitTracker/Ramadan/RamadanHomePageClient";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getBooksOverview } from "@/lib/customer/books";
-import { getHabitTrackers, getQaza } from "@/lib/customer/habits";
+import { nextRamadan } from "@/lib/customer/habitDisplay";
+import { getHabitTrackers, getQaza, getRamadanPrep } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getReminders } from "@/lib/customer/reminders";
 import { getSkillsOverview } from "@/lib/customer/skills";
@@ -36,8 +37,10 @@ export default async function HabitsPage({ searchParams }: PageProps<"/habit-tra
   }
 
   if (category === "Ramadan") {
-    const [trackers, reminders] = await Promise.all([getHabitTrackers("Ramadan"), getReminders()]);
-    return <RamadanHomePageClient trackers={trackers} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
+    // "Get ready" is for the next Ramadan, keyed by the year it begins in.
+    const prepYear = Number(nextRamadan(getAppToday()).startsOn.slice(0, 4));
+    const [trackers, reminders, prep] = await Promise.all([getHabitTrackers("Ramadan"), getReminders(), getRamadanPrep(prepYear)]);
+    return <RamadanHomePageClient trackers={trackers} today={getAppToday()} reminders={reminders?.reminders ?? null} prep={prep} />;
   }
 
   if (category === "Book") {
