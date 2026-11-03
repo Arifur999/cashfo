@@ -27,6 +27,8 @@ const TABS: { value: Tab; label: string }[] = [
   { value: "custom", label: "Custom" },
 ];
 
+const ALL_MODES: Tab[] = ["month", "year", "custom"];
+
 const key = (year: number, month: number) => year * 12 + month;
 
 // "Sep", or "সেপ্টে".
@@ -56,13 +58,19 @@ interface PeriodPickerProps {
   onPick: (period: PickedPeriod) => void;
   busy?: boolean;
   align?: "start" | "end";
+  // The kinds of period offered, all three unless a page says (Budget
+  // Planning: a plan is a month); with one there are no tabs.
+  modes?: Tab[];
+  // The line under the months when greyed-out ones mean something other
+  // than "no data" (an English key).
+  greyNote?: string;
 }
 
 // "Choose period" (the canvas's one period picker for every report page): a
 // month of a year, a whole year typed or picked, the reader's own days, or
 // all time, in one popover under the button. Months with nothing are
 // greyed out, so a pick never lands on an empty page.
-export function PeriodPicker({ period, today, activeMonths, allowAll = false, defaultPeriod, onPick, busy = false, align = "end" }: PeriodPickerProps) {
+export function PeriodPicker({ period, today, activeMonths, allowAll = false, defaultPeriod, onPick, busy = false, align = "end", modes = ALL_MODES, greyNote }: PeriodPickerProps) {
   const { t, fmt } = useLocale();
   const current = { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) };
   const range = periodRange(period);
@@ -76,7 +84,12 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
   const firstYear = shownYear ?? years[0];
 
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>(period.kind === "year" || period.kind === "custom" ? period.kind : "month");
+  // The tab of the period in force, when this page offers it.
+  const tabOf = (): Tab => {
+    const wanted = period.kind === "year" || period.kind === "custom" ? period.kind : "month";
+    return modes.includes(wanted) ? wanted : modes[0];
+  };
+  const [tab, setTab] = useState<Tab>(tabOf);
   const [monthYear, setMonthYear] = useState(firstYear);
   const [yearInput, setYearInput] = useState("");
   const [yearError, setYearError] = useState<string | null>(null);
@@ -93,7 +106,7 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
   function toggle(next: boolean) {
     setOpen(next);
     if (!next) return;
-    setTab(period.kind === "year" || period.kind === "custom" ? period.kind : "month");
+    setTab(tabOf());
     setMonthYear(firstYear);
     setYearInput("");
     setYearError(null);
@@ -136,7 +149,7 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
         </button>
       </PopoverTrigger>
       <PopoverContent align={align} sideOffset={8} aria-label={t("Choose period")} className="w-90 max-w-[calc(100vw-32px)] gap-3.5 rounded-2xl border border-line bg-surface p-3.5 text-ink ring-0">
-        <SegmentedControl options={TABS} value={tab} onChange={(next) => setTab(next)} label="Period type" variant="pill" stretch />
+        {modes.length > 1 && <SegmentedControl options={TABS.filter((option) => modes.includes(option.value))} value={tab} onChange={(next) => setTab(next)} label="Period type" variant="pill" stretch />}
 
         {tab === "month" && (
           <>
@@ -172,7 +185,7 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
                 })}
               </div>
             </div>
-            <span className="text-caption text-ink-muted">{have ? t("Greyed-out months have no data.") : t("Months after this one are greyed out.")}</span>
+            <span className="text-caption text-ink-muted">{have ? t(greyNote ?? "Greyed-out months have no data.") : t("Months after this one are greyed out.")}</span>
           </>
         )}
 
