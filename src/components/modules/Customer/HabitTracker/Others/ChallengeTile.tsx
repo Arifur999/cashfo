@@ -29,6 +29,8 @@ const SIZES = {
   32: "size-8 rounded-[9px] [&_svg]:size-4",
   // A card going on now.
   40: "size-10 rounded-[11px] [&_svg]:size-5",
+  // A card on Challenges' list.
+  44: "size-11 rounded-md [&_svg]:size-5",
   // The head card of a challenge's own page.
   48: "size-12 rounded-md [&_svg]:size-6",
 } as const;
