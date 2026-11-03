@@ -549,4 +549,9 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Was kept in {name}": "রাখা ছিল {name}-এ",
   "The dark line shows where the plan expects you to be today.": "কালো দাগটি দেখায় পরিকল্পনা অনুযায়ী আজ কত জমা থাকার কথা।",
   "Plan today {amount}": "আজকের পরিকল্পনা {amount}",
+  "Goals table": "লক্ষ্যের টেবিল",
+  "{name}: details": "{name}: বিস্তারিত",
+  "{amount} sent to balance": "{amount} ব্যালেন্সে পাঠানো হয়েছে",
+  "No monthly target": "মাসিক লক্ষ্য নেই",
+  "{amount} a month is enough": "মাসে {amount} হলেই চলবে",
 };

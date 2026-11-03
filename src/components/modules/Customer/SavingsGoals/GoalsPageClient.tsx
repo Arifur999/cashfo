@@ -28,6 +28,9 @@ import { GoalFormDialog } from "./GoalFormDialog";
 import { GoalReachedDialog } from "./GoalReachedDialog";
 import { GoalStatementDialog } from "./GoalStatementDialog";
 import { MoveMoneyDialog, type MoveSetup } from "./MoveMoneyDialog";
+import { useStoredChoice } from "../Balance/useStoredChoice";
+import { LIST_VIEWS, ViewToggle, type ListView } from "../Shared/ViewToggle";
+import { GoalsTable } from "./GoalsTable";
 import { RestoreWalletButton } from "./RestoreWalletButton";
 import { SavingsSummary } from "./SavingsSummary";
 import { SavingsAccountDialog } from "./SavingsAccountDialog";
@@ -84,6 +87,8 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [tab, setTab] = useState<Tab>("ALL");
   const [behindOnly, setBehindOnly] = useState(false);
+  // Cards or a table, as this browser last had it.
+  const [view, setView] = useStoredChoice<ListView>("smartly-savings-view", LIST_VIEWS, "cards");
   const [modal, setModal] = useState<Modal | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -281,16 +286,19 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
             onShowBehind={() => setBehindOnly(true)}
           />
 
-          <TabBar
-            options={TABS.map((item) => ({ value: item.value, label: t(item.label), count: tabGoals(item.value).length }))}
-            value={showBehind ? ("" as Tab) : tab}
-            onChange={(value) => {
-              setTab(value);
-              setBehindOnly(false);
-            }}
-            label={t("Goal status")}
-            className="max-md:overflow-x-auto"
-          />
+          <div className="flex items-end gap-4 border-b border-line">
+            <TabBar
+              options={TABS.map((item) => ({ value: item.value, label: t(item.label), count: tabGoals(item.value).length }))}
+              value={showBehind ? ("" as Tab) : tab}
+              onChange={(value) => {
+                setTab(value);
+                setBehindOnly(false);
+              }}
+              label={t("Goal status")}
+              className="min-w-0 flex-1 border-b-0 max-md:overflow-x-auto"
+            />
+            <ViewToggle value={view} onChange={setView} className="mb-1.5" />
+          </div>
 
           {showBehind && (
             <div className="flex flex-wrap items-center gap-3 rounded-md bg-warning-soft px-4 py-2.5 text-[13.5px] text-warning-ink">
@@ -303,24 +311,39 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {shown.map((goal) => (
-              <GoalCard key={goal.id} goal={goal} color={colorOf(goal)} currency={currency} today={today} canManage={canManage} noWallet={noWallet} canMoveTo={canMoveTo(goal)} busy={isPending} onAction={(action) => act(goal, action)} />
-            ))}
-            {canManage && tab === "ALL" && !showBehind && shown.length % 2 === 1 && (
-              <button
-                type="button"
-                onClick={() => setModal({ kind: "goal" })}
-                className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
-              >
-                <span className="flex size-10 items-center justify-center rounded-field bg-mint-50 text-emerald">
-                  <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
-                </span>
-                <span className="text-body font-semibold text-ink">{t("New goal")}</span>
-                <span className="text-caption text-ink-muted">{t("Emergency fund, Hajj, a new bike…")}</span>
-              </button>
-            )}
-          </div>
+          {view === "table" && shown.length > 0 ? (
+            <GoalsTable
+              goals={shown}
+              colorOf={colorOf}
+              currency={currency}
+              today={today}
+              canManage={canManage}
+              noWallet={noWallet}
+              canMoveTo={canMoveTo}
+              busy={isPending}
+              onAction={act}
+              onNew={canManage && tab === "ALL" && !showBehind ? () => setModal({ kind: "goal" }) : null}
+            />
+          ) : view === "cards" && (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {shown.map((goal) => (
+                <GoalCard key={goal.id} goal={goal} color={colorOf(goal)} currency={currency} today={today} canManage={canManage} noWallet={noWallet} canMoveTo={canMoveTo(goal)} busy={isPending} onAction={(action) => act(goal, action)} />
+              ))}
+              {canManage && tab === "ALL" && !showBehind && shown.length % 2 === 1 && (
+                <button
+                  type="button"
+                  onClick={() => setModal({ kind: "goal" })}
+                  className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
+                >
+                  <span className="flex size-10 items-center justify-center rounded-field bg-mint-50 text-emerald">
+                    <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
+                  </span>
+                  <span className="text-body font-semibold text-ink">{t("New goal")}</span>
+                  <span className="text-caption text-ink-muted">{t("Emergency fund, Hajj, a new bike…")}</span>
+                </button>
+              )}
+            </div>
+          )}
           {shown.length === 0 && !showBehind && tab !== "ALL" && <p className="rounded-lg border border-line bg-surface p-9 text-center text-body text-ink-muted">{t(EMPTY_TAB[tab])}</p>}
         </>
       )}
