@@ -254,10 +254,3 @@ export function monthRangeDays(start: string, end?: string | null): { dateFrom: 
   return { dateFrom: `${first}-01`, dateTo: `${last}-${String(lastDay).padStart(2, "0")}` };
 }
 
-// "September 2026", "Sep – Nov 2026", or "Nov 2025 – Feb 2026".
-export function monthRangeLabel(start: string, end: string | null | undefined, locale: FormatLocale): string {
-  const [first, last] = !end || end >= start ? [start, end || start] : [end, start];
-  if (first === last) return formatDay(`${first}-01`, "MMMM yyyy", locale);
-  if (first.slice(0, 4) === last.slice(0, 4)) return `${formatDay(`${first}-01`, "MMM", locale)} – ${formatDay(`${last}-01`, "MMM yyyy", locale)}`;
-  return `${formatDay(`${first}-01`, "MMM yyyy", locale)} – ${formatDay(`${last}-01`, "MMM yyyy", locale)}`;
-}
