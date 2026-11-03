@@ -59,6 +59,9 @@ export interface NavLeaf {
   // The page's own name where the menu shortens it ("Referrals" heads its
   // page as "Referral Program").
   heading?: string;
+  // false: left out of the sidebar's list (the board has no row for it),
+  // still named in the breadcrumb, the tab title and the search palette.
+  menu?: false;
 }
 
 export interface NavItem extends NavLeaf {
@@ -276,10 +279,11 @@ export const NAV_SECTIONS: NavSection[] = [
   { label: "Plan@@habits", tone: "habits", app: "habit", items: [{ label: "To Do List", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" }] },
 ];
 
-// Settings: reached from the sidebar's foot (the gear) and the account
-// menu, not a menu row. Its sections show in the breadcrumb as
-// "Settings › Security" and in the search palette under "Account ›
-// Settings" (Settings has its own menu).
+// Settings: the last group of the Money Tracker's menu (AppSidebar board),
+// also the gear in the sidebar's foot and the account menu. Its sections
+// show in the breadcrumb as "Settings › Security" and in the search palette
+// under "Account › Settings". Workspaces has no row (the workspace switcher
+// and the account menu lead there).
 export const NAV_FOOT_LABEL = "Account@@user";
 export const NAV_FOOT: NavItem[] = [
   {
@@ -290,7 +294,7 @@ export const NAV_FOOT: NavItem[] = [
       { label: "Profile", href: "/settings/profile" },
       { label: "Security", href: "/settings/security" },
       { label: "Plans", href: "/settings/plans" },
-      { label: "Workspaces", href: "/settings/workspaces" },
+      { label: "Workspaces", href: "/settings/workspaces", menu: false },
       { label: "App preferences", href: "/settings/app" },
       { label: "Help & support", href: "/settings/help" },
       { label: "Resources & legal", href: "/settings/resources" },

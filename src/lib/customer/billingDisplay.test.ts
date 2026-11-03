@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canCancel, familyName, familyPlan, featureMissing, featureValue, heroFamily, paymentStatusView, planFamilies, planState, sidebarPlan, usagePercent, usageTone, yearlySaving, type BillingPlan, type Subscription } from "./billingDisplay";
+import { canCancel, daysLeft, familyName, familyPlan, featureMissing, featureValue, heroFamily, paymentStatusView, planFamilies, planState, sidebarPlan, usagePercent, usageTone, yearlySaving, type BillingPlan, type Subscription } from "./billingDisplay";
 
 const plan = (over: Partial<BillingPlan>): BillingPlan => ({ id: "x", name: "Free", slug: "free", billingCycle: "FREE", price: "0.00", currency: "BDT", trialDays: 0, featureLimits: {}, displayOrder: 0, ...over });
 
@@ -66,10 +66,22 @@ describe("subscription state", () => {
   });
 
   it("names the plan in the sidebar, a trial marked and an ended plan as free", () => {
-    expect(sidebarPlan(sub({ billingCycle: "FREE", isPaid: false }))).toEqual({ name: null, trial: false });
-    expect(sidebarPlan(sub({ status: "TRIALING", isPaid: false }))).toEqual({ name: "Monthly Pro", trial: true });
-    expect(sidebarPlan(sub({ status: "PAST_DUE" }))).toEqual({ name: "Monthly Pro", trial: false });
-    expect(sidebarPlan(sub({ status: "EXPIRED" }))).toEqual({ name: null, trial: false });
+    expect(sidebarPlan(sub({ billingCycle: "FREE", isPaid: false }))).toEqual({ name: null, trial: false, trialEndsAt: null, pending: false });
+    expect(sidebarPlan(sub({ status: "TRIALING", isPaid: false, trialEndsAt: "2026-11-10T00:00:00Z" }))).toEqual({ name: "Monthly Pro", trial: true, trialEndsAt: "2026-11-10T00:00:00Z", pending: false });
+    expect(sidebarPlan(sub({ status: "PAST_DUE" }))).toEqual({ name: "Monthly Pro", trial: false, trialEndsAt: null, pending: false });
+    expect(sidebarPlan(sub({ status: "EXPIRED" }))).toEqual({ name: null, trial: false, trialEndsAt: null, pending: false });
+  });
+
+  it("marks a payment that waits to be confirmed", () => {
+    const waiting = { id: "p", displayId: "PAY-1", planId: "mp", planName: "Monthly Pro", amount: "199.00", gateway: "BKASH" as const, instructions: { en: "", bn: "" }, expiresAt: "2026-11-04T00:00:00Z", createdAt: "2026-11-03T00:00:00Z" };
+    expect(sidebarPlan(sub({ billingCycle: "FREE", isPaid: false }), waiting).pending).toBe(true);
+  });
+
+  it("counts a trial's days left, a part day as a whole one", () => {
+    const now = new Date("2026-11-03T06:00:00Z");
+    expect(daysLeft("2026-11-10T06:00:00Z", now)).toBe(7);
+    expect(daysLeft("2026-11-03T18:00:00Z", now)).toBe(1);
+    expect(daysLeft("2026-11-01T00:00:00Z", now)).toBe(0);
   });
 
   it("words a payment's status", () => {

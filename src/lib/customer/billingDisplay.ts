@@ -245,19 +245,29 @@ export function planState(subscription: Subscription): PlanState {
   }
 }
 
-// The sidebar's plan chip (AppSidebar board): no name means "Free plan" and
-// the Upgrade card; otherwise the plan's name, marked while it is a trial.
-// A plan that ended counts as free again.
+// The sidebar's plan chip and card (AppSidebar board): no name means "Free
+// plan" and the Upgrade card; a trial says "Free trial" and when it ends;
+// otherwise the plan's name. A plan that ended counts as free again.
 export interface SidebarPlan {
   name: string | null;
   trial: boolean;
+  // When the trial ends; null outside one.
+  trialEndsAt: string | null;
+  // A payment waits for an admin to confirm it ("Payment being checked").
+  pending: boolean;
 }
 
-export function sidebarPlan(subscription: Subscription): SidebarPlan {
+export function sidebarPlan(subscription: Subscription, pendingPayment: PendingPayment | null = null): SidebarPlan {
   const state = planState(subscription);
-  if (state === "free" || state === "ended") return { name: null, trial: false };
-  return { name: subscription.planName, trial: state === "trial" };
+  const pending = pendingPayment !== null;
+  if (state === "free" || state === "ended") return { name: null, trial: false, trialEndsAt: null, pending };
+  const trial = state === "trial";
+  return { name: subscription.planName, trial, trialEndsAt: trial ? subscription.trialEndsAt : null, pending };
 }
+
+// Whole days left until `endsAt` (a trial's end), never below 0: a trial
+// ending later today has 1 left.
+export const daysLeft = (endsAt: string, now = new Date()): number => Math.max(0, Math.ceil((new Date(endsAt).getTime() - now.getTime()) / 86_400_000));
 
 // A paid plan with an end date can be stopped at its end (or the stop undone).
 export const canCancel = (subscription: Subscription): boolean => subscription.isPaid && Boolean(subscription.currentPeriodEnd);

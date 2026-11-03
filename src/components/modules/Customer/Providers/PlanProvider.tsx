@@ -17,11 +17,27 @@ export function usePlan(): SidebarPlan | null {
   return useContext(PlanContext);
 }
 
-// The plan's chip as the sidebar and the Dashboard's profile card word it:
-// "Free plan", "Monthly Pro", or "Monthly Pro · trial". free: show Upgrade.
-export function usePlanChip(): { free: boolean; label: string } {
+export type PlanStatus = "free" | "trial" | "paid";
+
+export interface PlanChip {
+  status: PlanStatus;
+  // Shorthand for status === "free": show Upgrade.
+  free: boolean;
+  // A payment waits for an admin to confirm it.
+  pending: boolean;
+  // When the trial ends; null outside one.
+  trialEndsAt: string | null;
+  // "Free plan", "Free trial", or the plan's name.
+  label: string;
+}
+
+// The plan as the sidebar's chip and card and the Dashboard's profile card
+// word it (AppSidebar and Dashboard boards).
+export function usePlanChip(): PlanChip {
   const plan = usePlan();
   const { t } = useLocale();
-  if (!plan?.name) return { free: true, label: t("Free plan") };
-  return { free: false, label: plan.trial ? t("{plan} · trial", { plan: plan.name }) : plan.name };
+  const pending = !!plan?.pending;
+  if (!plan?.name) return { status: "free", free: true, pending, trialEndsAt: null, label: t("Free plan") };
+  if (plan.trial) return { status: "trial", free: false, pending, trialEndsAt: plan.trialEndsAt, label: t("Free trial") };
+  return { status: "paid", free: false, pending, trialEndsAt: null, label: plan.name };
 }
