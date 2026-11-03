@@ -41,8 +41,23 @@ const PaymentDetailsCard = async ({ payment }: { payment: IPaymentDetail }) => {
       }),
     },
     { label: MOMENT_LABEL[payment.status], value: formatDate(payment.paidAt ?? payment.createdAt, "d MMM yyyy, h:mm:ss aaa", "—", locale) },
-    // Typed in at Mark paid: the number or account the money came from.
+    // The number or bank account the money came from: sent by the customer
+    // at checkout, or typed in at Mark paid.
     ...(payment.payerAccount ? [{ label: "Paid from", value: <code className="font-mono">{payment.payerAccount}</code> }] : []),
+    // When the customer sent the number and the TrxID, and their screenshot.
+    ...(payment.submittedAt ? [{ label: "Details sent", value: formatDate(payment.submittedAt, "d MMM yyyy, h:mm aaa", "—", locale) }] : []),
+    ...(payment.proof
+      ? [
+          {
+            label: "Screenshot",
+            value: (
+              <a href={`/admin/payments/${payment.id}/proof`} target="_blank" rel="noopener" className="font-semibold text-emerald hover:underline">
+                <T>Open the screenshot</T>
+              </a>
+            ),
+          },
+        ]
+      : []),
     // The period a paid payment bought.
     ...(payment.periodStart && payment.periodEnd
       ? [{ label: "Covers", value: `${formatDate(payment.periodStart, "d MMM", "—", locale)} – ${formatDate(payment.periodEnd, "d MMM yyyy", "—", locale)}` }]
