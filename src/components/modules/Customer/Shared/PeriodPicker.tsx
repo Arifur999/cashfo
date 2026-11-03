@@ -205,14 +205,14 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
               </form>
             </Field>
             <div className="flex flex-col gap-1.5">
-              <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{have ? t("Years with data") : t("Recent years")}</span>
+              <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{monthsIn.size > 0 ? t("Years with data") : t("Recent years")}</span>
               {years.map((year) => {
                 const on = period.kind === "year" && period.year === year;
                 const months = monthsIn.get(year) ?? 0;
                 return (
                   <button key={year} type="button" aria-pressed={on} onClick={() => pick({ kind: "year", year })} className={cn("flex h-11 items-center justify-between rounded-field px-3.5", choice(on))}>
                     <span className="text-body font-semibold">{toLocaleDigits(String(year), fmt)}</span>
-                    {have && <span className="text-caption font-normal text-ink-muted">{plural(t, months, "{count} month", "{count} months", undefined, fmt)}</span>}
+                    {monthsIn.size > 0 && <span className="text-caption font-normal text-ink-muted">{plural(t, months, "{count} month", "{count} months", undefined, fmt)}</span>}
                   </button>
                 );
               })}
