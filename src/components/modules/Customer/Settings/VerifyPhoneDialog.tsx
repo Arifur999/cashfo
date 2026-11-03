@@ -19,11 +19,16 @@ interface VerifyPhoneDialogProps {
   phone: string;
   onClose: () => void;
   onVerified: () => void;
+  // "Confirm your new number" right after saving one; "Verify your phone"
+  // otherwise.
+  title?: string;
+  // The toast once it is verified.
+  doneMessage?: string;
 }
 
 // Settings > Profile > "Verify": the account password (so a stolen session
 // can't put someone else's number here), then the code we text to it.
-export function VerifyPhoneDialog({ open, phone, onClose, onVerified }: VerifyPhoneDialogProps) {
+export function VerifyPhoneDialog({ open, phone, onClose, onVerified, title, doneMessage }: VerifyPhoneDialogProps) {
   const { t } = useLocale();
   const { user } = useAuth();
   const hasPassword = user.hasPassword !== false;
@@ -70,7 +75,7 @@ export function VerifyPhoneDialog({ open, phone, onClose, onVerified }: VerifyPh
     startTransition(async () => {
       const result = await confirmPhoneVerifyAction(challenge.challengeId, typed);
       if (result.success) {
-        toast.success(t("Your phone number is verified"));
+        toast.success(doneMessage ?? t("Your phone number is verified"));
         onVerified();
         onClose();
       } else {
@@ -109,7 +114,7 @@ export function VerifyPhoneDialog({ open, phone, onClose, onVerified }: VerifyPh
         if (challenge) confirm();
         else send();
       }}
-      title={t("Verify your phone")}
+      title={title ?? t("Verify your phone")}
       description={challenge ? t("Enter the code to finish.") : t("We'll text a 6-digit code to {phone}.", { phone })}
       footer={
         <>
