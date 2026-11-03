@@ -63,9 +63,10 @@ describe("the two menus", () => {
   it("draws the Habit Tracker as the HabitSidebar board does", () => {
     expect(labels(personal, "habit")).toEqual([
       ["Overview", [["Dashboard"]]],
-      ["Worship", [["Namaz"], ["Ramadan"]]],
-      ["Habits", [["Daily habits"], ["Challenges"], ["My Library"], ["Skills"]]],
+      ["Worship", [["Namaz", "Today", "Dashboard"], ["Ramadan", "Today", "Dashboard"]]],
+      ["Habits", [["Daily habits", "Today", "Monthly report"], ["Challenges"], ["My Library", "Reading now", "Dashboard"], ["Skills"]]],
       ["Plan@@habits", [["To Do List"]]],
+      ["Write", [["Notes & Journal", "Notes", "Journal"]]],
     ]);
   });
 
@@ -129,7 +130,12 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(locate("/zakat")!)).toEqual({ crumbs: [], heading: "Zakat calculator", tone: "neutral" });
     expect(breadcrumbFor(locate("/reports/detailed")!)).toEqual({ crumbs: [], heading: "Reports", tone: "insights" });
     expect(breadcrumbFor(locate("/habit-tracker")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "habits" });
-    expect(breadcrumbFor(locate("/habit-tracker/daily")!)).toEqual({ crumbs: ["Habits"], heading: "Daily habits", tone: "habits" });
+    expect(breadcrumbFor(locate("/habit-tracker/habits", personal, { category: "Course" })!)).toEqual({ crumbs: ["Habits"], heading: "Skills", tone: "habits" });
+    // A group's page names its group: "Daily habits › Monthly report".
+    expect(breadcrumbFor(locate("/habit-tracker/daily")!)).toEqual({ crumbs: ["Daily habits"], heading: "Today", tone: "habits" });
+    expect(breadcrumbFor(locate("/habit-tracker/daily/report")!)).toEqual({ crumbs: ["Daily habits"], heading: "Monthly report", tone: "habits" });
+    expect(breadcrumbFor(locate("/habit-tracker/habits/library")!)).toEqual({ crumbs: ["My Library"], heading: "Library dashboard", tone: "habits" });
+    expect(breadcrumbFor(locate("/habit-tracker/journal")!)).toEqual({ crumbs: ["Notes & Journal"], heading: "Journal", tone: "habits" });
   });
 
   it("puts Settings' sections under Settings", () => {

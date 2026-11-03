@@ -20,7 +20,7 @@ describe("topbarTrail", () => {
       { label: "Referrals", href: "/referrals" },
       { label: "Withdrawals", href: "/referrals/withdrawals" },
     ]);
-    expect(topbarTrail(locate("/habit-tracker/daily"), false)).toEqual([{ label: "Habits" }]);
+    expect(topbarTrail(locate("/habit-tracker/habits?category=Others"), false)).toEqual([{ label: "Habits" }]);
   });
 
   it("names nothing above the first section's pages", () => {
@@ -49,7 +49,11 @@ describe("topbarTrail", () => {
   });
 
   it("opens a habit list with its own category", () => {
-    expect(topbarTrail(locate("/habit-tracker/habits/namaz/2026-10"), true)).toEqual([{ label: "Namaz", href: "/habit-tracker/habits?category=Namaz" }]);
+    // A month of Namaz is a record under its Dashboard.
+    expect(topbarTrail(locate("/habit-tracker/habits/namaz/2026-10"), true)).toEqual([
+      { label: "Namaz", href: "/habit-tracker/habits?category=Namaz" },
+      { label: "Dashboard", href: "/habit-tracker/habits/namaz" },
+    ]);
   });
 
   it("leaves the list as text for a record shown on the list's own page", () => {
@@ -67,7 +71,7 @@ describe("recordListHref", () => {
     expect(recordListHref(record.location!, listVisitUrl(record.location, record.pathname, record.query), "/transactions?page=3")).toBe("/transactions?page=3");
     expect(recordListHref(record.location!, null)).toBe("/transactions");
     const sheet = at("/habit-tracker/habits/namaz/2026-10");
-    expect(recordListHref(sheet.location!, null)).toBe("/habit-tracker/habits?category=Namaz");
+    expect(recordListHref(sheet.location!, null)).toBe("/habit-tracker/habits/namaz");
   });
 
   // The vault's security checkup is ?checkup=1 on the vault's own page: the

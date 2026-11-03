@@ -256,8 +256,28 @@ export const NAV_SECTIONS: NavSection[] = [
     tone: "habits",
     app: "habit",
     items: [
-      { label: "Namaz", href: "/habit-tracker/habits", query: { category: "Namaz" }, match: ["/habit-tracker/habits/namaz"], icon: "namaz" },
-      { label: "Ramadan", href: "/habit-tracker/habits", query: { category: "Ramadan" }, match: ["/habit-tracker/habits/ramadan"], icon: "ramadan" },
+      // Today's page first; Dashboard is the month (Namaz) or the year's
+      // sheet (Ramadan), with its records under it.
+      {
+        label: "Namaz",
+        href: "/habit-tracker/habits",
+        query: { category: "Namaz" },
+        icon: "namaz",
+        subs: [
+          { label: "Today", href: "/habit-tracker/habits", query: { category: "Namaz" } },
+          { label: "Dashboard", href: "/habit-tracker/habits/namaz" },
+        ],
+      },
+      {
+        label: "Ramadan",
+        href: "/habit-tracker/habits",
+        query: { category: "Ramadan" },
+        icon: "ramadan",
+        subs: [
+          { label: "Today", href: "/habit-tracker/habits", query: { category: "Ramadan" } },
+          { label: "Dashboard", href: "/habit-tracker/habits/ramadan" },
+        ],
+      },
     ],
   },
   {
@@ -265,15 +285,49 @@ export const NAV_SECTIONS: NavSection[] = [
     tone: "habits",
     app: "habit",
     items: [
-      { label: "Daily habits", href: "/habit-tracker/daily", icon: "daily", badge: "habitsToday" },
+      {
+        label: "Daily habits",
+        href: "/habit-tracker/daily",
+        icon: "daily",
+        badge: "habitsToday",
+        subs: [
+          { label: "Today", href: "/habit-tracker/daily" },
+          { label: "Monthly report", href: "/habit-tracker/daily/report" },
+        ],
+      },
       // The "Others" trackers, named Challenges.
       { label: "Challenges", href: "/habit-tracker/habits", query: { category: "Others" }, match: ["/habit-tracker/habits/others"], icon: "challenges" },
-      { label: "My Library", href: "/habit-tracker/habits", query: { category: "Book" }, icon: "library" },
+      {
+        label: "My Library",
+        href: "/habit-tracker/habits",
+        query: { category: "Book" },
+        icon: "library",
+        subs: [
+          { label: "Reading now", href: "/habit-tracker/habits", query: { category: "Book" } },
+          { label: "Dashboard", href: "/habit-tracker/habits/library", heading: "Library dashboard" },
+        ],
+      },
       { label: "Skills", href: "/habit-tracker/habits", query: { category: "Course" }, icon: "skills" },
     ],
   },
   // "@@habits": a to-do plan (পরিকল্পনা), not a subscription plan.
   { label: "Plan@@habits", tone: "habits", app: "habit", items: [{ label: "To Do List", href: "/habit-tracker/todos", icon: "todo", badge: "todayTasks" }] },
+  {
+    label: "Write",
+    tone: "habits",
+    app: "habit",
+    items: [
+      {
+        label: "Notes & Journal",
+        href: "/habit-tracker/notes",
+        icon: "journal",
+        subs: [
+          { label: "Notes", href: "/habit-tracker/notes" },
+          { label: "Journal", href: "/habit-tracker/journal" },
+        ],
+      },
+    ],
+  },
 ];
 
 // Settings: reached from the sidebar's foot (the gear) and the account
