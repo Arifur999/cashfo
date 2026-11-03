@@ -345,7 +345,6 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
               activeMonths={activeMonths}
               allowAll
               defaultPeriod={ALL_TIME}
-              align="start"
               onPick={(next) => router.push(periodHref(pathname, Object.fromEntries(searchParams.entries()), next))}
             />
           </div>
