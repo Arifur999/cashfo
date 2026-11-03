@@ -23,7 +23,7 @@ export interface MonthOption {
 // The month list's percent: forest when good, amber below 80%.
 const pctTone = (pct: number | null) => (pct === null ? "text-ink-faint" : pct >= 80 ? "text-emerald" : "text-warning-ink");
 
-export function ReportHeader({ title, current, chip, subtitle, months, selected, onPrint }: { title: string; current: boolean; chip?: React.ReactNode; subtitle: string; months: MonthOption[]; selected: string; onPrint: () => void }) {
+export function ReportHeader({ title, current, chip, subtitle, months, selected, onPrint, action }: { title: string; current: boolean; chip?: React.ReactNode; subtitle: string; months: MonthOption[]; selected: string; onPrint: () => void; action?: React.ReactNode }) {
   const { t, fmt } = useLocale();
   const years = [...new Set(months.map((month) => month.key.slice(0, 4)))];
   return (
@@ -36,7 +36,7 @@ export function ReportHeader({ title, current, chip, subtitle, months, selected,
         </div>
         <p className="text-body text-ink-muted">{subtitle}</p>
       </div>
-      <div className="flex items-center gap-2.5 print:hidden">
+      <div className="flex flex-wrap items-center gap-2.5 print:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger className="flex h-10 min-w-50 items-center justify-between gap-2.5 rounded-sm border border-input bg-surface px-3 text-body font-semibold text-ink hover:bg-surface-sunken pointer-coarse:h-11">
             <span className="flex items-center gap-2">
@@ -63,6 +63,7 @@ export function ReportHeader({ title, current, chip, subtitle, months, selected,
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        {action}
         <button type="button" onClick={onPrint} aria-label={t("Print this month")} title={t("Print this month")} className="flex size-10 items-center justify-center rounded-sm border border-input bg-surface text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11">
           <Printer className="size-4.5" aria-hidden="true" />
         </button>

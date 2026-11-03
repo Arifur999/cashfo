@@ -1,9 +1,9 @@
 "use client";
 
-import { Calendar, Check, ChevronLeft, ChevronRight, Flame, Sunrise, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useOptimistic, useState, useTransition } from "react";
+import { createElement, Fragment, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -13,10 +13,10 @@ import IconTile from "@/components/smartly/IconTile";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { HabitMonthTracker, PrayerStatus, QazaSummary } from "@/lib/customer/api";
-import { actionError, WEEKDAY_PLURAL } from "@/lib/customer/habitDisplay";
+import { actionError } from "@/lib/customer/habitDisplay";
 import { deleteHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
-import { hijriRange, MONTH_NAMES, monthInsights, monthSummary, prayerSummaries, type Insight } from "@/lib/customer/namazDisplay";
+import { hijriRange, MONTH_NAMES, monthInsights, monthSummary, prayerSummaries } from "@/lib/customer/namazDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -25,6 +25,7 @@ import { RecordEyebrow } from "../Tracker/RecordEyebrow";
 import { type BoxState, BoxSwatch } from "../Tracker/SheetBox";
 import { StatCard } from "../Tracker/StatCard";
 import { withCheck } from "../trackerChecks";
+import { INSIGHT_ICON, insightText } from "./namazWords";
 import { PrayerSheet } from "./PrayerSheet";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
@@ -39,16 +40,6 @@ interface NamazSheetPageClientProps {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const INSIGHT_ICON: Record<Insight["key"], React.ReactNode> = {
-  nothingMissed: <Check />,
-  mostMissed: <Sunrise />,
-  strongest: <Check />,
-  weekday: <Calendar />,
-  run: <Flame />,
-  upFrom: <TrendingUp />,
-  downFrom: <TrendingDown />,
-};
-
 // What each box means, in the order the menu offers them, drawn by the boxes'
 // own looks. Today's open box is the dashed one in the brand.
 const LEGEND: { state: BoxState; label: string }[] = [
@@ -112,25 +103,6 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
       }
     });
   }
-
-  const insightText = (i: Insight): string => {
-    switch (i.key) {
-      case "nothingMissed":
-        return t(i.n === 1 ? "{count} day in and nothing missed." : "{count} days in and nothing missed.", { count: count(i.n ?? 0) });
-      case "mostMissed":
-        return t(i.n === 1 ? "{prayer} was missed most: {count} time." : "{prayer} was missed most: {count} times.", { prayer: t(i.item ?? ""), count: count(i.n ?? 0) });
-      case "strongest":
-        return t("{prayer} was the strongest: {done} of {total}.", { prayer: t(i.item ?? ""), done: count(i.n ?? 0), total: count(i.of ?? 0) });
-      case "weekday":
-        return t("{count} of the {total} missed prayers were on {weekday}.", { count: count(i.n ?? 0), total: count(i.of ?? 0), weekday: t(WEEKDAY_PLURAL[i.weekdayIndex ?? 0]) });
-      case "run":
-        return t("{count} days in a row now with all five prayed.", { count: count(i.n ?? 0) });
-      case "upFrom":
-        return t("Up from {pct}% in {month}.", { pct: count(i.previousPct ?? 0), month: monthWord(i.previousMonth) });
-      case "downFrom":
-        return t("Down from {pct}% in {month}.", { pct: count(i.previousPct ?? 0), month: monthWord(i.previousMonth) });
-    }
-  };
 
   const prayedSub =
     previousSummary && previousSummary.due > 0
@@ -250,9 +222,9 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
             {insights.map((insight, i) => (
               <li key={i} className="flex gap-2.5 text-small leading-[1.45] text-ink-2">
                 <IconTile tone={insight.tone} size={32} className="size-6.5 rounded-[7px] [&_svg]:size-3.5">
-                  {INSIGHT_ICON[insight.key]}
+                  {createElement(INSIGHT_ICON[insight.key])}
                 </IconTile>
-                <span className="pt-0.5">{insightText(insight)}</span>
+                <span className="pt-0.5">{insightText(insight, t, fmt)}</span>
               </li>
             ))}
           </ul>
