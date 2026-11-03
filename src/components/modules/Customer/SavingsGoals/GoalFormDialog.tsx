@@ -10,9 +10,8 @@ import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Input from "@/components/smartly/form/Input";
 import Textarea from "@/components/smartly/form/Textarea";
-import { useAmountField } from "@/hooks/useAmountField";
 import type { Account, SavingsGoal } from "@/lib/customer/api";
-import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { createSavingsGoalAction, type SavingsGoalFormInput, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
 import { monthsAhead, monthsBetween, savingsError } from "@/lib/customer/savingsDisplay";
@@ -20,6 +19,7 @@ import { monthsToGo } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { MoneyField } from "./MoneyField";
 
 interface GoalFormDialogProps {
   open: boolean;
@@ -259,7 +259,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
           <label htmlFor="goal-target" className={LABEL}>
             {t("Target")}
           </label>
-          <MoneyField id="goal-target" value={targetAmount} onChange={setTargetAmount} currency={currency} lead />
+          <MoneyField id="goal-target" value={targetAmount} onChange={setTargetAmount} currency={currency} look="target" />
         </div>
         {editing ? (
           <div className="flex min-w-0 flex-col gap-2">
@@ -271,7 +271,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
             <label htmlFor="goal-have" className={LABEL}>
               {t("Saved already")} <span className="font-medium text-ink-faint">· {t("optional")}</span>
             </label>
-            <MoneyField id="goal-have" value={have} onChange={setHave} currency={currency} />
+            <MoneyField id="goal-have" value={have} onChange={setHave} currency={currency} look="saved" />
           </div>
         )}
       </div>
@@ -378,26 +378,6 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
         </p>
       )}
     </PopupDialog>
-  );
-}
-
-// The board's amount box: the currency sign inline, the figure large and
-// bold (the target's sign in the brand colour).
-function MoneyField({ id, value, onChange, currency, lead = false }: { id: string; value: string; onChange: (value: string) => void; currency: string; lead?: boolean }) {
-  const { fmt } = useLocale();
-  const field = useAmountField(value, onChange, currency);
-  return (
-    <Input
-      id={id}
-      type="text"
-      inputMode="decimal"
-      size="xl"
-      {...field}
-      placeholder="0"
-      leading={<span className={cn("font-bold", lead ? "text-[20px] text-emerald" : "text-[18px] text-ink-faint")}>{currencySymbol(currency, fmt)}</span>}
-      frameClassName={cn(FRAME, "h-14 gap-1.5 px-3.5")}
-      className={cn("font-bold tabular-nums", lead ? "text-[22px]" : "text-[18px]")}
-    />
   );
 }
 
