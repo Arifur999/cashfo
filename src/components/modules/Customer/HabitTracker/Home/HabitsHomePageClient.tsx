@@ -13,6 +13,7 @@ import { HabitDrawer } from "../Daily/HabitDrawer";
 import { useReminderBook } from "../Reminders";
 import { ChallengesCard } from "./ChallengesCard";
 import { DailyHabitsCard } from "./DailyHabitsCard";
+import { JournalNotesCard } from "./JournalNotesCard";
 import type { HabitsHomeData } from "./homeTypes";
 import { Last7Card } from "./Last7Card";
 import { LearningMini } from "./LearningMini";
@@ -92,7 +93,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         </div>
       </div>
 
-      <div className="grid items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-4">
+      <div className="grid items-stretch gap-4 md:gap-5 min-[768px]:grid-cols-2 min-[1024px]:grid-cols-3 min-[1400px]:grid-cols-5">
         <ReadingCard book={reading} streak={data.books?.reading.streak ?? 0} pagesToday={reading ? (data.books?.pagesToday[reading.id] ?? 0) : 0} today={today} />
         <div className="hidden md:contents">
           <LearningMini overview={data.skills} today={today} />
@@ -100,6 +101,9 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         </div>
         {/* Phones see it only while Ramadan is going on (the card decides). */}
         <RamadanCard trackers={data.ramadan} today={today} />
+        <div className="hidden md:contents">
+          <JournalNotesCard summary={data.writing} />
+        </div>
       </div>
 
       <HabitDrawer open={habitOpen} onClose={() => setHabitOpen(false)} editing={null} reminders={reminders} />

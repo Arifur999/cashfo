@@ -43,6 +43,14 @@ export const writingDictionary: Record<string, string> = {
   "New category, e.g. Health": "নতুন ক্যাটাগরি, যেমন স্বাস্থ্য",
   "{name} removed. Its notes stay, without a category.": "{name} মুছে ফেলা হয়েছে। এর নোটগুলো থাকছে, ক্যাটাগরি ছাড়া।",
 
+  // The dashboard's card
+  "Journal & notes": "জার্নাল ও নোট",
+  "Today's journal is written": "আজকের জার্নাল লেখা হয়েছে",
+  "Write today's journal": "আজকের জার্নাল লিখুন",
+  "{count}-day writing streak": "টানা {count} দিন লেখা",
+  "A few lines and a mood": "কয়েক লাইন আর মেজাজ",
+  "Latest note": "সর্বশেষ নোট",
+
   // Journal
   "A few lines a day. Your diary stays private.": "দিনে কয়েক লাইন। আপনার ডায়েরি থাকে গোপন।",
   "Search journal and #tags": "জার্নাল ও #ট্যাগে খুঁজুন",
