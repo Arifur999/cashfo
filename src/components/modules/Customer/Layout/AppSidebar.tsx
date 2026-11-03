@@ -15,7 +15,7 @@ import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import type { Fmt } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import { HABIT_APP_LABEL, HABIT_HOME, MONEY_HOME, navAppFor, PLANS_ROUTE, SETTINGS_ROUTE, type NavApp } from "@/lib/customer/nav";
+import { CHECKOUT_ROUTE, HABIT_APP_LABEL, HABIT_HOME, MONEY_HOME, navAppFor, PLANS_ROUTE, SETTINGS_ROUTE, type NavApp } from "@/lib/customer/nav";
 import { sidebarCookie } from "@/lib/customer/sidebarState";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -143,18 +143,19 @@ const ROUND_ICON = "flex size-9 shrink-0 items-center justify-center rounded-ful
 
 // The plan card's words (AppSidebar board): a payment being checked, a
 // trial and the day it ends, or the free plan's Upgrade.
-function planPromo(plan: PlanChip, t: Translate, fmt: Fmt): { title: string; text: string; button: string } {
+function planPromo(plan: PlanChip, t: Translate, fmt: Fmt): { title: string; text: string; button: string; href: string } {
   if (plan.pending) {
-    return { title: t("Payment being checked"), text: t("Pro turns on once we confirm your TrxID, usually within 2 hours."), button: t("See status") };
+    return { title: t("Payment being checked"), text: t("Pro turns on once we confirm your TrxID, usually within 2 hours."), button: t("See status"), href: CHECKOUT_ROUTE };
   }
   if (plan.status === "trial" && plan.trialEndsAt) {
     return {
       title: t("Free trial · {count} days left", { count: formatCount(daysLeft(plan.trialEndsAt), fmt) }),
       text: t("Pick a plan before {date} to keep Pro.", { date: formatDate(plan.trialEndsAt, "d MMM", "", fmt) }),
       button: t("Choose a plan"),
+      href: PLANS_ROUTE,
     };
   }
-  return { title: t("Upgrade to Pro"), text: t("No monthly limit on transactions, plus PDF reports and income goals."), button: t("See plans") };
+  return { title: t("Upgrade to Pro"), text: t("No monthly limit on transactions, plus PDF reports and income goals."), button: t("See plans"), href: PLANS_ROUTE };
 }
 
 // The Money Tracker's foot: the Upgrade to Pro card (only while no group
@@ -227,7 +228,7 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
             </h2>
           </span>
           <p className="relative text-[12.5px] leading-[1.45] text-brand-ink">{promo.text}</p>
-          <Link href={PLANS_ROUTE} className="relative mt-1 flex h-8 items-center gap-1.5 self-start rounded-full bg-forest px-3.5 text-small font-semibold text-white hover:bg-forest-hover">
+          <Link href={promo.href} className="relative mt-1 flex h-8 items-center gap-1.5 self-start rounded-full bg-forest px-3.5 text-small font-semibold text-white hover:bg-forest-hover">
             {promo.button}
             <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
           </Link>

@@ -63,6 +63,9 @@
      the top bar's app switch. */
   --emerald-soft: #e8f1f0;
   --emerald-line: #c6ddd9;
+  /* The palest of it: a chosen option's ground (Checkout's plan and way
+     to pay, design-v4 #f4faf8). */
+  --emerald-wash: #f4faf8;
   /* The Habit Tracker's teal (HabitSidebar, HabitDashboard), its tint and
      edge. Inside the Habit Tracker ([data-app="habit"], below) the brand
      tokens take these. */
@@ -104,6 +107,7 @@
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
   --gateway-nagad: #d9480f;
+  --gateway-rocket: #8c3494;
 
   /* Pillars */
   --pillar-money: var(--emerald);
@@ -234,6 +238,7 @@
 
   --emerald-soft: #0e2a26;
   --emerald-line: #1c4536;
+  --emerald-wash: #0b221f;
   --habit: #3dbdb0;
   --habit-soft: #0c2a28;
   --habit-line: #18433f;
@@ -263,6 +268,7 @@
   --gold-on-forest: #f5c26b;
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
+  --gateway-rocket: #c98bd3;
 
   --pillar-loans: #f0a46a;
   --pillar-loans-soft: #3a2010;
@@ -498,6 +504,7 @@ html:not(.dark) [data-app="habit"] {
   --color-emerald-hover: var(--emerald-hover);
   --color-emerald-soft: var(--emerald-soft);
   --color-emerald-line: var(--emerald-line);
+  --color-emerald-wash: var(--emerald-wash);
   --color-habit: var(--habit);
   --color-habit-soft: var(--habit-soft);
   --color-habit-line: var(--habit-line);
@@ -545,6 +552,7 @@ html:not(.dark) [data-app="habit"] {
   --color-gold-on-forest: var(--gold-on-forest);
   --color-gateway-bkash: var(--gateway-bkash);
   --color-gateway-nagad: var(--gateway-nagad);
+  --color-gateway-rocket: var(--gateway-rocket);
   --color-pillar-money: var(--pillar-money);
   --color-pillar-money-soft: var(--pillar-money-soft);
   --color-pillar-loans: var(--pillar-loans);

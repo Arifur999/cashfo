@@ -62,6 +62,8 @@ export interface NavLeaf {
   // false: left out of the sidebar's list (the board has no row for it),
   // still named in the breadcrumb, the tab title and the search palette.
   menu?: false;
+  // Such a page lights this row of its group instead (Checkout, Plans).
+  litAs?: string;
 }
 
 export interface NavItem extends NavLeaf {
@@ -294,6 +296,7 @@ export const NAV_FOOT: NavItem[] = [
       { label: "Profile", href: "/settings/profile" },
       { label: "Security", href: "/settings/security" },
       { label: "Plans", href: "/settings/plans" },
+      { label: "Checkout", href: "/settings/plans/checkout", menu: false, litAs: "/settings/plans" },
       { label: "Workspaces", href: "/settings/workspaces", menu: false },
       { label: "App preferences", href: "/settings/app" },
       { label: "Help & support", href: "/settings/help" },
@@ -307,6 +310,8 @@ export const SETTINGS_ROUTE = "/settings";
 // Where every Upgrade / Manage plan button goes: the plans page in Settings
 // (built with the customer plan API).
 export const PLANS_ROUTE = "/settings/plans";
+// Paying for a plan (Checkout board), and a payment's status after.
+export const CHECKOUT_ROUTE = `${PLANS_ROUTE}/checkout`;
 
 // Which app a page belongs to: everything under /habit-tracker is the
 // Habit Tracker.

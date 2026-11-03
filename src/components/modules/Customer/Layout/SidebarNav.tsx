@@ -250,7 +250,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
     const pages = groupPages && item.href === GROUP_NAV_HREF ? groupPages : null;
     const subs = pages
       ? pages.links.map((link) => ({ label: link.label, href: link.href, on: link.tab === pages.current }))
-      : item.subs?.filter((sub) => sub.menu !== false).map((sub) => ({ label: sub.label, href: leafHref(sub), on: location?.sub === sub }));
+      : item.subs?.filter((sub) => sub.menu !== false).map((sub) => ({ label: sub.label, href: leafHref(sub), on: location?.sub === sub || location?.sub?.litAs === sub.href }));
     const self = location?.item === item && !location.sub && !pages;
     const inGroup = !!subs && location?.item === item;
     const expanded = isExpanded(item);
