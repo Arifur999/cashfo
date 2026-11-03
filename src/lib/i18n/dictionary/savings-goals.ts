@@ -590,4 +590,12 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Sent to {email}": "{email}-এ পাঠানো হবে",
   "Kept in": "টাকা রাখা আছে",
   "Was kept in": "টাকা রাখা ছিল",
+  // Add money: the goal's own account.
+  "Send {amount} from {from} to {to}": "{from} থেকে {to}-এ {amount} পাঠান",
+  "Deposit {amount} into {to}": "{to}-এ {amount} জমা দিন",
+  "This money goes into {to}": "এই টাকা যাবে {to}-এ",
+  "Account no. {number}": "হিসাব নং {number}",
+  "Set for this goal": "এই লক্ষ্যের জন্য ঠিক করা",
+  "Goes into": "যাবে",
+  "Set for this goal. Change it from Edit goal.": "এই লক্ষ্যের জন্য ঠিক করা। লক্ষ্য সম্পাদনা থেকে বদলান।",
 };
