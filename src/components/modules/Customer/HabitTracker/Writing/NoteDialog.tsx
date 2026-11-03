@@ -73,7 +73,7 @@ function NoteForm({ note, categories, onClose, onSaved, onDelete }: NoteDialogPr
       type="button"
       aria-pressed={kind === value}
       onClick={() => setKind(value)}
-      className={cn("h-8.5 rounded-[8px] border px-3 text-small font-semibold transition-colors", kind === value ? "border-emerald bg-emerald-soft text-emerald" : "border-line bg-surface text-ink hover:bg-surface-sunken")}
+      className={cn("h-8.5 rounded-sm border px-3 text-small font-semibold transition-colors", kind === value ? "border-emerald bg-emerald-soft text-emerald" : "border-line bg-surface text-ink hover:bg-surface-sunken")}
     >
       {label}
     </button>
@@ -131,7 +131,7 @@ function NoteForm({ note, categories, onClose, onSaved, onDelete }: NoteDialogPr
             type="button"
             aria-pressed={pinned}
             onClick={() => setPinned(!pinned)}
-            className={cn("h-8.5 rounded-[8px] border px-3 text-small font-semibold transition-colors", pinned ? "border-warning-line bg-warning-soft text-warning-ink" : "border-line bg-surface text-ink hover:bg-surface-sunken")}
+            className={cn("h-8.5 rounded-sm border px-3 text-small font-semibold transition-colors", pinned ? "border-warning-line bg-warning-soft text-warning-ink" : "border-line bg-surface text-ink hover:bg-surface-sunken")}
           >
             📌 {t(pinned ? "Pinned" : "Pin")}
           </button>

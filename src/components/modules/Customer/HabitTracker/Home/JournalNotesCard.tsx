@@ -34,7 +34,7 @@ export function JournalNotesCard({ summary }: JournalNotesCardProps) {
       </div>
       <Link
         href="/habit-tracker/journal"
-        className={cn("flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-ink transition-colors", written ? "border-income/30 bg-income-soft hover:border-income/50" : "border-line bg-strip hover:border-line-strong")}
+        className={cn("flex items-center gap-2.5 rounded-field border px-3 py-2.5 text-ink transition-colors", written ? "border-income/30 bg-income-soft hover:border-income/50" : "border-line bg-strip hover:border-line-strong")}
       >
         <span aria-hidden="true" className="text-[22px]">
           {written ? (mood === null ? "🔒" : MOODS[mood]?.emoji) : "✍️"}

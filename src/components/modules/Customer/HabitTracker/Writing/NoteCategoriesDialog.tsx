@@ -120,7 +120,7 @@ export function NoteCategoriesDialog({ open, categories, counts, onClose, onChan
                 disabled={isPending}
                 aria-label={t("Change colour of {name}", { name: category.name })}
                 title={t("Change colour")}
-                className="flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-line hover:bg-surface-sunken"
+                className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-line hover:bg-surface-sunken"
               >
                 <span aria-hidden="true" className={cn("size-3.5 rounded-[4px]", categoryDotClass(category.color))} />
               </button>
@@ -137,7 +137,7 @@ export function NoteCategoriesDialog({ open, categories, counts, onClose, onChan
                     rename(category);
                   }
                 }}
-                frameClassName="min-w-0 flex-1 rounded-[8px]"
+                frameClassName="min-w-0 flex-1 rounded-sm"
               />
               <span className="w-16 shrink-0 text-right text-caption whitespace-nowrap text-ink-muted tabular-nums">{t((counts[category.id] ?? 0) === 1 ? "{count} note" : "{count} notes", { count: formatCount(counts[category.id] ?? 0, fmt) })}</span>
               <button
@@ -160,8 +160,8 @@ export function NoteCategoriesDialog({ open, categories, counts, onClose, onChan
           }}
           className="flex gap-2"
         >
-          <Input size="sm" aria-label={t("New category")} value={newName} maxLength={CATEGORY_NAME_MAX} onChange={(event) => setNewName(event.target.value)} placeholder={t("New category, e.g. Health")} frameClassName="min-w-0 flex-1 rounded-[8px]" />
-          <Button type="submit" variant="secondary" className="h-9.5 rounded-[8px]" disabled={!newName.trim() || isPending}>
+          <Input size="sm" aria-label={t("New category")} value={newName} maxLength={CATEGORY_NAME_MAX} onChange={(event) => setNewName(event.target.value)} placeholder={t("New category, e.g. Health")} frameClassName="min-w-0 flex-1 rounded-sm" />
+          <Button type="submit" variant="secondary" className="h-9.5 rounded-sm" disabled={!newName.trim() || isPending}>
             {t("Add")}
           </Button>
         </form>

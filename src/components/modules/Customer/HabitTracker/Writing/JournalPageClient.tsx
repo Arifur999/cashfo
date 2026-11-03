@@ -160,22 +160,22 @@ export function JournalPageClient({ data: initialData, categories, date: initial
               placeholder={t("Search journal and #tags")}
               aria-label={t("Search journal")}
               leading={<Search className="size-4 text-ink-muted" strokeWidth={2} aria-hidden="true" />}
-              frameClassName="w-full rounded-[8px] md:w-65"
+              frameClassName="w-full rounded-sm md:w-65"
             />
-            <Button variant="secondary" className="h-9.5 rounded-[8px]" asChild>
+            <Button variant="secondary" className="h-9.5 rounded-sm" asChild>
               <Link href="/habit-tracker/notes">
                 <StickyNote strokeWidth={2} />
                 {t("Notes")}
               </Link>
             </Button>
             {data.pinSet && data.unlocked && (
-              <Button variant="secondary" className="h-9.5 rounded-[8px]" onClick={lockDiary} disabled={isLoading}>
+              <Button variant="secondary" className="h-9.5 rounded-sm" onClick={lockDiary} disabled={isLoading}>
                 <Lock strokeWidth={2} />
                 {t("Lock diary")}
               </Button>
             )}
             <Button
-              className="h-9.5 rounded-[8px]"
+              className="h-9.5 rounded-sm"
               onClick={() => {
                 if (data.month !== today.slice(0, 7)) load(today.slice(0, 7), (next) => setSelected({ date: today, entry: next.entries.find((entry) => entry.date === today) ?? null }));
                 else pickDay(today, entryOn.get(today) ?? null);
@@ -243,7 +243,7 @@ export function JournalPageClient({ data: initialData, categories, date: initial
                     aria-pressed={on}
                     title={label}
                     className={cn(
-                      "flex h-9 flex-col items-center justify-center rounded-[8px] border transition-colors disabled:cursor-not-allowed",
+                      "flex h-9 flex-col items-center justify-center rounded-sm border transition-colors disabled:cursor-not-allowed",
                       on ? "border-[1.5px] border-emerald bg-emerald-soft" : day === today ? "border-[1.5px] border-dashed border-emerald" : "border-divider",
                       !on && (entry ? "bg-surface hover:border-line-strong" : "bg-strip hover:border-line-strong"),
                     )}
@@ -286,7 +286,7 @@ export function JournalPageClient({ data: initialData, categories, date: initial
               </div>
               <div className="flex flex-col gap-2">
                 {shownHits?.entries.map((entry) => (
-                  <button key={entry.date} type="button" onClick={() => openHit(entry)} className="flex gap-2.5 rounded-[10px] border border-line bg-surface px-3 py-2.5 text-left hover:border-line-strong">
+                  <button key={entry.date} type="button" onClick={() => openHit(entry)} className="flex gap-2.5 rounded-field border border-line bg-surface px-3 py-2.5 text-left hover:border-line-strong">
                     <span aria-hidden="true" className="text-[20px]">
                       {MOODS[entry.mood]?.emoji}
                     </span>

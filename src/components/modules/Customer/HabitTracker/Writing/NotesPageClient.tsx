@@ -164,9 +164,9 @@ export function NotesPageClient({ notes: initialNotes, categories: initialCatego
               placeholder={t("Search notes and journal")}
               aria-label={t("Search notes and journal")}
               leading={<Search className="size-4 text-ink-muted" strokeWidth={2} aria-hidden="true" />}
-              frameClassName="w-full rounded-[8px] md:w-70"
+              frameClassName="w-full rounded-sm md:w-70"
             />
-            <Button variant="secondary" className="h-9.5 rounded-[8px]" asChild>
+            <Button variant="secondary" className="h-9.5 rounded-sm" asChild>
               <Link href="/habit-tracker/journal">
                 <BookHeart strokeWidth={2} />
                 {t("Journal")}
@@ -220,7 +220,7 @@ export function NotesPageClient({ notes: initialNotes, categories: initialCatego
                   type="button"
                   aria-pressed={on}
                   onClick={() => setFilter({ ...NO_FILTER, query: filter.query, view: view.key })}
-                  className={cn("flex h-8.5 shrink-0 items-center gap-2 rounded-[8px] px-2.5 text-left text-[13.5px] transition-colors", on ? "bg-emerald-soft font-bold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken")}
+                  className={cn("flex h-8.5 shrink-0 items-center gap-2 rounded-sm px-2.5 text-left text-[13.5px] transition-colors", on ? "bg-emerald-soft font-bold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken")}
                 >
                   <span aria-hidden="true">{view.emoji}</span>
                   <span className="flex-1 whitespace-nowrap">{t(view.label)}</span>
@@ -246,7 +246,7 @@ export function NotesPageClient({ notes: initialNotes, categories: initialCatego
                     type="button"
                     aria-pressed={on}
                     onClick={() => setFilter({ ...NO_FILTER, query: filter.query, categoryId: on ? null : category.id })}
-                    className={cn("flex h-8 items-center gap-2 rounded-[8px] px-2.5 text-left text-small text-ink transition-colors", on ? "bg-emerald-soft font-bold" : "font-medium hover:bg-surface-sunken")}
+                    className={cn("flex h-8 items-center gap-2 rounded-sm px-2.5 text-left text-small text-ink transition-colors", on ? "bg-emerald-soft font-bold" : "font-medium hover:bg-surface-sunken")}
                   >
                     <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-[3px]", categoryDotClass(category.color))} />
                     <span className="min-w-0 flex-1 truncate">{category.name}</span>
@@ -354,7 +354,7 @@ export function NotesPageClient({ notes: initialNotes, categories: initialCatego
                 <Link
                   key={entry.date}
                   href={`/habit-tracker/journal?date=${entry.date}`}
-                  className="flex items-center gap-2.5 rounded-[10px] border border-line bg-surface px-3 py-2.5 text-ink transition-colors hover:border-line-strong"
+                  className="flex items-center gap-2.5 rounded-field border border-line bg-surface px-3 py-2.5 text-ink transition-colors hover:border-line-strong"
                 >
                   <span aria-hidden="true" className="text-[18px]">
                     {MOODS[entry.mood]?.emoji}

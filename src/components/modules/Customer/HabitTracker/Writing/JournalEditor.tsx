@@ -121,7 +121,7 @@ export function JournalEditor({ date, title, entry, categories, pinSet, onSaved,
             role="switch"
             aria-checked={isPrivate}
             onClick={togglePrivate}
-            className={cn("h-8.5 rounded-[8px] border px-3 text-small font-semibold transition-colors", isPrivate ? "border-warning-line bg-warning-soft text-warning-ink" : "border-line bg-surface text-ink-soft hover:bg-surface-sunken")}
+            className={cn("h-8.5 rounded-sm border px-3 text-small font-semibold transition-colors", isPrivate ? "border-warning-line bg-warning-soft text-warning-ink" : "border-line bg-surface text-ink-soft hover:bg-surface-sunken")}
           >
             {isPrivate ? `🔒 ${t("Private")}` : `🔓 ${t("Not private")}`}
           </button>
@@ -147,7 +147,7 @@ export function JournalEditor({ date, title, entry, categories, pinSet, onSaved,
               change(setMood)(index);
               setMoodError(false);
             }}
-            className={cn("h-10 w-11 rounded-[10px] border-[1.5px] text-[22px] leading-none transition-colors", mood === index ? cn("bg-surface", option.ringClass) : moodError ? "border-expense bg-strip" : "border-line bg-strip hover:border-line-strong")}
+            className={cn("h-10 w-11 rounded-field border-[1.5px] text-[22px] leading-none transition-colors", mood === index ? cn("bg-surface", option.ringClass) : moodError ? "border-expense bg-strip" : "border-line bg-strip hover:border-line-strong")}
           >
             <span aria-hidden="true">{option.emoji}</span>
           </button>
@@ -208,7 +208,7 @@ export function JournalEditor({ date, title, entry, categories, pinSet, onSaved,
             #{tag}
           </span>
         ))}
-        <Button type="submit" className="h-9.5 rounded-[8px] px-5" disabled={isPending}>
+        <Button type="submit" className="h-9.5 rounded-sm px-5" disabled={isPending}>
           {t("Save entry")}
         </Button>
       </div>
