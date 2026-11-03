@@ -96,6 +96,11 @@
   --info-50: #eff6ff;
   --info-line: #bfdbfe;
   --info-ink: #1e40af;
+  /* Monthly Pro's tile on the Plans page (UpgradePlan board), and the
+     yearly saving's gold on the forest card. */
+  --sky: #0369a1;
+  --sky-soft: #e0f2fe;
+  --gold-on-forest: #f5c26b;
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
   --gateway-nagad: #d9480f;
@@ -253,6 +258,9 @@
   --info-50: #0f1a33;
   --info-line: #1e3a6b;
   --info-ink: #a9c4f5;
+  --sky: #7cc4f0;
+  --sky-soft: #0b2a3d;
+  --gold-on-forest: #f5c26b;
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
 
@@ -532,6 +540,9 @@ html:not(.dark) [data-app="habit"] {
   --color-info-50: var(--info-50);
   --color-info-line: var(--info-line);
   --color-info-ink: var(--info-ink);
+  --color-sky: var(--sky);
+  --color-sky-soft: var(--sky-soft);
+  --color-gold-on-forest: var(--gold-on-forest);
   --color-gateway-bkash: var(--gateway-bkash);
   --color-gateway-nagad: var(--gateway-nagad);
   --color-pillar-money: var(--pillar-money);

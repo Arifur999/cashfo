@@ -16,14 +16,14 @@ import { cn } from "@/lib/utils";
 // between them. On a phone the index is a menu (the top bar names it, so
 // its heading is for screen readers only) and each section gets a way back
 // to it and its name. Plans (UpgradePlan) is a page of its own: its heading
-// and full width.
+// and full width, and so is its payment page (Checkout).
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
   const pathname = usePathname();
   const isIndex = pathname === "/settings";
   const section = sectionOf(sectionFor(pathname));
 
-  if (pathname === PLANS_ROUTE) return <PageFrame className="gap-5.5">{children}</PageFrame>;
+  if (pathname === PLANS_ROUTE || pathname.startsWith(`${PLANS_ROUTE}/`)) return <PageFrame className="gap-5 md:pt-6.5 md:pb-10">{children}</PageFrame>;
 
   return (
     <PageFrame className={cn("gap-5.5 md:pt-7 md:pb-8", isIndex && "max-md:pt-4")}>
