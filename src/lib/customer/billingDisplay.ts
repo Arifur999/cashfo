@@ -35,6 +35,9 @@ export interface BillingPlans {
   plans: BillingPlan[];
   currentPlanId: string | null;
   trialAvailable: boolean;
+  // A payment gateway is set up, so paying online works (else only sending
+  // the money yourself does).
+  onlineCheckout?: boolean;
 }
 
 export interface Subscription {
@@ -75,6 +78,11 @@ export interface PendingPayment {
   instructions: { en: string; bn: string };
   expiresAt: string;
   createdAt: string;
+  // When the customer sent the money's details (the TrxID); null while
+  // they still have to.
+  submittedAt?: string | null;
+  // The TrxID they typed.
+  reference?: string | null;
 }
 
 export interface BillingOverview {
@@ -215,6 +223,43 @@ export function featureValue(limits: FeatureLimits, key: keyof FeatureLimits): F
 
 // A feature the plan doesn't have: a "no", or a count of nothing.
 export const featureMissing = (value: FeatureValue): boolean => value.kind === "no" || (value.kind === "count" && value.value === 0);
+
+// ---- The Plans page's cards (UpgradePlan board) ----
+
+// The paid plans, each a card of its own, in the admin's order.
+export const paidPlans = (plans: BillingPlan[]): BillingPlan[] => plans.filter((plan) => plan.billingCycle !== "FREE").sort((a, b) => a.displayOrder - b.displayOrder);
+
+// The free trial the first card offers: the longest a paid plan gives (the
+// first such plan on a tie), or null when no plan gives one.
+export function trialOffer(plans: BillingPlan[]): BillingPlan | null {
+  let best: BillingPlan | null = null;
+  for (const plan of paidPlans(plans)) {
+    if (plan.trialDays > 0 && (!best || plan.trialDays > best.trialDays)) best = plan;
+  }
+  return best;
+}
+
+// A yearly plan against twelve months of its family's monthly plan: the
+// percent saved, its price a month, and what the twelve months would cost
+// ("20% off · about ৳ 159 a month", "Instead of ৳ 2,388"). null with no
+// monthly plan to compare with, or nothing saved.
+export function yearlyDeal(yearly: BillingPlan, plans: BillingPlan[]): { percentOff: number; perMonth: number; twelveMonths: number } | null {
+  if (yearly.billingCycle !== "YEARLY") return null;
+  const family = familyName(yearly.name).toLowerCase();
+  const monthly = plans.find((plan) => plan.billingCycle === "MONTHLY" && familyName(plan.name).toLowerCase() === family);
+  if (!monthly) return null;
+  const twelveMonths = Number(monthly.price) * 12;
+  const price = Number(yearly.price);
+  if (!(twelveMonths > price)) return null;
+  return { percentOff: Math.round(((twelveMonths - price) / twelveMonths) * 100), perMonth: Math.round(price / 12), twelveMonths };
+}
+
+// The least a paid plan costs a month (a yearly one over its twelve
+// months): Free or Pro's "from ৳ 159 a month". null with no paid plan.
+export function lowestMonthly(plans: BillingPlan[]): number | null {
+  const months = paidPlans(plans).map((plan) => Number(plan.price) / (plan.billingCycle === "YEARLY" ? 12 : 1));
+  return months.length > 0 ? Math.round(Math.min(...months)) : null;
+}
 
 // ---- The usage strip ----
 
