@@ -175,3 +175,12 @@ export function summaryPalette(id: string, activeIds: readonly string[]): Wallet
   const at = activeIds.indexOf(id);
   return at === -1 ? OTHER_SAVINGS_PALETTE : savingsPalette(at);
 }
+
+// The savings account a goal names on its card and in its details: the one
+// it keeps its money in, or (an older goal with none) where most of its
+// money is; null when it has neither.
+export function keptIn(goal: Pick<SavingsGoal, "account" | "holdings">): { name: string; number: string | null } | null {
+  if (goal.account?.name) return { name: goal.account.name, number: goal.account.accountNumber };
+  const largest = goal.holdings.find((holding) => holding.name);
+  return largest?.name ? { name: largest.name, number: null } : null;
+}

@@ -3,6 +3,7 @@ import { bnDictionary } from "@/lib/i18n/dictionary";
 import { inEnglish } from "@/lib/i18n/message";
 import {
   ENTRY_META,
+  keptIn,
   goalColor,
   goalTotals,
   LOOK_META,
@@ -205,5 +206,14 @@ describe("summaryPalette", () => {
 
   it("greys a wallet that page doesn't list", () => {
     expect(summaryPalette("archived", ["dps"])).toBe(OTHER_SAVINGS_PALETTE);
+  });
+});
+
+describe("keptIn", () => {
+  const holding = (name: string | null) => ({ accountId: name, name, amount: "100.00" });
+  it("names the goal's own account, else where most of its money is", () => {
+    expect(keptIn({ account: { id: "a", name: "City Bank FDR", accountNumber: "1503 2245 6081" }, holdings: [holding("DPS")] })).toEqual({ name: "City Bank FDR", number: "1503 2245 6081" });
+    expect(keptIn({ account: null, holdings: [holding(null), holding("Islami Bank DPS")] })).toEqual({ name: "Islami Bank DPS", number: null });
+    expect(keptIn({ holdings: [] })).toBeNull();
   });
 });
