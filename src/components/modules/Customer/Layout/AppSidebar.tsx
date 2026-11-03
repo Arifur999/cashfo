@@ -5,19 +5,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import { usePlanChip } from "@/components/modules/Customer/Providers/PlanProvider";
+import { usePlanChip, type PlanChip } from "@/components/modules/Customer/Providers/PlanProvider";
 import Avatar from "@/components/smartly/Avatar";
 import Logo from "@/components/smartly/Logo";
 import { useScrollFades } from "@/hooks/useScrollFades";
 import { BRAND_NAME } from "@/lib/brand";
-import { HABIT_APP_LABEL, HABIT_HOME, MONEY_HOME, navAppFor, PLANS_ROUTE, SETTINGS_ROUTE, type NavApp } from "@/lib/customer/nav";
+import { daysLeft } from "@/lib/customer/billingDisplay";
+import { formatDate } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
+import type { Fmt } from "@/lib/i18n/formatPrefs";
+import type { Translate } from "@/lib/i18n/message";
+import { CHECKOUT_ROUTE, HABIT_APP_LABEL, HABIT_HOME, MONEY_HOME, navAppFor, PLANS_ROUTE, SETTINGS_ROUTE, type NavApp } from "@/lib/customer/nav";
 import { sidebarCookie } from "@/lib/customer/sidebarState";
-import { workspaceName } from "@/lib/customer/workspaceSwitch";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { LanguageSwitch } from "./LanguageSwitch";
-import { HabitMenu, MoneyMenu, RailTip, useMoneyGroupOpen } from "./SidebarNav";
-import { workspaceKind } from "./workspaceKind";
+import { HabitMenu, MoneyMenu, RailTip } from "./SidebarNav";
 
 // The desktop sidebar, one of two by the page on screen (lib/customer/nav):
 // the Money Tracker's floating white panel (AppSidebar board: 248px, 12px
@@ -55,9 +58,7 @@ export function AppSidebar({ initialCollapsed = false }: { initialCollapsed?: bo
       <div
         className={cn(
           "flex flex-col overflow-hidden rounded-panel bg-surface py-3.5 shadow-card transition-[width] duration-200 ease-out motion-reduce:transition-none dark:border dark:border-line",
-          // 272px open: room for the longer names (Password Management,
-          // Assets Management) beside their chevrons.
-          collapsed ? "w-18 px-2.5" : "w-68 px-3",
+          collapsed ? "w-18 px-2.5" : "w-62 px-3",
         )}
       >
         <SidebarPanel app="money" collapsed={collapsed} onToggle={toggle} />
@@ -99,30 +100,32 @@ export function SidebarPanel({ app, collapsed = false, onToggle, touch = false, 
   );
 }
 
-// The panel's head: the Smartly mark with the open workspace (Money
-// Tracker), or the Habit Tracker's sprout and what it keeps.
+// The panel's head: the Smartly leaf and name (Money Tracker; the open
+// workspace shows in the account menu and the phone drawer's switcher),
+// or the Habit Tracker's sprout and what it keeps.
 export function BrandBlock({ app, collapsed = false, as = "link" }: { app: NavApp; collapsed?: boolean; as?: "link" | "static" }) {
   const { t } = useLocale();
-  const { user, activeBusiness } = useAuth();
   const habit = app === "habit";
   const title = habit ? t(HABIT_APP_LABEL) : BRAND_NAME;
-  const subtitle = habit ? t("Prayers, habits and tasks") : activeBusiness && activeBusiness.type !== "PERSONAL" ? workspaceName(activeBusiness, user.name) : t(`${workspaceKind(activeBusiness)} workspace`);
   const mark = habit ? (
     <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-emerald text-on-action">
       <Sprout className="size-5" strokeWidth={2} />
     </span>
   ) : (
-    <Logo variant="icon" height={36} alt="" className="rounded-md" />
+    <Logo variant="mark" height={40} alt="" />
   );
   const body = (
     <>
       {mark}
-      {!collapsed && (
-        <span className="flex min-w-0 flex-1 flex-col gap-px">
-          <span className="truncate text-[15px] leading-[normal] font-semibold text-ink">{title}</span>
-          <span className="truncate text-caption text-ink-muted">{subtitle}</span>
-        </span>
-      )}
+      {!collapsed &&
+        (habit ? (
+          <span className="flex min-w-0 flex-1 flex-col gap-px">
+            <span className="truncate text-[15px] leading-[normal] font-semibold text-ink">{title}</span>
+            <span className="truncate text-caption text-ink-muted">{t("Prayers, habits and tasks")}</span>
+          </span>
+        ) : (
+          <span className="truncate text-[17px] leading-[normal] font-bold tracking-[-0.01em] text-ink">{title}</span>
+        ))}
     </>
   );
   const className = cn("flex w-full shrink-0 items-center gap-2.5 rounded-md", collapsed ? "justify-center py-2" : "p-2");
@@ -138,6 +141,23 @@ export function BrandBlock({ app, collapsed = false, as = "link" }: { app: NavAp
 
 const ROUND_ICON = "flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors";
 
+// The plan card's words (AppSidebar board): a payment being checked, a
+// trial and the day it ends, or the free plan's Upgrade.
+function planPromo(plan: PlanChip, t: Translate, fmt: Fmt): { title: string; text: string; button: string; href: string } {
+  if (plan.pending) {
+    return { title: t("Payment being checked"), text: t("Pro turns on once we confirm your TrxID, usually within 2 hours."), button: t("See status"), href: CHECKOUT_ROUTE };
+  }
+  if (plan.status === "trial" && plan.trialEndsAt) {
+    return {
+      title: t("Free trial · {count} days left", { count: formatCount(daysLeft(plan.trialEndsAt), fmt) }),
+      text: t("Pick a plan before {date} to keep Pro.", { date: formatDate(plan.trialEndsAt, "d MMM", "", fmt) }),
+      button: t("Choose a plan"),
+      href: PLANS_ROUTE,
+    };
+  }
+  return { title: t("Upgrade to Pro"), text: t("No monthly limit on transactions, plus PDF reports and income goals."), button: t("See plans"), href: PLANS_ROUTE };
+}
+
 // The Money Tracker's foot: the Upgrade to Pro card (only while no group
 // shows its pages), the profile row with the plan, then the language
 // switch, Settings and the fold button.
@@ -151,14 +171,15 @@ interface FootProps {
 }
 
 function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
-  const { t } = useLocale();
-  const { user, logout } = useAuth();
+  const { t, fmt } = useLocale();
+  const { user, askSignOut } = useAuth();
   const pathname = usePathname();
-  // The Upgrade card steps aside while a group shows its pages.
-  const groupOpen = useMoneyGroupOpen() || compact;
   const settingsOn = pathname === SETTINGS_ROUTE || pathname.startsWith(`${SETTINGS_ROUTE}/`);
-  // The plan's chip, and the Upgrade card and button only on the free plan.
-  const { free, label: planLabel } = usePlanChip();
+  // The plan's chip, and its card while on the free plan or a trial (the
+  // phone drawer has no room for the card: an Upgrade button instead).
+  const plan = usePlanChip();
+  const { free, label: planLabel } = plan;
+  const promo = !compact && plan.status !== "paid" ? planPromo(plan, t, fmt) : null;
   const toggleLabel = t(collapsed ? "Expand sidebar" : "Collapse sidebar");
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
@@ -193,7 +214,7 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
 
   return (
     <div className="flex shrink-0 flex-col gap-2 border-t border-line pt-3">
-      {free && !groupOpen && (
+      {promo && (
         <section aria-labelledby="sidebar-upgrade" className="relative flex flex-col gap-1.5 overflow-hidden rounded-lg bg-mint-50 p-3.5">
           <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true" className="absolute -top-7.5 -right-7 text-mint-200 dark:text-emerald-line">
             <circle cx="48" cy="48" r="34" fill="none" stroke="currentColor" strokeWidth="16" />
@@ -203,12 +224,12 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
               <Star className="size-3.75 fill-mint-200/35" strokeWidth={2} aria-hidden="true" />
             </span>
             <h2 id="sidebar-upgrade" className="text-body font-semibold text-forest dark:text-ink">
-              {t("Upgrade to Pro")}
+              {promo.title}
             </h2>
           </span>
-          <p className="relative text-[12.5px] leading-[1.45] text-brand-ink">{t("No monthly limit on transactions, plus PDF reports, income goals and up to 5 workspaces.")}</p>
-          <Link href={PLANS_ROUTE} className="relative mt-1 flex h-8 items-center gap-1.5 self-start rounded-full bg-forest px-3.5 text-small font-semibold text-white hover:bg-forest-hover">
-            {t("See plans")}
+          <p className="relative text-[12.5px] leading-[1.45] text-brand-ink">{promo.text}</p>
+          <Link href={promo.href} className="relative mt-1 flex h-8 items-center gap-1.5 self-start rounded-full bg-forest px-3.5 text-small font-semibold text-white hover:bg-forest-hover">
+            {promo.button}
             <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
           </Link>
         </section>
@@ -219,12 +240,12 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
           <span className="truncate text-[13.5px] leading-[normal] font-semibold text-ink">{user.name}</span>
           <span className={cn("self-start rounded-full px-1.75 py-px text-[11px] leading-[normal] font-semibold whitespace-nowrap", free ? "bg-surface-sunken text-ink-soft" : "bg-mint-50 text-brand-ink")}>{planLabel}</span>
         </span>
-        {free && groupOpen ? (
+        {free && compact ? (
           <Link href={PLANS_ROUTE} className="flex h-7.5 shrink-0 items-center rounded-full bg-forest px-3 text-[12.5px] font-semibold whitespace-nowrap text-white hover:bg-forest-hover">
             {t("Upgrade")}
           </Link>
         ) : (
-          <button type="button" onClick={logout} aria-label={t("Sign out")} title={t("Sign out")} className="flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink">
+          <button type="button" onClick={askSignOut} aria-label={t("Sign out")} title={t("Sign out")} className="flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink">
             <LogOut className="size-4.25" strokeWidth={2} aria-hidden="true" />
           </button>
         )}

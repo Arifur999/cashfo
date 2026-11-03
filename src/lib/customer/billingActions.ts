@@ -2,9 +2,11 @@
 
 import axios from "axios";
 import { TOO_MANY_ATTEMPTS_MESSAGE } from "@/lib/actionError";
+import { getClientHeaders } from "@/lib/axios/clientHeaders";
+import { getAccessToken } from "@/lib/tokenUtils";
 import { API_BASE_URL, getApiErrorMessage } from "./api";
 import { customerApi } from "./apiClient";
-import type { BillingOverview, BillingPayments, BillingPlans, CheckoutResult, CouponPreview, Gateway } from "./billingDisplay";
+import type { BillingOverview, BillingPayments, BillingPlans, CheckoutResult, CouponPreview, CustomerPayment, Gateway, ManualWallet } from "./billingDisplay";
 import type { SecurityResult } from "./securityActions";
 
 // Settings › Plans: the plans, the customer's own subscription, a trial,
@@ -46,9 +48,67 @@ export async function previewCouponAction(planId: string, code: string): Promise
   return callApi(async () => (await customerApi.post<CouponPreview>(`${API_BASE_URL}/api/billing/coupon-preview`, { planId, code })).data, "Couldn't check that coupon");
 }
 
-export async function checkoutAction(input: { planId: string; gateway: Gateway; couponCode?: string }): Promise<SecurityResult<CheckoutResult>> {
-  const body = { planId: input.planId, gateway: input.gateway, ...(input.couponCode?.trim() && { couponCode: input.couponCode.trim() }) };
+// One of the customer's own payments (Checkout's "being checked" and "all
+// set" views).
+export async function getBillingPaymentAction(paymentId: string): Promise<SecurityResult<CustomerPayment>> {
+  return callApi(async () => (await customerApi.get<CustomerPayment>(`${API_BASE_URL}/api/billing/payments/${encodeURIComponent(paymentId)}`)).data, "Couldn't load this payment");
+}
+
+// A checkout. With the details of the money sent (the number it came from
+// and the TrxID) it goes straight to checking.
+export async function checkoutAction(input: {
+  planId: string;
+  gateway: Gateway;
+  couponCode?: string;
+  payerAccount?: string;
+  reference?: string;
+}): Promise<SecurityResult<CheckoutResult>> {
+  const body = {
+    planId: input.planId,
+    gateway: input.gateway,
+    ...(input.couponCode?.trim() && { couponCode: input.couponCode.trim() }),
+    ...(input.payerAccount !== undefined && { payerAccount: input.payerAccount }),
+    ...(input.reference !== undefined && { reference: input.reference }),
+  };
   return callApi(async () => (await customerApi.post<CheckoutResult>(`${API_BASE_URL}/api/billing/checkout`, body)).data, "Couldn't start the payment");
+}
+
+// "Fix the details" of a payment being checked.
+export async function submitPaymentDetailsAction(paymentId: string, input: { gateway: ManualWallet; payerAccount: string; reference: string }): Promise<SecurityResult<CustomerPayment>> {
+  return callApi(
+    async () => (await customerApi.patch<CustomerPayment>(`${API_BASE_URL}/api/billing/checkout/${encodeURIComponent(paymentId)}`, input)).data,
+    "Couldn't save the details",
+  );
+}
+
+// The screenshot of the money sent: `screenshot` in a multipart body,
+// built client-side. fetch(), not axios, for the multipart body (see
+// uploadContactPhotoAction), with the visitor's headers by hand.
+export async function uploadPaymentProofAction(paymentId: string, formData: FormData): Promise<SecurityResult> {
+  const fallback = "Couldn't add the screenshot";
+  try {
+    const token = await getAccessToken();
+    if (!token) return { success: false, message: fallback, status: 401 };
+    const response = await fetch(`${API_BASE_URL}/api/billing/checkout/${encodeURIComponent(paymentId)}/proof`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, ...(await getClientHeaders()) },
+      body: formData,
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      if (response.status === 413) return { success: false, message: "The screenshot is bigger than 5 MB", status: 413 };
+      return { success: false, message: getApiErrorMessage(body, fallback), status: response.status };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, message: fallback };
+  }
+}
+
+export async function removePaymentProofAction(paymentId: string): Promise<SecurityResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/billing/checkout/${encodeURIComponent(paymentId)}/proof`);
+  }, "Couldn't remove the screenshot");
 }
 
 export async function cancelCheckoutAction(paymentId: string): Promise<SecurityResult> {

@@ -9,7 +9,7 @@ import { sidebarPlan, type BillingOverview, type SidebarPlan } from "./billingDi
 export const getSidebarPlan = cache(async (): Promise<SidebarPlan | null> => {
   try {
     const { data } = await customerApi.get<BillingOverview>(`${API_BASE_URL}/api/billing`);
-    return sidebarPlan(data.subscription);
+    return sidebarPlan(data.subscription, data.pendingPayment);
   } catch {
     return null;
   }

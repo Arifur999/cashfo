@@ -40,7 +40,7 @@ import { useFeature } from "@/components/modules/Customer/Providers/PlatformProv
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { MosqueIcon } from "@/components/smartly/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { findNavLocation, menuSections, NAV_SECTIONS, navAppFor, visibleNavSections, type NavApp, type NavIcon, type NavItem, type NavLocation, type NavSection } from "@/lib/customer/nav";
+import { findNavLocation, menuSections, NAV_FOOT, NAV_SECTIONS, navAppFor, visibleNavSections, type NavApp, type NavIcon, type NavItem, type NavLocation, type NavSection } from "@/lib/customer/nav";
 import { leafHref } from "@/lib/customer/paletteMatch";
 import { HABITS_CHANGED } from "@/lib/customer/habitsEvents";
 import { getHabitsTodayCountAction } from "@/lib/customer/shellActions";
@@ -284,7 +284,9 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
     const Icon = NAV_ICONS[item.icon];
     // A group's own pages, built from the address (Dashboard, Cash book…).
     const pages = groupPages && item.href === GROUP_NAV_HREF ? groupPages : null;
-    const subs = pages ? pages.links.map((link) => ({ label: link.label, href: link.href, on: link.tab === pages.current })) : item.subs?.map((sub) => ({ label: sub.label, href: leafHref(sub), on: location?.sub === sub }));
+    const subs = pages
+      ? pages.links.map((link) => ({ label: link.label, href: link.href, on: link.tab === pages.current }))
+      : item.subs?.filter((sub) => sub.menu !== false).map((sub) => ({ label: sub.label, href: leafHref(sub), on: location?.sub === sub || location?.sub?.litAs === sub.href }));
     const self = location?.item === item && !location.sub && !pages;
     const inGroup = !!subs && location?.item === item;
     const expanded = isExpanded(item);
@@ -379,7 +381,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
               // The board names no section here: the space between says it.
               section.label && <span className="sr-only">{t(section.label)}</span>
             )}
-            {section.items.map(renderItem)}
+            {(index === sections.length - 1 ? [...section.items, ...NAV_FOOT] : section.items).map(renderItem)}
           </div>
         ))}
       </div>
@@ -391,16 +393,6 @@ function SectionLabel({ section, className }: { section: NavSection; className?:
   const { t } = useLocale();
   if (!section.label) return null;
   return <span className={cn("text-[11px] leading-[normal] font-semibold tracking-[0.06em] text-ink-muted uppercase", className)}>{t(section.label)}</span>;
-}
-
-// Whether any Money Tracker group shows its pages: the foot's Upgrade card
-// steps aside then, so the menu is never pushed out of view (the
-// AppSidebar board's rule).
-export function useMoneyGroupOpen(): boolean {
-  const sections = menuSections(useNavSections(), "money");
-  const { location } = useNavLocation();
-  const { isExpanded } = useExpandedGroups(location);
-  return sections.some((section) => section.items.some(isExpanded));
 }
 
 // The Habit Tracker menu (HabitSidebar): 40px rows, the open page in a

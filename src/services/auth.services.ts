@@ -126,7 +126,8 @@ export const refreshAccessToken = async (refreshToken: string, requestHeaders: P
   }
 };
 
-export const logout = async (refreshToken: string): Promise<void> => {
+// everywhere: a customer's every device (the admin side has no such sign-out).
+export const logout = async (refreshToken: string, everywhere = false): Promise<void> => {
   const audience = getTokenAudience(refreshToken);
   if (!audience) {
     // Nothing the backend would still accept, so nothing left to end.
@@ -134,7 +135,8 @@ export const logout = async (refreshToken: string): Promise<void> => {
   }
 
   try {
-    await axios.post(`${SESSION_ENDPOINTS[audience]}/logout`, { refreshToken }, { headers: await getClientHeaders() });
+    const body = everywhere && audience === "user" ? { refreshToken, everywhere: true } : { refreshToken };
+    await axios.post(`${SESSION_ENDPOINTS[audience]}/logout`, body, { headers: await getClientHeaders() });
   } catch (error) {
     logServiceError("Error logging out", error);
     throw error;

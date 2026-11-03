@@ -19,6 +19,7 @@ import { assetsDictionary } from "./dictionary/assets";
 import { balanceDictionary } from "./dictionary/balance";
 import { booksDictionary } from "./dictionary/books";
 import { businessBooksDictionary } from "./dictionary/business-books";
+import { checkoutDictionary } from "./dictionary/checkout";
 import { chromeDictionary } from "./dictionary/chrome";
 import { dashboardDictionary } from "./dictionary/dashboard";
 import { groupExpensesDictionary } from "./dictionary/group-expenses";
@@ -116,6 +117,7 @@ export const bnDictionary: Record<string, string> = {
   ...zakatDictionary,
   ...settingsWorkspaceDictionary,
   ...settingsDictionary,
+  ...checkoutDictionary,
   ...groupExpensesDictionary,
   ...habitTrackerDictionary,
   ...booksDictionary,

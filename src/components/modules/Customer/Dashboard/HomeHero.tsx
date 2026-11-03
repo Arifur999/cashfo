@@ -2,12 +2,9 @@
 
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Camera, PiggyBank, ShieldCheck, Star, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { usePlanChip } from "@/components/modules/Customer/Providers/PlanProvider";
-import { workspaceKind } from "@/components/modules/Customer/Layout/workspaceKind";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
-import { workspaceName } from "@/lib/customer/workspaceSwitch";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import type { FormatLocale } from "@/lib/i18n/formatPrefs";
@@ -68,13 +65,13 @@ function ChangeLine({ change, good, text, onDark = false }: { change: number; go
 
 // The profile card at the head of the Dashboard: the photo (or the
 // initials on mint), the plan and how long they've been here, the name and
-// workspace, the quick add buttons and Upgrade.
+// how many wallets, the quick add buttons and the plan's button (Upgrade,
+// Choose plan in a trial, See payment while one is checked, Manage plan).
 export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: AddKind) => void }) {
   const { t, fmt } = useLocale();
-  const { user, activeBusiness } = useAuth();
   const { profile } = data;
-  const { free, label: planLabel } = usePlanChip();
-  const workspace = activeBusiness && activeBusiness.type !== "PERSONAL" ? workspaceName(activeBusiness, user.name) : t(`${workspaceKind(activeBusiness)} workspace`);
+  const { status, pending, label: planLabel } = usePlanChip();
+  const planButton = status === "paid" ? "Manage plan" : pending ? "See payment" : status === "trial" ? "Choose plan" : "Upgrade";
   const initials = profile.name
     .split(/\s+/)
     .filter(Boolean)
@@ -116,7 +113,7 @@ export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: Add
           {profile.name}
         </h2>
         <span className="truncate text-[13px] leading-[normal] text-ink-muted">
-          {workspace} · {t(data.wallets.length === 1 ? "{count} wallet" : "{count} wallets", { count: formatCount(data.wallets.length, fmt) })}
+          {t(data.wallets.length === 1 ? "{count} wallet" : "{count} wallets", { count: formatCount(data.wallets.length, fmt) })}
         </span>
       </div>
       <div className="flex items-center gap-2 px-1.5 pb-1.5">
@@ -136,7 +133,7 @@ export function ProfileCard({ data, onAdd }: { data: HomeData; onAdd: (kind: Add
         <span className="grow" />
         <Link href={PLANS_ROUTE} className="flex h-10 items-center gap-1.5 rounded-full bg-forest px-4 text-[13.5px] font-semibold whitespace-nowrap text-white hover:bg-forest-hover">
           <Star className="size-3.75 fill-mint-200/35 text-mint-200" strokeWidth={2} aria-hidden="true" />
-          {free ? t("Upgrade") : t("Manage plan")}
+          {t(planButton)}
         </Link>
       </div>
     </section>

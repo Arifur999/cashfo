@@ -84,6 +84,23 @@ export async function uploadCoverAction(formData: FormData): Promise<ActionResul
   return uploadProfileImage("cover", formData, "Failed to upload the cover");
 }
 
+// "Remove photo": back to the initials.
+export async function removeAvatarAction(): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/auth/avatar`, { headers: await authHeaders() });
+  }, "Couldn't remove the photo");
+}
+
+// "Undo": the photo it had before (null: back to the initials). The API
+// takes only our own uploads and Google photos.
+export async function restoreAvatarAction(url: string | null): Promise<ActionResult> {
+  return callApi(async () => {
+    const headers = await authHeaders();
+    if (url) await customerApi.put(`${API_BASE_URL}/api/auth/avatar`, { url }, { headers });
+    else await customerApi.delete(`${API_BASE_URL}/api/auth/avatar`, { headers });
+  }, "Couldn't put the photo back");
+}
+
 export async function removeCoverAction(): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/auth/cover`, { headers: await authHeaders() });

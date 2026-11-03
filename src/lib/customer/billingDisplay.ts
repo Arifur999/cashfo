@@ -4,7 +4,9 @@
 
 export type BillingCycle = "FREE" | "MONTHLY" | "YEARLY";
 export type SubscriptionStatus = "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED";
-export type Gateway = "BKASH" | "NAGAD" | "CARD";
+// The ways to send the money yourself, then paying online (CARD).
+export type ManualWallet = "BKASH" | "NAGAD" | "ROCKET" | "BANK";
+export type Gateway = ManualWallet | "CARD";
 export type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
 
 export interface FeatureLimits {
@@ -35,7 +37,26 @@ export interface BillingPlans {
   plans: BillingPlan[];
   currentPlanId: string | null;
   trialAvailable: boolean;
+  // A payment gateway is set up, so paying online works (else only sending
+  // the money yourself does).
+  onlineCheckout?: boolean;
+  // Where the money goes when the customer sends it themselves: only the
+  // ways an admin has set up (Admin › Settings › Billing).
+  paymentAccounts?: PaymentAccounts;
+  // The admin's own words for sending it, for when no way is set up:
+  // {amount}, {method} and {reference} still to fill.
+  manualInstructions?: { en: string; bn: string };
 }
+
+export interface BankAccountDetails {
+  bankName: string;
+  branch: string;
+  accountName: string;
+  accountNumber: string;
+  routingNumber: string;
+}
+
+export type PaymentAccounts = Partial<Record<"BKASH" | "NAGAD" | "ROCKET", string> & { BANK: BankAccountDetails }>;
 
 export interface Subscription {
   planId: string;
@@ -73,8 +94,16 @@ export interface PendingPayment {
   amount: string;
   gateway: Gateway;
   instructions: { en: string; bn: string };
-  expiresAt: string;
+  // null once the customer sent the money's details: it waits for an admin.
+  expiresAt: string | null;
   createdAt: string;
+  // When the customer sent the money's details (the TrxID); null while
+  // they still have to.
+  submittedAt?: string | null;
+  // The number (or bank account name) they sent from, and the TrxID.
+  payerAccount?: string | null;
+  reference?: string | null;
+  hasProof?: boolean;
 }
 
 export interface BillingOverview {
@@ -108,8 +137,13 @@ export interface CheckoutResult {
   discountSource: "COUPON" | "REFERRAL" | null;
   currency: string;
   gateway: Gateway;
-  expiresAt: string;
-  next: { kind: "instructions"; text: { en: string; bn: string } };
+  expiresAt: string | null;
+  submittedAt?: string | null;
+  payerAccount?: string | null;
+  reference?: string | null;
+  // A real gateway sends the customer to its page; the manual way says how
+  // to send the money.
+  next: { kind: "instructions"; text: { en: string; bn: string } } | { kind: "redirect"; url: string };
 }
 
 export interface BillingPayment {
@@ -130,8 +164,24 @@ export interface BillingPayment {
   periodStart: string | null;
   periodEnd: string | null;
   expiresAt: string | null;
-  invoice: { id: string; invoiceNumber: string } | null;
+  // The plan's cycle; absent from an older backend.
+  billingCycle?: BillingCycle;
+  payerAccount?: string | null;
+  reference?: string | null;
+  submittedAt?: string | null;
+  // emailedAt: when the receipt went to the customer's email.
+  invoice: { id: string; invoiceNumber: string; emailedAt?: string | null } | null;
   refund: { amount: string; status: string; createdAt: string } | null;
+}
+
+// One of the customer's own payments, as the checkout's "being checked"
+// and "all set" views read it (GET /api/billing/payments/:id).
+export interface CustomerPayment extends BillingPayment {
+  couponCode: string | null;
+  referralDiscount: string | null;
+  proof: { mimeType: string; size: number; createdAt: string } | null;
+  // Set while an open checkout still waits for its details.
+  instructions: { en: string; bn: string } | null;
 }
 
 export interface BillingPayments {
@@ -216,6 +266,43 @@ export function featureValue(limits: FeatureLimits, key: keyof FeatureLimits): F
 // A feature the plan doesn't have: a "no", or a count of nothing.
 export const featureMissing = (value: FeatureValue): boolean => value.kind === "no" || (value.kind === "count" && value.value === 0);
 
+// ---- The Plans page's cards (UpgradePlan board) ----
+
+// The paid plans, each a card of its own, in the admin's order.
+export const paidPlans = (plans: BillingPlan[]): BillingPlan[] => plans.filter((plan) => plan.billingCycle !== "FREE").sort((a, b) => a.displayOrder - b.displayOrder);
+
+// The free trial the first card offers: the longest a paid plan gives (the
+// first such plan on a tie), or null when no plan gives one.
+export function trialOffer(plans: BillingPlan[]): BillingPlan | null {
+  let best: BillingPlan | null = null;
+  for (const plan of paidPlans(plans)) {
+    if (plan.trialDays > 0 && (!best || plan.trialDays > best.trialDays)) best = plan;
+  }
+  return best;
+}
+
+// A yearly plan against twelve months of its family's monthly plan: the
+// percent saved, its price a month, and what the twelve months would cost
+// ("20% off · about ৳ 159 a month", "Instead of ৳ 2,388"). null with no
+// monthly plan to compare with, or nothing saved.
+export function yearlyDeal(yearly: BillingPlan, plans: BillingPlan[]): { percentOff: number; perMonth: number; twelveMonths: number } | null {
+  if (yearly.billingCycle !== "YEARLY") return null;
+  const family = familyName(yearly.name).toLowerCase();
+  const monthly = plans.find((plan) => plan.billingCycle === "MONTHLY" && familyName(plan.name).toLowerCase() === family);
+  if (!monthly) return null;
+  const twelveMonths = Number(monthly.price) * 12;
+  const price = Number(yearly.price);
+  if (!(twelveMonths > price)) return null;
+  return { percentOff: Math.round(((twelveMonths - price) / twelveMonths) * 100), perMonth: Math.round(price / 12), twelveMonths };
+}
+
+// The least a paid plan costs a month (a yearly one over its twelve
+// months): Free or Pro's "from ৳ 159 a month". null with no paid plan.
+export function lowestMonthly(plans: BillingPlan[]): number | null {
+  const months = paidPlans(plans).map((plan) => Number(plan.price) / (plan.billingCycle === "YEARLY" ? 12 : 1));
+  return months.length > 0 ? Math.round(Math.min(...months)) : null;
+}
+
 // ---- The usage strip ----
 
 // The bar's colour: calm, then amber from 80%, red at the limit.
@@ -245,30 +332,48 @@ export function planState(subscription: Subscription): PlanState {
   }
 }
 
-// The sidebar's plan chip (AppSidebar board): no name means "Free plan" and
-// the Upgrade card; otherwise the plan's name, marked while it is a trial.
-// A plan that ended counts as free again.
+// The sidebar's plan chip and card (AppSidebar board): no name means "Free
+// plan" and the Upgrade card; a trial says "Free trial" and when it ends;
+// otherwise the plan's name. A plan that ended counts as free again.
 export interface SidebarPlan {
   name: string | null;
   trial: boolean;
+  // When the trial ends; null outside one.
+  trialEndsAt: string | null;
+  // A payment whose money was sent waits for an admin to confirm it
+  // ("Payment being checked").
+  pending: boolean;
 }
 
-export function sidebarPlan(subscription: Subscription): SidebarPlan {
+export function sidebarPlan(subscription: Subscription, pendingPayment: PendingPayment | null = null): SidebarPlan {
   const state = planState(subscription);
-  if (state === "free" || state === "ended") return { name: null, trial: false };
-  return { name: subscription.planName, trial: state === "trial" };
+  // An older backend doesn't say when the details were sent (undefined):
+  // any open payment counts then.
+  const pending = pendingPayment !== null && pendingPayment.submittedAt !== null;
+  if (state === "free" || state === "ended") return { name: null, trial: false, trialEndsAt: null, pending };
+  const trial = state === "trial";
+  return { name: subscription.planName, trial, trialEndsAt: trial ? subscription.trialEndsAt : null, pending };
 }
+
+// Whole days left until `endsAt` (a trial's end), never below 0: a trial
+// ending later today has 1 left.
+export const daysLeft = (endsAt: string, now = new Date()): number => Math.max(0, Math.ceil((new Date(endsAt).getTime() - now.getTime()) / 86_400_000));
 
 // A paid plan with an end date can be stopped at its end (or the stop undone).
 export const canCancel = (subscription: Subscription): boolean => subscription.isPaid && Boolean(subscription.currentPeriodEnd);
 
-export const GATEWAYS: { value: Gateway; label: string }[] = [
-  { value: "BKASH", label: "bKash" },
-  { value: "NAGAD", label: "Nagad" },
-  { value: "CARD", label: "Card · SSLCommerz" },
-];
+const GATEWAY_LABELS: Record<string, string> = {
+  BKASH: "bKash",
+  NAGAD: "Nagad",
+  ROCKET: "Rocket",
+  BANK: "Bank transfer",
+  CARD: "Online · SSLCommerz",
+  SSLCOMMERZ: "Online · SSLCommerz",
+  MANUAL: "Bank or mobile banking",
+};
 
-export const gatewayLabel = (gateway: string): string => GATEWAYS.find((g) => g.value === gateway)?.label ?? gateway;
+// How a payment was made, in the app's words (dictionary keys).
+export const gatewayLabel = (gateway: string): string => GATEWAY_LABELS[gateway] ?? gateway;
 
 // A payment's chip: its words (dictionary keys) and tone.
 export function paymentStatusView(status: PaymentStatus): { label: string; tone: "income" | "warning" | "expense" | "neutral" } {
