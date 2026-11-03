@@ -103,7 +103,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
   );
   const searching = query.trim().length > 0;
 
-  const symbol = currencySymbol(currency);
+  const symbol = currencySymbol(currency, fmt);
   const money = (value: number | string) => (hidden ? maskedMoney(symbol) : formatCurrency(value, currency, fmt));
   const signed = (value: number, sign: "+" | "−") => (hidden ? maskedMoney(symbol) : `${sign} ${formatCurrency(Math.abs(value), currency, fmt)}`);
   const sum = (pick: (account: WalletOverviewRow) => string) => active.reduce((total, account) => total + Number(pick(account)), 0);

@@ -94,7 +94,7 @@ export function FinanceDashboard({ adminName, hour, revenue, overview, churn, pl
               bars={history.map((point, index) => ({
                 label: shortMonth(point.month, locale),
                 value: point.mrr,
-                short: toLocaleDigits(compactMoney(point.mrr), locale),
+                short: toLocaleDigits(compactMoney(point.mrr, locale), locale),
                 highlight: index === history.length - 1,
                 spoken: `${monthLabel(point.month, locale, translate)} ${formatAmount(point.mrr, undefined, locale)}`,
               }))}

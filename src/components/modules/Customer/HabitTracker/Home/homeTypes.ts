@@ -1,4 +1,4 @@
-import type { BooksOverview, Habit, HabitMonthLog, HabitMonthTracker, HabitToday, Reminder, SkillsOverview, TodoList } from "@/lib/customer/api";
+import type { BooksOverview, Habit, HabitMonthLog, HabitMonthTracker, HabitToday, JournalSummary, Reminder, SkillsOverview, TodoList } from "@/lib/customer/api";
 
 // Everything the Today page reads, gathered by the server page in one go.
 export interface HabitsHomeData {
@@ -16,6 +16,8 @@ export interface HabitsHomeData {
   skills: SkillsOverview | null;
   challenges: HabitMonthTracker[];
   ramadan: HabitMonthTracker[];
+  // Journal & notes: today written, the streak, the newest note.
+  writing: JournalSummary | null;
   // Saved reminders, for a new habit's (null when they couldn't be read).
   reminders: Reminder[] | null;
 }

@@ -3,7 +3,6 @@ import { RamadanSheetPageClient } from "@/components/modules/Customer/HabitTrack
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getHabitTracker, getHabitTrackers } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { getReminders } from "@/lib/customer/reminders";
 import { getAppToday } from "@/lib/date";
 
 // The list's name, read from nothing: Next runs generateMetadata for every
@@ -14,14 +13,14 @@ export async function generateMetadata({ params }: PageProps<"/habit-tracker/hab
   return customerPageMetadata(`/habit-tracker/habits/ramadan/${id}`);
 }
 
-// One Ramadan's sheet, opened from Habits › Ramadan.
+// Ramadan › Dashboard: one Ramadan's sheet.
 export default async function RamadanSheetPage({ params }: PageProps<"/habit-tracker/habits/ramadan/[id]">) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const [tracker, all, reminders] = await Promise.all([getHabitTracker(id), getHabitTrackers("Ramadan"), getReminders()]);
+  const [tracker, all] = await Promise.all([getHabitTracker(id), getHabitTrackers("Ramadan")]);
   if (!tracker || tracker.category !== "Ramadan") notFound();
 
-  return <RamadanSheetPageClient tracker={tracker} all={all} today={getAppToday()} reminders={reminders?.reminders ?? null} />;
+  return <RamadanSheetPageClient tracker={tracker} all={all} today={getAppToday()} />;
 }

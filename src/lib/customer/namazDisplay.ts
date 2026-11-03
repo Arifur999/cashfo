@@ -144,6 +144,31 @@ export function dayTotals(tracker: HabitMonthTracker): { day: number; prayed: nu
   });
 }
 
+// Days 1–7, 8–14 …: the share of the due prayers prayed. A past day owes
+// all its prayers; today only counts what is prayed so far, and a later
+// day nothing, so a week still going isn't marked down for the hours ahead.
+export function namazWeeks(tracker: HabitMonthTracker): { from: number; to: number; pct: number | null }[] {
+  const prayed = prayedChecks(tracker);
+  const weeks: { from: number; to: number; pct: number | null }[] = [];
+  for (let from = 1; from <= tracker.totalDays; from += 7) {
+    const to = Math.min(tracker.totalDays, from + 6);
+    let got = 0;
+    let due = 0;
+    for (let day = from; day <= to; day++) {
+      const n = prayed.filter((c) => c.day === day).length;
+      if (day <= tracker.elapsedDays) {
+        got += n;
+        due += tracker.items.length;
+      } else if (day === tracker.todayDay) {
+        got += n;
+        due += n;
+      }
+    }
+    weeks.push({ from, to, pct: due > 0 ? Math.round((got / due) * 100) : null });
+  }
+  return weeks;
+}
+
 // 0 = Sunday … 6 = Saturday for a day of the tracker's month.
 export function weekdayOfDay(tracker: HabitMonthTracker, day: number): number {
   return new Date(Date.UTC(tracker.year as number, (tracker.month as number) - 1, day)).getUTCDay();

@@ -220,8 +220,8 @@ export function AppPreferencesSection({ today, reminders: initialReminders, habi
           "Big amounts",
           "Lakh and crore, or groups of three.",
           segments<NumberGrouping>("Big amounts", prefs.numberGrouping, [
-            { value: "LAKH", label: sampleAmount(123456, "LAKH", digits) },
-            { value: "INTERNATIONAL", label: sampleAmount(123456, "INTERNATIONAL", digits) },
+            { value: "LAKH", label: sampleAmount(123456, "LAKH", digits, locale) },
+            { value: "INTERNATIONAL", label: sampleAmount(123456, "INTERNATIONAL", digits, locale) },
           ], (value) => changePref("numberGrouping", value)),
         )}
         {row(
@@ -236,7 +236,7 @@ export function AppPreferencesSection({ today, reminders: initialReminders, habi
         )}
         <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-divider bg-emerald-soft py-3", PX)} aria-live="polite">
           <span className="text-[12.5px] font-semibold text-emerald">{t("Preview@@format")}</span>
-          <span className="text-[15px] font-semibold text-ink tabular-nums">{sampleAmount(123456, prefs.numberGrouping, digits)}</span>
+          <span className="text-[15px] font-semibold text-ink tabular-nums">{sampleAmount(123456, prefs.numberGrouping, digits, locale)}</span>
           <span className="text-ink-faint" aria-hidden="true">
             ·
           </span>

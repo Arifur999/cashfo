@@ -97,7 +97,7 @@ export function ZakatSettingsDialog({ open, onClose, businessId, summary, curren
         value={toLocaleDigits(value, fmt)}
         onChange={(event) => set(cleanPrice(event.target.value))}
         invalid={tried && priceBad}
-        leading={<span className="flex h-11 w-10 items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft">{currencySymbol(currency)}</span>}
+        leading={<span className="flex h-11 w-10 items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>}
         frameClassName="gap-0 overflow-hidden pl-0"
         className="pl-3 tabular-nums"
       />

@@ -252,6 +252,12 @@ export const chromeDictionary: Record<string, string> = {
   Worship: "ইবাদত",
   "Plan@@habits": "পরিকল্পনা",
   "To Do List": "করণীয় তালিকা",
+  // Habit Tracker v13: the menu's groups and the Write section.
+  Write: "লেখা",
+  "Notes & Journal": "নোট ও জার্নাল",
+  "Monthly report": "মাসিক রিপোর্ট",
+  "Reading now": "এখন পড়ছি",
+  "Library dashboard": "লাইব্রেরি ড্যাশবোর্ড",
   "Prayers, habits and tasks": "নামাজ, অভ্যাস ও কাজ",
   "Upgrade to Pro": "Pro-তে আপগ্রেড করুন",
   "No monthly limit on transactions, plus PDF reports, income goals and up to 5 workspaces.":

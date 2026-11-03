@@ -132,7 +132,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
                   {...amountField}
                   placeholder="0"
                   className="text-h3 font-bold tabular-nums"
-                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
                   frameClassName="overflow-hidden pl-0"
                 />
               </Field>

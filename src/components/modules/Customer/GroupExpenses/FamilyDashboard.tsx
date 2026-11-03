@@ -331,7 +331,7 @@ export function FamilyDashboard({ data, view, onPeriod, onStatement, busy }: Fam
         return [...parts, `${joined ? "L" : "M"}${x(point.i)},${y(point.v)}`];
       }, [])
       .join(" ");
-    const symbol = currencySymbol(code);
+    const symbol = currencySymbol(code, fmt);
     const short = (value: number) => `${symbol} ${toLocaleDigits(value >= 1000 ? `${Math.round(value / 1000)}k` : String(Math.round(value)), fmt)}`;
     const budgets = [...new Set(months.map((m) => m.budget).filter((b): b is number => b !== null))];
     const aria = budgets.length === 1 ? t("Monthly spending in {year} against a {amount} monthly budget", { year: toLocaleDigits(key, fmt), amount: money(budgets[0]) }) : t("Monthly spending in {year} against the budget", { year: toLocaleDigits(key, fmt) });

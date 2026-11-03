@@ -32,7 +32,7 @@ describe("plan lines", () => {
   it("describes the trial, with a yearly plan's monthly share", () => {
     expect(trialLine({ billingCycle: "FREE", trialDays: 0, price: "0.00", currency: "BDT" })).toBe("No trial needed");
     expect(trialLine({ billingCycle: "MONTHLY", trialDays: 7, price: "299.00", currency: "BDT" })).toBe("7-day free trial");
-    expect(trialLine({ billingCycle: "YEARLY", trialDays: 14, price: "2999.00", currency: "BDT" })).toBe(`14-day free trial · about ৳${NBSP}250 a month`);
+    expect(trialLine({ billingCycle: "YEARLY", trialDays: 14, price: "2999.00", currency: "BDT" })).toBe(`14-day free trial · about TK${NBSP}250 a month`);
   });
 
   it("counts who is on a trial", () => {
@@ -73,7 +73,7 @@ describe("coupon lines", () => {
 
   it("words the discount and applies it", () => {
     expect(discountText({ discountType: "PERCENTAGE", discountValue: "20.00" })).toBe("20% off");
-    expect(discountText({ discountType: "FIXED_AMOUNT", discountValue: "100.00" })).toBe(`৳${NBSP}100 off`);
+    expect(discountText({ discountType: "FIXED_AMOUNT", discountValue: "100.00" })).toBe(`TK${NBSP}100 off`);
     // In Bangla the amount and the percent come in Bangla digits too.
     const bn = (key: string, values?: Record<string, string | number>) => fillText(translate("bn", key), values ?? {});
     expect(discountText({ discountType: "PERCENTAGE", discountValue: "20.00" }, bn, "bn")).toBe("২০% ছাড়");

@@ -10,7 +10,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CHALLENGE_PRESETS, DAY_ITEM } from "@/lib/customer/challengeDisplay";
-import { actionError, latinDigits } from "@/lib/customer/habitDisplay";
+import { actionError, dayText, latinDigits, shiftDay } from "@/lib/customer/habitDisplay";
 import { createChallengeAction } from "@/lib/customer/habitsActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -21,19 +21,25 @@ import { CloseButton, PanelFooter } from "../Tracker/PanelParts";
 interface NewChallengeDialogProps {
   open: boolean;
   onClose: () => void;
-  // The length picked on the page, if any.
+  // The length picked on the page, if any, and a name ("Try it again").
   presetDays: number | null;
+  presetName?: string;
+  // "YYYY-MM-DD" today: day 1 is today or tomorrow.
+  today: string;
   // The page's saved reminders: the new challenge's is saved once it exists.
   reminders?: ReminderBook;
+  // Made: the page shows it (without one, its own page opens).
+  onCreated?: (id: string) => void;
 }
 
 const MAX_DAYS = 365;
 // The server's longest daily item name.
 const MAX_ITEM = 40;
 
-// A new challenge: a name, how many days, and the daily items to tick
-// (one is enough; none means the day itself is ticked).
-export function NewChallengeDialog({ open, onClose, presetDays, reminders }: NewChallengeDialogProps) {
+// A new challenge (the ChallengesHome board's dialog): what you will do,
+// for how many days, starting today or tomorrow, and the daily items to
+// tick (one is enough; none means the day itself is ticked).
+export function NewChallengeDialog({ open, onClose, presetDays, presetName = "", today, reminders, onCreated }: NewChallengeDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -42,14 +48,16 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
   const [items, setItems] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [reminder, setReminder] = useState(() => draftFromReminder("CHALLENGE", null));
+  const [tomorrow, setTomorrow] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
-  const key = open ? String(presetDays ?? "default") : "closed";
+  const key = open ? `${presetDays ?? "default"}:${presetName}` : "closed";
   if (key !== prevKey) {
     setPrevKey(key);
     if (open) {
-      setName("");
+      setName(presetName);
+      setTomorrow(false);
       setDays(presetDays && CHALLENGE_PRESETS.some((p) => p.days === presetDays) ? presetDays : presetDays ? "custom" : 30);
       setCustom(presetDays && !CHALLENGE_PRESETS.some((p) => p.days === presetDays) ? String(presetDays) : "");
       setItems([]);
@@ -63,6 +71,8 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
   const valid = name.trim().length > 0 && name.trim().length <= 60 && daysOk;
   // Why Start stays off for a length of its own.
   const daysError = days === "custom" && custom !== "" && !daysOk ? t("From 1 to {max} days.", { max: formatCount(MAX_DAYS, fmt) }) : undefined;
+  const start = shiftDay(today, tomorrow ? 1 : 0);
+  const preview = daysOk ? [name.trim() || t("Your challenge"), t(totalDays === 1 ? "{count} day" : "{count} days", { count: formatCount(totalDays, fmt) }), t("{from} to {to}", { from: dayText(start, fmt, "dayMonth"), to: dayText(shiftDay(start, totalDays - 1), fmt, "dayMonth") })].join(" · ") : null;
   // The hidden item the day itself is ticked through can't be one of yours.
   const usable = (value: string) => value !== DAY_ITEM;
 
@@ -79,13 +89,13 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
     startTransition(async () => {
       const last = draft.trim();
       const all = last && usable(last) && !items.some((i) => i.toLowerCase() === last.toLowerCase()) ? [...items, last] : items;
-      const result = await createChallengeAction({ name: name.trim(), totalDays, items: all });
+      const result = await createChallengeAction({ name: name.trim(), totalDays, items: all, startsTomorrow: tomorrow });
       if (!result.data) {
         toast.error(actionError(result.message, "Failed to create challenge", t, fmt));
         return;
       }
       // Made, even if an item was refused: open it, and say what went wrong.
-      if (result.success) toast.success(t("Challenge created"));
+      if (result.success) toast.success(tomorrow ? t("{name} starts tomorrow.", { name: name.trim() }) : t("{name} started. Day 1 of {total}.", { name: name.trim(), total: formatCount(totalDays, fmt) }));
       else toast.error(actionError(result.message, "Failed to save habit", t, fmt));
       // Its reminder needs the new id, so it is saved now.
       if (reminders?.available) {
@@ -93,11 +103,16 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
         if (!saved.success) toast.error(t("Saved, but not its reminder. Open it again to set the reminder."));
       }
       onClose();
-      router.push(`/habit-tracker/habits/others/${result.data.id}`);
+      if (onCreated) {
+        onCreated(result.data.id);
+        router.refresh();
+      } else {
+        router.push(`/habit-tracker/habits/others/${result.data.id}`);
+      }
     });
   }
 
-  const pick = (on: boolean) => cn("flex h-11 items-center justify-center rounded-field border text-body font-bold transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong");
+  const pick = (on: boolean) => cn("flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-field border px-1 py-1.5 text-center transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong");
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
@@ -106,25 +121,27 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
           <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4.5">
             <div className="flex min-w-0 flex-col gap-1">
               <AlertDialogTitle className="text-h3 text-ink">{t("New challenge")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-small text-ink-muted">{t("Day 1 is today. Tick it off each day until you reach the end.")}</AlertDialogDescription>
+              <AlertDialogDescription className="text-small text-ink-muted">{t(tomorrow ? "Day 1 is tomorrow. Tick it off each day until you reach the end." : "Day 1 is today. Tick it off each day until you reach the end.")}</AlertDialogDescription>
             </div>
             <CloseButton onClick={onClose} label={t("Close")} className="-my-0.5 -mr-1.5 size-8.5 rounded-full" />
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex flex-col gap-4 px-6 py-5">
-              <Field htmlFor="ch-name" label={<span className="text-body font-medium text-ink">{t("Challenge name")}</span>}>
-                <Input id="ch-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={60} placeholder={t("No Sugar")} />
+              <Field htmlFor="ch-name" label={<span className="text-body font-medium text-ink">{t("What will you do?")}</span>}>
+                <Input id="ch-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={60} placeholder={t("e.g. No sugar, Walk after Fajr")} />
               </Field>
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("How many days")}</legend>
-                <div role="radiogroup" aria-label={t("How many days")} className="grid grid-cols-5 gap-2">
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("For how many days?")}</legend>
+                <div role="radiogroup" aria-label={t("For how many days?")} className="grid grid-cols-5 gap-2 max-[420px]:grid-cols-3">
                   {CHALLENGE_PRESETS.map((p) => (
                     <button key={p.days} type="button" role="radio" aria-checked={days === p.days} onClick={() => setDays(p.days)} className={pick(days === p.days)}>
-                      {formatCount(p.days, fmt)}
+                      <span className="text-[17px] leading-tight font-bold tabular-nums">{formatCount(p.days, fmt)}</span>
+                      <span className="text-[11px] leading-tight font-medium">{t(p.title)}</span>
                     </button>
                   ))}
-                  <button type="button" role="radio" aria-checked={days === "custom"} aria-label={t("Your own length")} onClick={() => setDays("custom")} className={cn(pick(days === "custom"), days !== "custom" && "border-dashed border-line-strong hover:border-emerald")}>
-                    +
+                  <button type="button" role="radio" aria-checked={days === "custom"} onClick={() => setDays("custom")} className={cn(pick(days === "custom"), days !== "custom" && "border-dashed border-line-strong hover:border-emerald")}>
+                    <span className="text-[17px] leading-tight font-bold">+</span>
+                    <span className="text-[11px] leading-tight font-medium">{t("Your own")}</span>
                   </button>
                 </div>
                 {days === "custom" && (
@@ -132,6 +149,17 @@ export function NewChallengeDialog({ open, onClose, presetDays, reminders }: New
                     <Input id="ch-days" size="sm" inputMode="numeric" value={custom} onChange={(event) => setCustom(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 3))} invalid={daysError !== undefined} placeholder={t("Any number of days, up to 365")} />
                   </Field>
                 )}
+              </fieldset>
+              <fieldset className="flex flex-col gap-2">
+                <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Start")}</legend>
+                <div role="radiogroup" aria-label={t("Start")} className="grid grid-cols-2 gap-2">
+                  {[false, true].map((later) => (
+                    <button key={String(later)} type="button" role="radio" aria-checked={tomorrow === later} onClick={() => setTomorrow(later)} className={cn(pick(tomorrow === later), "flex-row gap-1 text-small")}>
+                      {t(later ? "Tomorrow · {date}" : "Today · {date}", { date: dayText(shiftDay(today, later ? 1 : 0), fmt, "dayMonth") })}
+                    </button>
+                  ))}
+                </div>
+                {preview && <span className="text-caption text-ink-muted">{preview}</span>}
               </fieldset>
               <div className="flex flex-col gap-2">
                 <span className="text-body font-medium text-ink">

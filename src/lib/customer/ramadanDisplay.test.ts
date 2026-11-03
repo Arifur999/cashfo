@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HabitMonthTracker } from "./api";
 import { challengeMark, challengeSummary, challengeWindow, dayDone } from "./challengeDisplay";
-import { ashraSummary, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, setupDefaultYear, setupYears, summaryNote, withParas } from "./ramadanDisplay";
+import { ashraSummary, countdown, dashboardSheet, fastsToMakeUp, goingRamadan, isNightRow, lastRamadan, parasOn, quranKhatam, ramadanCell, ramadanDays, ramadanStartIn, ramadanSummary, ramadanWindow, setupDefaultYear, setupYears, summaryNote, withParas } from "./ramadanDisplay";
 
 const ramadan = (checks: [number, string][], overrides: Partial<HabitMonthTracker> = {}): HabitMonthTracker => ({
   id: "r",
@@ -17,6 +17,50 @@ const ramadan = (checks: [number, string][], overrides: Partial<HabitMonthTracke
   paras: [],
   createdAt: "2026-02-10T00:00:00.000Z",
   ...overrides,
+});
+
+describe("ramadan today", () => {
+  it("counts the fasts still owed, less the ones made up", () => {
+    const start = ramadanStartIn(2026) as string;
+    const tracker = ramadan([1, 2, 3, 5, 6].map((day) => [day, "Roza"] as [number, string]), { totalDays: 6 });
+    const over = ramadanWindow(tracker, "2026-10-02");
+    expect(fastsToMakeUp(tracker, over)).toEqual({ missedDays: [4], left: 1 });
+    expect(fastsToMakeUp({ ...tracker, fastsMadeUp: 1 }, over)).toEqual({ missedDays: [4], left: 0 });
+    expect(fastsToMakeUp({ ...tracker, fastsMadeUp: 3 }, over).left).toBe(0);
+    // While it is going, today's open box is not a missed fast yet.
+    const going = ramadanWindow(tracker, start.replace(/\d\d$/, (d) => String(Number(d) + 3).padStart(2, "0")));
+    expect(going.todayDay).toBe(4);
+    expect(fastsToMakeUp(tracker, going)).toEqual({ missedDays: [], left: 0 });
+    expect(fastsToMakeUp({ ...tracker, items: ["Taraweeh"] }, over)).toEqual({ missedDays: [], left: 0 });
+    expect(summaryNote({ ...tracker, fastsMadeUp: 1 }, over, ramadanSummary(tracker, over).items[0])).toBeNull();
+    expect(summaryNote(tracker, over, ramadanSummary(tracker, over).items[0])).toEqual({ kind: "makeUp", fasts: 1 });
+  });
+
+  it("counts down in days, whole weeks and whole months", () => {
+    expect(countdown(129)).toEqual({ days: 129, weeks: 18, months: 4 });
+    expect(countdown(6)).toEqual({ days: 6, weeks: 0, months: 0 });
+  });
+
+  it("knows the night rows", () => {
+    expect(isNightRow("Taraweeh")).toBe(true);
+    expect(isNightRow("tahajjud")).toBe(true);
+    expect(isNightRow("Roza")).toBe(false);
+  });
+
+  it("opens the Ramadan going on, else the last one over, else the soonest", () => {
+    const y2025 = ramadan([], { id: "a", year: 2025 });
+    const y2026 = ramadan([], { id: "b", year: 2026 });
+    const y2027 = ramadan([], { id: "c", year: 2027 });
+    const y2028 = ramadan([], { id: "d", year: 2028 });
+    const start = ramadanStartIn(2026) as string;
+    expect(dashboardSheet([y2025, y2026, y2027], start)?.id).toBe("b");
+    expect(goingRamadan([y2025, y2026], start)?.tracker.id).toBe("b");
+    expect(dashboardSheet([y2025, y2026, y2027], "2026-10-02")?.id).toBe("b");
+    expect(lastRamadan([y2025, y2026, y2027], "2026-10-02")?.tracker.id).toBe("b");
+    expect(dashboardSheet([y2028, y2027], "2026-10-02")?.id).toBe("c");
+    expect(goingRamadan([y2027], "2026-10-02")).toBeNull();
+    expect(dashboardSheet([], "2026-10-02")).toBeNull();
+  });
 });
 
 describe("ramadan", () => {
@@ -123,7 +167,7 @@ describe("challenge", () => {
 
   it("counts the day from when it was created", () => {
     const w = challengeWindow(challenge([]), "2026-10-02");
-    expect(w).toEqual({ start: "2026-09-21", end: "2026-10-20", today: 12, status: "going", daysLeft: 18 });
+    expect(w).toEqual({ start: "2026-09-21", end: "2026-10-20", today: 12, status: "going", daysLeft: 18, ended: false, lastDay: 30 });
     expect(challengeWindow(challenge([]), "2026-10-25").status).toBe("finished");
   });
 
@@ -135,6 +179,6 @@ describe("challenge", () => {
     expect(challengeMark(tracker, w, 3)).toBe("missed");
     expect(challengeMark(tracker, w, 12)).toBe("today");
     expect(challengeMark(tracker, w, 13)).toBe("later");
-    expect(challengeSummary(tracker, w)).toEqual({ done: 10, come: 12, missed: 1, pct: 33, streak: 8 });
+    expect(challengeSummary(tracker, w)).toEqual({ done: 10, come: 12, missed: 1, pct: 33, streak: 8, best: 8 });
   });
 });

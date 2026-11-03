@@ -56,7 +56,7 @@ export const clearAuthCookies = async () => {
   await deleteCookie(ACCESS_TOKEN_COOKIE);
   await deleteCookie(REFRESH_TOKEN_COOKIE);
   await deleteCookie(SESSION_ONLY_COOKIE);
-  await deleteCookiesWhere((name) => isBetterAuthCookie(name) || isWorkspaceUnlockCookie(name));
+  await deleteCookiesWhere((name) => isBetterAuthCookie(name) || isWorkspaceUnlockCookie(name) || name === JOURNAL_UNLOCK_COOKIE);
   await clearStashedAdminSession();
 };
 
@@ -80,6 +80,18 @@ export const setWorkspaceUnlock = (businessId: string, unlockToken: string) =>
 export const getWorkspaceUnlock = (businessId: string) => getCookie(workspaceUnlockCookie(businessId));
 
 export const clearWorkspaceUnlock = (businessId: string) => deleteCookie(workspaceUnlockCookie(businessId));
+
+// The diary's unlock (backend: POST /api/journal/unlock or /pin): sent as
+// x-journal-unlock with the journal's requests. A browser-session cookie,
+// so closing the browser locks the diary again; the backend also ends it
+// with the sign-in, after 12 hours, or when the PIN changes.
+const JOURNAL_UNLOCK_COOKIE = "journalUnlock";
+
+export const setJournalUnlock = (unlockToken: string) => setTokenInCookies(JOURNAL_UNLOCK_COOKIE, unlockToken, 0, false);
+
+export const getJournalUnlock = () => getCookie(JOURNAL_UNLOCK_COOKIE);
+
+export const clearJournalUnlock = () => deleteCookie(JOURNAL_UNLOCK_COOKIE);
 
 // Every unlock this device holds, comma-joined for a call that reads across
 // workspaces (the bell, Download my data): the backend keeps a PIN-locked

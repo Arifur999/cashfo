@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Moon, MoonStar, MoreVertical, Plus, Star, Trash2 } from "lucide-react";
+import { ChevronDown, MoonStar, MoreVertical, Plus, Star, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -11,22 +12,21 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { HabitMonthTracker, Reminder } from "@/lib/customer/api";
+import type { HabitMonthTracker } from "@/lib/customer/api";
+import { timeLabel } from "@/lib/customer/date";
 import { actionError, daysText, dayText, nextRamadan, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
+import { clockOf, prayerTimesFor } from "@/lib/customer/prayerTimes";
 import { deleteHabitTrackerAction, removeTrackerItemAction, setHabitTrackerCheckAction, setRamadanParasAction } from "@/lib/customer/habitsActions";
-import { ASHRAS, ashraSummary, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow, type SummaryNote, summaryNote, withParas } from "@/lib/customer/ramadanDisplay";
+import { ASHRAS, ashraSummary, fastsToMakeUp, isNightRow, quranItem, quranKhatam, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow, type SummaryNote, summaryNote, withParas } from "@/lib/customer/ramadanDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AddRowDialog } from "../Tracker/AddRowDialog";
-import { RecordEyebrow } from "../Tracker/RecordEyebrow";
 import { type BoxState, BoxSwatch, DayTotal, SheetBox } from "../Tracker/SheetBox";
 import { useRovingGrid } from "../Tracker/useRovingGrid";
 import { withCheck } from "../trackerChecks";
-import { useReminderBook } from "../Reminders";
 import { QuranKhatamCard } from "./QuranKhatamCard";
 import { RamadanSetupDialog } from "./RamadanSetupDialog";
-import { SehriIftarCard } from "./SehriIftarCard";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
@@ -34,9 +34,6 @@ interface RamadanSheetPageClientProps {
   tracker: HabitMonthTracker;
   all: HabitMonthTracker[];
   today: string;
-  // Saved reminders (Sehri's and Iftar's show on its card); null when they
-  // couldn't be read.
-  reminders: Reminder[] | null;
 }
 
 const SUGGESTIONS = ["Taraweeh", "Quran", "Zikr", "Sadaqah", "Tahajjud", "Dua", "Hadis"];
@@ -66,14 +63,16 @@ function noteText(note: SummaryNote, t: (key: string, values?: Record<string, st
 // A tick, or a day's paras, layered over the server's sheet until it answers.
 type SheetUpdate = { kind: "check"; day: number; item: string; checked: boolean } | { kind: "paras"; day: number; paras: number };
 
-// One Ramadan: the sheet with its three ashras and the odd nights of the
-// last ten marked, a summary of every row, the Quran khatam, and Sehri and
-// Iftar times. On a phone the sheet opens scrolled to today with the rows'
-// names pinned; it is one Tab stop, its boxes reached with the arrow keys.
-export function RamadanSheetPageClient({ tracker, all, today, reminders: savedReminders }: RamadanSheetPageClientProps) {
-  const reminders = useReminderBook(savedReminders);
+// Ramadan › Dashboard (the RamadanSheet board): one Ramadan's figures, the
+// sheet with its three ashras and the odd nights of the last ten (a day's
+// number ticks the whole day), each row, the Quran khatam and what stands
+// out; the Ramadan to come with its Sehri and Iftar above. On a phone the
+// sheet opens scrolled to today with the rows' names pinned; it is one Tab
+// stop, its boxes reached with the arrow keys.
+export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPageClientProps) {
   const { t, fmt } = useLocale();
-  const { hijriAdjust } = usePrayerSettings().settings;
+  const { settings } = usePrayerSettings();
+  const { hijriAdjust } = settings;
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [sheet, applyUpdate] = useOptimistic(tracker, (current, update: SheetUpdate) => (update.kind === "check" ? withCheck(current, update.day, update.item, update.checked) : withParas(current, update.day, update.paras)));
@@ -84,7 +83,6 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isPending, startRemove] = useTransition();
   const scroller = useRef<HTMLDivElement>(null);
-  const todayHead = useRef<HTMLSpanElement>(null);
   const count = (n: number) => formatCount(n, fmt);
   const digits = (value: number | string | null) => toLocaleDigits(String(value ?? ""), fmt);
 
@@ -107,7 +105,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
   // today under the pinned row names), with today's column in the middle.
   useEffect(() => {
     const box = scroller.current;
-    const head = todayHead.current;
+    const head = box?.querySelector<HTMLElement>("[data-today]");
     if (!box || !head || box.scrollWidth <= box.clientWidth) return;
     const left = head.getBoundingClientRect().left - box.getBoundingClientRect().left + box.scrollLeft;
     box.scrollLeft = Math.max(0, left - box.clientWidth / 2 + head.offsetWidth / 2);
@@ -161,75 +159,176 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
 
   const totals = days.map((d) => ({ day: d.day, count: d.day <= counted ? sheet.checks.filter((c) => c.day === d.day).length : null, open: d.day === window.todayDay }));
   const dateRange = window.start && window.end ? t("{from} to {to}", { from: dayText(window.start, fmt, "dayMonth"), to: dayText(window.end, fmt, "dayMonthYear") }) : null;
+  const sorted = [...all].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+  const yearName = (tracker: HabitMonthTracker) => t("Ramadan {year}", { year: digits(ramadanWindow(tracker, today, hijriAdjust).hijriYear ?? tracker.year) });
+
+  // The four figures: fasts kept, the second row (Taraweeh on the board),
+  // the Quran and everything.
+  const roza = summary.items.find((row) => row.item === "Roza");
+  const second = summary.items.find((row) => row.item === "Taraweeh") ?? summary.items.find((row) => row.item !== "Roza" && !quranItem([row.item]));
+  const byNight = second ? isNightRow(second.item) : false;
+  const khatam = quranKhatam(sheet);
+  const toMakeUp = fastsToMakeUp(sheet, window).left;
+  const stats = [
+    roza && {
+      label: t("Fasts kept"),
+      value: t("{done} of {total}", { done: count(roza.done), total: count(roza.of) }),
+      sub: roza.of === 0 ? t("Nothing to count yet") : roza.done === roza.of ? t("Every fast kept") : toMakeUp > 0 ? t("{count} to make up before next Ramadan", { count: count(toMakeUp) }) : t("All made up"),
+      tone: toMakeUp > 0 ? "text-warning-ink" : "text-ink",
+    },
+    second && {
+      label: t(second.item),
+      value: byNight ? t(second.done === 1 ? "{count} night" : "{count} nights", { count: count(second.done) }) : daysText(second.done, t, fmt),
+      sub: t(byNight ? "of {count} nights" : "of {count} days", { count: count(second.of) }),
+      tone: "text-ink",
+    },
+    quranItem(sheet.items) && { label: t("Quran"), value: t("{count} of 30 paras", { count: count(Math.min(30, khatam.read)) }), sub: khatam.finishedOn ? t("Khatam done") : t("{count} paras to go", { count: count(Math.max(0, 30 - khatam.read)) }), tone: khatam.finishedOn ? "text-income" : "text-ink" },
+    { label: t("Overall"), value: `${count(summary.pct)}%`, sub: t("Of everything on the sheet"), tone: "text-ink" },
+  ].filter((stat): stat is { label: string; value: string; sub: string; tone: string } => !!stat);
+
+  // What stands out: the strongest and the hardest row, the last ten
+  // nights, and the Ramadan before.
+  const rows = summary.items.filter((row) => row.of > 0);
+  const strongest = [...rows].sort((a, b) => b.pct - a.pct)[0];
+  const hardest = [...rows].sort((a, b) => a.pct - b.pct)[0];
+  const lastTen = days.filter((d) => d.day >= 21 && d.day <= counted);
+  const lastTenOf = lastTen.length * sheet.items.length;
+  const lastTenDone = sheet.checks.filter((c) => c.day >= 21 && c.day <= counted && sheet.items.includes(c.item)).length;
+  const before = sorted.find((tracker) => (tracker.year ?? 0) < (sheet.year ?? 0));
+  const beforeSummary = before ? ramadanSummary(before, ramadanWindow(before, today, hijriAdjust)) : null;
+  const standsOut: { key: string; tone: string; text: string }[] = [];
+  if (strongest) standsOut.push({ key: "strongest", tone: "bg-income", text: t("{name} was the strongest: {done} of {total}.", { name: t(strongest.item), done: count(strongest.done), total: count(strongest.of) }) });
+  if (hardest && hardest !== strongest && hardest.pct < 100) standsOut.push({ key: "hardest", tone: "bg-expense", text: t("{name} was the hardest: {done} of {total}.", { name: t(hardest.item), done: count(hardest.done), total: count(hardest.of) }) });
+  if (lastTenOf > 0) standsOut.push({ key: "lastTen", tone: "bg-warning-fill", text: t("Last ten nights: {pct}% done.", { pct: count(Math.round((lastTenDone / lastTenOf) * 100)) }) });
+  if (beforeSummary && beforeSummary.of > 0 && summary.of > 0 && before) {
+    const change = summary.pct - beforeSummary.pct;
+    standsOut.push({ key: "before", tone: change >= 0 ? "bg-income" : "bg-expense", text: t(change >= 0 ? "Up {change}% from {name}." : "Down {change}% from {name}.", { change: count(Math.abs(change)), name: yearName(before) }) });
+  }
+
+  // A day's number ticks every row that day (or, all ticked, clears them):
+  // shown at once, saved one row after another, one refresh at the end.
+  function tickDay(day: number) {
+    const ticked = (item: string) => sheet.checks.some((c) => c.day === day && c.item === item);
+    const checked = !sheet.items.every(ticked);
+    const changes = sheet.items.filter((item) => ticked(item) !== checked);
+    if (changes.length === 0) return;
+    startTransition(async () => {
+      for (const item of changes) applyUpdate({ kind: "check", day, item, checked });
+      for (const item of changes) {
+        const result = await setHabitTrackerCheckAction(sheet.id, { day, item, checked });
+        if (!result.success) {
+          toast.error(actionError(result.message, "Failed to update", t, fmt));
+          break;
+        }
+      }
+      router.refresh();
+    });
+  }
+
+  const times = prayerTimesFor(settings, window.status === "going" ? today : window.status === "upcoming" && window.start ? window.start : next.startsOn);
 
   return (
-    <PageFrame className="gap-4.5">
+    <PageFrame className="gap-3.5 md:pt-6">
       <TopbarExtras record={title} />
-      <div className="flex flex-col gap-1">
-        <RecordEyebrow href="/habit-tracker/habits?category=Ramadan" back={t("All Ramadans")} />
-        <PageHeader
-          title={
-            <span className="flex flex-wrap items-center gap-2.5">
-              {title}
-              <Chip tone={STATUS_CHIP[window.status]} className="h-6 gap-1.25 px-2.25 font-semibold tracking-normal">
-                {window.status === "completed" && <Check className="size-3" strokeWidth={3} aria-hidden="true" />}
-                {t(STATUS_LABEL[window.status])}
-              </Chip>
-            </span>
-          }
-          description={[dateRange, daysText(sheet.totalDays, t, fmt)].filter(Boolean).join(" · ")}
-          actions={
-            <>
-              <Button variant="secondary" onClick={() => setAddOpen(true)} className="rounded-sm px-3.5">
-                <Plus className="text-ink-soft" />
-                {t("Add a row")}
+      <PageHeader
+        title={
+          <span className="flex flex-wrap items-center gap-2.5">
+            {title}
+            <Chip tone={STATUS_CHIP[window.status]} className="h-6 gap-1.25 px-2.25 font-semibold tracking-normal">
+              {t(STATUS_LABEL[window.status])}
+            </Chip>
+          </span>
+        }
+        description={[dateRange, daysText(sheet.totalDays, t, fmt)].filter(Boolean).join(" · ")}
+        actions={
+          <>
+            {sorted.length > 1 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex h-10 min-w-44 items-center justify-between gap-2.5 rounded-sm border border-input bg-surface px-3 text-body font-semibold text-ink hover:bg-surface-sunken pointer-coarse:h-11">
+                  <span className="flex items-center gap-2">
+                    <MoonStar className="size-4 text-ink-muted" aria-hidden="true" />
+                    {title}
+                  </span>
+                  <ChevronDown className="size-4 text-ink-muted" aria-hidden="true" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-md border border-line bg-surface p-1 shadow-overlay ring-0">
+                  {sorted.map((tracker) => (
+                    <DropdownMenuItem key={tracker.id} asChild className={cn("rounded-sm px-3 py-2 text-body pointer-coarse:min-h-11", tracker.id === sheet.id ? "bg-emerald-soft font-semibold text-emerald" : "text-ink")}>
+                      <Link href={`/habit-tracker/habits/ramadan/${tracker.id}`} aria-current={tracker.id === sheet.id ? "page" : undefined}>
+                        {yearName(tracker)}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <Button variant="secondary" onClick={() => setAddOpen(true)} className="rounded-sm px-3.5">
+              <Plus className="text-ink-soft" />
+              {t("Add a row")}
+            </Button>
+            {!hasNext && window.status === "completed" && (
+              <Button onClick={() => setSetupOpen(true)} className="rounded-sm">
+                <Plus />
+                {t("Set up {name}", { name: nextName })}
               </Button>
-              {!hasNext && window.status === "completed" && (
-                <Button onClick={() => setSetupOpen(true)} className="rounded-sm">
-                  <Moon />
-                  {t("Set up {name}", { name: nextName })}
-                </Button>
-              )}
-              {(removable.length > 0 || deletable) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-sm border border-input bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
-                    <MoreVertical className="size-4.5" aria-hidden="true" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 rounded-md border border-line bg-surface p-1 shadow-overlay ring-0">
-                    {removable.map((item) => (
-                      <DropdownMenuItem key={item} onSelect={() => setRemoving(item)} className="rounded-sm px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
-                        <Trash2 className="size-4" aria-hidden="true" />
-                        {t("Remove the {name} row", { name: t(item) })}
-                      </DropdownMenuItem>
-                    ))}
-                    {deletable && (
-                      <DropdownMenuItem onSelect={() => setConfirmDelete(true)} className="rounded-sm px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense pointer-coarse:min-h-11">
-                        <Trash2 className="size-4" aria-hidden="true" />
-                        {t("Delete this sheet")}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+            )}
+            {(removable.length > 0 || deletable) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger aria-label={t("More")} className="flex size-10 items-center justify-center rounded-sm border border-input bg-surface text-ink hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
+                  <MoreVertical className="size-4.5" aria-hidden="true" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-md border border-line bg-surface p-1 shadow-overlay ring-0">
+                  {removable.map((item) => (
+                    <DropdownMenuItem key={item} onSelect={() => setRemoving(item)} className="rounded-sm px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      {t("Remove the {name} row", { name: t(item) })}
+                    </DropdownMenuItem>
+                  ))}
+                  {deletable && (
+                    <DropdownMenuItem onSelect={() => setConfirmDelete(true)} className="rounded-sm px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense pointer-coarse:min-h-11">
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      {t("Delete this sheet")}
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </>
+        }
+      />
+
+      {/* The Ramadan to come (or today, during one), with its Sehri and Iftar. */}
+      <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-linear-to-br from-emerald to-forest px-5 py-3 text-white dark:text-on-action">
+        <MoonStar className="size-4.5 shrink-0" aria-hidden="true" />
+        <span className="min-w-0 flex-1 basis-80 text-small">
+          {window.status === "going" ? (
+            <b className="font-semibold">{t("Day {day} of {total} · {name}", { day: count(window.todayDay ?? 1), total: count(sheet.totalDays), name: title })}</b>
+          ) : (
+            <>
+              <b className="font-semibold">{next.daysToGo === 0 ? t("{name} is going on now.", { name: nextName }) : t(next.daysToGo === 1 ? "{name} begins around {date} · in {count} day." : "{name} begins around {date} · in {count} days.", { name: nextName, date: dayText(next.startsOn, fmt, "full"), count: count(next.daysToGo) })}</b>{" "}
+              {next.daysToGo > 0 && <span className="opacity-90">{t("The exact day depends on the moon.")}</span>}
             </>
-          }
-        />
+          )}
+        </span>
+        <span className="text-small opacity-90">{window.status === "going" ? t("{city}, today:", { city: t(settings.city) }) : t("{city}, day 1:", { city: t(settings.city) })}</span>
+        <span className="rounded-full bg-white/18 px-3 py-1 text-small font-semibold tabular-nums">{t("Sehri ends {time}", { time: timeLabel(clockOf(times.Fajr), t, fmt) })}</span>
+        <span className="rounded-full bg-white/18 px-3 py-1 text-small font-semibold tabular-nums">{t("Iftar {time}", { time: timeLabel(clockOf(times.Maghrib), t, fmt) })}</span>
       </div>
 
-      {window.status !== "going" && (
-        <div role="status" className="flex items-center gap-3 rounded-[10px] border border-emerald-line bg-mint-50 px-4 py-3 text-body text-ink">
-          <MoonStar className="size-4.5 shrink-0 text-emerald" aria-hidden="true" />
-          <span>
-            <b className="font-semibold">{next.daysToGo === 0 ? t("{name} is going on now.", { name: nextName }) : t(next.daysToGo === 1 ? "{name} begins around {date}, in {count} day." : "{name} begins around {date}, in {count} days.", { name: nextName, date: dayText(next.startsOn, fmt, "dayMonthYear"), count: count(next.daysToGo) })}</b>{" "}
-            {next.daysToGo > 0 && t("The exact day depends on the moon, so the date can move by one day.")}
-          </span>
-        </div>
-      )}
+      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.label} padding="none" className="flex min-w-0 flex-col gap-0.5 rounded-md px-4 py-2.75">
+            <span className="text-[12.5px] font-medium text-ink-muted">{stat.label}</span>
+            <span className={cn("text-[22px] font-bold tracking-[-0.02em] tabular-nums", stat.tone)}>{stat.value}</span>
+            <span className="text-caption text-ink-muted">{stat.sub}</span>
+          </Card>
+        ))}
+      </div>
 
-      <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-5 pt-4 pb-4.5">
+      <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-4.5 pt-3 pb-3.5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-title font-semibold text-ink">{t("Ramadan sheet")}</h2>
-          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-[12.5px] text-ink-soft">
+          <h2 className="text-[15px] font-semibold text-ink">{t("Ramadan sheet")}</h2>
+          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-caption text-ink-2">
             {LEGEND.filter((entry) => !entry.going || window.status === "going").map((entry) => (
               <span key={entry.state} className="flex items-center gap-1.5">
                 <BoxSwatch state={entry.state} />
@@ -240,6 +339,7 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
               <Star className="size-3.5 fill-warning-fill text-warning-fill" strokeWidth={1.5} aria-hidden="true" />
               {t("Odd night of the last ten")}
             </span>
+            {counted > 0 && <span className="border-l border-line pl-3.5 text-ink-muted">{t("Tap a day number to tick the whole day")}</span>}
           </div>
         </div>
         <div ref={scroller} role="grid" aria-label={t("{name} sheet", { name: title })} onKeyDown={grid.onKeyDown} className="flex flex-col gap-0.75 overflow-x-auto pb-1">
@@ -262,17 +362,26 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
             <span className={cn(STICKY, "w-30 self-stretch")} />
             {days.map((d) => {
               const isToday = d.day === window.todayDay;
-              return (
-                <span
-                  key={d.day}
-                  ref={isToday ? todayHead : undefined}
-                  role="columnheader"
-                  title={[t("{day} Ramadan", { day: count(d.day) }), d.date ? dayText(d.date, fmt, "dayMonth") : null, d.oddNight ? t("odd night") : null].filter(Boolean).join(" · ")}
-                  className={cn("flex w-6.75 shrink-0 flex-col items-center gap-px text-caption font-semibold tabular-nums", isToday ? "rounded-[6px] bg-emerald text-on-action" : d.oddNight ? "text-warning" : "text-ink-muted")}
-                >
+              const label = [t("{day} Ramadan", { day: count(d.day) }), d.date ? dayText(d.date, fmt, "dayMonth") : null, d.oddNight ? t("odd night") : null].filter(Boolean).join(" · ");
+              const head = (
+                <>
                   <Star className={cn("size-2.75", d.oddNight ? "fill-warning-fill text-warning-fill" : "invisible")} strokeWidth={1.5} aria-hidden="true" />
                   <span>{count(d.day)}</span>
                   <span className={cn("text-[9.5px] leading-none", isToday ? "opacity-80" : "text-ink-faint")}>{d.weekday !== null ? t(WEEKDAY_MIN[d.weekday]) : ""}</span>
+                </>
+              );
+              const headClass = cn("flex w-full flex-col items-center gap-px rounded-[6px] text-caption font-semibold tabular-nums", isToday ? "bg-emerald text-on-action" : d.oddNight ? "text-warning" : "text-ink-muted");
+              return (
+                <span key={d.day} role="columnheader" data-today={isToday || undefined} className="flex w-6.75 shrink-0">
+                  {d.day <= counted ? (
+                    <button type="button" tabIndex={-1} title={t("{day}: tick the whole day", { day: label })} aria-label={t("{day}: tick the whole day", { day: label })} onClick={() => tickDay(d.day)} className={cn(headClass, !isToday && "hover:bg-surface-sunken")}>
+                      {head}
+                    </button>
+                  ) : (
+                    <span title={label} className={headClass}>
+                      {head}
+                    </span>
+                  )}
                 </span>
               );
             })}
@@ -317,20 +426,17 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
         </div>
       </Card>
 
-      <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-5 py-4">
+      <div className="grid items-stretch gap-3.5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-4.5 py-3.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-title font-semibold text-ink">{t("Summary")}</h2>
+            <h2 className="text-[15px] font-semibold text-ink">{t("Each row")}</h2>
             <span className="text-small font-bold text-emerald">{t("{pct}% of everything", { pct: count(summary.pct) })}</span>
           </div>
           {summary.items.map((row) => (
-            <div key={row.item} className="grid grid-cols-[82px_minmax(0,1fr)_minmax(46px,auto)] items-center gap-2.5 text-small">
+            <div key={row.item} className="grid grid-cols-[92px_minmax(0,1fr)_minmax(46px,auto)] items-center gap-2.5 text-small">
               <span className="truncate font-medium text-ink">{t(row.item)}</span>
-              <span className="flex min-w-0 flex-col gap-0.75">
-                <span className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
-                  <span className={cn("block h-full rounded-full", row.pct === 100 ? "bg-income" : "bg-emerald")} style={{ width: `${row.pct}%` }} />
-                </span>
-                <span className="text-[11.5px] font-normal text-ink-muted">{noteText(summaryNote(sheet, window, row), t, count)}</span>
+              <span className="block h-2 overflow-hidden rounded-full bg-surface-sunken" title={noteText(summaryNote(sheet, window, row), t, count) || undefined}>
+                <span className={cn("block h-full rounded-full", row.pct === 100 ? "bg-income" : "bg-emerald")} style={{ width: `${row.pct}%` }} />
               </span>
               <span className="text-right font-bold text-ink tabular-nums">
                 {count(row.done)}/{count(row.of)}
@@ -341,7 +447,22 @@ export function RamadanSheetPageClient({ tracker, all, today, reminders: savedRe
         </Card>
 
         <QuranKhatamCard sheet={sheet} window={window} days={days} onParas={logParas} saving={savingParas} />
-        <SehriIftarCard day={window.status === "going" ? today : window.status === "upcoming" && window.start ? window.start : next.startsOn} todayDay={window.todayDay} year={window.status === "completed" ? next.year : window.hijriYear} reminders={reminders} />
+
+        <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-4.5 py-3.5">
+          <h2 className="text-[15px] font-semibold text-ink">{t("What stands out")}</h2>
+          {standsOut.length === 0 ? (
+            <p className="text-small text-ink-muted">{t("Tick a few days and the sheet starts to speak.")}</p>
+          ) : (
+            <ul className="flex flex-col gap-2.5">
+              {standsOut.map((item) => (
+                <li key={item.key} className="flex items-start gap-2.5 text-small leading-[1.45] text-ink-2">
+                  <span aria-hidden="true" className={cn("mt-1.5 size-2 shrink-0 rounded-full", item.tone)} />
+                  {item.text}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
       <AddRowDialog open={addOpen} onClose={() => setAddOpen(false)} trackerId={sheet.id} existing={sheet.items} suggestions={SUGGESTIONS} description={t("Something to keep up every day of Ramadan, like Taraweeh or a para of Quran.")} />

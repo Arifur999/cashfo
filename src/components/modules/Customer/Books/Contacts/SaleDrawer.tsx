@@ -142,7 +142,7 @@ export function SaleDrawer({ open, kind, contact, businessId, currency, onClose 
     >
       <p className="rounded-md bg-strip px-4 py-3 text-small leading-relaxed text-ink-2">{t(kind === "sale" ? "Nothing is paid yet: the amount goes on what they owe you, and your income for the day. Record the payment when it comes in." : "Nothing is paid yet: the amount goes on what you owe them, and your expenses for the day. Record the payment when you make it.")}</p>
       <Field htmlFor="sale-amount" label={t(kind === "sale" ? "Amount they owe you" : "Amount you owe them")}>
-        <Input id="sale-amount" size="lg" inputMode="decimal" value={amount} onChange={(event) => setAmount(limitMoneyDecimals(event.target.value))} placeholder="0.00" autoFocus className="text-h3 tabular-nums" leading={<span className="text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>} />
+        <Input id="sale-amount" size="lg" inputMode="decimal" value={amount} onChange={(event) => setAmount(limitMoneyDecimals(event.target.value))} placeholder="0.00" autoFocus className="text-h3 tabular-nums" leading={<span className="text-h3 font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>} />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field htmlFor="sale-date" label={t("Date")}>

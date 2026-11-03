@@ -1,24 +1,25 @@
 "use client";
 
-import { ArrowRight, Calendar, Check, CheckCheck, Clock3, Plus, Settings2, X } from "lucide-react";
+import { ArrowRight, LayoutDashboard, Plus, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import Chip from "@/components/smartly/Chip";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { useMinuteClock } from "@/hooks/useMinuteClock";
 import type { HabitMonthTracker, PrayerStatus, QazaSummary, Reminder } from "@/lib/customer/api";
-import { actionError, monthShort, shiftDay } from "@/lib/customer/habitDisplay";
-import { nextPrayer, prayerTimesFor } from "@/lib/customer/prayerTimes";
-import { createHabitTrackerAction, setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
+import { actionError, hijriDate } from "@/lib/customer/habitDisplay";
+import { prayerStreak } from "@/lib/customer/habitsHome";
+import { prayerTimesFor } from "@/lib/customer/prayerTimes";
+import { setHabitTrackerCheckAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
-import { type CellState, cellState, hijriRange, isPrayed, MONTH_NAMES, monthSummary, prayedChecks, PRAYERS, trackerFor, yearSummary } from "@/lib/customer/namazDisplay";
-import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { cellState, monthSummary, PRAYERS, trackerFor } from "@/lib/customer/namazDisplay";
+import { formatDay } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,8 @@ import { NamazHero } from "./NamazHero";
 import { PrayerRemindersCard } from "./PrayerRemindersCard";
 import { PrayerSettingsDrawer } from "./PrayerSettingsDrawer";
 import { QazaCard } from "./QazaCard";
+import { TodayPrayersCard } from "./TodayPrayersCard";
+import { useThisMonthSheet } from "./useThisMonthSheet";
 
 interface NamazHomePageClientProps {
   trackers: HabitMonthTracker[];
@@ -42,36 +45,14 @@ interface NamazHomePageClientProps {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-// Each state's small box on the month card, as the sheet draws it; a
-// prayer still to come is a dashed box, the next one dashed in the brand.
-const MINI: Record<CellState, string> = {
-  jamaat: "bg-emerald text-on-action",
-  onTime: "bg-emerald-tint text-emerald",
-  qaza: "bg-warning-soft text-warning",
-  missed: "bg-expense-soft text-expense",
-  open: "border-[1.5px] border-dashed border-input bg-surface",
-  locked: "border-[1.5px] border-dashed border-input bg-surface",
-};
-// The words each box's tooltip gives ("Fajr: on time").
-const MINI_WORD: Record<CellState, string> = { jamaat: "with jama'at", onTime: "on time", qaza: "qaza, prayed after its time", missed: "missed", open: "not marked yet", locked: "later this month" };
+// The month ring's circumference (r = 30).
+const RING = 2 * Math.PI * 30;
 
-// Past this many months the year chart drops its percentages over the bars
-// (the figures stay in the chart's label): they no longer fit side by side.
-const LABELLED_MONTHS = 6;
-
-function StateIcon({ state, className }: { state: CellState; className?: string }) {
-  if (state === "jamaat") return <CheckCheck className={className} strokeWidth={2.75} aria-hidden="true" />;
-  if (state === "onTime") return <Check className={className} strokeWidth={3} aria-hidden="true" />;
-  if (state === "qaza") return <Clock3 className={className} strokeWidth={2.5} aria-hidden="true" />;
-  if (state === "missed") return <X className={className} strokeWidth={3} aria-hidden="true" />;
-  return null;
-}
-
-// Habits › Namaz: today's five prayers to tap, this month at a glance, what
-// was missed so far, the year so far, and every month's sheet. The current
-// month's sheet opens on its own.
+// Worship › Namaz › Today (the NamazHome board): the next prayer, today's
+// five prayers to mark, the qaza still owed, this month so far and the past
+// months. The current month's sheet opens on its own.
 export function NamazHomePageClient({ trackers, qaza, today, reminders: savedReminders }: NamazHomePageClientProps) {
-  const { t, locale, fmt } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
@@ -82,49 +63,12 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
   const [, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [openFailed, setOpenFailed] = useState(false);
   const { settings } = usePrayerSettings();
   const now = useMinuteClock();
-  // Today's next prayer, its box dashed in the brand (none once Isha is in).
-  const upcoming = now ? nextPrayer(settings, today, shiftDay(today, 1), now) : null;
-  const nextToday = upcoming && upcoming.at.getTime() === prayerTimesFor(settings, today)[upcoming.prayer].getTime() ? upcoming.prayer : null;
   const reminders = useReminderBook(savedReminders);
-  const creating = useRef(false);
   const count = (n: number) => formatCount(n, fmt);
 
-  // No sheet for this month yet: open one. Already there (Today or another
-  // tab opened it at the same time) is as good as opened; a failure, or no
-  // answer at all (offline), says so with a retry. Either way a refresh
-  // brings in whatever sheet there is.
-  const openSheet = useCallback(() => {
-    if (creating.current) return;
-    creating.current = true;
-    createHabitTrackerAction({ category: "Namaz", month, year })
-      .then((result) => result.success || /already exists/.test(result.message ?? ""))
-      .catch(() => false)
-      .then((opened) => {
-        if (!opened) {
-          creating.current = false;
-          setOpenFailed(true);
-        }
-        router.refresh();
-      });
-  }, [month, year, router]);
-
-  useEffect(() => {
-    // Once the sheet is here, a later month (the page left open past the
-    // 1st) can open its own.
-    if (server) creating.current = false;
-    else openSheet();
-  }, [server, openSheet]);
-
-  // The failure shows only while there is still no sheet.
-  const failed = openFailed && !server;
-
-  function retryOpen() {
-    setOpenFailed(false);
-    openSheet();
-  }
+  const { failed, retry: retryOpen } = useThisMonthSheet(server, year, month);
 
   function mark(item: string, status: PrayerStatus | null) {
     if (!current) return;
@@ -137,173 +81,117 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
   }
 
   const summary = current ? monthSummary(current) : null;
-  const yesterdayDone = current && todayDay > 1 ? prayedChecks(current).filter((c) => c.day === todayDay - 1).length : null;
-  const yearNow = yearSummary(trackers, year);
-  const months = [...trackers].sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.month ?? 0) - (a.month ?? 0));
-  const bestId = yearNow.best?.tracker.id;
-  const labelled = yearNow.months.length <= LABELLED_MONTHS;
+  const times = prayerTimesFor(settings, today);
+  // Today's prayers whose time has come, and how many of them are prayed.
+  const startedToday = now ? PRAYERS.filter((prayer) => times[prayer] <= now).length : 0;
+  const prayedToday = summary?.todayDone ?? 0;
+  const streak = prayerStreak(trackers, today);
+  // The month so far: the days gone by, and today's prayers that have started.
+  const soFarDue = (current?.elapsedDays ?? 0) * 5 + startedToday;
+  const soFarPrayed = (summary?.prayed ?? 0) + prayedToday;
+  const soFarPct = soFarDue > 0 ? Math.min(100, Math.round((soFarPrayed / soFarDue) * 100)) : 0;
+  // Missed: the days gone by, and today's started prayers marked not prayed.
+  const soFarMissed = (summary?.missed ?? 0) + (current ? PRAYERS.filter((prayer) => cellState(current, todayDay, prayer) === "missed").length : 0);
+  const past = trackers.filter((tracker) => tracker.id !== current?.id).sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.month ?? 0) - (a.month ?? 0));
+  const bestPastId = [...past].filter((tracker) => monthSummary(tracker).due > 0).sort((a, b) => monthSummary(b).pct - monthSummary(a).pct)[0]?.id;
   const monthDays = current?.totalDays ?? new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const thisMonthName = t(MONTH_NAMES[month - 1]);
-  const yearText = toLocaleDigits(String(year), fmt);
+  const chips = [
+    { label: t("Today"), value: t("{done} of {total} so far", { done: count(prayedToday), total: count(startedToday) }) },
+    { label: t("All-five streak"), value: streak > 0 ? t(streak === 1 ? "{count} day" : "{count} days", { count: count(streak) }) : "—" },
+    { label: t("This month"), value: `${count(soFarPct)}%` },
+  ];
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-4 md:pt-7">
       <PageHeader
         title={t("Namaz")}
-        description={t("The five daily prayers, month by month. Each new month opens on its own.")}
+        description={`${formatDay(today, "EEEE, d MMMM yyyy", fmt)} · ${hijriDate(today, fmt, settings.hijriAdjust)}`}
         actions={
-          <Button variant="secondary" onClick={() => setSettingsOpen(true)} className="rounded-sm px-3.5">
-            <Settings2 className="text-ink-soft" />
-            {t("Prayer time settings")}
-          </Button>
+          <>
+            <Button variant="secondary" asChild className="rounded-sm px-3.5">
+              <Link href="/habit-tracker/habits/namaz">
+                <LayoutDashboard className="text-ink-soft" />
+                {t("Dashboard")}
+              </Link>
+            </Button>
+            <Button variant="secondary" size="icon" onClick={() => setSettingsOpen(true)} aria-label={t("Prayer time settings")} title={t("Prayer time settings")} className="rounded-sm">
+              <Settings2 className="text-ink-soft" />
+            </Button>
+          </>
         }
       />
 
-      <NamazHero current={current} today={today} onMark={mark} onSettings={() => setSettingsOpen(true)} openFailed={failed} onRetry={retryOpen} />
+      <NamazHero today={today} chips={chips} onSettings={() => setSettingsOpen(true)} openFailed={failed} onRetry={retryOpen} />
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-title font-semibold text-ink">{t("This month")}</h2>
-            <Chip tone="mint" size="sm" className="px-2.25 text-[11.5px] text-emerald">
-              {t("Opened automatically")}
-            </Chip>
-          </div>
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-            <span className="text-[20px] leading-[normal] font-bold text-ink">{monthName(currentKey, fmt, "long", true)}</span>
-            <span className="text-small text-ink-muted">{t("Day {day} of {total}", { day: count(todayDay), total: count(monthDays) })}</span>
-          </div>
-          <div className="grid grid-cols-5 gap-1.5">
-            {PRAYERS.map((item) => {
-              const state: CellState = current ? cellState(current, todayDay, item) : "open";
-              return (
-                <span key={item} className="flex min-w-0 flex-col items-center gap-1.25 text-[11.5px] font-medium text-ink-soft">
-                  <span title={`${t(item)}: ${t(MINI_WORD[state])}`} className={cn("flex size-8.5 items-center justify-center rounded-sm", MINI[state], item === nextToday && !isPrayed(state) && state !== "missed" && "border-emerald")}>
-                    <StateIcon state={state} className="size-4" />
-                  </span>
-                  <span className="max-w-full truncate">{t(item)}</span>
-                </span>
-              );
-            })}
-          </div>
-          <ul className="flex flex-col gap-1.5 text-small text-ink-2">
-            {yesterdayDone !== null && (
-              <li className="flex items-center gap-2">
-                <Check className={cn("size-3.5 shrink-0", yesterdayDone === 5 ? "text-income" : "text-ink-muted")} strokeWidth={2.5} aria-hidden="true" />
-                {yesterdayDone === 5 ? t("Yesterday, all five prayed") : t("Yesterday, {count} of 5 prayed", { count: count(yesterdayDone) })}
-              </li>
-            )}
-            <li className="flex items-center gap-2">
-              <Calendar className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
-              {t("Each month opens on the 1st. Nothing to set up.")}
-            </li>
-          </ul>
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-2.5 border-t border-divider pt-3">
-            <span className="text-small text-ink-2">{fillNodes(t("{figure} prayed so far"), { figure: <b className="font-bold text-ink">{t("{done} of {total}", { done: count(summary?.prayedSoFar ?? 0), total: count((current?.elapsedDays ?? 0) * 5 + 5) })}</b> })}</span>
-            {current && (
-              <Button asChild variant="action" size="sm" className="h-8.5 gap-1.5 rounded-sm px-3.5 shadow-none">
-                <Link href={`/habit-tracker/habits/namaz/${current.id}`}>
-                  {t("Open {month}", { month: monthName(currentKey, fmt) })}
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-              </Button>
-            )}
-          </div>
-        </Card>
+      <TodayPrayersCard current={current} today={today} onMark={mark} reminders={reminders} />
 
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.1fr_1fr_1.1fr]">
         <QazaCard qaza={qaza} today={today} />
 
-        <Card padding="none" className="flex min-w-0 flex-col gap-3 overflow-hidden rounded-md px-5 py-4 md:col-span-2 xl:col-span-1">
+        <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-[14px] px-4.5 py-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-title font-semibold text-ink">{t("{year} so far", { year: yearText })}</h2>
-            {yearNow.months[0] && <span className="text-caption font-normal text-ink-muted">{t("Since {month}", { month: t(MONTH_NAMES[yearNow.months[0].month - 1]) })}</span>}
+            <h2 className="text-[16px] font-semibold text-ink">{t("{month} so far", { month: monthName(currentKey, fmt) })}</h2>
+            <span className="text-[12.5px] text-ink-muted">{t("Day {day} of {total}", { day: count(todayDay), total: count(monthDays) })}</span>
           </div>
-          <div className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-[30px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{count(yearNow.pct)}%</span>
-            <span className="text-body text-ink-soft">{t("{done} of {total} prayed", { done: count(yearNow.prayed), total: count(yearNow.due) })}</span>
-          </div>
-          <div role="img" aria-label={[t("Share of prayers prayed each month"), ...yearNow.months.map((m) => `${t(MONTH_NAMES[m.month - 1])} ${count(m.pct)}%`)].join(", ")} className="flex flex-col gap-1.5">
-            <div className={cn("flex h-21 items-end border-b border-line px-1", labelled ? "gap-3.5" : "gap-1")}>
-              {yearNow.months.map((m) => (
-                <span key={m.month} title={`${t(MONTH_NAMES[m.month - 1])}: ${count(m.pct)}%`} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-                  {labelled && <span className="text-[11.5px] font-bold text-ink-2 tabular-nums">{count(m.pct)}%</span>}
-                  <span className={cn("w-full max-w-11 rounded-t-[5px]", m.month === month ? "bg-emerald-tint" : "bg-emerald")} style={{ height: `${Math.max(4, m.pct * 0.6)}px` }} />
-                </span>
-              ))}
-            </div>
-            <div aria-hidden="true" className={cn("flex px-1", labelled ? "gap-3.5" : "gap-1")}>
-              {yearNow.months.map((m) => (
-                <span key={m.month} className="min-w-0 flex-1 truncate text-center text-[11.5px] font-normal text-ink-muted">
-                  {monthShort(m.month, locale)}
-                </span>
-              ))}
+          <div className="flex items-center gap-3.5">
+            <span role="img" aria-label={t("{pct}% prayed", { pct: count(soFarPct) })} className="relative size-18.5 shrink-0">
+              <svg viewBox="0 0 74 74" className="size-18.5 -rotate-90" aria-hidden="true">
+                <circle cx="37" cy="37" r="30" fill="none" className="stroke-emerald-soft" strokeWidth="8" />
+                <circle cx="37" cy="37" r="30" fill="none" className="stroke-emerald" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${(soFarPct / 100) * RING} ${RING}`} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[15px] font-bold text-ink tabular-nums">{count(soFarPct)}%</span>
+            </span>
+            <div className="flex flex-col gap-1 text-small text-ink-soft">
+              <span>{fillNodes(t("{count} of {total} prayed"), { count: <b className="font-bold text-ink">{count(soFarPrayed)}</b>, total: count(soFarDue) })}</span>
+              <span>{fillNodes(t("{count} with jama'at"), { count: <b className="font-bold text-ink">{count(summary?.jamaat ?? 0)}</b> })}</span>
+              <span>{fillNodes(t("{count} missed"), { count: <b className="font-bold text-ink">{count(soFarMissed)}</b> })}</span>
             </div>
           </div>
-          <span className="mt-auto text-[12.5px] text-ink-soft">
-            {yearNow.best && <>{fillNodes(t("Best month: {month}."), { month: <b className="font-semibold text-ink">{t(MONTH_NAMES[yearNow.best.month - 1])}</b> })} </>}
-            {t(todayDay === 1 ? "{month} has {count} day so far." : "{month} has {count} days so far.", { month: thisMonthName, count: count(todayDay) })}
-          </span>
+          <Button asChild className="mt-auto h-9.5 rounded-sm">
+            <Link href="/habit-tracker/habits/namaz">
+              {t("Open {month} report", { month: monthName(currentKey, fmt) })}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </Card>
+
+        <Card padding="none" className="flex min-w-0 flex-col gap-2 rounded-[14px] px-4.5 py-4 md:col-span-2 xl:col-span-1">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-[16px] font-semibold text-ink">{t("Past months")}</h2>
+            <button type="button" onClick={() => setAddOpen(true)} className="flex min-h-8 items-center gap-1 rounded-sm text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
+              <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+              {t("Add earlier month")}
+            </button>
+          </div>
+          {past.length === 0 ? (
+            <p className="py-4 text-small text-ink-muted">{t("No earlier months yet. Add one to fill it in.")}</p>
+          ) : (
+            <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto">
+              {past.map((tracker) => {
+                const s = monthSummary(tracker);
+                const key = `${tracker.year}-${pad(tracker.month ?? 1)}`;
+                return (
+                  <Link key={tracker.id} href={`/habit-tracker/habits/namaz/${tracker.id}`} className="grid grid-cols-[110px_minmax(0,1fr)_44px] items-center gap-3 rounded-sm px-1.5 py-2 text-ink hover:bg-surface-sunken">
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-[13.5px] font-semibold">{monthName(key, fmt, "long", true)}</span>
+                      <span className="truncate text-[11.5px] text-ink-muted">
+                        {s.due > 0 ? t("{done} of {total}", { done: count(s.prayed), total: count(s.due) }) : t("Not filled in yet")}
+                        {tracker.id === bestPastId ? ` · ${t("best")}` : ""}
+                      </span>
+                    </span>
+                    <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
+                      <span className={cn("block h-full", s.due === 0 ? "bg-line" : s.pct >= 80 ? "bg-emerald" : "bg-warning-fill")} style={{ width: `${s.pct}%` }} />
+                    </span>
+                    <span className="text-right text-[13.5px] font-bold tabular-nums">{s.due > 0 ? `${count(s.pct)}%` : "—"}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </Card>
       </div>
 
-      <section aria-labelledby="namaz-months" className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="namaz-months" className="text-title font-semibold text-ink">
-            {t("Months")}
-          </h2>
-          <button type="button" onClick={() => setAddOpen(true)} className="-mx-2 flex min-h-9 items-center gap-1.5 rounded-sm px-2 text-small font-semibold text-emerald hover:bg-surface-sunken pointer-coarse:min-h-11">
-            <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
-            {t("Add an earlier month")}
-          </button>
-        </div>
-        {months.length === 0 ? (
-          <Card padding="none" className="rounded-md px-5 py-8 text-center text-small text-ink-muted">
-            {failed ? t("Couldn't open this month's sheet") : t("This month's sheet is opening…")}
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {months.map((tracker) => {
-              const s = monthSummary(tracker);
-              const now = tracker.id === current?.id;
-              const key = `${tracker.year}-${pad(tracker.month ?? 1)}`;
-              const perfect = s.perfectDays;
-              return (
-                <Link key={tracker.id} href={`/habit-tracker/habits/namaz/${tracker.id}`} className={cn("flex flex-col gap-2.5 rounded-md border bg-surface px-4.5 py-4 text-ink shadow-card transition-colors hover:border-line-strong", now ? "border-emerald" : "border-line")}>
-                  <span className="flex items-start justify-between gap-2">
-                    <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="text-[15px] leading-[normal] font-semibold">{monthName(key, fmt, "long", true)}</span>
-                      <span className="text-caption font-normal text-ink-muted">{hijriRange(tracker.year as number, tracker.month as number, fmt, settings.hijriAdjust)}</span>
-                    </span>
-                    {now ? (
-                      <Chip tone="forest" size="sm" className="bg-emerald text-on-action">
-                        {t("This month")}
-                      </Chip>
-                    ) : tracker.id === bestId ? (
-                      <Chip tone="income" size="sm">
-                        {t("Best")}
-                      </Chip>
-                    ) : null}
-                  </span>
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className="text-[24px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums">{count(s.pct)}%</span>
-                    <span className="text-[12.5px] text-ink-soft tabular-nums">{t(now ? "{done} of {total} so far" : "{done} of {total}", { done: count(s.prayed), total: count(s.due) })}</span>
-                  </span>
-                  <span className="block h-1.5 overflow-hidden rounded-full bg-surface-sunken">
-                    <span className={cn("block h-full rounded-full", now ? "bg-emerald-tint" : "bg-emerald")} style={{ width: `${s.pct}%` }} />
-                  </span>
-                  <span className="flex flex-wrap justify-between gap-x-2 text-caption font-normal text-ink-muted">
-                    <span>{now ? t("Day {day} of {total}", { day: count(todayDay), total: count(tracker.totalDays) }) : t(perfect === 1 ? "{count} perfect day" : "{count} perfect days", { count: count(perfect) })}</span>
-                    <span>{t("{count} with jama'at", { count: count(s.jamaat) })}</span>
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Not on the board: the prayers' reminders sit under the months,
-          in the same card style. */}
+      {/* Not on the board: how early each prayer's reminder comes, under the cards. */}
       {reminders.available && <PrayerRemindersCard book={reminders} today={today} onSettings={() => setSettingsOpen(true)} />}
 
       <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={currentKey} />

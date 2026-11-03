@@ -8,6 +8,7 @@ import Kbd from "@/components/smartly/Kbd";
 import { dayLabel } from "@/components/modules/Admin/Dashboard/dashboardDates";
 import { formatAmount } from "@/lib/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 import { shortPaymentId } from "@/lib/payments";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { getInitials } from "@/lib/text";
@@ -66,7 +67,7 @@ const AdminSearch = () => {
               badge: t("Payment"),
               title: `${shortPaymentId(payment.id)} · ${formatAmount(payment.amount, payment.currency, locale)}`,
               sub: [payment.name, humanizeEnum(payment.gateway), t(humanizeEnum(payment.status))].filter(Boolean).join(" · "),
-              mark: <CommandMark>৳</CommandMark>,
+              mark: <CommandMark>{takaSign(locale)}</CommandMark>,
               href: `/admin/payments/${payment.id}`,
             })),
           },

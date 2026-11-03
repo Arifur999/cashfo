@@ -37,7 +37,7 @@ interface AccountDrawerProps {
 // parent and, for a new one, the balance it starts with. Editing also
 // offers to archive or remove it.
 export function AccountDrawer({ open, editing, accounts, businessId, preferredLanguage, currency, onClose, onRemoved }: AccountDrawerProps) {
-  const { t } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [name, setName] = useState("");
   const [nameBn, setNameBn] = useState("");
@@ -215,7 +215,7 @@ export function AccountDrawer({ open, editing, accounts, businessId, preferredLa
 
         {!editing && (
           <Field htmlFor="acc-opening" label={<>{t("Opening balance")}{optional}</>} hint={t("What the account holds today. It can't be changed later, only adjusted with an entry.")}>
-            <Input id="acc-opening" size="md" inputMode="decimal" value={openingBalance} onChange={(event) => setOpeningBalance(limitMoneyDecimals(event.target.value))} placeholder="0.00" className="tabular-nums" leading={<span className="font-semibold text-ink-2">{currencySymbol(currency)}</span>} />
+            <Input id="acc-opening" size="md" inputMode="decimal" value={openingBalance} onChange={(event) => setOpeningBalance(limitMoneyDecimals(event.target.value))} placeholder="0.00" className="tabular-nums" leading={<span className="font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>} />
           </Field>
         )}
 

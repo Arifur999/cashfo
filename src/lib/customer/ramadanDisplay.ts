@@ -119,8 +119,9 @@ export function ramadanSummary(tracker: HabitMonthTracker, window: RamadanWindow
   return { items, done, of, pct: of > 0 ? Math.round((done / of) * 100) : 0 };
 }
 
-// Taraweeh and Tahajjud are prayed at night.
+// Taraweeh and Tahajjud are prayed at night: counted in nights.
 const NIGHT_ROWS = new Set(["taraweeh", "tahajjud"]);
+export const isNightRow = (item: string): boolean => NIGHT_ROWS.has(item.toLowerCase());
 
 // The line under a row of the summary: done every day so far, the fasts
 // still to make up, or (once Ramadan is over) every day of the last ten.
@@ -128,7 +129,8 @@ export type SummaryNote = { kind: "everyDay" } | { kind: "makeUp"; fasts: number
 
 export function summaryNote(tracker: HabitMonthTracker, window: RamadanWindow, row: ItemSummary): SummaryNote {
   if (row.of > 0 && row.done === row.of) return { kind: "everyDay" };
-  if (row.item === "Roza" && row.of > row.done) return { kind: "makeUp", fasts: row.of - row.done };
+  const owed = row.item === "Roza" ? row.of - row.done - (tracker.fastsMadeUp ?? 0) : 0;
+  if (owed > 0) return { kind: "makeUp", fasts: owed };
   if (window.status !== "completed" || tracker.totalDays < 21) return null;
   const lastTen = ramadanDays(tracker).filter((d) => d.ashra === 3);
   const all = lastTen.every((d) => tracker.checks.some((c) => c.day === d.day && c.item === row.item));
@@ -182,6 +184,43 @@ export function withParas(tracker: HabitMonthTracker, day: number, paras: number
     paras: paras > 0 ? [...rest, { day, paras }].sort((a, b) => a.day - b.day) : rest,
     checks: tick ? [...tracker.checks, { day, item, status: "ON_TIME" }] : tracker.checks,
   };
+}
+
+// The fasts a sheet still owes: the Roza days left unticked (every day once
+// Ramadan is over; while it is going, the days fully past), less the ones
+// made up since ("I kept one").
+export function fastsToMakeUp(tracker: HabitMonthTracker, window: RamadanWindow): { missedDays: number[]; left: number } {
+  if (!tracker.items.includes("Roza")) return { missedDays: [], left: 0 };
+  const counted = window.status === "completed" ? tracker.totalDays : window.elapsedDays;
+  const missedDays = Array.from({ length: counted }, (_, i) => i + 1).filter((day) => !tickedOn(tracker, day, "Roza"));
+  return { missedDays, left: Math.max(0, missedDays.length - (tracker.fastsMadeUp ?? 0)) };
+}
+
+// Ramadan › Today's countdown: the days to go, and the whole weeks and
+// months in them.
+export const countdown = (days: number): { days: number; weeks: number; months: number } => ({ days, weeks: Math.floor(days / 7), months: Math.floor(days / 30) });
+
+// Each sheet with its window, the newest Ramadan first.
+function windows<T extends HabitMonthTracker>(trackers: T[], today: string, adjust: number): { tracker: T; window: RamadanWindow }[] {
+  return trackers.map((tracker) => ({ tracker, window: ramadanWindow(tracker, today, adjust) })).sort((a, b) => (b.tracker.year ?? 0) - (a.tracker.year ?? 0));
+}
+
+// The Ramadan going on now, if it has a sheet.
+export function goingRamadan<T extends HabitMonthTracker>(trackers: T[], today: string, adjust = 0): { tracker: T; window: RamadanWindow } | null {
+  return windows(trackers, today, adjust).find((x) => x.window.status === "going") ?? null;
+}
+
+// The last Ramadan over: the newest sheet whose days are all past.
+export function lastRamadan<T extends HabitMonthTracker>(trackers: T[], today: string, adjust = 0): { tracker: T; window: RamadanWindow } | null {
+  return windows(trackers, today, adjust).find((x) => x.window.status === "completed") ?? null;
+}
+
+// The sheet Ramadan › Dashboard opens: the Ramadan going on, else the last
+// one over, else the soonest one set up.
+export function dashboardSheet<T extends HabitMonthTracker>(trackers: T[], today: string, adjust = 0): T | null {
+  const all = windows(trackers, today, adjust);
+  const going = all.find((x) => x.window.status === "going") ?? all.find((x) => x.window.status === "completed") ?? all.filter((x) => x.window.status === "upcoming").at(-1);
+  return going?.tracker ?? null;
 }
 
 // How a box reads on a Ramadan sheet.

@@ -149,7 +149,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
           })}
         </NativeSelect>
       </Field>
-      <Field htmlFor="bud-amount" label={<span className="text-body font-medium text-ink">{t("Total budget for the month ({symbol})", { symbol: currencySymbol(currency) })}</span>}>
+      <Field htmlFor="bud-amount" label={<span className="text-body font-medium text-ink">{t("Total budget for the month ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
         <Input
           id="bud-amount"
           size="lg"
@@ -159,7 +159,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
           placeholder={t("e.g. 65000")}
           invalid={tried && !(value > 0)}
           className="text-h3 font-bold tabular-nums"
-          leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+          leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
           frameClassName="overflow-hidden pl-0"
         />
         {previous !== null && Number(previous) !== value && (

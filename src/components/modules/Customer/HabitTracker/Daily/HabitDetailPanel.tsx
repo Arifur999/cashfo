@@ -10,7 +10,7 @@ import type { Habit, HabitMonthLog } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { shiftMonth } from "@/lib/customer/groupDisplay";
-import { actionError, amountLabel, bestStreak, countsOn, countTone, dayMark, dayText, HABIT_UNITS, instantText, monthGrid, ruleLine, streakText, unitLabel, WEEKDAY_MIN } from "@/lib/customer/habitDisplay";
+import { actionError, amountLabel, bestStreak, completionRate, countsOn, countTone, dayMark, dayText, habitStart, lastDays, monthGrid, ruleLine, streakText, WEEKDAY_MIN, weekOf } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction } from "@/lib/customer/habitsActions";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
@@ -28,6 +28,8 @@ interface HabitDetailPanelProps {
   // The logs of the 60 days up to today (for the best streak), whatever
   // day the page shows, and the shown month's.
   bestLogs: HabitMonthLog[];
+  // The day's week and the 30 days up to it, for the last 30 days and this week.
+  logs: HabitMonthLog[];
   monthLogs: HabitMonthLog[];
   streak: number;
   // The best run over the habit's whole history, from the stats; without
@@ -57,7 +59,7 @@ const BEST_LOOK_BACK = 60;
 // One habit's month: its streaks, every day of the month coloured, and a
 // note for today. The month arrows leaf through the habit's months alone;
 // the day's list stays where it is.
-export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs: shownLogs, streak, bestStreak: allTimeBest, note, todayLog, onEdit, onMonthChange, inSheet = false }: HabitDetailPanelProps) {
+export function HabitDetailPanel({ habit, today, day, month, bestLogs, logs, monthLogs: shownLogs, streak, bestStreak: allTimeBest, note, todayLog, onEdit, onMonthChange, inSheet = false }: HabitDetailPanelProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const [draft, setDraft] = useState(note ?? "");
@@ -78,27 +80,22 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
   const plannedThisMonth = monthDays.filter((d) => countsOn(habit, shownLogs, d)).length;
   const counted = !!habit.targetValue;
   const target = habit.targetValue ?? 0;
-  // Over the planned days, so a missed day counts as nothing rather than not at all.
-  const total = monthLogs.reduce((sum, l) => sum + (l.value ?? 0), 0);
-  const average = plannedThisMonth > 0 ? Math.round((total / plannedThisMonth) * 10) / 10 : null;
   const best = Math.max(streak, allTimeBest ?? bestStreak(habit, bestLogs, today, BEST_LOOK_BACK, fmt));
-  const rate = plannedThisMonth > 0 ? Math.round((doneThisMonth / plannedThisMonth) * 100) : null;
-  const thisMonth = month === today.slice(0, 7);
-  const name = monthName(month, fmt);
-  // The goal's middle band (close, not yet there) only when it has room.
-  const near = Math.ceil(target * 0.75);
-
+  // The board's four: the streaks, the last 30 days up to the day shown, and
+  // today's amount (a counted habit) or the week's done days.
+  const rate30 = completionRate(habit, logs, lastDays(day, 30).filter((d) => d >= habitStart(habit, logs)), fmt);
+  const weekDone = weekOf(day, fmt).filter((d) => logs.some((l) => l.habitId === habit.id && l.completed && l.date.slice(0, 10) === d)).length;
   const facts = [
     { label: t("Current streak"), value: streakText(habit, streak, t, fmt) },
     { label: allTimeBest !== undefined ? t("Best streak") : t("Best, last 60 days"), value: streakText(habit, best, t, fmt) },
-    { label: name, value: t("{done} of {total} days", { done: count(doneThisMonth), total: count(plannedThisMonth) }) },
-    counted
-      ? { label: t("Daily average"), value: average === null ? "—" : amountLabel(average, habit.unit, t, fmt) }
-      : { label: thisMonth ? t("This month") : t("Rate in {month}", { month: name }), value: rate === null ? "—" : `${count(rate)}%` },
+    { label: t("Last 30 days"), value: rate30 === null ? "—" : `${count(rate30)}%` },
+    counted && day === today
+      ? { label: t("Today"), value: t("{done} of {total}", { done: count(todayLog?.value ?? 0), total: count(target) }) }
+      : { label: t("This week"), value: t("{count} done", { count: count(weekDone) }) },
   ];
 
   const canGoNext = month < today.slice(0, 7);
-  const subtitle = [ruleLine(habit, t, fmt), t("added {date}", { date: instantText(habit.createdAt, fmt) })].join(" · ");
+  const subtitle = ruleLine(habit, t, fmt);
 
   function saveNote() {
     if (day !== today || draft === (note ?? "") || isPending) return;
@@ -185,30 +182,6 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, monthLogs
             );
           })}
         </div>
-        {counted && target > 0 && (
-          <div className="flex flex-wrap items-center justify-end gap-x-1.5 gap-y-1 text-[11.5px] leading-[normal] font-normal text-ink-muted">
-            {/* Only a chip unit is capitalised; a typed one ("ml", "km") stays as typed. */}
-            <span className={cn("inline-block", habit.unit && HABIT_UNITS.includes(habit.unit.trim()) && "first-letter:uppercase")}>{habit.unit ? `${unitLabel(habit.unit, t)}:` : t("Amount:")}</span>
-            {near < target && (
-              <>
-                <span className="flex items-center gap-1">
-                  <span className={cn("size-3 rounded-[3px]", tone.bg)} /> {t("under {count}", { count: count(near) })}
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className={cn("size-3 rounded-[3px] bg-current/45", tone.fg)} /> {near === target - 1 ? count(near) : `${count(near)}–${count(target - 1)}`}
-                </span>
-              </>
-            )}
-            {near >= target && (
-              <span className="flex items-center gap-1">
-                <span className={cn("size-3 rounded-[3px]", tone.bg)} /> {t("under {count}", { count: count(target) })}
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <span className={cn("size-3 rounded-[3px] bg-current", tone.fg)} /> {t("{count} or more", { count: count(target) })}
-            </span>
-          </div>
-        )}
       </div>
 
       {day === today && (
