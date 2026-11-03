@@ -87,7 +87,7 @@ export function SpendingCard({ data }: { data: HomeData }) {
           >
             <div className="flex size-19 flex-col items-center justify-center rounded-full bg-surface">
               <span className={cn("text-[13px] leading-[normal] font-bold tabular-nums", empty ? "text-ink-faint" : "text-ink")}>
-                {total > 0 ? `${currencySymbol(data.currency).trim()} ${formatCompactAmount(total, fmt)}` : formatCurrency(0, data.currency, fmt)}
+                {total > 0 ? `${currencySymbol(data.currency, fmt).trim()} ${formatCompactAmount(total, fmt)}` : formatCurrency(0, data.currency, fmt)}
               </span>
               <span className="text-[10px] leading-[normal] text-ink-muted">{t("spent")}</span>
             </div>

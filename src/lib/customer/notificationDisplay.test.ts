@@ -13,10 +13,10 @@ describe("notificationView", () => {
     expect(notificationView(row("BUDGET", { category: "Shopping", percent: 98, left: "100.00", month: "2026-10" }), inEnglish, "en", "BDT", now)).toMatchObject({
       kind: "budget",
       title: "Shopping is at 98% of its limit",
-      body: "Only ৳ 100 left for the rest of October.",
+      body: "Only TK 100 left for the rest of October.",
       href: "/budget-planning",
     });
-    expect(notificationView(row("BUDGET", { category: "Food", percent: 105, left: "-400.00", month: "2026-10" }), inEnglish, "en", "BDT", now)).toMatchObject({ title: "Food is over its limit", body: "৳ 400 over the limit for October." });
+    expect(notificationView(row("BUDGET", { category: "Food", percent: 105, left: "-400.00", month: "2026-10" }), inEnglish, "en", "BDT", now)).toMatchObject({ title: "Food is over its limit", body: "TK 400 over the limit for October." });
   });
 
   it("gives a Bangla reader the category's Bangla name and Bangla digits", () => {
@@ -29,7 +29,7 @@ describe("notificationView", () => {
 
   it("counts the days to a loan payment from today, not from when it was written", () => {
     const due = (dueDate: string, direction = "PAYABLE", loan = 1) => notificationView(row("LOAN_DUE", { name: "Islami Bank", contactId: "c1", loan, direction, amount: "5000.00", dueDate, days: 3 }), inEnglish, "en", "BDT", now);
-    expect(due("2026-10-05")).toMatchObject({ kind: "loan", title: "Payment to Islami Bank is due in 3 days", body: "৳ 5,000 on Mon, 5 Oct.", href: "/loan-management/ledger?contactId=c1" });
+    expect(due("2026-10-05")).toMatchObject({ kind: "loan", title: "Payment to Islami Bank is due in 3 days", body: "TK 5,000 on Mon, 5 Oct.", href: "/loan-management/ledger?contactId=c1" });
     expect(due("2026-10-03").title).toBe("Payment to Islami Bank is due tomorrow");
     expect(due("2026-10-02", "RECEIVABLE", 0)).toMatchObject({ title: "Islami Bank should pay you today", href: "/contacts/c1" });
     expect(due("2026-10-01").title).toBe("Payment to Islami Bank is overdue");
@@ -39,24 +39,24 @@ describe("notificationView", () => {
   it("words a savings check-in", () => {
     expect(notificationView(row("SAVINGS", { goal: "iPhone", behind: 1, percent: 33, perMonth: "33750.00", targetDate: "2027-01-31", month: "2026-10" }), inEnglish, "en", "BDT", now)).toMatchObject({
       title: "Savings check-in for October",
-      body: "iPhone is behind. Save ৳ 33,750 a month to reach it by January.",
+      body: "iPhone is behind. Save TK 33,750 a month to reach it by January.",
     });
     expect(notificationView(row("SAVINGS", { goal: "Hajj", behind: 0, percent: 61, perMonth: "1000.00", targetDate: "2027-06-30", month: "2026-10" }), inEnglish, "en", "BDT", now).body).toBe("Hajj is on track: 61% saved.");
   });
 
   it("names the year of a target month that isn't within the coming year", () => {
     const behind = (targetDate: string, locale: "en" | "bn" = "en") => notificationView(row("SAVINGS", { goal: "Car", behind: 1, percent: 10, perMonth: "5000.00", targetDate, month: "2026-10" }), inEnglish, locale, "BDT", now).body;
-    expect(behind("2027-09-30")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by September.");
-    expect(behind("2027-10-31")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by October 2027.");
-    expect(behind("2028-01-31")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by January 2028.");
+    expect(behind("2027-09-30")).toBe("Car is behind. Save TK 5,000 a month to reach it by September.");
+    expect(behind("2027-10-31")).toBe("Car is behind. Save TK 5,000 a month to reach it by October 2027.");
+    expect(behind("2028-01-31")).toBe("Car is behind. Save TK 5,000 a month to reach it by January 2028.");
     expect(behind("2028-01-31", "bn")).toBe("Car is behind. Save ৳ ৫,০০০ a month to reach it by January ২০২৮.");
-    expect(behind("2026-08-31")).toBe("Car is behind. Save ৳ 5,000 a month to reach it by August 2026.");
+    expect(behind("2026-08-31")).toBe("Car is behind. Save TK 5,000 a month to reach it by August 2026.");
   });
 
   it("says when zakat is due and what is left, counting the days from now", () => {
     const zakat = (dueDate: string) => notificationView(row("ZAKAT", { dueDate, days: 30, left: "20000.00", zakat: "28548.00" }), inEnglish, "en", "BDT", now);
     expect(zakat("2026-11-01")).toMatchObject({ kind: "zakat", title: "Your zakat is due in 30 days", href: "/zakat" });
-    expect(zakat("2026-11-01").body).toMatch(/^৳.20,000 left to give by 1 Nov 2026\.$/);
+    expect(zakat("2026-11-01").body).toMatch(/^TK.20,000 left to give by 1 Nov 2026\.$/);
     expect(zakat("2026-10-03").title).toBe("Your zakat is due tomorrow");
     expect(zakat("2026-10-02").title).toBe("Your zakat is due today");
     expect(zakat("2026-09-30").title).toBe("Your zakat date has passed");
@@ -139,21 +139,21 @@ describe("notificationView for account rows", () => {
 
   it("words every billing event and opens Plans", () => {
     const paid = { event: "PAYMENT_PAID", paymentId: "p1", planName: "Pro", amount: "299.00", periodEnd: "2026-11-28T00:00:00.000Z", invoiceNumber: "INV-1" };
-    expect(en("BILLING", paid)).toEqual({ kind: "payment", title: "Payment received", body: "৳ 299 for Pro. It's active until 28 Nov 2026.", href: "/settings/plans" });
+    expect(en("BILLING", paid)).toEqual({ kind: "payment", title: "Payment received", body: "TK 299 for Pro. It's active until 28 Nov 2026.", href: "/settings/plans" });
     expect(bn("BILLING", paid)).toMatchObject({ title: "পেমেন্ট পাওয়া গেছে", body: "Pro-এর জন্য ৳ ২৯৯। ২৮ নভে ২০২৬ পর্যন্ত চালু থাকবে।" });
-    expect(en("BILLING", { ...paid, periodEnd: null }).body).toBe("৳ 299 for Pro. It's active now.");
+    expect(en("BILLING", { ...paid, periodEnd: null }).body).toBe("TK 299 for Pro. It's active now.");
 
     const failed = { event: "PAYMENT_FAILED", paymentId: "p1", planName: "Pro", amount: "299.00", reason: "Wrong TrxID" };
-    expect(en("BILLING", failed)).toMatchObject({ kind: "paymentProblem", title: "Payment failed", body: "Your ৳ 299 payment for Pro didn't go through. Reason: Wrong TrxID" });
+    expect(en("BILLING", failed)).toMatchObject({ kind: "paymentProblem", title: "Payment failed", body: "Your TK 299 payment for Pro didn't go through. Reason: Wrong TrxID" });
     expect(bn("BILLING", failed)).toMatchObject({ title: "পেমেন্ট ব্যর্থ হয়েছে", body: "Pro-এর জন্য আপনার ৳ ২৯৯ পেমেন্ট সম্পন্ন হয়নি। কারণ: Wrong TrxID" });
 
     const expired = { event: "PAYMENT_EXPIRED", paymentId: "p1", planName: "Pro", amount: "299.00" };
-    expect(en("BILLING", expired)).toMatchObject({ kind: "paymentProblem", title: "Payment not completed", body: "Your ৳ 299 checkout for Pro timed out. You can start it again from Plans." });
+    expect(en("BILLING", expired)).toMatchObject({ kind: "paymentProblem", title: "Payment not completed", body: "Your TK 299 checkout for Pro timed out. You can start it again from Plans." });
     expect(bn("BILLING", expired).title).toBe("পেমেন্ট সম্পন্ন হয়নি");
 
     const refunded = { event: "PAYMENT_REFUNDED", paymentId: "p1", planName: "Pro", amount: "299.00", full: 1, planDropped: 1 };
-    expect(en("BILLING", refunded)).toMatchObject({ kind: "refund", title: "Payment refunded", body: "Your ৳ 299 payment for Pro was refunded. You're on the Free plan now." });
-    expect(en("BILLING", { ...refunded, amount: "100.00", full: 0, planDropped: 0 }).body).toBe("৳ 100 of your payment for Pro was refunded.");
+    expect(en("BILLING", refunded)).toMatchObject({ kind: "refund", title: "Payment refunded", body: "Your TK 299 payment for Pro was refunded. You're on the Free plan now." });
+    expect(en("BILLING", { ...refunded, amount: "100.00", full: 0, planDropped: 0 }).body).toBe("TK 100 of your payment for Pro was refunded.");
     expect(bn("BILLING", refunded).body).toBe("Pro-এর জন্য আপনার ৳ ২৯৯ পেমেন্ট ফেরত দেওয়া হয়েছে। আপনি এখন ফ্রি প্ল্যানে আছেন।");
 
     const ending = { event: "PLAN_ENDING", planName: "Pro", endsAt: "2026-10-05T00:00:00.000Z", trial: 0, cancelling: 0 };
@@ -174,24 +174,24 @@ describe("notificationView for account rows", () => {
 
   it("words every referral event", () => {
     const pending = { event: "COMMISSION_PENDING", referralId: "r1", friendName: "Karim", planName: "Pro", amount: 59.8, paidAmount: "299.00", availableAt: "2026-11-01T00:00:00.000Z" };
-    expect(en("REFERRAL", pending)).toEqual({ kind: "referral", title: "Karim bought Pro", body: "You earned ৳ 59.80. You can withdraw it from 1 Nov 2026.", href: "/referrals/earnings" });
+    expect(en("REFERRAL", pending)).toEqual({ kind: "referral", title: "Karim bought Pro", body: "You earned TK 59.80. You can withdraw it from 1 Nov 2026.", href: "/referrals/earnings" });
     expect(bn("REFERRAL", pending)).toMatchObject({ title: "Karim Pro কিনেছেন", body: "আপনি ৳ ৫৯.৮০ পেয়েছেন। ১ নভে ২০২৬ থেকে তুলতে পারবেন।" });
     expect(en("REFERRAL", { ...pending, planName: null }).title).toBe("Karim bought a plan");
     expect(en("REFERRAL", { ...pending, kind: "RENEWAL" }).title).toBe("Karim renewed Pro");
     expect(bn("REFERRAL", { ...pending, kind: "RENEWAL" }).title).toBeTruthy();
 
     const available = { event: "COMMISSION_AVAILABLE", referralId: "r1", friendName: "Karim", amount: "60.00" };
-    expect(en("REFERRAL", available)).toMatchObject({ kind: "referral", title: "৳ 60 is ready to withdraw", body: "Your reward for inviting Karim." });
+    expect(en("REFERRAL", available)).toMatchObject({ kind: "referral", title: "TK 60 is ready to withdraw", body: "Your reward for inviting Karim." });
     expect(bn("REFERRAL", available)).toMatchObject({ title: "৳ ৬০ এখন তুলতে পারেন", body: "Karim-কে আমন্ত্রণ জানানোর পুরস্কার।" });
 
     const missed = { event: "COMMISSION_MISSED", referralId: "r1", friendName: "Karim", planName: "Pro", amount: 60, reason: "REFERRER_NOT_ON_PAID_PLAN" };
-    expect(en("REFERRAL", missed)).toMatchObject({ kind: "referralLost", title: "You missed a reward", body: "Karim bought a plan, but rewards need a paid plan of your own. You missed ৳ 60." });
+    expect(en("REFERRAL", missed)).toMatchObject({ kind: "referralLost", title: "You missed a reward", body: "Karim bought a plan, but rewards need a paid plan of your own. You missed TK 60." });
     expect(en("REFERRAL", { ...missed, amount: 0 }).body).toBe("Karim bought a plan, but rewards need a paid plan of your own.");
     expect(bn("REFERRAL", missed).title).toBe("একটি পুরস্কার পাননি");
 
     const cancelled = { event: "COMMISSION_CANCELLED", referralId: "r1", friendName: "Karim", amount: "60.00", reason: "FRIEND_REFUNDED" };
-    expect(en("REFERRAL", cancelled)).toMatchObject({ kind: "referralLost", title: "A reward was cancelled", body: "Karim's payment was refunded, so the ৳ 60 reward was cancelled." });
-    expect(en("REFERRAL", { ...cancelled, reason: "ADMIN" }).body).toBe("The ৳ 60 reward for inviting Karim was cancelled.");
+    expect(en("REFERRAL", cancelled)).toMatchObject({ kind: "referralLost", title: "A reward was cancelled", body: "Karim's payment was refunded, so the TK 60 reward was cancelled." });
+    expect(en("REFERRAL", { ...cancelled, reason: "ADMIN" }).body).toBe("The TK 60 reward for inviting Karim was cancelled.");
     expect(bn("REFERRAL", cancelled).body).toBe("Karim-এর পেমেন্ট ফেরত দেওয়া হয়েছে, তাই ৳ ৬০ পুরস্কার বাতিল হয়েছে।");
 
     // Lines held back from a withdrawal for a check, and one let go again.
@@ -214,13 +214,13 @@ describe("notificationView for account rows", () => {
 
   it("words every payout event and opens the withdrawals", () => {
     const base = { payoutId: "w1", displayId: "WD-0001", amount: "500.00", methodType: "BKASH" };
-    expect(en("PAYOUT", { ...base, event: "PAYOUT_APPROVED" })).toEqual({ kind: "payout", title: "Withdrawal approved", body: "Your ৳ 500 withdrawal is approved and will be sent soon.", href: "/referrals/withdrawals" });
+    expect(en("PAYOUT", { ...base, event: "PAYOUT_APPROVED" })).toEqual({ kind: "payout", title: "Withdrawal approved", body: "Your TK 500 withdrawal is approved and will be sent soon.", href: "/referrals/withdrawals" });
     expect(bn("PAYOUT", { ...base, event: "PAYOUT_APPROVED" }).body).toBe("আপনার ৳ ৫০০ তোলার অনুরোধ অনুমোদিত হয়েছে, শীঘ্রই পাঠানো হবে।");
     const paid = { ...base, event: "PAYOUT_PAID", paidAmount: "490.00", trxId: "BK123", paidAt: "2026-10-02T06:00:00.000Z", incomeWallet: null };
-    expect(en("PAYOUT", paid)).toMatchObject({ kind: "payout", title: "Withdrawal sent", body: "৳ 490 was sent to you. Transaction ID: BK123" });
+    expect(en("PAYOUT", paid)).toMatchObject({ kind: "payout", title: "Withdrawal sent", body: "TK 490 was sent to you. Transaction ID: BK123" });
     expect(bn("PAYOUT", paid)).toMatchObject({ title: "টাকা পাঠানো হয়েছে", body: "আপনাকে ৳ ৪৯০ পাঠানো হয়েছে। ট্রানজেকশন আইডি: BK123" });
     const rejected = { ...base, event: "PAYOUT_REJECTED", reason: "Wrong number" };
-    expect(en("PAYOUT", rejected)).toMatchObject({ kind: "payoutRejected", title: "Withdrawal rejected", body: "৳ 500 is back in your balance. Reason: Wrong number" });
+    expect(en("PAYOUT", rejected)).toMatchObject({ kind: "payoutRejected", title: "Withdrawal rejected", body: "TK 500 is back in your balance. Reason: Wrong number" });
     expect(bn("PAYOUT", rejected).title).toBe("টাকা তোলার অনুরোধ বাতিল হয়েছে");
   });
 

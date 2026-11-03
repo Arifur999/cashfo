@@ -3,6 +3,8 @@
 // amount and when a backup is overdue. Pure, so the cards and their tests
 // agree.
 import { topRequests } from "@/lib/adminDashboard";
+import { takaSign } from "@/lib/i18n/formatPrefs";
+import type { Locale } from "@/lib/i18n/translate";
 import type { FeatureRequestStatus } from "@/types/featureRequest.types";
 import type { TicketPriority } from "@/types/ticket.types";
 
@@ -57,11 +59,12 @@ export function compactAmount(value: number): string {
   return `${sign}${Math.round(abs)}`;
 }
 
-// A money bar's figure as the board writes it: "৳4.4k", "৳0", "-৳2.9k". No
-// space after the sign, unlike formatAmount, so it still fits a phone's slot.
-export function compactMoney(value: number): string {
+// A money bar's figure as the board writes it: "TK4.4k", "TK0", "-TK2.9k"
+// ("৳4.4k" in Bangla). No space after the sign, unlike formatAmount, so it
+// still fits a phone's slot.
+export function compactMoney(value: number, locale: Locale): string {
   const figure = compactAmount(Math.abs(value));
-  return `${value < 0 && figure !== "0" ? "-" : ""}৳${figure}`;
+  return `${value < 0 && figure !== "0" ? "-" : ""}${takaSign(locale)}${figure}`;
 }
 
 // The System page calls a backup worth a look after two days; no backup at
@@ -73,14 +76,15 @@ export const backupIsDue = (daysSinceLastBackup: number | null): boolean => days
 // Every bar of a chart at zero: nothing has come in yet.
 export const allZero = (values: number[]): boolean => values.every((value) => value === 0);
 
-// A revenue bar's label as the AdminDashboard board writes it: "৳ 41.3k",
-// "৳ 1.2L", "৳ 850". Latin digits; the card puts them in the reader's.
-export function revenueBarLabel(value: number): string {
+// A revenue bar's label as the AdminDashboard board writes it: "TK 41.3k",
+// "TK 1.2L", "TK 850" ("৳ 41.3k" in Bangla). Latin digits; the card puts
+// them in the reader's.
+export function revenueBarLabel(value: number, locale: Locale): string {
   const abs = Math.abs(value);
-  const sign = value < 0 ? "-" : "";
-  if (abs >= 100_000) return `${sign}৳ ${(abs / 100_000).toFixed(1)}L`;
-  if (abs >= 1_000) return `${sign}৳ ${(abs / 1_000).toFixed(1)}k`;
-  return `${sign}৳ ${Math.round(abs)}`;
+  const sign = `${value < 0 ? "-" : ""}${takaSign(locale)}`;
+  if (abs >= 100_000) return `${sign} ${(abs / 100_000).toFixed(1)}L`;
+  if (abs >= 1_000) return `${sign} ${(abs / 1_000).toFixed(1)}k`;
+  return `${sign} ${Math.round(abs)}`;
 }
 
 // Which bars of a daily chart get a date under them: the first, three

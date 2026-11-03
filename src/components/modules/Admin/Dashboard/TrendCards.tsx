@@ -107,7 +107,7 @@ export function RevenueCard({ months, changePct }: RevenueCardProps) {
               const value = values[index];
               return (
                 <span key={row.month} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-                  <span className="text-[11px] leading-[normal] font-semibold whitespace-nowrap text-ink-2 tabular-nums">{toLocaleDigits(revenueBarLabel(value), locale)}</span>
+                  <span className="text-[11px] leading-[normal] font-semibold whitespace-nowrap text-ink-2 tabular-nums">{toLocaleDigits(revenueBarLabel(value, locale), locale)}</span>
                   <span
                     className={cn("w-full max-w-11.5 rounded-t-[5px]", index === months.length - 1 ? "bg-forest" : "bg-mint-300/70")}
                     style={{ height: value > 0 ? Math.max(2, Math.round((value / max) * 118)) : 0 }}

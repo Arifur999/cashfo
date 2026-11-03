@@ -176,7 +176,7 @@ export function FamilyCloseDialog({ open, onClose, businessId, currency, range, 
               {...amountField}
               placeholder={t("Leave empty to set later")}
               className="font-semibold tabular-nums"
-              leading={<span className="flex h-10 w-9 items-center justify-center border-r border-line bg-surface text-body font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+              leading={<span className="flex h-10 w-9 items-center justify-center border-r border-line bg-surface text-body font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
               frameClassName="overflow-hidden pl-0"
             />
           </label>

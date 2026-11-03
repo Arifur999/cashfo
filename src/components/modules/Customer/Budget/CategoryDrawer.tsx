@@ -157,7 +157,7 @@ export function CategoryDrawer({ open, onClose, businessId, type = "EXPENSE", va
         {t("Monthly limit")}
       </label>
       <div className="flex h-13 items-stretch overflow-hidden rounded-sm border border-input bg-surface transition-[border-color,box-shadow] focus-within:border-focus-ring focus-within:focus-halo">
-        <span className="flex w-12 shrink-0 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-soft">{currencySymbol(currency)}</span>
+        <span className="flex w-12 shrink-0 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>
         <input
           id="cat-limit"
           type="text"

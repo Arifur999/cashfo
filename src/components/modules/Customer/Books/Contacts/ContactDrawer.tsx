@@ -253,7 +253,7 @@ export function ContactDrawer({ open, editing, hasEntries = true, businessId, cu
           <Field htmlFor="ct-opening" label={<>{t("Already owed")}{optional}</>} hint={t("Money owed from before you started keeping books here. It can't be changed later.")}>
             <div className="flex flex-col gap-2">
               <SegmentedControl label={t("Which way")} value={direction} onChange={setDirection} stretch options={[{ value: "THEY_OWE", label: t("They owe you") }, { value: "YOU_OWE", label: t("You owe them") }]} />
-              <Input id="ct-opening" size="md" inputMode="decimal" value={opening} onChange={(event) => setOpening(limitMoneyDecimals(event.target.value))} placeholder="0.00" className="tabular-nums" leading={<span className="font-semibold text-ink-2">{currencySymbol(currency)}</span>} />
+              <Input id="ct-opening" size="md" inputMode="decimal" value={opening} onChange={(event) => setOpening(limitMoneyDecimals(event.target.value))} placeholder="0.00" className="tabular-nums" leading={<span className="font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>} />
             </div>
           </Field>
         )}

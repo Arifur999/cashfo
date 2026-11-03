@@ -4,6 +4,7 @@ import { ArrowDownLeft, ArrowUpRight, ChartPie, FileText, Languages, ShieldCheck
 import Logo from "@/components/smartly/Logo";
 import { BRAND_NAME } from "@/lib/brand";
 import { toLocaleDigits } from "@/lib/i18n/digits";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { bnHeading } from "./bnType";
@@ -98,7 +99,7 @@ const DashboardArt = () => {
           <span className="rounded-full bg-surface-sunken px-2.5 py-1 text-caption font-medium text-ink-soft">{t("This month")}</span>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[30px] leading-normal font-bold tracking-[-0.02em] tabular-nums">৳ {digits("12,50,000")}</span>
+          <span className="text-[30px] leading-normal font-bold tracking-[-0.02em] tabular-nums">{takaSign(locale)} {digits("12,50,000")}</span>
           <span className="flex items-center gap-1.5 text-caption text-ink-muted">
             <span className="flex items-center gap-0.5 font-semibold text-emerald">
               <TrendingUp className="size-3.5" strokeWidth={2.25} />
@@ -136,8 +137,8 @@ const DashboardArt = () => {
         </div>
       </div>
 
-      <FloatCard className="top-0 right-0" tone="income" label={t("Income")} amount={`+ ৳ ${digits("85,000")}`} />
-      <FloatCard className="top-79.5 right-3" tone="expense" label={t("Expense")} amount={`− ৳ ${digits("52,300")}`} />
+      <FloatCard className="top-0 right-0" tone="income" label={t("Income")} amount={`+ ${takaSign(locale)} ${digits("85,000")}`} />
+      <FloatCard className="top-79.5 right-3" tone="expense" label={t("Expense")} amount={`− ${takaSign(locale)} ${digits("52,300")}`} />
     </div>
   );
 };

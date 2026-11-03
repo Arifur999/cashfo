@@ -178,7 +178,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
   const ready = account && ledger && summary;
   const money = account ? readsAsMoney(account) : true;
   const debitPositive = account ? isDebitPositive(account.accountType) : true;
-  const symbol = currencySymbol(currency);
+  const symbol = currencySymbol(currency, fmt);
   const shown = (value: string | number) => (hidden ? maskedMoney(symbol) : balanceText(value, currency, fmt));
   const lines = ledger ? statementPage(ledger) : null;
   const residual = ledger && summary && lines?.exact ? voidedNet(ledger, summary) : 0;

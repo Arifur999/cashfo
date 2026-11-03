@@ -4,6 +4,7 @@ import AppField from "@/components/shared/form/AppField";
 import AppSelectField from "@/components/shared/form/AppSelectField";
 import { firstZodError } from "@/lib/formValidators";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 import { enumOptions, humanizeEnum } from "@/lib/statusBadge";
 import { money } from "@/lib/subscriptions";
 import { BILLING_CYCLES, type ISubscriptionPlan } from "@/types/plan.types";
@@ -63,7 +64,7 @@ const PlanBasicsFields = ({ form, plan }: PlanBasicsFieldsProps) => {
           <ReadOnlyField label="Price">{money(plan.price, plan.currency, locale)}</ReadOnlyField>
         ) : (
           <form.Field name="price" validators={{ onChange: schema.shape.price }}>
-            {(field) => <AppField field={field} label="Price" inputMode="decimal" prepend={<span className="text-body text-ink-muted">৳</span>} />}
+            {(field) => <AppField field={field} label="Price" inputMode="decimal" prepend={<span className="text-body text-ink-muted">{takaSign(locale)}</span>} />}
           </form.Field>
         )}
         {plan ? (
