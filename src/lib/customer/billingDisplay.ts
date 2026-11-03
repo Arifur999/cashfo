@@ -4,7 +4,9 @@
 
 export type BillingCycle = "FREE" | "MONTHLY" | "YEARLY";
 export type SubscriptionStatus = "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED";
-export type Gateway = "BKASH" | "NAGAD" | "CARD";
+// The ways to send the money yourself, then paying online (CARD).
+export type ManualWallet = "BKASH" | "NAGAD" | "ROCKET" | "BANK";
+export type Gateway = ManualWallet | "CARD";
 export type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
 
 export interface FeatureLimits {
@@ -38,7 +40,23 @@ export interface BillingPlans {
   // A payment gateway is set up, so paying online works (else only sending
   // the money yourself does).
   onlineCheckout?: boolean;
+  // Where the money goes when the customer sends it themselves: only the
+  // ways an admin has set up (Admin › Settings › Billing).
+  paymentAccounts?: PaymentAccounts;
+  // The admin's own words for sending it, for when no way is set up:
+  // {amount}, {method} and {reference} still to fill.
+  manualInstructions?: { en: string; bn: string };
 }
+
+export interface BankAccountDetails {
+  bankName: string;
+  branch: string;
+  accountName: string;
+  accountNumber: string;
+  routingNumber: string;
+}
+
+export type PaymentAccounts = Partial<Record<"BKASH" | "NAGAD" | "ROCKET", string> & { BANK: BankAccountDetails }>;
 
 export interface Subscription {
   planId: string;
@@ -76,13 +94,16 @@ export interface PendingPayment {
   amount: string;
   gateway: Gateway;
   instructions: { en: string; bn: string };
-  expiresAt: string;
+  // null once the customer sent the money's details: it waits for an admin.
+  expiresAt: string | null;
   createdAt: string;
   // When the customer sent the money's details (the TrxID); null while
   // they still have to.
   submittedAt?: string | null;
-  // The TrxID they typed.
+  // The number (or bank account name) they sent from, and the TrxID.
+  payerAccount?: string | null;
   reference?: string | null;
+  hasProof?: boolean;
 }
 
 export interface BillingOverview {
@@ -116,8 +137,13 @@ export interface CheckoutResult {
   discountSource: "COUPON" | "REFERRAL" | null;
   currency: string;
   gateway: Gateway;
-  expiresAt: string;
-  next: { kind: "instructions"; text: { en: string; bn: string } };
+  expiresAt: string | null;
+  submittedAt?: string | null;
+  payerAccount?: string | null;
+  reference?: string | null;
+  // A real gateway sends the customer to its page; the manual way says how
+  // to send the money.
+  next: { kind: "instructions"; text: { en: string; bn: string } } | { kind: "redirect"; url: string };
 }
 
 export interface BillingPayment {
@@ -138,8 +164,24 @@ export interface BillingPayment {
   periodStart: string | null;
   periodEnd: string | null;
   expiresAt: string | null;
-  invoice: { id: string; invoiceNumber: string } | null;
+  // The plan's cycle; absent from an older backend.
+  billingCycle?: BillingCycle;
+  payerAccount?: string | null;
+  reference?: string | null;
+  submittedAt?: string | null;
+  // emailedAt: when the receipt went to the customer's email.
+  invoice: { id: string; invoiceNumber: string; emailedAt?: string | null } | null;
   refund: { amount: string; status: string; createdAt: string } | null;
+}
+
+// One of the customer's own payments, as the checkout's "being checked"
+// and "all set" views read it (GET /api/billing/payments/:id).
+export interface CustomerPayment extends BillingPayment {
+  couponCode: string | null;
+  referralDiscount: string | null;
+  proof: { mimeType: string; size: number; createdAt: string } | null;
+  // Set while an open checkout still waits for its details.
+  instructions: { en: string; bn: string } | null;
 }
 
 export interface BillingPayments {
@@ -298,13 +340,16 @@ export interface SidebarPlan {
   trial: boolean;
   // When the trial ends; null outside one.
   trialEndsAt: string | null;
-  // A payment waits for an admin to confirm it ("Payment being checked").
+  // A payment whose money was sent waits for an admin to confirm it
+  // ("Payment being checked").
   pending: boolean;
 }
 
 export function sidebarPlan(subscription: Subscription, pendingPayment: PendingPayment | null = null): SidebarPlan {
   const state = planState(subscription);
-  const pending = pendingPayment !== null;
+  // An older backend doesn't say when the details were sent (undefined):
+  // any open payment counts then.
+  const pending = pendingPayment !== null && pendingPayment.submittedAt !== null;
   if (state === "free" || state === "ended") return { name: null, trial: false, trialEndsAt: null, pending };
   const trial = state === "trial";
   return { name: subscription.planName, trial, trialEndsAt: trial ? subscription.trialEndsAt : null, pending };
@@ -317,13 +362,18 @@ export const daysLeft = (endsAt: string, now = new Date()): number => Math.max(0
 // A paid plan with an end date can be stopped at its end (or the stop undone).
 export const canCancel = (subscription: Subscription): boolean => subscription.isPaid && Boolean(subscription.currentPeriodEnd);
 
-export const GATEWAYS: { value: Gateway; label: string }[] = [
-  { value: "BKASH", label: "bKash" },
-  { value: "NAGAD", label: "Nagad" },
-  { value: "CARD", label: "Card · SSLCommerz" },
-];
+const GATEWAY_LABELS: Record<string, string> = {
+  BKASH: "bKash",
+  NAGAD: "Nagad",
+  ROCKET: "Rocket",
+  BANK: "Bank transfer",
+  CARD: "Online · SSLCommerz",
+  SSLCOMMERZ: "Online · SSLCommerz",
+  MANUAL: "Bank or mobile banking",
+};
 
-export const gatewayLabel = (gateway: string): string => GATEWAYS.find((g) => g.value === gateway)?.label ?? gateway;
+// How a payment was made, in the app's words (dictionary keys).
+export const gatewayLabel = (gateway: string): string => GATEWAY_LABELS[gateway] ?? gateway;
 
 // A payment's chip: its words (dictionary keys) and tone.
 export function paymentStatusView(status: PaymentStatus): { label: string; tone: "income" | "warning" | "expense" | "neutral" } {
