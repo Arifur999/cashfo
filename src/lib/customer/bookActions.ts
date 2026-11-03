@@ -36,6 +36,8 @@ export interface BookInput {
   pagesRead?: number;
   status?: BookStatus;
   color?: string;
+  // Put a book being read down for now, or take it up again.
+  paused?: boolean;
 }
 
 export async function createBookAction(input: BookInput): Promise<ActionResult<Book>> {

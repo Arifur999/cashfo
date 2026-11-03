@@ -19,12 +19,17 @@ const newestFirst =
   (a: Book, b: Book): number =>
     (b[key] ?? "").localeCompare(a[key] ?? "");
 
+// A book being read that was put down for now: its page kept, it waits
+// under Up next (the want-to-read shelf) until it is resumed.
+export const isPaused = (book: Pick<Book, "status" | "pausedAt">): boolean => book.status === "READING" && !!book.pausedAt;
+
 // Each shelf with its latest activity first: the book read most recently,
-// the one added last, the one finished last.
+// the one added last (after the paused ones, most recently paused first),
+// the one finished last.
 export function shelves(books: Book[]): Record<BookStatus, Book[]> {
   return {
-    READING: books.filter((b) => b.status === "READING").sort(newestFirst("updatedAt")),
-    WANT_TO_READ: books.filter((b) => b.status === "WANT_TO_READ").sort(newestFirst("createdAt")),
+    READING: books.filter((b) => b.status === "READING" && !isPaused(b)).sort(newestFirst("updatedAt")),
+    WANT_TO_READ: [...books.filter(isPaused).sort((a, b) => (b.pausedAt ?? "").localeCompare(a.pausedAt ?? "")), ...books.filter((b) => b.status === "WANT_TO_READ").sort(newestFirst("createdAt"))],
     FINISHED: books.filter((b) => b.status === "FINISHED").sort(newestFirst("finishedAt")),
   };
 }
@@ -120,5 +125,80 @@ export function applyProgress(book: Book, pagesRead: number, year: number): Book
   if (pages >= book.totalPages) status = "FINISHED";
   else if (pages > 0) status = "READING";
   else if (book.status === "FINISHED") status = "READING";
-  return { ...book, pagesRead: pages, status, finishedYear: status === "FINISHED" ? (book.finishedYear ?? year) : null };
+  // Reading on to a new page takes a paused book up again.
+  const pausedAt = status === "READING" && pages === book.pagesRead ? (book.pausedAt ?? null) : null;
+  return { ...book, pagesRead: pages, status, pausedAt, finishedYear: status === "FINISHED" ? (book.finishedYear ?? year) : null };
+}
+
+// Library › Dashboard.
+
+// A book's place on the dashboard's list: a paused one stands apart.
+export type BookShelf = "reading" | "paused" | "finished" | "want";
+export const bookShelf = (book: Pick<Book, "status" | "pausedAt">): BookShelf => (isPaused(book) ? "paused" : book.status === "READING" ? "reading" : book.status === "FINISHED" ? "finished" : "want");
+
+// The app-calendar day ("YYYY-MM-DD") of a moment, and its year and month (1-12).
+const dayKey = (iso: string): string => toDateInputValue(iso);
+const inMonth = (iso: string | null, year: number, month?: number): boolean => {
+  if (!iso) return false;
+  const key = dayKey(iso);
+  return Number(key.slice(0, 4)) === year && (month === undefined || Number(key.slice(5, 7)) === month);
+};
+
+// Days from the day a book was started to the day it was finished (both
+// counted), or to today while it is read; null before it is started.
+export function daysWithBook(book: Pick<Book, "startedAt" | "finishedAt">, today: string): number | null {
+  if (!book.startedAt) return null;
+  const end = book.finishedAt ? dayKey(book.finishedAt) : today;
+  return daysSince(book.startedAt, end) + 1;
+}
+
+export interface MonthBooks {
+  finished: Book[];
+  started: Book[];
+  // Read in that month, with the pages, most first.
+  read: { book: Book; pages: number }[];
+}
+
+// One month of a year: the books finished, started and read in it.
+export function monthBooks(books: Book[], bookMonths: Record<string, number[]>, year: number, month: number): MonthBooks {
+  return {
+    finished: books.filter((b) => b.status === "FINISHED" && inMonth(b.finishedAt, year, month)),
+    started: books.filter((b) => inMonth(b.startedAt, year, month)),
+    read: books
+      .map((book) => ({ book, pages: bookMonths[book.id]?.[month - 1] ?? 0 }))
+      .filter((row) => row.pages > 0)
+      .sort((a, b) => b.pages - a.pages),
+  };
+}
+
+// Books finished in each month of a year, January first.
+export const finishedByMonth = (books: Book[], year: number): number[] => Array.from({ length: 12 }, (_, i) => books.filter((b) => b.status === "FINISHED" && inMonth(b.finishedAt, year, i + 1)).length);
+
+export interface YearFigures {
+  finished: number;
+  pages: number;
+  // Pages a day over the days of the year so far (all of it, once over).
+  perDay: number;
+  started: number;
+  // Started that year and paused now.
+  paused: number;
+  // Average days to finish a book finished that year; null with none.
+  daysPerBook: number | null;
+}
+
+export function yearFigures(books: Book[], months: number[], year: number, today: string): YearFigures {
+  const finished = books.filter((b) => b.status === "FINISHED" && inMonth(b.finishedAt, year));
+  const started = books.filter((b) => inMonth(b.startedAt, year));
+  const pages = months.reduce((sum, n) => sum + n, 0);
+  const thisYear = Number(today.slice(0, 4));
+  const days = year === thisYear ? daysSince(`${year}-01-01`, today) + 1 : year < thisYear ? daysInYear(year) : 0;
+  const spans = finished.map((b) => daysWithBook(b, today)).filter((n): n is number => n !== null);
+  return {
+    finished: finished.length,
+    pages,
+    perDay: days > 0 ? Math.round(pages / days) : 0,
+    started: started.length,
+    paused: started.filter(isPaused).length,
+    daysPerBook: spans.length ? Math.round(spans.reduce((sum, n) => sum + n, 0) / spans.length) : null,
+  };
 }

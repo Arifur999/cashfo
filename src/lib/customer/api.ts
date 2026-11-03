@@ -1534,8 +1534,21 @@ export interface Book {
   startedAt: string | null;
   finishedAt: string | null;
   finishedYear: number | null;
+  // Put down for now while being read (still READING, its page kept).
+  pausedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// Library › Dashboard: one Asia/Dhaka year of reading, month by month
+// (January first), in all and for each book read that year (by id), that
+// year's goal, and every year from the first one with reading (newest first).
+export interface BookYear {
+  year: number;
+  goalTarget: number | null;
+  years: number[];
+  months: number[];
+  bookMonths: Record<string, number[]>;
 }
 
 // A note on a book, or a line the reader liked, with its page.
