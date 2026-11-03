@@ -76,12 +76,15 @@ export function KindCards<K extends string>({
   onChange,
   options,
   compact = false,
+  disabled = false,
 }: {
   legend: string;
   value: K;
   onChange: (value: K) => void;
   options: { value: K; label: string; sub?: string; icon: React.ReactNode; tone: "income" | "expense" | "info" }[];
   compact?: boolean;
+  // Locked (a used category keeps its type): the pick shows, nothing else can be picked.
+  disabled?: boolean;
 }) {
   const { t } = useLocale();
   const TONE = {
@@ -90,7 +93,7 @@ export function KindCards<K extends string>({
     info: { on: "border-2 border-info bg-info-soft", text: "text-info", tile: "bg-info-soft text-info" },
   } as const;
   return (
-    <fieldset className="m-0 min-w-0 border-0 p-0">
+    <fieldset disabled={disabled} className="m-0 min-w-0 border-0 p-0">
       <legend className="mb-2 text-body font-medium text-ink">{t(legend)}</legend>
       <div className={cn("grid gap-2.5", options.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
         {options.map((option) => {
@@ -105,7 +108,7 @@ export function KindCards<K extends string>({
               className={cn(
                 "flex min-w-0 items-center rounded-[12px] font-semibold transition-colors",
                 compact ? "h-13 justify-center gap-2 text-[15px]" : "h-19 gap-3 px-4 text-left",
-                on ? tone.on : "border border-input bg-surface text-ink-2 hover:bg-hover",
+                on ? tone.on : "border border-input bg-surface text-ink-2 hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface",
               )}
             >
               {compact ? (

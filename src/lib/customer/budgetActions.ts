@@ -92,7 +92,8 @@ export async function createBudgetCategoryAction(businessId: string, input: Budg
 export async function updateBudgetCategoryAction(
   businessId: string,
   id: string,
-  input: Partial<Omit<BudgetCategoryFormInput, "type">>,
+  // The type changes only while no transaction uses the category.
+  input: Partial<BudgetCategoryFormInput>,
 ): Promise<ActionResult<BudgetCategory>> {
   return callApi(async () => {
     const res = await customerApi.patch<BudgetCategory>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, input, {
@@ -102,10 +103,24 @@ export async function updateBudgetCategoryAction(
   }, "Failed to update category");
 }
 
-export async function deleteBudgetCategoryAction(businessId: string, id: string): Promise<ActionResult> {
+// A category its transactions use is deleted only with `moveTo`, the
+// category of the same type they move to; `moved` says how many did.
+export async function deleteBudgetCategoryAction(businessId: string, id: string, moveTo?: string): Promise<ActionResult<{ id: string; moved: number }>> {
   return callApi(async () => {
-    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, { headers: await authHeaders() });
+    const res = await customerApi.delete<{ id: string; moved: number }>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, {
+      headers: await authHeaders(),
+      params: moveTo ? { moveTo } : undefined,
+    });
+    return res.data;
   }, "Failed to delete category");
+}
+
+// Category Set's "Add the usual ones": the starter categories the workspace
+// doesn't have yet.
+export async function addStarterCategoriesAction(businessId: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/starter`, {}, { headers: await authHeaders() });
+  }, "Failed to add the categories");
 }
 
 export interface MonthlyPlanInput {

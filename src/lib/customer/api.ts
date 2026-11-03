@@ -912,11 +912,24 @@ export interface CategorySetRow {
   color: string;
   monthlyLimit: string | null;
   transactionCount: number;
+  // "zakat": the Zakat page's own category -- listed, changed only there.
+  system?: "zakat" | null;
+}
+
+// Money the app files under a name no category of the workspace has: the
+// charges paid with transfers and loan entries ("Bank charge", ...).
+export interface AutomaticCategoryRow {
+  type: "EXPENSE";
+  name: string;
+  kind: "charges";
+  transactionCount: number;
 }
 
 export interface CategorySet {
   income: CategorySetRow[];
   expense: CategorySetRow[];
+  // Left out by an older backend.
+  automatic?: AutomaticCategoryRow[];
 }
 
 // Savings Goals (/savings-goals/*): a named target funded by real

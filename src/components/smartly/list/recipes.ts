@@ -39,6 +39,12 @@ export const LIST_FOOTER = "border-t border-divider px-4 py-3 text-small text-in
 // the row. Use a plain link there and the row's onClick.
 export const STICKY_START = "sticky left-0 z-1 self-stretch bg-inherit pl-4 md:pl-6";
 
+// A row's square icon button (the Income & Expense boards' Edit and
+// Delete): grey in a line, emerald on hover; with LIST_ROW_DELETE, red.
+export const LIST_ROW_ACTION =
+  "relative z-10 inline-flex size-8.5 shrink-0 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted transition-colors hover:border-emerald/40 hover:bg-mint-50 hover:text-emerald disabled:opacity-50 pointer-coarse:size-11 [&_svg]:size-3.75";
+export const LIST_ROW_DELETE = "hover:border-expense/30 hover:bg-expense-soft hover:text-expense";
+
 // The density scale: 44 / 56 / 64 / 72px rows.
 export const ROW_HEIGHT = {
   dense: "min-h-11",

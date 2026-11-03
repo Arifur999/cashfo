@@ -12,6 +12,7 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip, { type ChipTone } from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
+import { LIST_ROW_ACTION, LIST_ROW_DELETE } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import ProgressBar from "@/components/smartly/ProgressBar";
@@ -48,8 +49,6 @@ const STATE: Record<BudgetState, { bar: "income" | "warning" | "expense"; text: 
 
 const COLUMNS = "md:grid-cols-[170px_minmax(0,1fr)_minmax(0,1fr)_120px_96px]";
 
-// The board's square icon buttons in a line: edit in ink, delete in red.
-const ROW_ACTION = "relative z-10 flex size-8.5 shrink-0 items-center justify-center rounded-[8px] border border-line bg-surface disabled:opacity-50 pointer-coarse:size-11";
 
 const monthKey = (m: YearMonth) => m.year * 12 + m.month;
 const same = (a: YearMonth | null, b: YearMonth) => !!a && a.month === b.month && a.year === b.year;
@@ -262,7 +261,7 @@ export function BudgetPlanPageClient({ businessId, currency, canManage, plans, s
                   <span className="flex justify-end gap-2">
                     {canManage && (
                       <>
-                        <button type="button" onClick={() => openEdit(row)} aria-label={t("Edit {month} plan", { month: label })} title={t("Edit")} className={cn(ROW_ACTION, "text-ink-2 hover:bg-surface-sunken")}>
+                        <button type="button" onClick={() => openEdit(row)} aria-label={t("Edit {month} plan", { month: label })} title={t("Edit")} className={LIST_ROW_ACTION}>
                           <Pencil className="size-4" aria-hidden="true" />
                         </button>
                         {row.id && (
@@ -272,7 +271,7 @@ export function BudgetPlanPageClient({ businessId, currency, canManage, plans, s
                             disabled={deletingId === row.id}
                             aria-label={t("Delete {month} plan", { month: label })}
                             title={t("Delete")}
-                            className={cn(ROW_ACTION, "text-expense hover:bg-expense-soft")}
+                            className={cn(LIST_ROW_ACTION, LIST_ROW_DELETE)}
                           >
                             <Trash2 className="size-4" aria-hidden="true" />
                           </button>

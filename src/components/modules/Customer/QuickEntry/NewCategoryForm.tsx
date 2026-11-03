@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
 import Input from "@/components/smartly/form/Input";
 import { createBudgetCategoryAction, type BudgetCategoryName } from "@/lib/customer/budgetActions";
-import { CATEGORY_NAME_MAX, categoryNameError, categoryServerError } from "@/lib/customer/categoryName";
+import { CATEGORY_NAME_MAX, CATEGORY_NAME_WORDS, categoryNameProblem, categoryServerProblem } from "@/lib/customer/categoryName";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 interface NewCategoryFormProps {
@@ -32,15 +32,16 @@ export function NewCategoryForm({ businessId, kind, taken, onAdded, onCancel, au
 
   function add() {
     if (isPending) return;
-    const problem = categoryNameError(name, taken);
+    const problem = categoryNameProblem(name, taken);
     if (problem) {
-      setError(problem);
+      setError(CATEGORY_NAME_WORDS.popup[problem]);
       return;
     }
     startTransition(async () => {
       const result = await createBudgetCategoryAction(businessId, { type: kind, name: name.trim(), icon: null });
       if (!result.success || !result.data) {
-        setError(categoryServerError(result.message));
+        const refused = categoryServerProblem(result.message);
+        setError(refused ? CATEGORY_NAME_WORDS.popup[refused] : (result.message ?? "Failed to create category"));
         return;
       }
       const { id: categoryId, name: added, icon, color } = result.data;

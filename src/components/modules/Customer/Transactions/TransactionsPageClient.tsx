@@ -14,7 +14,7 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import Kbd from "@/components/smartly/Kbd";
-import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
+import { LIST_ROW_ACTION, LIST_ROW_DELETE, ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
@@ -82,8 +82,6 @@ const COLUMNS = "md:grid-cols-[40px_100px_minmax(12rem,1fr)_140px_96px] xl:grid-
 const LIST_ID = "transactions-list";
 const PHONE_LIST_ID = "transactions-list-phone";
 
-// The board's square icon buttons in a line: edit in ink, delete in red.
-const ROW_ACTION = "flex size-8.5 items-center justify-center rounded-[8px] border border-line bg-surface pointer-coarse:size-11";
 
 // Income & Expense > Transactions (the Transactions board): the totals
 // strip, the filters with the period and Print, and the list grouped by day
@@ -539,12 +537,12 @@ function DesktopRow({ number, row, currency, canManage, onVoid, onEdit, onShowOn
           </Link>
         )}
         {editable && (
-          <button type="button" onClick={onEdit} aria-label={t("Edit transaction")} title={t("Edit")} className={cn(ROW_ACTION, "text-ink-2 hover:bg-surface-sunken")}>
+          <button type="button" onClick={onEdit} aria-label={t("Edit transaction")} title={t("Edit")} className={LIST_ROW_ACTION}>
             <Pencil className="size-4.25" aria-hidden="true" />
           </button>
         )}
         {canManage && row.transaction.voidable && (
-          <button type="button" onClick={onVoid} aria-label={t("Delete transaction")} title={t("Delete")} className={cn(ROW_ACTION, "text-expense hover:bg-expense-soft")}>
+          <button type="button" onClick={onVoid} aria-label={t("Delete transaction")} title={t("Delete")} className={cn(LIST_ROW_ACTION, LIST_ROW_DELETE)}>
             <Trash2 className="size-4.25" aria-hidden="true" />
           </button>
         )}
