@@ -34,9 +34,9 @@ const EXPENSE_STEP: Record<BazarRule, string> = {
 };
 
 const SHARE_OF_COSTS: Record<BazarRule, string> = {
-  MEALS: "your meals × the meal rate (bazar ÷ all meals), plus an equal part of the other costs. If bazar comes to ৳ 30,000 over 600 meals, the rate is ৳ 50, so 60 meals cost ৳ 3,000.",
-  SHARES: "the bazar split by each member's shares, plus an equal part of the other costs. With ৳ 12,000 of bazar and shares of 3, 1 and 4, they pay ৳ 4,500, ৳ 1,500 and ৳ 6,000.",
-  EQUAL: "everything spent in the month ÷ the members. If the month costs ৳ 40,000 and five people share it, each owes ৳ 8,000.",
+  MEALS: "your meals × the meal rate (bazar ÷ all meals), plus an equal part of the other costs. If bazar comes to TK 30,000 over 600 meals, the rate is TK 50, so 60 meals cost TK 3,000.",
+  SHARES: "the bazar split by each member's shares, plus an equal part of the other costs. With TK 12,000 of bazar and shares of 3, 1 and 4, they pay TK 4,500, TK 1,500 and TK 6,000.",
+  EQUAL: "everything spent in the month ÷ the members. If the month costs TK 40,000 and five people share it, each owes TK 8,000.",
 };
 
 // A brand-new group: four short steps, and how a balance is worked out.
@@ -181,7 +181,7 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMe
         </div>
         {meals ? (
           <p className="text-small leading-[1.55] text-ink-soft">
-            <b className="font-semibold text-ink">{t("Meal rate")}</b> = {t("all bazar ÷ all meals in the month. If bazar costs ৳ 19,840 and the mess ate 320 meals, one meal costs ৳ 62.00.")}
+            <b className="font-semibold text-ink">{t("Meal rate")}</b> = {t("all bazar ÷ all meals in the month. If bazar costs TK 19,840 and the mess ate 320 meals, one meal costs TK 62.00.")}
           </p>
         ) : (
           <p className="text-small leading-[1.55] text-ink-soft">

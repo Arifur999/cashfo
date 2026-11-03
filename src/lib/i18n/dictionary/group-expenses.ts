@@ -153,10 +153,10 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Share of the month's costs": "মাসের খরচের ভাগ",
   "gets back or has to pay": "পাবে বা দিবে",
   "Share of costs": "খরচের ভাগ",
-  "everything spent in the month ÷ the members. If the month costs ৳ 40,000 and five people share it, each owes ৳ 8,000.": "মাসের মোট খরচ ÷ সদস্য সংখ্যা। মাসে ৳ 40,000 খরচ হলে আর পাঁচজন ভাগ করলে প্রত্যেকের ভাগ ৳ 8,000।",
-  "your meals × the meal rate (bazar ÷ all meals), plus an equal part of the other costs. If bazar comes to ৳ 30,000 over 600 meals, the rate is ৳ 50, so 60 meals cost ৳ 3,000.":
+  "everything spent in the month ÷ the members. If the month costs TK 40,000 and five people share it, each owes TK 8,000.": "মাসের মোট খরচ ÷ সদস্য সংখ্যা। মাসে ৳ 40,000 খরচ হলে আর পাঁচজন ভাগ করলে প্রত্যেকের ভাগ ৳ 8,000।",
+  "your meals × the meal rate (bazar ÷ all meals), plus an equal part of the other costs. If bazar comes to TK 30,000 over 600 meals, the rate is TK 50, so 60 meals cost TK 3,000.":
     "আপনার মিল × মিল রেট (বাজার ÷ মোট মিল), সাথে বাকি খরচের সমান ভাগ। ৬০০ মিলে বাজার ৳ 30,000 হলে রেট ৳ 50, তাই ৬০ মিলের খরচ ৳ 3,000।",
-  "the bazar split by each member's shares, plus an equal part of the other costs. With ৳ 12,000 of bazar and shares of 3, 1 and 4, they pay ৳ 4,500, ৳ 1,500 and ৳ 6,000.":
+  "the bazar split by each member's shares, plus an equal part of the other costs. With TK 12,000 of bazar and shares of 3, 1 and 4, they pay TK 4,500, TK 1,500 and TK 6,000.":
     "বাজার প্রত্যেকের ভাগ অনুযায়ী, সাথে বাকি খরচের সমান ভাগ। বাজার ৳ 12,000 আর ভাগ ৩, ১ ও ৪ হলে তারা দেন ৳ 4,500, ৳ 1,500 ও ৳ 6,000।",
   "{term} is what the fund should be holding. It always equals all balances added together, so the account checks itself.": "{term} হলো ফান্ডে যত টাকা থাকার কথা। এটি সবসময় সব ব্যালেন্সের যোগফলের সমান, তাই হিসাব নিজেই মিলে যায়।",
 
@@ -669,7 +669,7 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Expenses paid from own pocket": "নিজের পকেট থেকে দেওয়া খরচ",
   "Meals × meal rate": "মিল × মিল রেট",
   "Share of rent, bills and other costs": "বাসা ভাড়া, বিল ও অন্যান্য খরচের ভাগ",
-  "all bazar ÷ all meals in the month. If bazar costs ৳ 19,840 and the mess ate 320 meals, one meal costs ৳ 62.00.": "মাসের সব বাজার ÷ সব মিল। বাজার ৳ ১৯,৮৪০ আর মেসে ৩২০ মিল খাওয়া হলে, এক মিলের খরচ ৳ ৬২.০০।",
+  "all bazar ÷ all meals in the month. If bazar costs TK 19,840 and the mess ate 320 meals, one meal costs TK 62.00.": "মাসের সব বাজার ÷ সব মিল। বাজার ৳ ১৯,৮৪০ আর মেসে ৩২০ মিল খাওয়া হলে, এক মিলের খরচ ৳ ৬২.০০।",
   "{term} is what the manager should be holding. It always equals all balances added together, so the account checks itself.": "{term} হলো ম্যানেজারের কাছে যতটা থাকার কথা। এটা সবসময় সব ব্যালেন্সের যোগফলের সমান, তাই হিসাব নিজেই মিলিয়ে নেয়।",
 
   // Group Expense v7: accountants, cash book, cost split, categories, monthly budget, activity log (2026-10-31)

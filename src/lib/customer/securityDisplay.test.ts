@@ -51,7 +51,8 @@ describe("numbers and dates", () => {
     expect(sampleNumber(123456, "LAKH", "LATIN")).toBe("1,23,456");
     expect(sampleNumber(123456, "INTERNATIONAL", "LATIN")).toBe("123,456");
     expect(sampleNumber(123456, "LAKH", "BENGALI")).toBe("১,২৩,৪৫৬");
-    expect(sampleAmount(123456, "INTERNATIONAL", "LATIN")).toBe("৳ 123,456");
+    expect(sampleAmount(123456, "INTERNATIONAL", "LATIN", "en")).toBe("TK 123,456");
+    expect(sampleAmount(123456, "LAKH", "BENGALI", "bn")).toBe("৳ ১,২৩,৪৫৬");
   });
 
   it("writes a day in each date style", () => {

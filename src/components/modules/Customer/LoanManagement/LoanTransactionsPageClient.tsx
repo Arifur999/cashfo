@@ -140,7 +140,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const kindRows = show === "all" ? rows : rows.filter((row) => (show === "profit") === (row.profit !== null));
   // Search: a name, a note, or an amount as typed (Bangla digits too).
   const query = toEnglishDigits(search.trim().toLowerCase());
-  const digits = query.replace(/[,\s৳]/g, "");
+  const digits = query.replace(/tk|[,\s৳]/g, "");
   const filteredRows = query
     ? kindRows.filter((row) => row.name.toLowerCase().includes(query) || (row.note ?? "").toLowerCase().includes(query) || (/^\d+(\.\d+)?$/.test(digits) && String(Math.abs(row.signedAmount)).includes(digits)))
     : kindRows;
