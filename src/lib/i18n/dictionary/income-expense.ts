@@ -146,7 +146,6 @@ export const incomeExpenseDictionary: Record<string, string> = {
   // The phone's half-width label over an income's wallet.
   "Into@@wallet": "যেখানে জমা",
   "More…": "আরও…",
-  "No categories yet. {link}": "এখনো কোনো ক্যাটাগরি নেই। {link}",
   "Add one under Budget": "বাজেটে একটি যোগ করুন",
   "Add one under Income sources": "আয়ের উৎসে একটি যোগ করুন",
   "No expense account exists in this workspace yet. Add one under {link}.": "এই ওয়ার্কস্পেসে এখনো কোনো খরচের হিসাব নেই। {link}-এ একটি যোগ করুন।",
@@ -579,7 +578,6 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Its {count} transactions keep the name; it just won't be offered for new ones.": "এর {count}টি লেনদেনে নামটি থেকে যাবে; শুধু নতুন লেনদেনে আর দেখাবে না।",
   "Select a category": "একটি ক্যাটাগরি বাছুন",
   "Add new category": "নতুন ক্যাটাগরি যোগ করুন",
-  "Add one under Category Set": "ক্যাটাগরি সেটে একটি যোগ করুন",
   "e.g. Weekly groceries": "যেমন সাপ্তাহিক বাজার",
   "Save transaction": "লেনদেন সেভ করুন",
   "Delete transaction": "লেনদেন মুছুন",
@@ -629,4 +627,12 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Recorded on the Assets page. Change it there.": "অ্যাসেট পেজে রাখা হয়েছে। সেখানে বদলান।",
   "Recorded on the Savings goals page. Change it there.": "সঞ্চয় লক্ষ্য পেজে রাখা হয়েছে। সেখানে বদলান।",
   "Recorded by the referral program.": "রেফারেল প্রোগ্রাম থেকে রাখা হয়েছে।",
+  // The transaction popup: a category added in place, the description box.
+  "No categories yet. Add the first one here.": "এখনো কোনো ক্যাটাগরি নেই। প্রথমটি এখানেই যোগ করুন।",
+  "New income category": "নতুন আয়ের ক্যাটাগরি",
+  "New expense category": "নতুন খরচের ক্যাটাগরি",
+  "Type a name first.": "আগে একটি নাম লিখুন।",
+  "That name is used by the app for Zakat or transfer fees": "এই নামটি অ্যাপ যাকাত বা ট্রান্সফার ফি-এর জন্য ব্যবহার করে",
+  "That category already exists.": "এই ক্যাটাগরিটি আগে থেকেই আছে।",
+  "e.g. Weekly groceries from the local market": "যেমন: স্থানীয় বাজার থেকে সাপ্তাহিক বাজার",
 };
