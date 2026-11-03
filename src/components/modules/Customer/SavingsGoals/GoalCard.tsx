@@ -156,7 +156,7 @@ export function GoalTile({ initial, tint, size = "md" }: { initial: string; tint
   return (
     <span
       aria-hidden="true"
-      className={cn("flex shrink-0 items-center justify-center font-bold", size === "md" ? "size-10 rounded-xl text-[17px]" : "size-9.5 rounded-[11px] text-[16px]", !tint && "bg-surface-sunken text-ink-faint")}
+      className={cn("flex shrink-0 items-center justify-center font-bold", size === "md" ? "size-10 rounded-[12px] text-[17px]" : "size-9.5 rounded-[11px] text-[16px]", !tint && "bg-surface-sunken text-ink-faint")}
       style={tint ? { background: `color-mix(in srgb, ${tint} 14%, var(--surface))`, color: tint } : undefined}
     >
       {initial}
