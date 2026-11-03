@@ -3,7 +3,7 @@ import { fillText } from "@/lib/i18n/fill";
 import type { Translate } from "@/lib/i18n/message";
 import { translate } from "@/lib/i18n/translate";
 import type { Book } from "./api";
-import { applyProgress, daysSince, daysToFinish, finishedIn, goalPace, nowReading, pageOfText, paceSentence, pagesLeft, progressPct, readingPace, shelves, weekPages } from "./libraryDisplay";
+import { applyProgress, bookShelf, daysSince, daysToFinish, daysWithBook, finishedByMonth, finishedIn, goalPace, isPaused, monthBooks, nowReading, pageOfText, paceSentence, pagesLeft, progressPct, readingPace, shelves, weekPages, yearFigures } from "./libraryDisplay";
 
 // The Bangla dictionary, the way useLocale().t reads it.
 const bn: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
@@ -26,6 +26,55 @@ function book(over: Partial<Book> & { id: string }): Book {
 }
 
 const TODAY = "2026-10-15";
+
+describe("a paused book", () => {
+  const paused = book({ id: "p", status: "READING", pagesRead: 60, pausedAt: "2026-10-10T00:00:00.000Z" });
+
+  it("waits under Up next with its page, ahead of the books not started", () => {
+    const all = shelves([book({ id: "w", createdAt: "2026-10-12T00:00:00.000Z" }), paused, book({ id: "r", status: "READING", pagesRead: 5 })]);
+    expect(all.READING.map((b) => b.id)).toEqual(["r"]);
+    expect(all.WANT_TO_READ.map((b) => b.id)).toEqual(["p", "w"]);
+    expect(isPaused(paused)).toBe(true);
+    expect(bookShelf(paused)).toBe("paused");
+    expect(nowReading([paused])).toBeNull();
+  });
+
+  it("is taken up again by reading on", () => {
+    expect(applyProgress(paused, 70, 2026)).toMatchObject({ pagesRead: 70, pausedAt: null });
+    expect(applyProgress(paused, 60, 2026).pausedAt).toBe(paused.pausedAt);
+  });
+});
+
+describe("the year on the dashboard", () => {
+  const finished = book({ id: "f", status: "FINISHED", pagesRead: 300, startedAt: "2026-03-01T04:00:00.000Z", finishedAt: "2026-03-10T04:00:00.000Z", finishedYear: 2026 });
+  const lastYear = book({ id: "l", status: "FINISHED", pagesRead: 300, startedAt: "2025-12-20T04:00:00.000Z", finishedAt: "2025-12-31T19:00:00.000Z", finishedYear: 2026 });
+  const reading = book({ id: "r", status: "READING", pagesRead: 40, startedAt: "2026-10-05T04:00:00.000Z" });
+  const paused = book({ id: "p", status: "READING", pagesRead: 20, startedAt: "2026-03-02T04:00:00.000Z", pausedAt: "2026-04-01T00:00:00.000Z" });
+  const books = [finished, lastYear, reading, paused];
+
+  it("counts the days with a book, both ends in", () => {
+    expect(daysWithBook(finished, TODAY)).toBe(10);
+    expect(daysWithBook(reading, TODAY)).toBe(11);
+    expect(daysWithBook(book({ id: "w" }), TODAY)).toBeNull();
+  });
+
+  it("finds a month's books by the app's calendar", () => {
+    const months = { f: [0, 0, 300, 0, 0, 0, 0, 0, 0, 0, 0, 0], p: [0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0] };
+    const march = monthBooks(books, months, 2026, 3);
+    expect(march.finished.map((b) => b.id)).toEqual(["f"]);
+    expect(march.started.map((b) => b.id)).toEqual(["f", "p"]);
+    expect(march.read).toEqual([{ book: finished, pages: 300 }, { book: paused, pages: 20 }]);
+    // Finished at 01:00 on 1 January in Dhaka.
+    expect(finishedByMonth(books, 2026)[0]).toBe(1);
+    expect(finishedByMonth(books, 2025)[11]).toBe(0);
+  });
+
+  it("adds up the year's figures", () => {
+    const months = [0, 0, 320, 0, 0, 0, 0, 0, 0, 40, 0, 0];
+    expect(yearFigures(books, months, 2026, TODAY)).toEqual({ finished: 2, pages: 360, perDay: 1, started: 3, paused: 1, daysPerBook: 12 });
+    expect(yearFigures(books, Array(12).fill(0), 2027, TODAY)).toMatchObject({ pages: 0, perDay: 0, daysPerBook: null });
+  });
+});
 
 describe("shelves", () => {
   it("sorts each shelf by its own latest activity", () => {

@@ -1,6 +1,6 @@
 // Server-only helpers for Habit Tracker -> Book. User-scoped like lib/habits.ts.
 import { cache } from "react";
-import { API_BASE_URL, type BooksOverview } from "./api";
+import { API_BASE_URL, type BookYear, type BooksOverview } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
@@ -13,6 +13,18 @@ export const getBooksOverview = cache(async (): Promise<BooksOverview | null> =>
   if (!accessToken) return null;
   try {
     const res = await customerApi.get<BooksOverview>(`${API_BASE_URL}/api/books`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
+  }
+});
+
+// Library › Dashboard's year; null when there is nothing to read.
+export const getBookYear = cache(async (year: number): Promise<BookYear | null> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+  try {
+    const res = await customerApi.get<BookYear>(`${API_BASE_URL}/api/books/year`, { headers: { Authorization: `Bearer ${accessToken}` }, params: { year } });
     return res.data;
   } catch (error) {
     return emptyUnlessOutage(error, null);

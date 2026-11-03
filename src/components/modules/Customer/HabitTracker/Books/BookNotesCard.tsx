@@ -73,10 +73,12 @@ export function BookNotesCard({ book, notes, today }: BookNotesCardProps) {
   const added = (note: BookNote) => (toDateInputValue(note.createdAt) === today ? t("Added today") : t("Added {date}", { date: instantText(note.createdAt, fmt) }));
 
   return (
-    <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4.5">
+    <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-[14px] px-4.5 py-3.5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="min-w-0 truncate text-title font-semibold text-ink">{t("Notes from {title}", { title: book.title })}</h2>
-        <span className="shrink-0 text-[12.5px] text-ink-muted">{t(notes.length === 1 ? "{count} note" : "{count} notes", { count: count(notes.length) })}</span>
+        <h2 className="shrink-0 text-[15px] font-semibold text-ink">{t("Notes")}</h2>
+        <span title={t(notes.length === 1 ? "{count} note" : "{count} notes", { count: count(notes.length) })} className="min-w-0 truncate text-[12.5px] text-ink-muted">
+          {book.title}
+        </span>
       </div>
       {notes.length === 0 ? (
         <p className="text-small text-ink-muted">{t("Keep the lines you like and your thoughts as you read.")}</p>
@@ -103,7 +105,7 @@ export function BookNotesCard({ book, notes, today }: BookNotesCardProps) {
         </button>
       )}
       <form onSubmit={add} className="mt-auto flex gap-2">
-        <Input size="sm" value={text} onChange={(event) => setText(event.target.value)} maxLength={500} placeholder={t("Write a note or a line you liked…")} aria-label={t("New note")} frameClassName="min-w-0 flex-1 px-3 pointer-coarse:h-11" />
+        <Input size="sm" value={text} onChange={(event) => setText(event.target.value)} maxLength={500} placeholder={t("A line you liked…")} aria-label={t("New note")} frameClassName="min-w-0 flex-1 px-3 pointer-coarse:h-11" />
         <Input size="sm" inputMode="numeric" value={page} onChange={(event) => setPage(latinDigits(event.target.value).replace(/\D/g, "").slice(0, 5))} placeholder={t("Page")} aria-label={t("Page")} aria-invalid={pageNumber !== null && pageNumber > book.totalPages} frameClassName="w-18 px-2.5 pointer-coarse:h-11" />
         <Button type="submit" variant="soft" size="sm" disabled={!valid || isPending} className="h-9.5 px-3.5 pointer-coarse:h-11">
           {t("Add")}
