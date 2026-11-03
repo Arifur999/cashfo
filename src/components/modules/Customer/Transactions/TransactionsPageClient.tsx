@@ -82,8 +82,8 @@ const COLUMNS = "md:grid-cols-[40px_100px_minmax(12rem,1fr)_140px_96px] xl:grid-
 const LIST_ID = "transactions-list";
 const PHONE_LIST_ID = "transactions-list-phone";
 
-// The board's round icon buttons: edit in ink, delete in red.
-const ROW_ACTION = "flex size-11 items-center justify-center rounded-full";
+// The board's square icon buttons in a line: edit in ink, delete in red.
+const ROW_ACTION = "flex size-8.5 items-center justify-center rounded-[8px] border border-line bg-surface pointer-coarse:size-11";
 
 // Income & Expense > Transactions (the Transactions board): the totals
 // strip, the filters with the period and Print, and the list grouped by day

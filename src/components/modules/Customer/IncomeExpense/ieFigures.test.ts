@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { budgetHref, budgetState, categoryName, daysLeft, donutGradient, monthHref, monthRange, oneDecimal, percentOf, planMatches, readMonth, savingsRate, transactionsHref } from "./ieFigures";
+import { budgetHref, budgetState, categoryName, daysLeft, donutGradient, oneDecimal, percentOf, planMatches, planMonthToShow, readMonth, savingsRate, transactionsHref } from "./ieFigures";
 
 const NOW = { month: 10, year: 2026 };
 
@@ -16,15 +16,27 @@ describe("readMonth", () => {
   });
 });
 
-describe("monthRange and monthHref", () => {
-  it("gives a month's first and last day, leap years included", () => {
-    expect(monthRange(2026, 10)).toEqual({ dateFrom: "2026-10-01", dateTo: "2026-10-31" });
-    expect(monthRange(2028, 2)).toEqual({ dateFrom: "2028-02-01", dateTo: "2028-02-29" });
+describe("planMonthToShow", () => {
+  const plans = [
+    { month: 11, year: 2026, id: "a" },
+    { month: 10, year: 2026, id: "b" },
+    { month: 8, year: 2026, id: "c" },
+  ];
+
+  it("shows the month asked for when it has a plan", () => {
+    expect(planMonthToShow(plans, { month: 8, year: 2026 }, NOW, true)).toEqual({ shown: { month: 8, year: 2026 }, missing: null });
   });
 
-  it("leaves this month out of the address and drops the page", () => {
-    expect(monthHref("/income-expense", { month: "9", year: "2026" }, 10, 2026, NOW)).toBe("/income-expense");
-    expect(monthHref("/transactions", { type: "EXPENSE", page: "3" }, 9, 2026, NOW)).toBe("/transactions?type=EXPENSE&month=9&year=2026");
+  it("falls back to this month's plan, and names a month the address asked for", () => {
+    expect(planMonthToShow(plans, { month: 9, year: 2026 }, NOW, true)).toEqual({ shown: { month: 10, year: 2026 }, missing: { month: 9, year: 2026 } });
+  });
+
+  it("falls back to the newest plan without a word when nothing was named", () => {
+    expect(planMonthToShow(plans.filter((plan) => plan.month !== 10), NOW, NOW, false)).toEqual({ shown: { month: 11, year: 2026 }, missing: null });
+  });
+
+  it("shows nothing when no month has a plan", () => {
+    expect(planMonthToShow([], { month: 9, year: 2026 }, NOW, true)).toEqual({ shown: null, missing: null });
   });
 });
 

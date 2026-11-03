@@ -18,27 +18,18 @@ export function readMonth(params: Params, fallback: { month: number; year: numbe
   return m >= 1 && m <= 12 && y >= 2000 && y <= 2100 ? { month: m, year: y } : null;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
 const lastDayOf = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
 
-// A month's first and last day, as the API's date filters take them.
-export function monthRange(year: number, month: number): { dateFrom: string; dateTo: string } {
-  return { dateFrom: `${year}-${pad(month)}-01`, dateTo: `${year}-${pad(month)}-${pad(lastDayOf(year, month))}` };
-}
-
-// The same page for another month, the rest of its address kept.
-export function monthHref(pathname: string, params: Params, month: number, year: number, current: { month: number; year: number }): string {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || key === "month" || key === "year" || key === "page") continue;
-    for (const item of Array.isArray(value) ? value : [value]) query.append(key, item);
-  }
-  if (month !== current.month || year !== current.year) {
-    query.set("month", String(month));
-    query.set("year", String(year));
-  }
-  const text = query.toString();
-  return text ? `${pathname}?${text}` : pathname;
+// Budget Planning's month (design: Budget): the one asked for when it has a
+// plan, else this month's plan, else the newest (`plans` come newest
+// first). `missing` is a month the address named that has none, for the
+// "There is no plan for ... yet" line. No plans at all: nothing to show.
+export function planMonthToShow(plans: YearMonth[], asked: YearMonth, current: YearMonth, named: boolean): { shown: YearMonth | null; missing: YearMonth | null } {
+  const has = (m: YearMonth) => plans.some((plan) => plan.month === m.month && plan.year === m.year);
+  if (plans.length === 0) return { shown: null, missing: null };
+  if (has(asked)) return { shown: asked, missing: null };
+  const shown = has(current) ? current : plans[0];
+  return { shown: { month: shown.month, year: shown.year }, missing: named ? asked : null };
 }
 
 // A list page for a period: this month (its own) written as nothing, all
