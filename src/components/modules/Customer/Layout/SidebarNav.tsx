@@ -42,6 +42,7 @@ import { MosqueIcon } from "@/components/smartly/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { findNavLocation, menuSections, NAV_SECTIONS, navAppFor, visibleNavSections, type NavApp, type NavIcon, type NavItem, type NavLocation, type NavSection } from "@/lib/customer/nav";
 import { leafHref } from "@/lib/customer/paletteMatch";
+import { HABITS_CHANGED } from "@/lib/customer/habitsEvents";
 import { getHabitsTodayCountAction } from "@/lib/customer/shellActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -206,6 +207,13 @@ export function useExpandedGroups(location: NavLocation | null) {
 function useHabitsToday(enabled: boolean): { done: number; total: number } | null {
   const pathname = usePathname();
   const [count, setCount] = useState<{ done: number; total: number } | null>(null);
+  // Bumped by a tick anywhere on the page.
+  const [ticks, setTicks] = useState(0);
+  useEffect(() => {
+    const onTick = () => setTicks((value) => value + 1);
+    window.addEventListener(HABITS_CHANGED, onTick);
+    return () => window.removeEventListener(HABITS_CHANGED, onTick);
+  }, []);
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
@@ -217,7 +225,7 @@ function useHabitsToday(enabled: boolean): { done: number; total: number } | nul
     return () => {
       cancelled = true;
     };
-  }, [enabled, pathname]);
+  }, [enabled, pathname, ticks]);
   return enabled ? count : null;
 }
 

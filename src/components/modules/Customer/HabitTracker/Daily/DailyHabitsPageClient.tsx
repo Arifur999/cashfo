@@ -1,58 +1,50 @@
 "use client";
 
-import { ArchiveRestore, Check, ChevronLeft, ChevronRight, Flame, Minus, Moon, Plus } from "lucide-react";
+import { ArchiveRestore, ChartColumn, Check, ChevronLeft, ChevronRight, Minus, Moon, Plus } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createElement, useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Button from "@/components/smartly/Button";
 import EmptyState from "@/components/smartly/EmptyState";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListGroupRow, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowButton } from "@/components/smartly/list";
-import LoadMore from "@/components/smartly/LoadMore";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
+import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Habit } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
-import { categoryTone } from "@/lib/customer/categoryTone";
-import { actionError, completionRate, countStep, countsOn, dayMark, dayText, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, ruleLine, shiftDay, streakText, streakWord, WEEKDAY_INITIAL, weekdayOf, weekOf } from "@/lib/customer/habitDisplay";
+import { categoryColorVar, categoryTone } from "@/lib/customer/categoryTone";
+import { actionError, amountLabel, completionRate, countStep, countsOn, dayMark, dayText, habitStart, lastDays, perfectDays, plannedCount, ruleLabel, ruleLine, shiftDay, streakText, weekOf } from "@/lib/customer/habitDisplay";
 import { checkInHabitAction, removeCheckInAction, updateHabitAction } from "@/lib/customer/habitsActions";
+import { announceHabitsChanged } from "@/lib/customer/habitsEvents";
 import { formatCount } from "@/lib/i18n/digits";
 import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { AmountPopover } from "../Tracker/AmountPopover";
 import { useReminderBook } from "../Reminders";
+import { AmountPopover } from "../Tracker/AmountPopover";
 import { CloseButton } from "../Tracker/PanelParts";
-import { StatCard } from "../Tracker/StatCard";
 import type { DailyHabitsData } from "./dailyTypes";
 import { HabitDetailPanel } from "./HabitDetailPanel";
 import { HabitDrawer } from "./HabitDrawer";
 
-// The board's columns: the week's seven 18px dots spread over 160px, the
-// streak's 70px (its widest word is "weeks"), the 30 days' 56px, and
-// Today's 140px, which holds "2 of 3 this week" and its tick.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_160px_70px_56px_140px] md:gap-x-3.5";
-const LIST_ID = "daily-habits";
-// Two stat cards side by side on a phone are ~175px each: a tighter inset.
-const STAT_PHONE = "max-md:px-4 max-md:py-3";
-// A smaller figure on phones, so a Bangla "x of y" fits one line of a 2x2 tile.
-const STAT_PHONE_VALUE = "max-md:text-h3";
-// A long list grows 50 rows at a time.
-const STEP = 50;
-// The habit's month sits beside the list from 1400px. The row's fixed
-// columns and inset take 548px, so any narrower and the 340px panel leaves
-// the names no room (at 1280 the name column is under 45px); below it the
-// month opens in a bottom sheet. Keep in step with the min-[1400px] and
-// max-[1400px] classes below.
-const SIDE_PANEL = "(min-width: 1400px)";
+// The habit's month sits beside the cards from 1280px, as the board lays
+// it out (two columns of cards and the 340px panel); narrower, a card
+// opens its month in a bottom sheet. Keep in step with the xl classes below.
+const SIDE_PANEL = "(min-width: 1280px)";
+const RING = 2 * Math.PI * 26;
+
+type Tab = "all" | "todo" | "done";
 
 // A habit's log on the day shown: the server's, or a tap's until it lands.
 type DayLog = { completed: boolean; value: number | null; note: string | null };
 
-// Daily habits: every habit with its week, streak and 30-day rate, ticked
-// off (or counted up) for the day being viewed, with one habit's month on
-// the side (in a bottom sheet below 1400px, where the side has no room).
+// Daily habits (the DailyHabits board): the day's progress in a banner,
+// every habit as a card with its week, streak and 30-day rate, ticked off
+// (or counted up) for the day being viewed, and one habit's month on the
+// side (in a bottom sheet where the side has no room).
 export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const { t, fmt } = useLocale();
   const router = useRouter();
@@ -65,9 +57,9 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [drawer, setDrawer] = useState<{ open: boolean; editing: Habit | null }>({ open: false, editing: null });
-  const [showArchived, setShowArchived] = useState(false);
-  const [shown, setShown] = useState(STEP);
-  // Rows with a request in flight wait on their own; the others stay live.
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("all");
+  // Cards with a request in flight wait on their own; the others stay live.
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [, startTransition] = useTransition();
   const [tapped, applyLog] = useOptimistic<Record<string, DayLog | null>, { id: string; log: DayLog | null }>({}, (current, update) => ({ ...current, [update.id]: update.log }));
@@ -86,7 +78,6 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const streakOf = (habit: Habit) => todayRows.find((r) => r.id === habit.id)?.streak ?? stats.find((s) => s.habitId === habit.id)?.currentStreak ?? 0;
 
   const planned = active.filter((h) => countsOn(h, logs, day));
-  const resting = active.length - planned.length;
   const done = planned.filter((h) => logFor(h)?.completed);
   const open = planned.filter((h) => !logFor(h)?.completed);
   const week = weekOf(day, fmt);
@@ -96,13 +87,14 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const done30 = logs.filter((l) => l.completed && last30.includes(l.date.slice(0, 10)) && active.some((h) => h.id === l.habitId)).length;
   const perfect = perfectDays(active, logs, last30);
   const selected = active.find((h) => h.id === selectedId) ?? planned[0] ?? active[0] ?? null;
+  const pct = planned.length > 0 ? Math.round((done.length / planned.length) * 100) : 0;
 
   // A new day shows its own month in the panel.
   function goTo(nextDay: string) {
     router.push(nextDay === today ? "/habit-tracker/daily" : `/habit-tracker/daily?day=${nextDay}`);
   }
 
-  // The panel's month alone; the day's list stays put.
+  // The panel's month alone; the day's cards stay put.
   function goToMonth(month: string) {
     const query = new URLSearchParams();
     if (!isToday) query.set("day", day);
@@ -126,8 +118,10 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     startTransition(async () => {
       applyLog({ id: habit.id, log });
       const result = await action();
-      if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to check in", t, fmt));
+      if (result.success) {
+        router.refresh();
+        announceHabitsChanged();
+      } else toast.error(actionError(result.message, "Failed to check in", t, fmt));
       setBusy((prev) => {
         const rest = new Set(prev);
         rest.delete(habit.id);
@@ -159,8 +153,11 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     setBusy((prev) => new Set(prev).add(habit.id));
     startTransition(async () => {
       const result = await updateHabitAction(habit.id, { isArchived: false });
-      if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to bring the habit back", t, fmt));
+      if (result.success) {
+        toast.success(t("{name} is back", { name: habit.name }));
+        router.refresh();
+        announceHabitsChanged();
+      } else toast.error(actionError(result.message, "Failed to bring the habit back", t, fmt));
       setBusy((prev) => {
         const rest = new Set(prev);
         rest.delete(habit.id);
@@ -174,16 +171,25 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     if (!wide) setSheetOpen(true);
   }
 
-  const openLine = (() => {
-    if (planned.length === 0) return isToday ? t("Nothing planned today") : t("Nothing planned that day");
-    if (open.length === 0) return t("Everything planned is done");
-    if (open.length === 1) return t("{name} is still open", { name: open[0].name });
-    if (open.length === 2) return t("{first} and {second} are still open", { first: open[0].name, second: open[1].name });
-    return t("{first}, {second} and {count} more are still open", { first: open[0].name, second: open[1].name, count: count(open.length - 2) });
-  })();
-  const dayShort = dayText(day, fmt, "dayMonth");
+  const heroTitle =
+    planned.length === 0
+      ? t(isToday ? "Nothing planned today" : "Nothing planned that day")
+      : open.length === 0
+        ? t(isToday ? "All done for today 🎉" : "Everything planned was done")
+        : t(isToday ? "{done} of {total} done today" : "{done} of {total} done that day", { done: count(done.length), total: count(planned.length) });
+  const heroSub =
+    planned.length === 0
+      ? t("Rest, or add a habit for days like this.")
+      : open.length === 0
+        ? t("Every habit planned for the day is ticked off.")
+        : t("{count} still to go: {names}", { count: count(open.length), names: open.map((h) => h.name).join(", ") });
+  const chips = [
+    { label: t("Longest streak"), value: longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, fmt) : "—" },
+    { label: redigit(t("Last 30 days"), fmt), value: planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—" },
+    { label: t("Perfect days"), value: t("{done} of {total}", { done: count(perfect), total: count(30) }) },
+  ];
 
-  const visible = active.slice(0, shown);
+  const shown = tab === "todo" ? open : tab === "done" ? done : active;
   const panel = (inSheet: boolean) =>
     selected && (
       <HabitDetailPanel
@@ -193,6 +199,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         month={panelMonth}
         bestLogs={bestLogs}
         monthLogs={panelLogs}
+        logs={logs}
         streak={streakOf(selected)}
         bestStreak={stats.find((s) => s.habitId === selected.id)?.bestStreak}
         note={isToday ? (logFor(selected)?.note ?? null) : null}
@@ -206,7 +213,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
       />
     );
 
-  const row = (habit: Habit) => {
+  const card = (habit: Habit) => {
     const log = logFor(habit);
     const tone = categoryTone(habit.color);
     const rule = ruleLabel(habit, t, fmt);
@@ -216,124 +223,122 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
     const rest = !countsOn(habit, logs, day);
     const streak = streakOf(habit);
     const rate = completionRate(habit, logs, last30.filter((d) => d >= habitStart(habit, logs)), fmt);
-    const on = !habit.isArchived && selected?.id === habit.id;
-    // Marked only while its month can be seen: beside the list, or in the
-    // sheet. Below 1400px the first habit is picked, not yet shown.
+    const on = selected?.id === habit.id;
+    // Marked only while its month can be seen: beside the cards, or in the sheet.
     const lit = on && (wide || sheetOpen);
     const value = log?.value ?? 0;
     const waiting = busy.has(habit.id);
-    // "A few times a week": how the week stands, beside the tick (under the
-    // name on a phone). The day on show counts by its tick, a tap's included.
-    const weekDone = logs.filter((l) => l.habitId === habit.id && l.completed && l.date.slice(0, 10) !== day && week.includes(l.date.slice(0, 10))).length + (log?.completed ? 1 : 0);
-    const weekly = habit.frequencyType === "WEEKLY_COUNT" && !habit.isArchived && !rest && !counted ? t("{done} of {total} this week", { done: count(weekDone), total: count(habit.weeklyCount ?? 1) }) : null;
-    const name = (
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-body font-semibold text-ink">{habit.name}</span>
-        <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">
-          {[ruleLine(habit, t, fmt), habit.isArchived ? t("archived") : null].filter(Boolean).join(" · ")}
-        </span>
-        {weekly && <span className="truncate text-caption text-ink-muted sm:hidden">{weekly}</span>}
-      </span>
-    );
+    const isDone = !!log?.completed;
+    // "3 times a week · 2 of 3 done": how the week stands, the day on show by its tick.
+    const weekDone = logs.filter((l) => l.habitId === habit.id && l.completed && l.date.slice(0, 10) !== day && week.includes(l.date.slice(0, 10))).length + (isDone ? 1 : 0);
+    const line = habit.frequencyType === "WEEKLY_COUNT" && !counted ? `${ruleLine(habit, t, fmt)} · ${t("{done} of {total} done", { done: count(weekDone), total: count(habit.weeklyCount ?? 1) })}` : ruleLine(habit, t, fmt);
     return (
-      <ListRow key={habit.id} columns={COLUMNS} density="relaxed" selected={lit} muted={habit.isArchived} aria-busy={waiting || undefined}>
-        {lit && <span aria-hidden="true" className={cn("absolute top-2.5 bottom-2.5 left-0 w-0.75 rounded-r-[3px] bg-current", tone.fg)} />}
-        <ListCell className="flex min-w-0 items-center gap-3">
-          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-field [&_svg]:size-4.5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
-          {habit.isArchived ? (
-            name
-          ) : (
-            // Beside the list the row picks the panel's habit (pressed or
-            // not); narrower, it opens the month in a sheet.
-            <ListRowButton aria-pressed={wide ? on : undefined} aria-haspopup={wide ? undefined : "dialog"} aria-label={t("Show {name}'s month", { name: habit.name })} onClick={() => select(habit)} className="min-w-0">
-              {name}
-            </ListRowButton>
-          )}
-        </ListCell>
-        <ListCell className="hidden md:block">
-          <span role="img" aria-label={t("{name}: this week", { name: habit.name })} className="flex justify-between px-0.5">
-            {week.map((d) => {
-              const mark = habit.isArchived ? "rest" : dayMark(habit, logs, d, today);
-              // The day on show follows its log, a tap's included.
-              const doneDay = d === day && log ? log.completed : mark === "done";
-              return (
-                <span key={d} title={`${dayText(d, fmt, "short")}: ${t(doneDay ? "done" : mark === "missed" ? "missed" : mark === "open" ? "still open" : mark === "future" ? "not yet" : "not planned")}`} className={cn("flex size-4.5 items-center justify-center rounded-full", doneDay ? cn("bg-current", tone.fg) : mark === "missed" ? "bg-expense-line" : mark === "open" ? cn("border-[1.5px] border-dashed border-current", tone.fg) : "border-[1.5px] border-line bg-surface")}>
-                  {doneDay && <Check className="size-2.5 text-surface" strokeWidth={3} aria-hidden="true" />}
-                </span>
-              );
-            })}
-          </span>
-        </ListCell>
-        <ListCell className="hidden flex-col gap-px md:flex">
-          <span className="flex items-center gap-1 text-body font-bold text-ink tabular-nums">
-            <Flame className="size-3.25 text-orange-fill" aria-hidden="true" />
-            {count(streak)}
-          </span>
-          <span className="text-[11.5px] leading-[normal] font-normal text-ink-muted">{t(streakWord(habit, streak))}</span>
-        </ListCell>
-        <ListCell align="end" className={cn("hidden text-body font-semibold tabular-nums md:block", rate === null ? "text-ink-muted" : rate >= 80 ? "text-income" : "text-warning")}>
-          {rate === null ? "—" : `${count(rate)}%`}
-        </ListCell>
-        <ListRowActions>
-          {habit.isArchived ? (
-            <Button variant="outline" size="sm" onClick={() => restore(habit)} disabled={waiting} className="h-8 gap-1 px-3 text-small pointer-coarse:h-11">
-              <ArchiveRestore className="size-4" />
-              {t("Bring back")}
-            </Button>
-          ) : rest ? (
-            <span title={rule.days} className="flex h-7.5 items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] leading-[normal] font-semibold text-ink-soft">
+      <li
+        key={habit.id}
+        aria-busy={waiting || undefined}
+        style={lit ? { borderColor: categoryColorVar(habit.color) } : undefined}
+        className={cn("relative flex flex-col gap-2.5 rounded-[12px] border-[1.5px] p-3.5 transition-colors", lit ? "" : isDone ? "border-divider bg-strip" : "border-line bg-surface hover:border-line-strong")}
+      >
+        <div className="flex items-center gap-3">
+          <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[11px] [&_svg]:size-5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
+          {/* The whole card picks the habit for the panel; its buttons sit above. */}
+          <button
+            type="button"
+            onClick={() => select(habit)}
+            aria-pressed={wide ? on : undefined}
+            aria-haspopup={wide ? undefined : "dialog"}
+            aria-label={t("Show {name}'s month", { name: habit.name })}
+            className="flex min-w-0 flex-1 flex-col gap-px text-left after:absolute after:inset-0 after:rounded-[12px] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-focus-ring"
+          >
+            <span className="truncate text-[15px] font-semibold text-ink">{habit.name}</span>
+            <span className="truncate text-[12.5px] text-ink-muted">{line}</span>
+          </button>
+          {rest ? (
+            <span title={rule.days} className="relative z-10 flex h-7.5 shrink-0 items-center gap-1.5 rounded-full bg-surface-sunken px-3 text-[12.5px] font-semibold text-ink-soft">
               <Moon className="size-3.25 text-ink-muted" strokeWidth={2.25} aria-hidden="true" />
               {t("Rest day")}
             </span>
-          ) : counted ? (
-            <span className={cn("flex flex-col items-end gap-1", waiting && "opacity-70")}>
-              <span className="flex items-center gap-1.5">
-                <button type="button" onClick={() => setCount(habit, value - step)} disabled={waiting || value === 0} aria-label={step === 1 ? t("One less: {name}", { name: habit.name }) : t("{count} less: {name}", { count: count(step), name: habit.name })} className="flex size-7.5 items-center justify-center rounded-sm border border-input bg-surface text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
-                  <Minus className="size-3.5" aria-hidden="true" />
-                </button>
-                <AmountPopover name={habit.name} value={value} target={target} unit={habit.unit} disabled={waiting} onSave={(next) => setCount(habit, next)} triggerClassName="flex h-7.5 min-w-11 items-center justify-center px-1 text-center text-body font-bold text-ink pointer-coarse:h-11">
-                  {count(value)} / {count(target)}
-                </AmountPopover>
-                <button type="button" onClick={() => setCount(habit, value + step)} disabled={waiting} aria-label={step === 1 ? t("One more: {name}", { name: habit.name }) : t("{count} more: {name}", { count: count(step), name: habit.name })} className={cn("flex size-7.5 items-center justify-center rounded-sm bg-current disabled:opacity-60 pointer-coarse:size-11", tone.fg)}>
-                  <Plus className="size-3.5 text-surface" aria-hidden="true" />
-                </button>
-              </span>
-              <span className={cn("block h-1 w-27.5 overflow-hidden rounded-full", tone.bg)}>
-                <span className={cn("block h-full bg-current", tone.fg)} style={{ width: `${Math.min(100, (value / target) * 100)}%` }} />
-              </span>
-            </span>
           ) : (
-            <span className="flex items-center gap-2.5">
-              {weekly && <span className="text-caption font-normal whitespace-nowrap text-ink-muted max-sm:hidden">{weekly}</span>}
-              <button type="button" onClick={() => toggle(habit)} disabled={waiting} aria-pressed={!!log?.completed} aria-label={log?.completed ? t("{name}, done. Tap to undo", { name: habit.name }) : t("Mark {name} as done", { name: habit.name })} className={cn("flex size-9 items-center justify-center rounded-full transition-colors pointer-coarse:size-11", log?.completed ? "bg-emerald text-on-action" : "border-[1.5px] border-input bg-surface text-ink-faint hover:border-emerald hover:text-emerald", waiting && "opacity-70")}>
-                <Check className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
+            !counted && (
+              <button
+                type="button"
+                onClick={() => toggle(habit)}
+                disabled={waiting}
+                aria-pressed={isDone}
+                aria-label={isDone ? t("{name}, done. Tap to undo", { name: habit.name }) : t("Mark {name} as done", { name: habit.name })}
+                style={isDone ? { backgroundColor: categoryColorVar(habit.color) } : undefined}
+                className={cn("relative z-10 flex size-11 shrink-0 items-center justify-center rounded-full transition-colors", isDone ? "text-surface" : "border-2 border-input bg-surface text-ink-faint hover:border-emerald hover:text-emerald", waiting && "opacity-70")}
+              >
+                <Check className="size-5" strokeWidth={2.75} aria-hidden="true" />
               </button>
-            </span>
+            )
           )}
-        </ListRowActions>
-      </ListRow>
+        </div>
+
+        {counted && !rest && (
+          <div className={cn("relative z-10 flex items-center gap-2.5", waiting && "opacity-70")}>
+            <button type="button" onClick={() => setCount(habit, value - step)} disabled={waiting || value === 0} aria-label={step === 1 ? t("One less: {name}", { name: habit.name }) : t("{count} less: {name}", { count: count(step), name: habit.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-[9px] border border-input bg-surface text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
+              <Minus className="size-4" aria-hidden="true" />
+            </button>
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
+              <AmountPopover name={habit.name} value={value} target={target} unit={habit.unit} disabled={waiting} onSave={(next) => setCount(habit, next)} triggerClassName="w-fit text-left text-small font-bold text-ink tabular-nums hover:underline">
+                {t("{done} of {total}", { done: count(value), total: amountLabel(target, habit.unit, t, fmt) })}
+              </AmountPopover>
+              <span className="block h-1.5 overflow-hidden rounded-full bg-line">
+                <span className="block h-full" style={{ width: `${Math.min(100, (value / target) * 100)}%`, backgroundColor: categoryColorVar(habit.color) }} />
+              </span>
+            </span>
+            <button type="button" onClick={() => setCount(habit, value + step)} disabled={waiting} aria-label={step === 1 ? t("One more: {name}", { name: habit.name }) : t("{count} more: {name}", { count: count(step), name: habit.name })} style={{ backgroundColor: categoryColorVar(habit.color) }} className="flex size-8.5 shrink-0 items-center justify-center rounded-[9px] text-surface disabled:opacity-60 pointer-coarse:size-11">
+              <Plus className="size-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2">
+          <span role="img" aria-label={t("{name}: this week", { name: habit.name })} className="flex gap-1">
+            {week.map((d) => {
+              const mark = dayMark(habit, logs, d, today);
+              // The day on show follows its log, a tap's included.
+              const doneDay = d === day && log ? log.completed : mark === "done";
+              const word = doneDay ? "done" : mark === "missed" ? "missed" : mark === "open" ? "still open" : mark === "future" ? "not yet" : "not planned";
+              return (
+                <span
+                  key={d}
+                  title={`${dayText(d, fmt, "short")}: ${t(word)}`}
+                  style={doneDay ? { backgroundColor: categoryColorVar(habit.color) } : mark === "open" ? { borderColor: categoryColorVar(habit.color) } : undefined}
+                  className={cn("size-3.5 rounded-[4px]", doneDay ? "" : mark === "missed" ? "bg-expense-soft" : mark === "open" ? "border-[1.5px] border-dashed" : "border-[1.5px] border-line bg-surface")}
+                />
+              );
+            })}
+          </span>
+          <span className="flex items-center gap-2.5 text-[12.5px]">
+            <span className="font-bold text-orange-fill">🔥 {streakText(habit, streak, t, fmt)}</span>
+            <span className={cn("font-semibold tabular-nums", rate === null ? "text-ink-muted" : rate >= 80 ? "text-income" : "text-warning-ink")}>{rate === null ? "—" : `${count(rate)}%`}</span>
+          </span>
+        </div>
+      </li>
     );
   };
 
+  const dayLabel = isToday ? t("Today, {date}", { date: dayText(day, fmt, "short") }) : dayText(day, fmt, "short");
+
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-3.5 md:pt-7">
       <PageHeader
-        eyebrow={t("Habits")}
-        tone="habits"
         title={t("Daily habits")}
-        description={t("Small things you repeat. Tick them off as you go and the streaks build on their own.")}
+        description={t("Tick them off as you go. Streaks build on their own.")}
         actions={
           <>
             <div role="group" aria-label={t("Day")} className="relative flex h-10 items-center overflow-hidden rounded-sm border border-input bg-surface pointer-coarse:h-11">
               <button type="button" onClick={() => goTo(shiftDay(day, -1))} aria-label={t("Previous day")} className="flex h-full w-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:w-11">
                 <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
-              <button type="button" onClick={openPicker} aria-label={t("Pick a day: {day}", { day: dayText(day, fmt, "full") })} className="flex h-full items-center px-2.5 text-body font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
-                {isToday ? t("Today, {date}", { date: dayText(day, fmt, "short") }) : dayText(day, fmt, "short")}
+              <button type="button" onClick={openPicker} aria-label={t("Pick a day: {day}", { day: dayText(day, fmt, "full") })} className="flex h-full min-w-37.5 items-center justify-center px-2.5 text-body font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
+                {dayLabel}
               </button>
               {/* The browser's own date picker; the button above opens it. */}
               <input ref={picker} type="date" value={day} max={today} onChange={(event) => event.target.value && event.target.value <= today && goTo(event.target.value)} aria-label={t("Pick a day: {day}", { day: dayText(day, fmt, "full") })} tabIndex={-1} className="sr-only" />
-              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex h-full w-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken disabled:cursor-not-allowed disabled:text-input pointer-coarse:w-11">
+              <button type="button" disabled={isToday} onClick={() => goTo(shiftDay(day, 1))} aria-label={t("Next day")} className="flex h-full w-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-35 pointer-coarse:w-11">
                 <ChevronRight className="size-4" aria-hidden="true" />
               </button>
             </div>
@@ -342,6 +347,12 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
                 {t("Back to today")}
               </Button>
             )}
+            <Button variant="secondary" className="rounded-sm pointer-coarse:h-11" asChild>
+              <Link href={`/habit-tracker/daily/report?month=${day.slice(0, 7)}`}>
+                <ChartColumn strokeWidth={2} />
+                {t("Monthly report")}
+              </Link>
+            </Button>
             <Button onClick={() => setDrawer({ open: true, editing: null })} className="rounded-sm pointer-coarse:h-11">
               <Plus strokeWidth={2.25} />
               {t("Add habit")}
@@ -350,87 +361,78 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         }
       />
 
-      {/* Two by two on a phone, so the habits start on the first screen. */}
-      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={isToday ? t("Done today") : t("Done on {date}", { date: dayShort })} value={t("{done} of {total}", { done: count(done.length), total: count(planned.length) })} sub={<span className="block truncate">{openLine}</span>} />
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Longest streak now")} value={longest && longest.streak > 0 ? streakText(longest.habit, longest.streak, t, fmt) : "—"} sub={<span className="block truncate">{longest && longest.streak > 0 ? longest.habit.name : t("Tick a habit two days running")}</span>} />
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={redigit(t("Last 30 days"), fmt)} value={planned30 > 0 ? `${count(Math.min(100, Math.round((done30 / planned30) * 100)))}%` : "—"} sub={t("{done} of {total} planned check-ins", { done: count(done30), total: count(planned30) })} />
-        <StatCard className={STAT_PHONE} valueClassName={STAT_PHONE_VALUE} label={t("Perfect days")} value={t("{done} of {total}", { done: count(perfect), total: count(30) })} sub={t("Every planned habit done")} />
-      </div>
+      <section aria-label={isToday ? t("Today") : dayLabel} className="flex flex-wrap items-center gap-x-5.5 gap-y-3 rounded-[14px] bg-linear-to-br from-emerald to-forest px-5.5 py-4 text-white shadow-[0_8px_24px_rgba(15,118,110,0.25)] dark:text-on-action">
+        <span role="img" aria-label={t("{pct}% done", { pct: count(pct) })} className="relative size-16 shrink-0">
+          <svg viewBox="0 0 64 64" className="size-16 -rotate-90" aria-hidden="true">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" strokeOpacity="0.22" strokeWidth="6" />
+            <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${(pct / 100) * RING} ${RING}`} />
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center text-[15px] font-bold tabular-nums">{count(pct)}%</span>
+        </span>
+        <div className="flex min-w-0 flex-1 basis-60 flex-col gap-0.75">
+          <span className="text-[22px] leading-tight font-bold">{heroTitle}</span>
+          <span className="text-small opacity-90">{heroSub}</span>
+        </div>
+        <div className="grid w-full grid-cols-3 gap-2.5 sm:w-auto">
+          {chips.map((chip) => (
+            <div key={chip.label} className="flex min-w-0 flex-col gap-px rounded-[12px] border border-white/20 bg-white/12 px-3.5 py-2.25 sm:w-32">
+              <span className="truncate text-caption opacity-85">{chip.label}</span>
+              <span className="truncate text-[19px] font-bold tabular-nums">{chip.value}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {habits.length === 0 ? (
         <EmptyState icon={<Check />} tone="habits" title={t("No habit yet")} description={t("Drink water, a morning walk, ten minutes of Quran: add the small things you want to repeat.")} action={<Button onClick={() => setDrawer({ open: true, editing: null })}>{t("Add habit")}</Button>} />
       ) : (
-        <div className="grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_340px]">
-          <ListCard
-            id={LIST_ID}
-            className="rounded-md"
-            label={t("Your habits")}
-            header={
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-3.5 md:px-5">
-                <h2 className="text-title leading-[normal] font-semibold text-ink">{t("Your habits")}</h2>
-                <span className="text-[12.5px] leading-[normal] text-ink-muted">
-                  {[t(isToday ? "{count} planned today" : "{count} planned that day", { count: count(planned.length) }), resting > 0 ? t("{count} resting", { count: count(resting) }) : null].filter(Boolean).join(" · ")}
-                </span>
-              </div>
-            }
-            footer={
-              <ListFooter>
-                {active.length > STEP && <LoadMore shown={Math.min(shown, active.length)} total={active.length} step={STEP} onMore={() => setShown((value) => value + STEP)} onLess={shown >= active.length ? () => setShown(STEP) : undefined} focusTargetId={LIST_ID} />}
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-caption font-normal text-ink-soft">
-                    <span className="flex items-center gap-1">
-                      <span className="size-2.5 rounded-full bg-emerald" /> {t("Done")}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="size-2.5 rounded-full bg-expense-line" /> {t("Missed")}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="size-2.5 rounded-full border-[1.5px] border-line bg-surface" /> {t("Not planned")}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="size-2.5 rounded-full border-[1.5px] border-dashed border-line-strong" /> {t("Still open today")}
-                    </span>
-                  </span>
-                  {archived.length > 0 && (
-                    <button type="button" aria-expanded={showArchived} onClick={() => setShowArchived(!showArchived)} className="flex min-h-9 items-center text-small font-semibold text-ink-soft hover:text-ink pointer-coarse:min-h-11">
-                      {showArchived ? t("Hide archived") : t("Archived habits ({count})", { count: count(archived.length) })}
-                    </button>
-                  )}
-                </div>
-              </ListFooter>
-            }
-          >
-            <ListHead columns={COLUMNS}>
-              <ListHeadCell>{t("Habit")}</ListHeadCell>
-              <ListHeadCell aria-label={t("This week")} className="flex justify-between px-0.5">
-                {week.map((d) => (
-                  <span key={d} aria-hidden="true" className={cn("w-4.5 text-center", d === day && "font-bold text-emerald")}>
-                    {t(WEEKDAY_INITIAL[weekdayOf(d)])}
-                  </span>
-                ))}
-              </ListHeadCell>
-              <ListHeadCell>{t("Streak")}</ListHeadCell>
-              <ListHeadCell align="end">{t("{count} days", { count: count(30) })}</ListHeadCell>
-              <ListHeadCell align="end">{isToday ? t("Today") : dayShort}</ListHeadCell>
-            </ListHead>
-            {active.length === 0 ? <ListEmpty icon={<Check />} tone="habits" title={t("No habit yet")} description={t("Every habit is archived. Bring one back below, or add a new one.")} action={<Button onClick={() => setDrawer({ open: true, editing: null })}>{t("Add habit")}</Button>} /> : visible.map(row)}
-            {showArchived && archived.length > 0 && (
-              <div role="rowgroup">
-                <ListGroupRow label={t("Archived habits")} aside={count(archived.length)} className="border-t border-line" />
-                {archived.map(row)}
-              </div>
+        <div className="grid items-start gap-3.5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <section aria-labelledby="daily-habits-title" className="flex flex-col gap-3 rounded-[14px] border border-line-card bg-surface px-4 py-3.5 shadow-card">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 id="daily-habits-title" className="text-[16px] font-semibold text-ink">
+                {t("Your habits")}
+              </h2>
+              <SegmentedControl
+                label={t("Show")}
+                variant="pill"
+                value={tab}
+                onChange={setTab}
+                options={[
+                  { value: "all", label: `${t("All")} · ${count(active.length)}` },
+                  { value: "todo", label: `${t("To do")} · ${count(open.length)}` },
+                  { value: "done", label: `${t("Done")} · ${count(done.length)}` },
+                ]}
+              />
+            </div>
+            {active.length === 0 ? (
+              <p className="py-8 text-center text-body text-ink-muted">{t("Every habit is archived. Bring one back below, or add a new one.")}</p>
+            ) : shown.length === 0 ? (
+              <p className="py-8 text-center text-body text-ink-muted">{t(tab === "todo" ? "Nothing left to do today 🎉" : "Nothing done yet. Tick a habit to start.")}</p>
+            ) : (
+              <ul className="grid gap-2.5 sm:grid-cols-2">{shown.map(card)}</ul>
             )}
-          </ListCard>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 pt-1 text-[12.5px] text-ink-muted">
+              <span>
+                {t("Tap a card to see its month. Full month report:")}{" "}
+                <Link href={`/habit-tracker/daily/report?month=${day.slice(0, 7)}`} className="font-semibold text-ink-soft underline hover:text-ink">
+                  {t("Monthly report")}
+                </Link>
+                {". "}
+                {t("🔥 is the streak, % is the last 30 days.")}
+              </span>
+              <button type="button" onClick={() => setArchiveOpen(true)} className="rounded-sm font-semibold text-ink-soft hover:text-ink">
+                {t("Archived habits ({count})", { count: count(archived.length) })}
+              </button>
+            </div>
+          </section>
 
-          <div className="max-[1400px]:hidden">{panel(false)}</div>
+          <div className="max-xl:hidden">{panel(false)}</div>
         </div>
       )}
 
-      {/* Below 1400px the habit's month opens over the list, where it can be seen. */}
+      {/* Narrower than the board, the habit's month opens over the cards. */}
       <Sheet open={sheetOpen && !wide && selected !== null} onOpenChange={setSheetOpen}>
         <SheetContent side="bottom" showCloseButton={false} className="max-h-[92dvh] gap-0 overflow-y-auto rounded-t-xl border-0 bg-surface p-0 text-ink">
-          {/* Laptops up to 1400px get the sheet too: its month keeps a panel's width, not the screen's. */}
           <div className="mx-auto flex w-full max-w-xl flex-col">
             <SheetHeader className="flex-row items-center justify-between space-y-0 px-4 pt-3">
               <SheetTitle className="text-small font-semibold text-ink-muted">{t("This habit's month")}</SheetTitle>
@@ -440,6 +442,27 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
           </div>
         </SheetContent>
       </Sheet>
+
+      <PopupDialog open={archiveOpen} onClose={() => setArchiveOpen(false)} width={460} title={t("Archived habits")} footer={<Button onClick={() => setArchiveOpen(false)}>{t("Done")}</Button>}>
+        {archived.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("No archived habits.")}</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {archived.map((habit) => (
+              <li key={habit.id} className="flex items-center justify-between gap-3 rounded-field border border-line px-3 py-2.5">
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-body font-semibold text-ink">{habit.name}</span>
+                  <span className="truncate text-caption text-ink-muted">{ruleLine(habit, t, fmt)}</span>
+                </span>
+                <Button variant="secondary" size="sm" onClick={() => restore(habit)} disabled={busy.has(habit.id)}>
+                  <ArchiveRestore className="size-4" />
+                  {t("Restore")}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PopupDialog>
 
       <HabitDrawer open={drawer.open} onClose={() => setDrawer({ open: false, editing: null })} editing={drawer.editing} reminders={reminders} />
     </PageFrame>
