@@ -598,4 +598,9 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Set for this goal": "এই লক্ষ্যের জন্য ঠিক করা",
   "Goes into": "যাবে",
   "Set for this goal. Change it from Edit goal.": "এই লক্ষ্যের জন্য ঠিক করা। লক্ষ্য সম্পাদনা থেকে বদলান।",
+  // A goal that changed savings account.
+  "Moved to another savings account": "অন্য সঞ্চয়ের হিসাবে সরানো হয়েছে",
+  "{goal} moved here": "{goal} এখানে এসেছে",
+  "{goal} moved away": "{goal} অন্য হিসাবে গেছে",
+  "{name} now keeps its money in {account}. Move {amount} there from {from}.": "{name}-এর টাকা এখন {account}-এ থাকে। {from} থেকে {amount} সেখানে সরিয়ে নিন।",
 };

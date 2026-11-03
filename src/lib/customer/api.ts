@@ -921,7 +921,9 @@ export interface CategorySet {
 // stored.
 export type SavingsGoalStatus = "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN";
 export type SavingsReminderChannel = "EMAIL" | "PHONE";
-export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN" | "WITHDRAWAL";
+// ACCOUNT_CHANGE: the goal moved to another savings account and took its
+// money along; what it has saved stays the same.
+export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN" | "WITHDRAWAL" | "ACCOUNT_CHANGE";
 // Only ever set for an ACTIVE goal -- null for Paused/Completed/Withdrawn,
 // where "are you saving fast enough" no longer applies. paceStatus is the
 // older two-way field; pace (backend savings-plan.ts) is the plan line's.
@@ -1069,11 +1071,12 @@ export interface SavingsWalletGoals {
 }
 
 // One line of a savings wallet's goal history, newest first. A move or a
-// withdrawal is this wallet's part of it.
+// withdrawal is this wallet's part of it; on a goal that moved here or away
+// (ACCOUNT_IN / ACCOUNT_OUT), accountName is the other savings account.
 export interface SavingsWalletHistoryRow {
   id: string;
   date: string;
-  kind: "ALREADY_SAVED" | "ADDED" | "MOVED" | "WITHDRAWN";
+  kind: "ALREADY_SAVED" | "ADDED" | "MOVED" | "WITHDRAWN" | "ACCOUNT_IN" | "ACCOUNT_OUT";
   goalName: string;
   otherGoalName: string | null;
   accountName: string | null;
@@ -1081,14 +1084,14 @@ export interface SavingsWalletHistoryRow {
   notes: string | null;
 }
 
-export type SavingsStatementKind = "ALREADY_SAVED" | "ADDED" | "MOVED_IN" | "MOVED_OUT" | "WITHDRAWN";
+export type SavingsStatementKind = "ALREADY_SAVED" | "ADDED" | "MOVED_IN" | "MOVED_OUT" | "WITHDRAWN" | "ACCOUNT_CHANGED";
 
 // A goal's statement, oldest first. from/to are names: an account, the
 // savings wallets, or the other goal, as the kind says.
 export interface SavingsStatement {
   goal: SavingsGoal;
   today: string;
-  rows: { date: string; kind: SavingsStatementKind; from: string | null; to: string | null; notes: string | null; moneyIn: string | null; moneyOut: string | null; balance: string }[];
+  rows: { date: string; kind: SavingsStatementKind; from: string | null; to: string | null; notes: string | null; moneyIn: string | null; moneyOut: string | null; balance: string; moved: string | null }[];
   totals: { opening: string; moneyIn: string; moneyOut: string; balance: string };
   sources: { kind: "ACCOUNT" | "ALREADY_SAVED" | "GOAL"; name: string | null; amount: string }[];
   now: SavingsHolding[];

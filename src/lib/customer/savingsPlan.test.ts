@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SavingsGoal } from "./api";
-import { addMoneyChips, behindFirst, catchUp, daysBetween, dueThisMonth, goalLook, goalsHero, monthEndAfter, monthlyAverage, monthlyFromNow, monthProgress, monthsToGo, planChart, splitLargestFirst, timeFraction } from "./savingsPlan";
+import { addMoneyChips, behindFirst, catchUp, daysBetween, dueThisMonth, entrySign, goalLook, goalsHero, monthEndAfter, monthlyAverage, monthlyFromNow, monthProgress, monthsToGo, planChart, splitLargestFirst, timeFraction } from "./savingsPlan";
 
 const TODAY = "2026-10-31";
 const goal = (over: Partial<SavingsGoal> = {}): SavingsGoal =>
@@ -155,5 +155,11 @@ describe("planChart", () => {
     expect(chart.planPoints).toBe("64,120 530,20");
     expect(chart.savedPoints.split(" ")).toHaveLength(6);
     expect(chart.now).toEqual({ x: chart.todayX, y: 110 });
+  });
+});
+
+describe("entrySign", () => {
+  it("adds money in, takes money out, and leaves an account change at zero", () => {
+    expect((["CONTRIBUTION", "TRANSFER_IN", "TRANSFER_OUT", "WITHDRAWAL", "ACCOUNT_CHANGE"] as const).map(entrySign)).toEqual([1, 1, -1, -1, 0]);
   });
 });

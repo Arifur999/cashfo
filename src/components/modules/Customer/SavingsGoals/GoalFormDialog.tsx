@@ -109,8 +109,8 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
   // reminder that went out); a changed one must come after today.
   const keptEnd = !!editing && endDate === editing.targetDate.slice(0, 10);
   const keptReminder = !!editing && reminderDate === (editing.reminderDate?.slice(0, 10) ?? "");
-  // Money already saved stays where it is in the books: the customer moves
-  // it in the bank when the goal changes account.
+  // Money already saved moves to the new account with the goal; the
+  // customer moves it in the bank too.
   const movedFrom = editing && saved > 0 && wallet && homeId && wallet.id !== homeId ? (editing.account?.name ?? editing.holdings.find((holding) => holding.accountId === homeId)?.name ?? null) : null;
   const hasExtra = !!reminderDate || !!description;
 
@@ -141,7 +141,8 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
         setError(savingsError(result.message, "Failed to save goal", t, currency, fmt));
         return;
       }
-      if (editing) toast.success(`${t("{name} was updated.", { name: goalName })}${reminder}`);
+      if (editing && movedFrom && wallet) toast.success(`${t("{name} now keeps its money in {account}. Move {amount} there from {from}.", { name: goalName, account: wallet.name, amount: money(saved), from: movedFrom })}${reminder}`);
+      else if (editing) toast.success(`${t("{name} was updated.", { name: goalName })}${reminder}`);
       else
         toast.success(
           `${t("{name} was created.", { name: goalName })} ${leftToSave > 0 ? t("{left} left to save, about {amount} a month.", { left: money(leftToSave), amount: money(perMonth) }) : t("The full target is already saved.")}${reminder}`,

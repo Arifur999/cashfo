@@ -74,6 +74,10 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
         return { title: t("Added for {goal}", { goal: row.goalName }), sub: row.accountName ? t("From {account}", { account: row.accountName }) : "", tone: "text-income", sign: "+ " };
       case "MOVED":
         return { title: t("Moved from {from} to {to}", { from: row.goalName, to: row.otherGoalName ?? "" }), sub: t("Goal transfer · balance unchanged"), tone: "text-info", sign: "" };
+      case "ACCOUNT_IN":
+        return { title: t("{goal} moved here", { goal: row.goalName }), sub: row.accountName ? t("From {account}", { account: row.accountName }) : "", tone: "text-income", sign: "+ " };
+      case "ACCOUNT_OUT":
+        return { title: t("{goal} moved away", { goal: row.goalName }), sub: row.accountName ? t("To {account}", { account: row.accountName }) : "", tone: "text-expense", sign: "− " };
       default:
         return { title: t("Withdrawn from {goal}", { goal: row.goalName }), sub: row.accountName ? t("To {account}", { account: row.accountName }) : "", tone: "text-expense", sign: "− " };
     }

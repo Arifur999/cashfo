@@ -130,11 +130,12 @@ export function goalTotals(goals: Pick<SavingsGoal, "status" | "targetAmount" | 
 
 // What each history entry is called. A move names the other goal when it
 // still exists ("Moved in from Hajj"), else just the direction.
-export const ENTRY_META: Record<SavingsEntryType, { title: string; withGoal?: string; flow: "in" | "out"; tone: "income" | "info" | "expense" }> = {
+export const ENTRY_META: Record<SavingsEntryType, { title: string; withGoal?: string; flow: "in" | "out" | "none"; tone: "income" | "info" | "expense" }> = {
   CONTRIBUTION: { title: "Added money", flow: "in", tone: "income" },
   TRANSFER_IN: { title: "Moved in", withGoal: "Moved in from {goal}", flow: "in", tone: "info" },
   TRANSFER_OUT: { title: "Moved out", withGoal: "Moved out to {goal}", flow: "out", tone: "info" },
   WITHDRAWAL: { title: "Withdrawn", flow: "out", tone: "expense" },
+  ACCOUNT_CHANGE: { title: "Moved to another savings account", flow: "none", tone: "info" },
 };
 
 // The backend's refusals in this area, in words the dictionary has. A fixed

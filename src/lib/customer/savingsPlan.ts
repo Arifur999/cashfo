@@ -1,4 +1,4 @@
-import type { SavingsGoal, SavingsGoalEntry, SavingsHolding } from "./api";
+import type { SavingsEntryType, SavingsGoal, SavingsGoalEntry, SavingsHolding } from "./api";
 
 // The Savings goals page's numbers (design: SavingsDashboard), worked out
 // from a goal and today ('YYYY-MM-DD', Dhaka). The plan line's pace itself
@@ -17,6 +17,13 @@ export function monthsToGo(end: string, today: string): number {
 }
 
 const num = (value: string | number) => Number(value) || 0;
+
+// What an entry does to a goal's saved amount, as the API counts it: money
+// in, money out, or money that only changed savings account.
+export function entrySign(type: SavingsEntryType): 1 | -1 | 0 {
+  if (type === "ACCOUNT_CHANGE") return 0;
+  return type === "TRANSFER_OUT" || type === "WITHDRAWAL" ? -1 : 1;
+}
 const saved = (goal: Pick<SavingsGoal, "currentAmount">) => num(goal.currentAmount);
 const left = (goal: Pick<SavingsGoal, "targetAmount" | "currentAmount">) => Math.max(0, num(goal.targetAmount) - saved(goal));
 
@@ -219,7 +226,7 @@ export function planChart(
   for (const entry of [...entries].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))) {
     const day = entry.date.slice(0, 10);
     points.push(`${x(day)},${y(total)}`);
-    total += entry.type === "CONTRIBUTION" || entry.type === "TRANSFER_IN" ? num(entry.amount) : -num(entry.amount);
+    total += num(entry.amount) * entrySign(entry.type);
     points.push(`${x(day)},${y(total)}`);
   }
   points.push(`${x(today)},${y(saved(goal))}`);
