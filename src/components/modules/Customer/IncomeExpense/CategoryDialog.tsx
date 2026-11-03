@@ -112,7 +112,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
     startTransition(async () => {
       const result = isNew
         ? await createBudgetCategoryAction(businessId, { type, name: trimmed, icon: null, color })
-        : await updateBudgetCategoryAction(businessId, editing.id as string, { name: trimmed, color, ...(type !== editing.type && { type }) });
+        : await updateBudgetCategoryAction(businessId, editing.id as string, { name: trimmed, ...(color !== editing.color && { color }), ...(type !== editing.type && { type }) });
       if (result.success) {
         toast.success(t(isNew ? "Category added" : "Category updated"));
         onSaved();
