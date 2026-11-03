@@ -29,24 +29,23 @@ import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
-import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowButton, ListSummaryRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { getStatementRowsAction } from "@/lib/customer/accountActions";
 import { accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
-import type { Account, AccountLedger, AccountSummary, LanguagePreference, LedgerKind, LedgerRow } from "@/lib/customer/api";
+import type { Account, AccountLedger, AccountSummary, ActiveMonth, LanguagePreference, LedgerKind, LedgerRow } from "@/lib/customer/api";
 import { accountColor, directionOf, kindOf, LEDGER_KIND_META, ledgerCsv, ledgerFileName, maskedMoney, partyOf, walletColorStyle } from "@/lib/customer/balanceDisplay";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { isDebitPositive, isSettledDay, periodText, readsAsMoney, statementBackLabel, type StatementLine, statementPage, voidedNet } from "@/lib/customer/ledger";
+import { periodHref, type PickedPeriod } from "@/lib/customer/period";
+import { isDebitPositive, periodText, readsAsMoney, statementBackLabel, type StatementLine, statementPage, voidedNet } from "@/lib/customer/ledger";
 import { walletIcon } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { PeriodPicker, periodLabel as periodName } from "../Shared/PeriodPicker";
 import { plural } from "@/lib/i18n/message";
 import { pageHref } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
@@ -68,10 +67,10 @@ interface AccountLedgerPageClientProps {
   currency: string;
   canManage: boolean;
   accountId: string;
-  range: DateRangePreset;
-  customFrom?: string;
-  customTo?: string;
-  // The period resolved on the server: "This month" is its first day to today.
+  period: PickedPeriod;
+  // The months this account has anything in; null when the API can't say.
+  activeMonths: ActiveMonth[] | null;
+  // The period's first and last day (none for all time).
   periodFrom?: string;
   periodTo?: string;
   // What the rows are narrowed to (the URL's dir, kind and q).
@@ -81,13 +80,7 @@ interface AccountLedgerPageClientProps {
   backHref?: string | null;
 }
 
-const PERIODS: { value: DateRangePreset; label: string }[] = [
-  { value: "all", label: "All time" },
-  { value: "this-month", label: "This month" },
-  { value: "last-month", label: "Last month" },
-  { value: "this-year", label: "This year" },
-  { value: "custom", label: "Custom" },
-];
+const ALL_TIME: PickedPeriod = { kind: "all" };
 
 // #, Date, Received / Sent, Type, To / From, Note, Amount, Balance; phones
 // scroll it sideways.
@@ -116,7 +109,7 @@ const KIND_ICON: Record<LedgerKind, LucideIcon> = {
 // -- narrowed by direction, kind and a search, each opening its details.
 // CSV downloads what is shown; Print previews the whole period.
 export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
-  const { businessId, wallets, others, account, ledger, summary, preferredLanguage, currency, canManage, accountId, range, customFrom, customTo, periodFrom, periodTo, filters, today, backHref } = props;
+  const { businessId, wallets, others, account, ledger, summary, preferredLanguage, currency, canManage, accountId, period, activeMonths, periodFrom, periodTo, filters, today, backHref } = props;
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -127,14 +120,6 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
   const [printing, setPrinting] = useState<{ rows: LedgerRow[]; complete: boolean } | null>(null);
   const [busy, setBusy] = useState<"print" | "csv" | null>(null);
   const [query, setQuery] = useState(filters.search);
-
-  // The custom days as typed, loaded once each is a whole date.
-  const [draft, setDraft] = useState({ from: customFrom ?? "", to: customTo ?? "" });
-  const [loaded, setLoaded] = useState({ from: customFrom, to: customTo });
-  if (loaded.from !== customFrom || loaded.to !== customTo) {
-    setLoaded({ from: customFrom, to: customTo });
-    setDraft((current) => ({ from: loaded.from !== customFrom ? (customFrom ?? "") : current.from, to: loaded.to !== customTo ? (customTo ?? "") : current.to }));
-  }
 
   function hrefWith(next: Record<string, string | undefined | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -165,16 +150,6 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
     setQuery(filters.search);
   }
 
-  function commitDay(key: "dateFrom" | "dateTo", value: string) {
-    if (value && !isSettledDay(value)) return;
-    if ((value || undefined) === (key === "dateFrom" ? customFrom : customTo)) return;
-    router.replace(hrefWith({ [key]: value || undefined }), { scroll: false });
-  }
-  function typeDay(side: "from" | "to", value: string) {
-    setDraft((current) => ({ ...current, [side]: value }));
-    if (isSettledDay(value)) commitDay(side === "from" ? "dateFrom" : "dateTo", value);
-  }
-
   const ready = account && ledger && summary;
   const money = account ? readsAsMoney(account) : true;
   const debitPositive = account ? isDebitPositive(account.accountType) : true;
@@ -185,7 +160,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
   const transfers = summary ? Number(summary.adjustment) : 0;
   const showTransfers = money || transfers !== 0;
   const accountName = account ? accountDisplayName(account, preferredLanguage) : "";
-  const periodLabel = t(PERIODS.find((period) => period.value === range)?.label ?? "All time");
+  const periodLabel = periodName(period, t, fmt);
   const rangeText = periodText(t, periodFrom, periodTo, fmt);
   const narrowed = !!(filters.direction || filters.kind || filters.search);
   const counts = ledger?.counts ?? { all: ledger?.meta.total ?? 0, in: 0, out: 0 };
@@ -349,29 +324,17 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-small font-medium text-ink-soft">{t("Period")}</span>
-            <SegmentedControl
-              options={PERIODS.map((period) => ({ value: period.value, label: t(period.label) }))}
-              value={range}
-              onChange={(value) => go(value === "custom" ? { range: value } : { range: value === "all" ? undefined : value, dateFrom: undefined, dateTo: undefined })}
-              label={t("Period")}
-              size="lg"
-              className="max-md:grid max-md:w-full max-md:grid-cols-3"
+            <PeriodPicker
+              period={period}
+              today={today}
+              activeMonths={activeMonths}
+              allowAll
+              defaultPeriod={ALL_TIME}
+              align="start"
+              onPick={(next) => router.push(periodHref(pathname, Object.fromEntries(searchParams.entries()), next))}
             />
           </div>
         </Card>
-        {range === "custom" && (
-          <Card padding="none" className="-mt-2 flex flex-wrap items-end gap-3 px-5 py-3.5">
-            <label className="flex flex-col gap-1.5 text-small font-medium text-ink-soft">
-              {t("From")}
-              <Input size="md" type="date" value={draft.from} onChange={(event) => typeDay("from", event.target.value)} onBlur={() => commitDay("dateFrom", draft.from)} max={draft.to || undefined} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-small font-medium text-ink-soft">
-              {t("To@@date")}
-              <Input size="md" type="date" value={draft.to} onChange={(event) => typeDay("to", event.target.value)} onBlur={() => commitDay("dateTo", draft.to)} min={draft.from || undefined} />
-            </label>
-            <span className="pb-3 text-small text-ink-muted">{rangeText}</span>
-          </Card>
-        )}
 
         {!ready || !lines ? (
           <Card padding="none" className="flex flex-col items-center gap-2.5 p-10 text-center">

@@ -45,15 +45,17 @@ export const getMonthlyBreakdown = cache(
 );
 
 // The months with any income or expense, newest first (Overview's period
-// picker greys out the rest); null when the backend can't say, so nothing
-// is greyed out.
-export const getActiveMonths = cache(async (businessId: string): Promise<ActiveMonth[] | null> => {
+// picker greys out the rest) -- or with anything on one account (its
+// ledger), or with transfers (scope "transfers"); null when the backend
+// can't say, so only months still to come are greyed out.
+export const getActiveMonths = cache(async (businessId: string, accountId?: string, scope?: "transfers"): Promise<ActiveMonth[] | null> => {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
   try {
     const response = await customerApi.get<ActiveMonth[]>(`${API_BASE_URL}/api/businesses/${businessId}/reports/active-months`, {
       headers: { Authorization: `Bearer ${accessToken}` },
+      params: { ...(accountId && { accountId }), ...(scope && { scope }) },
     });
     return response.data;
   } catch (error) {
