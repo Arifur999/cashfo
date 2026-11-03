@@ -71,6 +71,9 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
         return { what: `${t("Moved in from another goal")}${note}`, from: t("{name} (goal)", { name: row.from ?? "" }), to: goal.name };
       case "MOVED_OUT":
         return { what: `${t("Moved out to another goal")}${note}`, from: goal.name, to: t("{name} (goal)", { name: row.to ?? "" }) };
+      case "ACCOUNT_CHANGED":
+        // The money changed savings account; the balance stays the same.
+        return { what: `${t("Moved to another savings account")}${row.moved ? ` · ${money(row.moved)}` : ""}${note}`, from: row.from ?? "—", to: row.to ?? "—" };
       default:
         return { what: `${t("Withdrawn to main balance")}${note}`, from: row.from ?? "—", to: row.to ?? "—" };
     }

@@ -1,10 +1,9 @@
 "use client";
 
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Landmark, Lock, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
@@ -22,6 +21,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GoalRing } from "./GoalRing";
+import { MoneyField } from "./MoneyField";
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 interface AddMoneyDialogProps {
@@ -43,8 +43,9 @@ interface AddMoneyDialogProps {
 
 // Add money to a goal (design: SavingsDashboard's Add money popup): the
 // day, how much (with this month's suggestion and what is left as quick
-// picks), which account it leaves and which savings account keeps it, and
-// where everything stands after.
+// picks), which account it leaves -- it goes into the goal's own savings
+// account, picked only for a goal that has none open -- and where
+// everything stands after.
 export function AddMoneyDialog({ open, onClose, businessId, goal, color, currency, today, moneyAccounts, savingsWallets, startAmount, onReached }: AddMoneyDialogProps) {
   const { t, fmt, locale } = useLocale();
   const router = useRouter();
@@ -66,7 +67,8 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       setDate(today);
       setAmount(startAmount ? String(startAmount) : "");
       setFromId("");
-      // The wallet holding most of the goal's money, else the first.
+      // A goal without an open account of its own: the wallet holding
+      // most of its money, else the only one.
       setIntoId(savingsWallets.find((wallet) => wallet.id === goal?.holdings[0]?.accountId)?.id ?? (savingsWallets.length === 1 ? savingsWallets[0].id : ""));
       setNote("");
       setError("");
@@ -79,7 +81,9 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
   const left = Math.max(0, target - saved);
   const value = Number(amount) || 0;
   const from = moneyAccounts.find((account) => account.id === fromId);
-  const into = savingsWallets.find((wallet) => wallet.id === intoId);
+  // Every deposit goes into the goal's account while it is open.
+  const fixed = savingsWallets.find((wallet) => wallet.id === goal.accountId);
+  const into = fixed ?? savingsWallets.find((wallet) => wallet.id === intoId);
   const percentNow = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
   const percentAfter = target > 0 ? Math.min(100, Math.round(((saved + value) / target) * 100)) : 0;
   const month = formatDate(today, "MMMM", fmt);
@@ -128,6 +132,13 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
             : money(chip.amount),
   }));
   const fieldLabel = "text-small font-semibold text-ink-2";
+  const intoName = into ? accountDisplayName(into, lang) : "";
+  const guide = !into
+    ? null
+    : {
+        head: value && from ? t("Send {amount} from {from} to {to}", { amount: money(value), from: accountDisplayName(from, lang), to: intoName }) : value ? t("Deposit {amount} into {to}", { amount: money(value), to: intoName }) : t("This money goes into {to}", { to: intoName }),
+        sub: into.accountNumber ? t("Account no. {number}", { number: into.accountNumber }) : t("Set for this goal"),
+      };
 
   return (
     <PopupDialog
@@ -136,6 +147,9 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       width={560}
       busy={isPending}
       onSubmit={submit}
+      headClassName="items-center gap-3.5"
+      titleClassName="text-[17px]"
+      bodyClassName="gap-4.5 py-5"
       lead={
         <GoalRing percent={percentNow} color={color} size={52} label={t("{percent}% saved", { percent: formatCount(percentNow, fmt) })}>
           <span className="text-caption font-bold">{formatCount(percentNow, fmt)}%</span>
@@ -156,7 +170,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       }
     >
       <Field htmlFor="add-date" label={<span className={fieldLabel}>{t("Date")}</span>}>
-        <DayInput id="add-date" size="lg" value={date} onChange={(day) => setDate(day || today)} max={today} />
+        <DayInput id="add-date" size="lg" value={date} onChange={(day) => setDate(day || today)} max={today} className="rounded-[12px] px-3.5 text-[15px] font-semibold" />
       </Field>
 
       <div className="flex flex-col gap-2">
@@ -166,7 +180,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
           </label>
           <span className="text-caption text-ink-muted tabular-nums">{t("{amount} left to reach {target}", { amount: money(left), target: money(target) })}</span>
         </div>
-        <AmountInput id="add-amount" value={amount} onChange={setAmount} currency={currency} size="lg" autoFocus={!startAmount} />
+        <MoneyField id="add-amount" value={amount} onChange={setAmount} currency={currency} look="plain" autoFocus={!startAmount} />
         <div className="flex flex-wrap gap-1.5">
           {chips.map((chip) => {
             const on = value === chip.amount;
@@ -179,7 +193,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
                 onClick={() => setAmount(String(chip.amount))}
                 className={cn(
                   "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold whitespace-nowrap tabular-nums pointer-coarse:h-11",
-                  strong ? "border-emerald-line bg-mint-50 text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong",
+                  strong ? "border-emerald-line bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong",
                 )}
               >
                 {chip.kind === "suggested" && <Sparkles className="size-3.25" aria-hidden="true" />}
@@ -192,7 +206,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
 
       <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)]">
         <Field htmlFor="add-from" label={<span className={fieldLabel}>{t("Take it from")}</span>}>
-          <NativeSelect id="add-from" size="lg" value={fromId} onChange={(event) => setFromId(event.target.value)} className={cn(!from && "text-ink-muted")}>
+          <NativeSelect id="add-from" size="lg" value={fromId} onChange={(event) => setFromId(event.target.value)} className={cn("rounded-[12px]", !from && "text-ink-muted")}>
             <option value="" disabled>
               {moneyAccounts.length ? t("Select an account") : t("No wallet yet")}
             </option>
@@ -202,21 +216,45 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
           </NativeSelect>
         </Field>
         <span aria-hidden="true" className="hidden h-12 items-center justify-center sm:flex">
-          <span className="flex size-8 items-center justify-center rounded-full bg-mint-50 text-emerald">
+          <span className="flex size-8 items-center justify-center rounded-full bg-emerald-soft text-emerald">
             <ArrowRight className="size-4" strokeWidth={2.5} />
           </span>
         </span>
-        <Field htmlFor="add-into" label={<span className={fieldLabel}>{t("Keep it in")}</span>}>
-          <NativeSelect id="add-into" size="lg" value={intoId} onChange={(event) => setIntoId(event.target.value)} className={cn(!into && "text-ink-muted")}>
-            <option value="" disabled>
-              {t("Select a savings account")}
-            </option>
-            {savingsWallets.map((wallet) => (
-              <option key={wallet.id} value={wallet.id}>{`${accountDisplayName(wallet, lang)} · ${money(wallet.currentBalance)}`}</option>
-            ))}
-          </NativeSelect>
-        </Field>
+        {fixed ? (
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <span className={fieldLabel}>{t("Goes into")}</span>
+            <span title={t("Set for this goal. Change it from Edit goal.")} className="flex h-12 items-center gap-2 rounded-[12px] border border-emerald bg-emerald-soft px-2.5">
+              <Landmark className="size-4 shrink-0 text-emerald" strokeWidth={2} aria-hidden="true" />
+              <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{intoName}</span>
+              <Lock className="size-3.25 shrink-0 text-ink-muted" strokeWidth={2.25} aria-hidden="true" />
+              <span className="sr-only">{t("Set for this goal. Change it from Edit goal.")}</span>
+            </span>
+          </div>
+        ) : (
+          <Field htmlFor="add-into" label={<span className={fieldLabel}>{t("Keep it in")}</span>}>
+            <NativeSelect id="add-into" size="lg" value={intoId} onChange={(event) => setIntoId(event.target.value)} className={cn("rounded-[12px]", !into && "text-ink-muted")}>
+              <option value="" disabled>
+                {t("Select a savings account")}
+              </option>
+              {savingsWallets.map((wallet) => (
+                <option key={wallet.id} value={wallet.id}>{`${accountDisplayName(wallet, lang)} · ${money(wallet.currentBalance)}`}</option>
+              ))}
+            </NativeSelect>
+          </Field>
+          )}
       </div>
+
+      {guide && (
+        <div aria-live="polite" className="-mt-1.5 flex items-center gap-3 rounded-[14px] bg-wallet-forest px-3.5 py-3 text-white">
+          <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-white/16">
+            <Landmark className="size-4.5" strokeWidth={2} />
+          </span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[14px] font-bold tabular-nums">{guide.head}</span>
+            <span className="text-[12.5px] text-white/80 tabular-nums">{guide.sub}</span>
+          </span>
+        </div>
+      )}
 
       <Field
         htmlFor="add-note"
@@ -226,7 +264,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
           </span>
         }
       >
-        <Input id="add-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. October deposit")} />
+        <Input id="add-note" size="md" frameClassName="rounded-[12px] px-3.5" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. October deposit")} />
       </Field>
 
       <div className="flex flex-col gap-2.5 rounded-[14px] border border-line bg-strip px-4 py-3.5 text-small tabular-nums">

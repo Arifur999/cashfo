@@ -25,6 +25,9 @@ interface PopupDialogProps {
   footerClassName?: string;
   children?: React.ReactNode;
   bodyClassName?: string;
+  // The head row and its title, for a board that draws them its own way.
+  headClassName?: string;
+  titleClassName?: string;
   // A save is on its way: the popup can't be closed.
   busy?: boolean;
   onSubmit?: (event: React.FormEvent) => void;
@@ -36,7 +39,7 @@ interface PopupDialogProps {
 // The boards' centred popup (Savings first, then Zakat and Balance): a head
 // with the title and X over a line, the body, and a grey strip with the
 // buttons. On a phone it fills the width less a margin and scrolls.
-export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
+export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
   const { t } = useLocale();
   const close = (
     <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11">
@@ -54,11 +57,11 @@ export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, w
     </div>
   ) : (
     <>
-      <div className="flex shrink-0 items-start gap-3 border-b border-line px-6 py-4">
+      <div className={cn("flex shrink-0 items-start gap-3 border-b border-line px-6 py-4", headClassName)}>
         {lead}
         <div className="flex min-w-0 flex-1 flex-col gap-1 self-center">
           <div className="flex min-w-0 flex-wrap items-center gap-2.5">
-            <DialogTitle className="min-w-0 text-[18px] leading-[1.3] font-semibold wrap-break-word text-ink">{title}</DialogTitle>
+            <DialogTitle className={cn("min-w-0 text-[18px] font-semibold wrap-break-word text-ink", titleClassName, "leading-[1.3]")}>{title}</DialogTitle>
             {aside}
           </div>
           {sub ? (

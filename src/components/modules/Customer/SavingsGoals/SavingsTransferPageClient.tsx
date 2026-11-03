@@ -10,6 +10,7 @@ import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import IconAction from "@/components/smartly/IconAction";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
@@ -184,9 +185,9 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               </ListCell>
               <ListCell className="max-md:col-start-2 max-md:row-start-2 max-md:justify-self-end">
                 {canManage && transfer.canUndo && (
-                  <button type="button" onClick={() => void undo(transfer)} disabled={isPending} aria-label={t("Undo this move")} title={t("Undo this move")} className="flex size-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11">
-                    <Undo2 className="size-3.75" aria-hidden="true" />
-                  </button>
+                  <IconAction onClick={() => void undo(transfer)} disabled={isPending} aria-label={t("Undo this move")} title={t("Undo this move")}>
+                    <Undo2 aria-hidden="true" />
+                  </IconAction>
                 )}
               </ListCell>
             </ListRow>

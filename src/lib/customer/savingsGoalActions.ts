@@ -65,6 +65,10 @@ export interface SavingsGoalFormInput {
   reminderChannel?: SavingsReminderChannel | null;
   // "" clears the description on an edit; undefined leaves it as it is.
   description?: string;
+  // The savings account the goal keeps its money in: every deposit goes
+  // there, and so does the money already saved on a new goal.
+  accountId?: string;
+  startAmount?: number;
 }
 
 export async function createSavingsGoalAction(businessId: string, input: SavingsGoalFormInput): Promise<ActionResult<SavingsGoal>> {

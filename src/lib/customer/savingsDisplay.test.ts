@@ -3,9 +3,11 @@ import { bnDictionary } from "@/lib/i18n/dictionary";
 import { inEnglish } from "@/lib/i18n/message";
 import {
   ENTRY_META,
+  keptIn,
   goalColor,
   goalTotals,
   LOOK_META,
+  monthsAhead,
   monthsBetween,
   monthsLeft,
   neededPerMonth,
@@ -37,6 +39,16 @@ describe("monthsLeft", () => {
 
   it("is never negative", () => {
     expect(monthsLeft("2026-01-01", "2026-10-02")).toBe(0);
+  });
+});
+
+describe("monthsAhead", () => {
+  it("moves to the same day, or the month's last day when it is shorter", () => {
+    expect(monthsAhead("2026-11-03", 6)).toBe("2027-05-03");
+    expect(monthsAhead("2026-11-03", 12)).toBe("2027-11-03");
+    expect(monthsAhead("2026-08-31", 6)).toBe("2027-02-28");
+    expect(monthsAhead("2027-08-31", 6)).toBe("2028-02-29");
+    expect(monthsAhead("2026-12-15", 1)).toBe("2027-01-15");
   });
 });
 
@@ -205,5 +217,14 @@ describe("summaryPalette", () => {
 
   it("greys a wallet that page doesn't list", () => {
     expect(summaryPalette("archived", ["dps"])).toBe(OTHER_SAVINGS_PALETTE);
+  });
+});
+
+describe("keptIn", () => {
+  const holding = (name: string | null) => ({ accountId: name, name, amount: "100.00" });
+  it("names the goal's own account, else where most of its money is", () => {
+    expect(keptIn({ account: { id: "a", name: "City Bank FDR", accountNumber: "1503 2245 6081" }, holdings: [holding("DPS")] })).toEqual({ name: "City Bank FDR", number: "1503 2245 6081" });
+    expect(keptIn({ account: null, holdings: [holding(null), holding("Islami Bank DPS")] })).toEqual({ name: "Islami Bank DPS", number: null });
+    expect(keptIn({ holdings: [] })).toBeNull();
   });
 });

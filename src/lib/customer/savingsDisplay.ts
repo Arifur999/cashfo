@@ -56,6 +56,18 @@ export function monthsBetween(from: string, to: string): number {
   return Math.max(1, wholeMonths(from, to));
 }
 
+// The same day some months on ("2027-05-03" from "2026-11-03" and 6), or
+// that month's last day when it is shorter (31 Aug + 6 = 28 Feb): New goal's
+// 6 months / 1 year / 2 years.
+export function monthsAhead(day: string, months: number): string {
+  const [y, m, d] = day.slice(0, 10).split("-").map(Number);
+  const index = y * 12 + (m - 1) + months;
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`;
+}
+
 // How long an open goal still has: whole months, less than one, or its day
 // has gone by ("0 months left" read the same for both).
 export type TimeLeft = { kind: "months"; months: number } | { kind: "under-a-month" } | { kind: "past" };
@@ -118,11 +130,12 @@ export function goalTotals(goals: Pick<SavingsGoal, "status" | "targetAmount" | 
 
 // What each history entry is called. A move names the other goal when it
 // still exists ("Moved in from Hajj"), else just the direction.
-export const ENTRY_META: Record<SavingsEntryType, { title: string; withGoal?: string; flow: "in" | "out"; tone: "income" | "info" | "expense" }> = {
+export const ENTRY_META: Record<SavingsEntryType, { title: string; withGoal?: string; flow: "in" | "out" | "none"; tone: "income" | "info" | "expense" }> = {
   CONTRIBUTION: { title: "Added money", flow: "in", tone: "income" },
   TRANSFER_IN: { title: "Moved in", withGoal: "Moved in from {goal}", flow: "in", tone: "info" },
   TRANSFER_OUT: { title: "Moved out", withGoal: "Moved out to {goal}", flow: "out", tone: "info" },
   WITHDRAWAL: { title: "Withdrawn", flow: "out", tone: "expense" },
+  ACCOUNT_CHANGE: { title: "Moved to another savings account", flow: "none", tone: "info" },
 };
 
 // The backend's refusals in this area, in words the dictionary has. A fixed
@@ -174,4 +187,13 @@ export const OTHER_SAVINGS_PALETTE: WalletPalette = { gradient: "bg-wallet-charc
 export function summaryPalette(id: string, activeIds: readonly string[]): WalletPalette {
   const at = activeIds.indexOf(id);
   return at === -1 ? OTHER_SAVINGS_PALETTE : savingsPalette(at);
+}
+
+// The savings account a goal names on its card and in its details: the one
+// it keeps its money in, or (an older goal with none) where most of its
+// money is; null when it has neither.
+export function keptIn(goal: Pick<SavingsGoal, "account" | "holdings">): { name: string; number: string | null } | null {
+  if (goal.account?.name) return { name: goal.account.name, number: goal.account.accountNumber };
+  const largest = goal.holdings.find((holding) => holding.name);
+  return largest?.name ? { name: largest.name, number: null } : null;
 }

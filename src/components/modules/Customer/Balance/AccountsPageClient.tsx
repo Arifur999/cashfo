@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, ArrowDown, ArrowLeftRight, ArrowUp, ArrowUpDown, Check, ChevronDown, ChevronRight, CircleCheckBig, Ellipsis, Info, LayoutGrid, Pencil, Plus, ScrollText, Search, Table2, Trash2, Wallet, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowDown, ArrowLeftRight, ArrowUp, ArrowUpDown, Check, ChevronDown, ChevronRight, CircleCheckBig, Ellipsis, Info, Pencil, Plus, ScrollText, Search, Trash2, Wallet, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState, useTransition } from "react";
@@ -30,6 +30,7 @@ import { AdjustBalanceDialog } from "./AdjustBalanceDialog";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { HideBalancesButton } from "./HideBalancesButton";
 import { useBalancesHidden } from "./useBalancesHidden";
+import { ViewToggle, type ListView } from "../Shared/ViewToggle";
 import { useStoredChoice } from "./useStoredChoice";
 
 interface AccountsPageClientProps {
@@ -42,8 +43,7 @@ interface AccountsPageClientProps {
 }
 
 type Tab = "active" | "archived";
-type View = "table" | "cards";
-const VIEWS: View[] = ["table", "cards"];
+const VIEWS: readonly ListView[] = ["table", "cards"];
 
 // The table's grid: account, five movements, the balance and the menu.
 // Phones scroll it sideways.
@@ -66,7 +66,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
   const online = useOnline();
   const { hidden, toggle } = useBalancesHidden(true);
   const [tab, setTab] = useState<Tab>("active");
-  const [view, setView] = useStoredChoice<View>("smartly-bal-view", VIEWS, "table");
+  const [view, setView] = useStoredChoice<ListView>("smartly-bal-view", VIEWS, "table");
   const [sort, setSort] = useStoredChoice<AccountSort>("smartly-bal-sort", ACCOUNT_SORTS, "bal-desc");
   const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<"closed" | "add" | WalletOverviewRow>("closed");
@@ -241,25 +241,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
             );
           })}
         </div>
-        <div role="group" aria-label={t("View")} className="flex gap-0.5 rounded-full bg-surface-sunken p-0.75">
-          {VIEWS.map((value) => {
-            const on = view === value;
-            const label = t(value === "table" ? "Table view" : "Card view");
-            return (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={on}
-                aria-label={label}
-                title={label}
-                onClick={() => setView(value)}
-                className={cn("flex h-7.5 w-8.5 items-center justify-center rounded-full", on ? "bg-surface text-ink shadow-[0_1px_2px_rgba(18,32,29,0.12)] dark:bg-surface-raised" : "text-ink-faint hover:text-ink")}
-              >
-                {value === "table" ? <Table2 className="size-4" aria-hidden="true" /> : <LayoutGrid className="size-4" aria-hidden="true" />}
-              </button>
-            );
-          })}
-        </div>
+        <ViewToggle value={view} onChange={setView} order={VIEWS} />
       </div>
       <div className="flex flex-wrap items-center gap-3 border-t border-divider px-4 pt-3.5 pb-4 md:flex-nowrap md:px-6">
         <label className="flex h-9.5 min-w-0 flex-1 items-center gap-2 rounded-full border border-input bg-surface pr-1.5 pl-3 focus-within:border-focus-ring focus-within:focus-halo">
