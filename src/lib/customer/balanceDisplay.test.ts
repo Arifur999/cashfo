@@ -119,7 +119,7 @@ describe("ledger rows", () => {
     expect(entrySource({ ...row, contactId: "c 1" }, "LOAN_IN")?.href).toBe("/loan-management/ledger?contactId=c%201");
     expect(entrySource(row, "LOAN_IN")).toBeNull();
     expect(entrySource(row, "ADJUSTMENT")).toBeNull();
-    expect(entrySource(row, "ASSET_SALE")?.href).toBe("/assets-management/current");
+    expect(entrySource(row, "ASSET_SALE")?.href).toBe("/assets-management/purchase-sell");
   });
 
   it("has every kind's words in Bangla", () => {

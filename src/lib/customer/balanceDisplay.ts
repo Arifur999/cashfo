@@ -176,7 +176,7 @@ export function entrySource(row: Pick<LedgerRow, "transactionId" | "contactId" |
       return row.contactId ? { href: `/contacts/${encodeURIComponent(row.contactId)}`, label: "Open the contact" } : null;
     case "ASSET_PURCHASE":
     case "ASSET_SALE":
-      return { href: "/assets-management/current", label: "Open in Assets" };
+      return { href: "/assets-management/purchase-sell", label: "Open in Purchase & Sell" };
     case "ADJUSTMENT":
       return null;
     default:
