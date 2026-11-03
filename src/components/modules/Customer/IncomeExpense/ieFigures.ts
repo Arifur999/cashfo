@@ -41,6 +41,13 @@ export function monthHref(pathname: string, params: Params, month: number, year:
   return text ? `${pathname}?${text}` : pathname;
 }
 
+// A list page for a period: this month (its own) written as nothing, all
+// time as ?period=all (the shared periodHref writes only real periods).
+export function listPeriodHref(pathname: string, params: Params, period: PickedPeriod, current: YearMonth): string {
+  const href = periodHref(pathname, params, period, { kind: "month", ...current });
+  return period.kind === "all" ? `${href}${href.includes("?") ? "&" : "?"}period=all` : href;
+}
+
 // Transactions for a period (the page's own, this month, written as
 // nothing), of one kind, one category or the money with none.
 export function transactionsHref(period: PickedPeriod, current: YearMonth, filter: { type?: "INCOME" | "EXPENSE"; categoryId?: string; uncategorised?: boolean } = {}): string {
@@ -49,7 +56,7 @@ export function transactionsHref(period: PickedPeriod, current: YearMonth, filte
     ...(filter.categoryId && { categoryId: filter.categoryId }),
     ...(filter.uncategorised && { uncategorised: "1" }),
   };
-  return periodHref("/transactions", params, period, { kind: "month", ...current });
+  return listPeriodHref("/transactions", params, period, current);
 }
 
 // Budget Planning at the period's month (it plans one month at a time);

@@ -2,13 +2,15 @@ import { redirect } from "next/navigation";
 import { TransactionsPageClient, type TransactionTotals } from "@/components/modules/Customer/Transactions/TransactionsPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getMoneyAccounts } from "@/lib/customer/accounts";
-import type { TransactionType } from "@/lib/customer/api";
+import type { CategoryBreakdown, TransactionType } from "@/lib/customer/api";
 import { getBudgetCategoryNames } from "@/lib/customer/budgets";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { appYearMonth } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { getCategoryBreakdown } from "@/lib/customer/reports";
+import { type PickedPeriod, periodRange, readPickedPeriod } from "@/lib/customer/period";
+import { getActiveMonths, getCategoryBreakdown } from "@/lib/customer/reports";
 import { isCancelled } from "@/lib/customer/transactionDisplay";
-import { pageEdgeDays, readTransactionFilters } from "@/lib/customer/transactionRows";
+import { type CategoryCounts, pageEdgeDays, readTransactionFilters } from "@/lib/customer/transactionRows";
 import { getTransactions, getTransactionsSummary } from "@/lib/customer/transactions";
 import { getAppToday } from "@/lib/date";
 import { pageHref, pastEnd, readPageParam, readPageSizeParam } from "@/lib/table/pageParams";
@@ -21,6 +23,13 @@ const TYPES: TransactionType[] = ["INCOME", "EXPENSE"];
 const PAGE_SIZES = [10, 20, 50];
 const DEFAULT_PAGE_SIZE = 20;
 
+const countsOf = (breakdown: CategoryBreakdown): Record<string, number> =>
+  Object.fromEntries(breakdown.categories.filter((row) => row.count !== undefined).map((row) => [row.uncategorised ? "" : row.name, row.count ?? 0]));
+
+// Income & Expense > Transactions for a period: this month unless the
+// address asks for another (?month=&year=, ?period=year&year=, ?from=&to=,
+// or ?period=all for all time; an older link's ?dateFrom=&dateTo= is the
+// reader's own days), narrowed by type, category, wallet and a search.
 export default async function TransactionsPage({ searchParams }: PageProps<"/transactions">) {
   const params = await searchParams;
   const user = await getCurrentUser();
@@ -29,12 +38,24 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
+  const today = getAppToday();
+  const current = appYearMonth();
+  const thisMonth: PickedPeriod = { kind: "month", ...current };
   const page = readPageParam(params);
   const limit = readPageSizeParam(params, PAGE_SIZES, DEFAULT_PAGE_SIZE);
-  const { type: selectedType, dateFrom, dateTo, accountId, categoryId, search } = readTransactionFilters((key) => {
+  const { type: selectedType, dateFrom: oldFrom, dateTo: oldTo, accountId, categoryId, uncategorised, search } = readTransactionFilters((key) => {
     const value = params[key];
     return typeof value === "string" ? value : undefined;
   });
+  const period: PickedPeriod =
+    params.period === "all"
+      ? { kind: "all" }
+      : oldFrom || oldTo
+        ? (oldFrom ?? "2000-01-01") <= (oldTo ?? today)
+          ? { kind: "custom", from: oldFrom ?? "2000-01-01", to: oldTo ?? today }
+          : thisMonth
+        : readPickedPeriod(params, current, thisMonth);
+  const { dateFrom, dateTo } = periodRange(period);
 
   // This page is the Income & Expense list -- transfers and the books'
   // sale/purchase/payment postings have their own pages -- narrowed to one
@@ -45,16 +66,20 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
     transactionType: selectedType,
     transactionTypes: selectedType ? undefined : TYPES,
     accountId,
-    categoryId,
+    categoryId: uncategorised ? undefined : categoryId,
+    ...(uncategorised && { uncategorised: true }),
     search,
   };
 
-  const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories, summary] = await Promise.all([
+  const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories, summary, incomeBreakdown, expenseBreakdown, activeMonths] = await Promise.all([
     getTransactions(activeBusinessId, { ...filters, page, limit }),
     getMoneyAccounts(activeBusinessId),
     getBudgetCategoryNames(activeBusinessId, "EXPENSE"),
     getBudgetCategoryNames(activeBusinessId, "INCOME"),
     getTransactionsSummary(activeBusinessId, filters),
+    getCategoryBreakdown(activeBusinessId, "INCOME", dateFrom, dateTo),
+    getCategoryBreakdown(activeBusinessId, "EXPENSE", dateFrom, dateTo),
+    getActiveMonths(activeBusinessId),
   ]);
 
   // A page past the end (rows were voided away, an old link) opens the
@@ -70,15 +95,17 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   if (summary) {
     totals = { income: Number(summary.totals.INCOME), expense: Number(summary.totals.EXPENSE), count: summary.count, voided: summary.voided, scope: "all" };
   } else {
-    const wholeRange = !accountId && !categoryId && !search;
-    const [incomeBreakdown, expenseBreakdown] = await Promise.all([
-      wholeRange && selectedType !== "EXPENSE" ? getCategoryBreakdown(activeBusinessId, "INCOME", dateFrom, dateTo) : null,
-      wholeRange && selectedType !== "INCOME" ? getCategoryBreakdown(activeBusinessId, "EXPENSE", dateFrom, dateTo) : null,
-    ]);
+    const wholeRange = !accountId && !categoryId && !uncategorised && !search;
     const voidedOnPage = transactions.filter(isCancelled).length;
     const pageTotal = (type: TransactionType) => transactions.filter((t) => t.transactionType === type && !isCancelled(t)).reduce((sum, t) => sum + Number(t.entries[0]?.amount ?? 0), 0);
     totals = wholeRange
-      ? { income: Number(incomeBreakdown?.total ?? 0), expense: Number(expenseBreakdown?.total ?? 0), count: meta.total, voided: voidedOnPage, scope: "all" }
+      ? {
+          income: selectedType === "EXPENSE" ? 0 : Number(incomeBreakdown.total),
+          expense: selectedType === "INCOME" ? 0 : Number(expenseBreakdown.total),
+          count: meta.total,
+          voided: voidedOnPage,
+          scope: "all",
+        }
       : { income: pageTotal("INCOME"), expense: pageTotal("EXPENSE"), count: meta.total, voided: voidedOnPage, scope: "page" };
   }
 
@@ -96,6 +123,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   }
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
+  const counts: CategoryCounts = { INCOME: countsOf(incomeBreakdown), EXPENSE: countsOf(expenseBreakdown) };
 
   return (
     <TransactionsPageClient
@@ -103,12 +131,16 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
       transactions={transactions}
       accounts={accounts}
       categories={[...expenseCategories.map((c) => ({ ...c, type: "EXPENSE" as const })), ...incomeCategories.map((c) => ({ ...c, type: "INCOME" as const }))]}
+      categoryCounts={counts}
+      period={period}
+      current={current}
+      activeMonths={activeMonths}
       meta={meta}
       pageSize={limit}
       pageSizes={PAGE_SIZES}
       defaultPageSize={DEFAULT_PAGE_SIZE}
       currency={activeBusiness?.currency ?? "BDT"}
-      today={getAppToday()}
+      today={today}
       totals={totals}
       dayTotals={dayTotals}
       splitDays={edges}

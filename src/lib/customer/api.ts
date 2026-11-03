@@ -631,6 +631,9 @@ export interface Transaction {
   // withdrawal, an asset purchase or sale, a referral payout) -- voiding
   // only the money would leave that feature's figures wrong.
   voidable: boolean;
+  // A charge (its own expense) points at the transfer or loan entry it was
+  // paid with; null otherwise.
+  chargeForId?: string | null;
   entries: TransactionEntry[];
   // The bank or service charge paid with this entry (a loan entry's
   // Charge column); null without one. Missing from an older backend.

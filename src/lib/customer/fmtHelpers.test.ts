@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { dateRangeLabel } from "@/components/modules/Customer/Transactions/TransactionFilters";
 import { monthLabel } from "@/components/modules/Customer/Budget/MonthSwitcher";
 import { formatDay } from "@/lib/date";
 import { resolveFmt } from "@/lib/i18n/formatPrefs";
@@ -102,8 +101,6 @@ describe("list days in the date style", () => {
     expect(weekdayLabel("2026-09-30", "en")).toBe("Wed, 30 Sep 2026");
     expect(weekdayLabel("2026-09-30", bnDigitsEn)).toBe("Wed, ৩০ Sep ২০২৬");
     expect(friendDay("2025-08-14", "2026-10-28", dmy)).toBe("14/08/2025");
-    expect(dateRangeLabel("2026-09-27", "2026-10-02", inEnglish, "en")).toBe("27 Sep – 2 Oct 2026");
-    expect(dateRangeLabel("2026-09-27", "2026-10-02", inEnglish, dmy)).toBe("27/09/2026 – 02/10/2026");
   });
 });
 

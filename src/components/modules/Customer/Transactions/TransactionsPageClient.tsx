@@ -1,10 +1,14 @@
 "use client";
 
-import { Lock, Pencil, Plus, Receipt, Trash2 } from "lucide-react";
+import { ExternalLink, Lock, Pencil, Plus, Receipt, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { PrintPreview } from "@/components/modules/Customer/Balance/PrintPreview";
+import { listPeriodHref } from "@/components/modules/Customer/IncomeExpense/ieFigures";
 import { TransactionDrawer } from "@/components/modules/Customer/QuickEntry/TransactionDrawer";
+import { periodLabel } from "@/components/modules/Customer/Shared/PeriodPicker";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -15,13 +19,15 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
-import type { Account, Transaction } from "@/lib/customer/api";
+import type { Account, ActiveMonth, Transaction } from "@/lib/customer/api";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
+import { type PickedPeriod, periodRange, type YearMonth } from "@/lib/customer/period";
+import { listIncomeExpenseForPrintAction } from "@/lib/customer/transferActions";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { activeFilterCount, categoryIndex, categoryLabel, dayHeading, describeTransaction, type EditableEntry, editableEntry, groupByDay, isReversedRange, readTransactionFilters, rowTitle, type TransactionRow } from "@/lib/customer/transactionRows";
+import { activeFilterCount, type CategoryCounts, categoryIndex, categoryLabel, dayHeading, describeTransaction, type EditableEntry, editableEntry, groupByDay, owningFeature, readTransactionFilters, rowTitle, type TransactionRow } from "@/lib/customer/transactionRows";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { plural } from "@/lib/i18n/message";
@@ -29,6 +35,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { pageHref, readPageParam, readPageSizeParam } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
 import { type FilterCategory, TransactionFilters } from "./TransactionFilters";
+import { IEStatement, type StatementLine } from "./IEStatement";
 import { VoidTransactionDialog } from "./VoidTransactionDialog";
 
 export interface TransactionTotals {
@@ -47,6 +54,12 @@ interface TransactionsPageClientProps {
   transactions: Transaction[];
   accounts: Account[];
   categories: (FilterCategory & { icon: string | null; color: string })[];
+  // How many transactions each category has in the period (the dropdown's counts).
+  categoryCounts: CategoryCounts;
+  period: PickedPeriod;
+  current: YearMonth;
+  // The months with any income or expense; null when that can't be read.
+  activeMonths: ActiveMonth[] | null;
   meta: { page: number; limit: number; total: number; totalPages: number };
   pageSize: number;
   pageSizes: number[];
@@ -61,9 +74,10 @@ interface TransactionsPageClientProps {
   canManage: boolean;
 }
 
-// The board's table: #, Date, Type, Category, Note, Amount, Actions. Below
-// xl the type and the category go under the note, so the note column never
-// drops under 12rem beside the sidebar (iPads, small laptops).
+// The board's table: #, Date, Type, Category, Description (its account
+// under it), Amount, Actions. Below xl the type and the category go under
+// the description, so it never drops under 12rem beside the sidebar (iPads,
+// small laptops).
 const COLUMNS = "md:grid-cols-[40px_100px_minmax(12rem,1fr)_140px_96px] xl:grid-cols-[40px_110px_110px_190px_minmax(12rem,1fr)_150px_96px]";
 const LIST_ID = "transactions-list";
 const PHONE_LIST_ID = "transactions-list-phone";
@@ -71,9 +85,12 @@ const PHONE_LIST_ID = "transactions-list-phone";
 // The board's round icon buttons: edit in ink, delete in red.
 const ROW_ACTION = "flex size-11 items-center justify-center rounded-full";
 
-// Transactions: the filters, the totals strip, and the list grouped by
-// day with each day's net, newest first.
-export function TransactionsPageClient({ businessId, transactions, accounts, categories, meta, pageSize, pageSizes, defaultPageSize, currency, today, totals, dayTotals, splitDays, canManage }: TransactionsPageClientProps) {
+// Income & Expense > Transactions (the Transactions board): the totals
+// strip, the filters with the period and Print, and the list grouped by day
+// with each day's net, newest first. A category opens its own; a feature's
+// own posting (zakat, a charge, an asset, a savings move, a referral payout)
+// is changed on its own page.
+export function TransactionsPageClient({ businessId, transactions, accounts, categories, categoryCounts, period, current, activeMonths, meta, pageSize, pageSizes, defaultPageSize, currency, today, totals, dayTotals, splitDays, canManage }: TransactionsPageClientProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -82,16 +99,20 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const [voiding, setVoiding] = useState<TransactionRow | null>(null);
   // A row's Edit: the transaction popup filled in with it.
   const [editing, setEditing] = useState<EditableEntry | null>(null);
+  // Print: the statement of every matching transaction, once loaded.
+  const [printing, setPrinting] = useState<{ transactions: Transaction[]; complete: boolean } | null>(null);
+  const [loadingPrint, startPrint] = useTransition();
 
   const lang = displayLanguage(locale);
   const accountNames = Object.fromEntries(accounts.map((account) => [account.id, accountDisplayName(account, lang)]));
   const categoriesById = categoryIndex(categories);
   const groups = groupByDay(transactions.map((transaction) => describeTransaction(transaction, categoriesById, accountNames, locale)));
   const filters = readTransactionFilters((key) => searchParams.get(key));
-  const filtered = activeFilterCount(filters) > 0;
+  const filtered = activeFilterCount({ ...filters, dateFrom: undefined, dateTo: undefined }) > 0;
 
-  // A new account: nothing to filter or total yet, so only the empty card.
-  const blank = !filtered && meta.total === 0;
+  // A new account (no income or expense in any month): nothing to filter or
+  // total yet, so only the empty card.
+  const blank = activeMonths !== null && activeMonths.length === 0 && meta.total === 0 && !filtered;
 
   // The address last asked for, until it lands. useSearchParams keeps the
   // old URL while a navigation loads, so a second change made by then (From,
@@ -119,6 +140,46 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   // filter bar's Clear does.
   const limitParam = searchParams.get("limit");
   const clearHref = limitParam ? `/transactions?${new URLSearchParams({ limit: limitParam }).toString()}` : "/transactions";
+
+  // A row's category opens just that category, the rest kept.
+  const showOnly = (row: TransactionRow) => {
+    const next = Object.fromEntries(baseQuery());
+    delete next.page;
+    if (row.uncategorised) {
+      delete next.categoryId;
+      next.uncategorised = "1";
+    } else if (row.entryCategory) {
+      delete next.uncategorised;
+      next.categoryId = row.entryCategory;
+    }
+    navigate(listPeriodHref("/transactions", next, period, current));
+  };
+
+  // Print loads every transaction the filters match, not just this page.
+  function print() {
+    const { dateFrom, dateTo } = periodRange(period);
+    startPrint(async () => {
+      const result = await listIncomeExpenseForPrintAction(businessId, { dateFrom, dateTo, type: filters.type, categoryId: filters.categoryId, uncategorised: filters.uncategorised, accountId: filters.accountId, search: filters.search });
+      if (result.success && result.data) setPrinting(result.data);
+      else toast.error(t("Couldn't load the transactions to print. Try again."));
+    });
+  }
+  const { dateFrom: rangeFrom, dateTo: rangeTo } = periodRange(period);
+  const statementLines: StatementLine[] = (printing?.transactions ?? [])
+    .filter((transaction) => transaction.transactionType === "INCOME" || transaction.transactionType === "EXPENSE")
+    .map((transaction) => {
+      const row = describeTransaction(transaction, categoriesById, accountNames, locale);
+      return {
+        id: transaction.id,
+        date: transaction.transactionDate,
+        kind: transaction.transactionType as "INCOME" | "EXPENSE",
+        category: row.uncategorised ? t("Uncategorised") : row.category ? categoryLabel(row.category.name, t) : "—",
+        description: rowTitle(row, t),
+        account: row.wallet ?? "",
+        amount: Math.abs(row.signedAmount),
+      };
+    });
+  const narrowed = [filters.type && t(filters.type === "INCOME" ? "Income" : "Expense"), filters.uncategorised ? t("Uncategorised") : filters.categoryId && categoryLabel(filters.categoryId, t), filters.accountId && accountNames[filters.accountId], filters.search && t("search \"{text}\"", { text: filters.search })].filter(Boolean).join(" · ");
 
   // A new page size keeps the first row of the page on show (or asked for)
   // in view.
@@ -165,7 +226,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const addButton = canManage ? (
     <Button onClick={() => setAddOpen(true)} className="gap-1.5 rounded-full px-4.5">
       <Plus strokeWidth={2.5} className="size-4" />
-      {t("New transaction")}
+      {t("Transaction")}
     </Button>
   ) : (
     <span className="flex items-center gap-2 text-small text-ink-muted">
@@ -206,17 +267,29 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         </Card>
       )}
 
-      {!blank && <TransactionFilters accounts={accounts} categories={categories} navigate={navigate} baseQuery={baseQuery} />}
+      {!blank && (
+        <TransactionFilters
+          accounts={accounts}
+          categories={categories}
+          counts={categoryCounts}
+          period={period}
+          current={current}
+          today={today}
+          activeMonths={activeMonths}
+          navigate={navigate}
+          baseQuery={baseQuery}
+          onPrint={meta.total > 0 ? print : undefined}
+          printing={loadingPrint}
+        />
+      )}
 
       {transactions.length === 0 ? (
         <Card padding="none" className="flex min-h-140 flex-col items-center justify-center gap-2.5 p-10 text-center md:min-h-160.5">
           <EmptyIllustration />
-          <h2 className="text-h3 text-ink">{filtered ? t("Nothing matches these filters") : t("No transactions yet")}</h2>
+          <h2 className="text-h3 text-ink">{blank ? t("No transactions yet") : t("No transactions found")}</h2>
           <p className="max-w-105 text-body leading-[1.55] text-ink-muted">
-            {filtered
-              ? isReversedRange(filters)
-                ? t("From is after To, so nothing can match. Swap the dates.")
-                : t("Try a wider date range, or clear the filters.")
+            {!blank
+              ? t("Try another month, type or category, or clear the search.")
               : canManage
                 ? t("Add your first income or expense. It takes a few seconds, and your dashboard, budget and reports fill in from here.")
                 : t("Only an owner or accountant can add transactions")}
@@ -225,10 +298,10 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             {canManage && (
               <Button variant="action" onClick={() => setAddOpen(true)} className="gap-1.5">
                 <Plus strokeWidth={2.5} className="size-3.75" />
-                {filtered ? t("New transaction") : t("Add first transaction")}
+                {blank ? t("Add first transaction") : t("Transaction")}
               </Button>
             )}
-            {filtered ? (
+            {!blank ? (
               <Button variant="secondary" asChild className="rounded-sm">
                 <Link href={clearHref}>{t("Clear filters")}</Link>
               </Button>
@@ -240,7 +313,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
           </div>
           {/* N opens the New transaction drawer (Layout/AddMenu); phones
               have no keyboard to press it on. */}
-          {!filtered && canManage && (
+          {blank && canManage && (
             <p className="mt-3.5 hidden items-center gap-1.5 text-caption text-ink-muted md:flex">
               {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
                 key: <Kbd className="rounded-[4px] bg-strip px-1.5 py-px font-sans text-[11px] font-semibold text-ink-soft">N</Kbd>,
@@ -264,7 +337,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
               <ListHeadCell>{t("Date")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Type")}</ListHeadCell>
               <ListHeadCell className="hidden xl:block">{t("Category")}</ListHeadCell>
-              <ListHeadCell>{t("Note")}</ListHeadCell>
+              <ListHeadCell>{t("Description")}</ListHeadCell>
               <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
               <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
             </ListHead>
@@ -278,6 +351,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
                 canManage={canManage}
                 onVoid={() => setVoiding(row)}
                 onEdit={() => setEditing(editableEntry(row.transaction, rowTitle(row, t), row.entryCategory))}
+                onShowOnly={() => showOnly(row)}
               />
             ))}
           </ListCard>
@@ -308,6 +382,19 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
       {canManage && <TransactionDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} currency={currency} />}
       {canManage && editing && <TransactionDrawer open onClose={() => setEditing(null)} businessId={businessId} currency={currency} editing={editing} stayOnEdit />}
+      {printing && (
+        <PrintPreview subtitle={`A4 · ${periodLabel(period, t, fmt)}`} onClose={() => setPrinting(null)}>
+          <IEStatement
+            lines={statementLines}
+            periodLabel={periodLabel(period, t, fmt)}
+            range={rangeFrom && rangeTo ? `${formatDate(rangeFrom, undefined, fmt)} – ${formatDate(rangeTo, undefined, fmt)}` : null}
+            narrowed={narrowed || null}
+            capped={!printing.complete}
+            today={today}
+            currency={currency}
+          />
+        </PrintPreview>
+      )}
       {voiding && (
         <VoidTransactionDialog
           open
@@ -351,15 +438,29 @@ function CategoryTile({ row, size = 36 }: { row: TransactionRow; size?: 36 | 40 
 // (a transfer, a loan or asset posting) plain.
 const TYPE_BADGE: Record<string, string> = { INCOME: "bg-income-soft text-income", EXPENSE: "bg-expense-soft text-expense" };
 
-function DesktopRow({ number, row, currency, canManage, onVoid, onEdit }: { number: number; row: TransactionRow; currency: string; canManage: boolean; onVoid: () => void; onEdit: () => void }) {
+// Where a feature's own posting is changed: the page that keeps it.
+function sourceOf(row: TransactionRow): { href: string; label: string; tip: string } | null {
+  const transaction = row.transaction;
+  if (transaction.transactionType === "EXPENSE" && row.entryCategory === "Zakat") return { href: "/zakat", label: "Zakat page", tip: "Recorded on the Zakat page. Change it there." };
+  if (transaction.chargeForId) return { href: `/transactions/${transaction.chargeForId}`, label: "Its transfer", tip: "A charge on a transfer or a loan entry. Change it there." };
+  const feature = owningFeature(transaction);
+  if (feature === "asset") return { href: "/assets-management/purchase-sell", label: "Assets", tip: "Recorded on the Assets page. Change it there." };
+  if (feature === "savings") return { href: "/savings-goals/dashboard", label: "Savings", tip: "Recorded on the Savings goals page. Change it there." };
+  if (feature === "referral") return { href: "/referrals", label: "Referrals", tip: "Recorded by the referral program." };
+  return null;
+}
+
+function DesktopRow({ number, row, currency, canManage, onVoid, onEdit, onShowOnly }: { number: number; row: TransactionRow; currency: string; canManage: boolean; onVoid: () => void; onEdit: () => void; onShowOnly: () => void }) {
   const { t, fmt } = useLocale();
   const href = `/transactions/${row.transaction.id}`;
   const kind = row.transaction.transactionType;
   const tone = kind === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
   const title = rowTitle(row, t);
-  const category = row.category && categoryLabel(row.category.name, t);
+  const category = row.uncategorised && !owningFeature(row.transaction) ? t("Uncategorised") : row.category && categoryLabel(row.category.name, t);
+  const filterable = row.uncategorised || !!row.entryCategory;
   const typeLabel = t(TRANSACTION_TYPE_LABELS[kind]);
   const editable = canManage && !row.cancelled && editableEntry(row.transaction, title, row.entryCategory) !== null;
+  const source = !row.cancelled ? sourceOf(row) : null;
   return (
     // A voided row fades to 60% as the board sets it back; its buttons stay
     // solid.
@@ -371,10 +472,17 @@ function DesktopRow({ number, row, currency, canManage, onVoid, onEdit }: { numb
       </ListCell>
       <ListCell className="hidden min-w-0 items-center gap-2 text-body text-ink-2 xl:flex">
         {category ? (
-          <>
-            <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", tone.fg)} />
-            <span className="truncate">{category}</span>
-          </>
+          filterable ? (
+            <button type="button" onClick={onShowOnly} title={t("Show only {name}", { name: category })} className="relative z-10 flex min-w-0 items-center gap-2 rounded-sm text-left hover:text-ink hover:underline">
+              <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", row.uncategorised ? "text-ink-faint" : tone.fg)} />
+              <span className="truncate">{category}</span>
+            </button>
+          ) : (
+            <>
+              <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", tone.fg)} />
+              <span className="truncate">{category}</span>
+            </>
+          )
         ) : (
           <span className="text-ink-muted">—</span>
         )}
@@ -390,7 +498,11 @@ function DesktopRow({ number, row, currency, canManage, onVoid, onEdit }: { numb
             </Chip>
           )}
         </span>
-        <span className="truncate text-caption text-ink-muted xl:hidden">{[typeLabel, category].filter(Boolean).join(" · ")}</span>
+        <span className="truncate text-caption text-ink-muted">
+          <span className="xl:hidden">{[typeLabel, category].filter(Boolean).join(" · ")}</span>
+          {row.wallet && <span className="xl:hidden"> · </span>}
+          {row.wallet}
+        </span>
       </ListCell>
       <ListCell align="end">
         <AmountText
@@ -403,6 +515,12 @@ function DesktopRow({ number, row, currency, canManage, onVoid, onEdit }: { numb
         />
       </ListCell>
       <ListRowActions>
+        {source && !editable && (
+          <Link href={source.href} title={t(source.tip)} className="relative z-10 flex h-8 items-center gap-1 rounded-full bg-surface-sunken px-2.5 text-caption font-semibold whitespace-nowrap text-ink-2 hover:bg-hover pointer-coarse:h-11">
+            {t(source.label)}
+            <ExternalLink className="size-3" aria-hidden="true" />
+          </Link>
+        )}
         {editable && (
           <button type="button" onClick={onEdit} aria-label={t("Edit transaction")} title={t("Edit")} className={cn(ROW_ACTION, "text-ink-2 hover:bg-surface-sunken")}>
             <Pencil className="size-4.25" aria-hidden="true" />

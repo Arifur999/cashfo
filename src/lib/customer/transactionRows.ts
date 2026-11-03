@@ -40,6 +40,9 @@ export interface TransactionRow {
   // Positive for money in, negative for money out, as entered for a transfer.
   signedAmount: number;
   cancelled: "Voided" | "Reversal" | null;
+  // An income or expense that files under no category: Income & Expense
+  // calls it Uncategorised (its account stands in on `category`).
+  uncategorised: boolean;
 }
 
 export const shiftDay = (day: string, delta: number): string => {
@@ -100,12 +103,15 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
   const signedAmount = transaction.transactionType === "EXPENSE" ? -amount : amount;
   return {
     transaction,
-    title: (transaction.reversalOfId ? reversalTitle(transaction.description) : transaction.description) || category?.name || null,
+    // What the reader wrote: the description, else the note a quick entry
+    // keeps on its entry (the popup's Note), else the category.
+    title: (transaction.reversalOfId ? reversalTitle(transaction.description) : transaction.description) || (transaction.reversalOfId ? null : transaction.entries.find((e) => e.note?.trim())?.note?.trim()) || category?.name || null,
     category,
     entryCategory,
     wallet,
     signedAmount,
     cancelled: cancelledLabel(transaction),
+    uncategorised: !categoryEntry && (transaction.transactionType === "INCOME" || transaction.transactionType === "EXPENSE"),
   };
 }
 
@@ -275,9 +281,15 @@ export function editChanges(editing: EditableEntry, values: EntryValues): number
 
 // The filters the Transactions list takes from its URL. Anything else in
 // the query (page, limit, a tracking tag) is no filter.
+// How many transactions each category has in a period, by type; the money
+// with no category under "" (Transactions' category dropdown).
+export type CategoryCounts = Record<"INCOME" | "EXPENSE", Record<string, number>>;
+
 export interface TransactionListFilters {
   type?: "INCOME" | "EXPENSE";
   categoryId?: string;
+  // Only what files under no category (?uncategorised=1).
+  uncategorised?: boolean;
   accountId?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -299,6 +311,7 @@ export function readTransactionFilters(get: QueryValue): TransactionListFilters 
   return {
     type: type === "INCOME" || type === "EXPENSE" ? type : undefined,
     categoryId: text("categoryId"),
+    uncategorised: get("uncategorised") === "1" || get("uncategorised") === "true" ? true : undefined,
     accountId: text("accountId"),
     dateFrom: day("dateFrom"),
     dateTo: day("dateTo"),
@@ -308,17 +321,15 @@ export function readTransactionFilters(get: QueryValue): TransactionListFilters 
 
 // How many filters are on, the date range counting once.
 export const activeFilterCount = (filters: TransactionListFilters): number =>
-  [filters.type, filters.categoryId, filters.accountId, filters.dateFrom || filters.dateTo, filters.search].filter(Boolean).length;
+  [filters.type, filters.categoryId || filters.uncategorised, filters.accountId, filters.dateFrom || filters.dateTo, filters.search].filter(Boolean).length;
 
 // A From day after the To day: nothing can match.
 export const isReversedRange = (filters: Pick<TransactionListFilters, "dateFrom" | "dateTo">): boolean => !!filters.dateFrom && !!filters.dateTo && filters.dateFrom > filters.dateTo;
 
 // One category's entries in one month: what Budget's and Income sources'
-// "See transactions" open.
+// "See transactions" open (the month in the report pages' own words).
 export function categoryTransactionsHref(type: "INCOME" | "EXPENSE", category: string, year: number, month: number): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const query = new URLSearchParams({ type, categoryId: category, dateFrom: `${year}-${pad(month)}-01`, dateTo: `${year}-${pad(month)}-${pad(last)}` });
+  const query = new URLSearchParams({ type, categoryId: category, month: String(month), year: String(year) });
   return `/transactions?${query.toString()}`;
 }
 

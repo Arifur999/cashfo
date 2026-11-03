@@ -29,6 +29,8 @@ export interface TransactionFilters {
   // Only what still stands: voided ones and their reversals left out.
   standingOnly?: boolean;
   search?: string;
+  // Only what files under no category (Income & Expense's Uncategorised).
+  uncategorised?: boolean;
   page?: number;
   limit?: number;
 }
