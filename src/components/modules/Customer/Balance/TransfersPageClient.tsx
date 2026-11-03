@@ -28,6 +28,7 @@ import { listTransfersForPrintAction } from "@/lib/customer/transferActions";
 import { transferAmount, transferParties } from "@/lib/customer/transfers";
 import { walletIcon } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
+import IconAction, { iconActionClass } from "@/components/smartly/IconAction";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { PeriodPicker, periodLabel as periodName } from "../Shared/PeriodPicker";
 import { plural } from "@/lib/i18n/message";
@@ -69,8 +70,7 @@ interface TransfersPageClientProps {
 }
 
 // #, Date, From, To, Note, Amount, Charge, Action; phones scroll sideways.
-const COLUMNS = "grid-cols-[24px_92px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)_104px_84px_72px] min-w-235";
-const ICON_BUTTON = "flex size-8 items-center justify-center rounded-full pointer-coarse:size-11";
+const COLUMNS = "grid-cols-[24px_92px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)_104px_84px_68px] min-w-235";
 const SEARCH_DELAY = 350;
 
 // Transfers (board: Balance — Transfers): what moved between the
@@ -440,17 +440,17 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                     </ListCell>
                     <ListRowActions>
                       {editable ? (
-                        <button type="button" onClick={() => startEdit(transfer)} aria-label={t("Edit transfer")} title={t("Edit")} className={cn(ICON_BUTTON, "text-ink-2 hover:bg-surface-sunken")}>
-                          <Pencil className="size-4" aria-hidden="true" />
-                        </button>
+                        <IconAction onClick={() => startEdit(transfer)} aria-label={t("Edit transfer")} title={t("Edit")}>
+                          <Pencil aria-hidden="true" />
+                        </IconAction>
                       ) : (
-                        <Link href={transactionHref(transfer.id, here)} aria-label={t("View details")} title={t("View details")} className={cn(ICON_BUTTON, "text-ink-soft hover:bg-surface-sunken")}>
-                          <Eye className="size-4" aria-hidden="true" />
+                        <Link href={transactionHref(transfer.id, here)} aria-label={t("View details")} title={t("View details")} className={iconActionClass()}>
+                          <Eye aria-hidden="true" />
                         </Link>
                       )}
                       {canManage && transfer.voidable && parties.fromId && parties.toId && (
-                        <button
-                          type="button"
+                        <IconAction
+                          tone="danger"
                           onClick={() =>
                             setDeleting({
                               id: transfer.id,
@@ -468,10 +468,9 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                           disabled={!online}
                           aria-label={t("Delete transfer")}
                           title={t("Delete")}
-                          className={cn(ICON_BUTTON, "text-expense hover:bg-expense-soft disabled:opacity-50")}
                         >
-                          <Trash2 className="size-4" aria-hidden="true" />
-                        </button>
+                          <Trash2 aria-hidden="true" />
+                        </IconAction>
                       )}
                     </ListRowActions>
                   </ListRow>
