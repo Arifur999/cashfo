@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useTransition, type ReactNode } from "react";
+import { createContext, useContext, useState, useTransition, type ReactNode } from "react";
+import { SignOutDialog } from "@/components/modules/Customer/Layout/SignOutDialog";
 import type { CurrentUser, UserBusiness } from "@/lib/customer/api";
 import { logoutAction } from "@/app/-actions/authActions";
 
@@ -28,7 +29,11 @@ interface AuthContextValue {
   // in an admin's read-only view, which the API never asks). Locked ones
   // missing here ask for the PIN before they open.
   unlockedBusinessIds: string[];
-  logout: () => void;
+  // Signs out at once (true: on every device too).
+  logout: (everywhere?: boolean) => void;
+  // Asks first ("Sign out?", with the every-device choice): what a Sign out
+  // button does.
+  askSignOut: () => void;
   refreshFailed: () => void;
 }
 
@@ -52,14 +57,18 @@ export function AuthProvider({ initialUser, initialActiveBusinessId, unlockedBus
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
 
   const [, startTransition] = useTransition();
+  const [asking, setAsking] = useState(false);
 
-  function logout() {
-    startTransition(() => logoutAction());
+  // Only a real true counts: a button wired straight to logout hands it its
+  // click event.
+  function logout(everywhere?: boolean) {
+    startTransition(() => logoutAction(everywhere === true));
   }
 
   return (
-    <AuthContext.Provider value={{ user, activeBusinessId, activeBusiness, unlockedBusinessIds, logout, refreshFailed: logout }}>
+    <AuthContext.Provider value={{ user, activeBusinessId, activeBusiness, unlockedBusinessIds, logout, askSignOut: () => setAsking(true), refreshFailed: () => logout() }}>
       {children}
+      <SignOutDialog open={asking} onClose={() => setAsking(false)} onSignOut={logout} />
     </AuthContext.Provider>
   );
 }

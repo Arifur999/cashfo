@@ -4,7 +4,6 @@ import { Bell, BookOpen, ChevronRight, CircleHelp, Hash, Languages, LogOut, Moon
 import Link from "next/link";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
-import Loader from "@/components/shared/Loader";
 import Avatar from "@/components/smartly/Avatar";
 import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
@@ -13,7 +12,6 @@ import { APP_VERSION, DEVICES_ANCHOR, NUMBERS_ANCHOR, REMINDERS_ANCHOR } from "@
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { useSignOut } from "./SettingsNav";
 
 interface MenuRow {
   key: string;
@@ -40,8 +38,7 @@ interface SettingsMobileMenuProps {
 // phone has no other way there besides Home's upgrade card).
 export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuProps) {
   const { t, locale, fmt } = useLocale();
-  const { user } = useAuth();
-  const { signingOut, signOut } = useSignOut();
+  const { user, askSignOut } = useAuth();
   const { preference, allowDark } = useTheme();
   const prefs = user.preferences ?? DEFAULT_PREFERENCES;
   const twoStepOn = Boolean(user.twoFactorEnabled);
@@ -110,9 +107,9 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
         </section>
       ))}
 
-      <button type="button" onClick={signOut} disabled={signingOut} aria-busy={signingOut || undefined} className="flex h-12.5 items-center justify-center gap-2 rounded-[14px] border border-expense-line bg-surface text-[15px] font-semibold text-expense disabled:cursor-wait disabled:opacity-70">
-        {signingOut ? <Loader size={18} label={t("Signing out...")} /> : <LogOut className="size-4.5" aria-hidden="true" />}
-        {signingOut ? t("Signing out...") : t("Sign out")}
+      <button type="button" onClick={askSignOut} className="flex h-12.5 items-center justify-center gap-2 rounded-[14px] border border-expense-line bg-surface text-[15px] font-semibold text-expense">
+        <LogOut className="size-4.5" aria-hidden="true" />
+        {t("Sign out")}
       </button>
       <span className="text-center text-caption text-ink-faint">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</span>
     </div>

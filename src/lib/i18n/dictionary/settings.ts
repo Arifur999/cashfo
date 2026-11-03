@@ -12,8 +12,6 @@
 // settings-workspace.ts.
 export const settingsDictionary: Record<string, string> = {
   // Rail and phone menu
-  "Settings sections": "সেটিংসের অংশ",
-  "Your account, your security and how the app looks.": "আপনার অ্যাকাউন্ট, নিরাপত্তা আর অ্যাপ দেখতে কেমন।",
   Support: "সহায়তা",
   Profile: "প্রোফাইল",
   Workspaces: "ওয়ার্কস্পেস",
@@ -612,4 +610,20 @@ export const settingsDictionary: Record<string, string> = {
   "This profile card isn't shared": "এই প্রোফাইল কার্ডটি শেয়ার করা নেই",
   "Its owner may have turned it off.": "হয়তো এর মালিক এটি বন্ধ করেছেন।",
   "Go to Smartly": "Smartly-তে যান",
+
+  // The sidebar's sign-out dialog and plan card (AppSidebar board), the
+  // Dashboard's plan button
+  "Sign out?": "সাইন আউট করবেন?",
+  "You will leave Smartly on this device. Your records stay safe and come back when you sign in.": "এই ডিভাইস থেকে বের হয়ে যাবেন। আপনার সব হিসাব নিরাপদে থাকবে, আবার সাইন ইন করলেই পাবেন।",
+  "Sign out on all my devices": "সব ডিভাইস থেকে সাইন আউট করুন",
+  Stay: "থাকুন",
+  "Payment being checked": "পেমেন্ট যাচাই হচ্ছে",
+  "Pro turns on once we confirm your TrxID, usually within 2 hours.": "TrxID নিশ্চিত হলেই Pro চালু হবে, সাধারণত ২ ঘণ্টার মধ্যে।",
+  "See status": "অবস্থা দেখুন",
+  "Free trial · {count} days left": "ফ্রি ট্রায়াল · আর {count} দিন",
+  "Pick a plan before {date} to keep Pro.": "{date}-এর আগে একটি প্ল্যান বেছে নিন, তাহলে Pro থেকে যাবে।",
+  "Choose a plan": "প্ল্যান বেছে নিন",
+  "No monthly limit on transactions, plus PDF reports and income goals.": "মাসিক লেনদেনের কোনো সীমা নেই, সাথে PDF রিপোর্ট আর আয়ের লক্ষ্য।",
+  "See payment": "পেমেন্ট দেখুন",
+  "Choose plan": "প্ল্যান বাছুন",
 };

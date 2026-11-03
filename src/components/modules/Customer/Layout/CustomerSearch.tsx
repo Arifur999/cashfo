@@ -100,7 +100,7 @@ export function CustomerSearch(props: CustomerSearchProps) {
 
 function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSearchProps) {
   const { t, locale, fmt, toggleLocale } = useLocale();
-  const { user, activeBusiness, logout } = useAuth();
+  const { user, activeBusiness, askSignOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const darkModeOn = useFeature("dark_mode");
   const loansOn = useFeature("loan_management");
@@ -195,7 +195,7 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSe
       : []),
     { key: "language", label: "Change language", sub: locale === "en" ? "বাংলা" : "English", context: ["English", "Bangla", "বাংলা"], mark: <Mark tone="neutral" icon={Languages} />, onSelect: changeLanguage },
     ...(darkModeOn ? [{ key: "theme", label: "Change theme", sub: t(themeHint), context: both(themeHint), mark: <Mark tone="neutral" icon={theme === "dark" ? Sun : Moon} />, onSelect: toggleTheme }] : []),
-    { key: "sign-out", label: "Sign out", sub: user.email, context: [], mark: <Mark tone="expense" icon={LogOut} />, onSelect: logout },
+    { key: "sign-out", label: "Sign out", sub: user.email, context: [], mark: <Mark tone="expense" icon={LogOut} />, onSelect: askSignOut },
   ];
   const shownActions = term ? rankMatches(term, paletteActions, (action) => ({ titles: both(action.label), context: action.context })) : paletteActions;
 
