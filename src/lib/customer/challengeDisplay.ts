@@ -2,34 +2,51 @@ import type { HabitMonthTracker } from "./api";
 import { dayOf, shiftDay } from "./habitDisplay";
 
 // The maths behind a challenge (the "Others" category): a named sheet of
-// N days that counts from the day it was created. Day N = days since
-// createdAt, on the platform calendar.
+// N days that counts from its start date (today or tomorrow, as it was
+// started; an older one from the UTC date it was created), on the platform
+// calendar. It can be ended early, which stops it at that day.
 
 export const CHALLENGE_PRESETS = [
   { days: 21, title: "A first try", sub: "Short enough to finish. Like waking up at 5 am." },
   { days: 30, title: "One month", sub: "A full month of something, like no sugar." },
-  { days: 40, title: "The classic 40", sub: "Like a walk after Fajr every day." },
+  { days: 40, title: "The classic", sub: "Like a walk after Fajr every day." },
   { days: 66, title: "Make it stick", sub: "About how long a new habit takes to feel automatic." },
 ];
 
-export type ChallengeStatus = "going" | "finished";
+// "upcoming": started for tomorrow. "finished": past its last day, or
+// ended early.
+export type ChallengeStatus = "upcoming" | "going" | "finished";
 
 export interface ChallengeWindow {
   // "YYYY-MM-DD" of day 1 and of the last day.
   start: string;
   end: string;
-  // Today's day number, past the end once it is over.
+  // Today's day number: 0 before day 1, past the end once it is over.
   today: number;
   status: ChallengeStatus;
   daysLeft: number;
+  // Ended early, and the last day it ran to (its last day, or the day it
+  // was ended on).
+  ended: boolean;
+  lastDay: number;
 }
 
 export function challengeWindow(tracker: HabitMonthTracker, today: string): ChallengeWindow {
-  const start = tracker.createdAt.slice(0, 10);
+  const start = tracker.startsOn ?? tracker.createdAt.slice(0, 10);
   const end = shiftDay(start, tracker.totalDays - 1);
-  const todayN = Math.max(1, Math.round((dayOf(today).getTime() - dayOf(start).getTime()) / 86400000) + 1);
-  const status: ChallengeStatus = todayN > tracker.totalDays ? "finished" : "going";
-  return { start, end, today: Math.min(todayN, tracker.totalDays + 1), status, daysLeft: Math.max(0, tracker.totalDays - todayN) };
+  const todayN = Math.round((dayOf(today).getTime() - dayOf(start).getTime()) / 86400000) + 1;
+  const ended = tracker.endedOnDay != null;
+  const lastDay = tracker.endedOnDay ?? tracker.totalDays;
+  const status: ChallengeStatus = todayN < 1 ? "upcoming" : ended || todayN > tracker.totalDays ? "finished" : "going";
+  return {
+    start,
+    end,
+    today: status === "upcoming" ? 0 : Math.min(todayN, tracker.totalDays + 1),
+    status,
+    daysLeft: status === "upcoming" ? tracker.totalDays : status === "going" ? tracker.totalDays - todayN : 0,
+    ended,
+    lastDay,
+  };
 }
 
 // The hidden item a challenge with no daily items of its own is ticked
@@ -77,10 +94,13 @@ export function stripTotals(tracker: HabitMonthTracker, window: ChallengeWindow)
   return { done, missed, toCome: tracker.totalDays - done - missed };
 }
 
-export type ChallengeMark = "done" | "missed" | "today" | "later";
+// "notReached": after the day a challenge was ended early.
+export type ChallengeMark = "done" | "missed" | "today" | "later" | "notReached";
 
 export function challengeMark(tracker: HabitMonthTracker, window: ChallengeWindow, day: number): ChallengeMark {
   if (dayDone(tracker, day)) return "done";
+  if (window.ended && day > window.lastDay) return "notReached";
+  if (window.status === "finished") return "missed";
   if (day === window.today && window.status === "going") return "today";
   if (day < window.today) return "missed";
   return "later";
@@ -88,18 +108,29 @@ export function challengeMark(tracker: HabitMonthTracker, window: ChallengeWindo
 
 export interface ChallengeSummary {
   done: number;
-  // Days that have come, today included.
+  // Days that have come, today included (up to the day it ended).
   come: number;
   missed: number;
+  // Done days out of all of its days.
   pct: number;
-  // Done days in a row ending today or yesterday.
+  // Done days in a row ending today or yesterday (or its last day).
   streak: number;
+  // The longest run of done days.
+  best: number;
 }
 
 export function challengeSummary(tracker: HabitMonthTracker, window: ChallengeWindow): ChallengeSummary {
-  const come = Math.min(window.today, tracker.totalDays);
+  const come = window.status === "upcoming" ? 0 : window.status === "finished" ? window.lastDay : Math.min(window.today, tracker.totalDays);
   let done = 0;
-  for (let d = 1; d <= come; d++) if (dayDone(tracker, d)) done++;
+  let best = 0;
+  let run = 0;
+  for (let d = 1; d <= come; d++) {
+    if (dayDone(tracker, d)) {
+      done++;
+      run++;
+      best = Math.max(best, run);
+    } else if (!(window.status === "going" && d === come)) run = 0;
+  }
   let streak = 0;
   let cursor = window.status === "going" && !dayDone(tracker, come) ? come - 1 : come;
   while (cursor >= 1 && dayDone(tracker, cursor)) {
@@ -107,7 +138,27 @@ export function challengeSummary(tracker: HabitMonthTracker, window: ChallengeWi
     cursor--;
   }
   const missed = window.status === "going" ? come - 1 - (done - (dayDone(tracker, come) ? 1 : 0)) : come - done;
-  return { done, come, missed: Math.max(0, missed), pct: tracker.totalDays > 0 ? Math.round((done / tracker.totalDays) * 100) : 0, streak };
+  return { done, come, missed: Math.max(0, missed), pct: tracker.totalDays > 0 ? Math.round((done / tracker.totalDays) * 100) : 0, streak, best };
+}
+
+// A finished challenge counts as completed when it ran to its last day
+// with at least this share of its days done.
+export const COMPLETED_PCT = 80;
+
+export type ChallengeOutcome = "going" | "completed" | "notCompleted";
+
+// Going (or about to start), completed, or not completed (ended early, or
+// under COMPLETED_PCT).
+export function challengeOutcome(tracker: HabitMonthTracker, window: ChallengeWindow): ChallengeOutcome {
+  if (window.status !== "finished") return "going";
+  if (window.ended) return "notCompleted";
+  return challengeSummary(tracker, window).pct >= COMPLETED_PCT ? "completed" : "notCompleted";
+}
+
+// The share of the days that have come that were done.
+export function successRate(summary: ChallengeSummary): number {
+  const counted = summary.done + summary.missed;
+  return counted > 0 ? Math.round((summary.done / counted) * 100) : 0;
 }
 
 // The preset a length matches, if any.

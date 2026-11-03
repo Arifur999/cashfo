@@ -1650,6 +1650,10 @@ export interface HabitMonthTracker {
   createdAt: string;
   // Ramadan only: the missed fasts made up since ("I kept one").
   fastsMadeUp?: number;
+  // Challenges only: the date day 1 falls on ("YYYY-MM-DD"), and the day it
+  // was ended early (null while it runs its course).
+  startsOn?: string | null;
+  endedOnDay?: number | null;
 }
 
 // Ramadan › Today's "Get ready" steps ticked for one Ramadan (year: the

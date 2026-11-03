@@ -167,7 +167,7 @@ describe("challenge", () => {
 
   it("counts the day from when it was created", () => {
     const w = challengeWindow(challenge([]), "2026-10-02");
-    expect(w).toEqual({ start: "2026-09-21", end: "2026-10-20", today: 12, status: "going", daysLeft: 18 });
+    expect(w).toEqual({ start: "2026-09-21", end: "2026-10-20", today: 12, status: "going", daysLeft: 18, ended: false, lastDay: 30 });
     expect(challengeWindow(challenge([]), "2026-10-25").status).toBe("finished");
   });
 
@@ -179,6 +179,6 @@ describe("challenge", () => {
     expect(challengeMark(tracker, w, 3)).toBe("missed");
     expect(challengeMark(tracker, w, 12)).toBe("today");
     expect(challengeMark(tracker, w, 13)).toBe("later");
-    expect(challengeSummary(tracker, w)).toEqual({ done: 10, come: 12, missed: 1, pct: 33, streak: 8 });
+    expect(challengeSummary(tracker, w)).toEqual({ done: 10, come: 12, missed: 1, pct: 33, streak: 8, best: 8 });
   });
 });
