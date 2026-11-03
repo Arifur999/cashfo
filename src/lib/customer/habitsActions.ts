@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker, type PrayerStatus, type QazaSummary } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker, type PrayerStatus, type QazaSummary, type RamadanPrep, type RamadanPrepKey } from "./api";
 import { DAY_ITEM, MAX_BACKFILL_DAYS } from "./challengeDisplay";
 import type { PrayerSettings } from "./prayerTimes";
 import { getAccessToken } from "@/lib/tokenUtils";
@@ -78,6 +78,21 @@ export async function setHabitTrackerCheckAction(
 
 // Ramadan: the paras read on one day (0 clears it); the server also ticks
 // the sheet's Quran row.
+// "I kept one": how many of a Ramadan sheet's missed fasts were made up.
+export async function setFastsMadeUpAction(id: string, count: number): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await customerApi.put<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/fasts-made-up`, { count }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the fast");
+}
+
+export async function saveRamadanPrepAction(year: number, items: RamadanPrepKey[]): Promise<ActionResult<RamadanPrep>> {
+  return callApi(async () => {
+    const res = await customerApi.put<RamadanPrep>(`${API_BASE_URL}/api/habit-trackers/ramadan-prep`, { year, items }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the list");
+}
+
 export async function setRamadanParasAction(id: string, input: { day: number; paras: number }): Promise<ActionResult<{ day: number; paras: number }>> {
   return callApi(async () => {
     const res = await customerApi.put<{ day: number; paras: number }>(`${API_BASE_URL}/api/habit-trackers/${id}/paras`, input, {

@@ -1648,6 +1648,16 @@ export interface HabitMonthTracker {
   paras: { day: number; paras: number }[];
   // When the sheet was created: a challenge counts its days from here.
   createdAt: string;
+  // Ramadan only: the missed fasts made up since ("I kept one").
+  fastsMadeUp?: number;
+}
+
+// Ramadan › Today's "Get ready" steps ticked for one Ramadan (year: the
+// Gregorian year it begins in, as its sheet is keyed).
+export type RamadanPrepKey = "intention" | "makeUp" | "quran" | "sadaqah" | "tahajjud";
+export interface RamadanPrep {
+  year: number;
+  items: RamadanPrepKey[];
 }
 
 // Habit Tracker -> To Do List: one list per calendar date, holding any number

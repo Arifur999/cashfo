@@ -3,7 +3,7 @@
 // comment on Habit).
 import { isAxiosError } from "axios";
 import { cache } from "react";
-import { API_BASE_URL, type Habit, type HabitMonth, type HabitMonthTracker, type HabitStat, type HabitToday, type QazaSummary } from "./api";
+import { API_BASE_URL, type Habit, type HabitMonth, type HabitMonthTracker, type HabitStat, type HabitToday, type QazaSummary, type RamadanPrep } from "./api";
 import { logServiceError } from "@/lib/axios/logServiceError";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { DEFAULT_PRAYER_SETTINGS, type PrayerSettings } from "./prayerTimes";
@@ -105,6 +105,19 @@ export const getHabitStats = cache(async (): Promise<HabitStat[]> => {
 });
 
 // Every habit and one month's logs ("YYYY-MM").
+// Ramadan › Today's "Get ready" steps for one Ramadan; null when they
+// couldn't be read.
+export const getRamadanPrep = cache(async (year: number): Promise<RamadanPrep | null> => {
+  const headers = await authHeaders();
+  if (!headers) return null;
+  try {
+    const res = await customerApi.get<RamadanPrep>(`${API_BASE_URL}/api/habit-trackers/ramadan-prep`, { headers, params: { year } });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
+  }
+});
+
 // A run of months (at most 24) in one read: Daily habits › Monthly report.
 export const getHabitMonths = cache(async (from: string, to: string): Promise<HabitMonth | null> => {
   const headers = await authHeaders();
