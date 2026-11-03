@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -12,7 +12,6 @@ import ErrorState from "@/components/smartly/ErrorState";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { QazaSummary } from "@/lib/customer/api";
 import { actionError, dayText } from "@/lib/customer/habitDisplay";
 import { logQazaAction, removeQazaAction, setQazaSinceAction } from "@/lib/customer/habitsActions";
@@ -71,51 +70,44 @@ export function QazaCard({ qaza: serverQaza, today }: QazaCardProps) {
   const since = dayText(qaza.since, fmt, "dayMonth");
 
   return (
-    <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4">
+    <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-[14px] px-4.5 py-4">
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <h2 className="text-title font-semibold text-ink">{t("Qaza to make up")}</h2>
-        <span className="text-caption text-ink-muted">{t("Counting from {date}", { date: since })}</span>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <span className={cn("text-[30px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums", qaza.totalLeft > 0 ? "text-warning" : "text-income")}>{count(qaza.totalLeft)}</span>
-        <span className="text-body text-ink-soft">{t(qaza.totalLeft === 1 ? "prayer left" : "prayers left")}</span>
-      </div>
-      <div className="grid grid-cols-5 gap-1.5">
-        {PRAYERS.map((prayer) => (
-          <span key={prayer} className={cn("flex min-w-0 flex-col items-center gap-0.5 rounded-sm border py-1.5", qaza.left[prayer] > 0 ? "border-warning-line bg-warning-50 text-warning-ink" : "border-line bg-strip text-ink-muted")}>
-            <span className="text-[15px] leading-[normal] font-bold tabular-nums">{count(qaza.left[prayer] ?? 0)}</span>
-            <span className="max-w-full truncate px-0.5 text-[11px]">{t(prayer)}</span>
-          </span>
-        ))}
-      </div>
-      <div className="flex flex-col gap-1.25">
-        <div className="flex flex-wrap justify-between gap-x-3 text-[12.5px] text-ink-soft">
-          <span>{t("{count} missed since {date}", { count: count(missed), date: since })}</span>
-          <span className="font-semibold text-ink">{t("{count} made up", { count: count(madeUp) })}</span>
-        </div>
-        <span role="progressbar" aria-label={t("Qaza made up")} aria-valuenow={share} aria-valuemin={0} aria-valuemax={100} className="block h-1.5 overflow-hidden rounded-full bg-warning-soft">
-          <span className="block h-full rounded-full bg-warning-fill" style={{ width: `${share}%` }} />
-        </span>
-      </div>
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2.5 border-t border-divider pt-3">
-        <button type="button" onClick={() => setHistoryOpen(true)} className="flex min-h-9 items-center text-small font-semibold text-ink-soft hover:text-ink pointer-coarse:min-h-11">
+        <h2 className="text-[16px] font-semibold text-ink">{t("Qaza to make up")}</h2>
+        <button type="button" onClick={() => setHistoryOpen(true)} className="flex min-h-8 items-center rounded-sm text-small font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
           {t("History")}
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger disabled={isPending} className="flex h-8.5 items-center gap-1.5 rounded-sm border border-warning-fill bg-warning-50 px-3.5 text-small font-semibold text-warning-ink hover:bg-warning-soft disabled:opacity-60 pointer-coarse:h-11">
-            {isPending ? <Loader /> : <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
-            {t("I prayed a qaza")}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={6} className="w-48 rounded-md border border-line bg-surface p-1.5 shadow-overlay ring-0">
-            {PRAYERS.map((prayer) => (
-              <DropdownMenuItem key={prayer} onSelect={() => log(prayer)} className="flex h-9 cursor-pointer items-center justify-between gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken pointer-coarse:h-11">
-                {t(prayer)}
-                <span className="text-caption text-ink-muted tabular-nums">{t("{count} left", { count: count(qaza.left[prayer] ?? 0) })}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <span className={cn("text-[30px] leading-[normal] font-bold tabular-nums", qaza.totalLeft > 0 ? "text-warning-ink" : "text-income")}>{count(qaza.totalLeft)}</span>
+        <span className="text-body text-ink-soft">
+          {t(qaza.totalLeft === 1 ? "prayer left" : "prayers left")} · {t("{count} made up", { count: count(madeUp) })}
+        </span>
+      </div>
+      <span className="text-[12.5px] text-ink-muted">{t("Prayed one? Tap its box to take 1 off.")}</span>
+      <div className="grid grid-cols-5 gap-1.5">
+        {PRAYERS.map((prayer) => {
+          const left = qaza.left[prayer] ?? 0;
+          return (
+            <button
+              key={prayer}
+              type="button"
+              disabled={left === 0 || isPending}
+              onClick={() => log(prayer)}
+              title={t("I prayed a {prayer} qaza", { prayer: t(prayer) })}
+              aria-label={t("I prayed a {prayer} qaza. {count} left.", { prayer: t(prayer), count: count(left) })}
+              className={cn("flex min-w-0 flex-col items-center gap-px rounded-[9px] border py-1.75 transition-colors disabled:cursor-default", left > 0 ? "border-warning-line bg-warning-50 text-warning-ink enabled:hover:bg-warning-soft" : "border-income/30 bg-income-soft text-income")}
+            >
+              <span className="text-[17px] leading-[normal] font-bold tabular-nums">{count(left)}</span>
+              <span className="max-w-full truncate px-0.5 text-[11.5px]">{t(prayer)}</span>
+              <span className={cn("text-[10.5px] font-bold", left === 0 && "invisible")}>{isPending ? <Loader /> : "−1"}</span>
+            </button>
+          );
+        })}
+      </div>
+      <span className="text-caption text-ink-muted">{t("{count} missed since {date}", { count: count(missed), date: since })}</span>
+      <span role="progressbar" aria-label={t("Qaza made up")} aria-valuenow={share} aria-valuemin={0} aria-valuemax={100} className="mt-auto block h-1.5 overflow-hidden rounded-full bg-warning-soft">
+        <span className="block h-full rounded-full bg-warning-fill" style={{ width: `${share}%` }} />
+      </span>
       <QazaHistoryDialog open={historyOpen} onClose={() => setHistoryOpen(false)} qaza={qaza} today={today} onChange={setQaza} />
     </Card>
   );

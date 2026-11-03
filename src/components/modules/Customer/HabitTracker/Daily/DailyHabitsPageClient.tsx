@@ -373,9 +373,9 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
           <span className="text-[22px] leading-tight font-bold">{heroTitle}</span>
           <span className="text-small opacity-90">{heroSub}</span>
         </div>
-        <div className="grid w-full grid-cols-3 gap-2.5 sm:w-auto">
+        <div className="grid w-full grid-cols-3 gap-2.5 sm:flex sm:w-auto">
           {chips.map((chip) => (
-            <div key={chip.label} className="flex min-w-0 flex-col gap-px rounded-[12px] border border-white/20 bg-white/12 px-3.5 py-2.25 sm:w-32">
+            <div key={chip.label} className="flex min-w-0 flex-col gap-px rounded-[12px] border border-white/20 bg-white/12 px-3.5 py-2.25 sm:min-w-32">
               <span className="truncate text-caption opacity-85">{chip.label}</span>
               <span className="truncate text-[19px] font-bold tabular-nums">{chip.value}</span>
             </div>
