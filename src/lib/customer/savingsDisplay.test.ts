@@ -7,6 +7,7 @@ import {
   goalColor,
   goalTotals,
   LOOK_META,
+  monthsAhead,
   monthsBetween,
   monthsLeft,
   neededPerMonth,
@@ -38,6 +39,16 @@ describe("monthsLeft", () => {
 
   it("is never negative", () => {
     expect(monthsLeft("2026-01-01", "2026-10-02")).toBe(0);
+  });
+});
+
+describe("monthsAhead", () => {
+  it("moves to the same day, or the month's last day when it is shorter", () => {
+    expect(monthsAhead("2026-11-03", 6)).toBe("2027-05-03");
+    expect(monthsAhead("2026-11-03", 12)).toBe("2027-11-03");
+    expect(monthsAhead("2026-08-31", 6)).toBe("2027-02-28");
+    expect(monthsAhead("2027-08-31", 6)).toBe("2028-02-29");
+    expect(monthsAhead("2026-12-15", 1)).toBe("2027-01-15");
   });
 });
 

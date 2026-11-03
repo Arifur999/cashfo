@@ -56,6 +56,18 @@ export function monthsBetween(from: string, to: string): number {
   return Math.max(1, wholeMonths(from, to));
 }
 
+// The same day some months on ("2027-05-03" from "2026-11-03" and 6), or
+// that month's last day when it is shorter (31 Aug + 6 = 28 Feb): New goal's
+// 6 months / 1 year / 2 years.
+export function monthsAhead(day: string, months: number): string {
+  const [y, m, d] = day.slice(0, 10).split("-").map(Number);
+  const index = y * 12 + (m - 1) + months;
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`;
+}
+
 // How long an open goal still has: whole months, less than one, or its day
 // has gone by ("0 months left" read the same for both).
 export type TimeLeft = { kind: "months"; months: number } | { kind: "under-a-month" } | { kind: "past" };
