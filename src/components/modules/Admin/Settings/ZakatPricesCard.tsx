@@ -15,6 +15,7 @@ import SkeletonRows from "@/components/smartly/SkeletonRows";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatDay } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 import { queryKeys } from "@/lib/queryKeys";
 import { zakatPricesQuery } from "@/queries/zakat.queries";
 import type { IZakatPrices } from "@/types/zakat.types";
@@ -72,7 +73,7 @@ const PricesForm = ({ prices, canManage }: { prices: IZakatPrices; canManage: bo
     },
   });
   const disabled = !canManage;
-  const taka = <span className="font-semibold text-ink-soft">৳</span>;
+  const taka = <span className="font-semibold text-ink-soft">{takaSign(locale)}</span>;
 
   return (
     <AppForm onSubmit={form.handleSubmit} className="space-y-0">

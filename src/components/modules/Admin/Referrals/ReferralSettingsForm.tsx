@@ -20,6 +20,7 @@ import { METHOD_BRANDS } from "@/lib/customer/referralDisplay";
 import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { plansQuery } from "@/queries/plan.queries";
@@ -49,7 +50,7 @@ const toFormValues = (settings: IReferralSettings): IReferralSettingsFormValues 
 const CARD = "flex flex-col gap-4 p-5";
 const CHECKBOX = "size-4.5 rounded-[5px] border-line-strong data-checked:border-emerald data-checked:bg-emerald";
 
-// A number with its unit in a grey cell beside it: "20 | %", "৳ | 300".
+// A number with its unit in a grey cell beside it: "20 | %", "TK | 300".
 const UnitInput = ({
   field,
   label,
@@ -209,7 +210,7 @@ const SettingsFormBody = ({ settings, canManage }: { settings: IReferralSettings
               </h2>
               <div className="grid gap-3 sm:grid-cols-3">
                 <form.Field name="minWithdrawal" validators={{ onChange: rules.minWithdrawal }}>
-                  {(field) => <UnitInput field={field} label="Minimum" unit="৳" unitFirst hint="Smallest withdrawal" disabled={disabled} />}
+                  {(field) => <UnitInput field={field} label="Minimum" unit={takaSign(locale)} unitFirst hint="Smallest withdrawal" disabled={disabled} />}
                 </form.Field>
                 <form.Field
                   name="withdrawalFee"
@@ -223,7 +224,7 @@ const SettingsFormBody = ({ settings, canManage }: { settings: IReferralSettings
                   }}
                 >
                   {(field) => (
-                    <UnitInput field={field} label="Fee" unit="৳" unitFirst hint={Number(field.state.value) > 0 ? "Taken off what is sent" : "We pay the transfer cost"} disabled={disabled} />
+                    <UnitInput field={field} label="Fee" unit={takaSign(locale)} unitFirst hint={Number(field.state.value) > 0 ? "Taken off what is sent" : "We pay the transfer cost"} disabled={disabled} />
                   )}
                 </form.Field>
                 <form.Field name="payWithinDays" validators={{ onChange: rules.payWithinDays }}>

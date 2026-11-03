@@ -21,7 +21,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { fillPlaceholders, getPlaceholderError } from "@/lib/templatePlaceholders";
 import type { INotificationTemplate } from "@/types/notification.types";
 import { type INotificationTemplateFormValues, notificationTemplateFormZodSchema } from "@/zod/notification.validation";
-import { CHANNEL_META, SAMPLE_VALUES, templateName, templateWhen } from "../notificationOptions";
+import { CHANNEL_META, sampleValues, templateName, templateWhen } from "../notificationOptions";
 import { insertAtCaret, sameTemplateText, smsLength } from "./templateText";
 import TemplateTextField, { type TextControl } from "./TemplateTextField";
 import VariableChips from "./VariableChips";
@@ -152,15 +152,15 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
   };
 
   // "142 characters · 3 SMS", as the preview's sample values would send.
-  const smsHint = (text: string) => {
-    const { characters, parts } = smsLength(fillPlaceholders(text, SAMPLE_VALUES));
+  const smsHint = (text: string, language: "en" | "bn") => {
+    const { characters, parts } = smsLength(fillPlaceholders(text, sampleValues(language)));
     if (characters === 0) return undefined;
     return plural(translate, characters, "{count} character · {parts} SMS", "{count} characters · {parts} SMS", { count: formatCount(characters, locale), parts: formatCount(parts, locale) });
   };
 
   const bangla = previewLanguage === "bn";
-  const previewSubject = fillPlaceholders(bangla ? values.subjectBn : values.subjectEn, SAMPLE_VALUES);
-  const previewBody = fillPlaceholders(bangla ? values.bodyBn : values.bodyEn, SAMPLE_VALUES);
+  const previewSubject = fillPlaceholders(bangla ? values.subjectBn : values.subjectEn, sampleValues(previewLanguage));
+  const previewBody = fillPlaceholders(bangla ? values.bodyBn : values.bodyEn, sampleValues(previewLanguage));
 
   return (
     // uniqueIds: two templates can be open side by side without their
@@ -213,7 +213,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
               multiline
               readOnly={!canManage}
               onFocusControl={focusControl("bodyEn")}
-              hint={isSms ? smsHint(values.bodyEn) : undefined}
+              hint={isSms ? smsHint(values.bodyEn, "en") : undefined}
             />
           )}
         </form.Field>
@@ -226,7 +226,7 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
               lang="bn"
               readOnly={!canManage}
               onFocusControl={focusControl("bodyBn")}
-              hint={isSms ? smsHint(values.bodyBn) : undefined}
+              hint={isSms ? smsHint(values.bodyBn, "bn") : undefined}
             />
           )}
         </form.Field>
