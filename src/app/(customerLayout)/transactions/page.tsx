@@ -43,7 +43,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const thisMonth: PickedPeriod = { kind: "month", ...current };
   const page = readPageParam(params);
   const limit = readPageSizeParam(params, PAGE_SIZES, DEFAULT_PAGE_SIZE);
-  const { type: selectedType, dateFrom: oldFrom, dateTo: oldTo, accountId, categoryId, uncategorised, search } = readTransactionFilters((key) => {
+  const { type: selectedType, dateFrom: oldFrom, dateTo: oldTo, accountId, categoryId, uncategorised, search, deleted } = readTransactionFilters((key) => {
     const value = params[key];
     return typeof value === "string" ? value : undefined;
   });
@@ -72,7 +72,9 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   };
 
   const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories, summary, incomeBreakdown, expenseBreakdown, activeMonths] = await Promise.all([
-    getTransactions(activeBusinessId, { ...filters, page, limit }),
+    // Deleted rows stay out unless asked for; the summary still counts
+    // them, for the strip's "Show N voided".
+    getTransactions(activeBusinessId, { ...filters, ...(!deleted && { standingOnly: true }), page, limit }),
     getMoneyAccounts(activeBusinessId),
     getBudgetCategoryNames(activeBusinessId, "EXPENSE"),
     getBudgetCategoryNames(activeBusinessId, "INCOME"),
@@ -93,7 +95,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   // search, wallet or category filter falls back to this page's rows.
   let totals: TransactionTotals;
   if (summary) {
-    totals = { income: Number(summary.totals.INCOME), expense: Number(summary.totals.EXPENSE), count: summary.count, voided: summary.voided, scope: "all" };
+    totals = { income: Number(summary.totals.INCOME), expense: Number(summary.totals.EXPENSE), count: deleted ? summary.count : (summary.standing ?? meta.total), voided: summary.voided, scope: "all" };
   } else {
     const wholeRange = !accountId && !categoryId && !uncategorised && !search;
     const voidedOnPage = transactions.filter(isCancelled).length;

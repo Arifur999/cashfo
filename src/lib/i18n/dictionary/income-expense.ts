@@ -39,7 +39,6 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Every income and expense transaction.": "সব আয় ও ব্যয়ের লেনদেন।",
   "Only an owner or accountant can add transactions": "শুধু মালিক বা হিসাবরক্ষক লেনদেন যোগ করতে পারেন",
   Net: "নিট",
-  "{count} voided": "{count}টি বাতিল",
   // Pages of a customer list are পৃষ্ঠা, as the pager under it says.
   "this page": "এই পৃষ্ঠা",
   "Nothing matches these filters": "এই ফিল্টারে কিছু মেলেনি",
@@ -635,4 +634,19 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "That name is used by the app for Zakat or transfer fees": "এই নামটি অ্যাপ যাকাত বা ট্রান্সফার ফি-এর জন্য ব্যবহার করে",
   "That category already exists.": "এই ক্যাটাগরিটি আগে থেকেই আছে।",
   "e.g. Weekly groceries from the local market": "যেমন: স্থানীয় বাজার থেকে সাপ্তাহিক বাজার",
+  // Transactions' Delete with Undo, and the voided rows' toggle.
+  "Delete this transaction?": "এই লেনদেনটি ডিলিট করবেন?",
+  "It is removed from Transactions, the Overview totals and Budget Planning.": "এটা লেনদেন, ওভারভিউয়ের হিসাব আর বাজেট প্ল্যানিং থেকে মুছে যাবে।",
+  "Transaction deleted": "লেনদেন ডিলিট হয়েছে",
+  "Transaction restored": "লেনদেন আগের মতো ফিরেছে",
+  "Couldn't bring the transaction back": "লেনদেনটি ফেরানো যায়নি",
+  "Failed to delete the transaction": "লেনদেনটি ডিলিট করা যায়নি",
+  "Deleted from Transactions": "লেনদেন পেজ থেকে ডিলিট করা",
+  "Show {count} voided": "বাতিল হওয়া {count}টি দেখান",
+  "Hide voided": "বাতিল হওয়াগুলো লুকান",
+  "Only a transaction deleted from Transactions can be brought back": "শুধু লেনদেন পেজ থেকে ডিলিট করা লেনদেনই ফেরানো যায়",
+  "A delete can be undone for 10 minutes only": "ডিলিট শুধু ১০ মিনিটের মধ্যে ফেরানো যায়",
+  "Only the person who deleted it can undo the delete": "যিনি ডিলিট করেছেন শুধু তিনিই এটা ফেরাতে পারবেন",
+  "Bring back the entry this charge was paid with first": "আগে যে এন্ট্রির সাথে এই চার্জ দেওয়া হয়েছিল সেটি ফেরান",
+  "This transaction is back already": "এই লেনদেনটি আগেই ফিরে এসেছে",
 };

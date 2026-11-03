@@ -294,6 +294,9 @@ export interface TransactionListFilters {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  // Deleted (voided) rows and their reversals listed too (?deleted=1): a
+  // view, not a filter, so it isn't counted as one.
+  deleted?: boolean;
 }
 
 // A query's values, from useSearchParams() or a page's searchParams.
@@ -316,6 +319,7 @@ export function readTransactionFilters(get: QueryValue): TransactionListFilters 
     dateFrom: day("dateFrom"),
     dateTo: day("dateTo"),
     search: text("search"),
+    deleted: get("deleted") === "1" ? true : undefined,
   };
 }
 

@@ -36,7 +36,7 @@ import { pageHref, readPageParam, readPageSizeParam } from "@/lib/table/pagePara
 import { cn } from "@/lib/utils";
 import { type FilterCategory, TransactionFilters } from "./TransactionFilters";
 import { IEStatement, type StatementLine } from "./IEStatement";
-import { VoidTransactionDialog } from "./VoidTransactionDialog";
+import { DeleteTransactionDialog } from "./DeleteTransactionDialog";
 
 export interface TransactionTotals {
   income: number;
@@ -135,6 +135,17 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   };
 
   const hrefFor = (page: number) => pageHref("/transactions", searchParams, page);
+
+  // The strip's "Show N voided" / "Hide voided": the same list with the
+  // voided rows (and their reversals) in or out, from its first page.
+  const toggleDeleted = () => {
+    const next = baseQuery();
+    next.delete("page");
+    if (filters.deleted) next.delete("deleted");
+    else next.set("deleted", "1");
+    const query = next.toString();
+    navigate(query ? `/transactions?${query}` : "/transactions");
+  };
 
   // Clearing the filters keeps the page size the reader picked, as the
   // filter bar's Clear does.
@@ -254,11 +265,20 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             label={[
               t("Net"),
               plural(t, totals.count, "{count} transaction", "{count} transactions", undefined, fmt),
-              totals.voided > 0 && t("{count} voided", { count: formatCount(totals.voided, fmt) }),
               totals.scope === "page" && t("this page"),
             ]
               .filter(Boolean)
               .join(" · ")}
+            aside={
+              totals.voided > 0 && (
+                <>
+                  {" · "}
+                  <button type="button" onClick={toggleDeleted} className="rounded-sm font-semibold text-emerald hover:underline">
+                    {filters.deleted ? t("Hide voided") : t("Show {count} voided", { count: formatCount(totals.voided, fmt) })}
+                  </button>
+                </>
+              )
+            }
             divided
             className="max-md:hidden"
           >
@@ -396,13 +416,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         </PrintPreview>
       )}
       {voiding && (
-        <VoidTransactionDialog
-          open
-          onClose={() => setVoiding(null)}
-          businessId={businessId}
-          transactionId={voiding.transaction.id}
-          title={rowTitle(voiding, t)}
-        />
+        <DeleteTransactionDialog row={voiding} businessId={businessId} currency={currency} onClose={() => setVoiding(null)} />
       )}
     </PageFrame>
   );
@@ -414,11 +428,14 @@ const PHONE_FIGURE = "text-h3 max-md:leading-[1.2] font-bold md:text-[20px]";
 
 // The desktop board says Income and Expense; the phone board, Money in and
 // Money out (phoneLabel).
-function TotalCell({ label, phoneLabel = label, children, divided = false, className }: { label: string; phoneLabel?: string; children: React.ReactNode; divided?: boolean; className?: string }) {
+function TotalCell({ label, phoneLabel = label, aside, children, divided = false, className }: { label: string; phoneLabel?: string; aside?: React.ReactNode; children: React.ReactNode; divided?: boolean; className?: string }) {
   return (
     <div className={cn("flex flex-col gap-1 px-4 py-3 md:px-5 md:py-4", divided && "md:border-l md:border-line", className)}>
       <span className="text-small font-normal text-ink-muted md:hidden">{phoneLabel}</span>
-      <span className="text-caption text-ink-muted max-md:hidden">{label}</span>
+      <span className="text-caption text-ink-muted max-md:hidden">
+        {label}
+        {aside}
+      </span>
       {children}
     </div>
   );
