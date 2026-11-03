@@ -132,6 +132,18 @@
   --cat-10: #4e8f5e;
   /* The boards' category yellow, apart from the warning amber. */
   --cat-11: #ca8a04;
+  /* Notes (the NotesHome board): a card's tint, and the five journal moods
+     from Great to Hard. */
+  --note-yellow: #fefce8;
+  --note-green: #f0fdf4;
+  --note-blue: #eff6ff;
+  --note-pink: #fdf2f8;
+  --note-purple: #f5f3ff;
+  --mood-0: #16a34a;
+  --mood-1: #65a30d;
+  --mood-2: #ca8a04;
+  --mood-3: #ea580c;
+  --mood-4: #dc2626;
   /* A prayer marked on time: the emerald washed out (the sheet boards'
      primary at 78% white). */
   --emerald-tint: #cfe3df;
@@ -279,6 +291,16 @@
   --cat-9: #5fcfe6;
   --cat-10: #8fcb9c;
   --cat-11: #facc15;
+  --note-yellow: #29250f;
+  --note-green: #0f2618;
+  --note-blue: #111d33;
+  --note-pink: #2b1323;
+  --note-purple: #1f1838;
+  --mood-0: #4ade80;
+  --mood-1: #a3e635;
+  --mood-2: #facc15;
+  --mood-3: #fb923c;
+  --mood-4: #f87171;
   --rose: #f08fbf;
   --rose-soft: #3a1528;
   --emerald-tint: #1c4536;
@@ -563,6 +585,16 @@ html:not(.dark) [data-app="habit"] {
   --color-cat-9: var(--cat-9);
   --color-cat-10: var(--cat-10);
   --color-cat-11: var(--cat-11);
+  --color-note-yellow: var(--note-yellow);
+  --color-note-green: var(--note-green);
+  --color-note-blue: var(--note-blue);
+  --color-note-pink: var(--note-pink);
+  --color-note-purple: var(--note-purple);
+  --color-mood-0: var(--mood-0);
+  --color-mood-1: var(--mood-1);
+  --color-mood-2: var(--mood-2);
+  --color-mood-3: var(--mood-3);
+  --color-mood-4: var(--mood-4);
 
   /* shadcn */
   --color-background: var(--background);

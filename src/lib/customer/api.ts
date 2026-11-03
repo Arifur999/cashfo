@@ -1694,3 +1694,75 @@ export interface TodoList {
   date: string; // "YYYY-MM-DD"
   items: TodoItem[];
 }
+
+// Habit Tracker > Write (backend src/writing): notes and the journal.
+// Personal, like the rest of the Habit Tracker (no :businessId).
+export type NoteKind = "NOTE" | "IDEA";
+export type NoteColor = "white" | "yellow" | "green" | "blue" | "pink" | "purple";
+export type NoteCategoryColor = "blue" | "rose" | "amber" | "violet" | "teal" | "green" | "slate";
+
+export interface Note {
+  id: string;
+  kind: NoteKind;
+  title: string;
+  body: string;
+  categoryId: string | null;
+  tags: string[];
+  color: NoteColor;
+  pinned: boolean;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NoteCategory {
+  id: string;
+  name: string;
+  color: NoteCategoryColor;
+}
+
+export interface NotesOverview {
+  notes: Note[];
+  categories: NoteCategory[];
+}
+
+export type JournalKind = "DAILY" | "DIARY";
+
+export interface JournalEntry {
+  date: string; // "YYYY-MM-DD"
+  kind: JournalKind;
+  // 0 Great, 1 Good, 2 Okay, 3 Low, 4 Hard.
+  mood: number;
+  wentWell: string;
+  gratefulFor: string;
+  tomorrow: string;
+  body: string;
+  categoryId: string | null;
+  tags: string[];
+  isPrivate: boolean;
+  locked: false;
+  updatedAt: string;
+}
+
+// A private entry while the diary is locked: only that the day has one.
+export interface LockedJournalEntry {
+  date: string;
+  isPrivate: true;
+  locked: true;
+}
+
+export interface JournalMonth {
+  month: string; // "YYYY-MM"
+  today: string;
+  pinSet: boolean;
+  unlocked: boolean;
+  streak: number;
+  total: number;
+  entries: (JournalEntry | LockedJournalEntry)[];
+}
+
+export interface JournalSummary {
+  today: { written: boolean; mood: number | null };
+  streak: number;
+  latestNote: { id: string; kind: NoteKind; title: string; body: string } | null;
+}

@@ -33,6 +33,7 @@ import { settingsWorkspaceDictionary } from "./dictionary/settings-workspace";
 import { sharedDictionary } from "./dictionary/shared";
 import { skillsDictionary } from "./dictionary/skills";
 import { todosDictionary } from "./dictionary/todos";
+import { writingDictionary } from "./dictionary/writing";
 import { vaultDictionary } from "./dictionary/vault";
 import { zakatDictionary } from "./dictionary/zakat";
 
@@ -121,6 +122,7 @@ export const bnDictionary: Record<string, string> = {
   ...businessBooksDictionary,
   ...skillsDictionary,
   ...todosDictionary,
+  ...writingDictionary,
   // Last, so a word every customer page shares (see that file) always wins
   // over an area that happened to word it differently.
   ...sharedDictionary,
