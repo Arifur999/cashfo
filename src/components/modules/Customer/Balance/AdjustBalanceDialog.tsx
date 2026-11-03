@@ -137,7 +137,7 @@ export function AdjustBalanceDialog({ account, name, kind, onClose, businessId, 
           <span className="text-small font-semibold text-ink-2">{t("Smartly shows")}</span>
           <span className="flex h-11 items-center rounded-field bg-surface-sunken px-3 text-[15px] font-bold text-ink tabular-nums">{formatCurrency(current, currency, fmt)}</span>
         </div>
-        <Field htmlFor="adjust-real" label={<span className="text-small font-semibold text-ink-2">{t("Real balance ({symbol})", { symbol: currencySymbol(currency) })}</span>}>
+        <Field htmlFor="adjust-real" label={<span className="text-small font-semibold text-ink-2">{t("Real balance ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
           <Input
             id="adjust-real"
             size="md"

@@ -301,7 +301,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
           placeholder="0"
           invalid={tried && !(value > 0)}
           className="text-h3 font-bold tabular-nums"
-          leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-[17px] font-semibold text-ink-soft">{currencySymbol(currency)}</span>}
+          leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-[17px] font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>}
           frameClassName="overflow-hidden pl-0"
         />
       </Field>

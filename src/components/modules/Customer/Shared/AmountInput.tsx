@@ -3,6 +3,7 @@
 import Input from "@/components/smartly/form/Input";
 import { useAmountField } from "@/hooks/useAmountField";
 import { currencySymbol } from "@/lib/customer/currency";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface AmountInputProps {
@@ -25,6 +26,7 @@ interface AmountInputProps {
 // sign in a 52px strip cell on the left and the figure large and bold beside
 // it, grouped as it is typed ("16,50,000").
 const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid = false, describedBy, size = "xl" }: AmountInputProps) => {
+  const { fmt } = useLocale();
   const field = useAmountField(value, onChange, currency);
   const lg = size === "lg";
   return (
@@ -38,7 +40,7 @@ const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid
       autoFocus={autoFocus}
       invalid={invalid}
       {...(describedBy && { "aria-describedby": invalid ? `${id}-error ${describedBy}` : describedBy })}
-      leading={<span className={cn("flex items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft", lg ? "h-12 w-11 text-[17px]" : "h-14 w-13 text-[20px]")}>{currencySymbol(currency)}</span>}
+      leading={<span className={cn("flex items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft", lg ? "h-12 w-11 text-[17px]" : "h-14 w-13 text-[20px]")}>{currencySymbol(currency, fmt)}</span>}
       frameClassName={cn("gap-0 overflow-hidden rounded-sm pl-0", lg ? "h-12" : "h-14")}
       className={cn("font-bold tabular-nums", lg ? "pl-3 text-h3" : "pl-3.5 text-[24px]")}
     />

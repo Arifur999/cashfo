@@ -148,7 +148,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
 
   const lang = displayLanguage(locale);
   const walletById = new Map(wallets.map((wallet) => [wallet.id, wallet]));
-  const symbol = currencySymbol(currency);
+  const symbol = currencySymbol(currency, fmt);
   const money = (value: number | string) => (hidden ? maskedMoney(symbol) : formatCurrency(value, currency, fmt));
   const here = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
   const thisMonth = today.slice(0, 7);
