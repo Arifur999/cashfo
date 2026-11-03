@@ -27,6 +27,9 @@ interface LedgerStatementProps {
   // "This month", and the days it covers.
   periodLabel: string;
   range: string;
+  // YYYY-MM when the period is one month: the statement is numbered by it
+  // (else by this month).
+  month?: string | null;
   today: string;
   currency: string;
   preferredLanguage: LanguagePreference;
@@ -38,7 +41,7 @@ const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] f
 // The ledger on paper (board: Ledger — Print preview): who it is for and
 // which account, the period, its five figures, every entry with its In,
 // Out and running balance, and the closing balance under them.
-export function LedgerStatement({ account, rows, figures, capped, periodLabel, range, today, currency, preferredLanguage }: LedgerStatementProps) {
+export function LedgerStatement({ account, rows, figures, capped, periodLabel, range, month = null, today, currency, preferredLanguage }: LedgerStatementProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
   const debitPositive = isDebitPositive(account.accountType);
@@ -66,7 +69,7 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
         </div>
         <div className="flex flex-col items-end gap-0.75 text-right">
           <span className="text-[17px] font-bold tracking-[0.06em] uppercase">{t("Account statement")}</span>
-          <span className="text-[11px] text-ink-muted">{t("Statement no. {number}", { number: `LDG-${account.id.slice(0, 4).toUpperCase()}-${today.slice(0, 7).replace("-", "")}` })}</span>
+          <span className="text-[11px] text-ink-muted">{t("Statement no. {number}", { number: `LDG-${account.id.slice(0, 4).toUpperCase()}-${(month ?? today.slice(0, 7)).replace("-", "")}` })}</span>
           <span className="text-[11px] text-ink-muted">{t("Generated {date}", { date: formatDate(today, undefined, fmt) })}</span>
         </div>
       </header>

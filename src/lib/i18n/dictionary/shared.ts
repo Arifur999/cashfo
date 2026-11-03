@@ -207,4 +207,12 @@ export const sharedDictionary: Record<string, string> = {
   "Code from the SMS": "SMS-এর কোড",
   "We sent a 6-digit code by SMS to {phone}. Enter it to finish. It works for 10 minutes.": "{phone}-এ ৬ সংখ্যার একটি কোড SMS করেছি। শেষ করতে কোডটি দিন। এটি ১০ মিনিট কাজ করবে।",
   "We sent a 6-digit code by SMS to {email}. Enter it to send {amount} to {destination}.": "{email}-এ ৬ সংখ্যার একটি কোড SMS করেছি। {destination}-এ {amount} পাঠাতে কোডটি দিন।",
+  // ---- The report pages' "Choose period" (Shared/PeriodPicker)
+  "Type a year first.": "আগে একটা বছর লিখুন।",
+  "No data found for {year}.": "{year} সালের কোনো তথ্য পাওয়া যায়নি।",
+  "Greyed-out months have no data.": "ধূসর মাসগুলোতে কোনো তথ্য নেই।",
+  "Months after this one are greyed out.": "এই মাসের পরের মাসগুলো ধূসর।",
+  "Years with data": "যেসব বছরে তথ্য আছে",
+  "Recent years": "সাম্প্রতিক বছর",
+  "The “From” date must be on or before the “To” date.": "“থেকে” তারিখটা “পর্যন্ত” তারিখের আগে বা একই দিন হতে হবে।",
 };
