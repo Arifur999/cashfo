@@ -42,6 +42,7 @@ import { MosqueIcon } from "@/components/smartly/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { findNavLocation, menuSections, NAV_SECTIONS, navAppFor, visibleNavSections, type NavApp, type NavIcon, type NavItem, type NavLocation, type NavSection } from "@/lib/customer/nav";
 import { leafHref } from "@/lib/customer/paletteMatch";
+import { HABITS_CHANGED } from "@/lib/customer/habitsEvents";
 import { getHabitsTodayCountAction } from "@/lib/customer/shellActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -109,42 +110,70 @@ export function useNavLocation(): { app: NavApp; location: NavLocation | null } 
 // closes the one before). One store for the sidebar and the phone drawer.
 // When storage refuses (a private window, blocked site data) the choice
 // lasts until the tab closes.
-const OPEN_GROUPS_KEY = "smartly.sidebar.group";
-const openGroupsListeners = new Set<() => void>();
-let openGroupsInMemory = "";
-let storageRefused = false;
+function storedMenuChoice(key: string) {
+  const listeners = new Set<() => void>();
+  let inMemory = "";
+  let refused = false;
+  const read = (): string => {
+    if (refused) return inMemory;
+    try {
+      return window.localStorage.getItem(key) ?? "";
+    } catch {
+      refused = true;
+      return inMemory;
+    }
+  };
+  const write = (value: string) => {
+    inMemory = value;
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      refused = true;
+    }
+    for (const listener of listeners) listener();
+  };
+  const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    // Another tab opened or closed a group.
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === key || event.key === null) listener();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      listeners.delete(listener);
+      window.removeEventListener("storage", onStorage);
+    };
+  };
+  return { read, write, subscribe };
+}
 
-function readOpenGroups(): string {
-  if (storageRefused) return openGroupsInMemory;
+const openGroups = storedMenuChoice("smartly.sidebar.group");
+const readOpenGroups = openGroups.read;
+const writeOpenGroups = openGroups.write;
+const subscribeOpenGroups = openGroups.subscribe;
+
+// The Habit Tracker's groups (HabitSidebar): each opens and closes on its
+// own, several at a time, kept as {"<group's link>": open}. A group the
+// customer never touched is open while one of its pages is on screen.
+const habitGroups = storedMenuChoice("smartly.sidebar.habit-groups");
+
+function parseHabitGroups(raw: string): Record<string, boolean> {
+  if (!raw) return {};
   try {
-    return window.localStorage.getItem(OPEN_GROUPS_KEY) ?? "";
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, boolean] => typeof entry[1] === "boolean"));
   } catch {
-    storageRefused = true;
-    return openGroupsInMemory;
+    return {};
   }
 }
 
-function writeOpenGroups(value: string) {
-  openGroupsInMemory = value;
-  try {
-    window.localStorage.setItem(OPEN_GROUPS_KEY, value);
-  } catch {
-    storageRefused = true;
-  }
-  for (const listener of openGroupsListeners) listener();
-}
-
-function subscribeOpenGroups(listener: () => void) {
-  openGroupsListeners.add(listener);
-  // Another tab opened or closed a group.
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === OPEN_GROUPS_KEY || event.key === null) listener();
-  };
-  window.addEventListener("storage", onStorage);
-  return () => {
-    openGroupsListeners.delete(listener);
-    window.removeEventListener("storage", onStorage);
-  };
+function useHabitGroups(location: NavLocation | null) {
+  const raw = useSyncExternalStore(habitGroups.subscribe, habitGroups.read, nothingRemembered);
+  const chosen = parseHabitGroups(raw);
+  const isExpanded = (item: NavItem) => !!item.subs && (chosen[leafHref(item)] ?? location?.item === item);
+  const toggle = (item: NavItem) => habitGroups.write(JSON.stringify({ ...chosen, [leafHref(item)]: !isExpanded(item) }));
+  return { isExpanded, toggle };
 }
 
 // The server can't see this browser's choice, so the server render and
@@ -178,6 +207,13 @@ export function useExpandedGroups(location: NavLocation | null) {
 function useHabitsToday(enabled: boolean): { done: number; total: number } | null {
   const pathname = usePathname();
   const [count, setCount] = useState<{ done: number; total: number } | null>(null);
+  // Bumped by a tick anywhere on the page.
+  const [ticks, setTicks] = useState(0);
+  useEffect(() => {
+    const onTick = () => setTicks((value) => value + 1);
+    window.addEventListener(HABITS_CHANGED, onTick);
+    return () => window.removeEventListener(HABITS_CHANGED, onTick);
+  }, []);
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
@@ -189,7 +225,7 @@ function useHabitsToday(enabled: boolean): { done: number; total: number } | nul
     return () => {
       cancelled = true;
     };
-  }, [enabled, pathname]);
+  }, [enabled, pathname, ticks]);
   return enabled ? count : null;
 }
 
@@ -377,6 +413,8 @@ export function HabitMenu({ collapsed = false, touch = false, className, style, 
   const { openCount } = useTodayTasks();
   const habits = useHabitsToday(true);
   const rows = useCurrentRowInView();
+  const { isExpanded, toggle } = useHabitGroups(location);
+  const baseId = useId();
 
   const badgeOf = (item: NavItem): { text: string; title: string } | null => {
     if (item.badge === "todayTasks" && openCount > 0) {
@@ -409,30 +447,59 @@ export function HabitMenu({ collapsed = false, touch = false, className, style, 
               const Icon = NAV_ICONS[item.icon];
               const on = location?.item === item;
               const badge = badgeOf(item);
+              const rowClass = cn(
+                "relative flex w-full shrink-0 items-center rounded-sm text-body transition-colors",
+                touch ? "h-11" : "h-10",
+                collapsed ? "justify-center" : "gap-3 px-3",
+                on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
+              );
+              const badgeTag = badge && (
+                <span title={badge.title} className={cn("min-w-5 rounded-full px-1.75 py-px text-center text-caption font-semibold tabular-nums", on ? "bg-surface text-emerald" : "bg-surface-sunken text-ink-soft")}>
+                  <span aria-hidden="true">{badge.text}</span>
+                  <span className="sr-only">{badge.title}</span>
+                </span>
+              );
+              // A group (Namaz, Daily habits…): its name opens and closes its
+              // pages, as the board's does; folded, it opens the first page.
+              if (item.subs && !collapsed) {
+                const expanded = isExpanded(item);
+                const subsId = `${baseId}-habit${leafHref(item).replace(/[^\w-]/g, "-")}`;
+                return (
+                  <div key={leafHref(item)} className="flex flex-col">
+                    <button type="button" aria-expanded={expanded} aria-controls={subsId} onClick={() => toggle(item)} className={rowClass}>
+                      <Icon className={cn("size-4.5 shrink-0", on ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
+                      <span className="min-w-0 flex-1 truncate text-left">{t(item.label)}</span>
+                      <ChevronDown className={cn("size-3.5 shrink-0 transition-transform", expanded && "rotate-180", on ? "text-emerald" : "text-ink-muted")} strokeWidth={2.5} aria-hidden="true" />
+                      {badgeTag}
+                    </button>
+                    <div id={subsId} hidden={!expanded} className="mt-0.5 mb-1 ml-5.75 flex flex-col gap-0.5 border-l-[1.5px] border-line pl-3">
+                      {item.subs.map((sub) => {
+                        const subOn = location?.sub === sub;
+                        return (
+                          <Link
+                            key={leafHref(sub)}
+                            href={leafHref(sub)}
+                            aria-current={subOn ? "page" : undefined}
+                            className={cn(
+                              "flex items-center rounded-[7px] px-2.5 text-[13.5px] whitespace-nowrap transition-colors",
+                              touch ? "h-10" : "h-8",
+                              subOn ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-soft hover:bg-surface-sunken hover:text-ink",
+                            )}
+                          >
+                            <span className="min-w-0 truncate">{t(sub.label)}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
               return (
                 <RailTip key={leafHref(item)} label={t(item.label)} show={collapsed}>
-                  <Link
-                    href={leafHref(item)}
-                    aria-current={on ? "page" : undefined}
-                    aria-label={collapsed ? t(item.label) : undefined}
-                    className={cn(
-                      "relative flex shrink-0 items-center rounded-sm text-body transition-colors",
-                      touch ? "h-11" : "h-10",
-                      collapsed ? "justify-center" : "gap-3 px-3",
-                      on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
-                    )}
-                  >
+                  <Link href={leafHref(item)} aria-current={on && !location?.sub ? "page" : undefined} aria-label={collapsed ? t(item.label) : undefined} className={rowClass}>
                     <Icon className={cn("size-4.5 shrink-0", on ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
                     {!collapsed && <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>}
-                    {badge &&
-                      (collapsed ? (
-                        <span aria-hidden="true" className="absolute top-1.5 right-2 size-2 rounded-full bg-emerald" />
-                      ) : (
-                        <span title={badge.title} className={cn("min-w-5 rounded-full px-1.75 py-px text-center text-caption font-semibold tabular-nums", on ? "bg-surface text-emerald" : "bg-surface-sunken text-ink-soft")}>
-                          <span aria-hidden="true">{badge.text}</span>
-                          <span className="sr-only">{badge.title}</span>
-                        </span>
-                      ))}
+                    {badge && (collapsed ? <span aria-hidden="true" className="absolute top-1.5 right-2 size-2 rounded-full bg-emerald" /> : badgeTag)}
                   </Link>
                 </RailTip>
               );

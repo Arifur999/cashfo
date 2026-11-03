@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HabitMonthTracker, PrayerStatus } from "./api";
-import { allOnTime, allPrayed, canMark, cellState, dayTotals, hijriRange, monthInsights, monthSummary, prayerSummaries, PRAYERS, yearSummary } from "./namazDisplay";
+import { allOnTime, allPrayed, canMark, cellState, dayTotals, hijriRange, monthInsights, monthSummary, namazWeeks, prayerSummaries, PRAYERS, yearSummary } from "./namazDisplay";
 
 // September 2026, viewed on the 4th at some point during the day: three
 // days fully past, today the 4th.
@@ -128,5 +128,19 @@ describe("prayer statuses", () => {
     expect(s.qaza).toBe(1);
     expect(s.todayDone).toBe(0);
     expect(dayTotals(tracker)[1].prayed).toBe(4);
+  });
+});
+
+describe("namazWeeks", () => {
+  it("counts the past days whole and today only for what is prayed", () => {
+    // 1–3 past: 15 due, 11 prayed; today (4th) Fajr prayed: 1 of 1.
+    const weeks = namazWeeks(sheet([...fullDays([1, 2]), [3, "Fajr"], [4, "Fajr"]]));
+    expect(weeks[0]).toEqual({ from: 1, to: 7, pct: Math.round((12 / 16) * 100) });
+    expect(weeks[1]).toEqual({ from: 8, to: 14, pct: null });
+    expect(weeks.at(-1)).toEqual({ from: 29, to: 30, pct: null });
+  });
+
+  it("leaves out a missed mark", () => {
+    expect(namazWeeks(sheet([[1, "Fajr", "MISSED"]], { elapsedDays: 1, todayDay: 2 }))[0].pct).toBe(0);
   });
 });

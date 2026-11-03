@@ -8,7 +8,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
-import { usePrintInLight } from "./usePrintInLight";
+import { usePrintInLight } from "@/hooks/usePrintInLight";
 
 export interface StatementTransfer {
   id: string;

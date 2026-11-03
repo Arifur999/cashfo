@@ -60,7 +60,8 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
   const ownItems = sheet.items.filter((item) => !(dayItself && item === DAY_ITEM));
   // The days are one Tab stop (today's box first), walked with the arrow
   // keys: a long challenge no longer puts hundreds of boxes before today's items.
-  const days = useRovingGrid(1, sheet.totalDays, { row: 0, col: Math.min(window.today, sheet.totalDays) - 1 });
+  const days = useRovingGrid(1, sheet.totalDays, { row: 0, col: Math.max(0, Math.min(window.today, window.lastDay) - 1) });
+  const markWord = (mark: ReturnType<typeof challengeMark>) => t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : mark === "notReached" ? "not reached" : "later");
 
   // Every tick goes through one call that stops at the first refusal, so a
   // half-saved day says so instead of passing in silence. One at a time:
@@ -98,9 +99,13 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
   }
 
   const statusLine =
-    window.status === "finished"
-      ? t("Finished · {done} of {total} days done", { done: count(summary.done), total: count(sheet.totalDays) })
-      : [t("Day {day} of {total}", { day: count(window.today), total: count(sheet.totalDays) }), summary.missed === 0 ? t("every day done so far") : t(summary.missed === 1 ? "{count} day missed" : "{count} days missed", { count: count(summary.missed) })].join(" · ");
+    window.status === "upcoming"
+      ? t("Starts tomorrow, {date}", { date: dayText(window.start, fmt, "dayMonth") })
+      : window.ended
+        ? t("Ended early on day {day} · {done} of {total} days done", { day: count(window.lastDay), done: count(summary.done), total: count(sheet.totalDays) })
+        : window.status === "finished"
+          ? t("Finished · {done} of {total} days done", { done: count(summary.done), total: count(sheet.totalDays) })
+          : [t("Day {day} of {total}", { day: count(window.today), total: count(sheet.totalDays) }), summary.missed === 0 ? t("every day done so far") : t(summary.missed === 1 ? "{count} day missed" : "{count} days missed", { count: count(summary.missed) })].join(" · ");
 
   return (
     <PageFrame className="gap-5 md:pt-7">
@@ -140,7 +145,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
       <Card padding="none" className="flex flex-col gap-4 rounded-md px-5 py-4.5 md:flex-row md:items-center">
         <ChallengeTile name={sheet.name} size={48} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-[12.5px] text-ink-muted">{t("Started {start} · ends {end}", { start: dayText(window.start, fmt, "short"), end: dayText(window.end, fmt, "short") })}</span>
+          <span className="text-[12.5px] text-ink-muted">{t(window.status === "upcoming" ? "Starts {start} · ends {end}" : "Started {start} · ends {end}", { start: dayText(window.start, fmt, "short"), end: dayText(window.end, fmt, "short") })}</span>
           <span className="text-title text-ink">{statusLine}</span>
         </div>
         <div className="flex flex-wrap gap-6 text-center">
@@ -175,7 +180,8 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
           <div role="group" aria-labelledby="challenge-days" aria-describedby="challenge-days-hint" onKeyDown={days.onKeyDown} className="grid grid-cols-[repeat(auto-fill,44px)] gap-2.5">
             {Array.from({ length: sheet.totalDays }, (_, i) => i + 1).map((day) => {
               const mark = challengeMark(sheet, window, day);
-              const past = day <= window.today && day <= sheet.totalDays;
+              // A day that has come, up to the day it was ended.
+              const past = day <= window.today && day <= window.lastDay;
               const cell = { row: 0, col: day - 1 };
               return (
                 <button
@@ -187,9 +193,9 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
                   disabled={!past}
                   aria-disabled={busyDay !== null || undefined}
                   onClick={() => toggleDay(day)}
-                  aria-label={`${t("Day {day}", { day: count(day) })}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`}
-                  title={`${t("Day {day}", { day: count(day) })}: ${t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "today" ? "today" : "later")}`}
-                  className={cn("flex size-11 items-center justify-center rounded-field text-body font-bold transition-colors", mark === "done" && "bg-emerald text-on-action", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-2 border-brand-ink bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-surface-sunken text-ink-muted", day === window.today && mark === "done" && "ring-2 ring-brand-ink ring-offset-2 ring-offset-surface", busyDay === day && "opacity-60")}
+                  aria-label={`${t("Day {day}", { day: count(day) })}: ${markWord(mark)}`}
+                  title={`${t("Day {day}", { day: count(day) })}: ${markWord(mark)}`}
+                  className={cn("flex size-11 items-center justify-center rounded-field text-body font-bold transition-colors", mark === "done" && "bg-emerald text-on-action", mark === "missed" && "bg-expense-soft text-expense", mark === "today" && "border-2 border-brand-ink bg-surface text-ink", mark === "later" && "cursor-not-allowed bg-surface-sunken text-ink-muted", mark === "notReached" && "cursor-not-allowed bg-surface-sunken text-ink-faint", day === window.today && mark === "done" && "ring-2 ring-brand-ink ring-offset-2 ring-offset-surface", busyDay === day && "opacity-60")}
                 >
                   {mark === "done" ? <Check className="size-4.5" strokeWidth={3} aria-hidden="true" /> : count(day)}
                 </button>
@@ -215,7 +221,7 @@ export function ChallengeDetailPageClient({ tracker, today, reminders: savedRemi
         <div className="flex min-w-0 flex-col gap-5">
           <Card padding="none" className="flex flex-col gap-3 rounded-md px-5 py-4.5">
             <div className="flex flex-col gap-0.5">
-              <h2 className="text-title text-ink">{window.status === "finished" ? t("Finished") : t("Today · day {day}", { day: count(window.today) })}</h2>
+              <h2 className="text-title text-ink">{window.status === "finished" ? t(window.ended ? "Ended early" : "Finished") : window.status === "upcoming" ? t("Starts tomorrow") : t("Today · day {day}", { day: count(window.today) })}</h2>
               <span className="text-[12.5px] text-ink-muted">{dayText(today, fmt, "short")}</span>
             </div>
             {window.status === "going" &&

@@ -1648,6 +1648,20 @@ export interface HabitMonthTracker {
   paras: { day: number; paras: number }[];
   // When the sheet was created: a challenge counts its days from here.
   createdAt: string;
+  // Ramadan only: the missed fasts made up since ("I kept one").
+  fastsMadeUp?: number;
+  // Challenges only: the date day 1 falls on ("YYYY-MM-DD"), and the day it
+  // was ended early (null while it runs its course).
+  startsOn?: string | null;
+  endedOnDay?: number | null;
+}
+
+// Ramadan › Today's "Get ready" steps ticked for one Ramadan (year: the
+// Gregorian year it begins in, as its sheet is keyed).
+export type RamadanPrepKey = "intention" | "makeUp" | "quran" | "sadaqah" | "tahajjud";
+export interface RamadanPrep {
+  year: number;
+  items: RamadanPrepKey[];
 }
 
 // Habit Tracker -> To Do List: one list per calendar date, holding any number
@@ -1693,4 +1707,76 @@ export interface TodoList {
   id: string;
   date: string; // "YYYY-MM-DD"
   items: TodoItem[];
+}
+
+// Habit Tracker > Write (backend src/writing): notes and the journal.
+// Personal, like the rest of the Habit Tracker (no :businessId).
+export type NoteKind = "NOTE" | "IDEA";
+export type NoteColor = "white" | "yellow" | "green" | "blue" | "pink" | "purple";
+export type NoteCategoryColor = "blue" | "rose" | "amber" | "violet" | "teal" | "green" | "slate";
+
+export interface Note {
+  id: string;
+  kind: NoteKind;
+  title: string;
+  body: string;
+  categoryId: string | null;
+  tags: string[];
+  color: NoteColor;
+  pinned: boolean;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NoteCategory {
+  id: string;
+  name: string;
+  color: NoteCategoryColor;
+}
+
+export interface NotesOverview {
+  notes: Note[];
+  categories: NoteCategory[];
+}
+
+export type JournalKind = "DAILY" | "DIARY";
+
+export interface JournalEntry {
+  date: string; // "YYYY-MM-DD"
+  kind: JournalKind;
+  // 0 Great, 1 Good, 2 Okay, 3 Low, 4 Hard.
+  mood: number;
+  wentWell: string;
+  gratefulFor: string;
+  tomorrow: string;
+  body: string;
+  categoryId: string | null;
+  tags: string[];
+  isPrivate: boolean;
+  locked: false;
+  updatedAt: string;
+}
+
+// A private entry while the diary is locked: only that the day has one.
+export interface LockedJournalEntry {
+  date: string;
+  isPrivate: true;
+  locked: true;
+}
+
+export interface JournalMonth {
+  month: string; // "YYYY-MM"
+  today: string;
+  pinSet: boolean;
+  unlocked: boolean;
+  streak: number;
+  total: number;
+  entries: (JournalEntry | LockedJournalEntry)[];
+}
+
+export interface JournalSummary {
+  today: { written: boolean; mood: number | null };
+  streak: number;
+  latestNote: { id: string; kind: NoteKind; title: string; body: string } | null;
 }

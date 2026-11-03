@@ -11,6 +11,7 @@ import { getReminders } from "@/lib/customer/reminders";
 import { getSkillsOverview } from "@/lib/customer/skills";
 import { listFor } from "@/lib/customer/todoDisplay";
 import { getTodoLists } from "@/lib/customer/todos";
+import { getJournalSummary } from "@/lib/customer/writing";
 import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/habit-tracker");
@@ -23,7 +24,7 @@ export default async function HabitsTodayPage() {
 
   const today = getAppToday();
   const month = today.slice(0, 7);
-  const [namaz, habits, todayRows, thisMonth, lastMonth, books, skills, challenges, ramadan, todoLists, reminders] = await Promise.all([
+  const [namaz, habits, todayRows, thisMonth, lastMonth, books, skills, challenges, ramadan, todoLists, reminders, writing] = await Promise.all([
     getHabitTrackers("Namaz"),
     getHabits(true),
     getHabitsToday(),
@@ -35,6 +36,7 @@ export default async function HabitsTodayPage() {
     getHabitTrackers("Ramadan"),
     getTodoLists(),
     getReminders(),
+    getJournalSummary(),
   ]);
 
   const data: HabitsHomeData = {
@@ -50,6 +52,7 @@ export default async function HabitsTodayPage() {
     skills,
     challenges,
     ramadan,
+    writing,
     reminders: reminders?.reminders ?? null,
   };
   return <HabitsHomePageClient data={data} />;

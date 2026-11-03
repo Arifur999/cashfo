@@ -12,6 +12,7 @@ import { categoryTone } from "@/lib/customer/categoryTone";
 import { actionError, amountLabel, countStep, ruleLabel, ruleLine } from "@/lib/customer/habitDisplay";
 import { doneThisWeek, doneToday } from "@/lib/customer/habitsHome";
 import { checkInHabitAction, removeCheckInAction } from "@/lib/customer/habitsActions";
+import { announceHabitsChanged } from "@/lib/customer/habitsEvents";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -48,8 +49,10 @@ export function DailyHabitsCard({ rows: serverRows, logs, resting, today }: Dail
     startTransition(async () => {
       applyLog(update);
       const result = await action();
-      if (result.success) router.refresh();
-      else toast.error(actionError(result.message, "Failed to check in", t, fmt));
+      if (result.success) {
+        router.refresh();
+        announceHabitsChanged();
+      } else toast.error(actionError(result.message, "Failed to check in", t, fmt));
     });
   }
 

@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker, type PrayerStatus, type QazaSummary } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Habit, type HabitFrequency, type HabitLog, type HabitMonthTracker, type PrayerStatus, type QazaSummary, type RamadanPrep, type RamadanPrepKey } from "./api";
 import { DAY_ITEM, MAX_BACKFILL_DAYS } from "./challengeDisplay";
 import type { PrayerSettings } from "./prayerTimes";
 import { getAccessToken } from "@/lib/tokenUtils";
@@ -78,6 +78,21 @@ export async function setHabitTrackerCheckAction(
 
 // Ramadan: the paras read on one day (0 clears it); the server also ticks
 // the sheet's Quran row.
+// "I kept one": how many of a Ramadan sheet's missed fasts were made up.
+export async function setFastsMadeUpAction(id: string, count: number): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await customerApi.put<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/fasts-made-up`, { count }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the fast");
+}
+
+export async function saveRamadanPrepAction(year: number, items: RamadanPrepKey[]): Promise<ActionResult<RamadanPrep>> {
+  return callApi(async () => {
+    const res = await customerApi.put<RamadanPrep>(`${API_BASE_URL}/api/habit-trackers/ramadan-prep`, { year, items }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the list");
+}
+
 export async function setRamadanParasAction(id: string, input: { day: number; paras: number }): Promise<ActionResult<{ day: number; paras: number }>> {
   return callApi(async () => {
     const res = await customerApi.put<{ day: number; paras: number }>(`${API_BASE_URL}/api/habit-trackers/${id}/paras`, input, {
@@ -104,7 +119,7 @@ export async function createRamadanTrackerAction(input: { year: number; days: 29
 
 // ---- Others challenges (a named, day-count sheet -- any number can run at once) ----
 
-export async function createCustomTrackerAction(input: { name: string; totalDays: number }): Promise<ActionResult<HabitMonthTracker>> {
+export async function createCustomTrackerAction(input: { name: string; totalDays: number; startsTomorrow?: boolean }): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
     const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/custom`, input, { headers: await authHeaders() });
     return res.data;
@@ -164,9 +179,9 @@ export async function setChallengeDayAction(id: string, input: { day: number; it
 
 // A new challenge with its daily items. A refused item still leaves the
 // challenge made, so its sheet comes back with the error to open it anyway.
-export async function createChallengeAction(input: { name: string; totalDays: number; items: string[] }): Promise<ActionResult<HabitMonthTracker>> {
+export async function createChallengeAction(input: { name: string; totalDays: number; items: string[]; startsTomorrow?: boolean }): Promise<ActionResult<HabitMonthTracker>> {
   if (!isItemList(input.items)) return { success: false, message: "Failed to create challenge" };
-  const made = await createCustomTrackerAction({ name: input.name, totalDays: input.totalDays });
+  const made = await createCustomTrackerAction({ name: input.name, totalDays: input.totalDays, ...(input.startsTomorrow && { startsTomorrow: true }) });
   if (!made.success || !made.data) return made;
   let tracker = made.data;
   for (const item of input.items) {
@@ -213,6 +228,22 @@ export async function addChallengeItemAction(id: string, input: { name: string; 
 // challenge whole, ticks and all, in one transaction. A Namaz or Ramadan
 // sheet is deleted only while nothing is ticked: this refuses them, so the
 // challenge page can never take one away.
+// "End challenge": it stops at today's day and moves to Not completed.
+export async function endChallengeAction(id: string): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/end`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to end the challenge");
+}
+
+// "Restart": day 1 is today again, its ticks cleared.
+export async function restartChallengeAction(id: string): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/restart`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to restart the challenge");
+}
+
 export async function deleteChallengeAction(id: string): Promise<ActionResult> {
   return callApi(async () => {
     const headers = await authHeaders();
