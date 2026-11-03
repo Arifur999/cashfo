@@ -105,6 +105,18 @@ export const getHabitStats = cache(async (): Promise<HabitStat[]> => {
 });
 
 // Every habit and one month's logs ("YYYY-MM").
+// A run of months (at most 24) in one read: Daily habits › Monthly report.
+export const getHabitMonths = cache(async (from: string, to: string): Promise<HabitMonth | null> => {
+  const headers = await authHeaders();
+  if (!headers) return null;
+  try {
+    const res = await customerApi.get<HabitMonth>(`${API_BASE_URL}/api/habits/months`, { headers, params: { from, to } });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
+  }
+});
+
 export const getHabitMonth = cache(async (month: string): Promise<HabitMonth> => {
   const headers = await authHeaders();
   if (!headers) return { habits: [], logs: [] };
