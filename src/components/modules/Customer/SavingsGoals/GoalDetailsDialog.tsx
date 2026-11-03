@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, FileText, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, FileText, Landmark, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
@@ -8,7 +8,7 @@ import type { SavingsGoal, SavingsGoalEntry } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getSavingsGoalDetailAction } from "@/lib/customer/savingsGoalActions";
-import { LOOK_META, TREND_META } from "@/lib/customer/savingsDisplay";
+import { keptIn, LOOK_META, TREND_META } from "@/lib/customer/savingsDisplay";
 import { dueThisMonth, goalLook, monthlyAverage, monthsSinceStart, monthsToGo, planChart } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -77,6 +77,7 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
   const need = dueThisMonth(goal, today);
   const chart = planChart(goal, list, today);
   const lastDay = list[0]?.date;
+  const kept = keptIn(goal);
 
   const paceLine = (() => {
     if (closed) return { box: "bg-surface-sunken text-ink-2", head: look === "ACHIEVED" ? t("Achieved.") : t("Closed early."), text: t("{amount} went to {account} on {date}.", { amount: money(goal.withdrawnAmount), account: goal.lastWithdrawal?.accountName ?? t("your main balance"), date: goal.lastWithdrawal ? day(goal.lastWithdrawal.date) : "" }) };
@@ -179,6 +180,19 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
           </p>
         </div>
       </div>
+
+      {kept && (
+        <div className="flex items-center gap-3 rounded-[12px] border border-emerald-line bg-emerald-soft px-3.5 py-2.5">
+          <span aria-hidden="true" className="flex size-8.5 shrink-0 items-center justify-center rounded-[10px] bg-emerald text-white">
+            <Landmark className="size-4.25" strokeWidth={2} />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-px">
+            <span className="text-[12px] text-ink-soft">{closed ? t("Was kept in") : t("Kept in")}</span>
+            <span className="truncate text-[14.5px] font-bold text-ink">{kept.name}</span>
+          </span>
+          {kept.number && <span className="shrink-0 text-[12.5px] whitespace-nowrap text-ink-soft tabular-nums">{kept.number}</span>}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {stats.map((stat) => (

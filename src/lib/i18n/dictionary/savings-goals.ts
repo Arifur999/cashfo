@@ -588,4 +588,6 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Hide reminder and note": "রিমাইন্ডার ও নোট লুকান",
   "Email me a reminder on": "রিমাইন্ডার ইমেইলের তারিখ",
   "Sent to {email}": "{email}-এ পাঠানো হবে",
+  "Kept in": "টাকা রাখা আছে",
+  "Was kept in": "টাকা রাখা ছিল",
 };
