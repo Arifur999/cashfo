@@ -4,24 +4,25 @@
 // `style: "currency"`: that API's rendered symbol for BDT varies by
 // environment/ICU data (sometimes "BDT", sometimes "৳").
 //
-// Taka is grouped the South Asian way (lakh/crore: ৳ 12,50,000), other
+// Taka is grouped the South Asian way (lakh/crore: TK 12,50,000), other
 // currencies the international way. Whole amounts drop the paisa, as the
-// design writes money ("৳ 85,000", "৳ 2,699.10"). The grouping locale is
+// design writes money ("TK 85,000", "TK 2,699.10"). The grouping locale is
 // always explicit, never the machine default, so the server and every
 // browser print the same text.
 //
 // Every formatter takes the reader's language last: a Bangla reader gets
-// Bangla digits ("৳ ১২,৫০,০০০"), grouped the same way. Leave it out only
-// where the text must stay Latin -- a CSV export, an input's value. Given the
-// reader's Fmt (formatPrefs.ts) instead, the digits and the taka grouping
-// follow Settings' "Digits" and "Big amounts": "৳ 1,250,000" in groups of
-// three, Bangla digits under an English page.
+// taka's sign and Bangla digits ("৳ ১২,৫০,০০০"), grouped the same way, and
+// an English reader "TK" (takaSign). Leave it out only where the text must
+// stay Latin -- a CSV export, an input's value. Given the reader's Fmt
+// (formatPrefs.ts) instead, the digits and the taka grouping follow
+// Settings' "Digits" and "Big amounts": "TK 1,250,000" in groups of three,
+// Bangla digits under an English page.
 import { toLocaleDigits } from "@/lib/i18n/digits";
-import { type FormatLocale, fmtOf, langOf, takaGroupingLocale } from "@/lib/i18n/formatPrefs";
+import { type FormatLocale, fmtOf, langOf, takaGroupingLocale, takaSign } from "@/lib/i18n/formatPrefs";
 
-const CURRENCIES: Record<string, { symbol: string; locale: string }> = {
-  BDT: { symbol: "৳", locale: "en-IN" },
-  USD: { symbol: "$", locale: "en-US" },
+const CURRENCIES: Record<string, { symbol: (locale: FormatLocale) => string; locale: string }> = {
+  BDT: { symbol: takaSign, locale: "en-IN" },
+  USD: { symbol: () => "$", locale: "en-US" },
 };
 
 // The Intl locale a currency is grouped by: taka by the reader's choice
@@ -43,14 +44,14 @@ const groupDigits = (value: number, grouping: string) => {
 };
 
 export function formatCurrency(amount: number | string, currencyCode: string, locale: FormatLocale = "en"): string {
-  const symbol = CURRENCIES[currencyCode]?.symbol ?? currencyCode;
+  const symbol = CURRENCIES[currencyCode]?.symbol(locale) ?? currencyCode;
   const grouping = groupingFor(currencyCode, locale);
   const value = Number(amount);
   // Rounded to the paisa before the sign is chosen, so a sum that is
-  // negative only by float noise (-2.8e-17) prints "৳ 0", not "-৳ 0".
+  // negative only by float noise (-2.8e-17) prints "TK 0", not "-TK 0".
   const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
-  // "-৳ 1,500", not "৳ -1,500": the sign leads, as it is read. A
-  // no-break space, so a narrow card never leaves "৳" alone on its line.
+  // "-TK 1,500", not "TK -1,500": the sign leads, as it is read. A
+  // no-break space, so a narrow card never leaves "TK" alone on its line.
   return toLocaleDigits(`${rounded < 0 ? "-" : ""}${symbol} ${groupDigits(Math.abs(rounded), grouping)}`, locale);
 }
 
@@ -63,7 +64,7 @@ export function formatGrouped(amount: number | string, currencyCode: string, loc
   return toLocaleDigits(`${rounded < 0 ? "-" : ""}${groupDigits(Math.abs(rounded), grouping)}`, locale);
 }
 
-// "+ ৳ 85,000" for money in, "− ৳ 52,300" for money out, "৳ 0" for
+// "+ TK 85,000" for money in, "− TK 52,300" for money out, "TK 0" for
 // nothing: the explicit sign the dashboards and statements show, with a real
 // minus sign and a space, as the design writes it.
 export function formatSignedCurrency(amount: number | string, currencyCode: string, locale: FormatLocale = "en"): string {
@@ -100,8 +101,9 @@ export function formatCompactAmount(amount: number, locale: FormatLocale = "en")
   return toLocaleDigits(`${sign}${Math.round(abs)}`, locale);
 }
 
-// Just the symbol, e.g. for an inline prefix inside an amount input --
-// callers that need the formatted number too should use formatCurrency().
-export function currencySymbol(currencyCode: string): string {
-  return CURRENCIES[currencyCode]?.symbol ?? `${currencyCode} `;
+// Just the symbol in the reader's language ("TK", "৳"), e.g. for an inline
+// prefix inside an amount input -- callers that need the formatted number
+// too should use formatCurrency().
+export function currencySymbol(currencyCode: string, locale: FormatLocale): string {
+  return CURRENCIES[currencyCode]?.symbol(locale) ?? `${currencyCode} `;
 }

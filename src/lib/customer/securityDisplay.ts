@@ -1,6 +1,7 @@
 // Pure helpers behind Settings' security, app preferences and delete-account
 // screens, so the pages and their tests agree.
 import { toBanglaDigits } from "@/lib/i18n/banglaDates";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 import type { Locale } from "@/lib/i18n/translate";
 import type { DateStyle, DigitStyle, DisplayPreferences, NumberGrouping, WeekStart } from "./api";
 
@@ -123,7 +124,8 @@ export function sampleNumber(value: number, grouping: NumberGrouping, digits: Di
   return writeDigits(text, digits);
 }
 
-export const sampleAmount = (value: number, grouping: NumberGrouping, digits: DigitStyle): string => `৳ ${sampleNumber(value, grouping, digits)}`;
+// "TK 1,23,456" in English, "৳ ১,২৩,৪৫৬" in Bangla.
+export const sampleAmount = (value: number, grouping: NumberGrouping, digits: DigitStyle, locale: Locale): string => `${takaSign(locale)} ${sampleNumber(value, grouping, digits)}`;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

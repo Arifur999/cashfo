@@ -220,7 +220,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
             placeholder="0"
             invalid={tried && !(value > 0)}
             className="text-h3 font-bold tabular-nums"
-            leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+            leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
             frameClassName="overflow-hidden pl-0"
           />
           {kind === "DEPOSIT" && !special && dues > 0 && member && (

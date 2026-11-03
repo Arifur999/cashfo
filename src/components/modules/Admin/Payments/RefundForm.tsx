@@ -18,6 +18,7 @@ import { buildRefundFormZodSchema, type IRefundFormValues } from "@/zod/payment.
 import ChoiceCard, { ChoiceCardGroup } from "@/components/smartly/ChoiceCard";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 
 type HowMuch = "all" | "part";
 
@@ -114,7 +115,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
               field={field}
               label="Amount"
               inputMode="decimal"
-              prepend={<span className="text-body text-ink-muted">৳</span>}
+              prepend={<span className="text-body text-ink-muted">{takaSign(locale)}</span>}
               description={translate("Up to {amount}.", { amount: formatAmount(maxAmount, payment.currency, locale) })}
             />
           )}

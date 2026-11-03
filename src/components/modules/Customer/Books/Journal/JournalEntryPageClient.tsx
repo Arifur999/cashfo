@@ -62,7 +62,7 @@ export function JournalEntryPageClient({ businessId, groups, preferredLanguage, 
   const totals = journalTotals(lines);
   const ready = canManage && totals.balanced && totals.complete && date.length === 10;
   const missingAccount = lines.some(lineNeedsAccount);
-  const symbol = <span className="font-semibold text-ink-2">{currencySymbol(currency)}</span>;
+  const symbol = <span className="font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>;
   const optional = <span className="font-normal text-ink-muted"> ({t("optional")})</span>;
   // A group whose accounts are all archived offers nothing to pick.
   const pickable = groups.map((group) => ({ group, rows: flattenAccounts(group.accounts).filter(({ account }) => account.status === "ACTIVE") })).filter(({ rows }) => rows.length > 0);

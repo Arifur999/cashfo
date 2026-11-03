@@ -418,7 +418,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           <span aria-hidden="true" className={cn("font-semibold", wide ? "text-[26px]" : "text-h1", kind === "INCOME" ? "text-income" : kind === "EXPENSE" ? "text-expense-fill" : "text-ink-muted")}>
             {kind === "INCOME" ? "+" : kind === "EXPENSE" ? "−" : "↔"}
           </span>
-          <span className={cn("font-semibold", wide ? "text-[26px] text-ink-soft" : "text-h1 text-ink-2")}>{currencySymbol(currency)}</span>
+          <span className={cn("font-semibold", wide ? "text-[26px] text-ink-soft" : "text-h1 text-ink-2")}>{currencySymbol(currency, fmt)}</span>
           <input
             id={amountId}
             type="text"

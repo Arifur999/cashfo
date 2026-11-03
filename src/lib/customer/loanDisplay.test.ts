@@ -211,10 +211,10 @@ describe("statementEquation", () => {
   const sum = (equation: StatementEquation) => equation.opening + equation.raised - equation.lowered;
 
   it("reads a plain statement from its closing side", () => {
-    // ৳5,000 pawna, ৳10,000 more lent, ৳3,000 got back.
+    // TK5,000 pawna, TK10,000 more lent, TK3,000 got back.
     const lent = statementEquation(5000, 12000, 3000, 10000);
     expect(lent).toEqual({ side: "PAWNA", opening: 5000, raised: 10000, lowered: 3000, closing: 12000 });
-    // ৳20,000 dena, ৳5,000 more taken, ৳8,000 paid back.
+    // TK20,000 dena, TK5,000 more taken, TK8,000 paid back.
     const owed = statementEquation(-20000, -17000, 5000, 8000);
     expect(owed).toEqual({ side: "DENA", opening: 20000, raised: 5000, lowered: 8000, closing: 17000 });
     // A first loan taken: the opening of 0 reads as 0 on the dena side.
@@ -223,10 +223,10 @@ describe("statementEquation", () => {
   });
 
   it("reads a settled closing from the opening's side", () => {
-    // You owed ৳50,000 and paid it all back: 50,000 + 0 − 50,000 = 0.
+    // You owed TK50,000 and paid it all back: 50,000 + 0 − 50,000 = 0.
     const paidOff = statementEquation(-50000, 0, 0, 50000);
     expect(paidOff).toEqual({ side: "DENA", opening: 50000, raised: 0, lowered: 50000, closing: 0 });
-    // They owed ৳20,000 and paid it all back.
+    // They owed TK20,000 and paid it all back.
     const gotBack = statementEquation(20000, 0, 20000, 0);
     expect(gotBack).toEqual({ side: "PAWNA", opening: 20000, raised: 0, lowered: 20000, closing: 0 });
     expect(statementEquation(0, 0, 0, 0)).toEqual({ side: "SETTLED", opening: 0, raised: 0, lowered: 0, closing: 0 });
@@ -234,10 +234,10 @@ describe("statementEquation", () => {
   });
 
   it("counts an opening on the other side as a minus", () => {
-    // ৳10,000 pawna, then a ৳30,000 loan taken: −10,000 + 30,000 − 0 = 20,000 dena.
+    // TK10,000 pawna, then a TK30,000 loan taken: −10,000 + 30,000 − 0 = 20,000 dena.
     const flipped = statementEquation(10000, -20000, 30000, 0);
     expect(flipped).toEqual({ side: "DENA", opening: -10000, raised: 30000, lowered: 0, closing: 20000 });
-    // ৳5,000 dena, then ৳12,000 lent: 7,000 pawna.
+    // TK5,000 dena, then TK12,000 lent: 7,000 pawna.
     const back = statementEquation(-5000, 7000, 0, 12000);
     expect(back).toEqual({ side: "PAWNA", opening: -5000, raised: 12000, lowered: 0, closing: 7000 });
     expect([flipped, back].map(sum)).toEqual([20000, 7000]);
@@ -259,7 +259,7 @@ describe("statementPageEdges", () => {
     status: "POSTED",
     ...extra,
   });
-  // ৳5,000 pawna, then 120 loans of ৳1,000 given: row n leaves 5,000 + n × 1,000.
+  // TK5,000 pawna, then 120 loans of TK1,000 given: row n leaves 5,000 + n × 1,000.
   const rows = Array.from({ length: 120 }, (_, i) => entry(i + 1, 5000 + (i + 1) * 1000));
   const ids = (page: { rows: StatementRow[] }) => page.rows.map((row) => row.transactionId);
 
@@ -290,7 +290,7 @@ describe("statementPageEdges", () => {
 
   it("carries the unchanged balance on from a voided last row", () => {
     // Row 50 was voided: the API leaves the balance where row 49 put it, and
-    // every later row is ৳1,000 lower.
+    // every later row is TK1,000 lower.
     const voided = rows.map((row, i) => (i === 49 ? entry(50, 54000, { status: "VOIDED", cancelled: true }) : i > 49 ? entry(i + 1, 5000 + i * 1000) : row));
     expect(statementPageEdges(voided, 1, 50, 5000).carriedForward).toBe(54000);
     expect(statementPageEdges(voided, 2, 50, 5000).broughtForward).toBe(54000);
@@ -340,8 +340,8 @@ describe("contactMatches", () => {
 describe("loanErrorText", () => {
   const money = (amount: number) => formatCurrency(amount, "BDT");
   it("rewords the API's raw figures as money", () => {
-    expect(loanErrorText("Payment amount (10000.00) exceeds the total outstanding balance (5000.00)", "x", inEnglish, money)).toBe("That's more than is owed. It can be ৳ 5,000 at most.");
-    expect(loanErrorText("This contact still has an outstanding balance of 50000.00. Settle it before archiving.", "x", inEnglish, money)).toBe("This contact still has a balance of ৳ 50,000. Settle it before archiving.");
+    expect(loanErrorText("Payment amount (10000.00) exceeds the total outstanding balance (5000.00)", "x", inEnglish, money)).toBe("That's more than is owed. It can be TK 5,000 at most.");
+    expect(loanErrorText("This contact still has an outstanding balance of 50000.00. Settle it before archiving.", "x", inEnglish, money)).toBe("This contact still has a balance of TK 50,000. Settle it before archiving.");
   });
 
   it("says an action's trade fallback the loan way, and keeps any other message", () => {

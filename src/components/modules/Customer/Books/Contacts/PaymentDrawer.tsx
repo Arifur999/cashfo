@@ -173,7 +173,7 @@ export function PaymentDrawer({ open, direction, contact, outstanding, owedTotal
         }
         error={over ? (applied ? t("Only {amount} is left on that one.", { amount: formatCurrency(applied.remainingAmount, currency, fmt) }) : t("Only {amount} is owed.", { amount: formatCurrency(due, currency, fmt) })) : undefined}
       >
-        <Input id="pay-amount" size="lg" inputMode="decimal" value={amount} onChange={(event) => setAmount(limitMoneyDecimals(event.target.value))} placeholder="0.00" autoFocus invalid={over} className="text-h3 tabular-nums" leading={<span className="text-h3 font-semibold text-ink-2">{currencySymbol(currency)}</span>} />
+        <Input id="pay-amount" size="lg" inputMode="decimal" value={amount} onChange={(event) => setAmount(limitMoneyDecimals(event.target.value))} placeholder="0.00" autoFocus invalid={over} className="text-h3 tabular-nums" leading={<span className="text-h3 font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>} />
       </Field>
       <Field htmlFor="pay-date" label={t("Date")}>
         <DayInput id="pay-date" size="md" value={date} onChange={setDate} max={today} />

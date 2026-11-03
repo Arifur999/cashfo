@@ -3,6 +3,8 @@
 import AppField from "@/components/shared/form/AppField";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { firstZodError } from "@/lib/formValidators";
+import { takaSign } from "@/lib/i18n/formatPrefs";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { randomCouponCode } from "@/lib/subscriptions";
 import type { DiscountType } from "@/types/coupon.types";
 import { couponFormZodSchema as schema, getPercentageError } from "@/zod/coupon.validation";
@@ -17,6 +19,7 @@ const DISCOUNT_TYPE_OPTIONS: { value: DiscountType; label: string }[] = [
 // The code, with a link that makes one up, then the discount: a percent /
 // fixed switch beside the number, as the design's drawer draws them.
 const CouponDiscountFields = ({ form }: { form: CouponFormApi }) => {
+  const { locale } = useLocale();
   return (
     <>
       <form.Field name="code" validators={{ onChange: schema.shape.code }}>
@@ -69,7 +72,7 @@ const CouponDiscountFields = ({ form }: { form: CouponFormApi }) => {
                   field={field}
                   label={<span className="sr-only"><T>{discountType === "PERCENTAGE" ? "Percent off" : "Taka off"}</T></span>}
                   inputMode="decimal"
-                  prepend={discountType === "FIXED_AMOUNT" ? <span className="text-body text-ink-muted">৳</span> : undefined}
+                  prepend={discountType === "FIXED_AMOUNT" ? <span className="text-body text-ink-muted">{takaSign(locale)}</span> : undefined}
                   append={discountType === "PERCENTAGE" ? <span className="text-body text-ink-muted">%</span> : undefined}
                 />
               )}

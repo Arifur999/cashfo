@@ -4,7 +4,7 @@ import { formatDate as formatCustomerDate, timeLabel } from "@/lib/customer/date
 import { formatDate, formatRelativeDay } from "@/lib/date";
 import { banglaDayMonth, banglaShortDay } from "./banglaDates";
 import { formatCount, toLocaleDigits } from "./digits";
-import { datePattern, fmtOf, langOf, redigit, resolveFmt, weekdayOrder, weekStartOf, withLocale, writeDigits, type FormatPreferences } from "./formatPrefs";
+import { datePattern, fmtOf, langOf, redigit, resolveFmt, takaSign, weekdayOrder, weekStartOf, withLocale, writeDigits, type FormatPreferences } from "./formatPrefs";
 import { inEnglish, plural } from "./message";
 
 const NBSP = " ";
@@ -36,6 +36,16 @@ describe("resolveFmt", () => {
   it("falls back for a missing or unknown field", () => {
     expect(resolveFmt({}, "bn")).toBe(fmtOf("bn"));
     expect(resolveFmt({ dateStyle: "WEIRD" as never, weekStart: "FRIDAY" as never }, "en")).toBe(fmtOf("en"));
+  });
+});
+
+describe("takaSign", () => {
+  it("follows the language, not the digits", () => {
+    expect(takaSign("en")).toBe("TK");
+    expect(takaSign("bn")).toBe("৳");
+    expect(takaSign(resolveFmt({ digitStyle: "BENGALI" }, "en"))).toBe("TK");
+    expect(takaSign(resolveFmt({ digitStyle: "LATIN" }, "bn"))).toBe("৳");
+    expect(takaSign(null)).toBe("TK");
   });
 });
 
@@ -136,20 +146,20 @@ describe("the formatters with a Fmt", () => {
   });
 
   it("formatCurrency follows the digits and the grouping", () => {
-    expect(formatCurrency(1250000, "BDT", bnDigitsEn)).toBe(`৳${NBSP}১২,৫০,০০০`);
+    expect(formatCurrency(1250000, "BDT", bnDigitsEn)).toBe(`TK${NBSP}১২,৫০,০০০`);
     expect(formatCurrency(1250000, "BDT", latinBn)).toBe(`৳${NBSP}12,50,000`);
-    expect(formatCurrency(1250000, "BDT", intl)).toBe(`৳${NBSP}1,250,000`);
+    expect(formatCurrency(1250000, "BDT", intl)).toBe(`TK${NBSP}1,250,000`);
     expect(formatCurrency(1250000, "BDT", intlBn)).toBe(`৳${NBSP}১,২৫০,০০০`);
     // The paisa only when there are some, either way.
-    expect(formatCurrency(2699.1, "BDT", intl)).toBe(`৳${NBSP}2,699.10`);
-    expect(formatCurrency(-1500, "BDT", intl)).toBe(`-৳${NBSP}1,500`);
+    expect(formatCurrency(2699.1, "BDT", intl)).toBe(`TK${NBSP}2,699.10`);
+    expect(formatCurrency(-1500, "BDT", intl)).toBe(`-TK${NBSP}1,500`);
     // Other currencies keep their own grouping.
     expect(formatCurrency(1250000, "USD", "en")).toBe(`$${NBSP}1,250,000`);
   });
 
   it("formatSignedCurrency and formatGrouped follow them too", () => {
-    expect(formatSignedCurrency(1250000, "BDT", intl)).toBe(`+ ৳${NBSP}1,250,000`);
-    expect(formatSignedCurrency(-52300, "BDT", bnDigitsEn)).toBe(`− ৳${NBSP}৫২,৩০০`);
+    expect(formatSignedCurrency(1250000, "BDT", intl)).toBe(`+ TK${NBSP}1,250,000`);
+    expect(formatSignedCurrency(-52300, "BDT", bnDigitsEn)).toBe(`− TK${NBSP}৫২,৩০০`);
     expect(formatGrouped(1250000, "BDT", intl)).toBe("1,250,000");
     expect(formatGrouped(1250000, "BDT", latinBn)).toBe("12,50,000");
   });

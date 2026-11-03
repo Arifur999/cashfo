@@ -36,6 +36,7 @@ const SELECT =
 // One money box: the currency sign and the typed amount (Bangla digits and
 // grouping accepted, as everywhere money is typed).
 function MoneyInput({ id, value, onChange, currency }: { id: string; value: string; onChange: (value: string) => void; currency: string }) {
+  const { fmt } = useLocale();
   const field = useAmountField(value, onChange, currency);
   return (
     <Input
@@ -44,7 +45,7 @@ function MoneyInput({ id, value, onChange, currency }: { id: string; value: stri
       inputMode="decimal"
       placeholder="0"
       {...field}
-      leading={<span className="text-title font-semibold text-ink-2">{currencySymbol(currency)}</span>}
+      leading={<span className="text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
       className="text-title font-semibold tabular-nums"
     />
   );
@@ -118,10 +119,10 @@ export function BudgetDialog({ businessId, currency, editing, years, onClose, on
           </select>
         </Field>
       </div>
-      <Field htmlFor="bud-target" label={<span className="text-body font-medium text-ink">{t("Income target ({symbol})", { symbol: currencySymbol(currency) })}</span>}>
+      <Field htmlFor="bud-target" label={<span className="text-body font-medium text-ink">{t("Income target ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
         <MoneyInput id="bud-target" value={target} onChange={setTarget} currency={currency} />
       </Field>
-      <Field htmlFor="bud-budget" label={<span className="text-body font-medium text-ink">{t("Expense budget ({symbol})", { symbol: currencySymbol(currency) })}</span>}>
+      <Field htmlFor="bud-budget" label={<span className="text-body font-medium text-ink">{t("Expense budget ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
         <MoneyInput id="bud-budget" value={budget} onChange={setBudget} currency={currency} />
       </Field>
       <div aria-live="polite" className={cn("flex items-center justify-between gap-3 rounded-[12px] px-4 py-3.5", planned < 0 ? "bg-expense-soft" : "bg-income-soft")}>

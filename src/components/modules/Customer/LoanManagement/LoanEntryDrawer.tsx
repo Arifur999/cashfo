@@ -455,7 +455,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
               {...amountField}
               placeholder="0"
               invalid={overLimit}
-              leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-[17px] font-semibold text-ink-soft">{currencySymbol(currency)}</span>}
+              leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-[17px] font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>}
               frameClassName="h-12 gap-0 overflow-hidden rounded-sm pl-0"
               className="pl-3 text-h3 font-bold tabular-nums"
             />

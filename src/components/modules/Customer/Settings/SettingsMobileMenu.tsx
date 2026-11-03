@@ -60,7 +60,7 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
       rows: [
         { key: "language", href: "/settings/app", label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English", lang: locale === "bn" ? "bn" : undefined },
         ...(allowDark ? [{ key: "theme", href: "/settings/app", label: "Theme", icon: Moon, tone: "neutral" as const, value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") }] : []),
-        { key: "numbers", href: `/settings/app#${NUMBERS_ANCHOR}`, label: "Numbers and dates", icon: Hash, tone: "income", value: sampleAmount(123456, prefs.numberGrouping, digitsInForce(prefs.digitStyle, locale)) },
+        { key: "numbers", href: `/settings/app#${NUMBERS_ANCHOR}`, label: "Numbers and dates", icon: Hash, tone: "income", value: sampleAmount(123456, prefs.numberGrouping, digitsInForce(prefs.digitStyle, locale), locale) },
         { key: "reminders", href: `/settings/app#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "rose", value: remindersOn === null ? undefined : t("{count} on", { count: formatCount(remindersOn, fmt) }) },
       ],
     },
