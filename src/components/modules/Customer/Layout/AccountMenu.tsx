@@ -32,7 +32,7 @@ const ITEM = "flex min-h-11 cursor-pointer items-center gap-3 rounded-none px-4 
 // workspace settings, then settings, referrals (with what is ready to
 // withdraw) and help, lock and sign out.
 export function AccountMenu({ className }: { className?: string }) {
-  const { user, activeBusiness, logout } = useAuth();
+  const { user, activeBusiness, askSignOut } = useAuth();
   const { t, fmt } = useLocale();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -145,7 +145,7 @@ export function AccountMenu({ className }: { className?: string }) {
 
           <DropdownMenuSeparator className="m-0 bg-line" />
           <div className="py-2">
-            <DropdownMenuItem onSelect={logout} className={cn(ITEM, "text-expense focus:text-expense [&_svg]:text-expense")}>
+            <DropdownMenuItem onSelect={askSignOut} className={cn(ITEM, "text-expense focus:text-expense [&_svg]:text-expense")}>
               <LogOut />
               {t("Sign out")}
             </DropdownMenuItem>

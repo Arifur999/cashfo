@@ -118,6 +118,8 @@ interface Words {
 const NOT_YOU = "If this wasn't you, change your password now.";
 
 const PLANS_PATH = "/settings/plans";
+// One payment's own page: its receipt once paid, or paying again.
+const PAYMENT_PATH = "/settings/plans/checkout";
 const REFERRALS_PATH = "/referrals";
 const EARNINGS_PATH = "/referrals/earnings";
 const WITHDRAWALS_PATH = "/referrals/withdrawals";
@@ -129,9 +131,12 @@ const IDEAS_PATH = "/settings/help";
 const sentences = (...parts: string[]) => parts.filter(Boolean).join(" ");
 
 // A BILLING row (BillingNotices on the backend); null for an event this
-// build doesn't know.
+// build doesn't know. A paid, failed or lapsed payment opens its own page
+// (Checkout: the receipt, or paying again); the rest open Plans.
 function billingView(data: UserNotification["data"], { t, money, day }: Words): NotificationView | null {
-  const href = PLANS_PATH;
+  const paymentId = text(data.paymentId).trim();
+  const ownPage = paymentId && ["PAYMENT_PAID", "PAYMENT_FAILED", "PAYMENT_EXPIRED"].includes(text(data.event));
+  const href = ownPage ? `${PAYMENT_PATH}?payment=${encodeURIComponent(paymentId)}` : PLANS_PATH;
   const plan = text(data.planName).trim();
   const amount = money(data.amount);
   const view = (kind: NotificationKind, title: string, body: string): NotificationView => ({ kind, title, body, href });

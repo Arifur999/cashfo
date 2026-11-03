@@ -15,6 +15,16 @@ export interface IPlatformSettingsValues {
   // The old flat referral reward. Referrals & Payouts > Settings holds the
   // commission rules now; the API still answers with it.
   referralRewardAmount: number;
+  // Where a customer sends the money for a plan (Checkout): wallet numbers
+  // as digits, empty when that way isn't offered. Absent from an older API.
+  billingPaymentAccounts?: IPaymentAccounts;
+}
+
+export interface IPaymentAccounts {
+  bkash: string;
+  nagad: string;
+  rocket: string;
+  bank: { bankName: string; branch: string; accountName: string; accountNumber: string; routingNumber: string };
 }
 
 // As the admin API answers: the values, plus who changed one last and when.

@@ -21,6 +21,7 @@ import { ACCOUNT_SORTS, accountColor, lastUsedText, maskedMoney, matchesAccount,
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { maskAccountNumber, WALLET_TYPE_META, walletIcon, walletType } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
+import { iconActionClass } from "@/components/smartly/IconAction";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
@@ -166,12 +167,13 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
         <DropdownMenuTrigger
           disabled={busy}
           aria-label={t("Actions for {name}", { name: nameOf(account) })}
-          className={cn(
-            "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full disabled:cursor-default pointer-coarse:size-11",
-            onCard ? "bg-white/16 text-white hover:bg-white/26 data-open:bg-white/30" : "text-ink-2 hover:bg-surface-sunken data-open:bg-surface-sunken",
-          )}
+          className={
+            onCard
+              ? "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/16 text-white hover:bg-white/26 disabled:cursor-default data-open:bg-white/30 pointer-coarse:size-11"
+              : cn(iconActionClass(), "relative z-10 disabled:cursor-default data-open:border-mint-200 data-open:bg-emerald-soft data-open:text-emerald")
+          }
         >
-          {busy ? <Loader size={16} onDark={onCard} label={t("Loading...")} /> : <Ellipsis className="size-4.5" aria-hidden="true" />}
+          {busy ? <Loader size={16} onDark={onCard} label={t("Loading...")} /> : <Ellipsis className={onCard ? "size-4.5" : undefined} aria-hidden="true" />}
         </DropdownMenuTrigger>
         {/* A popup opened from the menu keeps its own focus: the menu doesn't hand it back to the button as it closes. */}
         <DropdownMenuContent align="end" sideOffset={6} onCloseAutoFocus={(event) => event.preventDefault()} className="w-52 rounded-xl border border-line bg-surface p-1.5 shadow-overlay ring-0">

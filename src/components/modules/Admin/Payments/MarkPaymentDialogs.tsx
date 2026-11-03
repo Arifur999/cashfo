@@ -18,11 +18,12 @@ import { humanizeEnum } from "@/lib/statusBadge";
 import type { IPayment } from "@/types/payment.types";
 import { markPaymentFailedServerZodSchema, markPaymentPaidFormZodSchema, type IMarkPaymentPaidFormValues } from "@/zod/payment.validation";
 
-type DialogPayment = Pick<IPayment, "id" | "amount" | "currency" | "gateway" | "plan" | "platformUser" | "createdAt" | "expiresAt">;
+type DialogPayment = Pick<IPayment, "id" | "amount" | "currency" | "gateway" | "plan" | "platformUser" | "createdAt" | "expiresAt" | "gatewayReferenceId" | "payerAccount">;
 
 const rules = markPaymentPaidFormZodSchema.shape;
 
-// Mounted inside the dialog content, so each open starts empty.
+// Mounted inside the dialog content, so each open starts afresh: with the
+// TrxID and number the customer sent at checkout, for the admin to check.
 const MarkPaidForm = ({ payment, onDone }: { payment: DialogPayment; onDone: () => void }) => {
   const { translate, locale } = useLocale();
   const gateway = translate(humanizeEnum(payment.gateway));
@@ -32,7 +33,12 @@ const MarkPaidForm = ({ payment, onDone }: { payment: DialogPayment; onDone: () 
     invalidateKeys: [queryKeys.payments.all, queryKeys.invoices.all],
   });
   const form = useForm({
-    defaultValues: { gatewayReferenceId: "", paidAt: toDateTimeInputValue(new Date()), payerAccount: "", note: "" } satisfies IMarkPaymentPaidFormValues,
+    defaultValues: {
+      gatewayReferenceId: payment.gatewayReferenceId ?? "",
+      paidAt: toDateTimeInputValue(new Date()),
+      payerAccount: payment.payerAccount ?? "",
+      note: "",
+    } satisfies IMarkPaymentPaidFormValues,
     onSubmit: async ({ value }) => {
       if (await run(value)) onDone();
     },

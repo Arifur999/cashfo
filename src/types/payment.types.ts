@@ -1,6 +1,6 @@
 import type { IInvoice, IInvoiceSummary } from "./invoice.types";
 
-export const PAYMENT_GATEWAYS = ["BKASH", "NAGAD", "SSLCOMMERZ", "CARD", "MANUAL"] as const;
+export const PAYMENT_GATEWAYS = ["BKASH", "NAGAD", "ROCKET", "BANK", "SSLCOMMERZ", "CARD", "MANUAL"] as const;
 export type PaymentGateway = (typeof PAYMENT_GATEWAYS)[number];
 
 export const PAYMENT_STATUSES = ["PENDING", "SUCCESS", "FAILED", "REFUNDED"] as const;
@@ -45,8 +45,12 @@ export interface IPayment {
   // beat the coupon.
   listPrice?: string | null;
   referralDiscount?: string | null;
-  // The number the money came from, typed in at Mark paid.
+  // The number (or bank account name) the money came from: sent by the
+  // customer at checkout, or typed in at Mark paid.
   payerAccount?: string | null;
+  // When the customer sent that number and the TrxID; it waits for a check
+  // since then and no longer lapses.
+  submittedAt?: string | null;
   // An unpaid checkout lapses at this time.
   expiresAt?: string | null;
   // The period it paid for (set when it is marked paid).
@@ -105,6 +109,9 @@ export interface IPaymentDetail extends Omit<IPayment, "invoice" | "refund"> {
   otherPayments: IOtherPayment[];
   relatedTickets?: IRelatedTicket[];
   subscription?: IPayerSubscription | null;
+  // The customer's screenshot of the money sent (its bytes at
+  // /admin/payments/:id/proof). Absent from an older API.
+  proof?: { mimeType: string; size: number; createdAt: string } | null;
 }
 
 // Mark paid: the gateway's transaction ID, when the money arrived (now when

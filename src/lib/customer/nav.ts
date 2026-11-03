@@ -59,6 +59,11 @@ export interface NavLeaf {
   // The page's own name where the menu shortens it ("Referrals" heads its
   // page as "Referral Program").
   heading?: string;
+  // false: left out of the sidebar's list (the board has no row for it),
+  // still named in the breadcrumb, the tab title and the search palette.
+  menu?: false;
+  // Such a page lights this row of its group instead (Checkout, Plans).
+  litAs?: string;
 }
 
 export interface NavItem extends NavLeaf {
@@ -330,10 +335,11 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-// Settings: reached from the sidebar's foot (the gear) and the account
-// menu, not a menu row. Its sections show in the breadcrumb as
-// "Settings › Security" and in the search palette under "Account ›
-// Settings" (Settings has its own menu).
+// Settings: the last group of the Money Tracker's menu (AppSidebar board),
+// also the gear in the sidebar's foot and the account menu. Its sections
+// show in the breadcrumb as "Settings › Security" and in the search palette
+// under "Account › Settings". Workspaces has no row (the workspace switcher
+// and the account menu lead there).
 export const NAV_FOOT_LABEL = "Account@@user";
 export const NAV_FOOT: NavItem[] = [
   {
@@ -344,7 +350,8 @@ export const NAV_FOOT: NavItem[] = [
       { label: "Profile", href: "/settings/profile" },
       { label: "Security", href: "/settings/security" },
       { label: "Plans", href: "/settings/plans" },
-      { label: "Workspaces", href: "/settings/workspaces" },
+      { label: "Checkout", href: "/settings/plans/checkout", menu: false, litAs: "/settings/plans" },
+      { label: "Workspaces", href: "/settings/workspaces", menu: false },
       { label: "App preferences", href: "/settings/app" },
       { label: "Help & support", href: "/settings/help" },
       { label: "Resources & legal", href: "/settings/resources" },
@@ -357,6 +364,8 @@ export const SETTINGS_ROUTE = "/settings";
 // Where every Upgrade / Manage plan button goes: the plans page in Settings
 // (built with the customer plan API).
 export const PLANS_ROUTE = "/settings/plans";
+// Paying for a plan (Checkout board), and a payment's status after.
+export const CHECKOUT_ROUTE = `${PLANS_ROUTE}/checkout`;
 
 // Which app a page belongs to: everything under /habit-tracker is the
 // Habit Tracker.

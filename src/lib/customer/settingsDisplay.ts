@@ -14,26 +14,19 @@ export interface SettingsSection {
   href: string;
   // Dictionary keys.
   label: string;
-  // "@@user": plain "Account" is Bangla's হিসাব, a ledger account.
-  group: "Account@@user" | "App" | "Support";
-  // Left out of the rail (design-v4 SettingsNav has no Workspaces row: the
-  // workspace switcher and the account menu lead there).
-  hidden?: boolean;
 }
 
 // Profile has its own address, as the sidebar's Settings › Profile does;
 // /settings itself is the menu on a phone and the profile on a wide screen.
 export const SETTINGS_SECTIONS: SettingsSection[] = [
-  { key: "profile", href: "/settings/profile", label: "Profile", group: "Account@@user" },
-  { key: "security", href: "/settings/security", label: "Security", group: "Account@@user" },
-  { key: "plans", href: "/settings/plans", label: "Plans", group: "Account@@user" },
-  { key: "workspaces", href: "/settings/workspaces", label: "Workspaces", group: "Account@@user", hidden: true },
-  { key: "app", href: "/settings/app", label: "App preferences", group: "App" },
-  { key: "help", href: "/settings/help", label: "Help & support", group: "Support" },
-  { key: "resources", href: "/settings/resources", label: "Resources & legal", group: "Support" },
+  { key: "profile", href: "/settings/profile", label: "Profile" },
+  { key: "security", href: "/settings/security", label: "Security" },
+  { key: "plans", href: "/settings/plans", label: "Plans" },
+  { key: "workspaces", href: "/settings/workspaces", label: "Workspaces" },
+  { key: "app", href: "/settings/app", label: "App preferences" },
+  { key: "help", href: "/settings/help", label: "Help & support" },
+  { key: "resources", href: "/settings/resources", label: "Resources & legal" },
 ];
-
-export const SETTINGS_GROUPS: SettingsSection["group"][] = ["Account@@user", "App", "Support"];
 
 // The section a path belongs to; /settings (and anything unknown) is the
 // profile, which the index shows on a wide screen.

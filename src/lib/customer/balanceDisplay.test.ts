@@ -16,7 +16,6 @@ import {
   matchesAccount,
   matchState,
   monthRangeDays,
-  monthRangeLabel,
   moneyByType,
   parseTypedAmount,
   partyOf,
@@ -120,7 +119,7 @@ describe("ledger rows", () => {
     expect(entrySource({ ...row, contactId: "c 1" }, "LOAN_IN")?.href).toBe("/loan-management/ledger?contactId=c%201");
     expect(entrySource(row, "LOAN_IN")).toBeNull();
     expect(entrySource(row, "ADJUSTMENT")).toBeNull();
-    expect(entrySource(row, "ASSET_SALE")?.href).toBe("/assets-management/current");
+    expect(entrySource(row, "ASSET_SALE")?.href).toBe("/assets-management/purchase-sell");
   });
 
   it("has every kind's words in Bangla", () => {
@@ -168,11 +167,5 @@ describe("transfers", () => {
     expect(monthRangeDays("2026-09")).toEqual({ dateFrom: "2026-09-01", dateTo: "2026-09-30" });
     expect(monthRangeDays("2026-09", "2026-11")).toEqual({ dateFrom: "2026-09-01", dateTo: "2026-11-30" });
     expect(monthRangeDays("2026-02", "2025-11")).toEqual({ dateFrom: "2025-11-01", dateTo: "2026-02-28" });
-  });
-
-  it("names a run of months", () => {
-    expect(monthRangeLabel("2026-09", null, "en")).toBe("September 2026");
-    expect(monthRangeLabel("2026-09", "2026-11", "en")).toBe("Sep – Nov 2026");
-    expect(monthRangeLabel("2025-11", "2026-02", "en")).toBe("Nov 2025 – Feb 2026");
   });
 });

@@ -6,8 +6,9 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import type { Account, LedgerKind } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { LEDGER_KIND_META } from "@/lib/customer/balanceDisplay";
-import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { statementBackPath } from "@/lib/customer/ledger";
+import { periodRange, readPickedPeriod } from "@/lib/customer/period";
+import { getActiveMonths } from "@/lib/customer/reports";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getAppToday } from "@/lib/date";
 import { getLocale } from "@/lib/i18n/locale";
@@ -15,7 +16,6 @@ import { pageHref, pastEnd, readPageParam } from "@/lib/table/pageParams";
 
 export const generateMetadata = () => customerPageMetadata("/balance/ledger");
 
-const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year", "custom"];
 // Rows on one page of a ledger.
 const PAGE_SIZE = 50;
 const SEARCH_MAX = 80;
@@ -42,9 +42,10 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
   const accountId = typeof params.accountId === "string" ? params.accountId : "";
-  const range = PRESETS.find((preset) => preset === params.range) ?? "all";
-  const customFrom = isIsoDay(params.dateFrom) ? params.dateFrom : undefined;
-  const customTo = isIsoDay(params.dateTo) ? params.dateTo : undefined;
+  // All time unless the address picks a month, a year or days (older
+  // ?range= links still open what they meant).
+  const today = getAppToday();
+  const period = readPickedPeriod(params, { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) });
   const page = readPageParam(params);
   const direction = params.dir === "in" || params.dir === "out" ? params.dir : undefined;
   const kind = typeof params.kind === "string" && params.kind in LEDGER_KIND_META ? (params.kind as LedgerKind) : undefined;
@@ -56,14 +57,16 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
   const walletIds = new Set(wallets.map((wallet) => wallet.id));
   const others = flatten(groups.flatMap((group) => group.accounts)).filter((account) => !walletIds.has(account.id));
 
-  const { dateFrom, dateTo } = resolveDateRange(range, customFrom, customTo);
-  const [account, ledger, summary] = accountId
+  const { dateFrom, dateTo } = periodRange(period);
+  const [account, ledger, summary, activeMonths] = accountId
     ? await Promise.all([
         getAccount(activeBusinessId, accountId),
         getLedger(activeBusinessId, accountId, { dateFrom, dateTo, page, limit: PAGE_SIZE, direction, kind, search: search || undefined, standingOnly: true }),
         getAccountSummary(activeBusinessId, accountId, { dateFrom, dateTo }),
+        // The months this account has anything in, for the period picker.
+        getActiveMonths(activeBusinessId, accountId),
       ])
-    : [null, null, null];
+    : [null, null, null, null];
 
   // A page past the end (entries deleted away, an old link) opens the last
   // page instead of an empty ledger.
@@ -82,13 +85,12 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
       currency={currency}
       canManage={canManage}
       accountId={accountId}
-      range={range}
-      customFrom={customFrom}
-      customTo={customTo}
+      period={period}
+      activeMonths={activeMonths}
       periodFrom={dateFrom}
       periodTo={dateTo}
       filters={{ direction: direction ?? null, kind: kind ?? null, search }}
-      today={getAppToday()}
+      today={today}
       backHref={statementBackPath(params.from)}
     />
   );

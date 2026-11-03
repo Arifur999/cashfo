@@ -17,6 +17,8 @@ export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
 export const GATEWAY_CHIP_CLASS: Record<PaymentGateway, string> = {
   BKASH: "bg-gateway-bkash text-white",
   NAGAD: "bg-gateway-nagad text-white",
+  ROCKET: "bg-gateway-rocket text-white",
+  BANK: "bg-info-ink text-white",
   SSLCOMMERZ: "bg-info text-white",
   CARD: "bg-ink-2 text-white",
   MANUAL: "bg-line text-ink-2",
@@ -26,6 +28,8 @@ export const GATEWAY_CHIP_CLASS: Record<PaymentGateway, string> = {
 export const GATEWAY_BAR_CLASS: Record<PaymentGateway, string> = {
   BKASH: "bg-gateway-bkash",
   NAGAD: "bg-gateway-nagad",
+  ROCKET: "bg-gateway-rocket",
+  BANK: "bg-info-ink",
   SSLCOMMERZ: "bg-info",
   CARD: "bg-ink-2",
   MANUAL: "bg-ink-faint",

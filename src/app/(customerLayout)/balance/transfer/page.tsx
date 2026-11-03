@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { TransfersPageClient, type TransferPeriod } from "@/components/modules/Customer/Balance/TransfersPageClient";
+import { TransfersPageClient } from "@/components/modules/Customer/Balance/TransfersPageClient";
 import { getWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { isMonthKey, monthRangeDays } from "@/lib/customer/balanceDisplay";
-import { resolveDateRange } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { periodRange, readPickedPeriod } from "@/lib/customer/period";
+import { getActiveMonths } from "@/lib/customer/reports";
 import { getTransactions, getTransactionsSummary } from "@/lib/customer/transactions";
 import { getAppToday } from "@/lib/date";
 import { pageHref, pastEnd, readPageParam, readPageSizeParam } from "@/lib/table/pageParams";
@@ -32,12 +32,10 @@ export default async function TransfersPage({ searchParams }: PageProps<"/balanc
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
   const today = getAppToday();
 
-  // All time, this month, this year, or a run of months (?start=2026-09&end=2026-11).
-  const period: TransferPeriod =
-    params.range === "custom"
-      ? { range: "custom", start: isMonthKey(params.start) ? params.start : today.slice(0, 7), end: isMonthKey(params.end) ? params.end : null }
-      : { range: params.range === "this-month" || params.range === "this-year" ? params.range : "all", start: null, end: null };
-  const { dateFrom, dateTo } = period.range === "custom" ? monthRangeDays(period.start!, period.end) : resolveDateRange(period.range);
+  // All time unless the address picks a month, a year or days (older
+  // ?range= links still open what they meant).
+  const period = readPickedPeriod(params, { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) });
+  const { dateFrom, dateTo } = periodRange(period);
   const page = readPageParam(params);
   const limit = readPageSizeParam(params, PAGE_SIZES, PAGE_SIZE);
   const accountId = typeof params.account === "string" && params.account ? params.account : undefined;
@@ -46,10 +44,12 @@ export default async function TransfersPage({ searchParams }: PageProps<"/balanc
   // Goals' own, and a deleted transfer (voided, with its reversal) is gone.
   const filters = { transactionType: "TRANSFER" as const, dateFrom, dateTo, accountId, search: search || undefined, excludeSavings: true, standingOnly: true };
 
-  const [list, summary, wallets] = await Promise.all([
+  const [list, summary, wallets, activeMonths] = await Promise.all([
     getTransactions(activeBusinessId, { ...filters, page, limit, withBalanceAfter: true }),
     getTransactionsSummary(activeBusinessId, filters),
     getWallets(activeBusinessId),
+    // The months with transfers, for the period picker.
+    getActiveMonths(activeBusinessId, undefined, "transfers"),
   ]);
 
   // A page past the end (transfers deleted away, an old link) opens the last one.
@@ -70,6 +70,7 @@ export default async function TransfersPage({ searchParams }: PageProps<"/balanc
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
       period={period}
+      activeMonths={activeMonths}
       accountId={accountId ?? ""}
       search={search}
       periodFrom={dateFrom}

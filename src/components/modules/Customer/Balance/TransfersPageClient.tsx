@@ -16,8 +16,9 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
-import type { Account, Transaction, TransactionListResponse } from "@/lib/customer/api";
-import { accountColor, maskedMoney, monthRangeLabel, walletColorStyle } from "@/lib/customer/balanceDisplay";
+import type { Account, ActiveMonth, Transaction, TransactionListResponse } from "@/lib/customer/api";
+import { periodHref, type PickedPeriod } from "@/lib/customer/period";
+import { accountColor, maskedMoney, walletColorStyle } from "@/lib/customer/balanceDisplay";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { periodText, transactionHref } from "@/lib/customer/ledger";
@@ -27,7 +28,9 @@ import { listTransfersForPrintAction } from "@/lib/customer/transferActions";
 import { transferAmount, transferParties } from "@/lib/customer/transfers";
 import { walletIcon } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
+import IconAction, { iconActionClass } from "@/components/smartly/IconAction";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { PeriodPicker, periodLabel as periodName } from "../Shared/PeriodPicker";
 import { plural } from "@/lib/i18n/message";
 import { pageHref } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
@@ -35,16 +38,10 @@ import { HideBalancesButton } from "./HideBalancesButton";
 import { PrintPreview } from "./PrintPreview";
 import { TransferDeleteDialog, type DeletedTransfer } from "./TransferDeleteDialog";
 import { TransferDialog, type EditedTransfer } from "./TransferDialog";
-import { TransferPeriodMenu, type PeriodRange } from "./TransferPeriodMenu";
 import { type StatementTransfer, TransferStatement } from "./TransferStatement";
 import { useBalancesHidden } from "./useBalancesHidden";
 
-export interface TransferPeriod {
-  range: PeriodRange;
-  // A custom run of months, "2026-09" to "2026-11" (end null: one month).
-  start: string | null;
-  end: string | null;
-}
+const ALL_TIME: PickedPeriod = { kind: "all" };
 
 interface TransfersPageClientProps {
   businessId: string;
@@ -57,7 +54,9 @@ interface TransfersPageClientProps {
   wallets: Account[];
   currency: string;
   canManage: boolean;
-  period: TransferPeriod;
+  period: PickedPeriod;
+  // The months with transfers; null when the API can't say.
+  activeMonths: ActiveMonth[] | null;
   accountId: string;
   search: string;
   periodFrom?: string;
@@ -71,8 +70,7 @@ interface TransfersPageClientProps {
 }
 
 // #, Date, From, To, Note, Amount, Charge, Action; phones scroll sideways.
-const COLUMNS = "grid-cols-[24px_92px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)_104px_84px_72px] min-w-235";
-const ICON_BUTTON = "flex size-8 items-center justify-center rounded-full pointer-coarse:size-11";
+const COLUMNS = "grid-cols-[24px_92px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)_104px_84px_68px] min-w-235";
 const SEARCH_DELAY = 350;
 
 // Transfers (board: Balance — Transfers): what moved between the
@@ -80,7 +78,7 @@ const SEARCH_DELAY = 350;
 // history -- each transfer with both accounts' balances after it, its note
 // and charge, Edit and Delete.
 export function TransfersPageClient(props: TransfersPageClientProps) {
-  const { businessId, transfers, meta, totals, wallets, currency, canManage, period, accountId, search, periodFrom, periodTo, today, pageSizes, defaultPageSize, openNew, fromId } = props;
+  const { businessId, transfers, meta, totals, wallets, currency, canManage, period, activeMonths, accountId, search, periodFrom, periodTo, today, pageSizes, defaultPageSize, openNew, fromId } = props;
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -151,10 +149,9 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
   const symbol = currencySymbol(currency, fmt);
   const money = (value: number | string) => (hidden ? maskedMoney(symbol) : formatCurrency(value, currency, fmt));
   const here = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
-  const thisMonth = today.slice(0, 7);
-  const periodLabel = period.range === "custom" && period.start ? monthRangeLabel(period.start, period.end, fmt) : t(period.range === "this-month" ? "This month" : period.range === "this-year" ? "This year" : "All time");
+  const periodLabel = periodName(period, t, fmt);
   const accountName = accountId ? (walletById.get(accountId) ? accountDisplayName(walletById.get(accountId)!, lang) : t("Removed account")) : t("All accounts");
-  const filtered = period.range !== "all" || !!accountId || !!search;
+  const filtered = period.kind !== "all" || !!accountId || !!search;
   const paged = meta.totalPages > 1;
 
   const namesOf = (transfer: Transaction) => {
@@ -354,12 +351,13 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                     </option>
                   ))}
                 </NativeSelect>
-                <TransferPeriodMenu
-                  range={period.range}
-                  start={period.start}
-                  end={period.end}
-                  thisMonth={thisMonth}
-                  onChange={(range, start, end) => router.push(hrefWith(range === "custom" ? { range, start, end } : { range: range === "all" ? undefined : range, start: undefined, end: undefined }))}
+                <PeriodPicker
+                  period={period}
+                  today={today}
+                  activeMonths={activeMonths}
+                  allowAll
+                  defaultPeriod={ALL_TIME}
+                  onPick={(next) => router.push(periodHref(pathname, Object.fromEntries(searchParams.entries()), next))}
                 />
               </div>
             </div>
@@ -442,17 +440,17 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                     </ListCell>
                     <ListRowActions>
                       {editable ? (
-                        <button type="button" onClick={() => startEdit(transfer)} aria-label={t("Edit transfer")} title={t("Edit")} className={cn(ICON_BUTTON, "text-ink-2 hover:bg-surface-sunken")}>
-                          <Pencil className="size-4" aria-hidden="true" />
-                        </button>
+                        <IconAction onClick={() => startEdit(transfer)} aria-label={t("Edit transfer")} title={t("Edit")}>
+                          <Pencil aria-hidden="true" />
+                        </IconAction>
                       ) : (
-                        <Link href={transactionHref(transfer.id, here)} aria-label={t("View details")} title={t("View details")} className={cn(ICON_BUTTON, "text-ink-soft hover:bg-surface-sunken")}>
-                          <Eye className="size-4" aria-hidden="true" />
+                        <Link href={transactionHref(transfer.id, here)} aria-label={t("View details")} title={t("View details")} className={iconActionClass()}>
+                          <Eye aria-hidden="true" />
                         </Link>
                       )}
                       {canManage && transfer.voidable && parties.fromId && parties.toId && (
-                        <button
-                          type="button"
+                        <IconAction
+                          tone="danger"
                           onClick={() =>
                             setDeleting({
                               id: transfer.id,
@@ -470,10 +468,9 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                           disabled={!online}
                           aria-label={t("Delete transfer")}
                           title={t("Delete")}
-                          className={cn(ICON_BUTTON, "text-expense hover:bg-expense-soft disabled:opacity-50")}
                         >
-                          <Trash2 className="size-4" aria-hidden="true" />
-                        </button>
+                          <Trash2 aria-hidden="true" />
+                        </IconAction>
                       )}
                     </ListRowActions>
                   </ListRow>
