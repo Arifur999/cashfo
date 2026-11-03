@@ -137,9 +137,9 @@ describe("notificationView for account rows", () => {
   const en = (type: UserNotification["type"], data: UserNotification["data"]) => notificationView(account(type, data), inEnglish, "en", "BDT", now);
   const bn = (type: UserNotification["type"], data: UserNotification["data"]) => notificationView(account(type, data), inBangla, "bn", "BDT", now);
 
-  it("words every billing event and opens Plans", () => {
+  it("words every billing event and opens the payment's page or Plans", () => {
     const paid = { event: "PAYMENT_PAID", paymentId: "p1", planName: "Pro", amount: "299.00", periodEnd: "2026-11-28T00:00:00.000Z", invoiceNumber: "INV-1" };
-    expect(en("BILLING", paid)).toEqual({ kind: "payment", title: "Payment received", body: "৳ 299 for Pro. It's active until 28 Nov 2026.", href: "/settings/plans" });
+    expect(en("BILLING", paid)).toEqual({ kind: "payment", title: "Payment received", body: "৳ 299 for Pro. It's active until 28 Nov 2026.", href: "/settings/plans/checkout?payment=p1" });
     expect(bn("BILLING", paid)).toMatchObject({ title: "পেমেন্ট পাওয়া গেছে", body: "Pro-এর জন্য ৳ ২৯৯। ২৮ নভে ২০২৬ পর্যন্ত চালু থাকবে।" });
     expect(en("BILLING", { ...paid, periodEnd: null }).body).toBe("৳ 299 for Pro. It's active now.");
 
@@ -150,6 +150,8 @@ describe("notificationView for account rows", () => {
     const expired = { event: "PAYMENT_EXPIRED", paymentId: "p1", planName: "Pro", amount: "299.00" };
     expect(en("BILLING", expired)).toMatchObject({ kind: "paymentProblem", title: "Payment not completed", body: "Your ৳ 299 checkout for Pro timed out. You can start it again from Plans." });
     expect(bn("BILLING", expired).title).toBe("পেমেন্ট সম্পন্ন হয়নি");
+    expect(en("BILLING", expired).href).toBe("/settings/plans/checkout?payment=p1");
+    expect(en("BILLING", { ...expired, paymentId: undefined }).href).toBe("/settings/plans");
 
     const refunded = { event: "PAYMENT_REFUNDED", paymentId: "p1", planName: "Pro", amount: "299.00", full: 1, planDropped: 1 };
     expect(en("BILLING", refunded)).toMatchObject({ kind: "refund", title: "Payment refunded", body: "Your ৳ 299 payment for Pro was refunded. You're on the Free plan now." });
