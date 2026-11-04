@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getAppToday } from "@/lib/date";
 import { LoanDashboardPageClient } from "@/components/modules/Customer/LoanManagement/LoanDashboardPageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
@@ -21,5 +22,5 @@ export default async function LoanManagementDashboardPage() {
   // which rows are loans at all, and the list the entry drawer offers.
   const [dashboard, contacts] = await Promise.all([getLoanDashboard(activeBusinessId), getAllContacts(activeBusinessId, "LOAN")]);
 
-  return <LoanDashboardPageClient businessId={activeBusinessId} dashboard={dashboard} contacts={contacts} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} canTrade={activeBusiness?.type === "BUSINESS"} />;
+  return <LoanDashboardPageClient businessId={activeBusinessId} dashboard={dashboard} contacts={contacts} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} today={getAppToday()} canTrade={activeBusiness?.type === "BUSINESS"} />;
 }

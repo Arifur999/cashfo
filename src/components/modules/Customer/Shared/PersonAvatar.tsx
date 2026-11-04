@@ -34,12 +34,14 @@ interface PersonAvatarProps {
   size?: keyof typeof SIZES;
   // Phone lists colour each person; desktop tables keep them neutral.
   coloured?: boolean;
+  // Letters in place of the usual two (the Loan boards: "H" for Hasan).
+  initials?: string;
   className?: string;
 }
 
 // A person's photo, or their initials on a round tile: a loan contact, a
 // group member.
-export function PersonAvatar({ name, src, kind, size = 36, coloured = false, className }: PersonAvatarProps) {
+export function PersonAvatar({ name, src, kind, size = 36, coloured = false, initials, className }: PersonAvatarProps) {
   if (src) {
     // A backend-served upload, so a plain <img>.
     // eslint-disable-next-line @next/next/no-img-element
@@ -55,7 +57,7 @@ export function PersonAvatar({ name, src, kind, size = 36, coloured = false, cla
   }
   return (
     <span aria-hidden="true" className={cn("inline-flex shrink-0 items-center justify-center rounded-full font-bold", SIZES[size], coloured ? avatarTone(name) : "bg-surface-sunken text-ink-2", className)}>
-      {contactInitials(name)}
+      {initials ?? contactInitials(name)}
     </span>
   );
 }
