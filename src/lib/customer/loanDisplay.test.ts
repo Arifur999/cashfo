@@ -5,6 +5,7 @@ import { formatCurrency } from "./currency";
 import {
   avatarTone,
   balanceAfterEntry,
+  bdMobileOk,
   contactMatches,
   foldProfitRuns,
   isCancelledRow,
@@ -411,5 +412,12 @@ describe("monthItems", () => {
     expect(monthItems(month).map((item) => [item.label, item.amount])).toEqual([["Lent", 0], ["Borrowed", 100000], ["Got back", 0], ["Paid back@@month", 0], ["Profit paid@@month", 5000]]);
     expect(monthItems({ ...month, profitReceived: "250.00" })).toHaveLength(6);
     expect(monthItems(undefined)).toHaveLength(5);
+  });
+});
+
+describe("bdMobileOk", () => {
+  it("takes a Bangladeshi mobile in any usual shape, or nothing", () => {
+    expect(["01711-223344", "+8801711223344", "8801911 223344", "", "  "].map(bdMobileOk)).toEqual([true, true, true, true, true]);
+    expect(["16259", "01211223344", "0171122334", "02-9876543"].map(bdMobileOk)).toEqual([false, false, false, false]);
   });
 });

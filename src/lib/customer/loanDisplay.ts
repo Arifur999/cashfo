@@ -503,3 +503,10 @@ export function monthItems(month: LoanMonth | undefined): { label: string; amoun
   ];
   return items.filter((item, index) => index < 5 || item.amount > 0);
 }
+
+// A Bangladeshi mobile number, with or without its +88 and dashes or
+// spaces ("01711-223344"); an empty one is fine (the phone is optional).
+export function bdMobileOk(phone: string): boolean {
+  const digits = phone.replace(/[\s-]/g, "").replace(/^\+?88/, "");
+  return phone.trim() === "" || /^01[3-9]\d{8}$/.test(digits);
+}
