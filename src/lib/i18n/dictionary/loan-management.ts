@@ -450,4 +450,12 @@ export const loanManagementDictionary: Record<string, string> = {
   "Money out · balance stays the same": "টাকা গেল · ব্যালেন্স একই থাকবে",
   "Money in · balance stays the same": "টাকা এল · ব্যালেন্স একই থাকবে",
   "Money went from": "টাকা গেছে যে অ্যাকাউন্ট থেকে",
+  // Loans v15: transactions.
+  "Loan transaction": "ঋণের লেনদেন",
+  "Transactions@@new": "লেনদেন",
+  "Money in · {period}": "টাকা এসেছে · {period}",
+  "Money out · {period}": "টাকা গেছে · {period}",
+  "Showing {first} to {last} of {total} · newest first": "{total}টির মধ্যে {first} থেকে {last} · নতুনগুলো আগে",
+  "Edit entry for {name}": "এন্ট্রি এডিট: {name}",
+  "Delete entry for {name}": "এন্ট্রি মুছুন: {name}",
 };

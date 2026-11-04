@@ -1,9 +1,10 @@
 "use client";
 
-import { HandCoins, Pencil, Plus, Printer, Search, Trash2, TriangleAlert } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, HandCoins, Pencil, Plus, Printer, Search, Trash2, TriangleAlert } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
+import { PeriodPicker, periodLabel as periodName } from "@/components/modules/Customer/Shared/PeriodPicker";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
 import Loader from "@/components/shared/Loader";
@@ -12,28 +13,23 @@ import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
-import DayInput from "@/components/smartly/form/DayInput";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
+import IconAction from "@/components/smartly/IconAction";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
-import Pagination from "@/components/smartly/Pagination";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { usePageParam } from "@/hooks/usePageParam";
 import type { Contact, Transaction } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import type { DateRangePreset } from "@/lib/customer/dateRangePresets";
-import { DIRECTION_META, loanDirection, loanEditOf, loanPaymentRow, loanTotals, type LoanEdit } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, loanDirection, loanEditOf, loanPaymentRow, loanTotals, wordInitials, type LoanEdit } from "@/lib/customer/loanDisplay";
 import { toEnglishDigits } from "@/lib/customer/money";
+import { periodHref, type PickedPeriod } from "@/lib/customer/period";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
-import { getAppToday } from "@/lib/date";
-import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { formatNumber } from "@/lib/number";
 import { paginate } from "@/lib/table/paginate";
-import { pageRange } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
 import { usePrinting } from "./usePrinting";
@@ -47,20 +43,11 @@ interface LoanTransactionsPageClientProps {
   loanContacts: Contact[];
   canManage: boolean;
   currency: string;
-  range: DateRangePreset;
+  // The period shown: this year unless the address asks for another.
+  period: PickedPeriod;
+  today: string;
   selectedContactId: string;
-  customFrom?: string;
-  customTo?: string;
 }
-
-const PERIODS: { value: DateRangePreset; label: string }[] = [
-  { value: "all", label: "All time" },
-  { value: "this-month", label: "This month" },
-  { value: "last-month", label: "Last month" },
-  { value: "this-year", label: "This year" },
-  { value: "last-year", label: "Last year" },
-  { value: "custom", label: "Custom" },
-];
 
 // The board's All / Principal / Profit, kept in the URL with the page.
 type Show = "all" | "principal" | "profit";
@@ -69,7 +56,8 @@ const readShow = (value: string | null): Show => (value === "principal" || value
 
 const PATH = "/loan-management/transactions";
 const LIST_ID = "loan-payments";
-const PAGE_SIZE = 25;
+// The board's ten to a page.
+const PAGE_SIZE = 10;
 
 // Below xl a row is two lines (who, then the date; the amount, then the
 // balance after it), with the buttons beside them from md. From xl the
@@ -86,16 +74,15 @@ const WIDEST = "hidden min-[87.5rem]:block print:block";
 const FROM_XL = "hidden xl:block print:block";
 // Back to the column's own place once the row has its columns.
 const AT_XL = "xl:col-auto xl:row-auto print:col-auto print:row-auto";
-// The board's 40px round buttons, 44px under a finger.
-const ACTION = "flex size-10 items-center justify-center rounded-full transition-colors pointer-coarse:size-11";
 
 // Loans › Transactions: every loan given or taken, every repayment and
 // every profit payment, numbered newest first, each with its charge and
 // the balance with that bank or person just after it; Edit and Delete on
 // each standing entry.
-export function LoanTransactionsPageClient({ businessId, transactions, complete, loanContacts, canManage, currency, range, selectedContactId, customFrom, customTo }: LoanTransactionsPageClientProps) {
+export function LoanTransactionsPageClient({ businessId, transactions, complete, loanContacts, canManage, currency, period, today, selectedContactId }: LoanTransactionsPageClientProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   // Admin > System > Feature Flags: pdf_export off hides Print.
   const pdfExportOn = useFeature("pdf_export");
@@ -104,8 +91,6 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const [isPending, startTransition] = useTransition();
   // The filters as just picked, while the page loads them.
   const [shownContactId, setShownContactId] = useOptimistic(selectedContactId);
-  const [shownRange, setShownRange] = useOptimistic(range);
-  const [shownDates, setShownDates] = useOptimistic({ from: customFrom ?? "", to: customTo ?? "" });
   const [search, setSearch] = useState("");
   const [voiding, setVoiding] = useState<Transaction | null>(null);
   const [editing, setEditing] = useState<LoanEdit | null>(null);
@@ -151,9 +136,10 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const listed = printing ? filteredRows : paged.rows;
   // The board's #: 1 is the newest entry the list shows.
   const firstNumber = printing ? 1 : (paged.page - 1) * PAGE_SIZE + 1;
-  const filtered = range !== "all" || selectedContactId !== "" || show !== "all" || query !== "";
+  const thisYear: PickedPeriod = { kind: "year", year: Number(today.slice(0, 4)) };
+  const filtered = selectedContactId !== "" || show !== "all" || query !== "";
 
-  function navigate(next: { contactId?: string; range?: string; dateFrom?: string; dateTo?: string; show?: string }, replace = false) {
+  function navigate(next: { contactId?: string; show?: string }, replace = false) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
       if (value) params.set(key, value);
@@ -165,15 +151,16 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     const href = query ? `${PATH}?${query}` : PATH;
     startTransition(() => {
       if ("contactId" in next) setShownContactId(next.contactId ?? "");
-      if ("range" in next) setShownRange((next.range as DateRangePreset | undefined) ?? "all");
-      if ("dateFrom" in next || "dateTo" in next) setShownDates({ from: "dateFrom" in next ? (next.dateFrom ?? "") : shownDates.from, to: "dateTo" in next ? (next.dateTo ?? "") : shownDates.to });
       if (replace) router.replace(href, { scroll: false });
       else router.push(href, { scroll: false });
     });
   }
 
-  function setRange(value: DateRangePreset) {
-    navigate(value === "custom" ? { range: value } : { range: value === "all" ? undefined : value, dateFrom: undefined, dateTo: undefined });
+  // Another period: this year is written as nothing, all time as
+  // ?period=all.
+  function pickPeriod(next: PickedPeriod) {
+    const href = periodHref(pathname, Object.fromEntries(searchParams.entries()), next, thisYear);
+    startTransition(() => router.push(next.kind === "all" ? `${href}${href.includes("?") ? "&" : "?"}period=all` : href, { scroll: false }));
   }
 
   // Shown at once: the rows are all here, so the address changes in place.
@@ -198,15 +185,14 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const voidingWallet = voidingRow?.wallet ?? t("your wallet");
   const voidingCharge = voiding?.charge ? Number(voiding.charge) : 0;
 
-  const periodLabel =
-    range === "custom"
-      ? customFrom || customTo
-        ? t("{from} – {to}", { from: customFrom ? formatDate(customFrom, undefined, fmt) : "…", to: customTo ? formatDate(customTo, undefined, fmt) : "…" })
-        : t("All time")
-      : t(PERIODS.find((period) => period.value === range)?.label ?? "All time");
+  // "2026", "Nov 2026", "All time": the tiles' and the print line's period.
+  const periodLabel = period.kind === "year" ? formatCount(period.year, fmt).replace(/,/g, "") : periodName(period, t, fmt);
   const printLine = [contactsById.get(selectedContactId)?.name ?? t("All banks & people"), show === "all" ? null : t(SHOW_LABELS[show]), query ? `“${search.trim()}”` : null, periodLabel].filter(Boolean).join(" · ");
-  const { first, last } = pageRange(paged.page, PAGE_SIZE, paged.total);
-  const figure = (text: string) => <b className="font-semibold text-ink">{text}</b>;
+  const first = paged.total === 0 ? 0 : (paged.page - 1) * PAGE_SIZE + 1;
+  const last = Math.min(paged.total, paged.page * PAGE_SIZE);
+  // The board's tiles: all the money in and out, profit too.
+  const moneyIn = totals.in + totals.profitReceived;
+  const moneyOut = totals.out + totals.profitPaid;
   const kindChip = (isProfit: boolean) => (
     <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className="font-bold">
       {t(isProfit ? "Profit" : "Principal")}
@@ -228,11 +214,11 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     <PageFrame className="gap-5">
       {/* The board's title line, New loan entry at its end. */}
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-[22px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Loan transactions")}</h1>
+        <h1 className="text-[22px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Loan transaction")}</h1>
         {canManage && (
-          <Button onClick={() => setDrawerOpen(true)} className="shrink-0 print:hidden">
+          <Button onClick={() => setDrawerOpen(true)} aria-label={t("New loan entry")} className="shrink-0 print:hidden">
             <Plus strokeWidth={2.5} className="size-4" />
-            {t("New loan entry")}
+            {t("Transactions@@new")}
           </Button>
         )}
       </div>
@@ -246,11 +232,11 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
       {/* The two totals across the page. */}
       <section>
         <Card padding="none" className="grid min-w-0 grid-cols-2">
-          <TotalCell label={t("Money in@@loan")}>
-            <AmountText value={totals.in} currency={currency} size="h2" tone={totals.in ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.in && "text-ink-muted")} />
+          <TotalCell label={t("Money in · {period}", { period: periodLabel })}>
+            <AmountText value={moneyIn} currency={currency} size="h2" tone={moneyIn ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyIn && "text-ink-muted")} />
           </TotalCell>
-          <TotalCell label={t("Money out@@loan")} className="border-l">
-            <AmountText value={-totals.out} currency={currency} size="h2" tone={totals.out ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !totals.out && "text-ink-muted")} />
+          <TotalCell label={t("Money out · {period}", { period: periodLabel })} className="border-l">
+            <AmountText value={-moneyOut} currency={currency} size="h2" tone={moneyOut ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyOut && "text-ink-muted")} />
           </TotalCell>
         </Card>
       </section>
@@ -299,28 +285,12 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 // A phone: the two selects share a row, and this fills the one under them.
                 className="max-md:order-last max-md:flex max-md:w-full max-md:[&>button]:flex-1"
               />
-              <NativeSelect size="sm" value={shownRange} onChange={(event) => setRange(event.target.value as DateRangePreset)} aria-label={t("Period")} frameClassName="max-md:flex-1" className="text-small">
-                {PERIODS.map((period) => (
-                  <option key={period.value} value={period.value}>
-                    {t(period.label)}
-                  </option>
-                ))}
-              </NativeSelect>
+              <PeriodPicker period={period} today={today} activeMonths={null} allowAll defaultPeriod={thisYear} onPick={pickPeriod} busy={isPending} />
               {pdfExportOn && transactions.length > 0 && (
                 <Button variant="secondary" size="sm" onClick={() => window.print()} title={t("Print this list")} className="max-md:hidden">
                   <Printer className="text-ink-2" />
                   {t("Print")}
                 </Button>
-              )}
-              {shownRange === "custom" && (
-                // Each date replaces the address rather than adding to it, so Back leaves the page, not each edit.
-                <div className="flex items-center gap-2 md:basis-full md:justify-end">
-                  <DayInput size="sm" value={shownDates.from} onChange={(value) => navigate({ dateFrom: value }, true)} max={shownDates.to || getAppToday()} aria-label={t("From")} placeholder={t("From")} className="w-40 text-small" />
-                  <span aria-hidden="true" className="text-ink-muted">
-                    –
-                  </span>
-                  <DayInput size="sm" value={shownDates.to} onChange={(value) => navigate({ dateTo: value }, true)} min={shownDates.from || undefined} max={getAppToday()} aria-label={t("To@@date")} placeholder={t("To@@date")} className="w-40 text-small" />
-                </div>
               )}
               {isPending && <Loader size={16} label={t("Loading...")} />}
             </div>
@@ -330,16 +300,18 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         }
         footer={
           paged.total > 0 && (
-            <ListFooter className="print:hidden">
-              <Pagination
-                page={paged.page}
-                totalPages={paged.totalPages}
-                total={paged.total}
-                pageSize={PAGE_SIZE}
-                onPageChange={setPage}
-                focusTargetId={LIST_ID}
-                summary={<p>{fillNodes(t("Showing {range} of {total}, newest first"), { range: figure(toLocaleDigits(`${formatNumber(first)}–${formatNumber(last)}`, fmt)), total: figure(formatCount(paged.total, fmt)) })}</p>}
-              />
+            <ListFooter className="flex-row items-center justify-between gap-3 print:hidden">
+              <p className="text-small text-ink-muted tabular-nums">{t("Showing {first} to {last} of {total} · newest first", { first: formatCount(first, fmt), last: formatCount(last, fmt), total: formatCount(paged.total, fmt) })}</p>
+              {paged.totalPages > 1 && (
+                <span className="flex gap-2">
+                  <IconAction onClick={() => setPage(paged.page - 1)} disabled={paged.page <= 1} aria-label={t("Previous page")} title={t("Previous page")} className="disabled:opacity-40">
+                    <ChevronLeft aria-hidden="true" />
+                  </IconAction>
+                  <IconAction onClick={() => setPage(paged.page + 1)} disabled={paged.page >= paged.totalPages} aria-label={t("Next page")} title={t("Next page")} className="disabled:opacity-40">
+                    <ChevronRight aria-hidden="true" />
+                  </IconAction>
+                </span>
+              )}
             </ListFooter>
           )
         }
@@ -364,7 +336,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 variant="secondary"
                 onClick={() => {
                   setSearch("");
-                  navigate({ contactId: undefined, range: undefined, dateFrom: undefined, dateTo: undefined, show: undefined });
+                  navigate({ contactId: undefined, show: undefined });
+                  if (period.kind !== "all") pickPeriod({ kind: "all" });
                 }}
               >
                 {t("Show all entries")}
@@ -402,7 +375,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                   {/* Below xl the date sits under the name, past the avatar. */}
                   <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 max-xl:pl-10.5 xl:text-small print:pl-0", AT_XL)}>{formatDate(transaction.transactionDate, undefined, fmt)}</ListCell>
                   <ListCell className={cn("col-start-1 row-start-1 flex min-w-0 items-center gap-2.5", AT_XL)}>
-                    <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} />
+                    <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} initials={wordInitials(name)} />
                     <span className="flex min-w-0 flex-col">
                       <ListRowLink href={`/transactions/${transaction.id}`} className="truncate font-medium text-ink">
                         {name}
@@ -441,14 +414,14 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                   </ListCell>
                   <ListRowActions className="hidden md:col-start-3 md:row-[1/span_2] md:flex md:justify-end xl:col-auto xl:row-auto print:hidden">
                     {edit && (
-                      <button type="button" onClick={() => setEditing(edit)} aria-label={t("Edit entry")} title={t("Edit")} className={cn(ACTION, "text-ink-2 hover:bg-surface-sunken")}>
-                        <Pencil className="size-4" aria-hidden="true" />
-                      </button>
+                      <IconAction onClick={() => setEditing(edit)} aria-label={t("Edit entry for {name}", { name })} title={t("Edit")}>
+                        <Pencil aria-hidden="true" />
+                      </IconAction>
                     )}
                     {canManage && transaction.voidable && (
-                      <button type="button" onClick={() => setVoiding(transaction)} aria-label={t("Delete entry")} title={t("Delete")} className={cn(ACTION, "text-expense hover:bg-expense-soft")}>
-                        <Trash2 className="size-4" aria-hidden="true" />
-                      </button>
+                      <IconAction tone="danger" onClick={() => setVoiding(transaction)} aria-label={t("Delete entry for {name}", { name })} title={t("Delete")}>
+                        <Trash2 aria-hidden="true" />
+                      </IconAction>
                     )}
                   </ListRowActions>
                 </ListRow>
