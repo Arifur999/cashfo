@@ -27,6 +27,8 @@ interface PopupDialogProps {
   bodyClassName?: string;
   // The head row and its title, for a board that draws them its own way.
   headClassName?: string;
+  // Where focus starts (the dialog's first field by default).
+  onOpenAutoFocus?: (event: Event) => void;
   titleClassName?: string;
   // A save is on its way: the popup can't be closed.
   busy?: boolean;
@@ -39,7 +41,7 @@ interface PopupDialogProps {
 // The boards' centred popup (Savings first, then Zakat and Balance): a head
 // with the title and X over a line, the body, and a grey strip with the
 // buttons. On a phone it fills the width less a margin and scrolls.
-export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
+export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, onOpenAutoFocus, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
   const { t } = useLocale();
   const close = (
     <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11">
@@ -83,6 +85,7 @@ export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, w
     <Dialog open={open} onOpenChange={(next) => !next && !busy && onClose()}>
       <DialogContent
         showCloseButton={false}
+        onOpenAutoFocus={onOpenAutoFocus}
         className={cn(WIDTHS[width], "flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]", className)}
       >
         {onSubmit ? (

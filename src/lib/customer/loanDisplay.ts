@@ -3,7 +3,7 @@ import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { localName, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import { paginate } from "@/lib/table/paginate";
-import type { ContactBalanceDetail, ContactType, LoanBalanceDirection, LoanStatementRow, Transaction } from "./api";
+import type { ContactBalanceDetail, ContactType, LoanActivityKind, LoanBalanceDirection, LoanDashboardRow, LoanMonth, LoanStatementRow, Transaction } from "./api";
 import { toEnglishDigits } from "./money";
 import { cancelledLabel } from "./transactionDisplay";
 import { WALLET_TYPES } from "./walletVisuals";
@@ -457,4 +457,56 @@ export function avatarTone(name: string): string {
   let hash = 0;
   for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return AVATAR_TONES[hash % AVATAR_TONES.length];
+}
+
+// The kinds the Add contact form offers, in the board's order (an older
+// contact may be a supplier or "other", and keeps it).
+export const LOAN_FORM_KINDS: ContactType[] = ["BOTH", "RELATIVE", "CUSTOMER", "BANK", "NGO"];
+
+// The board's letters for a person: the first of each of the first two
+// words ("Karim Traders" KT, "Hasan" H).
+export function wordInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  return words.length === 0 ? "?" : words.slice(0, 2).map((word) => word[0]!).join("").toUpperCase();
+}
+
+// "Gave loan {date}": a contact's newest entry as Contacts' Last activity
+// says it, with the day to fill in; the opening balance when there is no
+// entry, and "Paid back in full" when the money back settled them.
+const LAST_ACTIVITY: Record<LoanActivityKind, string> = {
+  GAVE: "Gave loan {date}",
+  TOOK: "Took loan {date}",
+  GOT_BACK: "Got money back {date}",
+  PAID_BACK: "Paid back {date}",
+  PROFIT_PAID: "Profit paid {date}",
+  PROFIT_RECEIVED: "Profit received {date}",
+};
+
+export function lastActivity(row: Pick<LoanDashboardRow, "lastEntry" | "openingBalance" | "currentBalance"> | undefined): { key: string; date: string | null } {
+  const last = row?.lastEntry;
+  if (!last) return { key: row && Number(row.openingBalance) !== 0 ? "Opening balance" : "No entries yet", date: null };
+  const settled = Number(row.currentBalance) === 0 && (last.kind === "GOT_BACK" || last.kind === "PAID_BACK");
+  return { key: settled ? "Paid back in full {date}" : LAST_ACTIVITY[last.kind], date: last.date };
+}
+
+// This month's loan money as the Dashboard's strip lists it: the five
+// always, profit received only when there was some. "@@month" keeps the
+// Bangla of a strip word apart from the same English elsewhere.
+export function monthItems(month: LoanMonth | undefined): { label: string; amount: number; tone: "income" | "expense" | "warning" }[] {
+  const items = [
+    { label: "Lent", amount: Number(month?.lent ?? 0), tone: "expense" as const },
+    { label: "Borrowed", amount: Number(month?.borrowed ?? 0), tone: "income" as const },
+    { label: "Got back", amount: Number(month?.gotBack ?? 0), tone: "income" as const },
+    { label: "Paid back@@month", amount: Number(month?.paidBack ?? 0), tone: "expense" as const },
+    { label: "Profit paid@@month", amount: Number(month?.profitPaid ?? 0), tone: "warning" as const },
+    { label: "Profit received@@month", amount: Number(month?.profitReceived ?? 0), tone: "income" as const },
+  ];
+  return items.filter((item, index) => index < 5 || item.amount > 0);
+}
+
+// A Bangladeshi mobile number, with or without its +88 and dashes or
+// spaces ("01711-223344"); an empty one is fine (the phone is optional).
+export function bdMobileOk(phone: string): boolean {
+  const digits = phone.replace(/[\s-]/g, "").replace(/^\+?88/, "");
+  return phone.trim() === "" || /^01[3-9]\d{8}$/.test(digits);
 }

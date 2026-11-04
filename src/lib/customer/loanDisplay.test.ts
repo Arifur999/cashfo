@@ -5,15 +5,18 @@ import { formatCurrency } from "./currency";
 import {
   avatarTone,
   balanceAfterEntry,
+  bdMobileOk,
   contactMatches,
   foldProfitRuns,
   isCancelledRow,
+  lastActivity,
   loanDirection,
   loanEditOf,
   loanEntryOf,
   loanErrorText,
   loanPaymentRow,
   loanTotals,
+  monthItems,
   profitCategory,
   repaymentLimit,
   statementEquation,
@@ -22,6 +25,7 @@ import {
   statementTotals,
   walletDeltaOf,
   whoPhrase,
+  wordInitials,
   type LoanBalanceDetail,
   type StatementEquation,
   type StatementRow,
@@ -376,5 +380,44 @@ describe("walletDeltaOf", () => {
     expect(walletDeltaOf({ kind: "TAKE_LOAN", profit: null, amount: 100000, charge: 500 })).toBe(99500);
     expect(walletDeltaOf({ kind: "GIVE_LOAN", profit: null, amount: 20000, charge: 0 })).toBe(-20000);
     expect(walletDeltaOf({ kind: null, profit: { paid: true, category: null }, amount: 5000, charge: 50 })).toBe(-5050);
+  });
+});
+
+describe("wordInitials", () => {
+  it("takes the first letter of the first two words", () => {
+    expect([wordInitials("Karim Traders"), wordInitials("Hasan"), wordInitials("  rahim uddin  khan "), wordInitials("")]).toEqual(["KT", "H", "RU", "?"]);
+  });
+});
+
+describe("lastActivity", () => {
+  const row = (lastEntry: { kind: "GAVE" | "GOT_BACK" | "PAID_BACK" | "PROFIT_PAID"; date: string } | null, currentBalance = "45000.00", openingBalance = "0.00") => ({ lastEntry, currentBalance, openingBalance });
+  it("names the newest entry with its day", () => {
+    expect(lastActivity(row({ kind: "GOT_BACK", date: "2026-09-16" }))).toEqual({ key: "Got money back {date}", date: "2026-09-16" });
+    expect(lastActivity(row({ kind: "PROFIT_PAID", date: "2026-09-30" }, "-500000.00")).key).toBe("Profit paid {date}");
+  });
+  it("says paid back in full when money back settled them", () => {
+    expect(lastActivity(row({ kind: "GOT_BACK", date: "2026-07-02" }, "0.00")).key).toBe("Paid back in full {date}");
+    expect(lastActivity(row({ kind: "GAVE", date: "2026-07-02" }, "0.00")).key).toBe("Gave loan {date}");
+  });
+  it("falls back to the opening balance, or no entries", () => {
+    expect(lastActivity(row(null, "70000.00", "70000.00"))).toEqual({ key: "Opening balance", date: null });
+    expect(lastActivity(row(null, "0.00"))).toEqual({ key: "No entries yet", date: null });
+    expect(lastActivity(undefined).key).toBe("No entries yet");
+  });
+});
+
+describe("monthItems", () => {
+  it("lists the five always, and profit received only when there was some", () => {
+    const month = { lent: "0.00", borrowed: "100000.00", gotBack: "0.00", paidBack: "0.00", profitPaid: "5000.00", profitReceived: "0.00", entries: 2 };
+    expect(monthItems(month).map((item) => [item.label, item.amount])).toEqual([["Lent", 0], ["Borrowed", 100000], ["Got back", 0], ["Paid back@@month", 0], ["Profit paid@@month", 5000]]);
+    expect(monthItems({ ...month, profitReceived: "250.00" })).toHaveLength(6);
+    expect(monthItems(undefined)).toHaveLength(5);
+  });
+});
+
+describe("bdMobileOk", () => {
+  it("takes a Bangladeshi mobile in any usual shape, or nothing", () => {
+    expect(["01711-223344", "+8801711223344", "8801911 223344", "", "  "].map(bdMobileOk)).toEqual([true, true, true, true, true]);
+    expect(["16259", "01211223344", "0171122334", "02-9876543"].map(bdMobileOk)).toEqual([false, false, false, false]);
   });
 });

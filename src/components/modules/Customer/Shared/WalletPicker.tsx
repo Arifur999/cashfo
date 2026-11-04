@@ -43,10 +43,15 @@ export interface WalletPickerProps {
   // What to say when there is no wallet to pick, in place of "No wallet yet.
   // Add a wallet" (the Move money drawer's "To" when there's no other).
   emptyMessage?: React.ReactNode;
+  // Shown while there are wallets but none is picked yet.
+  placeholder?: string;
+  // Save found none picked: a red edge, and the error read out with it.
+  invalid?: boolean;
+  describedBy?: string;
 }
 
 // The wallet to pay from or into: its icon, name, balance now and after.
-export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose, emptyMessage }: WalletPickerProps) {
+export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", tone = "mint", variant = "money", wallets, savingsWallets = [], value, onChange, after, afterInWords = false, minBalance = 0, currency, loading, error, onClose, emptyMessage, placeholder, invalid = false, describedBy }: WalletPickerProps) {
   const { t, locale, fmt } = useLocale();
   const [open, setOpen] = useState(false);
   const all = [...wallets, ...savingsWallets];
@@ -100,8 +105,9 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
             type="button"
             aria-labelledby={`${id}-label ${id}-value`}
             aria-haspopup="listbox"
+            aria-describedby={describedBy}
             disabled={loading || all.length === 0}
-            className={cn("flex min-w-0 items-center gap-3 rounded-field border border-input bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
+            className={cn(invalid ? "border-expense" : "border-input", "flex min-w-0 items-center gap-3 rounded-field border bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
           >
             {selected && size === "compact" ? (
               <>
@@ -121,7 +127,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
                 </span>
               </>
             ) : (
-              <span className="flex-1 text-body text-ink-muted">{loading ? t("Loading...") : variant === "savings" ? t("No savings wallet yet") : t("No wallet yet")}</span>
+              <span className="flex-1 text-body text-ink-muted">{loading ? t("Loading...") : placeholder && all.length > 0 ? placeholder : variant === "savings" ? t("No savings wallet yet") : t("No wallet yet")}</span>
             )}
             <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
           </button>

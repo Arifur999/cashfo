@@ -3,15 +3,13 @@ import { LoanTransactionsPageClient } from "@/components/modules/Customer/LoanMa
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getAllContacts } from "@/lib/customer/contacts";
-import { isIsoDay, resolveDateRange, type DateRangePreset } from "@/lib/customer/dateRangePresets";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { type PickedPeriod, periodRange, readPickedPeriod } from "@/lib/customer/period";
 import { getAllTransactions } from "@/lib/customer/transactions";
+import { getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/loan-management/transactions");
 
-// Last year and a custom range too, so the 1,000-row notice's "pick a
-// shorter range" can be followed.
-const PRESETS: DateRangePreset[] = ["all", "this-month", "last-month", "this-year", "last-year", "custom"];
 
 export default async function LoanTransactionsPage({ searchParams }: PageProps<"/loan-management/transactions">) {
   const params = await searchParams;
@@ -24,11 +22,13 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  const range = PRESETS.find((preset) => preset === params.range) ?? "all";
-  const customFrom = isIsoDay(params.dateFrom) ? params.dateFrom : undefined;
-  const customTo = isIsoDay(params.dateTo) ? params.dateTo : undefined;
+  // This year unless the address asks for another period (?period=all for
+  // all time; an older ?range= link opens what it meant).
+  const today = getAppToday();
+  const current = { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) };
+  const period: PickedPeriod = params.period === "all" ? { kind: "all" } : readPickedPeriod(params, current, { kind: "year", year: current.year });
   const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
-  const { dateFrom, dateTo } = resolveDateRange(range, customFrom, customTo);
+  const { dateFrom, dateTo } = periodRange(period);
 
   // Loan contacts only: a trade (BUSINESS) contact books a "loan" as a
   // credit sale or purchase -- revenue or expense, with the wallet ignored --
@@ -59,10 +59,9 @@ export default async function LoanTransactionsPage({ searchParams }: PageProps<"
       loanContacts={loanContacts}
       canManage={canManage}
       currency={activeBusiness?.currency ?? "BDT"}
-      range={range}
+      period={period}
+      today={today}
       selectedContactId={selectedContactId}
-      customFrom={customFrom}
-      customTo={customTo}
     />
   );
 }

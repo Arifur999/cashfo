@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, HandCoins, Plus, Search, UserPlus } from "lucide-react";
+import { ArrowDownLeft, ArrowDownWideNarrow, ArrowUpRight, CalendarDays, Check, ChevronDown, HandCoins, Plus, Search, UserPlus } from "lucide-react";
 import { useState } from "react";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
@@ -8,14 +8,15 @@ import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import EmptyState from "@/components/smartly/EmptyState";
 import Input from "@/components/smartly/form/Input";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import type { Contact, LoanBalanceDirection, LoanDashboard, LoanDashboardRow } from "@/lib/customer/api";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import type { Contact, LoanBalanceDirection, LoanDashboard, LoanDashboardRow, LoanMonth } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, whoPhrase } from "@/lib/customer/loanDisplay";
+import { formatDate } from "@/lib/customer/date";
+import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, type LoanEntryKind, monthItems, whoPhrase, wordInitials } from "@/lib/customer/loanDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -32,15 +33,22 @@ interface LoanDashboardPageClientProps {
   currency: string;
   canManage: boolean;
   canTrade: boolean;
+  // "YYYY-MM-DD" in Asia/Dhaka: the month the strip is for.
+  today: string;
 }
 
 type Tab = "ALL" | LoanBalanceDirection;
 type Sort = "biggest" | "smallest" | "name";
+const SORTS: { value: Sort; label: string }[] = [
+  { value: "biggest", label: "Highest to lowest" },
+  { value: "smallest", label: "Lowest to highest" },
+  { value: "name", label: "Name A–Z" },
+];
 
 // From xl the board's columns, a little narrower so a name keeps room
 // beside the sidebar at 1280 (the opening a little wider, for its sign);
 // below xl each row is the phone's two lines.
-const COLUMNS = "xl:grid-cols-[minmax(0,1fr)_116px_116px_116px_104px_160px]";
+const COLUMNS = "xl:grid-cols-[minmax(0,1fr)_120px_136px_136px_136px_190px] xl:gap-x-3.5";
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
 const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
 
@@ -50,7 +58,7 @@ const figure = (value: string, currency: string, locale: FormatLocale, className
 
 // Loans: what you are owed and what you owe, then everyone with a balance,
 // filtered by direction. Rows open the statement.
-export function LoanDashboardPageClient({ businessId, dashboard, contacts, currency, canManage, canTrade }: LoanDashboardPageClientProps) {
+export function LoanDashboardPageClient({ businessId, dashboard, contacts, currency, canManage, canTrade, today }: LoanDashboardPageClientProps) {
   const { t, fmt } = useLocale();
   const [tab, setTab] = useState<Tab>("ALL");
   const [search, setSearch] = useState("");
@@ -75,7 +83,10 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
     .filter((row) => tab === "ALL" || row.direction === tab)
     .filter((row) => contactMatches(row.contactName, row.contactPhone, search))
     .sort((a, b) => (sort === "name" ? a.contactName.localeCompare(b.contactName) : (Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))) * (sort === "biggest" ? 1 : -1)));
-  const sums = shown.reduce((sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), profit: sum.profit + Number(row.profitPaid), net: sum.net + Number(row.currentBalance) }), { opening: 0, in: 0, out: 0, profit: 0, net: 0 });
+  const sums = shown.reduce(
+    (sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), profit: sum.profit + Number(row.profitPaid), got: sum.got + Number(row.profitReceived), net: sum.net + Number(row.currentBalance) }),
+    { opening: 0, in: 0, out: 0, profit: 0, got: 0, net: 0 },
+  );
 
   const counted = (label: string, count: number) => (
     <>
@@ -102,7 +113,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   );
 
   return (
-    <PageFrame className="md:gap-6">
+    <PageFrame className="md:min-h-full md:gap-4.5 md:pt-6">
       {/* The board has no title from md: the topbar names the page. */}
       <PageHeader
         eyebrow={t("Loans")}
@@ -113,9 +124,41 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
       />
       <h1 className="hidden md:block md:sr-only">{t("Loans & Dena-Pawna")}</h1>
 
-      {/* From md the board's three figures across the page. */}
-      <section>
-        <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
+      {/* From md: this month's loan money, and New entry beside it. */}
+      <div className="hidden items-center gap-3 md:flex">
+        <MonthStrip month={dashboard.thisMonth} today={today} currency={currency} />
+        {canManage && activeContacts.length > 0 && (
+          <Button onClick={() => setEntry({})} className="shrink-0">
+            <Plus strokeWidth={2.5} className="size-4" />
+            {t("New entry")}
+          </Button>
+        )}
+      </div>
+
+      {/* From md the board's three figures, each picking its tab. */}
+      <section aria-label={t("Balance")} className="hidden grid-cols-3 gap-4 md:grid">
+        <KpiCard on={tab === "PAWNA"} side="PAWNA" onPick={() => setTab("PAWNA")} title={t("Show only Pawna")} label={t("Pawna")} count={counts.PAWNA} sub={t("They owe you")}>
+          <AmountText value={totalPawna} currency={currency} tone="income" signed className={KPI_FIGURE} />
+        </KpiCard>
+        <KpiCard on={tab === "DENA"} side="DENA" onPick={() => setTab("DENA")} title={t("Show only Dena")} label={t("Dena")} count={counts.DENA} sub={t("You owe them")}>
+          <AmountText value={-totalDena} currency={currency} tone="expense" signed className={KPI_FIGURE} />
+        </KpiCard>
+        <KpiCard
+          on={tab === "ALL"}
+          side="ALL"
+          onPick={() => setTab("ALL")}
+          title={t("Show everyone")}
+          label={t("Net position")}
+          count={counts.ALL}
+          sub={t(net > 0 ? "You are owed more than you owe" : net < 0 ? "You owe more than you are owed" : "Pawna and Dena are even")}
+        >
+          <AmountText value={net} currency={currency} tone="auto" signed className={KPI_FIGURE} />
+        </KpiCard>
+      </section>
+
+      {/* Phone: the two figures, two to a row. */}
+      <section className="md:hidden">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
           <Card padding="sm" className={PHONE_FIGURE_CARD}>
             <span className={PHONE_FIGURE_LABEL}>
               <span className="md:hidden">{t("Owed to you")}</span>
@@ -134,10 +177,6 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             <AmountText value={totalDena} currency={currency} size="h2" tone="expense" className={cn(PHONE_FIGURE, "md:hidden")} />
             <AmountText value={-totalDena} currency={currency} size="h2" tone="expense" signed className={cn(PHONE_FIGURE, "max-md:hidden")} />
             <span className="text-caption font-normal text-ink-muted md:hidden">{sideCaption("DENA", "{side} · {who}")}</span>
-          </Card>
-          <Card className="hidden min-w-0 flex-col gap-2 md:flex">
-            <span className="text-small font-medium text-ink-muted">{t("Net position")}</span>
-            <AmountText value={net} currency={currency} size="h2" signed className={DESK_FIGURE} />
           </Card>
         </div>
       </section>
@@ -187,7 +226,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           {phoneEntryButtons}
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-1">
           {/* Phone: the direction switch above the list, as the board has it. */}
           <SegmentedControl
             options={[
@@ -206,19 +245,16 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           <ListCard
             label={t("Loans")}
             header={
-              <div className="hidden flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4 md:flex">
+              <div className="hidden items-center justify-between gap-4 px-6 py-3.5 md:flex">
                 <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} />
-                <div className="flex w-full flex-wrap gap-3 md:w-auto">
-                  <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="w-full md:w-60" />
-                  <NativeSelect size="sm" value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label={t("Sort")} className="text-small">
-                    <option value="biggest">{t("Biggest balance first")}</option>
-                    <option value="smallest">{t("Smallest balance first")}</option>
-                    <option value="name">{t("Name A–Z")}</option>
-                  </NativeSelect>
+                <div className="flex min-w-0 flex-1 gap-2.5 lg:ml-4">
+                  <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="min-w-0 flex-1" />
+                  <SortMenu value={sort} onChange={setSort} />
                 </div>
               </div>
             }
-            className="max-md:shadow-none"
+            className="max-md:shadow-none md:flex md:min-h-65 md:flex-1 md:flex-col"
+            tableClassName="md:flex md:flex-1 md:flex-col md:border-t md:border-line"
           >
             <ListHead columns={COLUMNS} className="md:hidden xl:grid">
               <ListHeadCell>{t("Bank / person")}</ListHeadCell>
@@ -233,8 +269,8 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               <DashboardRow key={row.contactId} row={row} contact={contactsById.get(row.contactId)} currency={currency} />
             ))}
             {shown.length > 0 && (
-              <ListTotalRow columns={COLUMNS} className="hidden xl:grid">
-                <ListCell>{t("Net")}</ListCell>
+              <ListTotalRow columns={COLUMNS} className="hidden xl:mt-auto xl:grid">
+                <ListCell className="truncate">{t(shown.length === 1 ? "Net · {count} contact" : "Net · {count} contacts", { count: formatCount(shown.length, fmt) })}</ListCell>
                 <ListCell align="end">
                   <AmountText value={sums.opening} currency={currency} signed size="sm" className="font-semibold" />
                 </ListCell>
@@ -244,16 +280,17 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                 <ListCell align="end" className="tabular-nums">
                   {formatCurrency(sums.out, currency, fmt)}
                 </ListCell>
-                <ListCell align="end" className="tabular-nums">
+                <ListCell align="end" className="flex flex-col items-end gap-px tabular-nums">
                   {formatCurrency(sums.profit, currency, fmt)}
+                  {sums.got > 0 && <span className="text-[11.5px] font-medium text-income">{t("+ {amount} received", { amount: formatCurrency(sums.got, currency, fmt) })}</span>}
                 </ListCell>
                 <ListCell align="end">
-                  <AmountText value={sums.net} currency={currency} signed size="sm" className="text-body font-bold" />
+                  <AmountText value={sums.net} currency={currency} tone="auto" signed size="sm" className="text-body font-bold" />
                 </ListCell>
               </ListTotalRow>
             )}
             {/* Tablet and small laptop: the Net, under the balance column. */}
-            {shown.length > 0 && <ListTotalRow label={t("Net")} value={<AmountText value={sums.net} currency={currency} signed size="sm" className="text-body font-bold" />} className="hidden md:flex xl:hidden" />}
+            {shown.length > 0 && <ListTotalRow label={t("Net")} value={<AmountText value={sums.net} currency={currency} signed size="sm" className="text-body font-bold" />} className="hidden md:mt-auto md:flex xl:hidden" />}
           </ListCard>
           {phoneEntryButtons}
         </div>
@@ -271,7 +308,102 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
 const PHONE_FIGURE_CARD = "flex min-w-0 flex-col gap-1 max-md:shadow-none md:gap-2 md:p-5";
 const PHONE_FIGURE_LABEL = "text-small font-medium text-ink-muted max-md:font-normal";
 const PHONE_FIGURE = "text-h3 wrap-anywhere max-md:leading-[1.2] max-md:font-bold md:text-h2 xl:text-h1";
-const DESK_FIGURE = "wrap-anywhere xl:text-h1";
+const KPI_FIGURE = "text-[26px] leading-[1.25] font-bold tracking-[-0.02em] whitespace-nowrap";
+
+// A side's card: a dot, its name and how many are on it, the figure and
+// what it means; pressing it shows only that side (Net: everyone).
+const KPI_TONE = {
+  PAWNA: { label: "text-income", dot: "bg-income", on: "border-income ring-3 ring-income-soft" },
+  DENA: { label: "text-expense", dot: "bg-expense-fill", on: "border-expense-fill ring-3 ring-expense-soft" },
+  ALL: { label: "text-ink-muted", dot: "", on: "border-emerald ring-3 ring-emerald-soft" },
+} as const;
+
+function KpiCard({ on, side, onPick, title, label, count, sub, children }: { on: boolean; side: keyof typeof KPI_TONE; onPick: () => void; title: string; label: string; count: number; sub: string; children: React.ReactNode }) {
+  const { t, fmt } = useLocale();
+  const tone = KPI_TONE[side];
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onPick}
+      title={title}
+      className={cn("flex min-w-0 flex-col gap-1 rounded-[18px] border bg-surface px-5 py-4 text-left text-ink shadow-card transition-[border-color,box-shadow] hover:border-input", on ? tone.on : "border-line-card")}
+    >
+      <span className={cn("flex w-full items-center justify-between gap-2 text-[13px] font-semibold", tone.label)}>
+        <span className="flex items-center gap-1.75">
+          {tone.dot && <span aria-hidden="true" className={cn("size-2 rounded-full", tone.dot)} />}
+          {label}
+        </span>
+        <span className="text-[12px] font-medium text-ink-faint">{t(count === 1 ? "{count} contact" : "{count} contacts", { count: formatCount(count, fmt) })}</span>
+      </span>
+      {children}
+      <span className="text-[12.5px] text-ink-muted">{sub}</span>
+    </button>
+  );
+}
+
+// This month's loan money: lent, borrowed, money back both ways and the
+// profit, each greyed while it is nothing.
+const MONTH_TONE = { income: "text-income", expense: "text-expense", warning: "text-warning" };
+
+function MonthStrip({ month, today, currency }: { month: LoanMonth | undefined; today: string; currency: string }) {
+  const { t, fmt } = useLocale();
+  const items = monthItems(month).map((item) => ({ ...item, label: t(item.label), value: formatCurrency(item.amount, currency, fmt) }));
+  const entries = month?.entries ?? 0;
+  return (
+    <div
+      role="group"
+      aria-label={t("Loan activity this month")}
+      title={items.map((item) => `${item.label} ${item.value}`).join(" · ")}
+      className="flex h-14 min-w-0 flex-1 items-center gap-4.5 overflow-hidden rounded-2xl border border-line-card bg-surface px-4.5 whitespace-nowrap tabular-nums"
+    >
+      <span className="flex shrink-0 items-center gap-2.5">
+        <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-muted">
+          <CalendarDays className="size-4" strokeWidth={2} />
+        </span>
+        <span className="flex flex-col gap-px">
+          <span className="text-[13px] font-semibold text-ink">{t("This month@@loan")}</span>
+          <span className="text-[11.5px] text-ink-faint">
+            {formatDate(today, "MMMM", fmt)} · {entries ? t(entries === 1 ? "{count} entry" : "{count} entries", { count: formatCount(entries, fmt) }) : t("no entries yet")}
+          </span>
+        </span>
+      </span>
+      <span aria-hidden="true" className="h-7 w-px shrink-0 bg-line" />
+      {items.map((item) => (
+        <span key={item.label} className="flex shrink-0 flex-col gap-px">
+          <span className="text-[11.5px] text-ink-muted">{item.label}</span>
+          <span className={cn("text-[13.5px] font-semibold", item.amount ? MONTH_TONE[item.tone] : "text-ink-faint")}>{item.value}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// The order of the rows: a button with the sort icon and the choice, and
+// its menu.
+function SortMenu({ value, onChange }: { value: Sort; onChange: (next: Sort) => void }) {
+  const { t } = useLocale();
+  const current = SORTS.find((sort) => sort.value === value) ?? SORTS[0];
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger aria-label={`${t("Sort by")}: ${t(current.label)}`} className="flex h-9.5 shrink-0 items-center gap-2 rounded-field border border-input bg-surface px-3 text-[13px] font-medium whitespace-nowrap text-ink hover:border-ink-faint data-open:border-emerald">
+        <ArrowDownWideNarrow className="size-4 text-ink-muted" aria-hidden="true" />
+        {t(current.label)}
+        <ChevronDown className="size-3.5 text-ink-muted" aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-xl border border-line bg-surface p-1.5 shadow-overlay ring-0">
+        <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(next as Sort)}>
+          {SORTS.map((sort) => (
+            <DropdownMenuRadioItem key={sort.value} value={sort.value} className={cn("min-h-10 justify-between rounded-lg px-2.5 text-[13.5px] [&>span:first-child]:hidden", sort.value === value ? "bg-emerald-soft/50 font-semibold" : "font-medium")}>
+              {t(sort.label)}
+              {sort.value === value && <Check className="size-3.5 text-emerald" strokeWidth={2.75} aria-hidden="true" />}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 // One contact: the phone's two lines (who, then where it stands) below xl,
 // plus a line of its figures from md, and the board's columns from xl. The name is the link, stretched over the row.
@@ -290,7 +422,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
     <ListRow columns={COLUMNS} density="relaxed" className="xl:min-h-15">
       <ListCell className="flex min-w-0 items-center gap-3">
         <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={40} coloured className="xl:hidden" />
-        <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} className="hidden xl:inline-flex" />
+        <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} initials={wordInitials(row.contactName)} className="hidden xl:inline-flex" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="flex min-w-0 items-center gap-2">
             <ListRowLink href={`/loan-management/ledger?contactId=${row.contactId}`} className="truncate text-title text-ink xl:text-body xl:font-medium">
@@ -319,8 +451,9 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
       <ListCell align="end" className="hidden xl:block">
         {figure(row.totalPayment, currency, fmt)}
       </ListCell>
-      <ListCell align="end" className="hidden xl:block">
+      <ListCell align="end" className="hidden flex-col items-end gap-px xl:flex">
         {figure(row.profitPaid, currency, fmt, "text-warning")}
+        {Number(row.profitReceived) > 0 && <span className="text-[11.5px] text-income tabular-nums">{t("+ {amount} received", { amount: formatCurrency(row.profitReceived, currency, fmt) })}</span>}
       </ListCell>
       <ListCell align="end" className="flex flex-col items-end xl:flex-row xl:items-center xl:justify-end xl:gap-2">
         {settled ? (

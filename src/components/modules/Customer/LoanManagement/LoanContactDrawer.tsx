@@ -1,22 +1,20 @@
 "use client";
 
-import { Camera, ImagePlus, Landmark, Trash2, Users, WifiOff } from "lucide-react";
+import { Camera, ImagePlus, Info, Landmark, Minus, Plus, Trash2, Users, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Chip from "@/components/smartly/Chip";
-import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
 import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { DIRECTION_META, LOAN_KIND_LABELS, LOAN_KINDS, loanErrorText } from "@/lib/customer/loanDisplay";
+import { bdMobileOk, LOAN_FORM_KINDS, LOAN_KIND_LABELS, loanErrorText } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { radioProps } from "./radio";
@@ -32,25 +30,30 @@ interface LoanContactDrawerProps {
   canTrade: boolean;
 }
 
-type BalanceKind = "PAWNA" | "DENA" | "ZERO";
-
-const BALANCE_KINDS: { value: BalanceKind; label: string; on: string }[] = [
-  { value: "PAWNA", label: "They owe me", on: "text-income" },
-  { value: "DENA", label: "I owe them", on: "text-expense" },
-  { value: "ZERO", label: "Nothing yet", on: "text-ink" },
+// What was owed before Smartly: nothing, they owe me (pawna, positive) or
+// I owe them (dena, negative).
+type Owed = "NONE" | "THEY" | "ME";
+const OWED: { value: Owed; label: string; on: string }[] = [
+  { value: "NONE", label: "Nothing@@owed", on: "text-ink" },
+  { value: "THEY", label: "They owe me", on: "text-income" },
+  { value: "ME", label: "I owe them", on: "text-expense" },
 ];
-const BALANCE_VALUES = BALANCE_KINDS.map((option) => option.value);
+const OWED_VALUES = OWED.map((option) => option.value);
 const CATEGORIES: ContactCategory[] = ["LOAN", "BUSINESS"];
 // The photo tile before one is added: a bank or NGO in its own colours.
 const KIND_TILE: Partial<Record<ContactType, string>> = { BANK: "bg-info-soft text-info", NGO: "bg-pillar-insights-soft text-pillar-insights" };
+const LABEL = "text-[13px] font-semibold text-ink-2";
+const FIELD = "rounded-field";
 
 // Loose on purpose: the API takes any text, this only catches a slip.
 const EMAIL = /^\S+@\S+\.\S+$/;
 
-// Add or edit a bank or person in the design's drawer: a photo or logo,
-// the name, what they are, (in a business workspace) whether you lend to
-// them or trade with them, a phone or an email, the address, and -- for a
-// new one -- where the balance stands now.
+type Errors = Partial<Record<"name" | "phone" | "amount" | "email", string>>;
+
+// Add or edit a bank or person (LoanContacts board's popup): what they are,
+// the name, a phone, what was owed before Smartly, and a line about the
+// loan -- plus a photo or logo, in a business workspace whether it is a
+// loan or trade, and, folded away, an email and an address.
 export function LoanContactDrawer({ open, onClose, businessId, editing, currency, canTrade }: LoanContactDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
@@ -61,31 +64,38 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   const [photoUrl, setPhotoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState("");
-  const [type, setType] = useState<ContactType>("BOTH");
+  const [type, setType] = useState<ContactType | "">("");
   const [category, setCategory] = useState<ContactCategory>("LOAN");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
-  const [balanceKind, setBalanceKind] = useState<BalanceKind>("ZERO");
-  const [openingBalance, setOpeningBalance] = useState("");
-  const openingBalanceField = useAmountField(openingBalance, setOpeningBalance, currency);
+  const [notes, setNotes] = useState("");
+  const [owed, setOwed] = useState<Owed>("NONE");
+  const [opening, setOpening] = useState("");
+  const openingField = useAmountField(opening, setOpening, currency);
+  const [showMore, setShowMore] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const [isPending, startTransition] = useTransition();
 
-  // Populate the instant the drawer opens, or switches to another contact.
+  // Fill the form the moment it opens, or switches to another contact.
   const [prevKey, setPrevKey] = useState("closed");
   const key = open ? (editing?.id ?? "create") : "closed";
   if (key !== prevKey) {
     setPrevKey(key);
     if (open) {
+      const start = Number(editing?.openingBalance ?? 0);
       setPhotoUrl(editing?.photoUrl ?? "");
       setName(editing?.name ?? "");
-      setType(editing?.type ?? "BOTH");
+      setType(editing?.type ?? "");
       setCategory(canTrade ? (editing?.category ?? "LOAN") : "LOAN");
       setPhone(editing?.phone ?? "");
       setEmail(editing?.email ?? "");
       setAddress(editing?.address ?? "");
-      setBalanceKind("ZERO");
-      setOpeningBalance("");
+      setNotes(editing?.notes ?? "");
+      setOwed(start > 0 ? "THEY" : start < 0 ? "ME" : "NONE");
+      setOpening(start ? String(Math.abs(start)) : "");
+      setShowMore(!!(editing?.email || editing?.address));
+      setErrors({});
     }
   }
 
@@ -107,23 +117,41 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
     }
   }
 
-  const amount = Number(openingBalance) || 0;
-  const trimmedName = name.trim();
-  const reachable = phone.trim().length > 0 || email.trim().length > 0;
-  const emailOk = !email.trim() || EMAIL.test(email.trim());
-  const valid = trimmedName.length > 0 && reachable && emailOk && (balanceKind === "ZERO" || amount > 0);
+  const trade = canTrade && category === "BUSINESS";
+  const amount = Number(opening) || 0;
+  const signedOpening = owed === "NONE" ? 0 : owed === "ME" ? -amount : amount;
+  // An older contact may be a supplier or "other": it keeps that choice.
+  const kinds = editing && !LOAN_FORM_KINDS.includes(editing.type) ? [...LOAN_FORM_KINDS, editing.type] : LOAN_FORM_KINDS;
   // Moving a contact with a loan history to Books takes them, and their
   // entries, out of every Loans page.
   const hasLoanHistory = !!editing && (!!editing.lastActivityAt || Number(editing.currentBalance) !== 0 || Number(editing.openingBalance) !== 0);
+  const hasEntries = !!editing?.lastActivityAt;
   const money = (figure: number) => formatCurrency(figure, currency, fmt);
+
+  // The board's checks, said under the field on Save. A phone kept as it
+  // was (a bank's hotline, say) is not checked again.
+  function check(): Errors {
+    const found: Errors = {};
+    const phoneChanged = phone.trim() !== (editing?.phone ?? "");
+    if (!name.trim()) found.name = t(type ? "Enter a name." : "Pick a type first.");
+    if (phoneChanged && !bdMobileOk(phone)) found.phone = t("Enter a Bangladeshi mobile number, like 01711-223344.");
+    if (owed !== "NONE" && !(amount > 0)) found.amount = t(opening.trim() ? "The amount must be more than 0." : "Enter the amount.");
+    if (email.trim() && !EMAIL.test(email.trim())) found.email = t("Enter a valid email");
+    // A trade contact is invoiced, so it needs a way to be reached.
+    if (trade && !phone.trim() && !email.trim()) found.phone = t("Add a phone or an email, so they can be reached.");
+    return found;
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || isPending || !online) return;
-    const trade = canTrade && category === "BUSINESS";
+    if (isPending || !online) return;
+    const found = check();
+    if (!type) found.name = found.name ?? t("Pick a type first.");
+    setErrors(found);
+    if (Object.keys(found).length > 0 || !type) return;
     if (trade && editing?.category === "LOAN" && hasLoanHistory) {
       const moving = await confirm({
-        title: t("Move {name} to Books?", { name: trimmedName }),
+        title: t("Move {name} to Books?", { name: name.trim() }),
         message: t("They and their entries leave Loans and show in Books › Customers & suppliers instead."),
         confirmLabel: "Move to Books",
         danger: false,
@@ -132,13 +160,11 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
     }
     startTransition(async () => {
       try {
-        const base = { name: trimmedName, type, category: canTrade ? category : "LOAN", phone: phone.trim() || undefined, email: email.trim() || undefined, address: address.trim() || undefined, photoUrl: photoUrl || undefined };
+        const base = { name: name.trim(), type, category: canTrade ? category : ("LOAN" as const), photoUrl: photoUrl || undefined, openingBalance: String(signedOpening) };
         const result = editing
           ? // Empty fields sent as "" so they clear; left out they would stay.
-            await updateContactAction(businessId, editing.id, { ...base, phone: phone.trim(), email: email.trim(), address: address.trim(), photoUrl })
-          : // Pawna (they owe us) is positive, dena (we owe them) negative, as
-            // everywhere else in the app.
-            await createContactAction(businessId, { ...base, openingBalance: balanceKind === "ZERO" ? undefined : String(balanceKind === "DENA" ? -amount : amount) });
+            await updateContactAction(businessId, editing.id, { ...base, phone: phone.trim(), email: email.trim(), address: address.trim(), notes: notes.trim(), photoUrl, ...(signedOpening === Number(editing.openingBalance) && { openingBalance: undefined }) })
+          : await createContactAction(businessId, { ...base, phone: phone.trim() || undefined, email: email.trim() || undefined, address: address.trim() || undefined, notes: notes.trim() || undefined, openingBalance: signedOpening ? String(signedOpening) : undefined });
         if (!result.success) {
           toast.error(loanErrorText(result.message, editing ? "Failed to update contact" : "Failed to create contact", t, money));
           return;
@@ -157,26 +183,27 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
     });
   }
 
-  const direction = balanceKind === "PAWNA" ? DIRECTION_META.PAWNA : DIRECTION_META.DENA;
-  const label = (text: string, optional = false) => (
-    <span className="text-body font-medium text-ink">
-      {text} {optional && <span className="font-normal text-ink-muted">({t("optional")})</span>}
-    </span>
-  );
-  const shownName = trimmedName || t("This contact");
-  const reachError = trimmedName.length > 0 && !reachable;
   const photoLabel = photoUrl ? t("Change photo or logo") : t("Upload photo or logo");
+  const errorLine = (id: string, text: string | undefined) =>
+    text && (
+      <span id={id} role="alert" className="text-[12.5px] text-expense">
+        {text}
+      </span>
+    );
 
   return (
-    <Drawer
+    <PopupDialog
       open={open}
-      width={470}
-      popup
-      title={editing ? t("Edit contact") : t("Add contact")}
-      description={t("A person, bank or NGO you lend to or borrow from.")}
-      busy={isPending}
       onClose={onClose}
+      width={520}
+      busy={isPending}
       onSubmit={submit}
+      headClassName="items-center pt-4 pr-5 pb-3.5 pl-6"
+      titleClassName="text-[18px] font-bold"
+      bodyClassName="gap-4 px-6 py-4.5"
+      footerClassName="px-6"
+      title={editing ? t("Edit contact") : t("Add contact")}
+      sub={editing ? t("Fix the name, type, phone or details.") : t("Someone you lend to or borrow from.")}
       footer={
         <div className="flex w-full flex-col gap-2">
           {!online && (
@@ -186,151 +213,201 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
             </p>
           )}
           <div className="flex items-center justify-end gap-2.5">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+            <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={!valid || isPending || uploading || !online} className="px-4.5">
+            <Button type="submit" size="lg" disabled={isPending || uploading || !online} className="px-5.5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {editing ? t("Save changes") : t("Add contact")}
+              {editing ? t("Save changes") : t("Add contact@@button")}
             </Button>
           </div>
         </div>
       }
     >
-      {/* The board's 16px between fields, a touch closer than other drawers. */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-end gap-3">
+      <div className="flex flex-col gap-2">
+        <span id={`${groupId}-kind`} className={LABEL}>
+          {t("Type")}
+        </span>
+        <div role="radiogroup" aria-labelledby={`${groupId}-kind`} className="flex flex-wrap gap-1.5">
+          {kinds.map((kind) => {
+            const on = kind === type;
+            return (
+              <button
+                key={kind}
+                {...radioProps<ContactType | "">(kind, { values: kinds, value: type, onChange: (next) => setType(next) })}
+                className={cn("h-8.5 rounded-full border-[1.5px] px-3.5 text-[13px] font-semibold transition-colors pointer-coarse:h-11", on ? "border-emerald bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-2 hover:border-input")}
+              >
+                {t(LOAN_KIND_LABELS[kind])}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {canTrade && (
+        <div className="flex flex-col gap-2">
+          <span id={`${groupId}-category`} className={LABEL}>
+            {t("What do you do with them?")}
+          </span>
+          <div role="radiogroup" aria-labelledby={`${groupId}-category`} className="grid grid-cols-2 gap-2">
+            {(
+              [
+                { value: "LOAN", title: "Loan", sub: "Lend or borrow money" },
+                { value: "BUSINESS", title: "Trade", sub: "Sell or buy on credit" },
+              ] as const
+            ).map((option) => {
+              const on = option.value === category;
+              return (
+                <button key={option.value} {...radioProps(option.value, { values: CATEGORIES, value: category, onChange: setCategory })} className={cn("flex flex-col items-start gap-0.5 rounded-[12px] border-[1.5px] px-3 py-2.5 text-left transition-colors", on ? "border-emerald bg-emerald-soft" : "border-line bg-surface hover:border-input")}>
+                  <span className={cn("text-[13.5px] font-semibold", on ? "text-emerald" : "text-ink")}>{t(option.title)}</span>
+                  <span className="text-[12px] text-ink-muted">{t(option.sub)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="ct-name" className={LABEL}>
+          {t("Name")}
+        </label>
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={uploading}
             aria-label={photoLabel}
             title={photoLabel}
-            className={cn("relative flex size-13 shrink-0 items-center justify-center overflow-visible rounded-md border border-dashed border-input disabled:opacity-60", KIND_TILE[type] ?? "bg-surface-sunken text-ink-2")}
+            className={cn("relative flex size-11 shrink-0 items-center justify-center rounded-field border border-dashed border-input disabled:opacity-60", type ? (KIND_TILE[type] ?? "bg-surface-sunken text-ink-2") : "bg-surface-sunken text-ink-2")}
           >
             {photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoUrl} alt="" className="size-full rounded-md object-cover" />
+              <img src={photoUrl} alt="" className="size-full rounded-field object-cover" />
             ) : uploading ? (
-              <Loader size={18} label={t("Loading...")} />
+              <Loader size={16} label={t("Loading...")} />
             ) : (
-              // What they are, as the board draws a bank; anyone else, a photo to add.
-              createElement(type === "BANK" ? Landmark : type === "NGO" ? Users : ImagePlus, { className: "size-5.5", "aria-hidden": true })
+              createElement(type === "BANK" ? Landmark : type === "NGO" ? Users : ImagePlus, { className: "size-4.5", "aria-hidden": true })
             )}
-            <span aria-hidden="true" className="absolute -right-1.5 -bottom-1.5 flex size-5.5 items-center justify-center rounded-full border border-line bg-surface text-ink-soft">
-              <Camera className="size-3" strokeWidth={2.25} />
+            <span aria-hidden="true" className="absolute -right-1.5 -bottom-1.5 flex size-5 items-center justify-center rounded-full border border-line bg-surface text-ink-soft">
+              <Camera className="size-2.75" strokeWidth={2.25} />
             </span>
           </button>
           <input ref={fileInput} type="file" accept="image/*" onChange={choosePhoto} className="hidden" />
-          <Field htmlFor="ct-name" label={label(t("Name"))} className="flex-1">
-            <Input id="ct-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={120} placeholder={t("e.g. Arif, or Islami Bank")} />
-          </Field>
+          <Input
+            id="ct-name"
+            size="md"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            autoFocus
+            maxLength={50}
+            placeholder={t("e.g. Rahim Uddin or Sonali Bank")}
+            invalid={!!errors.name}
+            aria-describedby={errors.name ? "ct-name-error" : undefined}
+            frameClassName={cn(FIELD, "flex-1")}
+          />
         </div>
+        {errorLine("ct-name-error", errors.name)}
         {photoUrl && (
-          <button type="button" onClick={() => setPhotoUrl("")} disabled={uploading} className="-mt-2 inline-flex w-fit items-center gap-1.5 rounded-sm text-caption font-semibold text-expense hover:underline disabled:opacity-60">
+          <button type="button" onClick={() => setPhotoUrl("")} disabled={uploading} className="inline-flex w-fit items-center gap-1.5 rounded-sm text-caption font-semibold text-expense hover:underline disabled:opacity-60">
             <Trash2 className="size-3.5" aria-hidden="true" />
             {t("Remove photo")}
           </button>
         )}
+      </div>
 
-        <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-          <legend id={`${groupId}-kind`} className="mb-2 text-body leading-[normal] font-medium text-ink">
-            {t("Who is this?")}
-          </legend>
-          <div role="radiogroup" aria-labelledby={`${groupId}-kind`} className="flex flex-wrap gap-1.5">
-            {LOAN_KINDS.map((kind) => {
-              const on = kind === type;
-              return (
-                <button key={kind} {...radioProps(kind, { values: LOAN_KINDS, value: type, onChange: setType })} className={cn("h-8.5 rounded-full border px-3 text-small transition-colors pointer-coarse:h-11", on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-2 hover:border-line-strong")}>
-                  {t(LOAN_KIND_LABELS[kind])}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="ct-phone" className={LABEL}>
+          {t(trade ? "Phone" : "Phone (optional)")}
+        </label>
+        <Input
+          id="ct-phone"
+          size="md"
+          type="tel"
+          value={phone}
+          onChange={(event) => setPhone(event.target.value)}
+          maxLength={16}
+          placeholder="01XXXXXXXXX"
+          invalid={!!errors.phone}
+          aria-describedby={errors.phone ? "ct-phone-error" : undefined}
+          frameClassName={FIELD}
+          className="tabular-nums"
+        />
+        {errorLine("ct-phone-error", errors.phone)}
+      </div>
 
-        {canTrade && (
-          <fieldset className="m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0">
-            <legend id={`${groupId}-category`} className="mb-2 text-body leading-[normal] font-medium text-ink">
-              {t("What do you do with them?")}
-            </legend>
-            <div role="radiogroup" aria-labelledby={`${groupId}-category`} aria-describedby={`${groupId}-category-hint`} className="grid grid-cols-2 gap-2">
-              {(
-                [
-                  { value: "LOAN", title: "Loan", sub: "Lend or borrow money" },
-                  { value: "BUSINESS", title: "Trade", sub: "Sell or buy on credit" },
-                ] as const
-              ).map((option) => {
-                const on = option.value === category;
-                return (
-                  <button key={option.value} {...radioProps(option.value, { values: CATEGORIES, value: category, onChange: setCategory })} className={cn("flex flex-col items-start gap-0.5 rounded-field border px-3 py-2.5 text-left transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong")}>
-                    <span className={cn("text-small font-semibold", on ? "text-emerald" : "text-ink")}>{t(option.title)}</span>
-                    <span className={cn("text-caption font-normal", on ? "text-ink-soft" : "text-ink-muted")}>{t(option.sub)}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <span id={`${groupId}-category-hint`} className="text-caption font-normal text-ink-muted">
-              {t("Trade contacts are kept in Books › Customers & suppliers, not in Loans.")}
-            </span>
-          </fieldset>
-        )}
-
-        {/* The board's phone and address side by side; the email under them
-            (a phone or an email is needed, so they can be reached). */}
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <Field htmlFor="ct-phone" label={label(t("Phone"))} error={reachError ? t("Add a phone or an email, so they can be reached.") : undefined}>
-            <Input id="ct-phone" size="md" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="01XXX-XXXXXX" invalid={reachError} aria-describedby={reachError ? "ct-phone-error" : "ct-email-hint"} className="px-0" frameClassName="px-3" />
-          </Field>
-          <Field htmlFor="ct-address" label={label(t("Address"), true)}>
-            <Input id="ct-address" size="md" value={address} onChange={(event) => setAddress(event.target.value)} maxLength={200} placeholder={t("Motijheel branch")} className="px-0" frameClassName="px-3" />
-          </Field>
+      <div className="flex flex-col gap-2">
+        <span id={`${groupId}-owed`} className="flex flex-col gap-px">
+          <span className={LABEL}>{t("Opening balance")}</span>
+          <span className="text-[12px] text-ink-muted">{t("What was owed before you started using Smartly")}</span>
+        </span>
+        <div role="radiogroup" aria-labelledby={`${groupId}-owed`} className="grid grid-cols-3 gap-1 rounded-[12px] bg-surface-sunken p-1">
+          {OWED.map((option) => {
+            const on = option.value === owed;
+            return (
+              <button key={option.value} {...radioProps(option.value, { values: OWED_VALUES, value: owed, onChange: setOwed })} className={cn("h-9 rounded-[9px] text-[13px] font-semibold transition-colors pointer-coarse:h-11", on ? cn("bg-surface shadow-[0_1px_3px_rgba(18,32,29,0.12)]", option.on) : "text-ink-soft hover:text-ink")}>
+                {t(option.label)}
+              </button>
+            );
+          })}
         </div>
-        <Field htmlFor="ct-email" label={label(t("Email"))} hint={t("A phone or an email is needed, so they can be reached.")} error={!emailOk ? t("Enter a valid email") : undefined}>
-          <Input id="ct-email" size="md" type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={120} placeholder="name@example.com" invalid={!emailOk} autoComplete="off" className="px-0" frameClassName="px-3" />
-        </Field>
-
-        {!editing && (
-          <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-            <legend id={`${groupId}-balance`} className="mb-2 text-body leading-[normal] font-medium text-ink">
-              {t("Balance right now")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-            </legend>
-            <div role="radiogroup" aria-labelledby={`${groupId}-balance`} className="grid grid-cols-3 gap-1 rounded-full bg-surface-sunken p-1">
-              {BALANCE_KINDS.map((option) => {
-                const on = option.value === balanceKind;
-                return (
-                  <button key={option.value} {...radioProps(option.value, { values: BALANCE_VALUES, value: balanceKind, onChange: setBalanceKind })} className={cn("h-9 rounded-full text-small transition-colors pointer-coarse:h-11", on ? cn("bg-surface font-semibold shadow-[0_1px_3px_rgba(18,32,29,0.12)]", option.on) : "font-medium text-ink-soft hover:text-ink")}>
-                    {t(option.label)}
-                  </button>
-                );
-              })}
-            </div>
-            {balanceKind !== "ZERO" && (
-              <>
-                <Input
-                  size="xl"
-                  type="text"
-                  inputMode="decimal"
-                  {...openingBalanceField}
-                  placeholder="0"
-                  aria-label={t("Opening balance")}
-                  autoFocus
-                  leading={<span className="flex h-13 w-12 items-center justify-center border-r border-line bg-strip text-h3 font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>}
-                  frameClassName="h-13 gap-0 overflow-hidden rounded-sm pl-0"
-                  className="pl-3.5 text-[20px] font-bold tabular-nums"
-                />
-                <span className={cn("flex items-center gap-1.5 text-caption font-normal", direction.text)}>
-                  <Chip tone={direction.chip} size="sm" className="font-bold">
-                    {t(direction.name)}
-                  </Chip>
-                  <span className="min-w-0">{t(balanceKind === "DENA" ? "{name} starts with {amount} you owe them." : "{name} starts with {amount} they owe you.", { name: shownName, amount: money(amount) })}</span>
-                </span>
-              </>
-            )}
-          </fieldset>
+        {owed !== "NONE" && (
+          <>
+            <Input
+              size="md"
+              type="text"
+              inputMode="decimal"
+              {...openingField}
+              placeholder="0"
+              aria-label={t("Opening balance")}
+              invalid={!!errors.amount}
+              aria-describedby={errors.amount ? "ct-amount-error" : undefined}
+              leading={<span className="text-[14px] font-semibold text-ink-faint">{currencySymbol(currency, fmt)}</span>}
+              frameClassName={cn(FIELD, "gap-1.5")}
+              className="text-[14px] font-semibold tabular-nums"
+            />
+            {errorLine("ct-amount-error", errors.amount)}
+          </>
         )}
       </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="ct-notes" className={LABEL}>
+          {t("Details (optional)")}
+        </label>
+        <Input id="ct-notes" size="md" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={80} placeholder={t("e.g. House loan, shop credit")} frameClassName={FIELD} />
+      </div>
+
+      {/* Not on the board: an email and an address, folded away. */}
+      <button type="button" onClick={() => setShowMore(!showMore)} aria-expanded={showMore} aria-controls="ct-more" className="-mt-1 flex h-8 items-center gap-1.5 self-start text-[13px] font-semibold text-emerald hover:text-emerald-hover">
+        {showMore ? <Minus className="size-3.5" strokeWidth={2.5} aria-hidden="true" /> : <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
+        {showMore ? t("Hide email and address") : t("Add an email or address")}
+      </button>
+      {showMore && (
+        <div id="ct-more" className="-mt-2 grid gap-2.5 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="ct-email" className={LABEL}>
+              {t("Email")}
+            </label>
+            <Input id="ct-email" size="md" type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={120} placeholder="name@example.com" invalid={!!errors.email} autoComplete="off" frameClassName={FIELD} />
+            {errorLine("ct-email-error", errors.email)}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="ct-address" className={LABEL}>
+              {t("Address")}
+            </label>
+            <Input id="ct-address" size="md" value={address} onChange={(event) => setAddress(event.target.value)} maxLength={200} placeholder={t("Motijheel branch")} frameClassName={FIELD} />
+          </div>
+        </div>
+      )}
+
+      {editing && hasEntries && (
+        <p className="flex gap-2.5 rounded-[12px] bg-mint-50 px-3 py-2.5 text-[12.5px] leading-normal text-brand-ink">
+          <Info className="mt-0.5 size-3.75 shrink-0" strokeWidth={2.25} aria-hidden="true" />
+          <span>{t("Its entries stay as they are. Changing the opening balance moves the current balance by the same amount.")}</span>
+        </p>
+      )}
       {confirmDialog}
-    </Drawer>
+    </PopupDialog>
   );
 }

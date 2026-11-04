@@ -1,20 +1,19 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, Percent, WifiOff } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Percent, Plus, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Field from "@/components/smartly/form/Field";
+import DayInput from "@/components/smartly/form/DayInput";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { useAmountField } from "@/hooks/useAmountField";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, Contact } from "@/lib/customer/api";
 import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
@@ -28,7 +27,6 @@ import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
-import DayInput from "@/components/smartly/form/DayInput";
 import { radioProps } from "./radio";
 
 interface LoanEntryDrawerProps {
@@ -47,35 +45,43 @@ interface LoanEntryDrawerProps {
 
 type Purpose = "PRINCIPAL" | "PROFIT";
 type ProfitWay = "PAID" | "RECEIVED";
+type Errors = Partial<Record<"contact" | "purpose" | "what" | "account" | "date" | "amount", string>>;
 
 const PURPOSES: Purpose[] = ["PRINCIPAL", "PROFIT"];
 const PROFIT_WAYS: ProfitWay[] = ["PAID", "RECEIVED"];
 const PICKER_ID = "loan-who";
+const LABEL = "text-[13px] font-semibold text-ink-2";
+// The board's choice cards: a 1.5px edge, the brand colour once picked.
+const CHOICE = "flex rounded-[12px] border-[1.5px] px-3 py-2.25 text-left transition-colors";
+const choiceTone = (on: boolean, error: boolean) => (on ? "border-emerald bg-emerald-soft" : error ? "border-expense-line bg-surface hover:border-input" : "border-line bg-surface hover:border-input");
 
 // The repayment a contact's detail tells the cap of, by kind.
 const REPAYMENTS: Partial<Record<LoanEntryKind, { over: string; none: string; noneSub: string }>> = {
   RECEIVE_PAYMENT: { over: "They owe you {amount} at most", none: "Nothing to get back: they don't owe you anything right now.", noneSub: "Nothing to get back" },
   MAKE_PAYMENT: { over: "You owe them {amount} at most", none: "Nothing to pay back: you don't owe them anything right now.", noneSub: "Nothing to pay back" },
 };
+const PROFIT_META: Record<ProfitWay, { title: string; sub: string; flow: "in" | "out" }> = {
+  PAID: { title: "I paid profit or interest", sub: "Money out · balance stays the same", flow: "out" },
+  RECEIVED: { title: "I received profit or interest", sub: "Money in · balance stays the same", flow: "in" },
+};
 
-// New loan entry: who, whether it is the loan itself or its profit, what
-// happened (a loan given or taken, money back or paid back; or profit paid
-// or received, filed under a category), through which wallet, how much --
-// and what both balances will be once it is saved. Every entry moves real
-// money, so a wallet is always required. Profit never moves the loan. A
-// repayment can't be more than is owed on its side, as the API checks.
+// New loan entry (LoanTransactions board's popup): who, whether it is the
+// loan itself or its profit, what happened, through which account and on
+// which day, how much -- and what both balances will be once it is saved.
+// The checks run on Save and are said under each field. Profit never moves
+// the loan; a repayment can't be more than is owed on its side, and money
+// out can't be more than the account holds.
 export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency, initialContactId, initialKind, editing = null }: LoanEntryDrawerProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const online = useOnline();
-  const wide = useMediaQuery("(min-width: 768px)");
   const amountId = useId();
   const groupId = useId();
   const [contactId, setContactId] = useState("");
-  const [kind, setKind] = useState<LoanEntryKind>("GIVE_LOAN");
-  const [purpose, setPurpose] = useState<Purpose>("PRINCIPAL");
+  const [purpose, setPurpose] = useState<Purpose | null>(null);
+  const [kind, setKind] = useState<LoanEntryKind | null>(null);
   // Profit: I paid it (an expense) or I received it (an income).
-  const [profitWay, setProfitWay] = useState<ProfitWay>("PAID");
+  const [profitWay, setProfitWay] = useState<ProfitWay | null>(null);
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState<{ EXPENSE: string[]; INCOME: string[] }>({ EXPENSE: [], INCOME: [] });
   const [expenseAccounts, setExpenseAccounts] = useState<Account[]>([]);
@@ -83,11 +89,12 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const [date, setDate] = useState(getAppToday());
   const [amount, setAmount] = useState("");
   const amountField = useAmountField(amount, setAmount, currency);
-  // A bank or service charge paid with it, out of the same wallet.
+  // A bank or service charge paid with it, out of the same account.
   const [charge, setCharge] = useState("");
   const chargeField = useAmountField(charge, setCharge, currency);
-  // The slip or loan number (the board's Reference); the statement shows it
-  // in its Reference column.
+  const [showCharge, setShowCharge] = useState(false);
+  // The slip or loan number, or a word about it (the statement's Note /
+  // reference).
   const [reference, setReference] = useState("");
   const [wallets, setWallets] = useState<Account[]>([]);
   const [walletsError, setWalletsError] = useState<string | null>(null);
@@ -96,6 +103,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   // again after each save, since the save changed it.
   const [detail, setDetail] = useState<{ contactId: string; data: LoanBalanceDetail | null } | null>(null);
   const [saves, setSaves] = useState(0);
+  const [errors, setErrors] = useState<Errors>({});
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(false);
@@ -104,29 +112,33 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
     if (open && editing) {
       // The entry as it was saved.
       setContactId(editing.contactId);
-      setKind(editing.kind ?? "GIVE_LOAN");
       setPurpose(editing.profit ? "PROFIT" : "PRINCIPAL");
-      setProfitWay(editing.profit && !editing.profit.paid ? "RECEIVED" : "PAID");
+      setKind(editing.kind ?? null);
+      setProfitWay(editing.profit ? (editing.profit.paid ? "PAID" : "RECEIVED") : null);
       setCategory(editing.profit?.category ?? "");
       setAmount(String(editing.amount));
       setCharge(editing.charge ? String(editing.charge) : "");
+      setShowCharge(!!editing.charge);
       setReference(editing.reference);
       setDate(editing.date);
       setAccountId(editing.accountId);
-      setWalletsError(null);
-      setLoading(true);
     } else if (open) {
       // Whoever the page opened it for, or the only one there is; never
-      // whoever happens to sort first.
+      // whoever happens to sort first. Nothing else is picked for you.
       setContactId(initialContactId && contacts.some((c) => c.id === initialContactId) ? initialContactId : contacts.length === 1 ? contacts[0].id : "");
-      setKind(initialKind ?? "GIVE_LOAN");
-      setPurpose("PRINCIPAL");
-      setProfitWay("PAID");
+      setPurpose(initialKind ? "PRINCIPAL" : null);
+      setKind(initialKind ?? null);
+      setProfitWay(null);
       setCategory("");
       setAmount("");
       setCharge("");
+      setShowCharge(false);
       setReference("");
       setDate(getAppToday());
+      setAccountId("");
+    }
+    if (open) {
+      setErrors({});
       setWalletsError(null);
       setLoading(true);
     }
@@ -141,7 +153,8 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         const list = money.data ?? [];
         setWallets(list);
         setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
-        setAccountId((picked) => picked || list[0]?.id || "");
+        // The only account there is; with more, the customer picks.
+        setAccountId((picked) => picked || (list.length === 1 ? list[0].id : ""));
         setCategories({ EXPENSE: expense.map((c) => c.name), INCOME: income.map((c) => c.name) });
         setExpenseAccounts(accounts);
       })
@@ -167,7 +180,6 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
 
   const contact = contacts.find((c) => c.id === contactId);
   const wallet = wallets.find((w) => w.id === accountId);
-  const meta = LOAN_ENTRY_META[kind];
   const profit = purpose === "PROFIT";
   const profitPaid = profitWay === "PAID";
   const profitType = profitPaid ? "EXPENSE" : "INCOME";
@@ -179,6 +191,11 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const value = Number(amount) || 0;
   const chargeValue = Number(charge) || 0;
   const money = (figure: number) => formatCurrency(figure, currency, fmt);
+  // What happened, once it is picked for the purpose shown.
+  const principalKind = !profit && purpose ? kind : null;
+  const way = profit ? profitWay : null;
+  const known = !!principalKind || !!way;
+  const flowIn = way ? PROFIT_META[way].flow === "in" : principalKind ? LOAN_ENTRY_META[principalKind].flow === "in" : false;
   // Edit: what the entry being changed did, taken back out of today's
   // figures (it is voided as the change is saved).
   const editingHere = editing && editing.contactId === contactId ? editing : null;
@@ -192,30 +209,46 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
     const cap = contactDetail ? repaymentLimit(contactDetail, option) : null;
     return cap === null ? null : cap + (editingHere && editingHere.kind === option ? editingHere.amount : 0);
   };
-  const repayment = !profit ? REPAYMENTS[kind] : undefined;
-  const limit = repayment ? limitOf(kind) : null;
-  const noneOwed = limit === 0;
-  const overLimit = limit !== null && limit > 0 && value > limit + 0.005;
+  const repayment = principalKind ? REPAYMENTS[principalKind] : undefined;
+  const limit = principalKind && repayment ? limitOf(principalKind) : null;
   const checkingLimit = !!repayment && !!contact && contactDetail === undefined;
 
-  const flowIn = profit ? !profitPaid : meta.flow === "in";
   const walletBefore = wallet ? Number(wallet.currentBalance) - editedWallet : null;
-  const walletAfter = walletBefore !== null ? walletBefore + (flowIn ? value : -value) - chargeValue : null;
+  const walletAfter = walletBefore !== null && known ? walletBefore + (flowIn ? value : -value) - chargeValue : null;
   const balanceNow = contact ? Number(contact.currentBalance) - editedPrincipal : 0;
-  const balanceAfter = profit ? balanceNow : balanceAfterEntry(balanceNow, kind, value);
-  const valid = !!contact && value > 0 && accountId.length > 0 && (!profit || !profitPaid || expenseAccountId.length > 0) && !noneOwed && !overLimit && !checkingLimit;
-  const canSave = valid && online && !isPending;
-  const saveLabel = editing ? "Save changes" : profit ? (profitPaid ? "Save profit payment" : "Save profit received") : meta.save;
-  const walletLabel = profit ? (profitPaid ? "Pay from" : "Money came into") : meta.walletLabel;
-  const fallback = profit ? "Couldn't save the profit entry" : kind === "GIVE_LOAN" || kind === "TAKE_LOAN" ? "Couldn't save the loan" : "Couldn't save the payment";
+  const balanceAfter = principalKind ? balanceAfterEntry(balanceNow, principalKind, value) : balanceNow;
+  const canSave = online && !isPending && !checkingLimit;
+  const accountLabel = !known ? "Account" : flowIn ? "Money came into" : "Money went from";
+  const fallback = profit ? "Couldn't save the profit entry" : principalKind === "GIVE_LOAN" || principalKind === "TAKE_LOAN" ? "Couldn't save the loan" : "Couldn't save the payment";
 
   const directionText = (balance: number) => {
     const direction = loanDirection(balance);
     return direction === "SETTLED" ? t("Settled") : `${t(DIRECTION_META[direction].name)} ${money(Math.abs(balance))}`;
   };
 
+  // The board's checks, each said under its field.
+  function check(): Errors {
+    const found: Errors = {};
+    if (!contact) found.contact = t("Pick the bank or person.");
+    if (!purpose) found.purpose = t("Pick what the money is for.");
+    if (!known) found.what = t("Pick what happened.");
+    else if (profit && profitPaid && !expenseAccountId) found.what = t("Add an expense category first, to file the profit under.");
+    if (!accountId) found.account = t("Pick the account.");
+    if (!date) found.date = t("Pick a date.");
+    else if (date > getAppToday()) found.date = t("The date can’t be in the future.");
+    if (!amount.trim()) found.amount = t("Enter the amount.");
+    else if (!(value > 0)) found.amount = t("The amount must be more than 0.");
+    else if (repayment && limit === 0) found.amount = t(repayment.none);
+    else if (repayment && limit !== null && value > limit + 0.005) found.amount = t(repayment.over, { amount: money(limit) });
+    else if (wallet && known && !flowIn && walletBefore !== null && value + chargeValue > walletBefore + 0.005) found.amount = t("{account} has only {amount}.", { account: accountDisplayName(wallet, displayLanguage(locale)), amount: money(Math.max(0, walletBefore)) });
+    return found;
+  }
+
   function save(another: boolean) {
     if (!canSave) return;
+    const found = check();
+    setErrors(found);
+    if (Object.keys(found).length > 0 || !purpose) return;
     startTransition(async () => {
       try {
         const referenceNo = reference.trim() || undefined;
@@ -223,26 +256,26 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         const base = { contactId, amount: value, date, referenceNo, moneyAccountId: accountId, charge: charged };
         const filed = { contactId, amount: value, date, referenceNo, categoryId: picked || undefined, charge: charged };
         // Edit keeps the kind: a principal entry stays one, profit stays profit.
-        const result = editing
-          ? editing.profit
+        const result = profit
+          ? editing
             ? await correctTransactionAction(businessId, editing.transactionId, profitPaid ? "EXPENSE" : "INCOME", profitPaid ? { ...filed, fromAccountId: accountId, expenseAccountId } : { ...filed, toAccountId: accountId })
-            : await correctLoanEntryAction(businessId, editing.transactionId, kind, base)
-          : profit
-          ? profitPaid
-            ? await createExpenseAction(businessId, { ...filed, fromAccountId: accountId, expenseAccountId })
-            : await createIncomeAction(businessId, { ...filed, toAccountId: accountId })
-          : kind === "GIVE_LOAN"
-            ? await recordSaleAction(businessId, base)
-            : kind === "TAKE_LOAN"
-              ? await recordPurchaseAction(businessId, base)
-              : kind === "RECEIVE_PAYMENT"
-                ? await receivePaymentAction(businessId, base)
-                : await payPaymentAction(businessId, base);
+            : profitPaid
+              ? await createExpenseAction(businessId, { ...filed, fromAccountId: accountId, expenseAccountId })
+              : await createIncomeAction(businessId, { ...filed, toAccountId: accountId })
+          : editing
+            ? await correctLoanEntryAction(businessId, editing.transactionId, principalKind!, base)
+            : principalKind === "GIVE_LOAN"
+              ? await recordSaleAction(businessId, base)
+              : principalKind === "TAKE_LOAN"
+                ? await recordPurchaseAction(businessId, base)
+                : principalKind === "RECEIVE_PAYMENT"
+                  ? await receivePaymentAction(businessId, base)
+                  : await payPaymentAction(businessId, base);
         if (!result.success) {
           toast.error(loanErrorText(result.message, fallback, t, money));
           return;
         }
-        toast.success(t(editing ? "Changes saved" : "Entry saved"));
+        toast.success(editing ? t("Entry updated") : t("Entry saved for {name}", { name: contact?.name ?? "" }));
         router.refresh();
         // The old detail is stale now: until the fresh one is in, the cap
         // reads as being checked and Save waits, rather than allowing
@@ -250,34 +283,35 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         setDetail(null);
         setSaves((count) => count + 1);
         if (another) {
+          // The board's next entry: the same day, everything else fresh.
+          setContactId("");
+          setPurpose(null);
+          setKind(null);
+          setProfitWay(null);
           setAmount("");
           setCharge("");
+          setShowCharge(false);
           setReference("");
+          setAccountId("");
           // The entry is saved: a wallet refresh that fails keeps the old
           // figures rather than reading as a failed save, inviting a second one.
           const fresh = await listMoneyAccountsAction(businessId).catch(() => null);
           if (fresh?.success && fresh.data) setWallets(fresh.data);
-          document.getElementById(amountId)?.focus();
+          document.getElementById(PICKER_ID)?.focus();
         } else {
           onClose();
         }
       } catch {
-        // The request never got there (offline, timed out): the drawer and
+        // The request never got there (offline, timed out): the popup and
         // what was typed stay, rather than the page's error screen.
         toast.error(t("Couldn't save. Check your connection and try again."));
       }
     });
   }
 
-  const label = (text: string, optional = false) => (
-    <span className="text-body font-medium text-ink">
-      {text} {optional && <span className="font-normal text-ink-muted">({t("optional")})</span>}
-    </span>
-  );
-
   // Where focus starts: the amount once someone is picked, else the picker.
   function focusFirst(event: Event) {
-    const target = document.getElementById(contactId ? amountId : PICKER_ID);
+    const target = document.getElementById(contactId && known ? amountId : PICKER_ID);
     if (!target || (target as HTMLButtonElement).disabled) return;
     event.preventDefault();
     target.focus();
@@ -285,23 +319,36 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
 
   const peopleLink = (
     <Link href="/loan-management/bank-person-list" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
-      {t("People & banks")}
+      {t("Contacts")}
     </Link>
   );
+  const errorLine = (key: keyof Errors) =>
+    errors[key] && (
+      <span id={`${groupId}-${key}-error`} role="alert" className="text-[12.5px] text-expense">
+        {errors[key]}
+      </span>
+    );
+  const pickPurpose = (next: Purpose) => {
+    setPurpose(next);
+    setErrors((now) => ({ ...now, purpose: undefined, what: undefined }));
+  };
 
   return (
-    <Drawer
+    <PopupDialog
       open={open}
-      width={470}
-      popup
-      title={t(editing ? "Edit loan entry" : "New loan entry")}
-      busy={isPending}
       onClose={onClose}
-      onOpenAutoFocus={focusFirst}
+      width={560}
+      busy={isPending}
       onSubmit={(event) => {
         event.preventDefault();
         save(false);
       }}
+      onOpenAutoFocus={focusFirst}
+      headClassName="items-center pt-4 pr-5 pb-3.5 pl-6"
+      titleClassName="text-[18px] font-bold"
+      bodyClassName="gap-4 px-6 py-4.5"
+      footerClassName="px-6"
+      title={t(editing ? "Edit loan entry" : "New loan entry")}
       footer={
         <div className="flex w-full flex-col gap-2">
           {!online && (
@@ -310,213 +357,267 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
               {t("You're offline. Saving waits until the internet is back.")}
             </p>
           )}
-          {/* Tight enough that the longest primary (Save profit payment) still fits the 470px drawer. */}
-          <div className={cn("flex items-center gap-2", !wide && "flex-wrap")}>
+          <div className="flex flex-wrap items-center gap-2.5">
             {!editing && (
-              <Button type="button" variant="secondary" onClick={() => save(true)} disabled={!canSave} className={cn("px-3", !wide && "order-2 flex-1")}>
+              <Button type="button" variant="secondary" size="lg" onClick={() => save(true)} disabled={!canSave} className="px-4 max-sm:order-2 max-sm:flex-1">
                 {t("Save & add another")}
               </Button>
             )}
-            <span className="hidden flex-1 md:block" />
-            <Button type="button" variant="ghost" onClick={onClose} className="hidden px-3 text-ink-soft md:inline-flex">
+            <span className="flex-1 max-sm:hidden" />
+            <Button type="button" variant="ghost" size="lg" onClick={onClose} className="px-4 text-ink-2 max-sm:hidden">
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={!canSave} className={cn("px-4", !wide && "order-1 w-full")}>
+            <Button type="submit" size="lg" disabled={!canSave} className="px-5.5 max-sm:order-1 max-sm:w-full">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t(saveLabel)}
+              {editing ? t("Save changes") : t("Save entry")}
             </Button>
           </div>
         </div>
       }
     >
-      {/* The board's 14px between fields: the entry fits without a scroll. */}
-      <div className="flex flex-col gap-3.5">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={PICKER_ID} className="text-body font-medium text-ink">
-            {t("Bank / person")}
-          </label>
-          <ContactPicker id={PICKER_ID} contacts={contacts} value={contactId} onChange={setContactId} currency={currency} size="xl" label={t("Bank / person")} />
-          {contacts.length === 0 && <p className="text-caption text-ink-muted">{fillNodes(t("Add a bank or person first, from {page}."), { page: peopleLink })}</p>}
-        </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={PICKER_ID} className={LABEL}>
+          {t("Bank / person")}
+        </label>
+        <ContactPicker
+          id={PICKER_ID}
+          contacts={contacts}
+          value={contactId}
+          onChange={(next) => {
+            setContactId(next);
+            setErrors((now) => ({ ...now, contact: undefined, amount: undefined }));
+          }}
+          currency={currency}
+          size="xl"
+          label={t("Bank / person")}
+          invalid={!!errors.contact}
+          describedBy={errors.contact ? `${groupId}-contact-error` : undefined}
+        />
+        {errorLine("contact")}
+        {contacts.length === 0 && <p className="text-caption text-ink-muted">{fillNodes(t("Add a bank or person first, from {page}."), { page: peopleLink })}</p>}
+      </div>
 
-        <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-          <legend id={`${groupId}-purpose`} className="mb-1.5 text-body leading-[normal] font-medium text-ink">
-            {t("What is this money for?")}
-          </legend>
-          <div role="radiogroup" aria-labelledby={`${groupId}-purpose`} className="grid grid-cols-2 gap-2">
-            {(
-              [
-                { value: "PRINCIPAL", title: "Principal", sub: "Changes the balance", on: "border-emerald bg-mint-50", ink: "text-emerald", subInk: "text-ink-2" },
-                { value: "PROFIT", title: "Profit / interest", sub: "Balance stays the same", on: "border-warning-fill bg-warning-50", ink: "text-warning-ink", subInk: "text-warning" },
-              ] as const
-            ).map((option) => {
-              const on = option.value === purpose;
+      <div className="flex flex-col gap-1.5">
+        <span id={`${groupId}-purpose`} className={LABEL}>
+          {t("What is this money for?")}
+        </span>
+        <div role="radiogroup" aria-labelledby={`${groupId}-purpose`} aria-describedby={errors.purpose ? `${groupId}-purpose-error` : undefined} className="grid grid-cols-2 gap-2">
+          {(
+            [
+              { value: "PRINCIPAL", title: "Principal", sub: "Changes the balance" },
+              { value: "PROFIT", title: "Profit / interest", sub: "Balance stays the same" },
+            ] as const
+          ).map((option) => {
+            const on = option.value === purpose;
+            return (
+              <button
+                key={option.value}
+                {...radioProps<Purpose | "">(option.value, { values: PURPOSES, value: purpose ?? "", onChange: (next) => next && pickPurpose(next), disabled: (candidate) => !!editing && candidate !== purpose })}
+                className={cn(CHOICE, "flex-col gap-px", choiceTone(on, !!errors.purpose))}
+              >
+                <span className={cn("text-[13.5px] font-semibold", on ? "text-emerald" : "text-ink")}>{t(option.title)}</span>
+                <span className="text-[12px] text-ink-muted">{t(option.sub)}</span>
+              </button>
+            );
+          })}
+        </div>
+        {errorLine("purpose")}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span id={`${groupId}-what`} className={LABEL}>
+          {t("What happened?")}
+        </span>
+        {!purpose ? (
+          <span className="rounded-[12px] border-[1.5px] border-dashed border-line p-3 text-center text-[12.5px] text-ink-faint">{t("Pick what the money is for first.")}</span>
+        ) : profit ? (
+          <div role="radiogroup" aria-labelledby={`${groupId}-what`} aria-describedby={errors.what ? `${groupId}-what-error` : undefined} className="grid grid-cols-2 gap-2">
+            {PROFIT_WAYS.map((option) => {
+              const on = option === profitWay;
+              const out = PROFIT_META[option].flow === "out";
               return (
-                <button key={option.value} {...radioProps(option.value, { values: PURPOSES, value: purpose, onChange: setPurpose, disabled: (candidate) => !!editing && candidate !== purpose })} className={cn("flex h-13 flex-col items-start justify-center gap-px rounded-field border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
-                  <span className={cn("text-small", on ? cn("font-bold", option.ink) : "font-semibold text-ink")}>{t(option.title)}</span>
-                  <span className={cn("text-caption font-normal", on ? option.subInk : "text-ink-muted")}>{t(option.sub)}</span>
+                <button
+                  key={option}
+                  {...radioProps<ProfitWay | "">(option, { values: PROFIT_WAYS, value: profitWay ?? "", onChange: (next) => next && setProfitWay(next), disabled: (candidate) => !!editing && candidate !== profitWay })}
+                  className={cn(CHOICE, "items-start gap-2", choiceTone(on, !!errors.what))}
+                >
+                  <WhatIcon out={out} />
+                  <span className="flex min-w-0 flex-col gap-px">
+                    <span className={cn("text-[13.5px] font-semibold", on ? "text-emerald" : "text-ink")}>{t(PROFIT_META[option].title)}</span>
+                    <span className="text-[12px] text-ink-muted">{t(PROFIT_META[option].sub)}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-        </fieldset>
-
-        {profit ? (
-          <>
-            <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-              <legend id={`${groupId}-way`} className="mb-1.5 text-body leading-[normal] font-medium text-ink">
-                {t("Did you pay it or receive it?")}
-              </legend>
-              <div role="radiogroup" aria-labelledby={`${groupId}-way`} className="grid grid-cols-2 gap-2">
-                {(
-                  [
-                    { value: "PAID", title: "I paid profit", sub: "Money went out · expense", on: "border-expense-fill bg-expense-soft/50", ink: "text-expense" },
-                    { value: "RECEIVED", title: "I received profit", sub: "Money came in · income", on: "border-income bg-mint-50/50", ink: "text-income" },
-                  ] as const
-                ).map((option) => {
-                  const on = option.value === profitWay;
-                  return (
-                    <button key={option.value} {...radioProps(option.value, { values: PROFIT_WAYS, value: profitWay, onChange: setProfitWay, disabled: (candidate) => !!editing && candidate !== profitWay })} className={cn("flex h-13 items-center gap-2.5 rounded-field border px-3 text-left transition-colors", on ? cn("border-[1.5px]", option.on) : "border-line bg-surface hover:border-line-strong")}>
-                      {option.value === "PAID" ? <ArrowUpRight className="size-4.5 shrink-0 text-expense-fill" strokeWidth={2.25} aria-hidden="true" /> : <ArrowDownLeft className="size-4.5 shrink-0 text-income" strokeWidth={2.25} aria-hidden="true" />}
-                      <span className="flex min-w-0 flex-col gap-px">
-                        <span className={cn("text-small", on ? cn("font-bold", option.ink) : "font-semibold text-ink")}>{t(option.title)}</span>
-                        <span className={cn("truncate text-caption font-normal", on ? option.ink : "text-ink-muted")}>{t(option.sub)}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-            <Field htmlFor="loan-category" label={label(t(profitPaid ? "Expense category" : "Income category"))} hint={t(profitPaid ? "Counted as an expense in this category. Your wallet changes once, from this entry." : "Counted as income in this category. Your wallet changes once, from this entry.")}>
-              {/* The board's percent tile before the category's name. */}
-              <span className="relative flex min-w-0">
-                <span aria-hidden="true" className={cn("pointer-events-none absolute top-1/2 left-3.5 z-1 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm", profitPaid ? "bg-warning-soft text-warning" : "bg-mint-50 text-emerald")}>
-                  <Percent className="size-3.5" strokeWidth={2.25} />
-                </span>
-                <NativeSelect id="loan-category" size="lg" value={picked} onChange={(event) => setCategory(event.target.value)} disabled={options.length === 0} frameClassName="w-full" className="pl-13 font-semibold">
-                  {options.length === 0 && <option value="">{t(loading ? "Loading..." : "No categories yet")}</option>}
-                  {options.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </span>
-            </Field>
-          </>
         ) : (
-          <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-            <legend id={`${groupId}-kind`} className="mb-1.5 text-body leading-[normal] font-medium text-ink">
-              {t("What happened?")}
-            </legend>
-            <div role="radiogroup" aria-labelledby={`${groupId}-kind`} aria-describedby={noneOwed ? `${groupId}-kind-error` : undefined} className="grid grid-cols-2 gap-2">
-              {LOAN_ENTRY_KINDS.map((option) => {
-                const on = option === kind;
-                const out = LOAN_ENTRY_META[option].flow === "out";
-                // Nothing owed on that side: it shows, with why, but can't be picked.
-                const blocked = limitOf(option) === 0 || (!!editing && option !== kind);
-                return (
-                  <button
-                    key={option}
-                    {...radioProps(option, { values: LOAN_ENTRY_KINDS, value: kind, onChange: setKind, disabled: (candidate) => candidate !== kind && (!!editing || limitOf(candidate) === 0) })}
-                    className={cn("flex h-14 items-center gap-2.5 rounded-field border px-3 text-left transition-colors", on ? "border-[1.5px] border-emerald bg-mint-50" : "border-line bg-surface hover:border-line-strong", blocked && !on && "cursor-not-allowed opacity-60 hover:border-line")}
-                  >
-                    {out ? <ArrowUpRight className="size-4.5 shrink-0 text-expense-fill" strokeWidth={2.25} aria-hidden="true" /> : <ArrowDownLeft className="size-4.5 shrink-0 text-income" strokeWidth={2.25} aria-hidden="true" />}
-                    <span className="flex min-w-0 flex-col gap-px">
-                      <span className={cn("text-small", on ? "font-bold text-emerald" : "font-semibold text-ink")}>{t(LOAN_ENTRY_META[option].title)}</span>
-                      <span className="truncate text-caption font-normal text-ink-muted">{blocked && limitOf(option) === 0 ? t(REPAYMENTS[option]?.noneSub ?? "") : t(LOAN_ENTRY_META[option].sub)}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            {noneOwed && repayment && (
-              <p id={`${groupId}-kind-error`} role="alert" className="mt-2 text-caption text-expense">
-                {t(repayment.none)}
-              </p>
-            )}
-          </fieldset>
-        )}
-
-        <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_150px]">
-          <WalletPicker label={t(walletLabel)} size="lg" wallets={wallets} value={accountId} onChange={setAccountId} after={walletAfter} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-          <Field htmlFor="loan-date" label={label(t("Date"))}>
-            <DayInput id="loan-date" size="xl" value={date} onChange={setDate} max={getAppToday()} className="gap-2 text-body" />
-          </Field>
-        </div>
-
-        <div className="grid gap-2.5 md:grid-cols-[180px_130px_minmax(0,1fr)]">
-          <Field htmlFor={amountId} label={label(t("Amount"))} error={overLimit && repayment && limit !== null ? t(repayment.over, { amount: money(limit) }) : undefined}>
-            <Input
-              id={amountId}
-              type="text"
-              inputMode="decimal"
-              size="lg"
-              {...amountField}
-              placeholder="0"
-              invalid={overLimit}
-              leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-[17px] font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>}
-              frameClassName="h-12 gap-0 overflow-hidden rounded-sm pl-0"
-              className="pl-3 text-h3 font-bold tabular-nums"
-            />
-          </Field>
-          <Field htmlFor="loan-charge" label={label(t("Charge"), true)} hint={chargeValue > 0 ? t("Paid from the same wallet, as an expense") : undefined}>
-            <Input id="loan-charge" type="text" inputMode="decimal" size="lg" {...chargeField} placeholder="0" className="px-0 tabular-nums" frameClassName="px-3" />
-          </Field>
-          <Field htmlFor="loan-ref" label={label(t("Reference"), true)}>
-            <Input id="loan-ref" size="lg" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={100} placeholder={t(profit ? "e.g. Sep profit · slip 4471" : "e.g. Loan no. BL-2231")} className="px-0" frameClassName="px-3" />
-          </Field>
-        </div>
-
-        {contact && (
-          <div className="flex flex-col gap-2 rounded-md border border-line bg-strip px-3.5 py-3 text-small tabular-nums">
-            {profit ? (
-              <>
-                <div className="flex justify-between gap-3">
-                  <span className="truncate text-ink-2">{t("{name} loan", { name: contact.name })}</span>
-                  <span className="font-semibold text-ink">
-                    {directionText(balanceNow)} · <span className="font-medium text-ink-muted">{t("no change")}</span>
+          <div role="radiogroup" aria-labelledby={`${groupId}-what`} aria-describedby={errors.what ? `${groupId}-what-error` : undefined} className="grid grid-cols-2 gap-2">
+            {LOAN_ENTRY_KINDS.map((option) => {
+              const on = option === kind;
+              const out = LOAN_ENTRY_META[option].flow === "out";
+              // Nothing owed on that side: it shows, with why, but can't be picked.
+              const none = limitOf(option) === 0;
+              const blocked = none || (!!editing && option !== kind);
+              return (
+                <button
+                  key={option}
+                  {...radioProps<LoanEntryKind | "">(option, { values: LOAN_ENTRY_KINDS, value: kind ?? "", onChange: (next) => next && setKind(next), disabled: (candidate) => candidate !== kind && (!!editing || limitOf(candidate as LoanEntryKind) === 0) })}
+                  className={cn(CHOICE, "items-start gap-2", choiceTone(on, !!errors.what), blocked && !on && "cursor-not-allowed opacity-60 hover:border-line")}
+                >
+                  <WhatIcon out={out} />
+                  <span className="flex min-w-0 flex-col gap-px">
+                    <span className={cn("text-[13.5px] font-semibold", on ? "text-emerald" : "text-ink")}>{t(LOAN_ENTRY_META[option].title)}</span>
+                    <span className="text-[12px] text-ink-muted">{none ? t(REPAYMENTS[option]?.noneSub ?? "") : t(LOAN_ENTRY_META[option].sub)}</span>
                   </span>
-                </div>
-                {picked && (
-                  <div className="flex justify-between gap-3">
-                    <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM", fmt) })}</span>
-                    <span className={cn("font-semibold", profitPaid ? "text-expense" : "text-income")}>+ {money(value)}</span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex justify-between gap-3">
-                <span className="truncate text-ink-2">{contact.name}</span>
-                {/* No "after" for an amount the API would refuse. */}
-                {overLimit || noneOwed ? (
-                  <span className="text-ink-muted">{directionText(balanceNow)}</span>
-                ) : (
-                  <span>
-                    <span className="text-ink-muted">{directionText(balanceNow)} → </span>
-                    <span className={cn("font-bold", DIRECTION_META[loanDirection(balanceAfter)].text)}>{directionText(balanceAfter)}</span>
-                  </span>
-                )}
-              </div>
-            )}
-            {chargeValue > 0 && (
-              <div className="flex justify-between gap-3">
-                <span className="truncate text-ink-2">{t("Charge · expense")}</span>
-                <span className="font-semibold text-expense">− {money(chargeValue)}</span>
-              </div>
-            )}
-            {wallet && walletAfter !== null && (
-              <div className="flex justify-between gap-3">
-                <span className="truncate text-ink-2">{accountDisplayName(wallet, displayLanguage(locale))}</span>
-                <span>
-                  <span className="text-ink-muted">{formatCurrency(walletBefore ?? wallet.currentBalance, currency, fmt)} → </span>
-                  <span className="font-semibold text-ink">{formatCurrency(walletAfter, currency, fmt)}</span>
-                </span>
-              </div>
-            )}
+                </button>
+              );
+            })}
           </div>
         )}
+        {errorLine("what")}
       </div>
-    </Drawer>
+
+      {/* Not on the board: profit is filed under a category, as income or an expense. */}
+      {profit && profitWay && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="loan-category" className={LABEL}>
+            {t(profitPaid ? "Expense category" : "Income category")}
+          </label>
+          <span className="relative flex min-w-0">
+            <span aria-hidden="true" className={cn("pointer-events-none absolute top-1/2 left-3 z-1 flex size-6.5 -translate-y-1/2 items-center justify-center rounded-sm", profitPaid ? "bg-warning-soft text-warning" : "bg-mint-50 text-emerald")}>
+              <Percent className="size-3.5" strokeWidth={2.25} />
+            </span>
+            <NativeSelect id="loan-category" size="md" value={picked} onChange={(event) => setCategory(event.target.value)} disabled={options.length === 0} frameClassName="w-full rounded-[12px]" className="pl-12 font-semibold">
+              {options.length === 0 && <option value="">{t(loading ? "Loading..." : "No categories yet")}</option>}
+              {options.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </NativeSelect>
+          </span>
+        </div>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <WalletPicker
+            label={t(accountLabel)}
+            size="lg"
+            wallets={wallets}
+            value={accountId}
+            onChange={(next) => {
+              setAccountId(next);
+              setErrors((now) => ({ ...now, account: undefined, amount: undefined }));
+            }}
+            after={walletAfter}
+            // Money coming in can land in an account below zero; money going
+            // out needs one with something in it.
+            minBalance={known && !flowIn ? 0 : Number.NEGATIVE_INFINITY}
+            currency={currency}
+            loading={loading}
+            error={walletsError}
+            onClose={onClose}
+            placeholder={t("Select an account")}
+            invalid={!!errors.account}
+            describedBy={errors.account ? `${groupId}-account-error` : undefined}
+          />
+          {errorLine("account")}
+        </div>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <label htmlFor="loan-date" className={LABEL}>
+            {t("Date")}
+          </label>
+          <DayInput id="loan-date" size="lg" value={date} onChange={setDate} max={getAppToday()} invalid={!!errors.date} className="h-13 gap-2 rounded-[12px]" />
+          {errorLine("date")}
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <label htmlFor={amountId} className={LABEL}>
+            {t("Amount")}
+          </label>
+          <Input
+            id={amountId}
+            type="text"
+            inputMode="decimal"
+            size="lg"
+            {...amountField}
+            placeholder="0"
+            invalid={!!errors.amount}
+            aria-describedby={errors.amount ? `${groupId}-amount-error` : undefined}
+            leading={<span className="text-[15px] font-semibold text-ink-faint">{currencySymbol(currency, fmt)}</span>}
+            frameClassName="gap-1.5 rounded-[12px] px-3"
+            className="text-[16px] font-bold tabular-nums"
+          />
+          {errorLine("amount")}
+        </div>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <label htmlFor="loan-ref" className={LABEL}>
+            {t("Note or reference (optional)")}
+          </label>
+          <Input id="loan-ref" size="lg" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={120} placeholder={t(profit ? "e.g. Sep profit · slip 4471" : "e.g. Loan no. BL-2231")} frameClassName="rounded-[12px] px-3" />
+        </div>
+      </div>
+
+      {/* Not on the board: a bank or service charge, folded away. */}
+      {showCharge ? (
+        <div className="-mt-1 flex flex-col gap-1.5">
+          <label htmlFor="loan-charge" className={LABEL}>
+            {t("Charge")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+          </label>
+          <div className="flex items-center gap-2.5">
+            <Input id="loan-charge" type="text" inputMode="decimal" size="md" {...chargeField} placeholder="0" leading={<span className="text-[14px] font-semibold text-ink-faint">{currencySymbol(currency, fmt)}</span>} frameClassName="w-40 gap-1.5 rounded-[12px] px-3" className="tabular-nums" />
+            <span className="text-caption text-ink-muted">{t("Paid from the same wallet, as an expense")}</span>
+          </div>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setShowCharge(true)} className="-mt-1 flex h-8 items-center gap-1.5 self-start text-[13px] font-semibold text-emerald hover:text-emerald-hover">
+          <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+          {t("Add a bank or service charge")}
+        </button>
+      )}
+
+      {contact && known && wallet && value > 0 && !errors.amount && (
+        <div aria-live="polite" className="flex flex-col gap-2 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-[13px] tabular-nums">
+          <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("After this")}</span>
+          <div className="flex justify-between gap-2.5">
+            <span className="truncate text-ink-2">{contact.name}</span>
+            <span className="whitespace-nowrap">
+              <span className="text-ink-muted">{directionText(balanceNow)} → </span>
+              {profit ? <b className="font-bold text-ink-muted">{t("no change")}</b> : <b className={cn("font-bold", DIRECTION_META[loanDirection(balanceAfter)].text)}>{directionText(balanceAfter)}</b>}
+            </span>
+          </div>
+          {profit && picked && (
+            <div className="flex justify-between gap-2.5">
+              <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM", fmt) })}</span>
+              <b className={cn("font-bold", profitPaid ? "text-expense" : "text-income")}>+ {money(value)}</b>
+            </div>
+          )}
+          {chargeValue > 0 && (
+            <div className="flex justify-between gap-2.5">
+              <span className="truncate text-ink-2">{t("Charge · expense")}</span>
+              <b className="font-bold text-expense">− {money(chargeValue)}</b>
+            </div>
+          )}
+          {walletAfter !== null && (
+            <div className="flex justify-between gap-2.5">
+              <span className="truncate text-ink-2">{accountDisplayName(wallet, displayLanguage(locale))}</span>
+              <span className="whitespace-nowrap">
+                <span className="text-ink-muted">{formatCurrency(walletBefore ?? wallet.currentBalance, currency, fmt)} → </span>
+                <b className="font-bold text-ink">{formatCurrency(walletAfter, currency, fmt)}</b>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </PopupDialog>
   );
+}
+
+// The way the money went: out up and to the right in red, in down and to
+// the left in the brand colour.
+function WhatIcon({ out }: { out: boolean }) {
+  return out ? <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-expense-fill" strokeWidth={2.25} aria-hidden="true" /> : <ArrowDownLeft className="mt-0.5 size-4 shrink-0 text-emerald" strokeWidth={2.25} aria-hidden="true" />;
 }

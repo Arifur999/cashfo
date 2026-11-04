@@ -3,6 +3,7 @@ import { LoanContactsPageClient } from "@/components/modules/Customer/LoanManage
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getAllContacts } from "@/lib/customer/contacts";
+import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 
 export const generateMetadata = () => customerPageMetadata("/loan-management/bank-person-list");
@@ -18,7 +19,7 @@ export default async function LoanContactsPage() {
 
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
-  const contacts = await getAllContacts(activeBusinessId, "LOAN");
+  const [contacts, dashboard] = await Promise.all([getAllContacts(activeBusinessId, "LOAN"), getLoanDashboard(activeBusinessId)]);
 
-  return <LoanContactsPageClient businessId={activeBusinessId} contacts={contacts} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} canTrade={activeBusiness?.type === "BUSINESS"} />;
+  return <LoanContactsPageClient businessId={activeBusinessId} contacts={contacts} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} activity={dashboard.rows} canTrade={activeBusiness?.type === "BUSINESS"} />;
 }
