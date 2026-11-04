@@ -803,6 +803,23 @@ export interface LoanDashboardRow {
   profitReceived: string;
   currentBalance: string;
   direction: LoanBalanceDirection;
+  // How many entries there are with them, and the newest one (an older
+  // backend sends neither).
+  entries?: number;
+  lastEntry?: { kind: LoanActivityKind; date: string } | null;
+}
+
+// A loan entry by what it was: a loan given or taken, money back, or profit.
+export type LoanActivityKind = "GAVE" | "TOOK" | "GOT_BACK" | "PAID_BACK" | "PROFIT_PAID" | "PROFIT_RECEIVED";
+
+export interface LoanMonth {
+  lent: string;
+  borrowed: string;
+  gotBack: string;
+  paidBack: string;
+  profitPaid: string;
+  profitReceived: string;
+  entries: number;
 }
 
 export interface LoanDashboard {
@@ -816,6 +833,8 @@ export interface LoanDashboard {
   // about how much a month.
   profitPaidThisYear: string;
   topProfit: { contactId: string; contactName: string; monthly: string } | null;
+  // This Asia/Dhaka month's loan money (an older backend sends none).
+  thisMonth?: LoanMonth;
   rows: LoanDashboardRow[];
 }
 

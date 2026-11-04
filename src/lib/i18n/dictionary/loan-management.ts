@@ -377,4 +377,18 @@ export const loanManagementDictionary: Record<string, string> = {
   "Its charge of {amount} is removed too.": "এর {amount} চার্জও বাদ যাবে।",
   "Paid from the same wallet, as an expense": "একই ওয়ালেট থেকে খরচ হিসেবে কাটা হবে",
   "Charge · expense": "চার্জ · খরচ",
+  // Loans v15: this month, and a contact's last activity.
+  "Lent": "ধার দিলাম",
+  "Borrowed": "ধার নিলাম",
+  "Got back": "ফেরত পেলাম",
+  "Paid back@@month": "শোধ দিলাম",
+  "Profit paid@@month": "মুনাফা দিলাম",
+  "Profit received@@month": "মুনাফা পেলাম",
+  "Gave loan {date}": "{date} ঋণ দেওয়া",
+  "Took loan {date}": "{date} ঋণ নেওয়া",
+  "Got money back {date}": "{date} টাকা ফেরত পাওয়া",
+  "Paid back {date}": "{date} শোধ দেওয়া",
+  "Profit paid {date}": "{date} মুনাফা দেওয়া",
+  "Profit received {date}": "{date} মুনাফা পাওয়া",
+  "Paid back in full {date}": "{date} পুরো শোধ",
 };
