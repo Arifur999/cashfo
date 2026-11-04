@@ -24,13 +24,16 @@ interface ContactPickerProps {
   disabled?: boolean;
   // The list's name for assistive tech: the field's own label.
   label?: string;
+  // Save found none picked: a red edge, and the error read out with it.
+  invalid?: boolean;
+  describedBy?: string;
 }
 
 // A bank or person, found by typing: their avatar, name and kind, and where
 // the balance stands. The search field drives the list: the arrow keys move
 // through it and Enter picks, as a combobox does. Archived contacts come
 // last, still there for their statement.
-export function ContactPicker({ contacts, value, onChange, currency, size = "md", id, disabled = false, label }: ContactPickerProps) {
+export function ContactPicker({ contacts, value, onChange, currency, size = "md", id, disabled = false, label, invalid = false, describedBy }: ContactPickerProps) {
   const { t, fmt } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -91,9 +94,11 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
           id={id}
           aria-haspopup="dialog"
           aria-expanded={open}
+          aria-describedby={describedBy}
           disabled={disabled || contacts.length === 0}
           className={cn(
-            "flex w-full min-w-0 items-center gap-3 border border-input bg-surface text-left transition-[border-color,box-shadow] focus-visible:border-focus-ring focus-visible:focus-halo focus-visible:outline-none disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo",
+            invalid ? "border-expense" : "border-input",
+            "flex w-full min-w-0 items-center gap-3 border bg-surface text-left transition-[border-color,box-shadow] focus-visible:border-focus-ring focus-visible:focus-halo focus-visible:outline-none disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo",
             size === "xl" ? "h-13 rounded-field px-3.5" : "h-11 rounded-field px-3",
           )}
         >
