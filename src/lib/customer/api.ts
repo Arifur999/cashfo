@@ -807,6 +807,8 @@ export interface LoanDashboardRow {
   // backend sends neither).
   entries?: number;
   lastEntry?: { kind: LoanActivityKind; date: string } | null;
+  // The day of their first entry.
+  firstEntryDate?: string | null;
 }
 
 // A loan entry by what it was: a loan given or taken, money back, or profit.
@@ -861,6 +863,10 @@ export interface LoanStatementRow {
   reversalOfId?: string | null;
   // Voided, or the reversal that voided it: listed, but not in the balance.
   cancelled?: boolean;
+  // What happened, and a charge posted with it (an older backend sends
+  // neither).
+  kind?: LoanActivityKind;
+  charge?: string | null;
 }
 
 export interface LoanStatement {

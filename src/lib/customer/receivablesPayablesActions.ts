@@ -121,3 +121,14 @@ export async function getContactBalanceDetailAction(businessId: string, contactI
     return null;
   }
 }
+
+// One loan entry as it was saved, to fill its Edit (the statement lists
+// only what it shows); null when it can't be read.
+export async function getLoanTransactionAction(businessId: string, transactionId: string): Promise<Transaction | null> {
+  try {
+    const res = await customerApi.get<Transaction>(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${transactionId}`, { headers: await authHeaders() });
+    return res.data;
+  } catch {
+    return null;
+  }
+}
