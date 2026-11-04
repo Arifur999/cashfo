@@ -406,4 +406,10 @@ export const loanManagementDictionary: Record<string, string> = {
   "Pawna and Dena are even": "পাওনা আর দেনা সমান",
   "Net · {count} contact": "নিট · {count} জন",
   "Net · {count} contacts": "নিট · {count} জন",
+  // Loans v15: contacts table.
+  "Contacts table": "কন্টাক্টের টেবিল",
+  "Open statement for {name}": "স্টেটমেন্ট খুলুন: {name}",
+  "Has transactions, can’t be deleted": "লেনদেন আছে, মোছা যাবে না",
+  "Total · {count} contact": "মোট · {count} জন",
+  "Total · {count} contacts": "মোট · {count} জন",
 };

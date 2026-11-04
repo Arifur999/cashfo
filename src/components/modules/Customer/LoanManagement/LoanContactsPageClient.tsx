@@ -17,17 +17,20 @@ import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { Contact, ContactType, LoanBalanceDirection } from "@/lib/customer/api";
+import type { Contact, ContactType, LoanBalanceDirection, LoanDashboardRow } from "@/lib/customer/api";
 import { archiveContactAction, deleteContactAction, unarchiveContactAction } from "@/lib/customer/contactActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { contactMatches, DIRECTION_META, LOAN_KIND_LABELS, LOAN_KINDS, loanDirection, loanErrorText } from "@/lib/customer/loanDisplay";
+import { contactMatches, DIRECTION_META, lastActivity, LOAN_KIND_LABELS, LOAN_KINDS, loanDirection, loanErrorText, wordInitials } from "@/lib/customer/loanDisplay";
 import { getAppToday } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
+import { useStoredChoice } from "@/components/modules/Customer/Balance/useStoredChoice";
+import { ViewToggle, type ListView } from "@/components/modules/Customer/Shared/ViewToggle";
 import { LoanContactDrawer } from "./LoanContactDrawer";
+import { LoanContactsTable } from "./LoanContactsTable";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
 
 interface LoanContactsPageClientProps {
@@ -38,6 +41,8 @@ interface LoanContactsPageClientProps {
   canManage: boolean;
   // A business workspace, where a contact can be moved to Books' trade list.
   canTrade: boolean;
+  // Each contact's entries and what happened last (the dashboard's rows).
+  activity: LoanDashboardRow[];
 }
 
 type Tab = "ALL" | LoanBalanceDirection | "ARCHIVED";
@@ -46,11 +51,13 @@ const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 te
 // Cards come 24 at a time; the totals above them count everyone.
 const STEP = 24;
 const GRID_ID = "loan-people";
+// The board's table first, then the cards.
+const VIEWS: readonly ListView[] = ["table", "cards"];
 
 // People & banks: everyone you have dena-pawna with, one card each with
 // where the balance stands and the two things you do next. Archived
 // contacts wait in their own tab, out of the counts.
-export function LoanContactsPageClient({ businessId, contacts, currency, canManage, canTrade }: LoanContactsPageClientProps) {
+export function LoanContactsPageClient({ businessId, contacts, currency, canManage, canTrade, activity }: LoanContactsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -60,6 +67,8 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   const [drawer, setDrawer] = useState<"closed" | "create" | Contact>("closed");
   const [entryFor, setEntryFor] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [view, setView] = useStoredChoice<ListView>("smartly-loan-contacts-view", VIEWS, "table");
+  const activityOf = new Map(activity.map((row) => [row.contactId, row]));
 
   const active = contacts.filter((contact) => contact.status === "ACTIVE");
   const archived = contacts.filter((contact) => contact.status === "ARCHIVED");
@@ -75,6 +84,8 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
     // Biggest balance first, either way, as the board lists them.
     .sort((a, b) => Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance)));
   const filtered = currentTab !== "ALL" || kind !== "" || search.trim() !== "";
+  const shownPawna = shown.reduce((sum, contact) => sum + Math.max(0, Number(contact.currentBalance)), 0);
+  const shownDena = shown.reduce((sum, contact) => sum + Math.max(0, -Number(contact.currentBalance)), 0);
 
   // How many cards are out, for the filters they were grown under: a new
   // filter starts again at the first 24.
@@ -161,8 +172,16 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
     ...(archived.length > 0 ? [{ value: "ARCHIVED" as Tab, label: counted(t("Archived@@tab"), archived.length) }] : []),
   ];
 
-  // "Last entry 3 Mar", with the year once it isn't this one.
+  // "Got money back 16 Sep", with the year once it isn't this one.
   const thisYear = getAppToday().slice(0, 4);
+  const dayOf = (date: string) => formatDate(date, formatDate(date, "yyyy") === thisYear ? "d MMM" : "d MMM yyyy", fmt);
+  const lastOf = (contact: Contact) => {
+    const row = activityOf.get(contact.id);
+    // An older backend without the activity: the card's line.
+    if (!row || row.lastEntry === undefined) return lastLine(contact);
+    const last = lastActivity({ ...row, currentBalance: contact.currentBalance });
+    return t(last.key, { date: last.date ? dayOf(last.date) : "" });
+  };
   const lastLine = (contact: Contact) => {
     if (contact.lastActivityAt === undefined) return t("Added {date}", { date: formatDate(contact.createdAt, undefined, fmt) });
     // Never an entry: what they were added with, when there was something.
@@ -172,7 +191,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   };
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 md:min-h-full">
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
@@ -213,6 +232,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
             <span className="text-small text-ink-muted tabular-nums max-md:w-full">
               {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency, fmt)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency, fmt)}</span>
             </span>
+            <ViewToggle value={view} onChange={setView} order={VIEWS} className="max-md:hidden" />
           </div>
 
           {shown.length === 0 ? (
@@ -224,8 +244,25 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 </Button>
               )}
             </div>
-          ) : (
-            <div id={GRID_ID} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          ) : view === "table" ? (
+            <div className="max-md:hidden md:flex md:flex-1 md:flex-col">
+              <LoanContactsTable
+                contacts={shown}
+                currency={currency}
+                canManage={canManage}
+                busy={isPending}
+                lastOf={lastOf}
+                subOf={(contact) => (institution(contact) && contact.notes) || null}
+                pawna={shownPawna}
+                dena={shownDena}
+                onEdit={(contact) => setDrawer(contact)}
+                onRemove={remove}
+                onRestore={restore}
+              />
+            </div>
+          ) : null}
+          {shown.length > 0 && (
+            <div id={GRID_ID} className={cn("grid gap-4 md:grid-cols-2 xl:grid-cols-3", view === "table" && "md:hidden")}>
               {shown.slice(0, visible).map((contact) => {
                 const direction = loanDirection(contact.currentBalance);
                 const meta = DIRECTION_META[direction];
@@ -234,7 +271,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 return (
                   <Card key={contact.id} padding="none" className={cn("flex min-w-0 flex-col gap-3.5 p-4.5", isArchived && "opacity-60")}>
                     <div className="flex items-center gap-3">
-                      <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} />
+                      <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} initials={wordInitials(contact.name)} />
                       <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                         <span className="flex min-w-0 items-center gap-2">
                           <span className="truncate text-title text-ink">{contact.name}</span>
@@ -315,7 +352,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                       </Chip>
                     </div>
                     <div className="flex items-center justify-between gap-2 text-caption font-normal text-ink-muted">
-                      <span className="min-w-0 truncate">{lastLine(contact)}</span>
+                      <span className="min-w-0 truncate">{lastOf(contact)}</span>
                       {/* The board's text links, 44px tall under a finger. */}
                       <span className="flex shrink-0 gap-3">
                         {canManage && !isArchived && (
@@ -334,6 +371,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
             </div>
           )}
           <LoadMore
+            className={cn(view === "table" && "md:hidden")}
             shown={Math.min(visible, shown.length)}
             total={shown.length}
             step={STEP}
