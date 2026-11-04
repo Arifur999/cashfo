@@ -546,6 +546,10 @@ export interface CategoryBreakdownRow {
   amount: string;
   percent: number;
   color: string;
+  // How many transactions (an older API leaves it out).
+  count?: number;
+  // The money with no category, read as "Uncategorised".
+  uncategorised?: boolean;
 }
 
 // A calendar month with any income or expense in it.
@@ -627,6 +631,9 @@ export interface Transaction {
   // withdrawal, an asset purchase or sale, a referral payout) -- voiding
   // only the money would leave that feature's figures wrong.
   voidable: boolean;
+  // A charge (its own expense) points at the transfer or loan entry it was
+  // paid with; null otherwise.
+  chargeForId?: string | null;
   entries: TransactionEntry[];
   // The bank or service charge paid with this entry (a loan entry's
   // Charge column); null without one. Missing from an older backend.
@@ -905,11 +912,24 @@ export interface CategorySetRow {
   color: string;
   monthlyLimit: string | null;
   transactionCount: number;
+  // "zakat": the Zakat page's own category -- listed, changed only there.
+  system?: "zakat" | null;
+}
+
+// Money the app files under a name no category of the workspace has: the
+// charges paid with transfers and loan entries ("Bank charge", ...).
+export interface AutomaticCategoryRow {
+  type: "EXPENSE";
+  name: string;
+  kind: "charges";
+  transactionCount: number;
 }
 
 export interface CategorySet {
   income: CategorySetRow[];
   expense: CategorySetRow[];
+  // Left out by an older backend.
+  automatic?: AutomaticCategoryRow[];
 }
 
 // Savings Goals (/savings-goals/*): a named target funded by real

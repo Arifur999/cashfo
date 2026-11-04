@@ -100,6 +100,17 @@ describe("describeTransaction without a category", () => {
     expect(row.title).toBe("Rent Expense");
     // The account only stands in: the entry itself carries no category.
     expect(row.entryCategory).toBeNull();
+    expect(row.uncategorised).toBe(true);
+  });
+
+  it("takes the note a quick entry keeps as the title, before the category", () => {
+    const quick = transaction({
+      entries: [
+        entry({ entryType: "DEBIT", amount: "7", note: "Weekly groceries", account: { id: "x", name: "Food Expense", accountType: "EXPENSE", accountSubtype: null } }),
+        entry({ entryType: "CREDIT", amount: "7", account: { id: "w", name: "Cash", accountType: "ASSET", accountSubtype: "cash" } }),
+      ],
+    });
+    expect(describeTransaction(quick, {}).title).toBe("Weekly groceries");
   });
 
   it("takes the wallet, not another asset, as the money side of an asset bought", () => {
@@ -203,7 +214,9 @@ describe("categoryLabel / systemText / rowTitle", () => {
 
   it("words the backend's own names in the reader's language and leaves a reader's alone", () => {
     expect(categoryLabel("Asset Sale", t)).toBe("bn:Asset Sale");
-    expect(categoryLabel("Food & Dining", t)).toBe("Food & Dining");
+    expect(categoryLabel("Lunch money", t)).toBe("Lunch money");
+    // A starter category keeps the app's wording while it keeps its name.
+    expect(categoryLabel("Food & Dining", t)).toBe("bn:Food & Dining");
     expect(systemText("Referral Program withdrawal", t)).toBe("bn:Referral Program withdrawal");
     expect(systemText("Lunch with team", t)).toBe("Lunch with team");
     expect(systemText("Asset sale: Kitchen fridge", (key, values) => `bn:${key}|${values?.name}`)).toBe("bn:Asset sale: {name}|Kitchen fridge");
@@ -411,7 +424,12 @@ describe("readTransactionFilters / activeFilterCount", () => {
   });
 
   it("ignores what the list can't apply", () => {
-    expect(read("type=TRANSFER&dateFrom=2026-13-01&search=%20%20")).toEqual({ type: undefined, categoryId: undefined, accountId: undefined, dateFrom: undefined, dateTo: undefined, search: undefined });
+    expect(read("type=TRANSFER&dateFrom=2026-13-01&search=%20%20&uncategorised=yes")).toEqual({ type: undefined, categoryId: undefined, uncategorised: undefined, accountId: undefined, dateFrom: undefined, dateTo: undefined, search: undefined });
+  });
+
+  it("reads the money with no category as one filter", () => {
+    expect(read("uncategorised=1").uncategorised).toBe(true);
+    expect(activeFilterCount(read("type=EXPENSE&uncategorised=true"))).toBe(2);
   });
 
   it("knows a range that runs backwards", () => {
@@ -423,8 +441,8 @@ describe("readTransactionFilters / activeFilterCount", () => {
 
 describe("categoryTransactionsHref", () => {
   it("opens one category's entries for the whole month", () => {
-    expect(categoryTransactionsHref("EXPENSE", "Food & Dining", 2026, 2)).toBe("/transactions?type=EXPENSE&categoryId=Food+%26+Dining&dateFrom=2026-02-01&dateTo=2026-02-28");
-    expect(categoryTransactionsHref("INCOME", "Salary", 2024, 2)).toContain("dateTo=2024-02-29");
+    expect(categoryTransactionsHref("EXPENSE", "Food & Dining", 2026, 2)).toBe("/transactions?type=EXPENSE&categoryId=Food+%26+Dining&month=2&year=2026");
+    expect(categoryTransactionsHref("INCOME", "Salary", 2024, 12)).toBe("/transactions?type=INCOME&categoryId=Salary&month=12&year=2024");
   });
 });
 

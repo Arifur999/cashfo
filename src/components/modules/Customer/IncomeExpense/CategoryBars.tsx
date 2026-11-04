@@ -1,31 +1,38 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 import Card from "@/components/smartly/Card";
-import type { CategoryBreakdown } from "@/lib/customer/api";
+import type { CategoryBreakdown, CategoryBreakdownRow } from "@/lib/customer/api";
 import { categoryColorVar, categoryTone } from "@/lib/customer/categoryTone";
 import { formatCurrency } from "@/lib/customer/currency";
 import { toLocaleDigits } from "@/lib/i18n/digits";
-import { formatPercent } from "@/lib/number";
+import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { donutGradient } from "./ieFigures";
+import { categoryName, donutGradient, oneDecimal } from "./ieFigures";
 
 interface CategoryBarsProps {
   id: string;
   title: string;
   // The donut's middle: "Total income" or "Total expense".
   totalLabel: string;
+  // "All income ›": every transaction of the kind in the period.
+  viewAll: { label: string; href: string };
   breakdown: CategoryBreakdown;
   currency: string;
   // The total's colour: income green, expense red.
   tone: "income" | "expense";
   emptyText: string;
+  // A category's transactions in the period.
+  hrefFor: (row: CategoryBreakdownRow) => string;
 }
 
-// One kind's categories: a donut of their shares with the total in its
-// middle, then each category biggest first, with its amount, its share and
-// a bar of that share in the category's own colour.
-export function CategoryBars({ id, title, totalLabel, breakdown, currency, tone, emptyText }: CategoryBarsProps) {
+// One kind's categories (the IEOverview board): a donut of their shares
+// with the total in its middle, then each category biggest first with how
+// many transactions it has, its amount, its share and a bar of that share
+// in the category's own colour, each opening its transactions.
+export function CategoryBars({ id, title, totalLabel, viewAll, breakdown, currency, tone, emptyText, hrefFor }: CategoryBarsProps) {
   const { t, fmt } = useLocale();
   const rows = [...breakdown.categories].sort((a, b) => Number(b.amount) - Number(a.amount));
   const total = Number(breakdown.total);
@@ -38,12 +45,15 @@ export function CategoryBars({ id, title, totalLabel, breakdown, currency, tone,
   );
   const toneText = tone === "income" ? "text-income" : "text-expense";
   return (
-    <Card padding="none" className="overflow-hidden" aria-labelledby={id} role="region">
+    <Card padding="none" className="overflow-hidden rounded-[14px]" aria-labelledby={id} role="region">
       <div className="flex items-center justify-between gap-3 border-b border-divider px-5 py-4">
         <h2 id={id} className="text-title font-semibold text-ink">
           {title}
         </h2>
-        <span className={cn("text-body font-bold tabular-nums", toneText)}>{totalText}</span>
+        <Link href={viewAll.href} className="flex items-center gap-0.5 rounded-sm text-small font-semibold text-emerald hover:underline">
+          {viewAll.label}
+          <ChevronRight className="size-3.5" aria-hidden="true" />
+        </Link>
       </div>
       <div className="flex justify-center px-5 pt-6 pb-5">
         <div role="img" aria-label={t("{title} pie chart", { title })} className="relative size-50 rounded-full" style={{ background: pie }}>
@@ -57,23 +67,27 @@ export function CategoryBars({ id, title, totalLabel, breakdown, currency, tone,
         <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Category details")}</span>
       </div>
       {rows.length === 0 ? (
-        <p className="px-5 pt-4 pb-8 text-center text-small text-ink-muted">{t(emptyText)}</p>
+        <p className="px-5 pt-4 pb-8 text-center text-small text-ink-muted">{emptyText}</p>
       ) : (
-        <ul className="flex flex-col gap-4 px-5 pt-3.5 pb-5">
+        <ul className="flex flex-col px-2.5 pt-1.5 pb-3">
           {rows.map((row) => {
-            const share = Math.max(0, Math.min(100, row.percent));
+            const share = total > 0 ? (Number(row.amount) / total) * 100 : 0;
             const color = categoryTone(row.color).fg;
+            const name = categoryName(row, t);
             return (
-              <li key={row.name} className="flex flex-col gap-2">
-                <span className="flex items-center gap-2.5 text-body">
-                  <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", color)} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-ink">{row.name}</span>
-                  <span className="font-semibold text-ink tabular-nums">{formatCurrency(row.amount, currency, fmt)}</span>
-                  <span className="w-13 text-right text-ink-muted tabular-nums">{toLocaleDigits(formatPercent(row.percent), fmt)}</span>
-                </span>
-                <span aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-surface-sunken">
-                  <span className={cn("block h-full rounded-full bg-current", color)} style={{ width: `${share}%` }} />
-                </span>
+              <li key={`${row.uncategorised ? "-" : ""}${row.name}`}>
+                <Link href={hrefFor(row)} title={t("See these transactions")} className="flex flex-col gap-2 rounded-md px-2.5 py-2.5 hover:bg-hover">
+                  <span className="flex items-center gap-2.5 text-body">
+                    <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", color)} />
+                    <span className="min-w-0 flex-1 truncate font-medium text-ink">{name}</span>
+                    {row.count !== undefined && <span className="shrink-0 text-caption text-ink-muted tabular-nums">{plural(t, row.count, "{count} entry", "{count} entries", undefined, fmt)}</span>}
+                    <span className="shrink-0 font-semibold text-ink tabular-nums">{formatCurrency(row.amount, currency, fmt)}</span>
+                    <span className="w-13 shrink-0 text-right text-ink-muted tabular-nums">{toLocaleDigits(`${oneDecimal(share)}%`, fmt)}</span>
+                  </span>
+                  <span aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-surface-sunken">
+                    <span className={cn("block h-full rounded-full bg-current", color)} style={{ width: `${Math.min(100, share)}%` }} />
+                  </span>
+                </Link>
               </li>
             );
           })}

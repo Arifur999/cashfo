@@ -1,7 +1,12 @@
 // The Income & Expense pages' arithmetic (Overview, Budget Planning), kept
-// pure so it is tested apart from the pages.
+// pure so it is tested apart from the pages. Their period is the report
+// pages' one (lib/customer/period.ts).
+import type { CategoryBreakdownRow } from "@/lib/customer/api";
+import { categoryLabel } from "@/lib/customer/transactionRows";
+import type { Translate } from "@/lib/i18n/message";
+import { type Params, type PickedPeriod, periodHref, type YearMonth } from "@/lib/customer/period";
 
-export type Params = Record<string, string | string[] | undefined>;
+export type { Params };
 
 // A month from the address (?month=10&year=2026), or null when it isn't one.
 export function readMonth(params: Params, fallback: { month: number; year: number }): { month: number; year: number } | null {
@@ -13,80 +18,53 @@ export function readMonth(params: Params, fallback: { month: number; year: numbe
   return m >= 1 && m <= 12 && y >= 2000 && y <= 2100 ? { month: m, year: y } : null;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
 const lastDayOf = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
 
-// A month's first and last day, as the API's date filters take them.
-export function monthRange(year: number, month: number): { dateFrom: string; dateTo: string } {
-  return { dateFrom: `${year}-${pad(month)}-01`, dateTo: `${year}-${pad(month)}-${pad(lastDayOf(year, month))}` };
+// Budget Planning's month (design: Budget): the one asked for when it has a
+// plan, else this month's plan, else the newest (`plans` come newest
+// first). `missing` is a month the address named that has none, for the
+// "There is no plan for ... yet" line. No plans at all: nothing to show.
+export function planMonthToShow(plans: YearMonth[], asked: YearMonth, current: YearMonth, named: boolean): { shown: YearMonth | null; missing: YearMonth | null } {
+  const has = (m: YearMonth) => plans.some((plan) => plan.month === m.month && plan.year === m.year);
+  if (plans.length === 0) return { shown: null, missing: null };
+  if (has(asked)) return { shown: asked, missing: null };
+  const shown = has(current) ? current : plans[0];
+  return { shown: { month: shown.month, year: shown.year }, missing: named ? asked : null };
 }
 
-// The same page for another month, the rest of its address kept.
-export function monthHref(pathname: string, params: Params, month: number, year: number, current: { month: number; year: number }): string {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || key === "month" || key === "year" || key === "page") continue;
-    for (const item of Array.isArray(value) ? value : [value]) query.append(key, item);
-  }
-  if (month !== current.month || year !== current.year) {
-    query.set("month", String(month));
-    query.set("year", String(year));
-  }
-  const text = query.toString();
-  return text ? `${pathname}?${text}` : pathname;
+// A list page for a period: this month (its own) written as nothing, all
+// time as ?period=all (the shared periodHref writes only real periods).
+export function listPeriodHref(pathname: string, params: Params, period: PickedPeriod, current: YearMonth): string {
+  const href = periodHref(pathname, params, period, { kind: "month", ...current });
+  return period.kind === "all" ? `${href}${href.includes("?") ? "&" : "?"}period=all` : href;
 }
 
-// Overview's period: a month (?month=&year=, this month when left out), a
-// whole year (?period=year&year=) or the reader's own days (?from=&to=).
-export type Period = { kind: "month"; month: number; year: number } | { kind: "year"; year: number } | { kind: "custom"; from: string; to: string };
-
-const isYear = (value: unknown): value is string => typeof value === "string" && /^\d{4}$/.test(value) && Number(value) >= 2000 && Number(value) <= 2100;
-
-// A real calendar day written YYYY-MM-DD.
-export function isDay(value: unknown): value is string {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+// Transactions for a period (the page's own, this month, written as
+// nothing), of one kind, one category or the money with none.
+export function transactionsHref(period: PickedPeriod, current: YearMonth, filter: { type?: "INCOME" | "EXPENSE"; categoryId?: string; uncategorised?: boolean } = {}): string {
+  const params: Params = {
+    ...(filter.type && { type: filter.type }),
+    ...(filter.categoryId && { categoryId: filter.categoryId }),
+    ...(filter.uncategorised && { uncategorised: "1" }),
+  };
+  return listPeriodHref("/transactions", params, period, current);
 }
 
-// The period the address asks for, or null when it isn't one.
-export function readPeriod(params: Params, current: { month: number; year: number }): Period | null {
-  if (params.from !== undefined || params.to !== undefined) {
-    return isDay(params.from) && isDay(params.to) && params.from <= params.to ? { kind: "custom", from: params.from, to: params.to } : null;
-  }
-  if (params.period === "year") return isYear(params.year) ? { kind: "year", year: Number(params.year) } : null;
-  if (params.period !== undefined) return null;
-  const month = readMonth(params, current);
-  return month && { kind: "month", ...month };
-}
+// Budget Planning at the period's month (it plans one month at a time);
+// this month for a year or the reader's own days.
+export const budgetHref = (period: PickedPeriod): string => (period.kind === "month" ? `/categories?month=${period.month}&year=${period.year}` : "/categories");
 
-// The period's first and last day, as the API's date filters take them.
-export function periodRange(period: Period): { dateFrom: string; dateTo: string } {
-  if (period.kind === "month") return monthRange(period.year, period.month);
-  if (period.kind === "year") return { dateFrom: `${period.year}-01-01`, dateTo: `${period.year}-12-31` };
-  return { dateFrom: period.from, dateTo: period.to };
-}
+// A share to one decimal, "70.5", or "70" when it is whole.
+export const oneDecimal = (value: number): string => String(Math.round(value * 10) / 10);
 
-// The page's address for a period; this month is the bare page.
-export function periodHref(pathname: string, period: Period, current: { month: number; year: number }): string {
-  const query = new URLSearchParams();
-  if (period.kind === "year") {
-    query.set("period", "year");
-    query.set("year", String(period.year));
-  } else if (period.kind === "custom") {
-    query.set("from", period.from);
-    query.set("to", period.to);
-  } else if (period.month !== current.month || period.year !== current.year) {
-    query.set("month", String(period.month));
-    query.set("year", String(period.year));
-  }
-  const text = query.toString();
-  return text ? `${pathname}?${text}` : pathname;
-}
+// A category's name in the reader's language: the money with none is
+// "Uncategorised"; the app's own names have their Bangla, a customer's own
+// name stays as written (transactionRows' categoryLabel).
+export const categoryName = (row: Pick<CategoryBreakdownRow, "name" | "uncategorised">, t: Translate): string => categoryLabel(row.uncategorised ? "Uncategorised" : row.name, t);
 
 // A donut's conic-gradient: each slice its share of the total, in order;
-// what the list leaves out (the API sends the top ten) is one "other" slice,
-// so the ring always closes. Nothing at all is one plain ring.
+// whatever the slices leave of the total is one "other" slice, so the ring
+// always closes. Nothing at all is one plain ring.
 export function donutGradient(slices: { amount: number; color: string }[], total: number, other: string, empty: string): string {
   if (!(total > 0)) return empty;
   const stops: string[] = [];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { budgetState, daysLeft, donutGradient, isDay, monthHref, monthRange, percentOf, periodHref, periodRange, planMatches, readMonth, readPeriod, savingsRate } from "./ieFigures";
+import { budgetHref, budgetState, categoryName, daysLeft, donutGradient, oneDecimal, percentOf, planMatches, planMonthToShow, readMonth, savingsRate, transactionsHref } from "./ieFigures";
 
 const NOW = { month: 10, year: 2026 };
 
@@ -16,15 +16,27 @@ describe("readMonth", () => {
   });
 });
 
-describe("monthRange and monthHref", () => {
-  it("gives a month's first and last day, leap years included", () => {
-    expect(monthRange(2026, 10)).toEqual({ dateFrom: "2026-10-01", dateTo: "2026-10-31" });
-    expect(monthRange(2028, 2)).toEqual({ dateFrom: "2028-02-01", dateTo: "2028-02-29" });
+describe("planMonthToShow", () => {
+  const plans = [
+    { month: 11, year: 2026, id: "a" },
+    { month: 10, year: 2026, id: "b" },
+    { month: 8, year: 2026, id: "c" },
+  ];
+
+  it("shows the month asked for when it has a plan", () => {
+    expect(planMonthToShow(plans, { month: 8, year: 2026 }, NOW, true)).toEqual({ shown: { month: 8, year: 2026 }, missing: null });
   });
 
-  it("leaves this month out of the address and drops the page", () => {
-    expect(monthHref("/income-expense", { month: "9", year: "2026" }, 10, 2026, NOW)).toBe("/income-expense");
-    expect(monthHref("/transactions", { type: "EXPENSE", page: "3" }, 9, 2026, NOW)).toBe("/transactions?type=EXPENSE&month=9&year=2026");
+  it("falls back to this month's plan, and names a month the address asked for", () => {
+    expect(planMonthToShow(plans, { month: 9, year: 2026 }, NOW, true)).toEqual({ shown: { month: 10, year: 2026 }, missing: { month: 9, year: 2026 } });
+  });
+
+  it("falls back to the newest plan without a word when nothing was named", () => {
+    expect(planMonthToShow(plans.filter((plan) => plan.month !== 10), NOW, NOW, false)).toEqual({ shown: { month: 11, year: 2026 }, missing: null });
+  });
+
+  it("shows nothing when no month has a plan", () => {
+    expect(planMonthToShow([], { month: 9, year: 2026 }, NOW, true)).toEqual({ shown: null, missing: null });
   });
 });
 
@@ -78,44 +90,26 @@ describe("planMatches", () => {
   });
 });
 
-describe("readPeriod", () => {
-  it("reads a month, this month by default", () => {
-    expect(readPeriod({}, NOW)).toEqual({ kind: "month", month: 10, year: 2026 });
-    expect(readPeriod({ month: "3", year: "2025" }, NOW)).toEqual({ kind: "month", month: 3, year: 2025 });
+describe("the Overview's ways into Transactions and Budget Planning", () => {
+  it("opens a kind, a category or the money with none, in the period", () => {
+    expect(transactionsHref({ kind: "month", month: 10, year: 2026 }, NOW, { type: "INCOME" })).toBe("/transactions?type=INCOME");
+    expect(transactionsHref({ kind: "month", month: 9, year: 2026 }, NOW, { type: "EXPENSE", categoryId: "Food & Dining" })).toBe("/transactions?type=EXPENSE&categoryId=Food+%26+Dining&month=9&year=2026");
+    expect(transactionsHref({ kind: "year", year: 2025 }, NOW, { type: "EXPENSE", uncategorised: true })).toBe("/transactions?type=EXPENSE&uncategorised=1&period=year&year=2025");
+    expect(transactionsHref({ kind: "custom", from: "2026-08-01", to: "2026-10-28" }, NOW)).toBe("/transactions?from=2026-08-01&to=2026-10-28");
   });
 
-  it("reads a whole year and the reader's own days", () => {
-    expect(readPeriod({ period: "year", year: "2025" }, NOW)).toEqual({ kind: "year", year: 2025 });
-    expect(readPeriod({ from: "2026-08-01", to: "2026-10-28" }, NOW)).toEqual({ kind: "custom", from: "2026-08-01", to: "2026-10-28" });
+  it("plans the period's month, else this one", () => {
+    expect(budgetHref({ kind: "month", month: 9, year: 2026 })).toBe("/categories?month=9&year=2026");
+    expect(budgetHref({ kind: "year", year: 2025 })).toBe("/categories");
   });
 
-  it("refuses what isn't a period", () => {
-    expect(readPeriod({ period: "year" }, NOW)).toBeNull();
-    expect(readPeriod({ period: "week" }, NOW)).toBeNull();
-    expect(readPeriod({ from: "2026-10-28", to: "2026-08-01" }, NOW)).toBeNull();
-    expect(readPeriod({ from: "2026-02-30", to: "2026-03-01" }, NOW)).toBeNull();
-    expect(readPeriod({ from: "2026-08-01" }, NOW)).toBeNull();
-  });
-});
-
-describe("periodRange and periodHref", () => {
-  it("gives each period its days", () => {
-    expect(periodRange({ kind: "month", month: 2, year: 2026 })).toEqual({ dateFrom: "2026-02-01", dateTo: "2026-02-28" });
-    expect(periodRange({ kind: "year", year: 2025 })).toEqual({ dateFrom: "2025-01-01", dateTo: "2025-12-31" });
-    expect(periodRange({ kind: "custom", from: "2026-08-01", to: "2026-08-09" })).toEqual({ dateFrom: "2026-08-01", dateTo: "2026-08-09" });
-  });
-
-  it("writes each period's address, this month bare", () => {
-    expect(periodHref("/income-expense", { kind: "month", month: 10, year: 2026 }, NOW)).toBe("/income-expense");
-    expect(periodHref("/income-expense", { kind: "month", month: 9, year: 2026 }, NOW)).toBe("/income-expense?month=9&year=2026");
-    expect(periodHref("/income-expense", { kind: "year", year: 2025 }, NOW)).toBe("/income-expense?period=year&year=2025");
-    expect(periodHref("/income-expense", { kind: "custom", from: "2026-08-01", to: "2026-10-28" }, NOW)).toBe("/income-expense?from=2026-08-01&to=2026-10-28");
-  });
-
-  it("knows a real day", () => {
-    expect(isDay("2024-02-29")).toBe(true);
-    expect(isDay("2025-02-29")).toBe(false);
-    expect(isDay("2025-2-1")).toBe(false);
+  it("writes a share to one decimal and names the money with no category", () => {
+    expect(oneDecimal(70.54)).toBe("70.5");
+    expect(oneDecimal(4)).toBe("4");
+    const t = (key: string) => `bn:${key}`;
+    expect(categoryName({ name: "Uncategorised", uncategorised: true }, t)).toBe("bn:Uncategorised");
+    expect(categoryName({ name: "Salary" }, t)).toBe("bn:Salary");
+    expect(categoryName({ name: "My own pot" }, t)).toBe("My own pot");
   });
 });
 

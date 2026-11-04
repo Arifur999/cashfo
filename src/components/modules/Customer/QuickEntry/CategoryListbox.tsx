@@ -1,36 +1,49 @@
 "use client";
 
 import { Check, ChevronDown, Plus } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { BudgetCategoryName } from "@/lib/customer/budgetActions";
 import { categoryTone } from "@/lib/customer/categoryTone";
+import { categoryLabel } from "@/lib/customer/transactionRows";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { NewCategoryForm } from "./NewCategoryForm";
 
 interface CategoryListboxProps {
   id: string;
+  businessId: string;
   kind: "INCOME" | "EXPENSE";
   options: BudgetCategoryName[];
   value: string;
   onChange: (name: string) => void;
-  // Leaving for Category Set (the popup closes first).
-  onNavigate: () => void;
+  // A category added from the list: the popup adds it to its options.
+  onAdded: (category: BudgetCategoryName) => void;
+  // Whether the reader may add one (an owner or accountant).
+  canAddCategory: boolean;
   disabled?: boolean;
 }
 
 // The transaction popup's category (design: TxnCategoryOpen): one box with
 // the picked category's dot and name, opening the kind's categories, each
-// with its colour, the picked one ticked, and "Add new category" under them.
-export function CategoryListbox({ id, kind, options, value, onChange, onNavigate, disabled = false }: CategoryListboxProps) {
+// with its colour, the picked one ticked, and "Add new category" under them,
+// which turns into a name box: the new category is picked and the list
+// closes.
+export function CategoryListbox({ id, businessId, kind, options, value, onChange, onAdded, canAddCategory, disabled = false }: CategoryListboxProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
   const picked = options.find((option) => option.name === value);
   const label = kind === "INCOME" ? t("Income categories") : t("Expense categories");
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setAdding(false);
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           id={id}
@@ -44,7 +57,7 @@ export function CategoryListbox({ id, kind, options, value, onChange, onNavigate
           )}
         >
           {picked && <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", categoryTone(picked.color).fg)} />}
-          <span className={cn("min-w-0 flex-1 truncate", picked || value ? "text-ink" : "text-ink-muted")}>{picked?.name ?? (value || t("Select a category"))}</span>
+          <span className={cn("min-w-0 flex-1 truncate", picked || value ? "text-ink" : "text-ink-muted")}>{value ? categoryLabel(picked?.name ?? value, t) : t("Select a category")}</span>
           <ChevronDown className={cn("size-4 shrink-0 text-ink-muted transition-transform", open && "rotate-180")} aria-hidden="true" />
         </button>
       </PopoverTrigger>
@@ -66,17 +79,39 @@ export function CategoryListbox({ id, kind, options, value, onChange, onNavigate
                 className={cn("flex h-11 shrink-0 items-center gap-2.5 rounded-[8px] px-2.5 text-left text-body text-ink hover:bg-hover", on && "bg-surface-sunken font-semibold")}
               >
                 <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", categoryTone(option.color).fg)} />
-                <span className="min-w-0 flex-1 truncate">{option.name}</span>
+                <span className="min-w-0 flex-1 truncate">{categoryLabel(option.name, t)}</span>
                 {on && <Check className="size-4 shrink-0 text-emerald" strokeWidth={2.5} aria-hidden="true" />}
               </button>
             );
           })}
         </div>
-        <div aria-hidden="true" className="mx-1 my-1.5 h-px bg-divider" />
-        <Link href={`/category-set?new=${kind}`} onNavigate={onNavigate} className="flex h-11 items-center gap-2 rounded-[8px] px-2.5 text-body font-semibold text-emerald hover:bg-hover">
-          <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
-          {t("Add new category")}
-        </Link>
+        {canAddCategory && (
+          <>
+            <div aria-hidden="true" className="mx-1 my-1.5 h-px bg-divider" />
+            {adding ? (
+              <div className="p-1">
+                <NewCategoryForm
+                  businessId={businessId}
+                  kind={kind}
+                  taken={options.map((option) => option.name)}
+                  autoFocus
+                  onCancel={() => setAdding(false)}
+                  onAdded={(category) => {
+                    onAdded(category);
+                    onChange(category.name);
+                    setAdding(false);
+                    setOpen(false);
+                  }}
+                />
+              </div>
+            ) : (
+              <button type="button" onClick={() => setAdding(true)} className="flex h-11 w-full items-center gap-2 rounded-[8px] px-2.5 text-body font-semibold text-emerald hover:bg-hover">
+                <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
+                {t("Add new category")}
+              </button>
+            )}
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );

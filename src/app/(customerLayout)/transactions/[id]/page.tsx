@@ -22,7 +22,7 @@ import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone
 import { formatCurrency } from "@/lib/customer/currency";
 import { getFmt } from "@/lib/customer/fmt";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { TRANSACTION_TYPE_LABELS, transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
+import { TRANSACTION_TYPE_LABELS, transactionBackLink, transactionPageHref, voidReasonLabel } from "@/lib/customer/transactionDisplay";
 import { categoryIndex, categoryLabel, describeTransaction, editableEntry, type OwningFeature, owningFeature, recordTimeLabel, reversalTitle, rowTitle, systemText, transactionDayLabel } from "@/lib/customer/transactionRows";
 import { getTransaction } from "@/lib/customer/transactions";
 import { toDateInputValue } from "@/lib/date";
@@ -139,7 +139,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
               <Chip tone="expense" className="mr-2 font-semibold">
                 {t(row.cancelled)}
               </Chip>
-              {transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}
+              {transaction.voidedReason && voidReasonLabel(transaction.voidedReason, t)}
               {transaction.reversalOfId && (
                 <Link href={transactionPageHref(transaction.reversalOfId, back)} className="font-semibold text-emerald hover:underline">
                   {t("See the original")}
@@ -276,7 +276,7 @@ export default async function TransactionDetailPage({ params, searchParams }: Pa
             {transaction.voidedAt && (
               <HistoryRow
                 tone="bg-expense-fill"
-                title={`${t("Voided")}${transaction.voidedReason ? ` · ${transaction.voidedReason === "Corrected" ? t("Corrected") : transaction.voidedReason}` : ""}`}
+                title={`${t("Voided")}${transaction.voidedReason ? ` · ${voidReasonLabel(transaction.voidedReason, t)}` : ""}`}
                 when={recordTimeLabel(transaction.voidedAt, fmt, t)}
                 link={transaction.correctedBy ? { href: transactionPageHref(transaction.correctedBy.id, back), label: t("See the corrected entry ({amount})", { amount: formatCurrency(Number(transaction.correctedBy.amount), currency, fmt) }) } : undefined}
               />

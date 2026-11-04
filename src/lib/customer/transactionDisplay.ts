@@ -1,3 +1,4 @@
+import type { Translate } from "@/lib/i18n/message";
 import type { Transaction, TransactionType } from "./api";
 
 // What each transaction type is called on screen -- English keys for t().
@@ -17,6 +18,15 @@ export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
 export function isCancelled(transaction: Pick<Transaction, "status" | "reversalOfId">): boolean {
   return transaction.status === "VOIDED" || !!transaction.reversalOfId;
 }
+
+// The reason Transactions' Delete voids with: the backend lets the person
+// who deleted take back only a void with this reason (transactions.service
+// DELETED_REASON), for 10 minutes.
+export const DELETED_REASON = "Deleted from Transactions";
+
+// Why a transaction was voided, in the reader's language when the app wrote
+// it (a correction, a delete), else as typed.
+export const voidReasonLabel = (reason: string, t: Translate): string => (reason === "Corrected" || reason === DELETED_REASON ? t(reason) : reason);
 
 // The note a cancelled row carries: "Voided" on the original, "Reversal" on
 // the posting that undid it. Null for a standing transaction.

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowDownLeft, ArrowLeftRight, ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, Info, LayoutGrid, Lock, TriangleAlert, Undo2, X } from "lucide-react";
+import { ArrowDown, ArrowDownLeft, ArrowLeftRight, ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, Info, LayoutGrid, Lock, Plus, TriangleAlert, Undo2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useId, useState, useTransition } from "react";
@@ -14,12 +14,14 @@ import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
+import Textarea from "@/components/smartly/form/Textarea";
 import Kbd from "@/components/smartly/Kbd";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
 import { CategoryListbox } from "./CategoryListbox";
+import { NewCategoryForm } from "./NewCategoryForm";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { budgetTone } from "@/lib/budgetTone";
 import type { Account, BudgetOverview } from "@/lib/customer/api";
@@ -30,8 +32,9 @@ import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { correctTransactionAction, createExpenseAction, createIncomeAction, createTransferAction, listExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
-import { editChanges, type EditableEntry, relativeDayKey } from "@/lib/customer/transactionRows";
+import { categoryLabel, editChanges, type EditableEntry, relativeDayKey } from "@/lib/customer/transactionRows";
 import { getAppToday } from "@/lib/date";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { plural } from "@/lib/i18n/message";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -55,6 +58,8 @@ interface TransactionDrawerProps {
 }
 
 const TILE_LIMIT = 7;
+// The backend's cap on an entry's description (quick-entries DTOs).
+const NOTE_MAX = 500;
 
 // The board's tab arrows: money coming in points down-left, money going out
 // up-right. The picked tab's words take the kind's colour (selected).
@@ -117,6 +122,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const amountField = useAmountField(amount, setAmount, currency);
   const [category, setCategory] = useState("");
   const [showAll, setShowAll] = useState(false);
+  // The phone's "Add new category" box under the tiles.
+  const [addingCategory, setAddingCategory] = useState(false);
   const [accountId, setAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
   const [date, setDate] = useState(getAppToday());
@@ -270,6 +277,15 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     setKind(next);
     setCategory("");
     setShowAll(false);
+    setAddingCategory(false);
+  }
+
+  // A category added from the popup joins its kind's list and is picked.
+  function categoryAdded(added: BudgetCategoryName) {
+    const type = kind === "INCOME" ? "INCOME" : "EXPENSE";
+    setCategories((current) => ({ ...current, [type]: [...current[type].filter((option) => option.id !== added.id), added] }));
+    setCategory(added.name);
+    setAddingCategory(false);
   }
 
   function save(another: boolean) {
@@ -344,10 +360,16 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     </Field>
   );
 
-  const categoryLink = (
-    <Link href={`/category-set?new=${kind === "INCOME" ? "INCOME" : "EXPENSE"}`} onNavigate={onClose} className="font-semibold text-emerald hover:underline">
-      {t("Add one under Category Set")}
-    </Link>
+  const categoryKind = kind === "INCOME" ? "INCOME" : "EXPENSE";
+  const newCategory = (cancel: boolean) => (
+    <NewCategoryForm businessId={businessId} kind={categoryKind} taken={options.map((option) => option.name)} onAdded={categoryAdded} onCancel={cancel ? () => setAddingCategory(false) : undefined} autoFocus={cancel} />
+  );
+
+  // The description box with its count of the 500 it holds.
+  const noteCount = (
+    <span className="block text-right tabular-nums">
+      {toLocaleDigits(String(note.length), fmt)} / {toLocaleDigits(String(NOTE_MAX), fmt)}
+    </span>
   );
 
   const body = (
@@ -433,7 +455,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         </div>
         {!wide && showBudget && (
           <span className="self-center text-small text-ink-muted">
-            {fillNodes(t("{category}: {amount} left after this"), { category, amount: <b className={hint.figure}>{formatCurrency(budgetLeft - value, currency, fmt)}</b> })}
+            {fillNodes(t("{category}: {amount} left after this"), { category: categoryLabel(category, t), amount: <b className={hint.figure}>{formatCurrency(budgetLeft - value, currency, fmt)}</b> })}
           </span>
         )}
         {editing && value !== editing.amount && (
@@ -458,9 +480,16 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
               </div>
             )
           ) : categoriesFailed ? null : options.length === 0 ? (
-            <p className="text-small text-ink-muted">{fillNodes(t("No categories yet. {link}"), { link: categoryLink })}</p>
+            canAdd ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-small text-ink-muted">{t("No categories yet. Add the first one here.")}</p>
+                {newCategory(false)}
+              </div>
+            ) : (
+              <p className="text-small text-ink-muted">{t("No categories yet.")}</p>
+            )
           ) : wide ? (
-            <CategoryListbox id="txn-cat" kind={kind === "INCOME" ? "INCOME" : "EXPENSE"} options={options} value={category} onChange={setCategory} onNavigate={onClose} />
+            <CategoryListbox id="txn-cat" businessId={businessId} kind={categoryKind} options={options} value={category} onChange={setCategory} onAdded={categoryAdded} canAddCategory={canAdd} />
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {visible.map((option) => {
@@ -472,14 +501,14 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                     type="button"
                     aria-pressed={on}
                     onClick={() => setCategory(option.name)}
-                    title={option.name}
+                    title={categoryLabel(option.name, t)}
                     className={cn(TILE, on ? "border-[1.5px] border-emerald bg-emerald-soft" : "border border-line bg-surface hover:border-input")}
                   >
                     <span className={cn(TILE_ICON, tone.bg, tone.fg)}>{createElement(categoryIconFor(option), { "aria-hidden": true })}</span>
                     {/* One line, cut with an ellipsis as the board does; the
                         caption's own line height, as a fixed 16px clipped
                         Bangla's lower vowel signs. */}
-                    <span className={cn(TILE_NAME, on ? "font-semibold text-emerald" : "font-medium text-ink-2")}>{option.name}</span>
+                    <span className={cn(TILE_NAME, on ? "font-semibold text-emerald" : "font-medium text-ink-2")}>{categoryLabel(option.name, t)}</span>
                   </button>
                 );
               })}
@@ -489,6 +518,19 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                     <LayoutGrid aria-hidden="true" />
                   </span>
                   <span className={cn(TILE_NAME, "font-medium text-ink-2")}>{t("More…")}</span>
+                </button>
+              )}
+            </div>
+          )}
+          {/* The phone adds a category under its tiles. */}
+          {!wide && !loading && !categoriesFailed && options.length > 0 && canAdd && (
+            <div className="mt-2">
+              {addingCategory ? (
+                newCategory(true)
+              ) : (
+                <button type="button" onClick={() => setAddingCategory(true)} className="flex min-h-11 items-center gap-1.5 rounded-md text-small font-semibold text-emerald hover:underline">
+                  <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
+                  {t("Add new category")}
                 </button>
               )}
             </div>
@@ -514,7 +556,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           {hint.icon}
           <span>
             {fillNodes(t("{category} has {left} left this month. After this, {after} of {limit} will be left."), {
-              category,
+              category: categoryLabel(category, t),
               left: <b className="font-semibold">{formatCurrency(budgetLeft, currency, fmt)}</b>,
               after: <b className={cn("font-semibold", hint.figure)}>{formatCurrency(budgetLeft - value, currency, fmt)}</b>,
               limit: formatCurrency(budgetLimit, currency, fmt),
@@ -535,8 +577,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
                 <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
                   <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
                 </Field>
-                <Field htmlFor="txn-note" label={<span className="text-body font-medium text-ink">{t("Note")}</span>}>
-                  <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+                <Field htmlFor="txn-note" label={<span className="text-body font-medium text-ink">{t("Description")}</span>}>
+                  <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={NOTE_MAX} />
                 </Field>
               </div>
             </>
@@ -544,13 +586,14 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           {!isTransfer && (
             <Field
               htmlFor="txn-note"
+              hint={noteCount}
               label={
                 <span className="text-body font-medium text-ink">
-                  {t("Note")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+                  {t("Description")} <span className="font-normal text-ink-muted">({t("optional")})</span>
                 </span>
               }
             >
-              <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("e.g. Weekly groceries")} maxLength={200} />
+              <Textarea id="txn-note" rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("e.g. Weekly groceries from the local market")} maxLength={NOTE_MAX} />
             </Field>
           )}
         </>
@@ -561,8 +604,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             {isTransfer ? <WalletPicker size="compact" label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} /> : phoneDate}
           </div>
           {isTransfer && phoneDate}
-          <Field htmlFor="txn-note" label={<span className={PHONE_LABEL}>{t("Note")}</span>}>
-            <Input id="txn-note" size="xl" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={200} />
+          <Field htmlFor="txn-note" label={<span className={PHONE_LABEL}>{t("Description")}</span>}>
+            <Input id="txn-note" size="xl" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={NOTE_MAX} />
           </Field>
         </>
       )}
