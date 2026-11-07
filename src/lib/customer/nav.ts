@@ -362,7 +362,8 @@ export const NAV_FOOT: NavItem[] = [
     subs: [
       { label: "Profile", href: "/settings/profile" },
       { label: "Security", href: "/settings/security" },
-      { label: "Plans", href: "/settings/plans" },
+      { label: "Plans & billing", href: "/settings/plans" },
+      { label: "Notifications", href: "/settings/notifications" },
       { label: "Checkout", href: "/settings/plans/checkout", menu: false, litAs: "/settings/plans" },
       { label: "Workspaces", href: "/settings/workspaces", menu: false },
       { label: "App preferences", href: "/settings/app" },

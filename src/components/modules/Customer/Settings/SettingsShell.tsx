@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 // its heading is for screen readers only) and each section gets a way back
 // to it and its name. Plans (UpgradePlan) is a page of its own: its heading
 // and full width, and so is its payment page (Checkout).
+const FULL_WIDTH = ["/settings/notifications", "/settings/data"];
+
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
   const pathname = usePathname();
@@ -24,6 +26,8 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   const section = sectionOf(sectionFor(pathname));
 
   if (pathname === PLANS_ROUTE || pathname.startsWith(`${PLANS_ROUTE}/`)) return <PageFrame className="gap-5 md:pt-6.5 md:pb-10">{children}</PageFrame>;
+  // The v16 boards draw these two at full width with their own title.
+  if (FULL_WIDTH.includes(pathname)) return <>{children}</>;
 
   return (
     <PageFrame className={cn("gap-5.5 md:pt-7 md:pb-8", isIndex && "max-md:pt-4")}>

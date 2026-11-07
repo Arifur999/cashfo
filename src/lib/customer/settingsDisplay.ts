@@ -7,7 +7,7 @@ import { nameParts, type Rule } from "./vaultDisplay";
 
 export const APP_VERSION = "0.1.0";
 
-export type SettingsSectionKey = "profile" | "security" | "plans" | "workspaces" | "app" | "help" | "resources";
+export type SettingsSectionKey = "profile" | "security" | "plans" | "notifications" | "workspaces" | "app" | "data" | "help" | "resources";
 
 export interface SettingsSection {
   key: SettingsSectionKey;
@@ -21,7 +21,8 @@ export interface SettingsSection {
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   { key: "profile", href: "/settings/profile", label: "Profile" },
   { key: "security", href: "/settings/security", label: "Security" },
-  { key: "plans", href: "/settings/plans", label: "Plans" },
+  { key: "plans", href: "/settings/plans", label: "Plans & billing" },
+  { key: "notifications", href: "/settings/notifications", label: "Notifications" },
   { key: "workspaces", href: "/settings/workspaces", label: "Workspaces" },
   { key: "app", href: "/settings/app", label: "App preferences" },
   { key: "help", href: "/settings/help", label: "Help & support" },
