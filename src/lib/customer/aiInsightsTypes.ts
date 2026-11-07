@@ -2,7 +2,7 @@
 // person's settings, and while it is on, the report the rules worked out.
 // Amounts are in paisa; months are 'YYYY-MM', days 'YYYY-MM-DD'.
 
-export type AiSection = "TRANSACTIONS" | "SAVINGS" | "LOANS" | "GROUPS";
+export type AiSection = "TRANSACTIONS" | "BUDGET" | "SAVINGS" | "LOANS" | "ASSETS" | "GROUPS";
 
 export interface AiSettings {
   on: boolean;

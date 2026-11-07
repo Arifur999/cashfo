@@ -367,6 +367,7 @@ export const NAV_FOOT: NavItem[] = [
       { label: "Checkout", href: "/settings/plans/checkout", menu: false, litAs: "/settings/plans" },
       { label: "Workspaces", href: "/settings/workspaces", menu: false },
       { label: "App preferences", href: "/settings/app" },
+      { label: "Data & privacy", href: "/settings/data" },
       { label: "Help & support", href: "/settings/help" },
       { label: "Resources & legal", href: "/settings/resources" },
     ],

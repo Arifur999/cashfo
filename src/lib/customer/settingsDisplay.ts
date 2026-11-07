@@ -25,6 +25,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   { key: "notifications", href: "/settings/notifications", label: "Notifications" },
   { key: "workspaces", href: "/settings/workspaces", label: "Workspaces" },
   { key: "app", href: "/settings/app", label: "App preferences" },
+  { key: "data", href: "/settings/data", label: "Data & privacy" },
   { key: "help", href: "/settings/help", label: "Help & support" },
   { key: "resources", href: "/settings/resources", label: "Resources & legal" },
 ];
