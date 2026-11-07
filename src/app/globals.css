@@ -165,6 +165,24 @@
   /* The fifth avatar tint (rose), beside mint, blue, amber and violet. */
   --rose: #b0477a;
   --rose-soft: #f9e6ef;
+  /* Calendar & Events' seven tints, a soft ground and its ink: an event's
+     type (Wedding pink, Gaye Holud yellow, Aqiqah teal, Khatna violet,
+     Birthday orange, Milad blue, Eid green), its people's avatars and
+     where a person stands. */
+  --tint-pink: #fce7f3;
+  --tint-pink-ink: #be185d;
+  --tint-yellow: #fef9c3;
+  --tint-yellow-ink: #a16207;
+  --tint-teal: #ccfbf1;
+  --tint-teal-ink: #0f766e;
+  --tint-violet: #ede9fe;
+  --tint-violet-ink: #6d28d9;
+  --tint-orange: #ffedd5;
+  --tint-orange-ink: #c2410c;
+  --tint-blue: #dbeafe;
+  --tint-blue-ink: #1d4ed8;
+  --tint-green: #dcfce7;
+  --tint-green-ink: #15803d;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -327,6 +345,20 @@
   --mood-4: #f87171;
   --rose: #f08fbf;
   --rose-soft: #3a1528;
+  --tint-pink: #3a1528;
+  --tint-pink-ink: #f08fbf;
+  --tint-yellow: #29250f;
+  --tint-yellow-ink: #facc15;
+  --tint-teal: #0b2e33;
+  --tint-teal-ink: #5cccdb;
+  --tint-violet: #1f1838;
+  --tint-violet-ink: #b6a2ff;
+  --tint-orange: #33200e;
+  --tint-orange-ink: #f0a46a;
+  --tint-blue: #14234a;
+  --tint-blue-ink: #86abf2;
+  --tint-green: #0f2618;
+  --tint-green-ink: #4ade80;
   --emerald-tint: #1c4536;
 
   --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -596,6 +628,20 @@ html:not(.dark) [data-app="habit"] {
   --color-emerald-tint: var(--emerald-tint);
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
+  --color-tint-pink: var(--tint-pink);
+  --color-tint-pink-ink: var(--tint-pink-ink);
+  --color-tint-yellow: var(--tint-yellow);
+  --color-tint-yellow-ink: var(--tint-yellow-ink);
+  --color-tint-teal: var(--tint-teal);
+  --color-tint-teal-ink: var(--tint-teal-ink);
+  --color-tint-violet: var(--tint-violet);
+  --color-tint-violet-ink: var(--tint-violet-ink);
+  --color-tint-orange: var(--tint-orange);
+  --color-tint-orange-ink: var(--tint-orange-ink);
+  --color-tint-blue: var(--tint-blue);
+  --color-tint-blue-ink: var(--tint-blue-ink);
+  --color-tint-green: var(--tint-green);
+  --color-tint-green-ink: var(--tint-green-ink);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);
