@@ -49,8 +49,8 @@ export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, w
     </button>
   );
   const inner = plain ? (
-    <div className="flex flex-col gap-3 px-6 py-5.5">
-      <DialogTitle className="text-h3 font-bold text-ink">{title}</DialogTitle>
+    <div className={cn("flex flex-col gap-3 px-6 py-5.5", bodyClassName)}>
+      <DialogTitle className={cn("text-h3 font-bold text-ink", titleClassName)}>{title}</DialogTitle>
       <DialogDescription asChild>
         <div className="text-body leading-[1.55] text-ink-soft">{sub}</div>
       </DialogDescription>

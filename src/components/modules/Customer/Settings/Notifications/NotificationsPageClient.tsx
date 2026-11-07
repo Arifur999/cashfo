@@ -14,6 +14,7 @@ import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PopupDialog } from "../../Shared/PopupDialog";
+import { BoardSegment, CARD, SELECT, SmallSwitch } from "../boardUi";
 
 interface Row {
   key: string;
@@ -103,16 +104,6 @@ const DAYS = [
 ] as const;
 
 const GRID = "grid grid-cols-[minmax(0,1fr)_repeat(4,108px)] items-center";
-const CARD = "min-w-0 rounded-card border border-line-card bg-surface shadow-card";
-const SELECT = "h-9 rounded-[10px] border border-input bg-surface px-2.75 text-[13.5px] text-ink disabled:bg-surface-sunken disabled:text-ink-faint";
-
-function Toggle({ on, label, disabled, title, onClick }: { on: boolean; label: string; disabled?: boolean; title?: string; onClick: () => void }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} aria-label={label} title={title} disabled={disabled} onClick={onClick} className={cn("relative h-5.5 w-9.5 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-55", on ? "bg-primary" : "bg-input")}>
-      <span className={cn("absolute top-0.5 left-0.5 size-4.5 rounded-full bg-white shadow-[0_1px_2px_rgba(18,32,29,0.25)] transition-transform", on && "translate-x-4")} />
-    </button>
-  );
-}
 
 // The SettingsNotifications board: every alert on or off in the bell,
 // email, SMS (Pro) and push, saved as each is switched; quiet hours, the
@@ -257,7 +248,7 @@ export function NotificationsPageClient({ initial, today }: { initial: Notificat
                       const proOnly = column.channel === "sms" && !page.pro;
                       return (
                         <span key={column.channel} role="cell" className="flex justify-center">
-                          <Toggle
+                          <SmallSwitch
                             on={on && !proOnly}
                             label={`${t(row.label)}: ${t(column.label)}`}
                             title={fixed ? t("Stays on for your safety") : proOnly ? t("SMS alerts come with Pro") : undefined}
@@ -287,7 +278,7 @@ export function NotificationsPageClient({ initial, today }: { initial: Notificat
                 </h2>
                 <p className="mt-1 text-small leading-normal text-ink-muted">{t("No SMS or push in this time. Alerts wait in the bell. Security alerts still come.")}</p>
               </div>
-              <Toggle on={prefs.quiet.on} label={t("Quiet hours")} disabled={busy} onClick={() => void save({ quietOn: !prefs.quiet.on }, "Saved")} />
+              <SmallSwitch on={prefs.quiet.on} label={t("Quiet hours")} disabled={busy} onClick={() => void save({ quietOn: !prefs.quiet.on }, "Saved")} />
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               {(["from", "to"] as const).map((end) => (
@@ -312,13 +303,7 @@ export function NotificationsPageClient({ initial, today }: { initial: Notificat
               </h2>
               <p className="mt-1 text-small leading-normal text-ink-muted">{t("A short email: money in, money out and what is due next.")}</p>
             </div>
-            <div role="radiogroup" aria-label={t("Daily or weekly summary")} className="flex gap-0.5 self-start rounded-full bg-surface-sunken p-[3px]">
-              {(["off", "daily", "weekly"] as const).map((mode) => (
-                <button key={mode} type="button" role="radio" aria-checked={prefs.summary.mode === mode} disabled={busy} onClick={() => void save({ summaryMode: mode }, "Saved")} className={cn("h-8 rounded-full px-3.25 text-small whitespace-nowrap", prefs.summary.mode === mode ? "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(18,32,29,0.10)]" : "font-medium text-ink-soft")}>
-                  {t(mode === "off" ? "Off" : mode === "daily" ? "Daily" : "Weekly")}
-                </button>
-              ))}
-            </div>
+            <BoardSegment value={prefs.summary.mode} label={t("Daily or weekly summary")} disabled={busy} onChange={(mode) => void save({ summaryMode: mode }, "Saved")} options={[{ value: "off", label: "Off" }, { value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }]} />
             {prefs.summary.mode !== "off" && (
               <>
                 <div className="grid grid-cols-2 gap-2.5">
