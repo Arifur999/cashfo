@@ -64,7 +64,9 @@ export interface NewEventInput {
 
 export interface NewGiftInput {
   direction: GiftDirection;
-  personId: string;
+  // Someone known, or a new person by name.
+  personId?: string;
+  personName?: string;
   kind: GiftKind;
   item?: string;
   amount: number;
