@@ -34,11 +34,11 @@ export function SpendingCard({ data }: { data: HomeData }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
             <h2 className="text-title leading-[normal] font-semibold text-ink">{label}</h2>
-            <span className="text-[13px] leading-[normal] text-ink-muted">{t(PERIOD_NAME[data.period.key])}</span>
+            <span className="text-[13px] leading-[normal] text-ink-muted">{data.period.label}</span>
           </div>
           {!empty && (
-            <Link href="/reports/detailed" className="text-[13px] leading-[normal] font-semibold text-emerald hover:text-emerald-hover">
-              {t("Reports")}
+            <Link href="/income-expense" className="text-[13px] leading-[normal] font-semibold text-emerald hover:text-emerald-hover">
+              {t("Details")}
             </Link>
           )}
         </div>

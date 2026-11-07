@@ -183,6 +183,11 @@
   --tint-blue-ink: #1d4ed8;
   --tint-green: #dcfce7;
   --tint-green-ink: #15803d;
+  /* The Dashboard's net worth card is dark in both themes: its pale green
+     and red for up and down, and its note. */
+  --worth-up: #86efac;
+  --worth-down: #fca5a5;
+  --worth-note: #9cc7be;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -642,6 +647,9 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-blue-ink: var(--tint-blue-ink);
   --color-tint-green: var(--tint-green);
   --color-tint-green-ink: var(--tint-green-ink);
+  --color-worth-up: var(--worth-up);
+  --color-worth-down: var(--worth-down);
+  --color-worth-note: var(--worth-note);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);
@@ -786,6 +794,10 @@ html:not(.dark) [data-app="habit"] {
 /* The Referral Program's earnings card: the primary, 32% darker at its end. */
 @utility bg-referral-hero {
   background-image: linear-gradient(135deg, #1c7567 0%, #135046 100%);
+}
+/* The Dashboard's net worth card: deep green to near black. */
+@utility bg-worth-hero {
+  background-image: linear-gradient(140deg, #155c51 0%, #0f3f38 55%, #0b2f2a 100%);
 }
 /* AI Insights' month card: forest brightening to the primary. */
 @utility bg-ai-hero {

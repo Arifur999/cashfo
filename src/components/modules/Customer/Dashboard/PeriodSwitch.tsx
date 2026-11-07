@@ -44,6 +44,9 @@ export function PeriodSwitch({ value, dateFrom, dateTo, today, variant, classNam
     const next = new URLSearchParams(searchParams.toString());
     next.delete("from");
     next.delete("to");
+    // The desktop picker's words for a period.
+    next.delete("month");
+    next.delete("year");
     if (key === "this-month") next.delete("period");
     else next.set("period", key);
     if (range) {

@@ -46,16 +46,21 @@ function CardHead({ title, href, link }: { title: string; href?: string; link?: 
 
 // Wallets: each active wallet with what it holds, Add wallet, and the
 // total at the foot.
-export function WalletsCard({ data }: { data: HomeData }) {
+// variant "accounts": the Dashboard board's Accounts card -- richest first,
+// no Add wallet, "Total in accounts", the amounts hidden with the net
+// worth card's eye.
+export function WalletsCard({ data, variant = "wallets", hidden = false }: { data: HomeData; variant?: "wallets" | "accounts"; hidden?: boolean }) {
   const { t, fmt } = useLocale();
   let banks = 0;
-  const shown = data.wallets.slice(0, WALLET_ROWS);
+  const accounts = variant === "accounts";
+  const shown = (accounts ? [...data.wallets].sort((a, b) => b.balance - a.balance) : data.wallets).slice(0, WALLET_ROWS);
+  const money = (value: number) => (hidden ? "৳ ••••••" : formatCurrency(value, data.currency, fmt));
   const onlyCash = data.wallets.length > 0 && data.wallets.every((w) => walletType({ accountSubtype: w.subtype }) === "cash");
 
   return (
     <section className={cn(CARD, "hidden flex-col overflow-hidden md:flex")}>
       <div className="flex items-center justify-between px-6 pt-5 pb-3">
-        <h2 className={TITLE}>{t("Wallets")}</h2>
+        <h2 className={TITLE}>{t(accounts ? "Accounts" : "Wallets")}</h2>
         <Link href="/balance/accounts" className={LINK}>
           {t("Manage")}
         </Link>
@@ -73,13 +78,13 @@ export function WalletsCard({ data }: { data: HomeData }) {
                   <span className="truncate text-body leading-[normal] font-medium text-ink">{wallet.name}</span>
                   <span className="text-caption text-ink-muted">{t(WALLET_KIND[kind])}</span>
                 </span>
-                <span className="text-body leading-[normal] font-semibold text-ink tabular-nums">{formatCurrency(wallet.balance, data.currency, fmt)}</span>
+                <span className={cn("text-body leading-[normal] font-semibold tabular-nums", wallet.balance < 0 ? "text-expense" : "text-ink")}>{money(wallet.balance)}</span>
               </Link>
             </li>
           );
         })}
       </ul>
-      {data.canManage && (
+      {data.canManage && !accounts && (
         <div className="px-6 pt-2">
           {/* ?new=1 asks My wallets to open its Add wallet drawer straight away. */}
           <Link
@@ -93,8 +98,8 @@ export function WalletsCard({ data }: { data: HomeData }) {
       )}
       <div className="grow" />
       <div className="mt-4 flex items-center justify-between border-t border-line bg-table-head px-6 py-4">
-        <span className="text-[13px] leading-[normal] text-ink-muted">{t("Total balance")}</span>
-        <span className="text-title leading-[normal] font-bold text-ink tabular-nums">{formatCurrency(data.balance, data.currency, fmt)}</span>
+        <span className="text-[13px] leading-[normal] text-ink-muted">{t(accounts ? "Total in accounts" : "Total balance")}</span>
+        <span className="text-title leading-[normal] font-bold text-ink tabular-nums">{money(data.balance)}</span>
       </div>
     </section>
   );

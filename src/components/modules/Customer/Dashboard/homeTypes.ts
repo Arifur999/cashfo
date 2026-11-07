@@ -1,6 +1,9 @@
-import type { Transaction } from "@/lib/customer/api";
+import type { ActiveMonth, Transaction } from "@/lib/customer/api";
+import type { SocialEventType } from "@/lib/customer/eventsTypes";
+import type { PickedPeriod } from "@/lib/customer/period";
 import type { CategoryMeta } from "@/lib/customer/transactionRows";
 import type { DashboardPeriodKey, SpendingSlice } from "./dashboardFigures";
+import type { MoneyFlow, WorthParts } from "./dashboardWorth";
 
 export type { CategoryMeta, SpendingSlice };
 
@@ -65,7 +68,26 @@ export interface HomeData {
   profile: { name: string; avatarUrl: string | null; since: string | null };
 
   // The period the figures cover, and how it reads ("October 2026").
-  period: { key: DashboardPeriodKey; dateFrom: string; dateTo: string; label: string };
+  // key: the phone chips' period; picked: the desktop period picker's.
+  period: { key: DashboardPeriodKey; picked: PickedPeriod; dateFrom: string; dateTo: string; label: string; isMonth: boolean };
+  // The months with any income or expense, for the picker.
+  activeMonths: ActiveMonth[] | null;
+  // The month before a month on show (the cards' "vs September"), else null.
+  compare: { label: string; income: number; expense: number } | null;
+  // A month's income target and spending budget (Budget Planning), null
+  // when none is set or the period isn't a month.
+  targets: { income: number | null; budget: number | null };
+  // Net worth today: its parts, how far it moved since last month ended,
+  // and how many accounts, goals, assets and people make it up.
+  worth: { parts: WorthParts; change: number | null; since: string; counts: { accounts: number; goals: number; assets: number; pawna: number; dena: number } };
+  // Where the period's money went; null when it couldn't be read.
+  flow: MoneyFlow | null;
+  // The next invitations and own events; null when they can't be shown.
+  events: { id: string; title: string; date: string; time: string | null; place: string | null; type: SocialEventType }[] | null;
+  biggestSpend: { name: string; amount: number } | null;
+  goalRows: { id: string; name: string; saved: number; target: number; paused: boolean }[];
+  loanPeople: { id: string; name: string; balance: number }[];
+  assetRows: { id: string; name: string; category: string; value: number; cost: number }[];
   // Last month's short name ("Sep"), for the phone's "vs Sep".
   lastMonthShort: string;
 
