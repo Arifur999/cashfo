@@ -116,7 +116,7 @@ describe("URL values", () => {
   });
 
   it("writes a view back as a URL, leaving the defaults out", () => {
-    expect(reportHref({ period: "this-year", walletId: null, show: "both" })).toBe("/reports/detailed?period=this-year");
-    expect(reportHref({ period: "this-tax-year", walletId: "w1", show: "expense" })).toBe("/reports/detailed?period=this-tax-year&wallet=w1&show=expense");
+    expect(reportHref({ period: "this-year", walletId: null, show: "both" })).toBe("/reports/categories?period=this-year");
+    expect(reportHref({ period: "this-tax-year", walletId: "w1", show: "expense" })).toBe("/reports/categories?period=this-tax-year&wallet=w1&show=expense");
   });
 });

@@ -123,7 +123,7 @@ export const NAV_SECTIONS: NavSection[] = [
     quickAdd: true,
     items: [
       { label: "Dashboard", href: MONEY_HOME, icon: "dashboard" },
-      { label: "Reports", href: "/reports/detailed", icon: "reports", tone: "insights", quickAdd: false },
+      { label: "Reports", href: "/reports/detailed", match: ["/reports/detailed", "/reports/categories"], icon: "reports", tone: "insights", quickAdd: false },
       { label: "AI Insights", href: "/ai-insights", icon: "ai", tone: "insights", quickAdd: false },
     ],
   },
