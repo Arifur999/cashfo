@@ -54,6 +54,7 @@ describe("the two menus", () => {
           ["Assets Management", "Dashboard", "Purchase & Sell", "Update", "Category", "All Assets"],
           ["Loan Management", "Dashboard", "Transactions", "Ledger", "Contacts"],
           ["Group Expense"],
+          ["Calendar & Events", "Calendar", "People@@events", "My events"],
         ],
       ],
       [NAV_FOOT_LABEL, [["Referrals", "Dashboard", "Referred users", "Earnings", "Withdrawals", "Invite links", "Profile & payouts"], ["Password Management"], ["Zakat"]]],

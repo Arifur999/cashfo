@@ -44,6 +44,7 @@ export type NavIcon =
   | "clock"
   | "journal"
   | "gift"
+  | "events"
   | "zakat"
   | "settings";
 
@@ -203,6 +204,16 @@ export const NAV_SECTIONS: NavSection[] = [
         ],
       },
       { label: "Group Expense", href: "/group-expenses", icon: "group" },
+      {
+        label: "Calendar & Events",
+        href: "/events",
+        icon: "events",
+        subs: [
+          { label: "Calendar", href: "/events" },
+          { label: "People@@events", href: "/events/people" },
+          { label: "My events", href: "/events/mine" },
+        ],
+      },
     ],
   },
   // "@@user": plain "Account" is Bangla's হিসাব, a ledger account, not the

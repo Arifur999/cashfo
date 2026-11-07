@@ -62,6 +62,13 @@ describe("notificationView", () => {
     expect(zakat("2026-09-30").title).toBe("Your zakat date has passed");
   });
 
+  it("says an event reminder by its name, then when and where, and opens Calendar & Events", () => {
+    const event = (date: string, time: string | null, place: string | null) => notificationView(row("EVENT", { eventId: "e1", title: "Sumaiya Apu's wedding", date, time, place, url: "/events" }), inEnglish, "en", "BDT", now);
+    expect(event("2026-10-03", "13:00", "Mirpur Convention Hall")).toEqual({ kind: "event", title: "Sumaiya Apu's wedding", body: "Tomorrow at 1:00 pm · Mirpur Convention Hall", href: "/events" });
+    expect(event("2026-10-03", null, null).body).toBe("Tomorrow");
+    expect(event("2026-09-30", "18:00", null).body).toBe("Wed, 30 Sep at 6:00 pm");
+  });
+
   it("opens the conversation support answered", () => {
     expect(notificationView(row("SUPPORT_REPLY", { ticketId: "t1", subject: "Shop money" }), inEnglish, "en")).toEqual({ kind: "support", title: "Support replied to your message", body: "Shop money", href: "/settings/help?message=t1" });
     // The admin's Support reply template, when on, words the body.

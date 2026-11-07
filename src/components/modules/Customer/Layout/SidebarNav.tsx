@@ -13,6 +13,7 @@ import {
   CircleCheckBig,
   Clock,
   Gift,
+  CalendarDays,
   GraduationCap,
   HandCoins,
   House,
@@ -77,6 +78,7 @@ export const NAV_ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
   clock: Clock,
   journal: PenLine,
   gift: Gift,
+  events: CalendarDays,
   zakat: HandCoins,
   settings: Settings,
 };

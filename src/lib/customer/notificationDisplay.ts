@@ -30,6 +30,7 @@ export type NotificationKind =
   | "campaign"
   | "idea"
   | "zakat"
+  | "event"
   | "other";
 
 export interface NotificationView {
@@ -313,7 +314,7 @@ function ideaView(data: UserNotification["data"], { t }: Words): NotificationVie
 // its type belongs to (or a link it carries), so it still reads and opens.
 // A reminder about a PIN-locked workspace: that there is one, not what it
 // says. Opening it asks for the workspace's PIN.
-const LOCKED_HOME: Partial<Record<string, string>> = { BUDGET: "/budget-planning", LOAN_DUE: "/loan-management", SAVINGS: "/savings-goals/dashboard", ZAKAT: "/zakat" };
+const LOCKED_HOME: Partial<Record<string, string>> = { BUDGET: "/budget-planning", LOAN_DUE: "/loan-management", SAVINGS: "/savings-goals/dashboard", ZAKAT: "/zakat", EVENT: "/events" };
 
 function lockedView(item: UserNotification, t: Translate): NotificationView {
   return { kind: "other", title: t("A reminder in a PIN-locked workspace"), body: t("Enter its PIN to see it."), href: LOCKED_HOME[item.type] ?? null };
@@ -416,6 +417,18 @@ function knownView(item: UserNotification, t: Translate, locale: FormatLocale, c
       return securityView(data, words);
     case "IDEA":
       return ideaView(data, words);
+    case "EVENT": {
+      // The day before an event with its reminder on: its name, then
+      // when (Tomorrow, or its day once that has passed) and where.
+      const date = text(data.date);
+      const days = daysUntil(date, now);
+      const at = text(data.time);
+      const time = isClock(at) ? timeLabel(at, t, locale) : "";
+      const day = days === 1 ? t("Tomorrow") : days === 0 ? t("Today") : formatDate(`${date}T00:00:00Z`, "EEE, d MMM", "—", locale);
+      const when = time ? t("{day} at {time}", { day, time }) : day;
+      const place = text(data.place).trim();
+      return { kind: "event", title: text(data.title).trim() || t("An event"), body: place ? `${when} · ${place}` : when, href: appPath(data.url) ?? "/events" };
+    }
     case "ZAKAT": {
       // 30 and 3 days before the zakat date, while some is left to give.
       const due = text(data.dueDate);
