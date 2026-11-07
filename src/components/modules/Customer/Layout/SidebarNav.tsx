@@ -14,6 +14,7 @@ import {
   Clock,
   Gift,
   CalendarDays,
+  Sparkles,
   GraduationCap,
   HandCoins,
   House,
@@ -79,6 +80,7 @@ export const NAV_ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
   journal: PenLine,
   gift: Gift,
   events: CalendarDays,
+  ai: Sparkles,
   zakat: HandCoins,
   settings: Settings,
 };

@@ -45,6 +45,7 @@ export type NavIcon =
   | "journal"
   | "gift"
   | "events"
+  | "ai"
   | "zakat"
   | "settings";
 
@@ -123,6 +124,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Dashboard", href: MONEY_HOME, icon: "dashboard" },
       { label: "Reports", href: "/reports/detailed", icon: "reports", tone: "insights", quickAdd: false },
+      { label: "AI Insights", href: "/ai-insights", icon: "ai", tone: "insights", quickAdd: false },
     ],
   },
   {

@@ -39,7 +39,7 @@ const labels = (ctx: NavContext, app: "money" | "habit") =>
 describe("the two menus", () => {
   it("draws the Money Tracker as the AppSidebar board does", () => {
     expect(labels(business, "money")).toEqual([
-      ["Overview", [["Dashboard"], ["Reports"]]],
+      ["Overview", [["Dashboard"], ["Reports"], ["AI Insights"]]],
       [
         "Money",
         [

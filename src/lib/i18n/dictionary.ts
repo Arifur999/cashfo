@@ -38,6 +38,7 @@ import { writingDictionary } from "./dictionary/writing";
 import { vaultDictionary } from "./dictionary/vault";
 import { zakatDictionary } from "./dictionary/zakat";
 import { eventsDictionary } from "./dictionary/events";
+import { aiInsightsDictionary } from "./dictionary/ai-insights";
 
 // The admin panel's own chrome.
 const bnAdminDictionary: Record<string, string> = {
@@ -117,6 +118,7 @@ export const bnDictionary: Record<string, string> = {
   ...vaultDictionary,
   ...zakatDictionary,
   ...eventsDictionary,
+  ...aiInsightsDictionary,
   ...settingsWorkspaceDictionary,
   ...settingsDictionary,
   ...checkoutDictionary,
