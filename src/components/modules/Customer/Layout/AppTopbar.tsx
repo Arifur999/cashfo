@@ -176,13 +176,8 @@ function Topbar() {
         </ol>
       </nav>
 
-      <div className="flex shrink-0 max-md:order-3">
-        <CustomerSearch
-          iconClassName={iconButton}
-          boxClassName={habit ? "rounded-sm border-line bg-strip" : "rounded-full border-line-card bg-surface shadow-control"}
-          kbdClassName={habit ? "rounded-xs" : "rounded-full"}
-        />
-      </div>
+      {/* The boards took the search box off the bar; Ctrl K still opens it. */}
+      <CustomerSearch showTriggers={false} />
 
       <TodayTasksPanel open={tasksOpen} onOpenChange={setTasksOpen}>
         <button type="button" aria-label={tasksLabel} title={t("Today’s tasks")} className={cn(
