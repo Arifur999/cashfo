@@ -21,5 +21,5 @@ export default async function UpdateAssetValuePage() {
 
   // Keyed by workspace: a switch lands on this same page, and its drawers
   // and filter must not carry the other workspace's choices over.
-  return <UpdateValuePageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets.filter((a) => a.status === "ACTIVE")} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} today={getAppToday()} />;
+  return <UpdateValuePageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} today={getAppToday()} />;
 }

@@ -11,10 +11,10 @@ import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, Group
 // whom, the budget bar, the spend by category and by month. Pure, so the
 // server page and the tests can both use them.
 
-// A group's pages, in the sidebar's order (the AppSidebar board's subs, then
-// Meals for a mess, the Activity log and Settings, which the boards draw but
-// give no link).
-export const GROUP_TABS = ["dashboard", "contributions", "expenses", "cashbook", "settlement", "members", "categories", "budget", "meals", "activity", "settings"] as const;
+// A group's pages, in the v16 AppSidebar board's order. The board leaves
+// Meals out; it is a working page for a mess (or a family counting meals),
+// so it sits after Monthly budget.
+export const GROUP_TABS = ["dashboard", "expenses", "settlement", "cashbook", "contributions", "budget", "meals", "members", "categories", "activity", "settings"] as const;
 export type GroupTab = (typeof GROUP_TABS)[number];
 
 // The pages a group shows: Meals only for a mess, or a family counting meals.
@@ -32,7 +32,7 @@ export const GROUP_TAB_LABELS: Record<GroupTab, string> = {
   categories: "Categories",
   budget: "Monthly budget",
   meals: "Meals",
-  activity: "Activity log",
+  activity: "Activity",
   settings: "Settings",
 };
 

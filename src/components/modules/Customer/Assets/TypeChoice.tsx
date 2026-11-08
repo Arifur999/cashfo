@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useId, useRef } from "react";
 import type { AssetCategoryOption } from "@/lib/customer/api";
@@ -45,8 +46,8 @@ export function TypeChoice({ categories, value, onChange, onClose, keep }: TypeC
 
   return (
     <fieldset className="m-0 flex min-w-0 flex-col border-0 p-0">
-      <legend id={legendId} className="mb-2 text-body leading-[normal] font-medium text-ink">
-        {t("Type")}
+      <legend id={legendId} className="mb-2 text-[14px] leading-[normal] font-medium text-ink">
+        {t("Category")}
       </legend>
       {names.length === 0 ? (
         <p className="text-caption text-ink-muted">
@@ -86,6 +87,15 @@ export function TypeChoice({ categories, value, onChange, onClose, keep }: TypeC
               </button>
             );
           })}
+          {/* A new category is made on its own page (name, icon and colour). */}
+          <Link
+            href="/assets-management/category"
+            onNavigate={onClose}
+            className="flex h-8.5 items-center gap-1.5 rounded-full border border-dashed border-emerald px-3 text-small font-semibold text-emerald hover:bg-mint-50 pointer-coarse:h-11"
+          >
+            <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+            {t("Add category")}
+          </Link>
         </div>
       )}
     </fieldset>

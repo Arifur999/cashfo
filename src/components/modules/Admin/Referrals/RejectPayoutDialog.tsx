@@ -10,9 +10,13 @@ import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatCurrency } from "@/lib/currency";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
 import type { IPayoutRow } from "@/types/referral.types";
 import { referralReasonServerZodSchema } from "@/zod/referral.validation";
 import { firstName } from "./payoutsDisplay";
+
+// The board's quick reasons; a tap fills the box, which can still be edited.
+const QUICK_REASONS = ["Account name doesn't match", "A friend's payment didn't reach us", "Looks like self-referral", "Wrong account number"];
 
 // Mounted inside the dialog content, so each open starts empty.
 const RejectForm = ({ payout, onDone }: { payout: IPayoutRow; onDone: () => void }) => {
@@ -36,8 +40,34 @@ const RejectForm = ({ payout, onDone }: { payout: IPayoutRow; onDone: () => void
           name: firstName(payout.user.name),
         })}
       </p>
+      <div className="flex flex-col gap-2">
+        <p id="reject-why" className="text-small font-medium text-ink">
+          {translate("Why are you rejecting it? The user sees this.")}
+        </p>
+        <form.Subscribe selector={(state) => state.values.reason}>
+          {(reason) => (
+            <div role="group" aria-labelledby="reject-why" className="flex flex-wrap gap-1.5">
+              {QUICK_REASONS.map((quick) => {
+                const text = translate(quick);
+                const on = reason.trim() === text;
+                return (
+                  <button
+                    key={quick}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => form.setFieldValue("reason", text)}
+                    className={cn("h-8 rounded-full border bg-surface px-3 text-[12.5px] font-semibold text-expense transition-colors", on ? "border-expense-fill bg-expense-soft" : "border-expense-line hover:bg-expense-soft")}
+                  >
+                    {text}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </form.Subscribe>
+      </div>
       <form.Field name="reason" validators={{ onChange: referralReasonServerZodSchema.shape.reason }}>
-        {(field) => <AppTextareaField field={field} label="Reason" rows={3} placeholder="For example: the name on the account doesn't match" />}
+        {(field) => <AppTextareaField field={field} label={<span className="sr-only">{translate("Reason")}</span>} rows={2} placeholder="Write a short reason" />}
       </form.Field>
       <FormDialogFooter isPending={isPending} submitLabel="Reject request" pendingLabel="Rejecting..." variant="destructive" />
     </AppForm>

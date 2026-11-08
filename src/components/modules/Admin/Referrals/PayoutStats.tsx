@@ -9,6 +9,7 @@ import { formatMonthName } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { payoutStatsQuery } from "@/queries/navBadge.queries";
+import { REFERRALS_HREF, REFERRALS_LIST_HREF } from "./payoutsDisplay";
 
 // The desk's four figures: what waits for a look, what is approved and
 // still to send, what went out this month, and the commissions still inside
@@ -27,16 +28,18 @@ const PayoutStats = ({ holdDays }: { holdDays: number | null }) => {
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-      <Kpi size="sm" label="Waiting for review" value={<span className="text-warning">{money(stats.waiting.amount)}</span>} note={requests(stats.waiting.count)} />
-      <Kpi size="sm" label="Approved, to send" value={money(stats.approved.amount)} note={requests(stats.approved.count)} />
+      <Kpi size="sm" href={`${REFERRALS_HREF}?status=REQUESTED`} label="Waiting for review" value={<span className="text-warning">{money(stats.waiting.amount)}</span>} note={requests(stats.waiting.count)} />
+      <Kpi size="sm" href={`${REFERRALS_HREF}?status=APPROVED`} label="Approved, to send" value={money(stats.approved.amount)} note={requests(stats.approved.count)} />
       <Kpi
         size="sm"
+        href={`${REFERRALS_HREF}?status=PAID`}
         label={translate("Paid in {month}", { month: translate(formatMonthName(stats.paidThisMonth.month)) })}
         value={<span className="text-emerald">{money(stats.paidThisMonth.amount)}</span>}
         note={countPhrase(translate, locale, stats.paidThisMonth.count, "{count} payout", "{count} payouts")}
       />
       <Kpi
         size="sm"
+        href={`${REFERRALS_LIST_HREF}?status=ON_HOLD`}
         label="Commission on hold"
         value={money(stats.onHold.amount)}
         note={

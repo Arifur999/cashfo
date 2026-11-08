@@ -1418,7 +1418,8 @@ export interface GroupSettlementResult {
 // with the running cash.
 export interface GroupCashbookRow {
   id: string;
-  source: "CONTRIBUTION" | "EXPENSE";
+  // HANDOVER: cash one holder handed to another (two rows, one each side).
+  source: "CONTRIBUTION" | "EXPENSE" | "HANDOVER";
   kind: "IN" | "OUT";
   date: string;
   accountantId: string;
@@ -1430,6 +1431,8 @@ export interface GroupCashbookRow {
   note: string | null;
   amount: string;
   balance: string;
+  // A handover's other holder: who got the cash (OUT) or gave it (IN).
+  otherId?: string;
 }
 
 export interface GroupCashbook {
@@ -1451,12 +1454,14 @@ export type GroupActivityAction = "ADDED" | "EDITED" | "DELETED" | "MONTH";
 export interface GroupActivity {
   id: string;
   action: GroupActivityAction;
-  // EXPENSE, CONTRIBUTION, SETTLE, MEMBER, CATEGORY, BUDGET, SETTINGS, SPLIT, MEALS, MONTH
+  // EXPENSE, CONTRIBUTION, SETTLE, HANDOVER, MEMBER, CATEGORY, BUDGET, SETTINGS, SPLIT, MEALS, MONTH
   entity: string;
   entityId: string | null;
   summary: Record<string, unknown>;
   change: { field: string; from: unknown; to: unknown }[] | null;
+  // Who made the change (their initials when they hide their name in groups).
   actorName: string | null;
+  actorUserId?: string | null;
   createdAt: string;
 }
 
