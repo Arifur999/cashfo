@@ -55,6 +55,9 @@ export interface HomeGoal {
 export interface HomeData {
   businessId: string;
   currency: string;
+  // Today in the Hijri calendar ("21 Rabiʻ II 1448"), for a reader who
+  // asked for it beside dates (Settings › App preferences).
+  hijri?: string | null;
   // OWNER or ACCOUNTANT: the API lets only them post, so only they see the
   // add buttons and Void.
   canManage: boolean;

@@ -257,9 +257,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const incomeTarget = picked.kind === "month" && monthPlan?.incomeTarget ? Number(monthPlan.incomeTarget) : 0;
   const monthBudget = picked.kind === "month" ? planBudget || Number(budgetOverview?.totalBudget ?? 0) : 0;
 
+  const hijri = user.preferences?.showHijri ? homeDates(now, fmt, APP_TIME_ZONE, (await getPrayerSettings()).hijriAdjust).hijri : null;
   const data: HomeData = {
     businessId: activeBusinessId,
     currency,
+    hijri,
     canManage,
     today,
     greeting,

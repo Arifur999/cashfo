@@ -116,6 +116,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { user } = useAuth();
+  const defaultAccountId = user.businesses.find((business) => business.id === businessId)?.defaultAccountId ?? null;
   const wide = useMediaQuery("(min-width: 768px)");
   const [kind, setKind] = useState<EntryKind>(initialKind);
   const [amount, setAmount] = useState("");
@@ -179,7 +180,10 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         const list = money.data ?? [];
         setWallets(list);
         setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
-        setAccountId((current) => current || list[0]?.id || "");
+        // The member's default wallet here (Settings › App preferences),
+        // while it is still one of them; else the first.
+        const preferred = list.find((wallet) => wallet.id === defaultAccountId)?.id;
+        setAccountId((current) => current || preferred || list[0]?.id || "");
         // Only a transfer has a second wallet: an edit of an income or an
         // expense never gets one, so opening it changes nothing.
         if (editingKind === undefined || editingKind === "TRANSFER") setToAccountId((current) => current || list[1]?.id || "");
@@ -200,7 +204,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     return () => {
       live = false;
     };
-  }, [open, businessId, editingKind, attempt]);
+  }, [open, businessId, editingKind, attempt, defaultAccountId]);
 
   // The budget of the month the entry is dated in, for the "left this
   // month" hint: an entry for last month counts against last month.

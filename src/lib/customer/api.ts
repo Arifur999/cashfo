@@ -29,6 +29,8 @@ export interface UserBusiness {
   role: MemberRole;
   isDefault: boolean;
   hasPinLock: boolean;
+  // Settings › App preferences: the wallet new entries start from here.
+  defaultAccountId?: string | null;
   trialEndsAt: string | null;
 }
 
@@ -100,7 +102,17 @@ export interface DisplayPreferences {
   numberGrouping: NumberGrouping;
   dateStyle: DateStyle;
   weekStart: WeekStart;
+  // Settings › App preferences (v16). Absent from an older backend.
+  roundAmounts?: boolean;
+  startPage?: StartPage;
+  rowsPerPage?: number;
+  compactTables?: boolean;
+  sidebarCollapsed?: boolean;
+  fiscalYearStart?: "JANUARY" | "JULY";
+  showHijri?: boolean;
 }
+
+export type StartPage = "DASHBOARD" | "REPORTS" | "INCOME_EXPENSE" | "GROUP" | "CALENDAR";
 
 // GET|PATCH /api/auth/alerts. emailReady: the platform can send email now.
 export interface SecurityAlerts {

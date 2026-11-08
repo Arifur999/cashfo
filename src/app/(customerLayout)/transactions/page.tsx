@@ -42,7 +42,9 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const current = appYearMonth();
   const thisMonth: PickedPeriod = { kind: "month", ...current };
   const page = readPageParam(params);
-  const limit = readPageSizeParam(params, PAGE_SIZES, DEFAULT_PAGE_SIZE);
+  // The reader's rows per page (Settings › App preferences) unless the address says.
+  const defaultPageSize = PAGE_SIZES.includes(user.preferences?.rowsPerPage ?? 0) ? user.preferences!.rowsPerPage! : DEFAULT_PAGE_SIZE;
+  const limit = readPageSizeParam(params, PAGE_SIZES, defaultPageSize);
   const { type: selectedType, dateFrom: oldFrom, dateTo: oldTo, accountId, categoryId, uncategorised, search, deleted } = readTransactionFilters((key) => {
     const value = params[key];
     return typeof value === "string" ? value : undefined;
@@ -140,7 +142,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
       meta={meta}
       pageSize={limit}
       pageSizes={PAGE_SIZES}
-      defaultPageSize={DEFAULT_PAGE_SIZE}
+      defaultPageSize={defaultPageSize}
       currency={activeBusiness?.currency ?? "BDT"}
       today={today}
       totals={totals}

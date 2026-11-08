@@ -159,3 +159,9 @@ export async function correctTransactionAction(
     return res.data;
   }, "Failed to save the changes");
 }
+
+// Settings › App preferences › Default account for new transactions: the
+// member's own wallet to start from in this workspace (null: the first).
+export async function setDefaultAccountAction(businessId: string, accountId: string | null): Promise<ActionResult<{ defaultAccountId: string | null }>> {
+  return callApi(async () => (await customerApi.put<{ defaultAccountId: string | null }>(`/api/businesses/${businessId}/accounts/default`, { accountId })).data, "Couldn't save your default account");
+}

@@ -13,8 +13,8 @@ const at = "2026-10-02T06:00:00.000Z";
 
 describe("resolveFmt", () => {
   it("reads no preferences as the language's own way", () => {
-    expect(resolveFmt(null, "en")).toEqual({ locale: "en", digits: "latin", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: 6 });
-    expect(resolveFmt(undefined, "bn")).toEqual({ locale: "bn", digits: "bengali", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: 6 });
+    expect(resolveFmt(null, "en")).toEqual({ locale: "en", digits: "latin", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: 6, round: false });
+    expect(resolveFmt(undefined, "bn")).toEqual({ locale: "bn", digits: "bengali", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: 6, round: false });
   });
 
   // The defaults are the plain value itself, so nothing moves for a reader
@@ -192,5 +192,13 @@ describe("the formatters with a Fmt", () => {
     expect(banglaShortDay("2026-10-02", latinBn)).toBe("শুক্র, 2 অক্টো");
     expect(timeLabel("17:30", inEnglish, bnDigitsEn)).toBe("৫:৩০ pm");
     expect(plural(inEnglish, 3, "{count} entry", "{count} entries", undefined, bnDigitsEn)).toBe("৩ entries");
+  });
+});
+
+describe("rounded amounts", () => {
+  it("are whole taka for a reader who asked, to the paisa otherwise", async () => {
+    const { formatCurrency } = await import("@/lib/customer/currency");
+    expect(formatCurrency(1840.75, "BDT", resolveFmt({ roundAmounts: true }, "en"))).toBe(formatCurrency(1841, "BDT", "en"));
+    expect(formatCurrency(1840.75, "BDT", resolveFmt({ roundAmounts: false }, "en"))).not.toBe(formatCurrency(1841, "BDT", "en"));
   });
 });

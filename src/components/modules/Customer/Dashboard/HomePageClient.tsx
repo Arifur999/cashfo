@@ -68,6 +68,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
               <>
                 <span className="md:hidden">{data.period.label}</span>
                 <span className="max-md:hidden">{t("Here is your money at a glance · {period}", { period: data.period.label })}</span>
+                {data.hijri && <span className="text-ink-faint">{` · ${data.hijri}`}</span>}
               </>
             )}
           </p>

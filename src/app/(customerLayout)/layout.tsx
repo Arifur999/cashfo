@@ -97,7 +97,10 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   const unlocked = viewAs ? locked.map(() => true) : await Promise.all(locked.map((business) => hasWorkspaceUnlock(business.id)));
   const unlockedBusinessIds = locked.filter((_, index) => unlocked[index]).map((business) => business.id);
   // The sidebar folded to icons, as this browser left it.
-  const sidebarCollapsed = readSidebarCollapsed((await cookies()).get(SIDEBAR_COLLAPSED_COOKIE)?.value);
+  // Before this browser has a choice, Settings › App preferences' "Sidebar
+  // starts collapsed" decides.
+  const sidebarCookie = (await cookies()).get(SIDEBAR_COLLAPSED_COOKIE)?.value;
+  const sidebarCollapsed = sidebarCookie === undefined ? Boolean(user.preferences?.sidebarCollapsed) : readSidebarCollapsed(sidebarCookie);
 
   // A PIN-locked workspace asks for its PIN first, on whatever page was
   // opened, and stays on it once it opens.
@@ -143,7 +146,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                               an absolute child (a screen-reader-only label) is placed
                               in this scroller, not the page, so the page itself never
                               grows taller than the window and scrolls the sidebar away. */}
-                          <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto outline-none print:overflow-visible">
+                          <main id="main-content" tabIndex={-1} data-compact={user.preferences?.compactTables ? "true" : undefined} className="relative flex-1 overflow-y-auto outline-none print:overflow-visible">
                             <OfflineBanner />
                             <AnnouncementBanner announcements={platform.announcements} />
                             {children}

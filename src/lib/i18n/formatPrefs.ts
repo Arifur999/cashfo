@@ -29,6 +29,8 @@ export interface Fmt {
   readonly grouping: Grouping;
   readonly dateStyle: DateStyle;
   readonly weekStart: Weekday;
+  // Amounts to the whole taka (Settings › App preferences); saved ones keep their paisa.
+  readonly round: boolean;
 }
 
 export type FormatLocale = Locale | Fmt;
@@ -41,6 +43,7 @@ export interface FormatPreferences {
   numberGrouping?: "LAKH" | "INTERNATIONAL" | null;
   dateStyle?: DateStyle | null;
   weekStart?: "SATURDAY" | "SUNDAY" | "MONDAY" | null;
+  roundAmounts?: boolean | null;
 }
 
 // The app's week runs Saturday to Friday unless the reader says otherwise.
@@ -52,8 +55,8 @@ const DATE_STYLES: readonly DateStyle[] = ["D_MMM_YYYY", "DD_MM_YYYY", "YYYY_MM_
 // One frozen value per language, so fmtOf("bn") is the same object every
 // time (cheap, and stable as a React dependency).
 const PLAIN: Record<Locale, Fmt> = {
-  en: Object.freeze({ locale: "en", digits: "latin", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: DEFAULT_WEEK_START }),
-  bn: Object.freeze({ locale: "bn", digits: "bengali", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: DEFAULT_WEEK_START }),
+  en: Object.freeze({ locale: "en", digits: "latin", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: DEFAULT_WEEK_START, round: false }),
+  bn: Object.freeze({ locale: "bn", digits: "bengali", grouping: "lakh", dateStyle: "D_MMM_YYYY", weekStart: DEFAULT_WEEK_START, round: false }),
 };
 
 // The reader's choices in their language. No preferences (or a field left
@@ -66,8 +69,9 @@ export function resolveFmt(preferences: FormatPreferences | null | undefined, lo
   const grouping: Grouping = preferences.numberGrouping === "INTERNATIONAL" ? "international" : "lakh";
   const dateStyle = preferences.dateStyle && DATE_STYLES.includes(preferences.dateStyle) ? preferences.dateStyle : plain.dateStyle;
   const weekStart = (preferences.weekStart && WEEK_START_DAY[preferences.weekStart]) ?? plain.weekStart;
-  if (digits === plain.digits && grouping === plain.grouping && dateStyle === plain.dateStyle && weekStart === plain.weekStart) return plain;
-  return Object.freeze({ locale, digits, grouping, dateStyle, weekStart });
+  const round = preferences.roundAmounts === true;
+  if (digits === plain.digits && grouping === plain.grouping && dateStyle === plain.dateStyle && weekStart === plain.weekStart && !round) return plain;
+  return Object.freeze({ locale, digits, grouping, dateStyle, weekStart, round });
 }
 
 // Either form as a Fmt: a plain Locale is that language's own way.
