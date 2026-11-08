@@ -1,14 +1,17 @@
 "use client";
 
-import { Banknote, Lock, Pencil, Plus, Printer, Trash2 } from "lucide-react";
+import { Banknote, Lock, Pencil, Plus, Printer, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
+import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
+import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { countLabel, dayLabel, isDayClosed } from "@/lib/customer/groupDisplay";
+import { countLabel, dayLabel, groupMonthOf, isDayClosed, paidIn } from "@/lib/customer/groupDisplay";
+import { monthName } from "@/lib/customer/insights";
 import { type GroupPeriod, periodLabel } from "@/lib/customer/groupPeriod";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -23,7 +26,8 @@ interface GroupContributionsTabProps {
   data: GroupPageData;
   view: GroupView;
   onPeriod: (period: GroupPeriod) => void;
-  onAdd: () => void;
+  // With a member: the form opens with them picked.
+  onAdd: (memberId?: string) => void;
   onEdit: (row: GroupContribution) => void;
   onRemove: (row: GroupContribution) => void;
   // An own-pocket row is an expense: it opens and deletes as one.
@@ -34,8 +38,8 @@ interface GroupContributionsTabProps {
 }
 
 const PERIODS = ["month", "all", "year", "custom"] as const;
-// #, date, member, given to, type, note, amount, actions.
-const COLUMNS = "md:grid-cols-[36px_64px_minmax(0,1.1fr)_160px_112px_minmax(0,1fr)_110px_76px]";
+// #, date, member, received by, note (with its type), amount, actions.
+const COLUMNS = "md:grid-cols-[36px_64px_minmax(0,1.2fr)_minmax(0,160px)_minmax(0,1fr)_120px_76px]";
 const PAGE = 25;
 
 type RowType = "DEPOSIT" | "POCKET" | "RETURN" | "SETTLE" | "CARRY";
@@ -66,6 +70,7 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
   const { t, fmt } = useLocale();
   const { currency, startDay } = data;
   const period = data.period ?? { kind: "month" };
+  const [query, setQuery] = useState("");
   const [memberId, setMemberId] = useState("");
   const [type, setType] = useState<"" | RowType>("");
   const [limit, setLimit] = useState(PAGE);
@@ -100,14 +105,22 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
       expense: row,
     }));
   const all = [...contributionRows, ...pocketRows];
-  const rows = all.filter((row) => (!memberId || row.member?.id === memberId) && (!type || row.type === type)).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+  const words = query.trim().toLowerCase();
+  const rows = all
+    .filter((row) => (!memberId || row.member?.id === memberId) && (!type || row.type === type))
+    .filter((row) => !words || [row.memberName, row.note ?? "", row.givenTo?.name ?? "", String(Math.abs(row.amount))].some((text) => text.toLowerCase().includes(words))).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shown = rows.slice(0, limit);
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   const types = (["DEPOSIT", "POCKET", "RETURN", "SETTLE", "CARRY"] as const).filter((value) => value === "DEPOSIT" || value === "POCKET" || value === type || all.some((row) => row.type === value));
   const memberOptions = data.members.filter((member) => member.status === "ACTIVE" || all.some((row) => row.member?.id === member.id));
   const memberLabel = memberId ? (view.memberById[memberId]?.name ?? "") : t("All members");
   const typeLabel = type ? t(TYPE_LABELS[type]) : t("All types");
-  const givenText = (row: Row) => (row.givenTo ? t("{name} (accountant)", { name: row.givenTo.name }) : "—");
+  const givenText = (row: Row) => row.givenTo?.name ?? "—";
+  // The month on show, member by member: what each gave, their share and balance.
+  const month = monthName(data.range.key, fmt, "long", true);
+  const current = data.range.key === groupMonthOf(data.today, startDay);
+  const byMember = data.settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId] })).filter(({ row, member }) => member?.status === "ACTIVE" || paidIn(row) !== 0 || Number(row.share) !== 0);
+  const givenInMonth = byMember.reduce((sum, { row }) => sum + paidIn(row), 0);
 
   const statement = (): StatementSpec => ({
     title: t("Contributions statement"),
@@ -129,20 +142,92 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2.5">
-        <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
-        {canAdd && (
-          <Button onClick={onAdd}>
-            <Plus aria-hidden="true" />
-            {t("Add contribution")}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <h2 className="text-[19px] font-semibold text-ink">{t("Contributions · {period}", { period: label })}</h2>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
+          <Button variant="secondary" onClick={() => setPrinting(true)}>
+            <Printer aria-hidden="true" />
+            {t("Print")}
           </Button>
-        )}
+          {canAdd && (
+            <Button onClick={() => onAdd()}>
+              <Plus aria-hidden="true" />
+              {t("Add contribution")}
+            </Button>
+          )}
+        </div>
       </div>
+
+      {byMember.length > 0 && (
+        <Card padding="none" className="flex flex-col gap-3.5 px-5 py-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h3 className="text-[16px] font-semibold text-ink">{current ? t("This month by member") : t("{month} by member", { month })}</h3>
+            <span className="flex items-baseline gap-3">
+              <span className="text-caption text-ink-muted">{t("Given in {month}", { month })}</span>
+              <span className="text-[19px] font-bold text-income tabular-nums">{money(givenInMonth)}</span>
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {byMember.map(({ row, member }) => {
+              const gave = paidIn(row);
+              const balance = Number(row.balance);
+              const even = Math.abs(balance) < 0.005;
+              return (
+                <div key={row.groupMemberId} className="flex min-w-0 flex-col gap-2.5 rounded-xl border border-line px-3.5 py-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <MemberAvatar member={member ?? { id: row.groupMemberId, name: row.name, photoUrl: null }} members={data.members} size={28} />
+                    <span className="min-w-0 flex-1 truncate font-semibold text-ink">{row.name}</span>
+                    {gave <= 0 && member?.status === "ACTIVE" && (
+                      <Chip tone="warning" size="sm">
+                        {t("Not paid yet")}
+                      </Chip>
+                    )}
+                    {canAdd && member?.status === "ACTIVE" && (
+                      <button type="button" onClick={() => onAdd(member.id)} aria-label={t("Add a contribution from {name}", { name: row.name })} className="flex size-7.5 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                        <Plus className="size-4" aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                  <dl className="grid grid-cols-3 gap-2 tabular-nums">
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <dt className="text-caption text-ink-muted">{t("Gave")}</dt>
+                      <dd className="truncate text-body font-semibold text-income">{money(gave)}</dd>
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <dt className="text-caption text-ink-muted">{t("Share")}</dt>
+                      <dd className="truncate text-body font-semibold text-ink">{money(row.share)}</dd>
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <dt className="text-caption text-ink-muted">{t("Balance")}</dt>
+                      <dd className={cn("truncate text-body font-semibold", even ? "text-ink" : balance > 0 ? "text-income" : "text-expense")}>{even ? money(0) : formatSignedCurrency(balance, currency, fmt)}</dd>
+                      <dd className={cn("text-[11.5px] font-semibold", even ? "text-ink-muted" : balance > 0 ? "text-income" : "text-expense")}>{even ? t("All square") : balance > 0 ? t("Group owes them") : t("Owes the group")}</dd>
+                    </div>
+                  </dl>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <ListCard
         label={t("Contributions")}
         header={
           <div className="flex flex-wrap items-center gap-2.5 px-4 py-3 md:px-5">
+            <Input
+              type="search"
+              size="sm"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setLimit(PAGE);
+              }}
+              placeholder={t("Search name, note or amount…")}
+              aria-label={t("Search contributions")}
+              leading={<Search className="ml-2.5 size-4 text-ink-muted" aria-hidden="true" />}
+              frameClassName="w-full sm:w-72"
+            />
             <NativeSelect
               size="sm"
               aria-label={t("Member")}
@@ -177,14 +262,9 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
                 </option>
               ))}
             </NativeSelect>
-            <span className="ml-auto flex items-center gap-3">
-              <span className="flex flex-col items-end leading-tight">
-                <span className="text-caption text-ink-muted">{t("Total · {entries}", { entries: countLabel(t, fmt, rows.length, "{count} entry", "{count} entries") })}</span>
-                <span className="text-[18px] font-bold text-ink tabular-nums">{money(total)}</span>
-              </span>
-              <Button variant="outline" size="icon" aria-label={t("Print statement")} onClick={() => setPrinting(true)}>
-                <Printer aria-hidden="true" />
-              </Button>
+            <span className="ml-auto flex flex-col items-end leading-tight">
+              <span className="text-caption text-ink-muted">{t("Total · {entries}", { entries: countLabel(t, fmt, rows.length, "{count} entry", "{count} entries") })}</span>
+              <span className={cn("text-[18px] font-bold tabular-nums", total < 0 ? "text-expense" : "text-income")}>{money(total)}</span>
             </span>
           </div>
         }
@@ -203,13 +283,10 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
           <ListHeadCell>#</ListHeadCell>
           <ListHeadCell>{t("Date")}</ListHeadCell>
           <ListHeadCell>{t("Member")}</ListHeadCell>
-          <ListHeadCell>{t("Given to")}</ListHeadCell>
-          <ListHeadCell>{t("Type")}</ListHeadCell>
+          <ListHeadCell>{t("Received by")}</ListHeadCell>
           <ListHeadCell>{t("Note")}</ListHeadCell>
           <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
-          <ListHeadCell>
-            <span className="sr-only">{t("Actions")}</span>
-          </ListHeadCell>
+          <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {shown.length === 0 &&
           (all.length === 0 ? (
@@ -219,14 +296,14 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
               title={t("No contributions match these filters.")}
               action={
                 canAdd && (
-                  <Button size="sm" onClick={onAdd}>
-                    {t("Add contribution")}
+                  <Button size="sm" onClick={() => onAdd()}>
+                    {t("Add the first contribution")}
                   </Button>
                 )
               }
             />
           ) : (
-            <ListEmpty title={t("No contributions match these filters.")} />
+            <ListEmpty title={t("No contributions match your search or filter.")} />
           ))}
         {shown.map((row, index) => {
           const closed = isDayClosed(data.history, row.date);
@@ -244,19 +321,23 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
                 </span>
               </ListCell>
               <ListCell className="hidden truncate text-ink-2 md:block">{givenText(row)}</ListCell>
-              <ListCell className="hidden md:block">
-                <Chip tone={TYPE_TONES[row.type]}>{t(TYPE_LABELS[row.type])}</Chip>
+              <ListCell className="hidden min-w-0 items-center gap-2 md:flex">
+                {row.type !== "DEPOSIT" && (
+                  <Chip tone={TYPE_TONES[row.type]} size="sm" className="shrink-0">
+                    {t(TYPE_LABELS[row.type])}
+                  </Chip>
+                )}
+                <span className={cn("truncate", row.note ? "text-ink-2" : "text-input")}>{row.note || (row.type === "DEPOSIT" ? "—" : "")}</span>
               </ListCell>
-              <ListCell className={cn("hidden truncate md:block", row.note ? "text-ink-2" : "text-input")}>{row.note || "—"}</ListCell>
               <ListCell align="end" className={cn("font-semibold", row.amount < 0 ? "text-expense" : "text-income")}>
                 {formatSignedCurrency(row.amount, currency, fmt)}
               </ListCell>
-              <ListRowActions className="flex justify-end gap-0.5">
-                <button type="button" onClick={edit} aria-label={row.expense ? t("Edit expense") : t("Edit contribution")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
-                  {closed ? <Lock className="size-4" aria-hidden="true" /> : <Pencil className="size-4" aria-hidden="true" />}
+              <ListRowActions className="flex justify-end gap-1.5">
+                <button type="button" onClick={edit} aria-label={row.expense ? t("Edit expense") : t("Edit contribution")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                  {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}
                 </button>
-                <button type="button" onClick={remove} aria-label={row.expense ? t("Delete expense") : t("Delete contribution")} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
-                  <Trash2 className="size-4" aria-hidden="true" />
+                <button type="button" onClick={remove} aria-label={row.expense ? t("Delete expense") : t("Delete contribution")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
+                  <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
               </ListRowActions>
             </ListRow>

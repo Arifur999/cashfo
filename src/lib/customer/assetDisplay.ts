@@ -227,16 +227,21 @@ export function statementLines(asset: Pick<Asset, "valueHistory">): StatementLin
 }
 
 // A point on the Dashboard's value chart: what the assets were worth on a
-// day against what was paid for them, and the assets added since the point
-// before (by name).
+// day against what was paid for them, and the assets added and sold since
+// the point before (by name).
 export interface ValuePoint {
   // YYYY-MM-DD
   date: string;
   value: number;
   paid: number;
   added: string[];
+  sold: string[];
   today: boolean;
 }
+
+// The most year-end points the chart draws before it skips years (today
+// is always one more).
+const MAX_YEARS = 9;
 
 // What an asset was worth at the end of a day: its last value recorded by
 // then, or null before it was bought.
@@ -246,34 +251,97 @@ export function valueOn(asset: Pick<Asset, "valueHistory" | "purchaseDate" | "pu
   return known ? known.value : Number(asset.purchasePrice);
 }
 
-// The owned assets together: their value at the end of each year since the
-// first was bought, and today. It steps up when an asset is added and moves
-// with every value update.
-export function portfolioSeries(owned: Asset[], today: string): ValuePoint[] {
-  if (owned.length === 0) return [];
-  const firstYear = Math.min(...owned.map((asset) => Number(asset.purchaseDate.slice(0, 4))));
+// The assets together, sold ones until the day they were sold: their value
+// at the end of each year since the first was bought (every few years when
+// there are many), and today. It steps up when an asset is added, down when
+// one is sold, and moves with every value update.
+export function portfolioSeries(assets: Asset[], today: string): ValuePoint[] {
+  if (assets.length === 0) return [];
+  const bought = (asset: Asset) => asset.purchaseDate.slice(0, 10);
+  const soldOn = (asset: Asset) => (asset.status === "SOLD" && asset.soldAt ? asset.soldAt.slice(0, 10) : null);
+  const first = assets.map(bought).reduce((min, day) => (day < min ? day : min));
+  const firstYear = Number(first.slice(0, 4));
   const thisYear = Number(today.slice(0, 4));
-  const days = [...Array.from({ length: Math.max(0, thisYear - firstYear) }, (_, i) => `${firstYear + i}-12-31`), today];
+  let years = Array.from({ length: Math.max(0, thisYear - firstYear) }, (_, i) => firstYear + i);
+  const step = Math.max(1, Math.ceil(years.length / MAX_YEARS));
+  years = years.filter((_, i) => (years.length - 1 - i) % step === 0);
+  // All bought this year: the first purchase, then today.
+  const days = [...(years.length ? years.map((year) => `${year}-12-31`) : first < today ? [first] : []), today];
   return days.map((day, index) => {
     let value = 0;
     let paid = 0;
-    for (const asset of owned) {
+    for (const asset of assets) {
+      const sale = soldOn(asset);
+      if (sale !== null && sale <= day) continue;
       const worth = valueOn(asset, day);
       if (worth === null) continue;
       value += worth;
       paid += Number(asset.purchasePrice);
     }
     const from = index === 0 ? "" : days[index - 1];
-    const added = owned.filter((asset) => asset.purchaseDate.slice(0, 10) > from && asset.purchaseDate.slice(0, 10) <= day).map((asset) => asset.name);
-    return { date: day, value, paid, added, today: index === days.length - 1 };
+    const added = assets.filter((asset) => bought(asset) > from && bought(asset) <= day).map((asset) => asset.name);
+    const sold = assets.filter((asset) => {
+      const sale = soldOn(asset);
+      return sale !== null && sale > from && sale <= day;
+    });
+    return { date: day, value, paid, added, sold: sold.map((asset) => asset.name), today: index === days.length - 1 };
   });
 }
 
-// One asset: every value it was recorded at, against its starting price.
-export function assetSeries(asset: Pick<Asset, "valueHistory">): ValuePoint[] {
+// One asset: every value it was recorded at, against its starting price,
+// and the sale last once it was sold.
+export function assetSeries(asset: Pick<Asset, "valueHistory" | "status" | "soldAt" | "soldPrice" | "name">): ValuePoint[] {
   const lines = statementLines(asset);
   const start = lines[0]?.value ?? 0;
-  return lines.map((line, index) => ({ date: line.date.slice(0, 10), value: line.value, paid: start, added: [], today: index === lines.length - 1 }));
+  const points: ValuePoint[] = lines.map((line) => ({ date: line.date.slice(0, 10), value: line.value, paid: start, added: [], sold: [], today: false }));
+  if (asset.status === "SOLD" && asset.soldAt) points.push({ date: asset.soldAt.slice(0, 10), value: Number(asset.soldPrice ?? 0), paid: start, added: [], sold: [asset.name], today: false });
+  if (points.length) points[points.length - 1].today = asset.status !== "SOLD";
+  return points;
+}
+
+// The latest value updates and sales, newest first: what each moved from
+// and to. A purchase is where an asset starts, so it isn't one.
+export interface ValueChange {
+  key: string;
+  asset: Asset;
+  // YYYY-MM-DD
+  date: string;
+  kind: "update" | "sale";
+  from: number;
+  to: number;
+  note: string | null;
+}
+
+export function recentValueChanges(assets: Asset[], limit = 5): ValueChange[] {
+  const changes: ValueChange[] = [];
+  for (const asset of assets) {
+    const lines = statementLines(asset);
+    lines.slice(1).forEach((line, index) => changes.push({ key: `${asset.id}:${line.id}`, asset, date: line.date.slice(0, 10), kind: "update", from: lines[index].value, to: line.value, note: line.note }));
+    if (asset.status === "SOLD" && asset.soldAt) {
+      const last = lines[lines.length - 1]?.value ?? Number(asset.purchasePrice);
+      changes.push({ key: `${asset.id}:sale`, asset, date: asset.soldAt.slice(0, 10), kind: "sale", from: last, to: Number(asset.soldPrice ?? 0), note: null });
+    }
+  }
+  // On one day the sale comes after that day's update.
+  return changes.sort((a, b) => b.date.localeCompare(a.date) || (a.kind === b.kind ? 0 : a.kind === "sale" ? -1 : 1)).slice(0, limit);
+}
+
+// The owned assets' biggest rise and biggest drop at their last value
+// update, by percent; null where none moved that way.
+export function lastUpdateMovers(owned: Asset[]): { rise: ValueChange | null; drop: ValueChange | null } {
+  let rise: ValueChange | null = null;
+  let drop: ValueChange | null = null;
+  const pct = (change: ValueChange) => (change.from ? (change.to - change.from) / change.from : 0);
+  for (const asset of owned) {
+    const lines = statementLines(asset);
+    if (lines.length < 2) continue;
+    const before = lines[lines.length - 2];
+    const last = lines[lines.length - 1];
+    const change: ValueChange = { key: `${asset.id}:${last.id}`, asset, date: last.date.slice(0, 10), kind: "update", from: before.value, to: last.value, note: last.note };
+    if (change.to > change.from && (!rise || pct(change) > pct(rise))) rise = change;
+    if (change.to < change.from && (!drop || pct(change) < pct(drop))) drop = change;
+  }
+  return { rise, drop };
 }
 
 // The Dashboard table's orders.

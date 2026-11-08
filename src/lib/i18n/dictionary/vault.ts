@@ -432,4 +432,8 @@ export const vaultDictionary: Record<string, string> = {
   "Type all 6 digits from the text message.": "SMS-এর ৬টি সংখ্যাই লিখুন।",
   "Vault password, then a code by SMS": "ভল্ট পাসওয়ার্ড, তারপর SMS-এ আসা কোড",
   "Sent 5 times. Use the last code.": "৫ বার পাঠানো হয়েছে। শেষ কোডটি দিন।",
+  // Checkup all clear (v16)
+  "Nothing to fix right now": "এখন ঠিক করার কিছু নেই",
+  "We'll point out new problems here when they come up.": "নতুন কোনো সমস্যা দেখা দিলে আমরা এখানে জানাব।",
+  "Back to your logins": "আপনার লগইনগুলোতে ফিরে যান",
 };

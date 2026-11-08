@@ -160,6 +160,33 @@ export async function undoSettleUpAction(businessId: string, settleGroupId: stri
   }, "Failed to undo the payment");
 }
 
+// Cash book > Hand over cash: group cash from one holder to another.
+export interface GroupHandoverInput {
+  fromMemberId: string;
+  toMemberId: string;
+  amount: string;
+  date: string;
+  note?: string | null;
+}
+
+export async function createGroupHandoverAction(businessId: string, input: GroupHandoverInput): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/group/handovers`, input, { headers: await authHeaders() });
+  }, "Failed to save the handover");
+}
+
+export async function updateGroupHandoverAction(businessId: string, id: string, input: GroupHandoverInput): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.patch(`${API_BASE_URL}/api/businesses/${businessId}/group/handovers/${id}`, input, { headers: await authHeaders() });
+  }, "Failed to save the handover");
+}
+
+export async function deleteGroupHandoverAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/handovers/${id}`, { headers: await authHeaders() });
+  }, "Failed to delete the handover");
+}
+
 // Members > Cost split: equal, or a percent for each active member adding up to 100.
 export async function setGroupCostSplitAction(businessId: string, input: { mode: GroupCostSplit; members?: { groupMemberId: string; percent: number }[] }): Promise<ActionResult<GroupSettings>> {
   return callApi(async () => {

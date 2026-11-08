@@ -1,18 +1,19 @@
 "use client";
 
-import { ArrowRight, CalendarDays, CircleAlert, ExternalLink, MoreHorizontal, Pause, Pencil, Play } from "lucide-react";
+import { ArrowRight, CircleAlert, ExternalLink, MoreHorizontal, Pause, Pencil, Play } from "lucide-react";
 import Link from "next/link";
+import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { countLabel, groupMonthOf, groupTabHref } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { GROUP_KIND, MemberAvatar } from "./GroupBits";
+import { GROUP_KIND } from "./GroupBits";
 import type { GroupCardData } from "./groupTypes";
 
 interface GroupCardProps {
@@ -29,9 +30,9 @@ const monthsBetween = (from: string, to: string) => {
   return Math.max(1, (ty - fy) * 12 + (tm - fm) + 1);
 };
 
-// One group on the list (the v7 GroupList board): who is in it, the
-// month's budget, spending and how many have paid in, the budget bar, and
-// how long the group has run. A paused group is greyed and listed last.
+// One group on the list (the v16 GroupList board): its members and first
+// month, my role, the month's spending, budget and my balance, the budget
+// bar, and what my balance means. A paused group is greyed and listed last.
 export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardProps) {
   const { t, fmt } = useLocale();
   const { workspace, members, settlement, settings, budget, openMonth } = group;
@@ -51,8 +52,12 @@ export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardPr
   const current = groupMonthOf(today, startDay);
   const first = [current, ...members.map((member) => groupMonthOf((member.joinedOn ?? member.createdAt).slice(0, 10), startDay))].sort()[0];
   const months = monthsBetween(first, current);
-  const span = first === current ? monthName(current, fmt, "long", true) : `${monthName(first, fmt, "long", true)} – ${monthName(current, fmt, "long", true)}`;
-  const spanText = `${span} · ${countLabel(t, fmt, months, "{count} month", "{count} months")}`;
+  const since = t("since {month}", { month: monthName(first, fmt, "long", true) });
+  // My balance: the signed-in owner's own member row this month.
+  const isAdmin = workspace.role === "OWNER";
+  const me = isAdmin ? members.find((member) => member.isOwner) : undefined;
+  const mine = me ? Number(settlement.members.find((row) => row.groupMemberId === me.id)?.balance ?? 0) : null;
+  const monthShort = monthName(current, fmt, "long");
 
   return (
     <Card padding="none" className={cn("flex flex-col", paused && "bg-strip opacity-72")}>
@@ -75,19 +80,15 @@ export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardPr
               </Chip>
             )}
           </span>
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-small text-ink-muted">
-            {active.length > 0 && (
-              <span className="flex">
-                {active.map((member) => (
-                  <MemberAvatar key={member.id} member={member} members={members} size={24} className="-mr-1.5 border-2 border-surface" />
-                ))}
-              </span>
-            )}
-            <span className={cn("min-w-0", active.length > 0 && "pl-1.5")}>{countLabel(t, fmt, active.length, "{count} member", "{count} members")}</span>
-          </div>
+          <span className="text-small text-ink-muted" title={countLabel(t, fmt, months, "{count} month", "{count} months")}>
+            {[countLabel(t, fmt, active.length, "{count} member", "{count} members"), since, sharing.length > 0 ? t("{count} of {total} paid in", { count: formatCount(paid, fmt), total: formatCount(sharing.length, fmt) }) : ""].filter(Boolean).join(" · ")}
+          </span>
         </div>
+        <Chip tone="mint" className="mt-1 shrink-0 px-2.25 max-sm:hidden">
+          {t(isAdmin ? "You: Admin" : "You: Member")}
+        </Chip>
         <DropdownMenu>
-          <DropdownMenuTrigger aria-label={t("More actions for {name}", { name: workspace.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
+          <DropdownMenuTrigger aria-label={t("More actions for {name}", { name: workspace.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
             <MoreHorizontal className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-55 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
@@ -113,15 +114,15 @@ export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardPr
       </div>
 
       <div className="grid grid-cols-3 border-y border-divider">
+        <Stat label={t("Spent in {month}", { month: monthShort })} value={money(spent)} divided />
         <Stat label={t("Budget")} value={limit === null ? t("Not set") : money(limit)} tone={limit === null ? "text-ink-faint" : undefined} divided />
-        <Stat label={t("Expense")} value={money(spent)} tone="text-expense" divided />
-        <Stat label={t("Contributed by")} value={paid === sharing.length && paid > 0 ? countLabel(t, fmt, paid, "{count} member", "{count} members") : t("{count} of {total} members", { count: formatCount(paid, fmt), total: formatCount(sharing.length || active.length, fmt) })} />
+        <Stat label={t("My balance")} value={mine === null ? "—" : Math.abs(mine) < 0.005 ? money(0) : formatSignedCurrency(mine, workspace.currency, fmt)} tone={mine === null || Math.abs(mine) < 0.005 ? "text-ink-2" : mine > 0 ? "text-income" : "text-expense"} />
       </div>
 
       <div className="flex flex-col gap-2 px-5 py-3.5">
         <div className="flex flex-wrap justify-between gap-x-3 text-small">
-          <span className="text-ink-2">{used !== null ? t("{percent}% of budget used", { percent: formatCount(used, fmt) }) : t("No budget set")}</span>
-          <span className={cn("font-semibold tabular-nums", over ? "text-expense" : "text-ink-2")}>{limit === null ? "—" : over ? t("{amount} over budget", { amount: money(spent - limit) }) : t("{percent}% left", { percent: formatCount(Math.max(0, 100 - (used ?? 0)), fmt) })}</span>
+          <span className="text-ink-2">{used !== null ? t("{percent}% of the budget used", { percent: formatCount(used, fmt) }) : t("No budget set")}</span>
+          <span className={cn("font-semibold tabular-nums", over ? "text-expense" : "text-ink-2")}>{limit === null ? "—" : over ? t("{amount} over budget", { amount: money(spent - limit) }) : t("{amount} left", { amount: money(limit - spent) })}</span>
         </div>
         <span role="progressbar" aria-label={t("Budget used")} aria-valuenow={Math.min(100, used ?? 0)} aria-valuemin={0} aria-valuemax={100} className="h-2 overflow-hidden rounded-full bg-surface-sunken">
           <span className={cn("block h-full rounded-full", over ? "bg-expense-fill" : "bg-emerald")} style={{ width: `${Math.min(100, used ?? 0)}%` }} />
@@ -135,14 +136,15 @@ export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardPr
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-2 rounded-b-card border-t border-divider bg-strip px-5 py-3 text-small">
-        <span className="flex min-w-0 items-center gap-1.5 text-ink-soft">
-          <CalendarDays className="size-3.75 shrink-0" aria-hidden="true" />
-          <span className="truncate">{paused ? t("Paused · {span}", { span: spanText }) : spanText}</span>
+        <span className={cn("min-w-0 truncate", mine === null || Math.abs(mine) < 0.005 ? "text-ink-soft" : mine > 0 ? "text-income" : "text-expense")}>
+          {paused ? t("Paused · nothing new is counted") : mine === null ? t("You don’t share this group’s costs") : Math.abs(mine) < 0.005 ? t("You are all square") : mine > 0 ? t("The group owes you") : t("You owe the group")}
         </span>
-        <Link href={href} className="ml-auto flex shrink-0 items-center gap-1 font-semibold text-emerald hover:text-emerald-hover">
-          {t("Open group")}
-          <ArrowRight className="size-3.75" aria-hidden="true" />
-        </Link>
+        <Button asChild size="sm" className="ml-auto">
+          <Link href={href}>
+            {t("Open")}
+            <ArrowRight aria-hidden="true" />
+          </Link>
+        </Button>
       </div>
     </Card>
   );

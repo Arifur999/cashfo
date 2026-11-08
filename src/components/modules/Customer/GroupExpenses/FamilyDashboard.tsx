@@ -1,146 +1,63 @@
 "use client";
 
-import { CalendarCheck, CircleCheckBig } from "lucide-react";
-import Link from "next/link";
-import Banner from "@/components/smartly/Banner";
 import Card from "@/components/smartly/Card";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowButton, ListTotalRow } from "@/components/smartly/list";
-import type { GroupExpenseCategoryOption, GroupMember } from "@/lib/customer/api";
-import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { groupMonthOf, groupTabHref, paidIn, shortName, unclosedPreviousMonth } from "@/lib/customer/groupDisplay";
-import { accountantsOf, budgetMonths, budgetTotals, categoryRows, costShares, isAccountant, mainAccountantId, spendByMonthKey, yearMonths } from "@/lib/customer/groupFamily";
-import { type GroupPeriod, monthsIn, periodLabel } from "@/lib/customer/groupPeriod";
+import NativeSelect from "@/components/smartly/form/NativeSelect";
+import type { GroupMember } from "@/lib/customer/api";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
+import { groupMonthOf, type Transfer } from "@/lib/customer/groupDisplay";
+import { budgetMonths, budgetTotals, spendByMonthKey, yearMonths } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { BalanceCell, CategoryTile, categoryBarClass, MemberAvatar } from "./GroupBits";
-import { GroupPeriodPicker } from "./GroupPeriodPicker";
+import { FamilyMonthOverview } from "./FamilyMonthOverview";
 import type { GroupPageData, GroupView } from "./groupTypes";
-
-const PERIODS = ["month", "year", "custom"] as const;
-
-// A category's rule as the chart's tag writes it.
-export function ruleWord(option: GroupExpenseCategoryOption | undefined): string {
-  if (!option) return "equally";
-  if (option.defaultSplit === "SHARES") return "by cost split";
-  if (option.defaultSplit === "MEALS") return "by meals";
-  if (option.defaultSplit === "EXACT") return "exact amounts";
-  return option.defaultMemberIds?.length ? "only selected" : "equally";
-}
-
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_132px_104px_178px]";
 
 interface FamilyDashboardProps {
   data: GroupPageData;
   view: GroupView;
-  onPeriod: (period: GroupPeriod) => void;
+  canAdd: boolean;
+  onMonth: (key: string) => void;
+  onAddExpense: () => void;
+  onAddContribution: () => void;
+  onRecordPayment: (preset: Transfer | null) => void;
   onStatement: (member: GroupMember) => void;
   busy: boolean;
 }
 
-// A family's dashboard (the v7 FamilyDashboard board): spending by category
-// for the period with its budget, the year against the budget month by
-// month, and this month's balances. A finished month that was never closed
-// asks to be closed first.
-export function FamilyDashboard({ data, view, onPeriod, onStatement, busy }: FamilyDashboardProps) {
+// A family's dashboard (the v16 FamilyDashboard board): the month on show
+// with its quick actions, tiles, members' balances, where the money went
+// and the newest entries; then the year against the budget, month by month.
+export function FamilyDashboard({ data, view, canAdd, onMonth, onAddExpense, onAddContribution, onRecordPayment, onStatement, busy }: FamilyDashboardProps) {
   const { t, fmt } = useLocale();
-  const { currency, settlement, startDay } = data;
-  const period = data.period ?? { kind: "month" };
-  const span = data.periodRange ?? data.range;
+  const { currency, startDay } = data;
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const currentKey = groupMonthOf(data.today, startDay);
-  const expenses = data.periodExpenses ?? data.expenses;
-  const label = periodLabel(period, data.today, startDay, t, fmt);
+  // The signed-in customer is the group's owner when they own its workspace.
+  const me = data.role === "OWNER" ? data.members.find((member) => member.isOwner) : undefined;
 
-  // Category-wise spending, against the budgets of the period's months.
-  const rows = categoryRows(expenses, data.categories);
-  const spent = rows.reduce((sum, row) => sum + row.amount, 0);
-  const biggest = Math.max(...rows.map((row) => row.amount), 0);
-  const periodMonths = budgetMonths(monthsIn(span, startDay), data.budgets, spendByMonthKey(expenses, startDay), currentKey);
-  const periodBudget = budgetTotals(periodMonths);
-
-  // The year against the budget.
-  const yearKey = span.to.slice(0, 4) > currentKey.slice(0, 4) ? currentKey.slice(0, 4) : groupMonthOf(span.to, startDay).slice(0, 4);
+  // The year of the month on show, against the budget.
+  const yearKey = data.range.key.slice(0, 4);
   const year = budgetMonths(yearMonths(yearKey), data.budgets, spendByMonthKey(data.yearExpenses ?? [], startDay), currentKey);
   const yearTotals = budgetTotals(year);
-
-  // This month's balances.
-  const holderId = mainAccountantId(data.settings, data.members);
-  const accountants = accountantsOf(data.members);
-  const shares = costShares(data.members, data.settings);
-  const balanceRows = settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId] }));
-  const totalPaid = balanceRows.reduce((sum, r) => sum + paidIn(r.row), 0);
-  const totalCost = balanceRows.reduce((sum, r) => sum + Number(r.row.share), 0);
-  const holder = holderId ? view.memberById[holderId] : undefined;
-  const unclosed = unclosedPreviousMonth(data.history, data.members, data.range);
-  // A month before left open keeps part of the cash out of this month's balances.
-  const cashRows = settlement.accountantCash ?? [];
-  const checksOut = cashRows.length === 0 || Math.abs(cashRows.reduce((sum, row) => sum + Number(row.cash), 0) - view.cash) < 0.005;
-  const thisMonth = monthName(data.range.key, fmt, "long", true);
 
   const usedTone = (used: number | null) => (used === null ? "text-ink" : used > 100 ? "text-expense" : "text-income");
   const usedText = (used: number | null) => (used === null ? "—" : `${formatCount(Math.round(used), fmt)}%`);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4.5">
       <div className="flex justify-end">
-        <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
+        <NativeSelect size="md" aria-label={t("Choose a month")} value={data.range.key} onChange={(event) => onMonth(event.target.value)} className={cn("font-semibold", busy && "opacity-60")}>
+          {data.months.map((key) => (
+            <option key={key} value={key}>
+              {key === currentKey ? t("{month} · Current", { month: monthName(key, fmt, "long", true) }) : monthName(key, fmt, "long", true)}
+            </option>
+          ))}
+        </NativeSelect>
       </div>
 
-      {unclosed && unclosed.to < data.today && (
-        <Banner tone="warning" icon={<CalendarCheck />}>
-          <span className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <span>{t("{month} has ended. Check the balances and close it to lock the numbers.", { month: monthName(unclosed.key, fmt, "long", true) })}</span>
-            <Link href={groupTabHref(data.businessId, "settlement", { month: unclosed.key })} className="font-semibold text-warning-ink underline underline-offset-2">
-              {t("Review and close")}
-            </Link>
-          </span>
-        </Banner>
-      )}
-
-      <Card padding="none" className="flex min-w-0 flex-col gap-5 px-5 py-4.5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="flex flex-col gap-0.5">
-            <h2 id="fc-title" className="text-title font-semibold text-ink">
-              {t("Category-wise spending")}
-            </h2>
-            <p className="text-small text-ink-muted">{t("{period} · highest first", { period: label })}</p>
-          </div>
-          <dl className="flex gap-5">
-            <Stat label={t("Total budget")} value={periodBudget.withBudget > 0 ? money(periodBudget.budget) : t("Not set")} />
-            <Stat label={t("Spent")} value={money(spent)} />
-            <Stat label={t("Budget used")} value={usedText(periodBudget.used)} tone={usedTone(periodBudget.used)} />
-          </dl>
-        </div>
-        {rows.length === 0 ? (
-          <p className="py-6 text-center text-small text-ink-muted">{t("No categories yet.")}</p>
-        ) : (
-          <div role="list" aria-labelledby="fc-title" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            {rows.map((row) => {
-              const rule = ruleWord(row.option);
-              const height = biggest > 0 ? Math.max(row.amount > 0 ? 4 : 0, (row.amount / biggest) * 100) : 0;
-              return (
-                <div key={row.name} role="listitem" className="flex min-w-24 flex-1 flex-col items-center gap-2">
-                  <span className="text-[13px] font-bold whitespace-nowrap text-ink tabular-nums">{money(row.amount)}</span>
-                  <span className="flex h-36 w-full max-w-18 items-end overflow-hidden rounded-lg bg-surface-sunken">
-                    <span className={cn("w-full rounded-lg bg-current", categoryBarClass(row.name, data.categories))} style={{ height: `${height}%` }} />
-                  </span>
-                  <span className="flex flex-col items-center gap-1 text-center">
-                    <CategoryTile name={row.name} categories={data.categories} size={28} />
-                    <span className="line-clamp-2 text-caption font-semibold text-ink">{row.name}</span>
-                    <span className="flex flex-wrap items-center justify-center gap-1 text-[11px] text-ink-muted">
-                      <span className={cn("rounded-full px-1.5 py-px font-medium", rule === "by cost split" ? "bg-pillar-insights-soft text-pillar-insights" : "bg-surface-sunken text-ink-2")}>{t(rule)}</span>
-                      <span className="tabular-nums">{formatCount(Math.round(row.share), fmt)}%</span>
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Card>
+      <FamilyMonthOverview data={data} view={view} me={me} canAdd={canAdd} onAddExpense={onAddExpense} onAddContribution={onAddContribution} onRecordPayment={onRecordPayment} onStatement={onStatement} />
 
       <Card padding="none" className="flex min-w-0 flex-col gap-4 px-5 py-4.5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -213,96 +130,6 @@ export function FamilyDashboard({ data, view, onPeriod, onStatement, busy }: Fam
         </div>
         <p className="text-small text-ink-muted">{yearNote(year, yearTotals, t, fmt, money)}</p>
       </Card>
-
-      <ListCard
-        label={t("Balances · {month}", { month: thisMonth })}
-        className="min-w-0"
-        header={
-          <div className="flex items-center justify-between gap-3 px-4 py-3.5 md:px-5">
-            <h2 className="text-title font-semibold text-ink">{t("Balances · {month}", { month: thisMonth })}</h2>
-            <Link href={groupTabHref(data.businessId, "settlement")} className="text-small font-semibold text-emerald hover:text-emerald-hover">
-              {t("Open settlement")}
-            </Link>
-          </div>
-        }
-        footer={
-          balanceRows.length > 0 && (
-            <ListFooter className="flex-row items-center gap-2 py-2.5 text-[12.5px] text-ink-soft md:px-5">
-              <CircleCheckBig className="size-3.5 shrink-0 text-emerald" strokeWidth={2.5} aria-hidden="true" />
-              <span>
-                {!checksOut
-                  ? t("Balances add up to {amount}. Months left open keep the difference until they are closed.", { amount: formatSignedCurrency(view.cash, currency, fmt) })
-                  : accountants.length > 1
-                  ? t("Balances add up to {cash}, the cash the accountants are holding. The account checks out.", { cash: money(view.cash) })
-                  : holder
-                    ? t("Balances add up to {cash}, the cash {name} is holding. The account checks out.", { cash: money(view.cash), name: shortName(holder.name) })
-                    : t("Balances add up to {cash}, the cash in hand. The account checks out.", { cash: money(view.cash) })}
-              </span>
-            </ListFooter>
-          )
-        }
-      >
-        <ListHead columns={COLUMNS} className="h-8.5 gap-x-3.5 border-t md:px-5">
-          <ListHeadCell>{t("Member")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Paid in")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Cost")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
-        </ListHead>
-        {balanceRows.length === 0 && <ListEmpty title={t("Add members to see their balances.")} />}
-        {balanceRows.map(({ row, member }) => {
-          const own = Number(row.pocketPaid);
-          const role = member && isAccountant(member) ? t("Accountant") : t("Member");
-          const share = shares[row.groupMemberId];
-          const how =
-            data.settings.costSplit === "CUSTOM" && share !== undefined
-              ? t("{percent}% share {amount}", { percent: formatCount(Math.round(share * 10) / 10, fmt), amount: money(row.share) })
-              : t("equal share {amount}", { amount: money(row.share) });
-          return (
-            <ListRow key={row.groupMemberId} columns={COLUMNS} density="relaxed" className="gap-x-3.5 text-body tabular-nums md:px-5 md:py-1.5">
-              <ListCell className="flex items-center gap-2.5">
-                <MemberAvatar member={member ?? { id: row.groupMemberId, name: row.name, photoUrl: null }} members={data.members} size={34} />
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  {member ? (
-                    <ListRowButton onClick={() => onStatement(member)} aria-label={t("{name}'s statement", { name: row.name })} className="truncate font-semibold text-ink">
-                      {row.name}
-                    </ListRowButton>
-                  ) : (
-                    <span className="truncate font-semibold text-ink">{row.name}</span>
-                  )}
-                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">{t("{paid} paid in · {cost} cost", { paid: money(paidIn(row)), cost: money(row.share) })}</span>
-                  <span className="hidden truncate text-caption font-normal text-ink-muted md:block">{`${role} · ${how}`}</span>
-                </span>
-              </ListCell>
-              <ListCell align="end" className="hidden md:block">
-                <span className="flex flex-col items-end gap-px">
-                  <span>{money(paidIn(row))}</span>
-                  <span className="text-[11.5px] whitespace-nowrap text-ink-muted">{own > 0 ? t("incl. {amount} own pocket", { amount: money(own) }) : t("contributions")}</span>
-                </span>
-              </ListCell>
-              <ListCell align="end" className="hidden md:block">
-                {money(row.share)}
-              </ListCell>
-              <ListCell>
-                <BalanceCell value={Number(row.balance)} currency={currency} className="max-md:flex-col max-md:items-end max-md:gap-1" />
-              </ListCell>
-            </ListRow>
-          );
-        })}
-        {balanceRows.length > 0 && (
-          <ListTotalRow columns={COLUMNS} className="min-h-12.5 gap-x-3.5 tabular-nums md:px-5">
-            <span role="cell">{t("Total")}</span>
-            <span role="cell" className="hidden text-right md:block">
-              {money(totalPaid)}
-            </span>
-            <span role="cell" className="hidden text-right md:block">
-              {money(totalCost)}
-            </span>
-            <span role="cell" className={cn("text-right", view.cash < 0 ? "text-expense" : "text-income")}>
-              {formatSignedCurrency(view.cash, currency, fmt)}
-            </span>
-          </ListTotalRow>
-        )}
-      </ListCard>
     </div>
   );
 
