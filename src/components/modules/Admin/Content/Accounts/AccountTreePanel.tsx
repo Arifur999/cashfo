@@ -104,7 +104,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={() => openDialog("deactivate", template)}>
-                    <PowerOff aria-hidden="true" /> <T>Stop giving it to new workspaces</T>
+                    <PowerOff aria-hidden="true" /> <T>Stop giving it to new accounts</T>
                   </DropdownMenuItem>
                 </>
               )}
@@ -120,7 +120,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-title text-ink"><T>Starting wallets and accounts</T></h2>
-          <span className="text-small text-ink-muted"><T>The account tree a new workspace begins with</T></span>
+          <span className="text-small text-ink-muted"><T>The account tree a new account begins with</T></span>
         </div>
         {canManage && (
           <CreateAccountTemplateDialog
