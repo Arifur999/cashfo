@@ -20,7 +20,7 @@ import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDispl
 import type { Account } from "@/lib/customer/api";
 import { BUILT_IN_CHARGE_CATEGORIES, chargeOf, defaultChargeCategory } from "@/lib/customer/balanceDisplay";
 import { listBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
-import { formatCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { correctTransactionAction, createTransferAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { transferPair, type TransferPair } from "@/lib/customer/transfers";
 import { getAppToday } from "@/lib/date";
@@ -282,13 +282,13 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field htmlFor="transfer-amount" label={<span className="text-small font-semibold text-ink-2">{t("Amount")}</span>}>
-          <AmountInput id="transfer-amount" size="lg" value={amount} onChange={setAmount} currency={currency} autoFocus={!editing} />
+        <Field htmlFor="transfer-amount" label={<span className="text-small font-semibold text-ink-2">{t("Amount ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
+          <AmountInput id="transfer-amount" size="field" value={amount} onChange={setAmount} currency={currency} autoFocus={!editing} />
         </Field>
         <div className="flex min-w-0 flex-col gap-1.5">
           <div className="flex h-5 items-center justify-between gap-2">
             <label htmlFor="transfer-charge" className="text-small font-semibold text-ink-2">
-              {t("Charge")} <span className="font-normal text-ink-muted">({chargeMode === "pct" ? "%" : t("taka")})</span>
+              {t("Charge")} ({chargeMode === "pct" ? "%" : currencySymbol(currency, fmt)})
             </label>
             <span role="group" aria-label={t("Charge as")} className="flex gap-0.5 rounded-full bg-surface-sunken p-0.5">
               {(["tk", "pct"] as const).map((mode) => (
@@ -296,6 +296,7 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
                   key={mode}
                   type="button"
                   aria-pressed={chargeMode === mode}
+                  aria-label={mode === "tk" ? t("Amount") : t("Percent")}
                   onClick={() => {
                     if (mode === chargeMode) return;
                     // Back to taka keeps what the percent came to.
@@ -304,24 +305,23 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
                   }}
                   className={cn("h-5.5 rounded-full px-2.25 text-[11.5px] font-semibold", chargeMode === mode ? "bg-surface text-ink shadow-[0_1px_2px_rgba(18,32,29,0.12)] dark:bg-surface-raised" : "text-ink-muted")}
                 >
-                  {mode === "tk" ? t("Amount") : t("Percent")}
+                  {mode === "tk" ? currencySymbol(currency, fmt) : "%"}
                 </button>
               ))}
             </span>
           </div>
           {chargeMode === "tk" ? (
-            <AmountInput id="transfer-charge" size="lg" value={charge} onChange={setCharge} currency={currency} />
+            <AmountInput id="transfer-charge" size="field" value={charge} onChange={setCharge} currency={currency} placeholder={t("0 if there is no charge")} />
           ) : (
             <Input
               id="transfer-charge"
-              size="lg"
+              size="md"
               inputMode="decimal"
               value={toLocaleDigits(charge, fmt)}
               onChange={(event) => setCharge(event.target.value)}
               placeholder={t("e.g. 1.85")}
               invalid={pctTooHigh}
-              trailing={<span className="pr-2 text-body font-semibold text-ink-soft">%</span>}
-              className="text-h3 font-bold tabular-nums"
+              className="tabular-nums"
             />
           )}
           {chargeMode === "pct" && value > 0 && fee > 0 && !pctTooHigh && (

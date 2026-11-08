@@ -65,6 +65,8 @@ export interface AccountUpdateInput {
   parentId?: string | null;
   // null goes back to the type's own colour.
   color?: string | null;
+  // A money account's opening balance put right; its current balance moves too.
+  openingBalance?: string;
 }
 
 export async function updateAccountAction(businessId: string, id: string, input: AccountUpdateInput): Promise<ActionResult<Account>> {

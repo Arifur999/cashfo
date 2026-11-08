@@ -604,4 +604,7 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "{name} now keeps its money in {account}. Move {amount} there from {from}.": "{name}-এর টাকা এখন {account}-এ থাকে। {from} থেকে {amount} সেখানে সরিয়ে নিন।",
   "Add a savings account first. Every goal keeps its money in one.": "আগে একটা সঞ্চয়ের হিসাব যোগ করুন। প্রতিটি লক্ষ্যের টাকা একটা হিসাবে থাকে।",
   "Pick the savings account for this goal.": "এই লক্ষ্যের জন্য সঞ্চয়ের হিসাব বেছে নিন।",
+  // New goal: the savings account dropdown (v16)
+  "Choose an account": "একটা হিসাব বেছে নিন",
+  "Add a savings account": "একটা সঞ্চয়ের হিসাব যোগ করুন",
 };
