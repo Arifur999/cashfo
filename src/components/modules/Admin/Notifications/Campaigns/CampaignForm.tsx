@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Plus, UserRound, X } from "lucide-react";
+import { AlertTriangle, Plus, Trash2, UserRound } from "lucide-react";
 import { RadioGroup } from "radix-ui";
 import { useMemo, useState } from "react";
 import { createAndSendCampaignAction, createCampaignAction } from "@/app/(dashboardLayout)/admin/notifications/campaigns/_action";
@@ -12,6 +12,7 @@ import AppForm from "@/components/shared/form/AppForm";
 import AppSelectField from "@/components/shared/form/AppSelectField";
 import SelectControl from "@/components/shared/form/SelectControl";
 import Button from "@/components/smartly/Button";
+import IconAction from "@/components/smartly/IconAction";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatRelativeDateTime } from "@/lib/date";
@@ -219,9 +220,10 @@ const CampaignForm = ({ defaultValues = NEW_CAMPAIGN_DEFAULTS, audienceNote, onD
               <form.Field name={name}>
                 {(field) => <SelectControl ariaLabel={label} value={field.state.value} options={valueOptions[rule]} onValueChange={(value) => field.handleChange(value)} size="sm" className={RULE_SELECT} />}
               </form.Field>
-              <Button variant="ghost" size="icon-xs" className="text-ink-muted hover:text-ink" aria-label={translate("Remove the {rule} rule", { rule: translate(label) })} onClick={() => removeRule(rule)}>
-                <X className="size-4" aria-hidden="true" />
-              </Button>
+              {/* The v16 board's square delete action. */}
+              <IconAction tone="danger" className="size-7.5" aria-label={translate("Remove the {rule} rule", { rule: translate(label) })} onClick={() => removeRule(rule)}>
+                <Trash2 aria-hidden="true" />
+              </IconAction>
             </div>
           );
         })}

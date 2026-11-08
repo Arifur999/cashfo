@@ -248,8 +248,8 @@ export const adminContentDictionary: Record<string, string> = {
   Expenses: "খরচ",
 
   // Design v4
-  "What users read in the app: banners, legal pages, every word in both languages, and the starting categories.":
-    "ব্যবহারকারীরা অ্যাপে যা পড়েন: ব্যানার, আইনি পাতা, দুই ভাষায় প্রতিটি শব্দ, আর শুরুর ক্যাটাগরি।",
+  "What users read in the app: announcements, legal pages, every word in both languages, and the starting categories.":
+    "ব্যবহারকারীরা অ্যাপে যা পড়েন: ঘোষণা, আইনি পাতা, দুই ভাষায় প্রতিটি শব্দ, আর শুরুর ক্যাটাগরি।",
   "Users see every live banner, newest first": "ব্যবহারকারীরা চালু সব ব্যানার দেখেন, নতুনটি আগে",
   "Preview language: {language}. Switch": "প্রিভিউয়ের ভাষা: {language}। বদলান",
   "Live version {version} · published {when} by {name}": "চালু সংস্করণ {version} · {name} প্রকাশ করেছেন {when}",
