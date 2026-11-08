@@ -32,6 +32,12 @@ export const updateTicket = async (id: string, payload: IUpdateTicketPayload) =>
 export const addTicketMessage = async (id: string, payload: ITicketReplyPayload) =>
   httpClient.post<ITicketMessage>(`/admin/tickets/${id}/messages`, payload);
 
+// A reply with a picture: the same fields, multipart, the picture in `file`.
+// The multipart type keeps axios from turning the form into JSON; it adds
+// the boundary itself.
+export const addTicketMessageWithPicture = async (id: string, form: FormData) =>
+  httpClient.post<ITicketMessage>(`/admin/tickets/${id}/messages`, form, { headers: { "Content-Type": "multipart/form-data" } });
+
 export const getSavedReplies = async () => httpClient.get<ISavedReply[]>("/admin/tickets/saved-replies");
 
 export const createSavedReply = async (payload: ISavedReplyPayload) => httpClient.post<ISavedReply>("/admin/tickets/saved-replies", payload);

@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip, X } from "lucide-react";
+import { Link2, X } from "lucide-react";
 import { useId, useState } from "react";
 import Button from "@/components/smartly/Button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,8 @@ interface AttachLinkButtonProps {
   onChange: (value: string | null) => void;
 }
 
-// The board's paperclip beside Saved replies. The admin side has no file
-// store yet, so it attaches a link (a guide, a shared screenshot) that the
-// reply carries and the customer can open; the button fills while one is set.
+// A link beside the paperclip's picture: a guide or a page the reply
+// carries and the customer can open; the button fills while one is set.
 const AttachLinkButton = ({ value, onChange }: AttachLinkButtonProps) => {
   const { translate } = useLocale();
   const inputId = useId();
@@ -37,11 +36,11 @@ const AttachLinkButton = ({ value, onChange }: AttachLinkButtonProps) => {
         <Button
           variant="secondary"
           size="icon-sm"
-          aria-label={translate(value ? "Change the attached link" : "Attach a file")}
+          aria-label={translate(value ? "Change the attached link" : "Attach a link")}
           title={value ?? undefined}
           className={cn(value && "border-emerald bg-mint-50 text-brand-ink hover:bg-mint-50")}
         >
-          <Paperclip className="size-3.75" aria-hidden="true" />
+          <Link2 className="size-3.75" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-80 flex-col gap-2.5 p-3.5">

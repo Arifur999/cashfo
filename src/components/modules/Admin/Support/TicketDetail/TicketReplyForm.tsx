@@ -3,7 +3,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useSyncExternalStore, useTransition } from "react";
-import { replyToTicketAction } from "@/app/(dashboardLayout)/admin/support/_action";
+import { replyToTicketAction, replyWithPictureAction } from "@/app/(dashboardLayout)/admin/support/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
@@ -21,6 +21,7 @@ import { type ISupportTicketDetail, type ITicketReplyPayload, TICKET_STATUSES, t
 import { type ITicketReplyFormValues, ticketReplyFormZodSchema } from "@/zod/ticket.validation";
 import { type AfterSendChoice, DEFAULT_AFTER_SEND, initialAfterSend, isAfterSendChoice, KEEP_STATUS, readAfterSendChoice, saveAfterSendChoice, statusToSet, subscribeAfterSendChoice } from "./afterSendChoice";
 import AttachLinkButton from "./AttachLinkButton";
+import ReplyPictureButton, { ReplyPictureChip } from "./ReplyPictureButton";
 import SavedReplyPicker from "./SavedReplyPicker";
 import type { ThreadMessage } from "./TicketMessageBubble";
 import { SEND_AND_CLOSE_STATUSES } from "./ticketStatusCopy";
@@ -55,6 +56,8 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
   const [isSending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("reply");
   const [link, setLink] = useState<string | null>(null);
+  // A picture going with the next reply (never with a note).
+  const [picture, setPicture] = useState<File | null>(null);
   // The server can't read this browser's choice, so the first render (and
   // hydration) shows the default and the remembered one follows.
   const remembered = useSyncExternalStore(subscribeAfterSendChoice, readAfterSendChoice, () => DEFAULT_AFTER_SEND);
@@ -77,6 +80,13 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
     invalidateKeys: [queryKeys.tickets.all],
     refreshRoute: false,
   });
+  // The same reply with a picture: multipart, through its own action.
+  const replyWithPicture = useActionMutation({
+    action: (body: FormData) => replyWithPictureAction(ticket.id, body),
+    successMessage: () => (customerId ? translate("Reply sent. {name} sees it in My messages.", { name: requesterName }) : "Reply sent"),
+    invalidateKeys: [queryKeys.tickets.all],
+    refreshRoute: false,
+  });
 
   const form = useForm({
     defaultValues: { message: "" } satisfies ITicketReplyFormValues,
@@ -93,6 +103,7 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
     const status = note ? null : statusToSet(afterSend, currentStatus);
     const attachmentUrl = link ?? undefined;
     const payload: ITicketReplyPayload = { message: value.message.trim(), ...(note && { isInternal: true }), ...(status && { status }), ...(attachmentUrl && { attachmentUrl }) };
+    const sentPicture = note ? null : picture;
     startTransition(async () => {
       onSending({
         id: `pending-${Date.now()}`,
@@ -107,10 +118,23 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
       });
       form.reset();
       setLink(null);
+      setPicture(null);
+      let sent;
+      if (sentPicture) {
+        const body = new FormData();
+        body.set("message", payload.message);
+        if (payload.status) body.set("status", payload.status);
+        if (payload.attachmentUrl) body.set("attachmentUrl", payload.attachmentUrl);
+        body.set("file", sentPicture);
+        sent = await replyWithPicture.run(body);
+      } else {
+        sent = await reply.run(payload);
+      }
       // Put the text back, so a failed send isn't lost.
-      if (!(await reply.run(payload))) {
+      if (!sent) {
         form.setFieldValue("message", value.message);
         setLink(attachmentUrl ?? null);
+        setPicture(sentPicture);
         return;
       }
       setPicked(null);
@@ -157,6 +181,7 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
             />
           )}
         </form.Field>
+        {picture && !note && <ReplyPictureChip file={picture} onRemove={() => setPicture(null)} />}
         <div className="flex flex-wrap items-center gap-2">
           <SavedReplyPicker
             language={language?.toLowerCase() === "bn" ? "bn" : "en"}
@@ -165,6 +190,7 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
               insert(text);
             }}
           />
+          <ReplyPictureButton disabled={note} onPick={setPicture} />
           <AttachLinkButton value={link} onChange={setLink} />
           <span className="flex-1" />
           {!note && (

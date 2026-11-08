@@ -233,4 +233,12 @@ export const adminSupportDictionary: Record<string, string> = {
   "No notes yet. Use \"Note for admins\" above; users never see notes.": "এখনো কোনো নোট নেই। ওপরের \"অ্যাডমিনদের নোট\" ব্যবহার করুন; ব্যবহারকারীরা নোট কখনো দেখেন না।",
   "Only admins see notes.": "নোট শুধু অ্যাডমিনরা দেখেন।",
   "Note added for admins": "অ্যাডমিনদের জন্য নোট যোগ হয়েছে",
+  // Tickets: a picture with a reply (v16)
+  "Only JPEG, PNG or WEBP pictures can go with a reply": "উত্তরের সাথে শুধু JPEG, PNG বা WEBP ছবি যেতে পারে",
+  "The picture is bigger than 5 MB": "ছবিটি ৫ MB-এর চেয়ে বড়",
+  "{count} KB": "{count} KB",
+  "Remove the picture": "ছবিটি সরান",
+  "Attach a picture": "একটি ছবি যোগ করুন",
+  "Pictures go with a reply, not a note": "ছবি উত্তরের সাথে যায়, নোটের সাথে নয়",
+  "Pick a picture to send": "পাঠানোর জন্য একটি ছবি বাছুন",
 };
