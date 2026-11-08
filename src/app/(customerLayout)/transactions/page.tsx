@@ -30,6 +30,7 @@ const countsOf = (breakdown: CategoryBreakdown): Record<string, number> =>
 // address asks for another (?month=&year=, ?period=year&year=, ?from=&to=,
 // or ?period=all for all time; an older link's ?dateFrom=&dateTo= is the
 // reader's own days), narrowed by type, category, wallet and a search.
+// ?new=1 opens the New transaction popup (the Overview's button).
 export default async function TransactionsPage({ searchParams }: PageProps<"/transactions">) {
   const params = await searchParams;
   const user = await getCurrentUser();
@@ -73,7 +74,11 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
     search,
   };
 
-  const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories, summary, incomeBreakdown, expenseBreakdown, activeMonths] = await Promise.all([
+  // The strip shows both kinds' totals whatever the type filter (the board
+  // dims the one left out), so a type filter asks for them apart.
+  const bothTypes = selectedType ? { ...filters, transactionType: undefined, transactionTypes: TYPES } : null;
+
+  const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories, summary, incomeBreakdown, expenseBreakdown, activeMonths, bothSummary] = await Promise.all([
     // Deleted rows stay out unless asked for; the summary still counts
     // them, for the strip's "Show N voided".
     getTransactions(activeBusinessId, { ...filters, ...(!deleted && { standingOnly: true }), page, limit }),
@@ -84,6 +89,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
     getCategoryBreakdown(activeBusinessId, "INCOME", dateFrom, dateTo),
     getCategoryBreakdown(activeBusinessId, "EXPENSE", dateFrom, dateTo),
     getActiveMonths(activeBusinessId),
+    bothTypes ? getTransactionsSummary(activeBusinessId, bothTypes) : Promise.resolve(null),
   ]);
 
   // A page past the end (rows were voided away, an old link) opens the
@@ -91,26 +97,21 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const last = pastEnd(page, meta.totalPages, meta.total);
   if (last !== null) redirect(pageHref("/transactions", params, last));
 
-  // The figures strip covers every matching transaction, from the summary.
-  // An older backend has no summary: then only the date and type can be
-  // totalled across pages (the category breakdown knows those), and a
-  // search, wallet or category filter falls back to this page's rows.
+  // The figures strip covers every matching transaction of both kinds, from
+  // the summary. An older backend has no summary: then only the date can be
+  // totalled across pages (the category breakdown knows it), and a search,
+  // wallet or category filter falls back to this page's rows.
   let totals: TransactionTotals;
-  if (summary) {
-    totals = { income: Number(summary.totals.INCOME), expense: Number(summary.totals.EXPENSE), count: deleted ? summary.count : (summary.standing ?? meta.total), voided: summary.voided, scope: "all" };
+  const both = bothSummary ?? summary;
+  if (summary && both) {
+    totals = { income: Number(both.totals.INCOME), expense: Number(both.totals.EXPENSE), voided: summary.voided, scope: "all" };
   } else {
     const wholeRange = !accountId && !categoryId && !uncategorised && !search;
     const voidedOnPage = transactions.filter(isCancelled).length;
     const pageTotal = (type: TransactionType) => transactions.filter((t) => t.transactionType === type && !isCancelled(t)).reduce((sum, t) => sum + Number(t.entries[0]?.amount ?? 0), 0);
     totals = wholeRange
-      ? {
-          income: selectedType === "EXPENSE" ? 0 : Number(incomeBreakdown.total),
-          expense: selectedType === "INCOME" ? 0 : Number(expenseBreakdown.total),
-          count: meta.total,
-          voided: voidedOnPage,
-          scope: "all",
-        }
-      : { income: pageTotal("INCOME"), expense: pageTotal("EXPENSE"), count: meta.total, voided: voidedOnPage, scope: "page" };
+      ? { income: Number(incomeBreakdown.total), expense: Number(expenseBreakdown.total), voided: voidedOnPage, scope: "all" }
+      : { income: pageTotal("INCOME"), expense: pageTotal("EXPENSE"), voided: voidedOnPage, scope: "page" };
   }
 
   // A day at either edge of the page may go on past it, so its band's net
@@ -149,6 +150,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
       dayTotals={dayTotals}
       splitDays={edges}
       canManage={activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT"}
+      openNew={params.new === "1"}
     />
   );
 }
