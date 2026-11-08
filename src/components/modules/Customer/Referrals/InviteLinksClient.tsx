@@ -10,6 +10,7 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import ErrorState from "@/components/smartly/ErrorState";
+import IconAction from "@/components/smartly/IconAction";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import PageFrame from "@/components/smartly/PageFrame";
@@ -169,17 +170,16 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
                 <Button size="sm" onClick={() => copy(url, t("Link copied"))} className="rounded-full">
                   {t("Copy")}
                 </Button>
-                <button type="button" onClick={() => setQr(url)} aria-label={t("QR code for {name}", { name: link.main ? t("Main link") : link.label })} className="flex h-8 items-center justify-center rounded-full border border-line-strong px-2.5 text-[12.5px] font-semibold text-ink hover:bg-surface-sunken">
-                  <QrCode className="size-3.75" aria-hidden="true" />
-                  <span className="sr-only md:not-sr-only md:ml-1">QR</span>
+                <button type="button" onClick={() => setQr(url)} aria-label={t("QR code for {name}", { name: link.main ? t("Main link") : link.label })} className="flex h-8 items-center justify-center rounded-full border border-line-strong bg-surface px-2.5 text-[12.5px] font-semibold text-ink hover:bg-surface-sunken">
+                  <QrCode className="size-3.75 md:hidden" aria-hidden="true" />
+                  <span aria-hidden="true" className="max-md:hidden">
+                    QR
+                  </span>
                 </button>
-                {link.main ? (
-                  // Keeps the buttons in line with the rows that can be deleted.
-                  <span aria-hidden="true" className="size-8" />
-                ) : (
-                  <button type="button" onClick={() => setRemoving(link)} aria-label={t("Delete {name}", { name: link.label })} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-expense-soft hover:text-expense">
-                    <Trash2 className="size-3.75" aria-hidden="true" />
-                  </button>
+                {!link.main && (
+                  <IconAction tone="danger" onClick={() => setRemoving(link)} aria-label={t("Delete {name}", { name: link.label })}>
+                    <Trash2 aria-hidden="true" />
+                  </IconAction>
                 )}
               </ListCell>
             </ListRow>
