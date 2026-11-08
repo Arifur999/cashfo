@@ -620,4 +620,7 @@ export const referralsDictionary: Record<string, string> = {
   // Payout account placeholders (v16)
   "e.g. Gulshan": "যেমন: গুলশান",
   "e.g. {number}": "যেমন: {number}",
+  // Locked page plan picker (v16)
+  "Pick a plan to start earning": "আয় শুরু করতে একটি প্ল্যান বাছুন",
+  "Your invite link is ready as soon as you pay.": "পেমেন্ট করার সাথে সাথেই আপনার ইনভাইট লিংক তৈরি হয়ে যাবে।",
 };
