@@ -225,7 +225,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, currency, i
           <label htmlFor="asset-price" className={LABEL}>
             {t(buying ? "Price" : "Value")}
           </label>
-          <AmountInput id="asset-price" size="md" value={price} onChange={setPrice} currency={currency} />
+          <AmountInput id="asset-price" size="sm" value={price} onChange={setPrice} currency={currency} />
         </div>
       </div>
 
@@ -277,7 +277,7 @@ export function AssetDrawer({ open, onClose, businessId, categories, currency, i
             <label htmlFor="asset-worth" className={LABEL}>
               {t("Value today")} {optional}
             </label>
-            <AmountInput id="asset-worth" size="md" value={worth ?? price} onChange={setWorth} currency={currency} describedBy="asset-worth-hint" />
+            <AmountInput id="asset-worth" size="sm" value={worth ?? price} onChange={setWorth} currency={currency} describedBy="asset-worth-hint" />
             <span id="asset-worth-hint" className="text-[12px] text-ink-muted">
               {t("Change it if it's worth more or less now.")}
             </span>
