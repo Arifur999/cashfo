@@ -1,12 +1,10 @@
 "use client";
 
 import Card from "@/components/smartly/Card";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
 import type { GroupMember } from "@/lib/customer/api";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, type Transfer } from "@/lib/customer/groupDisplay";
 import { budgetMonths, budgetTotals, spendByMonthKey, yearMonths } from "@/lib/customer/groupFamily";
-import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -18,24 +16,26 @@ interface FamilyDashboardProps {
   data: GroupPageData;
   view: GroupView;
   canAdd: boolean;
-  onMonth: (key: string) => void;
+  // Whether a payment from this member may be recorded here.
+  canPay: (fromId: string) => boolean;
   onAddExpense: () => void;
   onAddContribution: () => void;
   onRecordPayment: (preset: Transfer | null) => void;
   onStatement: (member: GroupMember) => void;
-  busy: boolean;
 }
 
 // A family's dashboard (the v16 FamilyDashboard board): the month on show
 // with its quick actions, tiles, members' balances, where the money went
 // and the newest entries; then the year against the budget, month by month.
-export function FamilyDashboard({ data, view, canAdd, onMonth, onAddExpense, onAddContribution, onRecordPayment, onStatement, busy }: FamilyDashboardProps) {
+// The month is the header's (GroupHeader's month picker).
+export function FamilyDashboard({ data, view, canAdd, canPay, onAddExpense, onAddContribution, onRecordPayment, onStatement }: FamilyDashboardProps) {
   const { t, fmt } = useLocale();
   const { currency, startDay } = data;
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const currentKey = groupMonthOf(data.today, startDay);
-  // The signed-in customer is the group's owner when they own its workspace.
-  const me = data.role === "OWNER" ? data.members.find((member) => member.isOwner) : undefined;
+  // Whoever is looking: the owner's record for the Admin, their own for a
+  // member who signed in.
+  const me = data.members.find((member) => member.id === data.access.selfMemberId);
 
   // The year of the month on show, against the budget.
   const yearKey = data.range.key.slice(0, 4);
@@ -47,17 +47,7 @@ export function FamilyDashboard({ data, view, canAdd, onMonth, onAddExpense, onA
 
   return (
     <div className="flex flex-col gap-4.5">
-      <div className="flex justify-end">
-        <NativeSelect size="md" aria-label={t("Choose a month")} value={data.range.key} onChange={(event) => onMonth(event.target.value)} className={cn("font-semibold", busy && "opacity-60")}>
-          {data.months.map((key) => (
-            <option key={key} value={key}>
-              {key === currentKey ? t("{month} · Current", { month: monthName(key, fmt, "long", true) }) : monthName(key, fmt, "long", true)}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
-
-      <FamilyMonthOverview data={data} view={view} me={me} canAdd={canAdd} onAddExpense={onAddExpense} onAddContribution={onAddContribution} onRecordPayment={onRecordPayment} onStatement={onStatement} />
+      <FamilyMonthOverview data={data} view={view} me={me} canAdd={canAdd} canPay={canPay} onAddExpense={onAddExpense} onAddContribution={onAddContribution} onRecordPayment={onRecordPayment} onStatement={onStatement} />
 
       <Card padding="none" className="flex min-w-0 flex-col gap-4 px-5 py-4.5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">

@@ -1,4 +1,5 @@
 import type { GroupActivityAction, GroupActivityPage, GroupCashbook, GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMeal, GroupMember, GroupMonthlyBudget, GroupSettings, GroupSettlementRecord, GroupSettlementResult, MemberRole, WorkspaceListItem } from "@/lib/customer/api";
+import type { GroupAccess } from "@/lib/customer/groupAccess";
 import type { BudgetStatus, CategorySpend, GroupTab, MonthRange, Transfer } from "@/lib/customer/groupDisplay";
 import type { GroupPeriod, PeriodRange } from "@/lib/customer/groupPeriod";
 
@@ -29,8 +30,10 @@ export interface GroupPageData {
   currency: string;
   // The signed-in customer's role in the group's workspace (OWNER: its Admin).
   role: MemberRole;
-  // The customer's groups, for the header's Switch group.
-  groups: { id: string; name: string }[];
+  // Who is looking and what they may do (Admin, Editor or Viewer).
+  access: GroupAccess;
+  // The customer's groups and their role in each, for the header's Switch group.
+  groups: { id: string; name: string; role: MemberRole }[];
   today: string;
   tab: GroupTab;
   // The day the group's months start on.
@@ -75,6 +78,9 @@ export interface GroupPageData {
   // and a page of the Activity log, with its kind filter.
   activity: GroupActivityPage | null;
   activityAction: GroupActivityAction | null;
+  // What each month spent ("YYYY-MM" → taka), for the header's month
+  // picker; null on the pages without one.
+  monthTotals: Record<string, number> | null;
 }
 
 // Figures every tab reads, derived once by the page client.

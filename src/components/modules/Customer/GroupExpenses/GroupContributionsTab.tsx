@@ -35,6 +35,10 @@ interface GroupContributionsTabProps {
   onRemoveExpense: (row: GroupExpense) => void;
   busy: boolean;
   canAdd: boolean;
+  // Whose contribution may be added (an Editor: only their own), and
+  // which entries may be changed (an Editor: only what they added).
+  mayAddFor: (memberId: string) => boolean;
+  canTouch: (entry: { createdByUserId?: string | null }, date: string) => boolean;
 }
 
 const PERIODS = ["month", "all", "year", "custom"] as const;
@@ -66,7 +70,7 @@ interface Row {
 // (an expense, credited to them), by member, type and period, with a
 // printable statement. Returns, settle-ups and carried balances still list,
 // as they count in the balances.
-export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onRemove, onEditExpense, onRemoveExpense, busy, canAdd }: GroupContributionsTabProps) {
+export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onRemove, onEditExpense, onRemoveExpense, busy, canAdd, mayAddFor, canTouch }: GroupContributionsTabProps) {
   const { t, fmt } = useLocale();
   const { currency, startDay } = data;
   const period = data.period ?? { kind: "month" };
@@ -183,7 +187,7 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
                         {t("Not paid yet")}
                       </Chip>
                     )}
-                    {canAdd && member?.status === "ACTIVE" && (
+                    {canAdd && member?.status === "ACTIVE" && mayAddFor(member.id) && (
                       <button type="button" onClick={() => onAdd(member.id)} aria-label={t("Add a contribution from {name}", { name: row.name })} className="flex size-7.5 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                         <Plus className="size-4" aria-hidden="true" />
                       </button>
@@ -309,6 +313,8 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
           const closed = isDayClosed(data.history, row.date);
           const edit = () => (row.expense ? onEditExpense(row.expense) : row.contribution && onEdit(row.contribution));
           const remove = () => (row.expense ? onRemoveExpense(row.expense) : row.contribution && onRemove(row.contribution));
+          const entry = row.expense ?? row.contribution;
+          const touchable = !!entry && canTouch(entry, row.date);
           return (
             <ListRow key={`${row.type}:${row.id}`} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto_76px] gap-x-3 tabular-nums md:px-5 md:py-1">
               <ListCell className="hidden text-ink-muted md:block">{formatCount(index + 1, fmt)}</ListCell>
@@ -333,12 +339,16 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
                 {formatSignedCurrency(row.amount, currency, fmt)}
               </ListCell>
               <ListRowActions className="flex justify-end gap-1.5">
+                {touchable && (
+                <>
                 <button type="button" onClick={edit} aria-label={row.expense ? t("Edit expense") : t("Edit contribution")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                   {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}
                 </button>
                 <button type="button" onClick={remove} aria-label={row.expense ? t("Delete expense") : t("Delete contribution")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
                   <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
+                </>
+                )}
               </ListRowActions>
             </ListRow>
           );

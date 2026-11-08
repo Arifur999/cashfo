@@ -41,11 +41,13 @@ interface HandoverDialogProps {
   cash: Record<string, number>;
   today: string;
   editing: HandoverDraft | null;
+  // An Editor hands over only their own cash: the giver is them.
+  selfOnly?: string | null;
 }
 
 // Hand over cash (the v16 FamilyCashbook board): group cash moving from one
 // holder to another. Only who keeps the cash changes, never a balance.
-export function HandoverDialog({ open, onClose, businessId, currency, holders, cash, today, editing }: HandoverDialogProps) {
+export function HandoverDialog({ open, onClose, businessId, currency, holders, cash, today, editing, selfOnly = null }: HandoverDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const [fromId, setFromId] = useState("");
@@ -63,7 +65,7 @@ export function HandoverDialog({ open, onClose, businessId, currency, holders, c
   if (key !== prevKey) {
     setPrevKey(key);
     if (open) {
-      setFromId(editing?.fromId ?? "");
+      setFromId(editing?.fromId ?? selfOnly ?? "");
       setToId(editing?.toId ?? "");
       setAmount(editing ? String(editing.amount) : "");
       setDate(editing?.date ?? today);
@@ -128,7 +130,7 @@ export function HandoverDialog({ open, onClose, businessId, currency, holders, c
             ) : (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] sm:items-start">
                 <Field htmlFor="ho-from" label={label(t("From"))}>
-                  <MemberPicker id="ho-from" label={t("From")} members={holders} value={fromId} onChange={setFromId} currency={currency} balances={cash} exclude={toId} />
+                  <MemberPicker id="ho-from" label={t("From")} members={selfOnly ? holders.filter((member) => member.id === selfOnly) : holders} value={fromId} onChange={setFromId} currency={currency} balances={cash} exclude={toId} />
                   {shown(errors.from)}
                 </Field>
                 <span className="flex h-6 items-center justify-center text-ink-muted sm:mt-8 sm:h-13.5">

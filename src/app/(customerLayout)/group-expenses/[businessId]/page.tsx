@@ -4,6 +4,7 @@ import type { GroupPageData } from "@/components/modules/Customer/GroupExpenses/
 import type { GroupActivityAction } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getWorkspace, listWorkspaces } from "@/lib/customer/businesses";
+import { accessLevelOf } from "@/lib/customer/groupAccess";
 import { closedRecordFor, groupMonthOf, groupPickerMonths, groupTabFrom, type GroupTab, inMonth, isNewGroup, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
 import {
   getGroupActivity,
@@ -13,6 +14,7 @@ import {
   getGroupExpenses,
   getGroupMeals,
   getGroupMembers,
+  getGroupMonthTotals,
   getGroupMonthBudgets,
   getGroupSettings,
   getGroupSettlement,
@@ -56,11 +58,18 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
 
   // Missing, someone else's, or not a group: back to the list. An outage
   // throws to the error screen instead.
-  const business = await getWorkspace(businessId);
+  const [business, workspaces] = await Promise.all([getWorkspace(businessId), listWorkspaces()]);
   if (!business || business.type !== "GROUP") redirect("/group-expenses");
+  // The customer's role here: the owner is the group's Admin; a member given
+  // access an Editor (ACCOUNTANT) or a Viewer (STAFF). Unknown reads as the
+  // least: a Viewer.
+  const role = workspaces.find((workspace) => workspace.id === businessId)?.role ?? "STAFF";
+  const level = accessLevelOf(role);
 
   const today = getAppToday();
-  const tab = groupTabFrom(sp.tab);
+  // Settings are the Admin's; anyone else asking lands on the dashboard.
+  const asked = groupTabFrom(sp.tab);
+  const tab = asked === "settings" && level !== "ADMIN" ? "dashboard" : asked;
   // The group's month starts on its own day (the 1st unless set).
   const settings = await getGroupSettings(businessId);
   const startDay = settings.monthStartDay;
@@ -75,7 +84,9 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   const activityPage = Math.max(1, Math.floor(Number(sp.page)) || 1);
   const accountantId = typeof sp.accountant === "string" && sp.accountant ? sp.accountant : undefined;
 
-  const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals, workspaces] = await Promise.all([
+  // The pages whose header shows the month picker, with each month's spending.
+  const monthPage = tab === "dashboard" || tab === "expenses" || tab === "settlement" || tab === "cashbook" || tab === "contributions" || tab === "budget";
+  const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals, monthTotals] = await Promise.all([
     getGroupMembers(businessId),
     getGroupContributions(businessId, { from: range.from, to: range.to }),
     getGroupExpenses(businessId, { from: sixFrom, to: range.to }),
@@ -84,7 +95,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     getGroupSettlementHistory(businessId),
     getGroupMonthBudgets(businessId),
     getGroupMeals(businessId, range.from, range.to),
-    listWorkspaces(),
+    monthPage ? getGroupMonthTotals(businessId) : null,
   ]);
 
   // What the page on show needs beyond the month.
@@ -102,9 +113,16 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     businessId,
     name: business.name,
     currency: business.currency,
-    // The list names the customer's role; a group they reached is theirs to use.
-    role: workspaces.find((workspace) => workspace.id === businessId)?.role ?? "OWNER",
-    groups: workspaces.filter((workspace) => workspace.type === "GROUP").map(({ id, name }) => ({ id, name })),
+    role,
+    access: {
+      level,
+      userId: user.id,
+      // The Admin's own record is the owner's; anyone else's is the one their login is.
+      selfMemberId: (level === "ADMIN" ? members.find((member) => member.isOwner) : members.find((member) => member.userId === user.id && member.status === "ACTIVE"))?.id ?? null,
+      portal: Boolean(user.portalOnly),
+      readOnly: Boolean(user.impersonatedBy),
+    },
+    groups: workspaces.filter((workspace) => workspace.type === "GROUP").map(({ id, name, role: groupRole }) => ({ id, name, role: groupRole })),
     today,
     tab,
     startDay,
@@ -137,6 +155,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     cashbookAccountant: accountantId ?? null,
     activity,
     activityAction: activityAction ?? null,
+    monthTotals,
   };
 
   return <GroupPageClient data={data} />;

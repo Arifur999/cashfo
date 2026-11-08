@@ -1,22 +1,26 @@
 "use client";
 
-import { FileText, Pencil, PieChart, Search, Trash2, TriangleAlert, UserCheck, UserMinus, UserPlus } from "lucide-react";
+import { FileText, KeyRound, Pencil, PieChart, Search, Trash2, TriangleAlert, UserCheck, UserMinus, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
-import Chip from "@/components/smartly/Chip";
+import Chip, { type ChipTone } from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import type { GroupMember } from "@/lib/customer/api";
+import type { GroupAccessLink, GroupMember } from "@/lib/customer/api";
+import { MEMBER_ROLE_HINTS, MEMBER_ROLE_LABELS, memberAccessRole, type MemberAccessRole } from "@/lib/customer/groupAccess";
 import { groupTabHref, memberSince } from "@/lib/customer/groupDisplay";
 import { accountantsOf, addsUpToHundred, costShares, isAccountant } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
+import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { type AccessLinkShown, AccessLinkDialog } from "./AccessLinkDialog";
 import { BalanceCell, MemberAvatar } from "./GroupBits";
+import { MemberAccessDialog } from "./MemberAccessDialog";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 type Filter = "ACTIVE" | "ARCHIVED" | "ALL";
@@ -24,18 +28,21 @@ type Filter = "ACTIVE" | "ARCHIVED" | "ALL";
 interface GroupMembersTabProps {
   data: GroupPageData;
   view: GroupView;
-  onAdd: () => void;
-  onEdit: (member: GroupMember) => void;
+  // Changing members is the group's owner's: absent for everyone else,
+  // who see the list and each statement.
+  onAdd?: () => void;
+  onEdit?: (member: GroupMember) => void;
   // Mark inactive (asks first) or make active again.
-  onToggleStatus: (member: GroupMember) => void;
-  onRemove: (member: GroupMember) => void;
+  onToggleStatus?: (member: GroupMember) => void;
+  onRemove?: (member: GroupMember) => void;
   onStatement: (member: GroupMember) => void;
-  onCostSplit: () => void;
+  onCostSplit?: () => void;
 }
 
-// Member, phone, member since, cost share, actions.
-// Member, phone, member since, cost share, balance now, actions.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_130px_110px_180px_150px_152px]";
+const ROLE_TONES: Record<MemberAccessRole, ChipTone> = { ADMIN: "mint", EDITOR: "warning", VIEWER: "info", NONE: "neutral" };
+
+// Member, phone, member since, cost share, role and access, balance now, actions.
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_116px_96px_140px_176px_132px_168px]";
 
 // The group's people (the v7 FamilyMembers board): who is in, their role
 // -- accountants keep the cash -- and their part of the costs, with the
@@ -55,6 +62,24 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
   const broken = custom && active.length > 0 && !addsUpToHundred(active.map((member) => shares[member.id] ?? 0));
   const unshared = custom ? active.filter((member) => !(shares[member.id] > 0)) : [];
   const filterWord = filter === "ACTIVE" ? t("active") : filter === "ARCHIVED" ? t("inactive") : t("all");
+  // Members & access (the owner's): the access popup, and a link to send.
+  const [accessFor, setAccessFor] = useState<string | null>(null);
+  const [linkShown, setLinkShown] = useState<AccessLinkShown | null>(null);
+  const accessMember = accessFor ? (data.members.find((member) => member.id === accessFor) ?? null) : null;
+  const showLink = (member: GroupMember, link: GroupAccessLink) => {
+    setAccessFor(null);
+    setLinkShown({ link, name: member.name, phone: member.phone, roleLabel: t(MEMBER_ROLE_LABELS[memberAccessRole(member)]), groupName: data.name });
+  };
+  const day = (iso: string) => formatDay(iso.slice(0, 10), "d MMM", fmt);
+  // A member's login, in a few words, with its dot.
+  const accessLine = (member: GroupMember): { text: string; tone: string } | null => {
+    if (member.isOwner || !member.access) return null;
+    const { login, link } = member.access;
+    if (member.role === "MEMBER" || !member.role) return { text: t("No portal, no link"), tone: "bg-line-strong" };
+    if (login) return { text: login.lastLoginAt ? t("Can log in · last login {date}", { date: day(login.lastLoginAt) }) : t("Can log in"), tone: "bg-income" };
+    if (link) return { text: t("Link sent {date} · waiting", { date: day(link.createdAt) }), tone: "bg-warning" };
+    return { text: t("No login yet"), tone: "bg-line-strong" };
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -66,9 +91,11 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
         <Banner tone="warning" icon={<TriangleAlert />}>
           <span className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <span>{unshared.length > 0 ? t("The cost split doesn't add up to 100%: {names} have no share yet.", { names: unshared.map((member) => member.name).join(", ") }) : t("The cost split doesn't add up to 100%.")}</span>
-            <button type="button" onClick={onCostSplit} className="font-semibold text-warning-ink underline underline-offset-2">
-              {t("Fix the cost split")}
-            </button>
+            {onCostSplit && (
+              <button type="button" onClick={onCostSplit} className="font-semibold text-warning-ink underline underline-offset-2">
+                {t("Fix the cost split")}
+              </button>
+            )}
           </span>
         </Banner>
       )}
@@ -94,14 +121,18 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
             />
             <div className="flex flex-wrap gap-2.5">
               <Input size="sm" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leading={<Search />} placeholder={t("Search name, phone or who it covers…")} aria-label={t("Search members")} frameClassName="min-w-0 flex-1 md:w-60 md:flex-none" />
-              <Button variant="secondary" size="sm" onClick={onCostSplit} className="h-9.5 [&_svg]:text-ink-soft">
-                <PieChart />
-                {t("Cost split · {mode}", { mode: t(custom ? "Custom %" : "Equal") })}
-              </Button>
-              <Button size="sm" onClick={onAdd} className="h-9.5">
-                <UserPlus />
-                {t("Add member")}
-              </Button>
+              {onCostSplit && (
+                <Button variant="secondary" size="sm" onClick={onCostSplit} className="h-9.5 [&_svg]:text-ink-soft">
+                  <PieChart />
+                  {t("Cost split · {mode}", { mode: t(custom ? "Custom %" : "Equal") })}
+                </Button>
+              )}
+              {onAdd && (
+                <Button size="sm" onClick={onAdd} className="h-9.5">
+                  <UserPlus />
+                  {t("Add member")}
+                </Button>
+              )}
             </div>
           </div>
         }
@@ -117,6 +148,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           <ListHeadCell>{t("Phone")}</ListHeadCell>
           <ListHeadCell>{t("Member since")}</ListHeadCell>
           <ListHeadCell>{t("Cost share")}</ListHeadCell>
+          <ListHeadCell>{t("Role and access")}</ListHeadCell>
           <ListHeadCell align="end">{t("Balance now")}</ListHeadCell>
           <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
@@ -125,6 +157,8 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           const inactive = member.status !== "ACTIVE";
           const share = shares[member.id];
           const accountant = isAccountant(member);
+          const accessRole = memberAccessRole(member);
+          const line = accessLine(member);
           return (
             <ListRow key={member.id} columns={COLUMNS} className={cn("min-h-14 grid-cols-[minmax(0,1fr)_auto] gap-x-3 tabular-nums md:px-5 md:py-1.5", inactive && "opacity-60")}>
               <ListCell className="flex items-center gap-3">
@@ -132,17 +166,10 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <span className="truncate font-semibold text-ink">{member.name}</span>
-                    {member.isOwner && (
-                      <Chip tone="neutral" size="sm">
-                        {t("Owner")}
+                    {member.id === data.access.selfMemberId && (
+                      <Chip tone="forest" size="sm">
+                        {t("You")}
                       </Chip>
-                    )}
-                    {accountant && (
-                      <Link href={groupTabHref(data.businessId, "cashbook", { accountant: member.id })} title={t("Open cash book")} className="rounded-full">
-                        <Chip tone="mint" size="sm">
-                          {t("Accountant")}
-                        </Chip>
-                      </Link>
                     )}
                     {inactive && (
                       <Chip tone="neutral" size="sm">
@@ -167,6 +194,25 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                   </>
                 )}
               </ListCell>
+              <ListCell className="hidden min-w-0 flex-col items-start gap-1 md:flex">
+                {accountant ? (
+                  <Link href={groupTabHref(data.businessId, "cashbook", { accountant: member.id })} title={t("Open cash book")} className="rounded-full">
+                    <Chip tone={ROLE_TONES[accessRole]} size="sm" title={t(MEMBER_ROLE_HINTS[accessRole])}>
+                      {t(MEMBER_ROLE_LABELS[accessRole])}
+                    </Chip>
+                  </Link>
+                ) : (
+                  <Chip tone={ROLE_TONES[accessRole]} size="sm" title={t(MEMBER_ROLE_HINTS[accessRole])}>
+                    {t(MEMBER_ROLE_LABELS[accessRole])}
+                  </Chip>
+                )}
+                {line && (
+                  <span className="flex max-w-full min-w-0 items-center gap-1.5 text-caption text-ink-muted">
+                    <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", line.tone)} />
+                    <span className="truncate">{line.text}</span>
+                  </span>
+                )}
+              </ListCell>
               <ListCell className="hidden md:block">
                 {view.balances[member.id] === undefined ? <span className="block text-right text-input">—</span> : <BalanceCell value={view.balances[member.id]} currency={data.currency} stacked />}
               </ListCell>
@@ -174,15 +220,22 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                 <IconAction label={t("{name}'s statement", { name: member.name })} onClick={() => onStatement(member)}>
                   <FileText />
                 </IconAction>
-                <IconAction label={t("Edit {name}", { name: member.name })} onClick={() => onEdit(member)}>
-                  <Pencil />
-                </IconAction>
-                {!member.isOwner && (
+                {onEdit && (
+                  <IconAction label={t("Edit {name}", { name: member.name })} onClick={() => onEdit(member)}>
+                    <Pencil />
+                  </IconAction>
+                )}
+                {onEdit && !member.isOwner && !inactive && (
+                  <IconAction label={t("Access for {name}", { name: member.name })} onClick={() => setAccessFor(member.id)}>
+                    <KeyRound />
+                  </IconAction>
+                )}
+                {onToggleStatus && !member.isOwner && (
                   <IconAction label={inactive ? t("Make active {name}", { name: member.name }) : t("Mark inactive {name}", { name: member.name })} onClick={() => onToggleStatus(member)}>
                     {inactive ? <UserCheck /> : <UserMinus />}
                   </IconAction>
                 )}
-                {!member.isOwner && (
+                {onRemove && !member.isOwner && (
                   <IconAction label={t("Delete {name}", { name: member.name })} onClick={() => onRemove(member)} danger>
                     <Trash2 />
                   </IconAction>
@@ -192,6 +245,21 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           );
         })}
       </ListCard>
+      {onEdit && (
+        <>
+          <MemberAccessDialog
+            member={accessMember}
+            onClose={() => setAccessFor(null)}
+            businessId={data.businessId}
+            onLink={showLink}
+            onEditMember={(member) => {
+              setAccessFor(null);
+              onEdit(member);
+            }}
+          />
+          <AccessLinkDialog shown={linkShown} onClose={() => setLinkShown(null)} />
+        </>
+      )}
     </div>
   );
 }

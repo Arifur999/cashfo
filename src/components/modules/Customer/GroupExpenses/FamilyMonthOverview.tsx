@@ -34,13 +34,15 @@ interface FamilyMonthOverviewProps {
   // The signed-in customer's own member row (the group's owner), if any.
   me: GroupMember | undefined;
   canAdd: boolean;
+  // Whether a payment from this member may be recorded here.
+  canPay: (fromId: string) => boolean;
   onAddExpense: () => void;
   onAddContribution: () => void;
   onRecordPayment: (preset: Transfer | null) => void;
   onStatement: (member: GroupMember) => void;
 }
 
-export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAddContribution, onRecordPayment, onStatement }: FamilyMonthOverviewProps) {
+export function FamilyMonthOverview({ data, view, me, canAdd, canPay, onAddExpense, onAddContribution, onRecordPayment, onStatement }: FamilyMonthOverviewProps) {
   const { t, fmt } = useLocale();
   const { currency, settlement } = data;
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
@@ -48,7 +50,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   const month = monthName(data.range.key, fmt, "long", true);
   const current = data.range.key === groupMonthOf(data.today, data.startDay);
   const closed = view.closed;
-  const isAdmin = data.role === "OWNER";
+  const isAdmin = data.access.level === "ADMIN" && !data.access.readOnly;
   const actions = canAdd && !closed;
   // The month before this one, finished but never closed (it is asked for first).
   const previous = current && isAdmin && !data.settings.pausedAt ? unclosedPreviousMonth(data.history, data.members, data.range) : null;
@@ -233,7 +235,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                           ? t("Settled for this month through the cash holder.")
                           : t("You don’t owe anything and nobody owes you.")}
               </span>
-              {actions && myTransfer && (
+              {actions && myTransfer && canPay(myTransfer.fromId) && (
                 <Button size="sm" variant={myTransfer.fromId === me.id ? "danger" : "primary"} className="mt-0.5 self-start text-[13px]" onClick={() => onRecordPayment(myTransfer)}>
                   {myTransfer.fromId === me.id ? t("Pay now") : t("Record payment")}
                 </Button>

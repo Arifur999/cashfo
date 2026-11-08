@@ -10,14 +10,14 @@ import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListTotalRow } from "@/components/smartly/list";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { formatCurrency } from "@/lib/customer/currency";
 import { countLabel, groupMonthOf, groupTabHref, recordDiffers, shiftMonth, shortName } from "@/lib/customer/groupDisplay";
 import { settleUpAction, undoSettleUpAction } from "@/lib/customer/groupExpensesActions";
-import { isAccountant, mainAccountantId, type SettleCard, settlementCards, settleProgress, settleSums } from "@/lib/customer/groupFamily";
+import { canManage, canRecord, canTouchEntry, mayEnterFor } from "@/lib/customer/groupAccess";
+import { isAccountant, mainAccountantId, type SettleCard, type SettlePair, settlementCards, settleProgress, settleSums } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -33,17 +33,17 @@ const BALANCE_COLUMNS = "md:grid-cols-[minmax(0,1fr)_164px_150px_130px_104px]";
 interface FamilySettlementTabProps {
   data: GroupPageData;
   view: GroupView;
-  onMonth: (key: string) => void;
-  // A payment between any two members, recorded by hand.
-  onRecordPayment: () => void;
-  busy: boolean;
+  // A payment between any two members, recorded by hand; absent for
+  // someone who may not record payments.
+  onRecordPayment?: () => void;
 }
 
 // A family's month settled (the v7 FamilySettlement board): the month in
 // four figures, a card for each member saying what they pay the accountant
 // or get back, marked paid in one tap (and undone), then the month closed
 // with every balance carried forward. Closed months stay below, by year.
-export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy }: FamilySettlementTabProps) {
+// The month is the header's (GroupHeader's month picker).
+export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettlementTabProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { currency, settlement, range } = data;
@@ -68,6 +68,12 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
   const othersCash = cashRows.filter((row) => row.groupMemberId !== holderId).reduce((sum, row) => sum + Number(row.cash), 0);
   const ended = range.to < data.today;
   const drift = data.closedRecord && recordDiffers(data.closedRecord, settlement);
+  // Who may do what here: the Admin all of it; an Editor records the
+  // payments they make and undoes their own; closing is the Admin's.
+  const paused = Boolean(data.settings.pausedAt);
+  const manage = canManage(data.access);
+  const mayPay = (fromId: string | undefined) => !!fromId && canRecord(data.access, paused) && mayEnterFor(data.access, fromId);
+  const mayUndo = (pair: SettlePair) => canTouchEntry(data.access, pair, paused, closed);
 
   function pay(card: SettleCard) {
     if (!holder || (card.state.kind !== "pays" && card.state.kind !== "gets")) return;
@@ -163,17 +169,12 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
           <p className="text-small text-ink-muted">{t("Who owes whom for the month, and the payments that even it out.")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <NativeSelect size="md" aria-label={t("Month")} value={range.key} onChange={(event) => onMonth(event.target.value)} className={cn("font-semibold", busy && "opacity-60")}>
-            {data.months.map((key) => (
-              <option key={key} value={key}>
-                {monthName(key, fmt, "long", true)}
-              </option>
-            ))}
-          </NativeSelect>
-          <Button variant="secondary" onClick={onRecordPayment} disabled={closed}>
-            <Plus aria-hidden="true" />
-            {t("Record payment")}
-          </Button>
+          {onRecordPayment && (
+            <Button variant="secondary" onClick={onRecordPayment} disabled={closed}>
+              <Plus aria-hidden="true" />
+              {t("Record payment")}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -316,15 +317,20 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
                       </span>
                       {!closed &&
                         (done ? (
+                          (card.state.kind === "paid" || card.state.kind === "received") &&
+                          mayUndo(card.state.pair) && (
                           <Button variant="ghost" size="sm" onClick={() => undo(card)} disabled={isPending}>
                             {busyCard && <Loader />}
                             {t("Undo")}
                           </Button>
+                          )
                         ) : (
+                          mayPay(from?.id) && (
                           <Button size="sm" onClick={() => pay(card)} disabled={isPending}>
                             {busyCard && <Loader />}
                             {t("Record payment")}
                           </Button>
+                          )
                         ))}
                     </div>
                   );
@@ -366,9 +372,11 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
               {t("{month} is closed", { month: monthLong })}
             </span>
           ) : (
-            <Button onClick={() => setCloseOpen(true)} disabled={cards.length === 0} variant={ended ? "primary" : "secondary"}>
-              {t("Close {month}", { month: monthLong })}
-            </Button>
+            manage && (
+              <Button onClick={() => setCloseOpen(true)} disabled={cards.length === 0} variant={ended ? "primary" : "secondary"}>
+                {t("Close {month}", { month: monthLong })}
+              </Button>
+            )
           )}
         </section>
       </Card>

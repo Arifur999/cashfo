@@ -75,7 +75,7 @@ describe("settlement cards", () => {
     const paid = [settle("c1", "rakib", 4000, "s1"), settle("c2", "khaled", -4000, "s1")];
     const after = [row("khaled", 1000, 4000, 5000), row("arif", 2000, 4000, 6000), row("rakib", 0, 4000, 4000)];
     const cards = settlementCards(after, paid, "khaled");
-    expect(cards[2].state).toEqual({ kind: "paid", pair: { settleGroupId: "s1", fromId: "rakib", toId: "khaled", amount: 4000, date: "2026-10-28" } });
+    expect(cards[2].state).toEqual({ kind: "paid", pair: { settleGroupId: "s1", fromId: "rakib", toId: "khaled", amount: 4000, date: "2026-10-28", createdByUserId: null } });
     expect(cards[2].before).toBe(-4000);
     expect(cards[2].gave).toBe(0);
     expect(cards[0].before).toBe(5000);

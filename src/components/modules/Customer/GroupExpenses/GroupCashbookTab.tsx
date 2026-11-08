@@ -39,8 +39,12 @@ interface GroupCashbookTabProps {
   onPeriod: (period: GroupPeriod) => void;
   onAccountant: (id: string | null) => void;
   busy: boolean;
-  // A paused group takes no new handovers.
+  // Whether new handovers may be added (not while paused, not by a
+  // Viewer), which handovers may be changed (an Editor's own), and the
+  // Editor's own record (they hand over only their own cash).
   canAdd: boolean;
+  canTouch: (entry: { createdByUserId?: string | null }, date: string) => boolean;
+  selfOnly: string | null;
 }
 
 // Each accountant's cash (the FamilyCashbook boards): money in from the
@@ -48,7 +52,7 @@ interface GroupCashbookTabProps {
 // they returned, and cash handed from one holder to another (v16), with
 // the cash in hand after each. Deposits and expenses are added on their own
 // pages; handovers are added, edited and deleted here.
-export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, canAdd }: GroupCashbookTabProps) {
+export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, canAdd, canTouch, selfOnly }: GroupCashbookTabProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const [handover, setHandover] = useState<{ open: boolean; editing: HandoverDraft | null }>({ open: false, editing: null });
@@ -159,7 +163,7 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, can
             <Printer aria-hidden="true" />
             {t("Print statement")}
           </Button>
-          {canAdd && holders.length > 1 && (
+          {canAdd && holders.length > 1 && (!selfOnly || holders.some((member) => member.id === selfOnly)) && (
             <Button onClick={() => setHandover({ open: true, editing: null })}>
               <ArrowLeftRight aria-hidden="true" />
               {t("Hand over cash")}
@@ -342,7 +346,7 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, can
               </ListCell>
               <ListCell className="flex justify-end gap-1.5">
                 {draft ? (
-                  canAdd && (
+                  canTouch(row, row.date) && (
                     <>
                       <button type="button" onClick={() => setHandover({ open: true, editing: draft })} aria-label={t("Edit handover")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                         <Pencil className="size-3.75" aria-hidden="true" />
@@ -363,7 +367,7 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, can
         })}
       </ListCard>
 
-      <HandoverDialog open={handover.open} onClose={() => setHandover({ open: false, editing: null })} businessId={data.businessId} currency={currency} holders={holders} cash={holderCash} today={data.today} editing={handover.editing} />
+      <HandoverDialog open={handover.open} onClose={() => setHandover({ open: false, editing: null })} businessId={data.businessId} currency={currency} holders={holders} cash={holderCash} today={data.today} editing={handover.editing} selfOnly={selfOnly} />
       <ConfirmDialog
         open={removing !== null}
         onClose={() => !isPending && setRemoving(null)}

@@ -42,6 +42,8 @@ interface ContributionDrawerProps {
   // Open with a member already chosen (from their row or statement).
   presetMemberId?: string | null;
   closedGuard: ClosedGuard;
+  // An Editor adds only their own deposits: the member is them.
+  selfOnly?: string | null;
 }
 
 type Kind = "DEPOSIT" | "RETURN";
@@ -56,7 +58,7 @@ export function dayInMonth(range: MonthRange, today: string): string {
 // the v7 popup: when, how much (with a chip that fills their dues), who,
 // which accountant it was given to, and a note, with the balances after
 // saving.
-export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, cashInHand, holderId, range, today, editing, presetMemberId = null, closedGuard }: ContributionDrawerProps) {
+export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, cashInHand, holderId, range, today, editing, presetMemberId = null, closedGuard, selfOnly = null }: ContributionDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE" || member.id === editing?.groupMemberId);
@@ -82,7 +84,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
     setPrevKey(key);
     if (open) {
       const signed = Number(editing?.amount ?? 0);
-      setMemberId(editing?.groupMemberId ?? presetMemberId ?? "");
+      setMemberId(editing?.groupMemberId ?? selfOnly ?? presetMemberId ?? "");
       setKind(signed < 0 ? "RETURN" : "DEPOSIT");
       setAmount(editing ? String(Math.abs(signed)) : "");
       setDate(editing ? editing.date.slice(0, 10) : dayInMonth(range, today));
@@ -177,7 +179,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
         </>
       }
     >
-      {!special && (
+      {!special && !selfOnly && (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
           {/* Real radios under the cards: arrow keys move between them. */}
@@ -232,7 +234,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
       </div>
 
       <Field htmlFor="con-member" label={label(t("Member"))}>
-        <MemberPicker id="con-member" label={t("Member")} members={active} value={memberId} onChange={setMemberId} currency={currency} balances={balances} size="md" disabled={special} />
+        <MemberPicker id="con-member" label={t("Member")} members={selfOnly ? active.filter((member) => member.id === selfOnly) : active} value={memberId} onChange={setMemberId} currency={currency} balances={balances} size="md" disabled={special || !!selfOnly} />
       </Field>
 
       {!special && accountants.length > 0 && (

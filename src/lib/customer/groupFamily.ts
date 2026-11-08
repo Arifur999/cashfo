@@ -38,6 +38,8 @@ export interface SettlePair {
   toId: string;
   amount: number;
   date: string;
+  // Who recorded it (an Editor undoes only their own).
+  createdByUserId?: string | null;
 }
 
 export function settlePairs(contributions: GroupContribution[]): SettlePair[] {
@@ -50,7 +52,7 @@ export function settlePairs(contributions: GroupContribution[]): SettlePair[] {
   for (const [settleGroupId, rows] of groups) {
     const from = rows.find((row) => Number(row.amount) > 0);
     const to = rows.find((row) => Number(row.amount) < 0);
-    if (from && to) pairs.push({ settleGroupId, fromId: from.groupMemberId, toId: to.groupMemberId, amount: Number(from.amount), date: from.date.slice(0, 10) });
+    if (from && to) pairs.push({ settleGroupId, fromId: from.groupMemberId, toId: to.groupMemberId, amount: Number(from.amount), date: from.date.slice(0, 10), createdByUserId: from.createdByUserId ?? null });
   }
   return pairs;
 }

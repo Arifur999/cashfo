@@ -22,7 +22,8 @@ import { MealDayPhone } from "./MealDrawer";
 interface GroupMealsTabProps {
   data: GroupPageData;
   // Opens a day's meals.
-  onDay: (day: string) => void;
+  // Opens a day's meals: the Admin's (absent for everyone else, who only read).
+  onDay?: (day: string) => void;
   closedGuard: ClosedGuard;
 }
 
@@ -153,7 +154,7 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
                         type="button"
                         data-cell={`0-${col}`}
                         tabIndex={stop(0, col)}
-                        onClick={() => onDay(day)}
+                        onClick={() => onDay?.(day)}
                         onFocus={() => setFocus({ row: 0, col })}
                         aria-label={name}
                         title={name}
@@ -197,7 +198,7 @@ export function GroupMealsTab({ data, onDay, closedGuard }: GroupMealsTabProps) 
                             type="button"
                             data-cell={`${row}-${col}`}
                             tabIndex={stop(row, col)}
-                            onClick={() => onDay(day)}
+                            onClick={() => onDay?.(day)}
                             onFocus={() => setFocus({ row, col })}
                             aria-label={name}
                             title={name}

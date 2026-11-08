@@ -27,10 +27,11 @@ const COLUMNS = "md:grid-cols-[28px_minmax(0,1fr)_130px_160px_136px_84px]";
 interface GroupCategoriesTabProps {
   data: GroupPageData;
   onPeriod: (period: GroupPeriod) => void;
-  onAdd: () => void;
-  onEdit: (category: GroupExpenseCategoryOption) => void;
-  onHide: (category: GroupExpenseCategoryOption, hidden: boolean) => void;
-  onDelete: (category: GroupExpenseCategoryOption) => void;
+  // Changing categories is the Admin's: absent for everyone else.
+  onAdd?: () => void;
+  onEdit?: (category: GroupExpenseCategoryOption) => void;
+  onHide?: (category: GroupExpenseCategoryOption, hidden: boolean) => void;
+  onDelete?: (category: GroupExpenseCategoryOption) => void;
   busy: boolean;
 }
 
@@ -62,10 +63,12 @@ export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDe
         <h2 className="text-[19px] font-semibold text-ink">{t("Categories")}</h2>
         <div className="flex flex-wrap items-center gap-2.5">
           <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={data.startDay} onChange={onPeriod} busy={busy} />
-          <Button onClick={onAdd}>
-            <Plus aria-hidden="true" />
-            {t("Add category")}
-          </Button>
+          {onAdd && (
+            <Button onClick={onAdd}>
+              <Plus aria-hidden="true" />
+              {t("Add category")}
+            </Button>
+          )}
         </div>
       </div>
       <ListCard
@@ -130,10 +133,11 @@ export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDe
               </ListCell>
               <ListCell className="hidden md:block">
                 <span className={cn("inline-flex h-8 items-center gap-2 rounded-full border py-1 pr-3 pl-1.5", option.hidden ? "border-line bg-surface-sunken" : "border-success-line bg-income-soft/50")}>
-                  <SmallSwitch on={!option.hidden} label={option.hidden ? t("Make active: {name}", { name: option.name }) : t("Make inactive: {name}", { name: option.name })} title={option.hidden ? t("Inactive: not offered for new expenses. Click to make it active.") : t("Active: offered for new expenses. Click to make it inactive.")} onClick={() => onHide(option, !option.hidden)} />
+                  {onHide && <SmallSwitch on={!option.hidden} label={option.hidden ? t("Make active: {name}", { name: option.name }) : t("Make inactive: {name}", { name: option.name })} title={option.hidden ? t("Inactive: not offered for new expenses. Click to make it active.") : t("Active: offered for new expenses. Click to make it inactive.")} onClick={() => onHide(option, !option.hidden)} />}
                   <span className={cn("text-small font-semibold", option.hidden ? "text-ink-muted" : "text-income")}>{option.hidden ? t("Inactive") : t("Active")}</span>
                 </span>
               </ListCell>
+              {onHide && onEdit && onDelete && (
               <ListRowActions className="flex items-center justify-end gap-1.5">
                 {/* A phone has no Status column: the switch sits with the actions. */}
                 <span className="flex md:hidden">
@@ -146,6 +150,7 @@ export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDe
                   <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
               </ListRowActions>
+              )}
             </ListRow>
           );
         })}

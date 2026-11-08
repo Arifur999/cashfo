@@ -23,7 +23,10 @@ interface GroupSettlementTabProps {
   data: GroupPageData;
   view: GroupView;
   onRecordPayment: (transfer: Transfer) => void;
-  onCloseMonth: () => void;
+  // Whether a payment from this member may be recorded here.
+  canPay: (fromId: string) => boolean;
+  // Closing the month: the Admin's (absent for everyone else).
+  onCloseMonth?: () => void;
 }
 
 // A mess shows each member's meals, meal cost and shared cost; a family the
@@ -60,7 +63,7 @@ interface Line {
 // cost, what each put in and paid from their pocket -- whether the account
 // checks out, the payments that settle it (through the manager or member to
 // member), and the months already closed.
-export function MessSettlementTab({ data, view, onRecordPayment, onCloseMonth }: GroupSettlementTabProps) {
+export function MessSettlementTab({ data, view, onRecordPayment, canPay, onCloseMonth }: GroupSettlementTabProps) {
   const { t, fmt } = useLocale();
   const { currency, settlement, range, settings } = data;
   const month = monthName(range.key, fmt);
@@ -157,10 +160,12 @@ export function MessSettlementTab({ data, view, onRecordPayment, onCloseMonth }:
             {t("{month} is closed", { month })}
           </span>
         ) : (
-          <Button variant="action" onClick={onCloseMonth} disabled={settlement.members.length === 0}>
-            <Lock strokeWidth={2} />
-            {t("Close {month}", { month })}
-          </Button>
+          onCloseMonth && (
+            <Button variant="action" onClick={onCloseMonth} disabled={settlement.members.length === 0}>
+              <Lock strokeWidth={2} />
+              {t("Close {month}", { month })}
+            </Button>
+          )
         )}
       </Card>
 
@@ -390,7 +395,7 @@ export function MessSettlementTab({ data, view, onRecordPayment, onCloseMonth }:
                   <span className="text-caption font-normal text-ink-muted">{t(note)}</span>
                 </span>
                 <span className="font-bold text-ink tabular-nums">{money(payment.amount)}</span>
-                {!view.closed && (
+                {!view.closed && canPay(payment.fromId) && (
                   <Button
                     variant="secondary"
                     size="sm"

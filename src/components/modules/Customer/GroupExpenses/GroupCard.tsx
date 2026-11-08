@@ -2,6 +2,8 @@
 
 import { ArrowRight, CircleAlert, ExternalLink, MoreHorizontal, Pause, Pencil, Play } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
+import { ACCESS_HINTS, ACCESS_LABELS, accessLevelOf } from "@/lib/customer/groupAccess";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
@@ -53,9 +55,12 @@ export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardPr
   const first = [current, ...members.map((member) => groupMonthOf((member.joinedOn ?? member.createdAt).slice(0, 10), startDay))].sort()[0];
   const months = monthsBetween(first, current);
   const since = t("since {month}", { month: monthName(first, fmt, "long", true) });
-  // My balance: the signed-in owner's own member row this month.
-  const isAdmin = workspace.role === "OWNER";
-  const me = isAdmin ? members.find((member) => member.isOwner) : undefined;
+  // My balance: my own member row this month -- the owner's for the
+  // group's Admin, the one my login is for anyone else.
+  const { user } = useAuth();
+  const level = accessLevelOf(workspace.role);
+  const isAdmin = level === "ADMIN" && !user.impersonatedBy;
+  const me = level === "ADMIN" ? members.find((member) => member.isOwner) : members.find((member) => member.userId === user.id);
   const mine = me ? Number(settlement.members.find((row) => row.groupMemberId === me.id)?.balance ?? 0) : null;
   const monthShort = monthName(current, fmt, "long");
 
@@ -84,9 +89,10 @@ export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardPr
             {[countLabel(t, fmt, active.length, "{count} member", "{count} members"), since, sharing.length > 0 ? t("{count} of {total} paid in", { count: formatCount(paid, fmt), total: formatCount(sharing.length, fmt) }) : ""].filter(Boolean).join(" · ")}
           </span>
         </div>
-        <Chip tone="mint" className="mt-1 shrink-0 px-2.25 max-sm:hidden">
-          {t(isAdmin ? "You: Admin" : "You: Member")}
+        <Chip tone={level === "ADMIN" ? "mint" : level === "EDITOR" ? "warning" : "info"} className="mt-1 shrink-0 px-2.25 max-sm:hidden" title={t(ACCESS_HINTS[level])}>
+          {t("You: {role}", { role: t(ACCESS_LABELS[level]) })}
         </Chip>
+        {isAdmin && (
         <DropdownMenu>
           <DropdownMenuTrigger aria-label={t("More actions for {name}", { name: workspace.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
             <MoreHorizontal className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
@@ -111,6 +117,7 @@ export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardPr
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        )}
       </div>
 
       <div className="grid grid-cols-3 border-y border-divider">
