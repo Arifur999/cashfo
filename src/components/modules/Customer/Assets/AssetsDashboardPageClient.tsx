@@ -37,6 +37,7 @@ import { AssetStatementDialog } from "./AssetStatementDialog";
 import { AssetTypeTile } from "./AssetTypeTile";
 import { AssetValueChart, type PointNote } from "./AssetValueChart";
 import { ReadOnlyNote } from "./ReadOnlyNote";
+import { UpdateValueDrawer } from "./UpdateValueDrawer";
 
 interface AssetsDashboardPageClientProps {
   businessId: string;
@@ -79,6 +80,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
   const { t, fmt } = useLocale();
   const [addOpen, setAddOpen] = useState(false);
   const [reading, setReading] = useState<Asset | null>(null);
+  const [valuing, setValuing] = useState<Asset | null>(null);
   const [sort, setSort] = useState<AssetSort>("gain");
   // The chart's asset, or "" for all of them together.
   const [chartFor, setChartFor] = useState("");
@@ -157,6 +159,8 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
     return { ...entry, paid, color: categoryColorVar(match?.color) };
   });
   const changes = recentValueChanges(assets);
+  // The open statement, as the page last read it (an update made from it shows at once).
+  const statement = reading && (assets.find((asset) => asset.id === reading.id) ?? reading);
   const { rise, drop } = lastUpdateMovers(owned);
   const movers: { change: ValueChange; label: string; box: string; ink: string }[] = [];
   if (rise) movers.push({ change: rise, label: "Biggest rise at last update", box: "bg-income-soft/60", ink: "text-income" });
@@ -428,7 +432,20 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
       )}
 
       <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} currency={currency} variant="add" />
-      <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading && (assets.find((asset) => asset.id === reading.id) ?? reading)} categories={categories} currency={currency} businessId={businessId} canManage={canManage} />
+      <AssetStatementDialog
+        open={reading !== null}
+        onClose={() => setReading(null)}
+        asset={statement}
+        categories={categories}
+        currency={currency}
+        businessId={businessId}
+        canManage={canManage}
+        onUpdate={() => {
+          setValuing(statement);
+          setReading(null);
+        }}
+      />
+      <UpdateValueDrawer open={valuing !== null} onClose={() => setValuing(null)} businessId={businessId} asset={valuing} categories={categories} currency={currency} />
     </PageFrame>
   );
 }
