@@ -49,13 +49,17 @@ export function AssetValueChart({ points, currency, paidLabel, label, note, mark
   const short = (value: number) => `${currencySymbol(currency, fmt)} ${formatCompactAmount(value, fmt)}`;
   const top = points.reduce((best, point, index) => (point.value > points[best].value ? index : best), 0);
   const last = points.length - 1;
+  // Many points (one asset with years of updates): every few dates and
+  // figures, always the last.
+  const stride = Math.max(1, Math.ceil(points.length / 10));
+  const onStride = (index: number) => index % stride === 0 || index === last;
 
   const dot = ({ cx, cy, index }: { cx?: number; cy?: number; index?: number }) => {
     if (cx === undefined || cy === undefined || index === undefined) return <g key={`dot-${index}`} />;
     const point = points[index];
     const before = index > 0 ? points[index - 1].value : point.value;
     const fill = index === 0 ? "var(--ink-faint)" : point.value > before ? "var(--income)" : point.value < before ? "var(--expense)" : "var(--emerald)";
-    const marked = index === 0 || index === last || index === top || markAll;
+    const marked = index === 0 || index === last || index === top || (markAll && onStride(index));
     return (
       <g key={`dot-${index}`}>
         <circle cx={cx} cy={cy} r={4.5} fill={fill} stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" />
@@ -70,6 +74,7 @@ export function AssetValueChart({ points, currency, paidLabel, label, note, mark
 
   const tick = ({ x, y, payload }: { x?: number | string; y?: number | string; payload?: { value: string; index: number } }) => {
     const index = payload?.index ?? 0;
+    if (!onStride(index)) return <g />;
     const below = points[index] ? note(points[index], index) : null;
     return (
       <g transform={`translate(${x},${y})`}>
