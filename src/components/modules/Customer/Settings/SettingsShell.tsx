@@ -15,7 +15,7 @@ import { SettingsBack } from "./SettingsBack";
 // its heading is for screen readers only) and each section gets a way back
 // to it and its name. Plans (UpgradePlan) is a page of its own: its heading
 // and full width, and so is its payment page (Checkout).
-const FULL_WIDTH = ["/settings/profile", "/settings/security", "/settings/notifications", "/settings/app", "/settings/data", "/settings/help"];
+const FULL_WIDTH = ["/settings/profile", "/settings/security", "/settings/notifications", "/settings/app", "/settings/data", "/settings/help", "/settings/resources"];
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
