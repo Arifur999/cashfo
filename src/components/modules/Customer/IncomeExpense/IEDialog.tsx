@@ -20,20 +20,22 @@ interface IEDialogProps {
   saveLabel: string;
   saveDisabled?: boolean;
   onSubmit: () => void;
+  // The gap between the fields: the BudgetDialog board's 16px, else 18px.
+  bodyClassName?: string;
   children: React.ReactNode;
 }
 
 // The Income & Expense popups (design: TxnDrawer, CategoryDrawer,
 // BudgetDialog): the title and a close button over a line, the fields, and
-// Cancel and the save button under a line, near the top of the screen.
-export function IEDialog({ open, onClose, title, description, width = "md", busy = false, saveLabel, saveDisabled = false, onSubmit, children }: IEDialogProps) {
+// Cancel and the save button under a line, in the middle of the screen.
+export function IEDialog({ open, onClose, title, description, width = "md", busy = false, saveLabel, saveDisabled = false, onSubmit, bodyClassName, children }: IEDialogProps) {
   const { t } = useLocale();
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !busy && onClose()}>
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "top-[max(16px,12vh)] max-h-[calc(100dvh-32px)] translate-y-0 gap-0 overflow-y-auto rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-none",
+          "max-h-[calc(100dvh-32px)] gap-0 overflow-y-auto rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]",
           width === "lg" ? "w-135" : "w-125",
         )}
       >
@@ -45,19 +47,19 @@ export function IEDialog({ open, onClose, title, description, width = "md", busy
           }}
           className="flex flex-col"
         >
-          <div className="flex items-center justify-between gap-3 border-b border-divider py-4 pr-4 pl-6">
+          <div className="flex items-center justify-between gap-3 border-b border-line py-4 pr-4 pl-6">
             <DialogTitle className="text-[18px] font-semibold text-ink">{title}</DialogTitle>
             {description && <DialogDescription className="sr-only">{description}</DialogDescription>}
             <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50">
               <X className="size-4.5" aria-hidden="true" />
             </button>
           </div>
-          <div className="flex flex-col gap-4.5 px-6 py-5">{children}</div>
-          <div className="flex justify-end gap-2.5 border-t border-divider px-6 py-4">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={busy} className="rounded-full px-4.5">
+          <div className={cn("flex flex-col gap-4.5 px-6 py-5", bodyClassName)}>{children}</div>
+          <div className="flex justify-end gap-2.5 border-t border-line px-6 py-4">
+            <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={busy} className="px-4.5">
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={busy || saveDisabled} className="rounded-full px-5">
+            <Button type="submit" size="lg" disabled={busy || saveDisabled} className="px-5">
               {busy && <Loader size={16} onDark label={t("Loading...")} />}
               {t(saveLabel)}
             </Button>
@@ -87,10 +89,12 @@ export function KindCards<K extends string>({
   disabled?: boolean;
 }) {
   const { t } = useLocale();
+  // The boards' green and red: a 2px edge on the palest tint when picked,
+  // the words a shade deeper, the arrow always in the kind's colour.
   const TONE = {
-    income: { on: "border-2 border-income bg-income-soft", text: "text-income", tile: "bg-income-soft text-income" },
-    expense: { on: "border-2 border-expense bg-expense-soft", text: "text-expense", tile: "bg-expense-soft text-expense" },
-    info: { on: "border-2 border-info bg-info-soft", text: "text-info", tile: "bg-info-soft text-info" },
+    income: { on: "border-2 border-success bg-success-soft/50", text: "text-tint-green-ink", icon: "text-success", tile: "bg-success-soft/50" },
+    expense: { on: "border-2 border-expense-fill bg-expense-soft/50", text: "text-expense", icon: "text-expense-fill", tile: "bg-expense-soft/50" },
+    info: { on: "border-2 border-info bg-info-soft", text: "text-info", icon: "text-info", tile: "bg-info-soft" },
   } as const;
   return (
     <fieldset disabled={disabled} className="m-0 min-w-0 border-0 p-0">
@@ -106,24 +110,24 @@ export function KindCards<K extends string>({
               aria-pressed={on}
               onClick={() => onChange(option.value)}
               className={cn(
-                "flex min-w-0 items-center rounded-[12px] font-semibold transition-colors",
-                compact ? "h-13 justify-center gap-2 text-[15px]" : "h-19 gap-3 px-4 text-left",
+                "flex min-w-0 items-center font-semibold transition-colors",
+                compact ? "h-13 justify-center gap-2 rounded-[12px] text-[15px]" : "h-19 gap-3 rounded-[14px] px-4 text-left",
                 on ? tone.on : "border border-input bg-surface text-ink-2 hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface",
               )}
             >
               {compact ? (
                 <>
-                  <span className={cn("[&_svg]:size-4", tone.text)}>{option.icon}</span>
+                  <span className={cn("[&_svg]:size-4", tone.icon)}>{option.icon}</span>
                   <span className={on ? tone.text : undefined}>{t(option.label)}</span>
                 </>
               ) : (
                 <>
-                  <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.5", on ? "bg-surface" : tone.tile, tone.text)}>{option.icon}</span>
+                  <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.5", on ? "bg-surface" : tone.tile, tone.icon)}>{option.icon}</span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className={cn("text-[15px]", on ? tone.text : "text-ink")}>{t(option.label)}</span>
                     {option.sub && <span className="text-caption font-normal text-ink-muted">{t(option.sub)}</span>}
                   </span>
-                  {on && <Check className={cn("size-4.5 shrink-0", tone.text)} strokeWidth={2.5} aria-hidden="true" />}
+                  {on && <Check className={cn("size-4.5 shrink-0", tone.icon)} strokeWidth={2.5} aria-hidden="true" />}
                 </>
               )}
             </button>
