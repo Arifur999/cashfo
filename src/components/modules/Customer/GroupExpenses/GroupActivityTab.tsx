@@ -58,76 +58,82 @@ export function GroupActivityTab({ data, onKind, onPage, busy }: GroupActivityTa
   const current = page?.meta.page ?? 1;
 
   return (
-    <Card padding="none" aria-label={t("Activity log")} className={cn("flex flex-col gap-4 px-5 py-4", busy && "opacity-60")} asChild>
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SegmentedControl<Kind>
-            label={t("Kind")}
-            variant="tabs"
-            className="rounded-full p-1"
-            value={kind}
-            onChange={(next) => onKind(next === "ALL" ? null : next)}
-            options={(["ALL", "ADDED", "EDITED", "DELETED"] as Kind[]).map((value) => ({ value, label: KIND_LABELS[value] }))}
-          />
-          <span className="text-small text-ink-muted">{t("{count} changes · kept forever, can't be edited", { count: formatCount(total, fmt) })}</span>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-[19px] font-semibold text-ink">{t("Activity log")}</h2>
+        <p className="text-small text-ink-muted">{t("Every change in this group: who did it, and when. Lines can’t be edited or removed.")}</p>
+      </div>
+      <Card padding="none" aria-label={t("Activity log")} className={cn("flex flex-col gap-4 px-5 py-4", busy && "opacity-60")} asChild>
+        <section>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <SegmentedControl<Kind>
+              label={t("Kind")}
+              variant="tabs"
+              className="rounded-full p-1"
+              value={kind}
+              onChange={(next) => onKind(next === "ALL" ? null : next)}
+              options={(["ALL", "ADDED", "EDITED", "DELETED"] as Kind[]).map((value) => ({ value, label: KIND_LABELS[value] }))}
+            />
+            <span className="text-small text-ink-muted">{t("{count} changes · kept forever, can't be edited", { count: formatCount(total, fmt) })}</span>
+          </div>
 
-        {entries.length === 0 && <EmptyState icon={<History />} tone="neutral" title={t("Nothing matches these filters.")} />}
+          {entries.length === 0 && <EmptyState icon={<History />} tone="neutral" title={kind === "ALL" ? t("No changes yet. Everything people add or change in this group will show here.") : t("Nothing matches these filters.")} />}
 
-        {days.map((group) => (
-          <div key={group.day} className="flex flex-col gap-1">
-            <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{dayTitle(group.day)}</span>
-            <ul className="flex flex-col">
-              {group.items.map((entry) => {
-                const line = activityLine(entry, data.members, data.currency, t, fmt);
-                const who = entry.actorName ?? owner?.name ?? t("You");
-                return (
-                  <li key={entry.id} className="flex items-start gap-3 border-b border-divider py-3 last:border-b-0">
-                    <span className="relative shrink-0">
-                      <MemberAvatar member={owner ?? { id: "you", name: who, photoUrl: null }} members={data.members} size={36} />
-                      <span aria-hidden="true" className={cn("absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2 border-surface", ACTION_DOTS[entry.action])} />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col gap-1">
-                      <span className="text-body text-ink-2">
-                        <b className="font-semibold text-ink">{who}</b> {line.verb} {line.what && <b className="font-semibold text-ink">{line.what}</b>}
+          {days.map((group) => (
+            <div key={group.day} className="flex flex-col gap-1">
+              <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{dayTitle(group.day)}</span>
+              <ul className="flex flex-col">
+                {group.items.map((entry) => {
+                  const line = activityLine(entry, data.members, data.currency, t, fmt);
+                  const who = entry.actorName ?? owner?.name ?? t("You");
+                  return (
+                    <li key={entry.id} className="flex items-start gap-3 border-b border-divider py-3 last:border-b-0">
+                      <span className="relative shrink-0">
+                        <MemberAvatar member={owner ?? { id: "you", name: who, photoUrl: null }} members={data.members} size={36} />
+                        <span aria-hidden="true" className={cn("absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2 border-surface", ACTION_DOTS[entry.action])} />
                       </span>
-                      {line.changes.map((change, index) => (
-                        <span key={`${change.label}${index}`} className="flex flex-wrap items-center gap-1.5 text-small">
-                          <span className="text-ink-muted">{change.label}:</span>
-                          <span className="rounded bg-expense-soft px-1.5 text-expense line-through decoration-1">{change.from}</span>
-                          <span aria-hidden="true" className="text-ink-faint">
-                            →
-                          </span>
-                          <span className="rounded bg-income-soft px-1.5 font-semibold text-income">{change.to}</span>
+                      <span className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className="text-body text-ink-2">
+                          <b className="font-semibold text-ink">{who}</b> {line.verb} {line.what && <b className="font-semibold text-ink">{line.what}</b>}
                         </span>
-                      ))}
-                      {line.meta && <span className="text-caption text-ink-muted">{line.meta}</span>}
-                    </span>
-                    <span className="flex shrink-0 flex-col items-end gap-1">
-                      <span className="text-caption text-ink-muted tabular-nums">{formatDate(entry.createdAt, "h:mm a", "", fmt)}</span>
-                      <Chip tone={ACTION_TONES[entry.action]} size="sm">
-                        {t(ACTION_LABELS[entry.action])}
-                      </Chip>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+                        {line.changes.map((change, index) => (
+                          <span key={`${change.label}${index}`} className="flex flex-wrap items-center gap-1.5 text-small">
+                            <span className="text-ink-muted">{change.label}:</span>
+                            <span className="rounded bg-expense-soft px-1.5 text-expense line-through decoration-1">{change.from}</span>
+                            <span aria-hidden="true" className="text-ink-faint">
+                              →
+                            </span>
+                            <span className="rounded bg-income-soft px-1.5 font-semibold text-income">{change.to}</span>
+                          </span>
+                        ))}
+                        {line.meta && <span className="text-caption text-ink-muted">{line.meta}</span>}
+                      </span>
+                      <span className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="text-caption text-ink-muted tabular-nums">{formatDate(entry.createdAt, "h:mm a", "", fmt)}</span>
+                        <Chip tone={ACTION_TONES[entry.action]} size="sm">
+                          {t(ACTION_LABELS[entry.action])}
+                        </Chip>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
 
-        {pages > 1 && (
-          <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
-            <Button variant="secondary" size="sm" disabled={current <= 1 || busy} onClick={() => onPage(current - 1)}>
-              {t("Newer")}
-            </Button>
-            <span className="text-small text-ink-muted">{t("Page {page} of {count}", { page: formatCount(current, fmt), count: formatCount(pages, fmt) })}</span>
-            <Button variant="secondary" size="sm" disabled={current >= pages || busy} onClick={() => onPage(current + 1)}>
-              {t("Older")}
-            </Button>
-          </div>
-        )}
-      </section>
-    </Card>
+          {pages > 1 && (
+            <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+              <Button variant="secondary" size="sm" disabled={current <= 1 || busy} onClick={() => onPage(current - 1)}>
+                {t("Newer")}
+              </Button>
+              <span className="text-small text-ink-muted">{t("Page {page} of {count}", { page: formatCount(current, fmt), count: formatCount(pages, fmt) })}</span>
+              <Button variant="secondary" size="sm" disabled={current >= pages || busy} onClick={() => onPage(current + 1)}>
+                {t("Older")}
+              </Button>
+            </div>
+          )}
+        </section>
+      </Card>
+    </div>
   );
 }

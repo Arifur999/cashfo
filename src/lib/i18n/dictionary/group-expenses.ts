@@ -1177,4 +1177,12 @@ export const groupExpensesDictionary: Record<string, string> = {
   "handed over cash": "নগদ হস্তান্তর করেছেন",
   "deleted a cash handover": "একটি নগদ হস্তান্তর মুছেছেন",
   "changed a cash handover": "একটি নগদ হস্তান্তর বদলেছেন",
+  // v16 FamilyActivity board
+  "Every change in this group: who did it, and when. Lines can’t be edited or removed.": "এই গ্রুপের সব পরিবর্তন: কে করেছেন, কখন। লাইনগুলো এডিট বা মোছা যায় না।",
+  "No changes yet. Everything people add or change in this group will show here.": "এখনও কোনো পরিবর্তন নেই। এই গ্রুপে যে যা যোগ বা বদলাবেন, এখানে দেখা যাবে।",
+  // v16 GroupSettings board
+  "Group settings": "গ্রুপ সেটিংস",
+  "Name, first day of the month, budget warning, how costs and categories are shared, and pausing the group.": "নাম, মাসের প্রথম দিন, বাজেট সতর্কতা, খরচ আর ক্যাটাগরি কীভাবে ভাগ হবে, আর গ্রুপ বিরতি।",
+  "The group is paused: new entries are off until you resume it. Everything stays visible.": "গ্রুপ বিরতিতে আছে: আবার চালু না করা পর্যন্ত নতুন এন্ট্রি বন্ধ। সব দেখা যাবে।",
+  "Stops new money entries for a while (for example during a long trip). Turn it off again any time.": "কিছুদিনের জন্য নতুন টাকার এন্ট্রি বন্ধ রাখে (যেমন লম্বা ছুটিতে)। যেকোনো সময় আবার চালু করতে পারবেন।",
 };
