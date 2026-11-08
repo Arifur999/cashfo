@@ -14,7 +14,7 @@ import Input from "@/components/smartly/form/Input";
 import { createAccountAction, updateAccountAction } from "@/lib/customer/accountActions";
 import type { WalletOverviewRow } from "@/lib/customer/api";
 import { ACCOUNT_COLORS, accountColor, TYPE_COLOR, walletColorStyle } from "@/lib/customer/balanceDisplay";
-import { formatCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { maskAccountNumber, WALLET_TYPE_META, WALLET_TYPES, walletType, type WalletType } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -246,8 +246,8 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
         >
           <Input id="account-number" size="md" inputMode="numeric" value={numbered ? number : ""} onChange={(event) => setNumber(event.target.value)} disabled={!numbered} maxLength={40} placeholder={placeholders.number} />
         </Field>
-        <Field htmlFor="account-opening" label={<span className="text-small font-semibold text-ink-2">{t("Opening balance")}</span>}>
-          <AmountInput id="account-opening" size="lg" value={opening} onChange={setOpening} currency={currency} describedBy="account-opening-hint" />
+        <Field htmlFor="account-opening" label={<span className="text-small font-semibold text-ink-2">{t("Opening balance ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
+          <AmountInput id="account-opening" size="field" value={opening} onChange={setOpening} currency={currency} describedBy="account-opening-hint" />
         </Field>
       </div>
       <p id="account-opening-hint" aria-live="polite" className={cn("-mt-1.5 text-caption leading-[1.45]", openingChanged ? "text-warning" : "text-ink-muted")}>

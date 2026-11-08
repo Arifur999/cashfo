@@ -485,4 +485,10 @@ export const balanceDictionary: Record<string, string> = {
   "Money from {name}, recorded in Loan Management › Transactions.": "{name} থেকে পাওয়া টাকা, ঋণ ব্যবস্থাপনা › লেনদেন থেকে রেকর্ড করা।",
   "Paid to {name}, recorded in Loan Management › Transactions.": "{name}-কে দেওয়া টাকা, ঋণ ব্যবস্থাপনা › লেনদেন থেকে রেকর্ড করা।",
   "Open in Loan transactions": "ঋণের লেনদেনে খুলুন",
+  // Account and transfer forms: plain amount fields (v16)
+  "Amount ({symbol})": "পরিমাণ ({symbol})",
+  "Opening balance ({symbol})": "শুরুর ব্যালেন্স ({symbol})",
+  "0 if there is no charge": "চার্জ না থাকলে 0",
+  // Transfer statement: all time with none
+  "No transfers yet": "এখনো কোনো ট্রান্সফার নেই",
 };
