@@ -1,7 +1,7 @@
 "use server";
 
 import { requireId, runAction, runValidatedAction } from "@/lib/runAction";
-import { createAnnouncement, deleteAnnouncement, updateAnnouncement } from "@/services/announcement.services";
+import { createAnnouncement, deleteAnnouncement, restoreAnnouncement, updateAnnouncement } from "@/services/announcement.services";
 import { announcementServerZodSchema } from "@/zod/announcement.validation";
 
 export const createAnnouncementAction = async (values: unknown) =>
@@ -9,6 +9,9 @@ export const createAnnouncementAction = async (values: unknown) =>
 
 export const deleteAnnouncementAction = async (announcementId: string) =>
   requireId(announcementId, "announcement") ?? runAction("Failed to delete announcement", () => deleteAnnouncement(announcementId));
+
+export const restoreAnnouncementAction = async (announcementId: string) =>
+  requireId(announcementId, "announcement") ?? runAction("Couldn't bring the announcement back", () => restoreAnnouncement(announcementId));
 
 export const updateAnnouncementAction = async (announcementId: string, values: unknown) =>
   requireId(announcementId, "announcement") ??

@@ -21,7 +21,7 @@ export interface CompareRow {
 // paid plan does.
 export function FreeOrProCard({ rows }: { rows: CompareRow[] }) {
   const { t } = useLocale();
-  const cell = (kind: CompareRow["freeKind"], value: string) => (kind === "yes" ? t("Included") : kind === "no" ? "—" : value);
+  const cell = (kind: CompareRow["freeKind"], value: string) => (kind === "yes" ? t("Included") : kind === "no" ? "–" : value);
   const tone = (kind: CompareRow["freeKind"]) => (kind === "yes" ? "text-brand-ink" : kind === "no" ? "text-ink-faint" : "text-ink");
   return (
     <Card padding="none" className={CARD}>

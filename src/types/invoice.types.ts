@@ -1,4 +1,5 @@
 import type { IRefundSummary, PaymentGateway, PaymentStatus } from "./payment.types";
+import type { IFeatureLimits } from "./plan.types";
 
 export interface IInvoiceLineItem {
   description: string;
@@ -16,6 +17,9 @@ export interface IInvoice {
   paymentId: string;
   invoiceNumber: string;
   issuedTo: string;
+  // The billing phone it was issued with (Settings › Plans & billing ›
+  // Billing details); absent from an older API.
+  issuedPhone?: string | null;
   lineItems: IInvoiceLineItem[];
   totalAmount: string;
   pdfUrl: string | null;
@@ -39,7 +43,8 @@ export interface IInvoiceDetail extends IInvoice {
     gateway?: PaymentGateway;
     status: PaymentStatus;
     refund?: IRefundSummary | null;
-    plan: { id: string; name: string };
+    // What the plan allows (absent from an older API).
+    plan: { id: string; name: string; featureLimits?: Partial<IFeatureLimits> };
     // The period it paid for, and the number the money came from.
     periodStart?: string | null;
     periodEnd?: string | null;

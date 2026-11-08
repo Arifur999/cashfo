@@ -110,3 +110,52 @@ export interface IDashboardOverview extends IDashboardSummary {
   system: IDashboardSystem | null;
   support: IDashboardSupport | null;
 }
+
+// GET /admin/dashboard/overview?from&to -- the AdminDashboard board for the
+// period its "Choose period" picker shows. People and money are as they
+// stood on the period's last day (now while it runs to today); "Needs you
+// now", admin activity and System are always now. `money` is null for a
+// role that doesn't see money.
+export interface IDashboardRange {
+  // YYYY-MM-DD; `to` is never after today.
+  from: string;
+  to: string;
+  kind: "month" | "year" | "custom";
+  // A bar a day, or a bar a month (a year, or more than 62 days).
+  unit: "day" | "month";
+  isNow: boolean;
+}
+
+export interface IDashboardPeriodMoney {
+  paidUsers: { total: number; pctOfAccounts: number; byPlan: { planId: string; planName: string | null; count: number }[] };
+  accountsByPlan: IDashboardPlanRow[];
+  deletedLeftOut: number;
+  mrr: number;
+  arr: number;
+  // What the paid periods carried at the end against the period's start.
+  mrrChange: { pct: number | null; amount: number; before: number };
+  revenue: {
+    // The months the chart shows, oldest first; `highlight` are the ones the
+    // period covers (drawn dark).
+    months: { month: string; amount: string }[];
+    highlight: string[];
+    total: string;
+    // The span the total is compared with.
+    previous: { from: string; to: string; total: string };
+    changePct: number | null;
+  };
+}
+
+export interface IDashboardPeriodOverview {
+  range: IDashboardRange;
+  // The first customer's sign-up day: months before it have nothing.
+  since: string | null;
+  attention: IDashboardAttention;
+  users: { total: number; newInPeriod: number; newLast7d: number };
+  active: { count: number; accounts: number; pct: number };
+  // Keys are YYYY-MM-DD for days, YYYY-MM for months.
+  signups: { unit: "day" | "month"; points: { key: string; count: number }[] };
+  money: IDashboardPeriodMoney | null;
+  recentAuditLogs: IDashboardAuditLog[] | null;
+  system: IDashboardSystem | null;
+}

@@ -134,7 +134,7 @@ describe("help", () => {
     const ids = new Set(FAQS.map((faq) => faq.id));
     for (const guide of GUIDES) expect(ids.has(guide.faqId), guide.title).toBe(true);
     expect(GUIDES.find((guide) => guide.title === "Budgets that work")?.faqId).toBe("budget");
-    expect(GUIDES.find((guide) => guide.title === "Getting started")?.faqId).toBe("start");
+    expect(GUIDES.find((guide) => guide.title === "Your first 10 minutes in Smartly")?.faqId).toBe("start");
   });
 });
 

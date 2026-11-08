@@ -9,11 +9,12 @@ import { TICKET_CATEGORY_OPTIONS, TICKET_PRIORITY_OPTIONS } from "../ticketOptio
 // The inbox opens on everything still in the queue. The API searches the
 // subject and the requester's name and email; awaitingReply=true keeps the
 // tickets whose last message is the customer's, and sort=waiting puts the
-// longest wait first. Search and sort have no control of their own on the
+// longest wait first; unseen=true keeps the ones nobody has opened yet (the
+// note over the queue sets it). Search and sort have no control of their own on the
 // board (the top bar's search finds tickets), but links that carry them
 // (a person's "Find their tickets") still narrow the queue.
 export const TICKETS_TABLE_BASE_CONFIG = {
-  queryKeys: ["status", "search", "priority", "category", "assignedToAdminId", "awaitingReply", "sort"],
+  queryKeys: ["status", "search", "priority", "category", "assignedToAdminId", "awaitingReply", "unseen", "sort"],
   defaults: { status: "IN_QUEUE" },
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaults">;
 

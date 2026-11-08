@@ -79,12 +79,13 @@ export const allZero = (values: number[]): boolean => values.every((value) => va
 // A revenue bar's label as the AdminDashboard board writes it: "TK 41.3k",
 // "TK 1.2L", "TK 850" ("৳ 41.3k" in Bangla). Latin digits; the card puts
 // them in the reader's.
-export function revenueBarLabel(value: number, locale: Locale): string {
+// Over more than six bars the board leaves the taka sign off ("41.3k").
+export function revenueBarLabel(value: number, locale: Locale, withSign = true): string {
   const abs = Math.abs(value);
-  const sign = `${value < 0 ? "-" : ""}${takaSign(locale)}`;
-  if (abs >= 100_000) return `${sign} ${(abs / 100_000).toFixed(1)}L`;
-  if (abs >= 1_000) return `${sign} ${(abs / 1_000).toFixed(1)}k`;
-  return `${sign} ${Math.round(abs)}`;
+  const sign = `${value < 0 ? "-" : ""}${withSign ? `${takaSign(locale)} ` : ""}`;
+  if (abs >= 100_000) return `${sign}${(abs / 100_000).toFixed(1)}L`;
+  if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(1)}k`;
+  return `${sign}${Math.round(abs)}`;
 }
 
 // Which bars of a daily chart get a date under them: the first, three

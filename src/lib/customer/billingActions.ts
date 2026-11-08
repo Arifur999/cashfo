@@ -7,6 +7,7 @@ import { getAccessToken } from "@/lib/tokenUtils";
 import { API_BASE_URL, getApiErrorMessage } from "./api";
 import { customerApi } from "./apiClient";
 import type { BillingOverview, BillingPayments, BillingPlans, CheckoutResult, CouponPreview, CustomerPayment, Gateway, ManualWallet } from "./billingDisplay";
+import type { BillingDetails } from "./billingDetails";
 import type { SecurityResult } from "./securityActions";
 
 // Settings › Plans: the plans, the customer's own subscription, a trial,
@@ -120,4 +121,10 @@ export async function cancelCheckoutAction(paymentId: string): Promise<SecurityR
 // Stop the plan at the end of the period it is paid for, or undo that.
 export async function setCancelAtPeriodEndAction(cancel: boolean): Promise<SecurityResult<BillingOverview>> {
   return callApi(async () => (await customerApi.post<BillingOverview>(`${API_BASE_URL}/api/billing/${cancel ? "cancel" : "resume"}`, {})).data, cancel ? "Couldn't cancel your plan" : "Couldn't keep your plan");
+}
+
+// Settings › Plans & billing › Billing details: the name, phone and email
+// for receipts; an empty phone or email uses the account's own.
+export async function updateBillingDetailsAction(input: BillingDetails): Promise<SecurityResult<BillingDetails>> {
+  return callApi(async () => (await customerApi.put<BillingDetails>(`${API_BASE_URL}/api/billing/details`, { name: input.name, phone: input.phone ?? "", email: input.email })).data, "Couldn't save your billing details");
 }

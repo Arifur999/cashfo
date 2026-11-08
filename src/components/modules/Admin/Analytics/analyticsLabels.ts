@@ -1,5 +1,3 @@
-import { calendarDay } from "@/components/modules/Admin/Dashboard/dashboardDates";
-import type { Locale } from "@/lib/i18n/translate";
 import { humanizeEnum } from "@/lib/statusBadge";
 import type { DeviceType } from "@/types/analytics.types";
 
@@ -22,9 +20,6 @@ export const DEVICE_META: Record<DeviceType, { label: string; color: string }> =
   DESKTOP: { label: "Computer", color: "var(--forest)" },
   TABLET: { label: "Tablet", color: "var(--warning-fill)" },
 };
-
-// "2026-10-05" -> "5 Oct" ("৫ অক্টো") for chart axes; no timezone involved.
-export const formatShortDay = (day: string, locale: Locale = "en") => calendarDay(day, locale);
 
 // A cohort cell's green, in five steps so its figure stays readable (4.5:1
 // or more): forest on the four pale greens, white on full emerald. `fill` is

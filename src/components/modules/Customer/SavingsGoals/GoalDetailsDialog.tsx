@@ -91,15 +91,15 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
   const stats = [
     { label: t("Started"), value: day(goal.startDate), sub: since ? t(since === 1 ? "{count} month ago" : "{count} months ago", { count: formatCount(since, fmt) }) : t("this month") },
     { label: t("Ends"), value: day(goal.targetDate), sub: closed ? t("closed early") : completed ? t("reached") : t(months === 1 ? "{count} month left" : "{count} months left", { count: formatCount(months, fmt) }) },
-    { label: t("Left to save"), value: closed ? "—" : money(Math.max(0, target - saved)), sub: closed ? t("closed") : t("{percent}% done", { percent: formatCount(percent, fmt) }) },
+    { label: t("Left to save"), value: closed ? "–" : money(Math.max(0, target - saved)), sub: closed ? t("closed") : t("{percent}% done", { percent: formatCount(percent, fmt) }) },
     {
       label: t("Planned by today"),
-      value: active && pace ? money(pace.expected) : "—",
+      value: active && pace ? money(pace.expected) : "–",
       sub: active && pace ? (Number(pace.difference) >= 0 ? t("{amount} ahead", { amount: money(pace.difference) }) : t("{amount} behind", { amount: money(-Number(pace.difference)) })) : t("not tracking"),
       tone: active && pace ? (behind ? "text-warning" : "text-income") : undefined,
     },
-    { label: t("Needed a month"), value: active ? money(need) : "—", sub: active ? t("to finish on time") : paused ? t("paused") : t("none") },
-    { label: t("Your average"), value: average ? money(average) : "—", sub: trend ? t(trend.label) : t("a month so far"), tone: trend?.text },
+    { label: t("Needed a month"), value: active ? money(need) : "–", sub: active ? t("to finish on time") : paused ? t("paused") : t("none") },
+    { label: t("Your average"), value: average ? money(average) : "–", sub: trend ? t(trend.label) : t("a month so far"), tone: trend?.text },
   ];
 
   const canWithdraw = canManage && !closed && saved > 0;

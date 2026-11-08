@@ -22,11 +22,13 @@ interface PasswordFieldProps extends Omit<React.ComponentProps<"input">, "size" 
   // reads in the open); onVisibleChange hears the eye.
   visible?: boolean;
   onVisibleChange?: (visible: boolean) => void;
+  // False when one Show link elsewhere shows every field at once (Change password).
+  eye?: boolean;
 }
 
 // A password box with a show/hide eye, hidden to start with unless the
 // caller says otherwise.
-export function PasswordField({ value, onChange, size = "lg", invalid, mono = false, onCopy, frameClassName, className, defaultVisible = false, visible: shown, onVisibleChange, ...props }: PasswordFieldProps) {
+export function PasswordField({ value, onChange, size = "lg", invalid, mono = false, onCopy, frameClassName, className, defaultVisible = false, visible: shown, onVisibleChange, eye = true, ...props }: PasswordFieldProps) {
   const { t } = useLocale();
   const [shownHere, setShownHere] = useState(defaultVisible);
   const visible = shown ?? shownHere;
@@ -47,16 +49,20 @@ export function PasswordField({ value, onChange, size = "lg", invalid, mono = fa
       className={cn(mono && visible && "font-mono tracking-wider", className)}
       frameClassName={frameClassName}
       trailing={
+        !eye && !onCopy ? undefined : (
         <span className="flex items-center">
+          {eye && (
           <button type="button" onClick={toggle} aria-label={t(visible ? "Hide password" : "Show password")} aria-pressed={visible} className={button}>
             {visible ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
           </button>
+          )}
           {onCopy && (
             <button type="button" onClick={onCopy} aria-label={t("Copy password")} className={button}>
               <Copy className="size-4" aria-hidden="true" />
             </button>
           )}
         </span>
+        )
       }
     />
   );

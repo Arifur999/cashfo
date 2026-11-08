@@ -80,7 +80,7 @@ export function SavingsSummary({ hero, active, month, ratePercent, money, onShow
       <div className={CARD}>
         <span className="text-[13px] font-semibold text-ink-soft">{t("On pace")}</span>
         <span className="flex items-baseline gap-1.5">
-          <span className="text-[30px] leading-[normal] font-bold tracking-[-0.02em] text-ink">{hero.active ? formatCount(hero.active - hero.behind, fmt) : "—"}</span>
+          <span className="text-[30px] leading-[normal] font-bold tracking-[-0.02em] text-ink">{hero.active ? formatCount(hero.active - hero.behind, fmt) : "–"}</span>
           {hero.active > 0 && <span className="text-[13px] text-ink-muted">{t("of {count} active", { count: formatCount(hero.active, fmt) })}</span>}
         </span>
         {active.length > 0 && (

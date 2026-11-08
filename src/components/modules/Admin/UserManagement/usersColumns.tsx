@@ -3,11 +3,11 @@ import DateCell from "@/components/shared/cell/DateCell";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
 import UserInfoCell from "@/components/shared/cell/UserInfoCell";
 import type { IOwnerOverviewItem } from "@/types/owner.types";
-import { DaysUsedCell, OwnWorkspaceCell, PlanCell } from "./PeopleCells";
+import { DaysUsedCell, PlanCell } from "./PeopleCells";
 import { OWNER_STATUS_LABEL } from "./usersTable.config";
 
-// The design's Users list: who, phone, their workspace (and how many more),
-// plan, when they last signed in, how long they have used Smartly, status.
+// The v16 Users list: who, phone, plan, when they last signed in, how long
+// they have used Smartly, status. (Their workspaces are on their page.)
 export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
   {
     id: "name",
@@ -21,14 +21,7 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     accessorKey: "phone",
     header: "Phone",
     cell: ({ row }) => <span className={row.original.phone ? "text-ink-2 tabular-nums" : "text-ink-muted"}>{row.original.phone ?? "—"}</span>,
-    meta: { width: 120 },
-  },
-  {
-    id: "businessName",
-    accessorKey: "businessName",
-    header: "Workspace",
-    cell: ({ row }) => <OwnWorkspaceCell workspace={row.original} count={row.original.workspaceCount} />,
-    meta: { width: 170, exportValue: (row) => row.businessName ?? "" },
+    meta: { width: 130 },
   },
   {
     id: "planName",
@@ -43,14 +36,14 @@ export const usersColumns: ColumnDef<IOwnerOverviewItem>[] = [
     accessorKey: "lastLoginAt",
     header: "Last active",
     cell: ({ row }) => <DateCell date={row.original.lastLoginAt} relative />,
-    meta: { width: 124 },
+    meta: { width: 130 },
   },
   {
     id: "daysUsing",
     accessorKey: "daysUsing",
     header: "Using for",
     cell: ({ row }) => <DaysUsedCell days={row.original.daysUsing} />,
-    meta: { width: 84 },
+    meta: { width: 90 },
   },
   {
     id: "status",

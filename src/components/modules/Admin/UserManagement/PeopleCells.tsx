@@ -2,46 +2,16 @@
 
 import Link from "next/link";
 import PlanChipCell from "@/components/shared/cell/PlanChipCell";
-import Chip from "@/components/smartly/Chip";
 import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { UserOrigin } from "@/lib/navItem";
 import { cn } from "@/lib/utils";
-import { daysUsedLabel, moreWorkspacesLabel, type OwnWorkspaceFields, ownWorkspaceLabel, type WorkspaceListFields, workspaceNamesLabel } from "./peopleDisplay";
+import { daysUsedLabel, type WorkspaceListFields, workspaceNamesLabel } from "./peopleDisplay";
 import { usePersonHref } from "./usePersonHref";
 
 // Cells of the people lists that need the reader's language and digits:
 // the column definitions are plain data and can't call useLocale().
-
-interface OwnWorkspaceCellProps {
-  // The row's own workspace: its name and, from newer responses, its kind.
-  workspace: OwnWorkspaceFields;
-  // How many workspaces they own in all; more than one adds a "+2" chip.
-  count?: number;
-  // Owners names it in full: it is the workspace Reset data wipes.
-  long?: boolean;
-}
-
-// The person's own workspace (the personal one, in the reader's words) and,
-// beside it, how many more they have.
-export const OwnWorkspaceCell = ({ workspace, count = 1, long = false }: OwnWorkspaceCellProps) => {
-  const { t, locale } = useLocale();
-  const label = ownWorkspaceLabel(workspace, t, long ? "Personal workspace" : "Personal");
-  const extra = count - 1;
-  const more = label && extra > 0 ? moreWorkspacesLabel(extra, t, locale) : null;
-  return (
-    <span className="flex min-w-0 items-center gap-2">
-      <span className={label ? "truncate text-ink-2" : "text-ink-muted"}>{label ?? "—"}</span>
-      {more && (
-        <Chip tone="neutral" size="sm" title={more}>
-          <span aria-hidden="true">+{formatCount(extra, locale)}</span>
-          <span className="sr-only">{more}</span>
-        </Chip>
-      )}
-    </span>
-  );
-};
 
 // The plan chip, with "Trial ends 4 Oct" under it while a free trial runs.
 export const PlanCell = ({ plan, trialEndsAt }: { plan: string | null; trialEndsAt?: string | null }) => {

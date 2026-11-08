@@ -38,7 +38,7 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
 
   const { run: setActive } = useActionMutation({
     action: ({ id, isActive }: { id: string; isActive: boolean }) => setCategoryActiveAction(id, isActive),
-    successMessage: (updated) => translate(updated.isActive ? "{name} is back for new workspaces" : "{name} no longer goes to new workspaces", { name: updated.name }),
+    successMessage: (updated) => translate(updated.isActive ? "{name} is back for new accounts" : "{name} no longer goes to new accounts", { name: updated.name }),
     invalidateKeys: [queryKeys.categories.all],
     refreshRoute: false,
   });
@@ -87,7 +87,7 @@ const CategoriesPanel = ({ canManage }: { canManage: boolean }) => {
       <div className="flex items-center justify-between gap-3 px-4.5 py-3.5">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-title text-ink"><T>Starting categories</T></h2>
-          <span className="text-[12.5px] leading-[normal] text-ink-muted"><T>Every new workspace gets these. People can change their own later.</T></span>
+          <span className="text-[12.5px] leading-[normal] text-ink-muted"><T>Every new account gets these. People can change their own later.</T></span>
         </div>
         {canManage && (
           <CreateCategoryDialog

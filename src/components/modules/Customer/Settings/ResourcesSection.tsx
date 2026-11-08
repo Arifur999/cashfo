@@ -1,137 +1,204 @@
 "use client";
 
-import { ChartPie, ChevronRight, Download, FileText, KeyRound, Users, Wallet, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, ChartPie, ChevronRight, CircleHelp, Database, FileText, KeyRound, Leaf, Play, Share2, Star, Users, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
-import { SOFT_TONE } from "@/components/smartly/tones";
+import PageFrame from "@/components/smartly/PageFrame";
 import { formatDate } from "@/lib/customer/date";
-import { APP_VERSION, fileNameFrom, GUIDES, LEGAL_LINKS, type Guide } from "@/lib/customer/settingsDisplay";
+import { APP_VERSION, GUIDE_CATEGORY_LABEL, GUIDES, LEGAL_LINKS, LEGAL_SUMMARY, WHATS_NEW, type Guide, type GuideCategory } from "@/lib/customer/settingsDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { DeleteAccountDialog } from "./DeleteAccountDialog";
+import { CARD } from "./boardUi";
+import { LicencesDialog, RateUsDialog } from "./ResourcesDialogs";
+import { SettingsBack } from "./SettingsBack";
 
-const GUIDE_ICONS: Record<Guide["faqId"], LucideIcon> = { start: Wallet, budget: ChartPie, group: Users, vault: KeyRound };
-
-// What the export is saved as when the answer names no file.
-const EXPORT_FILE = "smartly-data.zip";
+const GUIDE_LOOK: Record<Guide["faqId"], { Icon: LucideIcon; tile: string }> = {
+  start: { Icon: Play, tile: "bg-mint-50 text-primary" },
+  opening: { Icon: Wallet, tile: "bg-mint-50 text-primary" },
+  budget: { Icon: ChartPie, tile: "bg-tint-blue text-tint-blue-ink" },
+  loans: { Icon: ArrowLeftRight, tile: "bg-tint-blue text-tint-blue-ink" },
+  group: { Icon: Users, tile: "bg-warning-soft text-warning" },
+  vault: { Icon: KeyRound, tile: "bg-tint-pink text-tint-pink-ink" },
+};
 
 interface ResourcesSectionProps {
   // When each legal page was last saved; null when it couldn't be read.
   legalUpdated: Record<string, string | null>;
 }
 
-// Short guides, the legal pages, the customer's data and the version
-// (design-v4 SettingsResources).
+// The SettingsResources board: short guides by topic (each opens its Help
+// answer), the legal pages, and about this version; downloading or
+// deleting the account's data lives in Data & privacy now.
 export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
-  const [preparing, setPreparing] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const readOnly = Boolean(user.impersonatedBy);
+  const [category, setCategory] = useState<GuideCategory | "all">("all");
+  const [dialog, setDialog] = useState<"rate" | "licences" | null>(null);
+  // A super admin viewing as this customer can read but not send.
+  const viewing = Boolean(user.impersonatedBy);
+  const used = (Object.keys(GUIDE_CATEGORY_LABEL) as GuideCategory[]).filter((key) => GUIDES.some((guide) => guide.category === key));
+  const shown = category === "all" ? GUIDES : GUIDES.filter((guide) => guide.category === category);
 
-  // The zip takes a moment to build: the button says so while it does, and
-  // a refusal (three downloads a minute at most) or a failure is said in a
-  // toast instead of a broken download in the browser's bar.
-  async function download() {
-    if (preparing) return;
-    setPreparing(true);
-    try {
-      const response = await fetch("/api/account-export", { cache: "no-store" });
-      if (!response.ok) {
-        toast.error(response.status === 429 ? t("You just downloaded your data. Try again in a minute.") : t("Couldn't prepare your file. Try again."));
-        return;
-      }
-      const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileNameFrom(response.headers.get("content-disposition")) ?? EXPORT_FILE;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      // Some browsers start reading the file only after the click returns.
-      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    } catch {
-      toast.error(t("Couldn't prepare your file. Try again."));
-    } finally {
-      setPreparing(false);
+  // The phone's share sheet with the person's invite (their referral
+  // link), else a copy of it.
+  function share() {
+    const code = user.profileCard?.code;
+    const url = `${window.location.origin}${code ? `/register?ref=${encodeURIComponent(code)}` : ""}`;
+    if (typeof navigator.share === "function") {
+      void navigator.share({ title: "Smartly", text: t("Join me on Smartly"), url }).catch(() => undefined);
+      return;
     }
+    void navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success(t("Link copied")))
+      .catch(() => toast.error(t("Couldn't copy. Select the text and copy it yourself.")));
   }
 
+  const pointer = (href: string, Icon: LucideIcon, title: string, body: string) => (
+    <Link href={href} className={cn(CARD, "flex items-center gap-3.5 px-5 py-4 hover:border-primary/40")}>
+      <span className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-surface-sunken text-ink-soft">
+        <Icon className="size-4.5" aria-hidden="true" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-body font-semibold text-ink">{t(title)}</span>
+        <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t(body)}</span>
+      </span>
+      <ArrowRight className="size-4 shrink-0 text-emerald" aria-hidden="true" />
+    </Link>
+  );
+
   return (
-    <div className="flex flex-col gap-4.5">
-      <Card padding="none" className="flex flex-col gap-3.5 px-4 py-4.5 md:px-5">
-        <h2 className="text-title font-semibold text-ink">{t("Guides")}</h2>
-        <div className="grid gap-3 @lg:grid-cols-2">
-          {GUIDES.map((guide) => {
-            const Icon = GUIDE_ICONS[guide.faqId] ?? Wallet;
-            return (
-              // Each opens the Help answer it is about.
-              <Link key={guide.title} href={`/settings/help?open=${guide.faqId}`} className="flex gap-3 rounded-md border border-line p-3.5 text-ink hover:border-line-strong hover:bg-hover">
-                <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-field", guide.faqId === "start" ? "bg-emerald-soft text-emerald" : SOFT_TONE[guide.tone])}>
-                  <Icon className="size-4.5" aria-hidden="true" />
-                </span>
-                <span className="flex min-w-0 flex-col gap-0.75">
-                  <span className="text-body font-semibold">{t(guide.title)}</span>
-                  <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t(guide.body)}</span>
-                  <span className="text-caption text-ink-faint">{t("{count} min read", { count: formatCount(guide.minutes, fmt) })}</span>
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </Card>
+    <PageFrame className="gap-5.5 leading-[normal]">
+      <div className="flex flex-col gap-1">
+        <SettingsBack />
+        <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Resources & legal")}</h1>
+        <p className="text-body text-ink-muted">{t("Short guides, our policies and everything about this version of Smartly.")}</p>
+      </div>
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="@container flex min-w-0 flex-col gap-4.5">
+          <section aria-labelledby="rs-guides" className={cn(CARD, "flex flex-col gap-4 px-5.5 py-5")}>
+            <div className="flex flex-col gap-0.75">
+              <h2 id="rs-guides" className="text-[16px] leading-[1.35] font-semibold text-ink">
+                {t("Guides")}
+              </h2>
+              <p className="text-small text-ink-muted">{t("Read one in a few minutes. Each ends with something you can do today.")}</p>
+            </div>
+            <div role="group" aria-label={t("Guides")} className="flex flex-wrap gap-2">
+              {(["all", ...used] as const).map((key) => {
+                const count = key === "all" ? GUIDES.length : GUIDES.filter((guide) => guide.category === key).length;
+                const on = category === key;
+                return (
+                  <button key={key} type="button" aria-pressed={on} onClick={() => setCategory(key)} className={cn("inline-flex h-8.5 items-center gap-1.5 rounded-full border px-3 text-small font-semibold", on ? "border-primary bg-primary text-white" : "border-line bg-surface text-ink-2 hover:bg-surface-sunken")}>
+                    {t(key === "all" ? "All" : GUIDE_CATEGORY_LABEL[key])}
+                    <span className={cn("text-[11.5px] font-medium", on ? "text-white/80" : "text-ink-muted")}>{formatCount(count, fmt)}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 @2xl:grid-cols-3">
+              {shown.map((guide) => {
+                const { Icon, tile } = GUIDE_LOOK[guide.faqId];
+                return (
+                  <li key={guide.title}>
+                    <Link href={`/settings/help?open=${guide.faqId}`} className="flex h-full flex-col gap-2 rounded-xl border border-line-card p-4 hover:border-primary/40 hover:shadow-card">
+                      <span className="flex items-start justify-between gap-2">
+                        <span className={cn("flex size-9.5 items-center justify-center rounded-[10px]", tile)}>
+                          <Icon className="size-4.5" aria-hidden="true" />
+                        </span>
+                        <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-soft">{t(GUIDE_CATEGORY_LABEL[guide.category])}</span>
+                      </span>
+                      <span className="mt-1 text-[15px] leading-[1.35] font-semibold text-ink">{t(guide.title)}</span>
+                      <span className="text-small leading-[1.5] text-ink-muted">{t(guide.body)}</span>
+                      <span className="mt-auto flex items-center justify-between pt-2 text-[12.5px]">
+                        <span className="text-ink-faint">{t("{count} min read", { count: formatCount(guide.minutes, fmt) })}</span>
+                        <span className="inline-flex items-center gap-1 font-semibold text-emerald">
+                          {t("Read")}
+                          <ArrowRight className="size-3.5" aria-hidden="true" />
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
 
-      <Card padding="none" className="overflow-hidden">
-        <h2 className="px-4 py-4 text-title font-semibold text-ink md:px-5">{t("Legal")}</h2>
-        {LEGAL_LINKS.map((link) => {
-          const updated = legalUpdated[link.page];
-          return (
-            // A new tab, and it says so; the ring is drawn inside the card's clip.
-            <a key={link.page} href={`/${link.page}`} target="_blank" rel="noopener noreferrer" className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-divider px-4 py-3 text-ink hover:bg-hover focus-visible:-outline-offset-2 md:px-5">
-              <FileText className="size-4.5 shrink-0 text-ink-muted" aria-hidden="true" />
-              <span className="min-w-0 flex-1 text-body font-medium">
-                {t(link.title)}
-                <span className="sr-only"> ({t("opens in a new tab")})</span>
+          <section aria-labelledby="rs-legal" className={cn(CARD, "overflow-hidden")}>
+            <div className="flex flex-col gap-0.75 px-5.5 pt-4.5 pb-3.5">
+              <h2 id="rs-legal" className="text-[16px] leading-[1.35] font-semibold text-ink">
+                {t("Legal")}
+              </h2>
+              <p className="text-small text-ink-muted">{t("The promises we make to you, in plain words.")}</p>
+            </div>
+            {LEGAL_LINKS.map((link) => {
+              const updated = legalUpdated[link.page];
+              return (
+                // A new tab, and it says so; the ring is drawn inside the card's clip.
+                <a key={link.page} href={`/${link.page}`} target="_blank" rel="noopener noreferrer" className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-divider px-5.5 py-3.25 text-ink hover:bg-hover focus-visible:-outline-offset-2">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-soft">
+                    <FileText className="size-4" aria-hidden="true" />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-body font-medium">
+                      {t(link.title)}
+                      <span className="sr-only"> ({t("opens in a new tab")})</span>
+                    </span>
+                    {LEGAL_SUMMARY[link.page] && <span className="text-[12.5px] text-ink-muted">{t(LEGAL_SUMMARY[link.page])}</span>}
+                  </span>
+                  {updated && <span className="text-[12.5px] text-ink-muted">{t("Updated {date}", { date: formatDate(updated, "d MMMM yyyy", fmt) })}</span>}
+                  <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                </a>
+              );
+            })}
+          </section>
+        </div>
+
+        <div className="flex flex-col gap-4 xl:sticky xl:top-4">
+          <section aria-labelledby="rs-about" className={cn(CARD, "flex flex-col gap-3.5 px-5 py-4.5")}>
+            <div className="flex items-center gap-3">
+              <span className="flex size-10.5 shrink-0 items-center justify-center rounded-xl bg-mint-50 text-primary">
+                <Leaf className="size-5" aria-hidden="true" />
               </span>
-              {updated && <span className="text-[12.5px] text-ink-muted">{t("Updated {date}", { date: formatDate(updated, undefined, fmt) })}</span>}
-              <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
-            </a>
-          );
-        })}
-      </Card>
-
-      <Card padding="none" className="overflow-hidden">
-        <h2 className="px-4 py-4 text-title font-semibold text-ink md:px-5">{t("Your data")}</h2>
-        <div className="flex flex-col gap-3 border-t border-divider px-4 py-3.5 @lg:flex-row @lg:items-center @lg:gap-3.5 md:px-5">
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-body font-semibold text-ink">{t("Download my data")}</span>
-            <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Wallets, transactions, budgets, savings, assets, loans and groups as spreadsheet files. Saved passwords are left out.")}</span>
-          </span>
-          <Button variant="secondary" onClick={() => void download()} disabled={preparing} aria-busy={preparing || undefined} className="h-9.5 shrink-0 self-start px-3.5 text-[13.5px] @lg:self-auto pointer-coarse:h-11">
-            {preparing ? <Loader size={16} /> : <Download className="size-4" aria-hidden="true" />}
-            {preparing ? t("Preparing your file...") : t("Download")}
-          </Button>
+              <span className="flex min-w-0 flex-col">
+                <h2 id="rs-about" className="text-[16px] font-semibold text-ink">
+                  {t("About Smartly")}
+                </h2>
+                <span className="text-[12.5px] text-ink-muted">{t("Money Tracker for web · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</span>
+              </span>
+            </div>
+            <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("What's new")}</span>
+            <ul className="flex flex-col gap-2">
+              {WHATS_NEW.map((line) => (
+                <li key={line} className="flex gap-2 text-[13px] leading-normal text-ink-2">
+                  <span aria-hidden="true" className="mt-1.75 size-1.5 shrink-0 rounded-full bg-primary" />
+                  {t(line)}
+                </li>
+              ))}
+            </ul>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" size="sm" className="h-9.5 rounded-full text-[13.5px]" disabled={viewing} onClick={() => setDialog("rate")}>
+                <Star className="size-3.75" aria-hidden="true" />
+                {t("Rate us")}
+              </Button>
+              <Button variant="secondary" size="sm" className="h-9.5 rounded-full text-[13.5px]" onClick={share}>
+                <Share2 className="size-3.75" aria-hidden="true" />
+                {t("Share the app")}
+              </Button>
+            </div>
+            <button type="button" onClick={() => setDialog("licences")} className="self-start text-small font-semibold text-emerald hover:underline">
+              {t("Open-source licences")}
+            </button>
+          </section>
+          {pointer("/settings/data", Database, "Export or delete your data", "Now in Data & privacy, with import and backups.")}
+          {pointer("/settings/help", CircleHelp, "Still stuck?", "Videos, messages to our team and contact details.")}
         </div>
-        <div className="flex flex-col gap-3 border-t border-divider bg-expense-soft/25 px-4 py-3.5 @lg:flex-row @lg:items-center @lg:gap-3.5 md:px-5">
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-body font-semibold text-expense">{t("Delete my account")}</span>
-            <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Removes your account and everything in it. You have 30 days to change your mind.")}</span>
-          </span>
-          <Button variant="secondary" onClick={() => setDeleteOpen(true)} disabled={readOnly} className="h-9.5 shrink-0 self-start border-expense-line px-3.5 text-[13.5px] text-expense hover:bg-expense-soft @lg:self-auto pointer-coarse:h-11">
-            {t("Delete account")}
-          </Button>
-        </div>
-      </Card>
-
-      <p className="text-[12.5px] text-ink-faint">{t("Smartly for web · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</p>
-
-      <DeleteAccountDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onDownload={() => void download()} />
-    </div>
+      </div>
+      <RateUsDialog open={dialog === "rate"} onClose={() => setDialog(null)} />
+      <LicencesDialog open={dialog === "licences"} onClose={() => setDialog(null)} />
+    </PageFrame>
   );
 }

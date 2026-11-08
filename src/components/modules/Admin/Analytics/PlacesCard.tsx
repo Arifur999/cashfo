@@ -18,7 +18,7 @@ const PLACES_SHOWN = 5;
 // totalUsers is optional here until IGeography carries it.
 type Geography = IGeography & { totalUsers?: number };
 
-const PlacesCard = ({ data, query }: { data: Geography | undefined; query: ReportQuery }) => {
+const PlacesCard = ({ data, query, inPeriod }: { data: Geography | undefined; query: ReportQuery; inPeriod: string }) => {
   const { locale } = useLocale();
   const countries = data?.countries ?? [];
   const people = data?.totalUsers ?? countries.reduce((sum, entry) => sum + entry.userCount, 0);
@@ -34,7 +34,7 @@ const PlacesCard = ({ data, query }: { data: Geography | undefined; query: Repor
           <T>Where they are</T>
         </h2>
         {query.status === "ready" && (
-          <span className="text-small text-ink-muted">{people > 0 ? <T values={{ count: formatCount(people, locale) }}>{"{count} people, by where they sign in"}</T> : <T>Nobody has signed in yet</T>}</span>
+          <span className="text-small text-ink-muted">{people > 0 ? <T values={{ count: formatCount(people, locale), period: inPeriod }}>{"{count} active people {period}"}</T> : <T values={{ period: inPeriod }}>{"Nobody was active {period}"}</T>}</span>
         )}
       </div>
       {query.status === "pending" && <ListPlaceholder rows={4} />}

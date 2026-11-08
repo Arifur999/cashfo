@@ -22,7 +22,7 @@ const CreateCategoryDialog = ({ direction = "EXPENSE", trigger }: CreateCategory
       open={open}
       onOpenChange={setOpen}
       title="New category"
-      description="A starting income or expense category every new workspace gets."
+      description="A starting income or expense category every new account gets."
       trigger={trigger ?? <CreateButton>New category</CreateButton>}
     >
       <CategoryForm defaultValues={{ ...NEW_CATEGORY_DEFAULTS, type: direction }} onDone={() => setOpen(false)} />

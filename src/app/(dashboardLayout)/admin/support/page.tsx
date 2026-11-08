@@ -3,6 +3,7 @@ import { SUPPORT_PAGE } from "@/components/modules/Admin/Support/supportPage";
 import { TICKETS_ROUTE } from "@/components/modules/Admin/Support/ticketLinks";
 import SupportHeaderActions from "@/components/modules/Admin/Support/SupportHeaderActions";
 import SupportTabs from "@/components/modules/Admin/Support/SupportTabs";
+import NewTicketsNote from "@/components/modules/Admin/Support/Tickets/NewTicketsNote";
 import TicketStats from "@/components/modules/Admin/Support/Tickets/TicketStats";
 import { ticketsQueryString } from "@/components/modules/Admin/Support/Tickets/ticketsTable.config";
 import TicketsTable from "@/components/modules/Admin/Support/Tickets/TicketsTable";
@@ -41,6 +42,7 @@ const SupportPage = async ({ searchParams }: PageProps<"/admin/support">) => {
         }}
       >
         <SupportTabs />
+        <NewTicketsNote />
         <TicketStats />
         <TicketsTable currentAdminId={admin?.id ?? null} />
       </QueryPrefetch>

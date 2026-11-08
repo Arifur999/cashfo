@@ -5,7 +5,8 @@ import type { Locale } from "./i18n/translate";
 
 // How an announcement's status reads: whether people see it right now.
 export const ANNOUNCEMENT_STATUS_LABEL: Record<AnnouncementStatus, string> = {
-  ACTIVE: "Live",
+  // In the apps and the bells now.
+  ACTIVE: "Sent",
   SCHEDULED: "Scheduled",
   EXPIRED: "Ended",
   DISABLED: "Off",

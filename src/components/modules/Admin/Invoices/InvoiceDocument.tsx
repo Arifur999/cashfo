@@ -1,13 +1,14 @@
 import Logo from "@/components/smartly/Logo";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { shortPaymentId } from "@/lib/payments";
 import { humanizeEnum } from "@/lib/statusBadge";
 import { cn } from "@/lib/utils";
 import type { IInvoiceDetail } from "@/types/invoice.types";
 import T from "@/components/shared/T";
 import { getTranslator } from "@/lib/i18n/locale";
-import { invoiceStamp, splitIssuedTo, type InvoiceStamp } from "./invoiceDisplay";
+import { invoiceStamp, planSummaryParts, splitIssuedTo, type InvoiceStamp } from "./invoiceDisplay";
 
 // The stamp's words and tone: mint once paid, neutral when it all went
 // back, amber when part of it did.
@@ -52,6 +53,10 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
   // Every amount on the sheet with its paisa, as a receipt prints them.
   const money = (value: string | number) => formatCurrency(value, currency, 2, locale);
   const period = periodText(invoice.payment?.periodStart, invoice.payment?.periodEnd, locale);
+  // Under the plan line: what the plan allows.
+  const planSummary = planSummaryParts(invoice.payment?.plan?.featureLimits)
+    .map((part) => t(part.key, part.values && { count: formatCount(part.values.count, locale) }))
+    .join(", ");
 
   return (
     <article
@@ -83,6 +88,7 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
           <span className={LABEL}><T>Issued to</T></span>
           <b className="font-semibold wrap-break-word text-ink">{issuedTo.name}</b>
           {issuedTo.email && <span className="break-all text-ink-2">{issuedTo.email}</span>}
+          {invoice.issuedPhone && <span className="text-ink-2 tabular-nums">{invoice.issuedPhone}</span>}
         </div>
         <div className="flex flex-col">
           <span className={LABEL}><T>Date</T></span>
@@ -108,7 +114,10 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
         </div>
         {invoice.lineItems.map((item, index) => (
           <div key={`${item.description}-${index}`} className={cn("grid gap-x-3 border-b border-line py-4 text-body", period ? "grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)_120px]" : "grid-cols-[minmax(0,1fr)_120px]")}>
-            <span className="font-semibold text-ink">{item.description}</span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="font-semibold text-ink">{item.description}</span>
+              {index === 0 && planSummary && <span className="text-[12.5px] leading-[normal] text-ink-muted">{planSummary}</span>}
+            </span>
             {period && <span className="text-ink-2">{index === 0 ? period : ""}</span>}
             <span className="text-right text-ink tabular-nums">{money(item.amount)}</span>
           </div>

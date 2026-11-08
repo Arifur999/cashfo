@@ -64,13 +64,21 @@ interface PeriodPickerProps {
   // The line under the months when greyed-out ones mean something other
   // than "no data" (an English key).
   greyNote?: string;
+  // The colour of a picked choice and of Show / Apply: the app's primary,
+  // or the admin panel's forest (its boards pass the picker #0F3F38).
+  accent?: "emerald" | "forest";
 }
+
+const ACCENT = {
+  emerald: { on: "border-emerald text-emerald", outline: "border-emerald", button: "" },
+  forest: { on: "border-forest text-forest", outline: "border-forest", button: "bg-forest hover:bg-forest-hover" },
+} as const;
 
 // "Choose period" (the canvas's one period picker for every report page): a
 // month of a year, a whole year typed or picked, the reader's own days, or
 // all time, in one popover under the button. Months with nothing are
 // greyed out, so a pick never lands on an empty page.
-export function PeriodPicker({ period, today, activeMonths, allowAll = false, defaultPeriod, onPick, busy = false, align = "end", modes = ALL_MODES, greyNote }: PeriodPickerProps) {
+export function PeriodPicker({ period, today, activeMonths, allowAll = false, defaultPeriod, onPick, busy = false, align = "end", modes = ALL_MODES, greyNote, accent = "emerald" }: PeriodPickerProps) {
   const { t, fmt } = useLocale();
   const current = { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) };
   const range = periodRange(period);
@@ -127,7 +135,8 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
     else pick({ kind: "custom", from, to });
   }
 
-  const choice = (on: boolean) => (on ? "border-[1.5px] border-emerald bg-emerald-soft font-bold text-emerald" : "border border-line bg-surface font-medium text-ink-2 hover:border-input");
+  const tone = ACCENT[accent];
+  const choice = (on: boolean) => (on ? cn("border-[1.5px] bg-emerald-soft font-bold", tone.on) : "border border-line bg-surface font-medium text-ink-2 hover:border-input");
   const outlined = open || (defaultPeriod !== undefined && !samePeriod(period, defaultPeriod));
   const yearOptions = years.includes(monthYear) ? years : [...years, monthYear].sort((a, b) => b - a);
 
@@ -139,7 +148,7 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
           aria-haspopup="dialog"
           className={cn(
             "flex h-11 shrink-0 items-center gap-2 rounded-full border bg-surface px-4 text-body font-semibold whitespace-nowrap text-ink transition-opacity",
-            outlined ? "border-emerald" : "border-input",
+            outlined ? tone.outline : "border-input",
             busy && "opacity-60",
           )}
         >
@@ -212,7 +221,7 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
                   placeholder={t("e.g. {year}", { year: String(current.year - 1) })}
                   frameClassName="min-w-0 flex-1"
                 />
-                <Button type="submit" className="rounded-full px-4">
+                <Button type="submit" className={cn("rounded-full px-4", tone.button)}>
                   {t("Show")}
                 </Button>
               </form>
@@ -272,7 +281,7 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
               <Button variant="secondary" onClick={() => setOpen(false)} className="rounded-full px-4">
                 {t("Cancel")}
               </Button>
-              <Button onClick={applyRange} className="rounded-full px-4.5">
+              <Button onClick={applyRange} className={cn("rounded-full px-4.5", tone.button)}>
                 {t("Apply")}
               </Button>
             </div>

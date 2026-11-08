@@ -14,8 +14,8 @@ import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { BillingSection } from "./BillingSection";
 import { checkoutHref } from "./checkoutRoute";
-import { PaymentsCard } from "./PaymentsCard";
 import { PlanCard, type PlanCardModel } from "./PlanCard";
 import { FreeOrProCard, PlanQuestions, WaysToPayCard, type CompareRow } from "./PlanDetails";
 import { PlanModal } from "./PlanModal";
@@ -27,10 +27,11 @@ interface PlansPageProps {
   payments: BillingPayments | null;
 }
 
-// Settings › Plans (UpgradePlan board): where the customer stands, the
-// free trial and each paid plan as a card, Free against Pro, the two ways
-// to pay and the questions people ask; below the board, the payments made
-// and their invoices. Choosing a plan opens the payment page (Checkout).
+// Settings › Plans & billing (UpgradePlan board): where the customer
+// stands, the free trial and each paid plan as a card, Free against Pro,
+// the two ways to pay, then Billing (payments and receipts, the plan, the
+// details on receipts) and the questions people ask. Choosing a plan opens
+// the payment page (Checkout).
 export function PlansPage({ plans, overview: initialOverview, payments }: PlansPageProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
@@ -50,7 +51,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
   if (!plans || !overview) {
     return (
       <>
-        <h1 className="text-[30px] leading-[1.2] font-semibold tracking-[-0.03em] text-ink">{t("Choose your plan")}</h1>
+        <h1 className="text-[30px] leading-[1.2] font-semibold tracking-[-0.03em] text-ink">{t("Plans & billing")}</h1>
         <ErrorState title={t("Couldn't load the plans")} onRetry={() => router.refresh()} />
       </>
     );
@@ -196,7 +197,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
             ["incomeGoalTracking", "Income goals"],
           ] as const
         ).map(([key, label]) => ({ label: t(label), free: "", pro: "", freeKind: freePlan?.featureLimits[key] ? ("yes" as const) : ("no" as const), proKind: proPlan.featureLimits[key] ? ("yes" as const) : ("no" as const) })),
-        { label: t("Price"), free: money(0), pro: lowest !== null ? t("from {amount} a month", { amount: money(lowest) }) : "—", freeKind: "text", proKind: "text" },
+        { label: t("Price"), free: money(0), pro: lowest !== null ? t("from {amount} a month", { amount: money(lowest) }) : "–", freeKind: "text", proKind: "text" },
       ]
     : [];
 
@@ -213,13 +214,12 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
   ].filter((item): item is { q: string; a: string } => !!item);
 
   const trialEnds = overview.subscription.trialEndsAt;
+  const seePlans = () => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.03em] text-ink md:text-[30px]">{t("Choose your plan")}</h1>
-        <p className="text-[14.5px] text-ink-muted">
-          {trial ? t("Start with {days} free days, then pick monthly or yearly. Prices are in taka.", { days: count(trial.trialDays) }) : t("Pick monthly or yearly. Prices are in taka.")}
-        </p>
+        <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.03em] text-ink md:text-[30px]">{t("Plans & billing")}</h1>
+        <p className="text-[14.5px] text-ink-muted">{t("Pick a plan, see what you paid and manage renewal. Prices are in taka.")}</p>
       </div>
 
       <PlanStatusStrip
@@ -241,7 +241,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
 
       {/* The board's three cards in a row; four (a plan the board doesn't
           have) two by two, so none gets too narrow for its name. */}
-      <div className={cn("grid items-stretch gap-4 pt-1.5", cards.length === 3 || cards.length > 4 ? "lg:grid-cols-3" : "md:grid-cols-2")}>
+      <div id="plans" className={cn("grid scroll-mt-3 items-stretch gap-4 pt-1.5", cards.length === 3 || cards.length > 4 ? "lg:grid-cols-3" : "md:grid-cols-2")}>
         {cards.map((card) => (
           <PlanCard key={card.key} card={card} />
         ))}
@@ -252,9 +252,18 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
         <WaysToPayCard online={plans.onlineCheckout === true} />
       </div>
 
-      <PlanQuestions items={questions} />
+      <BillingSection
+        overview={overview}
+        payments={payments}
+        readOnly={readOnly}
+        busy={isPending}
+        onSeePlans={seePlans}
+        onCancel={() => setModal("cancel")}
+        onResume={() => setCancel(false)}
+        onDetailsSaved={(billingDetails) => setOverview({ ...overview, billingDetails })}
+      />
 
-      {payments && payments.meta.total > 0 && <PaymentsCard initial={payments} />}
+      <PlanQuestions items={questions} />
 
       <PlanModal
         open={modal === "started"}

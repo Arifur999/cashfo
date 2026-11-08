@@ -28,10 +28,11 @@ interface ResetOwnerDataDialogProps {
 }
 
 // The AdminOwnerResetDialog board: the one irreversible action on the
-// people pages. It names the workspace it wipes, offers a copy of the data
-// first, and the admin types the workspace's name to confirm. Every
-// account's own workspace is called "Personal", which proves nothing, so
-// for that one the admin types the person's email instead.
+// people pages. It names the owner whose data it wipes, offers a copy of
+// the data first, and the admin types the owner's name to confirm. Reset
+// wipes the owner's own (default) workspace: someone with more than one is
+// told which it is and that the others are not touched, and types that
+// workspace's name instead (their email, for the one called "Personal").
 const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = true }: ResetOwnerDataDialogProps) => {
   const { translate, locale } = useLocale();
   const [copying, setCopying] = useState(false);
@@ -47,6 +48,17 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = tru
   const others = owner.workspaceCount - 1;
   const personal = isPersonalWorkspace(owner.businessName, owner.businessType);
   const workspace = owner.businessName && !personal ? owner.businessName : translate("{name}'s personal workspace", { name: owner.name });
+  // One workspace (nearly everyone): the board's words, about the owner.
+  const single = others <= 0;
+  const ownerName = owner.name.trim();
+  const confirmText = single ? ownerName || owner.email : personal || !owner.businessName ? owner.email : owner.businessName;
+  const typing = single
+    ? ownerName
+      ? (["Type the owner's name to confirm:", "Matches the owner's name"] as const)
+      : (["Type their email to confirm:", "Matches their email"] as const)
+    : personal || !owner.businessName
+      ? (["Type their email to confirm:", "Matches their email"] as const)
+      : (["Type the workspace name to confirm:", "Matches the workspace name"] as const);
 
   return (
     <>
@@ -55,10 +67,10 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = tru
       onOpenChange={onOpenChange}
       icon={TriangleAlert}
       wide
-      title={translate("Reset all data in {workspace}?", { workspace })}
+      title={single ? translate("Reset all data for {name}?", { name: owner.name }) : translate("Reset all data in {workspace}?", { workspace })}
       description={
         <>
-          <T values={{ workspace: <b className="font-semibold text-ink">{workspace}</b> }}>
+          <T values={{ workspace: <b className="font-semibold text-ink">{single ? owner.name : workspace}</b> }}>
             {"This permanently deletes all transactions, accounts, contacts, savings goals, assets, and budget categories for {workspace}. Their account login stays intact."}
           </T>
           {others > 0 && <> {plural(translate, others, "Their other workspace is not touched.", "Their other {count} workspaces are not touched.", undefined, locale)}</>}
@@ -69,9 +81,9 @@ const ResetOwnerDataDialog = ({ owner, open, onOpenChange, canDownloadCopy = tru
       confirmIcon={Trash2}
       pendingLabel="Resetting..."
       isPending={isPending}
-      confirmationText={personal || !owner.businessName ? owner.email : owner.businessName}
-      confirmationLabel={translate(personal || !owner.businessName ? "Type their email to confirm:" : "Type the workspace name to confirm:")}
-      confirmationMatchedText={personal || !owner.businessName ? "Matches their email" : "Matches the workspace name"}
+      confirmationText={confirmText}
+      confirmationLabel={translate(typing[0])}
+      confirmationMatchedText={typing[1]}
       footerStart={
         canDownloadCopy && (
           <Button

@@ -155,6 +155,8 @@ export interface Faq {
 export const FAQS: Faq[] = [
   { id: "void", question: "How do I fix or cancel a transaction?", answer: "Open it from Transactions. Edit fixes the amount, category, wallet, date or note: the original stays in its history, crossed out and marked as corrected, so your balances always add up. Void cancels one that should never have been added." },
   { id: "transfer", question: "How do I move money between my wallets?", answer: "Open Add at the top (the + button on a phone) and pick Transfer. Choose the wallet the money leaves and the one it goes to, and the amount. Both balances change at once and nothing counts as income or spending." },
+  { id: "opening", question: "How do I add the money I already have?", answer: "Add each wallet with what it holds today as its opening balance: cash in hand, each bank account, bKash or Nagad. An opening balance is not income, so it never counts as money earned this month; from then on record what comes in and goes out." },
+  { id: "loans", question: "How do I keep track of loans and dues?", answer: "Open Loan Management. Add the bank or person, then record each payment, profit or charge as it happens. Each loan keeps its own statement and balance, and Smartly reminds you before a payment date." },
   { id: "start", question: "Where do I start?", answer: "Add your wallets first, under Wallets: cash, a bank account, bKash or Nagad, each with what it holds today. Then record each income and expense with Add as it happens. Home sums it up: what you have, and what came in and went out this month." },
   { id: "budget", question: "How do budgets work?", answer: "Open Budget and give each kind of spending a monthly limit. Each category then shows what is left, or how far over it went. When one passes 90% of its limit, the bell tells you; you can turn that off under App preferences, Reminders." },
   { id: "group", question: "How is my share worked out in Group expenses?", answer: "Each expense is shared the way it was added: equally, by shares, by meals or in exact amounts, among the members in the group that day. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom." },
@@ -177,22 +179,42 @@ export const SHORTCUTS: { what: string; key: string }[] = [
   { what: "Close a drawer", key: "Esc" },
 ];
 
+export type GuideCategory = "start" | "money" | "groups" | "security";
+export const GUIDE_CATEGORY_LABEL: Record<GuideCategory, string> = { start: "Getting started", money: "Money", groups: "Groups", security: "Security" };
+
 export interface Guide {
   // Dictionary keys, and the help question it opens.
   title: string;
   body: string;
-  faqId: "start" | "budget" | "group" | "vault";
-  tone: "money" | "warning" | "rose";
+  faqId: "start" | "opening" | "budget" | "loans" | "group" | "vault";
+  category: GuideCategory;
   // How long it takes to read ("4 min read").
   minutes: number;
 }
 
-// Each guide opens the Help answer it is about.
+// Each guide opens the Help answer it is about (SettingsResources board).
 export const GUIDES: Guide[] = [
-  { title: "Getting started", body: "Add your wallets, record a transaction and read the dashboard.", faqId: "start", tone: "money", minutes: 4 },
-  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "budget", tone: "money", minutes: 3 },
-  { title: "Group Expense for families and messes", body: "Shares, meals, settling up and closing the month.", faqId: "group", tone: "warning", minutes: 6 },
-  { title: "Keeping your passwords safe", body: "The vault password, Generate and the security checkup.", faqId: "vault", tone: "rose", minutes: 3 },
+  { title: "Your first 10 minutes in Smartly", body: "Add your accounts, record a transaction and read the dashboard.", faqId: "start", category: "start", minutes: 4 },
+  { title: "Add opening balances the right way", body: "Why the money you already have is not income.", faqId: "opening", category: "start", minutes: 2 },
+  { title: "Budgets that work", body: "Set a limit for each category and see what is left.", faqId: "budget", category: "money", minutes: 3 },
+  { title: "Loans, dues and profit", body: "Track who owes whom and never miss a payment date.", faqId: "loans", category: "money", minutes: 3 },
+  { title: "Group Expense for families and messes", body: "Shares, meals, settling up and closing the month.", faqId: "group", category: "groups", minutes: 6 },
+  { title: "Keeping your passwords safe", body: "The vault password, Generate and the security checkup.", faqId: "vault", category: "security", minutes: 3 },
+];
+
+// The legal pages' one-line summaries (SettingsResources board).
+export const LEGAL_SUMMARY: Record<string, string> = {
+  terms: "The rules for using Smartly, in plain words.",
+  privacy: "What we collect, why, and the choices you have.",
+  "refund-policy": "When and how you get your money back.",
+};
+
+// What is new in this version (About Smartly).
+export const WHATS_NEW = [
+  "Notifications: choose in app, email, SMS or push for each alert.",
+  "Data & privacy: export, import from a file and automatic backups.",
+  "Savings goals now show if you are ahead or behind.",
+  "Habit Tracker with namaz and Ramadan, next to your money.",
 ];
 
 export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" }[] = [

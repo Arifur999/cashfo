@@ -10,7 +10,7 @@ import { OPEN_TICKET_STATUSES } from "@/lib/tickets";
 import { assignableAdminsQuery, ticketsListQuery, ticketStatsQuery } from "@/queries/ticket.queries";
 import type { ISupportTicket } from "@/types/ticket.types";
 import { hasTicketFilters, ticketHref } from "../ticketLinks";
-import { ticketsColumns } from "./ticketsColumns";
+import { isNewTicket, ticketsColumns } from "./ticketsColumns";
 import { buildTicketsTableConfig, ticketsQueryString } from "./ticketsTable.config";
 
 // The queue. currentAdminId puts the reader first in the Assigned filter.
@@ -47,8 +47,11 @@ const TicketsTable = ({ currentAdminId }: { currentAdminId: string | null }) => 
       layout={{ rowHeight: 58, flexMinWidth: 160 }}
       getRowId={(row) => row.id}
       onRowClick={(row) => router.push(ticketHref(row.id, listQuery))}
-      // An urgent ticket still in the queue gets the red wash.
-      rowClassName={(row) => (row.priority === "URGENT" && OPEN_TICKET_STATUSES.includes(row.status) ? "bg-expense-soft hover:bg-expense-soft" : undefined)}
+      // A ticket nobody has opened gets the blue wash, an urgent one still
+      // in the queue the red.
+      rowClassName={(row) =>
+        isNewTicket(row) ? "bg-info-50/60 hover:bg-info-50" : row.priority === "URGENT" && OPEN_TICKET_STATUSES.includes(row.status) ? "bg-expense-soft hover:bg-expense-soft" : undefined
+      }
       // An empty default tab is good news, not a filter that missed.
       emptyMessage={hasTicketFilters(searchParams) ? "No tickets match these filters." : "Nothing open: every ticket has an answer."}
     />

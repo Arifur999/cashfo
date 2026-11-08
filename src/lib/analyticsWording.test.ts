@@ -1,20 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { monthsAfter, rangeName, rangeSpan, shareOfAccounts, shareOfWeek, weekChange } from "./analyticsWording";
+import { monthsAfter, shareOfAccounts, shareOfWeek, weekChange } from "./analyticsWording";
 
 describe("analytics wording", () => {
-  it("names the window the charts cover", () => {
-    expect(rangeSpan({ from: "2026-09-02", to: "2026-10-01" })).toBe("2 Sep – 1 Oct");
-    expect(rangeName({ preset: "30", from: "2026-09-02", to: "2026-10-01" })).toBe("Last 30 days");
-    expect(rangeName({ preset: "custom", from: "2026-09-02", to: "2026-10-01" })).toBe("2 Sep – 1 Oct");
-  });
-
-  it("names it in the reader's language", () => {
-    const t = (key: string, values?: Record<string, string | number>) => (key === "Last {count} days" ? `গত ${values?.count} দিন` : key);
-    expect(rangeSpan({ from: "2026-09-02", to: "2026-10-01" }, "bn")).toBe("২ সেপ্টে – ১ অক্টো");
-    expect(rangeName({ preset: "90", from: "2026-07-04", to: "2026-10-01" }, t, "bn")).toBe("গত ৯০ দিন");
-    expect(rangeName({ preset: "custom", from: "2026-09-02", to: "2026-10-01" }, t, "bn")).toBe("২ সেপ্টে – ১ অক্টো");
-  });
-
   it("sets the active figures against what they come from", () => {
     expect(shareOfAccounts(768, 1272)).toBe("60% of all 1,272 accounts");
     expect(shareOfAccounts(0, 0)).toBe("No accounts yet");

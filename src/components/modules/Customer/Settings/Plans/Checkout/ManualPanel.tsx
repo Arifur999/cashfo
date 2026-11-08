@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Copy, Image as ImageIcon, Info, Upload, X } from "lucide-react";
+import { Check, Copy, Image as ImageIcon, Info, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import IconAction from "@/components/smartly/IconAction";
 import type { BankAccountDetails, ManualWallet } from "@/lib/customer/billingDisplay";
 import { formatWalletNumber, payerOk, referenceOk, walletMeta, type WalletMeta } from "@/lib/customer/checkoutDisplay";
 import { formatCount } from "@/lib/i18n/digits";
@@ -243,15 +244,9 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
           <span className="flex h-10 items-center gap-2.5 rounded-xl border border-mint-200 bg-emerald-soft pr-1.5 pl-3 text-[13.5px] font-semibold text-brand-ink">
             <ImageIcon className="size-4" strokeWidth={2} aria-hidden="true" />
             <span className="max-w-55 truncate">{form.shot ? form.shot.name : t("Screenshot added")}</span>
-            <button
-              type="button"
-              onClick={() => (form.shot ? onChange({ shot: null }) : savedShot?.onRemove())}
-              disabled={readOnly}
-              aria-label={t("Remove screenshot")}
-              className="flex size-7 items-center justify-center rounded-lg hover:bg-mint-50"
-            >
-              <X className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
-            </button>
+            <IconAction tone="danger" onClick={() => (form.shot ? onChange({ shot: null }) : savedShot?.onRemove())} disabled={readOnly} aria-label={t("Remove screenshot")}>
+              <Trash2 className="size-3.75" aria-hidden="true" />
+            </IconAction>
           </span>
         ) : (
           <>
