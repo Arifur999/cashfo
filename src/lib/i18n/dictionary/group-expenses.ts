@@ -1211,4 +1211,8 @@ export const groupExpensesDictionary: Record<string, string> = {
   "{count} groups you run. Open one to see its money.": "আপনি {count}টি গ্রুপ চালান। টাকার হিসাব দেখতে একটা খুলুন।",
   "No groups yet": "এখনো কোনো গ্রুপ নেই",
   "Make your first group with “New group”.": "“নতুন গ্রুপ” দিয়ে প্রথম গ্রুপ বানান।",
+  // v16 FamilyMembers board
+  "Who is in the group, each person’s share of the costs and where their balance stands.": "গ্রুপে কারা আছেন, খরচে প্রত্যেকের ভাগ আর কার ব্যালেন্স কোথায় দাঁড়িয়ে।",
+  "Search name, phone or who it covers…": "নাম, ফোন বা কাদের জন্য দিয়ে খুঁজুন…",
+  "Balance now: above 0 the group owes them, below 0 they owe the group. Members with money entries can’t be deleted; mark them inactive and they stay in the history.": "এখনকার ব্যালেন্স: ০-এর বেশি হলে গ্রুপ তাঁকে দেবে, কম হলে তিনি গ্রুপকে দেবেন। যাঁদের টাকার এন্ট্রি আছে তাঁদের মোছা যায় না; নিষ্ক্রিয় করলে ইতিহাসে থেকে যান।",
 };
