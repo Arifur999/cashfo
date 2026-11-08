@@ -7,10 +7,12 @@ import ResetOwnerDataDialog from "@/components/modules/Admin/ManageOwners/ResetO
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
 import T from "@/components/shared/T";
 import Button from "@/components/smartly/Button";
+import { iconActionClass } from "@/components/smartly/IconAction";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
 import type { IOwnerDetail, IOwnerRef, OwnerDialog } from "@/types/owner.types";
 import type { PlanChoice } from "./ChangeOwnerPlanForm";
 import DownloadOwnerCopyDialog from "./DownloadOwnerCopyDialog";
@@ -91,9 +93,13 @@ const OwnerDetailActions = ({ owner, plans, canChangeStatus, canChangePlan, canV
       {menu && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="size-9.5 pointer-coarse:size-11" aria-label={translate("More for {name}", { name: owner.name })}>
-              <MoreHorizontal className="size-4.5 text-ink-2" aria-hidden="true" />
-            </Button>
+            <button
+              type="button"
+              className={cn(iconActionClass(), "data-[state=open]:border-mint-200 data-[state=open]:bg-emerald-soft data-[state=open]:text-emerald")}
+              aria-label={translate("More for {name}", { name: owner.name })}
+            >
+              <MoreHorizontal aria-hidden="true" />
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60">
             {canView && (

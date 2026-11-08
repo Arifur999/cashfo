@@ -47,8 +47,8 @@ const single = (value: string | string[] | undefined) => (Array.isArray(value) ?
 export const generateMetadata = adminPageTitle("User");
 
 // A person's page as the AdminUserDetail board lays it out: who they are
-// with every action at the top, then tabs -- Overview (their numbers,
-// workspaces, devices and what admins did, beside billing, referrals,
+// with every action at the top, then tabs -- Overview (their numbers, their
+// workspaces when they have more than one, devices and what admins did, beside billing, referrals,
 // support and notes), Billing (their payments), Activity (every device and
 // admin action), Support (their tickets) and Notes.
 const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/[id]">) => {
@@ -130,7 +130,8 @@ const UserDetailPage = async ({ params, searchParams }: PageProps<"/admin/users/
           <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="flex min-w-0 flex-col gap-4">
               {owner.stats && <OwnerSummaryStats stats={owner.stats} />}
-              {owner.workspaces && <OwnerWorkspacesCard workspaces={owner.workspaces} planName={owner.billing?.planName ?? owner.planName} />}
+              {/* The board's people have one workspace; someone with more sees them listed. */}
+              {owner.workspaces && owner.workspaces.length > 1 && <OwnerWorkspacesCard workspaces={owner.workspaces} planName={owner.billing?.planName ?? owner.planName} />}
               {owner.devices && <OwnerDevicesCard userId={owner.userId} name={owner.name} devices={devices} canSignOut={canSignOut} limit={4} />}
               <OwnerActivityTimeline entries={owner.activityLog} limit={6} />
             </div>

@@ -211,4 +211,14 @@ export const adminSharedDictionary: Record<string, string> = {
   // A customer who asked to delete their account (the status chip and tab).
   "Deleting soon": "শীঘ্রই মুছে যাবে",
   "Deleting soon@@status": "শীঘ্রই মুছে যাবে",
+  // Categories and owner reset in the v16 words
+  "Every new account gets these. People can change their own later.": "প্রতিটি নতুন অ্যাকাউন্ট এগুলো পায়। পরে যে কেউ নিজেরগুলো বদলাতে পারেন।",
+  "{name} is back for new accounts": "{name} আবার নতুন অ্যাকাউন্টে যাবে",
+  "{name} no longer goes to new accounts": "{name} আর নতুন অ্যাকাউন্টে যাবে না",
+  "A starting income or expense category every new account gets.": "আয় বা খরচের একটি শুরুর ক্যাটাগরি, যা প্রতিটি নতুন অ্যাকাউন্ট পায়।",
+  "The account tree a new account begins with": "নতুন অ্যাকাউন্ট যে অ্যাকাউন্ট-কাঠামো দিয়ে শুরু হয়",
+  "Stop giving it to new accounts": "নতুন অ্যাকাউন্টকে আর দেবেন না",
+  "Reset all data for {name}?": "{name}-এর সব ডেটা রিসেট করবেন?",
+  "Type the owner's name to confirm:": "নিশ্চিত করতে মালিকের নাম লিখুন:",
+  "Matches the owner's name": "মালিকের নামের সাথে মিলেছে",
 };
