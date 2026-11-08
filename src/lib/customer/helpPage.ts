@@ -101,3 +101,22 @@ export function searchVideos(videos: HelpVideo[], query: string, bangla: boolean
 export const telHref = (number: string) => `tel:${number.replace(/[^\d+]/g, "")}`;
 export const whatsappHref = (number: string) => `https://wa.me/${number.replace(/\D/g, "")}`;
 export const webHref = (link: string) => (/^https?:\/\//i.test(link) ? link : `https://${link}`);
+
+// The 11-character video id of a YouTube link (watch?v=, youtu.be/,
+// shorts/, embed/, live/), or the bare id; null for anything else. The API
+// reads links the same way (help-rules.ts).
+export function youtubeIdOf(link: string): string | null {
+  const text = link.trim();
+  if (/^[\w-]{11}$/.test(text)) return text;
+  let url: URL;
+  try {
+    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+  } catch {
+    return null;
+  }
+  const host = url.hostname.replace(/^(www\.|m\.|music\.)/, "");
+  let id: string | null = null;
+  if (host === "youtu.be") id = url.pathname.slice(1).split("/")[0];
+  else if (host === "youtube.com" || host === "youtube-nocookie.com") id = url.pathname === "/watch" ? url.searchParams.get("v") : (/^\/(shorts|embed|live)\/([\w-]+)/.exec(url.pathname)?.[2] ?? null);
+  return id && /^[\w-]{11}$/.test(id) ? id : null;
+}

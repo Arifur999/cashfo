@@ -37,3 +37,12 @@ describe("searchVideos", () => {
     expect(searchVideos([video], "loan", false, label)).toHaveLength(0);
   });
 });
+
+describe("youtubeIdOf", () => {
+  it("reads a YouTube link in any of its shapes", async () => {
+    const { youtubeIdOf } = await import("./helpPage");
+    const id = "dQw4w9WgXcQ";
+    expect(["https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10s", "youtu.be/dQw4w9WgXcQ", "https://youtube.com/shorts/dQw4w9WgXcQ", id].map(youtubeIdOf)).toEqual([id, id, id, id]);
+    expect(["https://vimeo.com/123", "not a link"].map(youtubeIdOf)).toEqual([null, null]);
+  });
+});

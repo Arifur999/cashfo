@@ -2,6 +2,7 @@ import SettingsBoard from "@/components/modules/Admin/Settings/SettingsBoard";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
+import { adminHelpQuery } from "@/queries/help.queries";
 import { referralSettingsQuery } from "@/queries/referral.queries";
 import { platformSettingsQuery } from "@/queries/settings.queries";
 import { healthQuery } from "@/queries/system.queries";
@@ -23,7 +24,7 @@ const SettingsPage = async () => {
       <PageHeader title="Settings" description="For the whole platform. Every admin can see these; only super admins can change them." />
       <QueryPrefetch
         prefetch={(client) =>
-          Promise.all([client.prefetchQuery(platformSettingsQuery()), client.prefetchQuery(referralSettingsQuery()), client.prefetchQuery(zakatPricesQuery()), ...(manages ? [client.prefetchQuery(healthQuery())] : [])])
+          Promise.all([client.prefetchQuery(platformSettingsQuery()), client.prefetchQuery(referralSettingsQuery()), client.prefetchQuery(zakatPricesQuery()), client.prefetchQuery(adminHelpQuery()), ...(manages ? [client.prefetchQuery(healthQuery())] : [])])
         }
       >
         <SettingsBoard canManage={manages} canManageZakat={managesZakat} />
