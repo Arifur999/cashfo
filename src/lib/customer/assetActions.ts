@@ -116,6 +116,22 @@ export async function updateAssetValueAction(businessId: string, id: string, inp
   }, "Failed to update value");
 }
 
+// A value update set right (its value, day and note) or removed; the
+// purchase's own row and a sold asset's history stay as they are.
+export async function editAssetValueUpdateAction(businessId: string, id: string, entryId: string, input: UpdateAssetValueInput): Promise<ActionResult<Asset>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/value/${entryId}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the value update");
+}
+
+export async function deleteAssetValueUpdateAction(businessId: string, id: string, entryId: string): Promise<ActionResult<Asset>> {
+  return callApi(async () => {
+    const res = await customerApi.delete<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/value/${entryId}`, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to delete the value update");
+}
+
 // A correction to an asset entered wrongly. Only what is sent changes; null
 // clears the note. The backend takes purchaseDate only for an owned asset
 // no wallet paid for (a paid purchase keeps its posting's date), never

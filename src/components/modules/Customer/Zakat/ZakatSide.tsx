@@ -3,6 +3,7 @@
 import { Check, Trash2 } from "lucide-react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import IconAction from "@/components/smartly/IconAction";
 import { paymentMeta, WHO_CAN_RECEIVE } from "@/lib/customer/zakatDisplay";
 import type { ZakatPayment, ZakatStepId, ZakatSummary } from "@/lib/customer/zakatTypes";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -95,16 +96,15 @@ export function ZakatSide({ summary, money, walletName, onRecord, onDelete, pend
                   </span>
                   <span className="text-[13.5px] font-semibold whitespace-nowrap text-ink tabular-nums">{money(payment.amount)}</span>
                   {!readOnly && (
-                    <button
-                      type="button"
+                    <IconAction
+                      tone="danger"
                       disabled={pending === `payment:${payment.id}`}
                       onClick={() => onDelete(payment)}
                       aria-label={t("Delete this entry")}
                       title={t("Delete this entry")}
-                      className="flex size-7 shrink-0 items-center justify-center rounded-full text-ink-faint hover:bg-surface-sunken hover:text-expense disabled:opacity-60 pointer-coarse:size-11"
                     >
-                      <Trash2 className="size-3.5" aria-hidden="true" />
-                    </button>
+                      <Trash2 aria-hidden="true" />
+                    </IconAction>
                   )}
                 </li>
               ))}

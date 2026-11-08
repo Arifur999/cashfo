@@ -70,7 +70,6 @@ export const zakatDictionary: Record<string, string> = {
   "Cash and bank": "নগদ ও ব্যাংক",
   "Is this all the cash and bank money you have today?": "আজ আপনার কাছে নগদ আর ব্যাংকে কি এতটুকুই আছে?",
   "Cash kept at home or with family counts too. Add it if it is not in your wallets.": "বাসায় বা পরিবারের কাছে রাখা নগদ টাকাও ধরতে হবে। ওয়ালেটে না থাকলে যোগ করুন।",
-  "From your Wallets": "ওয়ালেট থেকে নেওয়া",
   "Add cash or an account not in the app": "অ্যাপে নেই এমন নগদ বা অ্যাকাউন্ট যোগ করুন",
   "Cash at home": "বাসায় রাখা নগদ",
   "Nagad wallet": "Nagad ওয়ালেট",
@@ -271,4 +270,6 @@ export const zakatDictionary: Record<string, string> = {
   "Gold looks too low. Check the price per vori.": "সোনার দাম খুব কম মনে হচ্ছে। প্রতি ভরির দাম দেখে নিন।",
   "Silver looks too low. Check the price per vori.": "রুপার দাম খুব কম মনে হচ্ছে। প্রতি ভরির দাম দেখে নিন।",
   "Pick the day of these prices": "এ দামগুলো যে দিনের, সেটা বেছে নিন",
+  // v16 board: the cash step reads from Balance › Accounts
+  "From Balance › Accounts": "ব্যালেন্স › অ্যাকাউন্ট থেকে নেওয়া",
 };
