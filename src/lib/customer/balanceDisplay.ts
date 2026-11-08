@@ -2,7 +2,7 @@
 // kept pure so they are tested on their own. Strings are English dictionary
 // keys; the pages translate them.
 import type { CSSProperties } from "react";
-import { formatDay } from "@/lib/date";
+import { formatDay, toDateInputValue } from "@/lib/date";
 import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
 import type { ChipTone } from "@/components/smartly/Chip";
@@ -157,7 +157,7 @@ export function partyOf(row: Pick<LedgerRow, "party" | "counterAccounts" | "cate
 
 // Where a row's record lives, for Entry details' button; null for an
 // adjustment (it is removed right there) and a cancelled row.
-export function entrySource(row: Pick<LedgerRow, "transactionId" | "contactId" | "chargeForId">, kind: LedgerKind): { href: string; label: string } | null {
+export function entrySource(row: Pick<LedgerRow, "transactionId" | "contactId" | "chargeForId" | "date">, kind: LedgerKind): { href: string; label: string } | null {
   if (row.chargeForId) return { href: "/balance/transfer", label: "Open in Transfers" };
   switch (kind) {
     case "INCOME":
@@ -169,8 +169,12 @@ export function entrySource(row: Pick<LedgerRow, "transactionId" | "contactId" |
     case "SAVINGS_WITHDRAW":
       return { href: "/savings-goals/dashboard", label: "Open in Savings Goals" };
     case "LOAN_OUT":
-    case "LOAN_IN":
-      return row.contactId ? { href: `/loan-management/ledger?contactId=${encodeURIComponent(row.contactId)}`, label: "Open in Loan Management" } : null;
+    case "LOAN_IN": {
+      // Loan Management › Transactions for that person, in the entry's year (the page opens on this year).
+      if (!row.contactId) return null;
+      const year = toDateInputValue(row.date).slice(0, 4);
+      return { href: `/loan-management/transactions?contactId=${encodeURIComponent(row.contactId)}${year ? `&period=year&year=${year}` : ""}`, label: "Open in Loan transactions" };
+    }
     case "PAYMENT_IN":
     case "PAYMENT_OUT":
       return row.contactId ? { href: `/contacts/${encodeURIComponent(row.contactId)}`, label: "Open the contact" } : null;

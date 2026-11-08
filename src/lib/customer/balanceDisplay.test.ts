@@ -97,7 +97,7 @@ describe("Match real balance", () => {
 });
 
 describe("ledger rows", () => {
-  const row = { kind: undefined, transactionType: "EXPENSE" as const, direction: undefined, entryType: "CREDIT" as const, party: null, counterAccounts: ["General Expense"], category: "Food", transactionId: "tx", contactId: null, chargeForId: null };
+  const row = { kind: undefined, transactionType: "EXPENSE" as const, direction: undefined, entryType: "CREDIT" as const, party: null, counterAccounts: ["General Expense"], category: "Food", transactionId: "tx", contactId: null, chargeForId: null, date: "2025-03-14" };
 
   it("falls back to the transaction type and the entry side on an older backend", () => {
     expect(kindOf(row)).toBe("EXPENSE");
@@ -116,7 +116,7 @@ describe("ledger rows", () => {
   it("opens each kind where it was made", () => {
     expect(entrySource(row, "EXPENSE")).toEqual({ href: "/transactions/tx", label: "Open in Income & Expense" });
     expect(entrySource({ ...row, chargeForId: "tr" }, "EXPENSE")?.href).toBe("/balance/transfer");
-    expect(entrySource({ ...row, contactId: "c 1" }, "LOAN_IN")?.href).toBe("/loan-management/ledger?contactId=c%201");
+    expect(entrySource({ ...row, contactId: "c 1" }, "LOAN_IN")).toEqual({ href: "/loan-management/transactions?contactId=c%201&period=year&year=2025", label: "Open in Loan transactions" });
     expect(entrySource(row, "LOAN_IN")).toBeNull();
     expect(entrySource(row, "ADJUSTMENT")).toBeNull();
     expect(entrySource(row, "ASSET_SALE")?.href).toBe("/assets-management/purchase-sell");
