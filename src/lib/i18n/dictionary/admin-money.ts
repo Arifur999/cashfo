@@ -529,4 +529,13 @@ export const adminMoneyDictionary: Record<string, string> = {
   "Include": "রাখুন",
   "Plan · paid on": "প্ল্যান · পরিশোধের দিন",
   "Did it reach us?": "আমাদের কাছে এসেছে?",
+  // Mark paid placeholder (v16 board)
+  "e.g. 8K2M4N7QXA": "যেমন: 8K2M4N7QXA",
+  // Reject reasons (v16 board)
+  "Why are you rejecting it? The user sees this.": "কেন বাতিল করছেন? ব্যবহারকারী এটি দেখতে পাবেন।",
+  "Account name doesn't match": "অ্যাকাউন্টের নাম মেলেনি",
+  "A friend's payment didn't reach us": "একজন বন্ধুর পেমেন্ট আমাদের কাছে আসেনি",
+  "Looks like self-referral": "নিজেকেই রেফার করা মনে হচ্ছে",
+  "Wrong account number": "ভুল অ্যাকাউন্ট নম্বর",
+  "Write a short reason": "সংক্ষেপে কারণ লিখুন",
 };

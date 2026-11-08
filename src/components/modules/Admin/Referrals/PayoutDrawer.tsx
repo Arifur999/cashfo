@@ -184,6 +184,7 @@ const MarkPaidForm = ({ payout, canManage, onDone, onReject }: { payout: IPayout
             <AppField
               field={field}
               label={payout.method.type === "BANK" ? translate("Bank reference") : translate("{method} transaction ID", { method: translate(method) })}
+              placeholder="e.g. 8K2M4N7QXA"
               autoComplete="off"
               className="font-mono tracking-[0.06em]"
             />
