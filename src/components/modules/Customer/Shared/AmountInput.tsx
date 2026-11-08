@@ -19,7 +19,8 @@ interface AmountInputProps {
   describedBy?: string;
   // "lg": the 48px box a form's second figure gets (New savings goal's
   // target, Move between goals), a size under the drawer's main amount.
-  size?: "xl" | "lg";
+  // "md": the Savings boards' 52px box (Withdraw, Move money), 10px corners.
+  size?: "xl" | "lg" | "md";
 }
 
 // A drawer's amount box (design-v4): 56px with 8px corners, the currency
@@ -28,21 +29,25 @@ interface AmountInputProps {
 const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid = false, describedBy, size = "xl" }: AmountInputProps) => {
   const { fmt } = useLocale();
   const field = useAmountField(value, onChange, currency);
-  const lg = size === "lg";
+  const box = {
+    xl: { strip: "h-14 w-13 text-[20px]", frame: "h-14 rounded-sm", figure: "pl-3.5 text-[24px]" },
+    lg: { strip: "h-12 w-11 text-[17px]", frame: "h-12 rounded-sm", figure: "pl-3 text-h3" },
+    md: { strip: "h-13 w-12 text-[19px]", frame: "h-13 rounded-field", figure: "pl-3.5 text-[22px]" },
+  }[size];
   return (
     <Input
       id={id}
       type="text"
       inputMode="decimal"
-      size={lg ? "lg" : "xl"}
+      size={size === "xl" ? "xl" : "lg"}
       {...field}
       placeholder="0"
       autoFocus={autoFocus}
       invalid={invalid}
       {...(describedBy && { "aria-describedby": invalid ? `${id}-error ${describedBy}` : describedBy })}
-      leading={<span className={cn("flex items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft", lg ? "h-12 w-11 text-[17px]" : "h-14 w-13 text-[20px]")}>{currencySymbol(currency, fmt)}</span>}
-      frameClassName={cn("gap-0 overflow-hidden rounded-sm pl-0", lg ? "h-12" : "h-14")}
-      className={cn("font-bold tabular-nums", lg ? "pl-3 text-h3" : "pl-3.5 text-[24px]")}
+      leading={<span className={cn("flex items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft", box.strip)}>{currencySymbol(currency, fmt)}</span>}
+      frameClassName={cn("gap-0 overflow-hidden pl-0", box.frame)}
+      className={cn("font-bold tabular-nums", box.figure)}
     />
   );
 };
