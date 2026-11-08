@@ -48,6 +48,9 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
   const [error, setError] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
   const [sentTo, setSentTo] = useState("");
+  // How the code last went; "Send by email instead" changes it.
+  const [channel, setChannel] = useState<"EMAIL" | "SMS">("EMAIL");
+  const [sendsLeft, setSendsLeft] = useState(1);
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(0);
   const [focused, setFocused] = useState(false);
@@ -64,6 +67,8 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
       setError(null);
       setGone(false);
       setSentTo(challenge.sentTo);
+      setChannel(challenge.channel);
+      setSendsLeft(challenge.sendsLeft);
       setResendAt(issuedAt + challenge.resendAfterSec * 1000);
       setNow(issuedAt);
     }
@@ -116,7 +121,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
     });
   }
 
-  function resend() {
+  function resend(byEmail = false) {
     if (!challenge || isResending) return;
     startResend(async () => {
       try {
@@ -124,9 +129,11 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
           await onRestart();
           return;
         }
-        const result = await resendWithdrawalCodeAction(challenge.challengeId);
+        const result = await resendWithdrawalCodeAction(challenge.challengeId, byEmail);
         if (result.success && result.data) {
           setSentTo(result.data.sentTo);
+          setChannel(result.data.channel);
+          setSendsLeft(result.data.sendsLeft);
           setResendAt(Date.now() + result.data.resendAfterSec * 1000);
           setNow(Date.now());
           setError(null);
@@ -158,7 +165,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
           </span>
           <AlertDialogTitle className="text-[20px] leading-normal font-semibold text-ink">{t("Confirm it's you")}</AlertDialogTitle>
           <AlertDialogDescription className="text-body leading-[1.55] text-ink-soft">
-            {fillNodes(challenge?.channel === "SMS" ? t("We sent a 6-digit code by SMS to {email}. Enter it to send {amount} to {destination}.") : t("We sent a 6-digit code by email to {email}. Enter it to send {amount} to {destination}."), {
+            {fillNodes(channel === "SMS" ? t("We sent a 6-digit code by SMS to {email}. Enter it to send {amount} to {destination}.") : t("We sent a 6-digit code by email to {email}. Enter it to send {amount} to {destination}."), {
               email: <b className="font-semibold break-words text-ink">{sentTo}</b>,
               amount: <b className="font-semibold whitespace-nowrap text-ink">{amount}</b>,
               destination,
@@ -220,12 +227,19 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
               <span className="text-ink-muted">
-                {t("Didn't get it?")} {waiting ? <span className="text-ink-faint">{t("Resend in {time}", { time: toLocaleDigits(countdownText(waitLeft), fmt) })}</span> : challenge?.channel !== "SMS" && t("Check your spam folder too.")}
+                {t("Didn't get it?")} {waiting ? <span className="text-ink-faint">{t("Resend in {time}", { time: toLocaleDigits(countdownText(waitLeft), fmt) })}</span> : channel !== "SMS" && t("Check your spam folder too.")}
               </span>
-              <button type="button" onClick={resend} disabled={waiting || busy || (!gone && challenge?.sendsLeft === 0)} className="flex min-h-9 items-center gap-1.5 font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
-                {isResending ? <Loader size={14} label={t("Loading...")} /> : gone ? <RefreshCw className="size-3.5" aria-hidden="true" /> : null}
-                {gone ? t("Get a new code") : t("Send the code again")}
-              </button>
+              <span className="flex flex-wrap items-center gap-x-4">
+                <button type="button" onClick={() => resend()} disabled={waiting || busy || (!gone && sendsLeft === 0)} className="flex min-h-9 items-center gap-1.5 font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
+                  {isResending ? <Loader size={14} label={t("Loading...")} /> : gone ? <RefreshCw className="size-3.5" aria-hidden="true" /> : null}
+                  {gone ? t("Get a new code") : t("Send the code again")}
+                </button>
+                {channel === "SMS" && !gone && (
+                  <button type="button" onClick={() => resend(true)} disabled={waiting || busy || sendsLeft === 0} className="flex min-h-9 items-center font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
+                    {t("Send by email instead")}
+                  </button>
+                )}
+              </span>
             </div>
 
             <div className="flex items-start gap-2 rounded-[14px] bg-strip px-3 py-2.5 text-[12.5px] leading-normal text-ink-soft">

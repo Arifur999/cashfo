@@ -109,9 +109,10 @@ export async function startWithdrawalAction(input: StartWithdrawalInput): Promis
   return callApi(async () => (await customerApi.post<WithdrawalChallenge>("/api/referrals/withdrawals/start", input)).data, "We couldn't start the withdrawal. Please try again.");
 }
 
-export async function resendWithdrawalCodeAction(challengeId: string): Promise<ReferralResult<WithdrawalChallenge>> {
+// `byEmail`: to the member's email this time (the SMS didn't come).
+export async function resendWithdrawalCodeAction(challengeId: string, byEmail = false): Promise<ReferralResult<WithdrawalChallenge>> {
   return callApi(
-    async () => (await customerApi.post<WithdrawalChallenge>(`/api/referrals/withdrawals/start/${enc(challengeId)}/resend`)).data,
+    async () => (await customerApi.post<WithdrawalChallenge>(`/api/referrals/withdrawals/start/${enc(challengeId)}/resend`, byEmail ? { byEmail: true } : undefined)).data,
     "We couldn't send the code. Please try again in a minute.",
   );
 }

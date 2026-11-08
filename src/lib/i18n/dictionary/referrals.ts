@@ -615,4 +615,6 @@ export const referralsDictionary: Record<string, string> = {
   "Friends scan it to sign up with your link. Print it for a poster or your shop counter.": "বন্ধুরা এটি স্ক্যান করে আপনার লিংক দিয়ে সাইন আপ করবেন। পোস্টার বা দোকানের কাউন্টারের জন্য প্রিন্ট করে নিন।",
   "Download PNG": "PNG ডাউনলোড করুন",
   "Nothing here for this filter.": "এই ফিল্টারে কিছু নেই।",
+  // Withdraw code by email (v16)
+  "Send by email instead": "এর বদলে ইমেইলে পাঠান",
 };
