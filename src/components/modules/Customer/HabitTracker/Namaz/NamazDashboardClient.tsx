@@ -93,6 +93,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
       subtitle={hijriRange(year, monthNumber, fmt, settings.hijriAdjust, true)}
       months={options}
       selected={month}
+      today={today}
       onPrint={() => window.print()}
       action={createButton}
     />

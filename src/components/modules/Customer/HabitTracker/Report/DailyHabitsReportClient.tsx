@@ -204,6 +204,7 @@ export function DailyHabitsReportClient({ habits, logs, month, today, firstMonth
         subtitle={[current ? t("This month so far") : null, t(report.rows.length === 1 ? "{count} habit" : "{count} habits", { count: count(report.rows.length) })].filter(Boolean).join(" · ")}
         months={options}
         selected={month}
+        today={today}
         onPrint={() => window.print()}
       />
       <ReportStats stats={stats} />

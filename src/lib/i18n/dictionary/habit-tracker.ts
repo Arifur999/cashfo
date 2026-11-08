@@ -1068,4 +1068,6 @@ export const habitTrackerDictionary: Record<string, string> = {
   "paused at p. {page}": "পাতা {page}-এ থামানো",
   "Under one a day": "দিনে একটিরও কম",
   "A line you liked…": "যে লাইনটি ভালো লেগেছে…",
+  // Namaz sheet: the month picker
+  "Greyed-out months have no sheet.": "ধূসর মাসগুলোতে কোনো শিট নেই।",
 };
