@@ -243,7 +243,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
       </Card>
 
       <UpdateValueDrawer open={valuing !== null} onClose={() => setValuing(null)} businessId={businessId} asset={valuing} categories={categories} currency={currency} />
-      <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading} categories={categories} currency={currency} />
+      <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading && (assets.find((asset) => asset.id === reading.id) ?? reading)} categories={categories} currency={currency} businessId={businessId} canManage={canManage} />
       <AssetDrawer open={adding} onClose={() => setAdding(false)} businessId={businessId} categories={categories} currency={currency} variant="add" />
     </PageFrame>
   );

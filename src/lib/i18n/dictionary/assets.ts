@@ -506,4 +506,18 @@ export const assetsDictionary: Record<string, string> = {
   "Compared with what you paid": "কেনা দামের তুলনায়",
   "Update date": "আপডেটের তারিখ",
   "e.g. Checked with local broker": "যেমন: স্থানীয় দালালের কাছে জেনেছি",
+  // v16 value history: edit and delete a value update
+  "Delete this value update?": "এই দামের আপডেট ডিলিট করবেন?",
+  "{date} · {amount}. The value today becomes the newest update left.": "{date} · {amount}। বাকি আপডেটগুলোর মধ্যে সবচেয়ে নতুনটাই হবে আজকের দাম।",
+  "Edit the value update of {date}": "{date}-এর দামের আপডেট এডিট করুন",
+  "Delete the value update of {date}": "{date}-এর দামের আপডেট ডিলিট করুন",
+  "Edit value update": "দামের আপডেট এডিট",
+  "Value update saved": "দামের আপডেট সেভ হয়েছে",
+  "Failed to save the value update": "দামের আপডেট সেভ করা যায়নি",
+  "Value update deleted": "দামের আপডেট ডিলিট হয়েছে",
+  "Failed to delete the value update": "দামের আপডেট ডিলিট করা যায়নি",
+  "Delete update": "আপডেট ডিলিট করুন",
+  "This is where the asset starts. Edit the purchase instead.": "এখান থেকেই সম্পদের শুরু। এর বদলে কেনার তথ্য এডিট করুন।",
+  "This asset is sold. Its value can't change.": "এই সম্পদ বিক্রি হয়ে গেছে। এর দাম আর বদলানো যায় না।",
+  "Value update not found": "দামের আপডেট পাওয়া যায়নি",
 };

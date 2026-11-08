@@ -428,7 +428,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
       )}
 
       <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} currency={currency} variant="add" />
-      <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading} categories={categories} currency={currency} />
+      <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading && (assets.find((asset) => asset.id === reading.id) ?? reading)} categories={categories} currency={currency} businessId={businessId} canManage={canManage} />
     </PageFrame>
   );
 }

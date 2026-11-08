@@ -1,9 +1,21 @@
 "use client";
 
-import { FileDown, Printer } from "lucide-react";
+import { FileDown, Pencil, Printer, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
+import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
+import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import DayInput from "@/components/smartly/form/DayInput";
+import Input from "@/components/smartly/form/Input";
+import IconAction from "@/components/smartly/IconAction";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
+import { deleteAssetValueUpdateAction, editAssetValueUpdateAction } from "@/lib/customer/assetActions";
+import { getAppToday } from "@/lib/date";
 import { categoryVisual, isInitialValueNote, statementLines, type StatementLine } from "@/lib/customer/assetDisplay";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -18,18 +30,74 @@ interface AssetStatementDialogProps {
   asset: Asset | null;
   categories: AssetCategoryOption[];
   currency: string;
+  // With both, an owned asset's value updates can be set right or removed
+  // (the owner or an accountant; never a sold asset's history).
+  businessId?: string;
+  canManage?: boolean;
 }
 
 const COLUMNS = "grid-cols-[32px_100px_minmax(8rem,1fr)_110px_110px_110px_84px]";
+const COLUMNS_EDIT = "grid-cols-[32px_100px_minmax(8rem,1fr)_110px_110px_110px_84px_76px]";
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
 // An asset's value statement: where it started, where it stands, the
 // whole change, and every value it was recorded at with the move from the
 // one before. Print (or save as PDF) opens it on a page of its own.
-export function AssetStatementDialog({ open, onClose, asset, categories, currency }: AssetStatementDialogProps) {
+export function AssetStatementDialog({ open, onClose, asset, categories, currency, businessId, canManage = false }: AssetStatementDialogProps) {
   const { t, fmt } = useLocale();
+  const router = useRouter();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  // The update being set right, and its fields.
+  const [editing, setEditing] = useState<StatementLine | null>(null);
+  const [form, setForm] = useState({ value: "", date: "", note: "" });
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   if (!asset) return null;
+  const editable = canManage && !!businessId && asset.status === "ACTIVE";
+  const columns = editable ? COLUMNS_EDIT : COLUMNS;
+  const today = getAppToday();
+  const bought = asset.purchaseDate.slice(0, 10);
+  const formValue = Number(form.value) || 0;
+  const formValid = formValue > 0 && form.date >= bought && form.date <= today;
+
+  function run(id: string, action: () => Promise<{ success: boolean; message?: string }>, done: string, failed: string, after?: () => void) {
+    setBusyId(id);
+    startTransition(async () => {
+      const result = await action().catch(() => ({ success: false, message: undefined }));
+      setBusyId(null);
+      if (result.success) {
+        toast.success(t(done));
+        after?.();
+        router.refresh();
+      } else {
+        toast.error(t(result.message ?? failed));
+      }
+    });
+  }
+
+  function openEdit(line: StatementLine) {
+    setEditing(line);
+    setForm({ value: String(line.value), date: line.date.slice(0, 10), note: line.note && !isInitialValueNote(line.note) ? line.note : "" });
+  }
+
+  function saveEdit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!editing || !businessId || !asset || !formValid || isPending) return;
+    const line = editing;
+    run(line.id, () => editAssetValueUpdateAction(businessId, asset.id, line.id, { value: formValue, date: form.date, note: form.note.trim() || undefined }), "Value update saved", "Failed to save the value update", () => setEditing(null));
+  }
+
+  async function removeLine(line: StatementLine) {
+    if (!businessId || !asset || isPending) return;
+    const ok = await confirm({
+      title: t("Delete this value update?"),
+      message: t("{date} · {amount}. The value today becomes the newest update left.", { date: day(line.date), amount: money(line.value) }),
+      confirmLabel: "Delete update",
+      danger: true,
+    });
+    if (ok) run(line.id, () => deleteAssetValueUpdateAction(businessId, asset.id, line.id), "Value update deleted", "Failed to delete the value update");
+  }
 
   const lines = statementLines(asset);
   const first = lines[0];
@@ -122,8 +190,8 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
         </div>
 
         <div className="overflow-x-auto rounded-[14px] border border-line">
-          <div className="min-w-180">
-            <div className={cn("grid items-center gap-x-3 bg-table-head px-4 py-2.5 text-caption font-semibold text-ink-muted", COLUMNS)}>
+          <div className={editable ? "min-w-200" : "min-w-180"}>
+            <div className={cn("grid items-center gap-x-3 bg-table-head px-4 py-2.5 text-caption font-semibold text-ink-muted", columns)}>
               <span>#</span>
               <span>{t("Date")}</span>
               <span>{t("Entry")}</span>
@@ -131,12 +199,13 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
               <span className="text-right">{t("New value")}</span>
               <span className="text-right">{t("Difference")}</span>
               <span>{t("Trend")}</span>
+              {editable && <span className="text-right">{t("Actions")}</span>}
             </div>
             <ul>
               {lines.map((line, index) => {
                 const what = entry(line, index);
                 return (
-                  <li key={line.id} className={cn("grid items-center gap-x-3 border-t border-divider px-4 py-2.5 text-small", COLUMNS)}>
+                  <li key={line.id} aria-busy={busyId === line.id || undefined} className={cn("grid items-center gap-x-3 border-t border-divider px-4 py-2.5 text-small", columns)}>
                     <span className="text-ink-muted tabular-nums">{formatCount(index + 1, fmt)}</span>
                     <span className="whitespace-nowrap text-ink-2 tabular-nums">{day(line.date)}</span>
                     <span className="flex min-w-0 flex-col">
@@ -151,6 +220,21 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
                         {trend(line, index)}
                       </span>
                     </span>
+                    {editable && (
+                      // The first line is where the asset starts: its purchase is edited instead.
+                      <span className="flex justify-end gap-1">
+                        {index > 0 && (
+                          <>
+                            <IconAction onClick={() => openEdit(line)} disabled={isPending} aria-label={t("Edit the value update of {date}", { date: day(line.date) })} title={t("Edit")}>
+                              <Pencil aria-hidden="true" />
+                            </IconAction>
+                            <IconAction tone="danger" onClick={() => removeLine(line)} disabled={isPending} aria-label={t("Delete the value update of {date}", { date: day(line.date) })} title={t("Delete")}>
+                              {busyId === line.id && !editing ? <Loader size={14} label={t("Loading...")} /> : <Trash2 aria-hidden="true" />}
+                            </IconAction>
+                          </>
+                        )}
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -158,6 +242,47 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
           </div>
         </div>
       </div>
+      <PopupDialog
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        width={420}
+        title={t("Edit value update")}
+        sub={asset.name}
+        busy={isPending}
+        onSubmit={saveEdit}
+        footerClassName="bg-surface"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setEditing(null)} disabled={isPending} className="h-11 rounded-full px-4.5">
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" disabled={!formValid || isPending} className="h-11 rounded-full px-5">
+              {isPending && <Loader size={16} onDark label={t("Saving...")} />}
+              {t("Save changes")}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="stmt-value" className="text-[14px] font-medium text-ink">
+            {t("Value")}
+          </label>
+          <AmountInput id="stmt-value" size="md" value={form.value} onChange={(value) => setForm({ ...form, value })} currency={currency} autoFocus />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="stmt-date" className="text-[14px] font-medium text-ink">
+            {t("Update date")}
+          </label>
+          <DayInput id="stmt-date" size="md" value={form.date} onChange={(date) => setForm({ ...form, date })} min={bought} max={today} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="stmt-note" className="text-[14px] font-medium text-ink">
+            {t("Note")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+          </label>
+          <Input id="stmt-note" size="md" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} maxLength={200} placeholder={t("e.g. Checked with local broker")} frameClassName="rounded-[10px]" />
+        </div>
+      </PopupDialog>
+      {confirmDialog}
     </Drawer>
   );
 }
