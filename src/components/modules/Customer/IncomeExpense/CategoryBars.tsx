@@ -77,7 +77,7 @@ export function CategoryBars({ id, title, totalLabel, viewAll, breakdown, curren
             const name = categoryName(row, t);
             return (
               <li key={`${row.uncategorised ? "-" : ""}${row.name}`}>
-                <Link href={hrefFor(row)} title={t("See these transactions")} className="group flex flex-col gap-2 rounded-md p-2.5 hover:bg-hover focus-visible:bg-hover">
+                <Link href={hrefFor(row)} title={t("See these transactions")} className="group flex flex-col gap-2 rounded-md p-2.5 hover:bg-hover focus-visible:bg-hover in-data-[compact=true]:gap-1.5 in-data-[compact=true]:py-1.5">
                   <span className="flex items-center gap-2.5 text-body">
                     <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", color)} />
                     <span className="min-w-0 flex-1 truncate font-medium text-ink">{name}</span>

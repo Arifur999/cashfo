@@ -86,6 +86,9 @@ const PHONE_LIST_ID = "transactions-list-phone";
 const IE_KINDS = ["INCOME", "EXPENSE"] as const;
 // How long a saved row stays lit.
 const HIGHLIGHT_MS = 3500;
+// Settings › App preferences › Compact tables (data-compact on the page's
+// main): the rows close up, as a table's cells do.
+const COMPACT_ROW = "in-data-[compact=true]:min-h-12 in-data-[compact=true]:py-1";
 
 // Income & Expense > Transactions (the Transactions board): the totals
 // strip, the filters with the period and Print, and the list, newest first.
@@ -539,7 +542,7 @@ function DesktopRow({ number, row, currency, canManage, lit, onVoid, onEdit, onS
   return (
     // A voided row fades to 60% as the board sets it back; its buttons stay
     // solid. A row just saved is lit for a moment.
-    <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("min-h-16 gap-x-3.5 transition-colors duration-500", lit && "bg-emerald-soft", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
+    <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("min-h-16 gap-x-3.5 transition-colors duration-500", COMPACT_ROW, lit && "bg-emerald-soft", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
       <ListCell className="text-small text-ink-muted tabular-nums">{formatCount(number, fmt)}</ListCell>
       <ListCell className="text-small whitespace-nowrap text-ink-soft tabular-nums">{formatDate(row.transaction.transactionDate, "d MMM yyyy", fmt)}</ListCell>
       <ListCell className="hidden xl:block">
@@ -616,7 +619,7 @@ function PhoneRow({ row, currency, divided, lit }: { row: TransactionRow; curren
   return (
     <Link
       href={`/transactions/${row.transaction.id}`}
-      className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4 transition-colors duration-500", divided && "border-t border-divider", row.cancelled && "opacity-60", lit && "bg-emerald-soft")}
+      className={cn("box-content grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 px-4 transition-colors duration-500", COMPACT_ROW, divided && "border-t border-divider", row.cancelled && "opacity-60", lit && "bg-emerald-soft")}
     >
       <CategoryTile row={row} size={40} />
       <span className="flex min-w-0 flex-col">

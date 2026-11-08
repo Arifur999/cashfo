@@ -243,7 +243,7 @@ export function BudgetPlanPageClient({ businessId, currency, canManage, plans, s
               return (
                 <li
                   key={`${row.year}-${row.month}`}
-                  className={cn("relative grid grid-cols-2 items-center gap-x-5 gap-y-3 border-b border-divider px-4 py-4 last:border-b-0 md:h-18 md:px-6 md:py-0", COLUMNS, on ? "bg-emerald-wash" : "hover:bg-hover")}
+                  className={cn("relative grid grid-cols-2 items-center gap-x-5 gap-y-3 border-b border-divider px-4 py-4 last:border-b-0 md:h-18 md:px-6 md:py-0 in-data-[compact=true]:py-2.5 md:in-data-[compact=true]:h-14 md:in-data-[compact=true]:py-0", COLUMNS, on ? "bg-emerald-wash" : "hover:bg-hover")}
                 >
                   {on && <span aria-hidden="true" className="absolute top-3.5 bottom-3.5 left-0 w-0.75 rounded-r-[3px] bg-emerald" />}
                   {/* The month picks the row; its overlay makes the whole row the target. */}

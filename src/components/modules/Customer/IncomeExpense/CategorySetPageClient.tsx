@@ -217,7 +217,7 @@ function CategoryRow({
   const { t, fmt } = useLocale();
   const tone = categoryTone(color);
   return (
-    <li className={cn("flex min-h-16 items-center gap-3 border-b border-divider py-2.5 pr-3 pl-5 transition-colors duration-500 last:border-b-0 hover:bg-hover", lit && "bg-emerald-soft hover:bg-emerald-soft")}>
+    <li className={cn("flex min-h-16 items-center gap-3 border-b border-divider py-2.5 pr-3 pl-5 transition-colors duration-500 last:border-b-0 hover:bg-hover in-data-[compact=true]:min-h-12 in-data-[compact=true]:py-1", lit && "bg-emerald-soft hover:bg-emerald-soft")}>
       <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] text-title font-bold", tone.bg, tone.fg)}>
         {[...name][0]?.toUpperCase()}
       </span>
