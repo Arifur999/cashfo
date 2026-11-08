@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProv
 import { TodayTasksProvider } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { ChooseWorkspaceRedirect } from "@/components/modules/Customer/Workspace/ChooseWorkspaceRedirect";
 import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
+import { AppLockGate } from "@/components/modules/Customer/Settings/AppLockGate";
 import { CUSTOMER_HOME_ROUTE, MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { resolveActiveWorkspace } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
@@ -127,6 +128,9 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                 <TodayTasksProvider>
                   <TopbarProvider>
                     <AddActionsProvider>
+                      {/* Settings › Security › App lock, on this device; never over
+                          a support admin's read-only view. */}
+                      {!user.impersonatedBy && <AppLockGate userId={user.id} />}
                       {/* The app's sidebar on the left (Money Tracker or Habit
                           Tracker, by the page); the top bar and the one
                           scrolling region on the right. */}
