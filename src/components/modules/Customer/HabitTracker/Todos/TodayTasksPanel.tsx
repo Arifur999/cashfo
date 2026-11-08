@@ -17,6 +17,7 @@ import { addTodoItemAction, createTodoListAction, moveTodoItemToNextDayAction, r
 import { getAppToday } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { iconActionClass } from "@/components/smartly/IconAction";
 import { cn } from "@/lib/utils";
 import { CloseButton } from "../Tracker/PanelParts";
 import { PriorityMenu, TaskMeta } from "./TaskBits";
@@ -182,7 +183,8 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
   const fullLink = !inHabits ? "Open in Habit Tracker" : items.length === 0 ? "All days" : "Open full list";
   const rowH = sheet ? "min-h-15" : "min-h-13.5";
   const doneRowH = sheet ? "min-h-13" : "min-h-10.5";
-  const btn = cn("flex shrink-0 items-center justify-center rounded-sm hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11", sheet ? "size-10" : "size-7.5");
+  // The board's small row actions (.sm-act): 30px here, 40px in the sheet.
+  const btn = (tone: "default" | "danger") => cn(iconActionClass(tone), sheet ? "size-10" : "size-7.5");
   // The box is 20px; its hit area reaches 44px.
   const box = "relative flex size-5 shrink-0 items-center justify-center rounded-[6px] after:absolute after:-inset-3 disabled:opacity-50";
   const groupHead = "flex items-center gap-2 text-[11.5px] leading-[normal] font-semibold tracking-[0.04em] text-ink-muted uppercase";
@@ -258,11 +260,11 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
                     <TaskMeta item={item} day={today} look="plain" />
                   </span>
                 </label>
-                <button type="button" onClick={() => void moveToTomorrow(item)} disabled={busy.has(item.id) || movingAll} aria-label={`${t("Move to tomorrow")}: ${item.text}`} title={t("Move to tomorrow")} className={cn(btn, "text-ink-muted hover:text-ink")}>
-                  <ArrowRightToLine className="size-4" strokeWidth={2.25} aria-hidden="true" />
+                <button type="button" onClick={() => void moveToTomorrow(item)} disabled={busy.has(item.id) || movingAll} aria-label={`${t("Move to tomorrow")}: ${item.text}`} title={t("Move to tomorrow")} className={btn("default")}>
+                  <ArrowRightToLine strokeWidth={2.25} aria-hidden="true" />
                 </button>
-                <button type="button" onClick={() => setRemoveId(item.id)} disabled={busy.has(item.id) || movingAll} aria-label={`${t("Delete")}: ${item.text}`} title={t("Delete")} className={cn(btn, "text-ink-faint hover:text-expense")}>
-                  <Trash2 className="size-4" aria-hidden="true" />
+                <button type="button" onClick={() => setRemoveId(item.id)} disabled={busy.has(item.id) || movingAll} aria-label={`${t("Delete")}: ${item.text}`} title={t("Delete")} className={btn("danger")}>
+                  <Trash2 aria-hidden="true" />
                 </button>
               </div>
             ),
@@ -290,8 +292,8 @@ function PanelBody({ sheet, onClose }: { sheet: boolean; onClose: () => void }) 
                         </button>
                         <span className="min-w-0 flex-1 truncate text-body text-ink-faint line-through">{item.text}</span>
                       </label>
-                      <button type="button" onClick={() => setRemoveId(item.id)} disabled={busy.has(item.id)} aria-label={`${t("Delete")}: ${item.text}`} title={t("Delete")} className={cn(btn, "text-input hover:text-expense")}>
-                        <Trash2 className="size-4" aria-hidden="true" />
+                      <button type="button" onClick={() => setRemoveId(item.id)} disabled={busy.has(item.id)} aria-label={`${t("Delete")}: ${item.text}`} title={t("Delete")} className={btn("danger")}>
+                        <Trash2 aria-hidden="true" />
                       </button>
                     </div>
                   ),
