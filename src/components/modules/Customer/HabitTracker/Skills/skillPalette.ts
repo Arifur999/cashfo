@@ -9,16 +9,23 @@ export interface SkillPalette {
   ink: string; // icon colour on the tile
 }
 
+// The v16 Skills boards' eight colours (violet, sky, green, pink, amber,
+// teal, red, indigo), each darkening to 62% of itself; slate stays for the
+// skills that have it.
 export const SKILL_PALETTE: SkillPalette[] = [
-  { key: "violet", label: "Violet", from: "#8b5cf6", to: "#5b21b6", ink: "#ffffff" },
-  { key: "indigo", label: "Indigo", from: "#6366f1", to: "#3730a3", ink: "#ffffff" },
-  { key: "lime", label: "Lime", from: "#bef264", to: "#4d7c0f", ink: "#1a2e05" },
-  { key: "teal", label: "Teal", from: "#2dd4bf", to: "#0f766e", ink: "#ffffff" },
-  { key: "rose", label: "Rose", from: "#fb7185", to: "#be123c", ink: "#ffffff" },
-  { key: "amber", label: "Amber", from: "#fbbf24", to: "#b45309", ink: "#3b1d02" },
-  { key: "sky", label: "Sky", from: "#38bdf8", to: "#0369a1", ink: "#ffffff" },
-  { key: "slate", label: "Slate", from: "#64748b", to: "#1e293b", ink: "#ffffff" },
+  { key: "violet", label: "Violet", from: "#7c3aed", to: "#4d2493", ink: "#ffffff" },
+  { key: "sky", label: "Sky", from: "#0284c7", to: "#01527b", ink: "#ffffff" },
+  { key: "lime", label: "Green", from: "#16a34a", to: "#0e652e", ink: "#ffffff" },
+  { key: "rose", label: "Pink", from: "#db2777", to: "#88184a", ink: "#ffffff" },
+  { key: "amber", label: "Amber", from: "#d97706", to: "#874a04", ink: "#ffffff" },
+  { key: "teal", label: "Teal", from: "#0f766e", to: "#094944", ink: "#ffffff" },
+  { key: "red", label: "Red", from: "#dc2626", to: "#881818", ink: "#ffffff" },
+  { key: "indigo", label: "Indigo", from: "#4f46e5", to: "#312b8e", ink: "#ffffff" },
+  { key: "slate", label: "Slate", from: "#475569", to: "#2c3541", ink: "#ffffff" },
 ];
+
+// The eight a form offers (slate is kept, not offered).
+export const SKILL_PICKER = SKILL_PALETTE.filter((p) => p.key !== "slate");
 
 // Picker order; the label is what the icon stands for (through t()).
 export const SKILL_ICONS: { key: string; label: string }[] = [

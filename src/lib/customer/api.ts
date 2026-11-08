@@ -1733,10 +1733,10 @@ export interface BookDetail {
 }
 
 // Habit Tracker -> Skills (the "Course" category): something being learned,
-// counted in lessons (a course) or hours (any skill). `target` and `progress`
-// are in the skill's unit -- HOURS are MINUTES (the UI shows hours). `status`
-// is settled server-side from progress (SkillsService.settle).
-export type SkillUnit = "LESSONS" | "HOURS";
+// counted in lessons or chapters (a course) or hours (any skill). `target`,
+// `progress` and `base` are in the skill's unit -- HOURS are MINUTES (the UI
+// shows hours). progress = base + every day logged, the target once completed.
+export type SkillUnit = "LESSONS" | "HOURS" | "CHAPTERS";
 export type SkillStatus = "WANT_TO_LEARN" | "LEARNING" | "COMPLETED";
 
 export interface Skill {
@@ -1747,8 +1747,15 @@ export interface Skill {
   target: number;
   progress: number;
   status: SkillStatus;
-  color: string; // key into components/habit-tracker/skills/skillPalette.ts
+  color: string; // key into components/modules/Customer/HabitTracker/Skills/skillPalette.ts
   icon: string; // same
+  // The v16 Skills pages (optional while an older backend answers).
+  category?: string; // skillsBoard.ts SKILL_CATEGORIES
+  link?: string;
+  why?: string;
+  targetDate?: string | null; // YYYY-MM-DD
+  pausedAt?: string | null; // learning, but put down for now
+  base?: number; // done before it was tracked here
   startedAt: string | null;
   completedAt: string | null;
   completedYear: number | null;
@@ -1759,16 +1766,79 @@ export interface Skill {
 export interface SkillWeekDay {
   date: string; // 'YYYY-MM-DD', Asia/Dhaka
   minutes: number; // learned that day in HOURS skills
-  lessons: number; // learned that day in LESSONS skills
+  lessons: number; // learned that day in LESSONS and CHAPTERS skills
   bySkill: Record<string, number>; // that day's amount per skill id, in the skill's unit
+}
+
+// What the list pages show of each skill beyond its row.
+export interface SkillSummary {
+  sessions: number; // days with practice
+  logged: number; // in the unit
+  lastPractised: string | null;
+  steps: { done: number; total: number; next: string | null };
+  lastNote: { title: string; text: string; date: string } | null;
+  notes?: number;
+  resources?: number;
+}
+
+// One day's practice of one skill.
+export interface SkillLogRow {
+  skillId: string;
+  date: string;
+  amount: number;
 }
 
 export interface SkillsOverview {
   year: number; // the current Asia/Dhaka year
   goalTarget: number | null; // this year's "complete N skills" goal
   streak: number; // consecutive days with activity, up to today
+  bestStreak?: number; // the longest run ever
   week: SkillWeekDay[]; // the last 7 days, oldest first, ending today
   skills: Skill[];
+  summaries?: Record<string, SkillSummary>;
+  // Every day of practice in the last 400 days, oldest first.
+  logs?: SkillLogRow[];
+}
+
+export interface PracticeEntry {
+  date: string;
+  amount: number;
+  note: string;
+}
+
+export interface SkillStep {
+  id: string;
+  title: string;
+  position: number;
+  done: boolean;
+  doneOn: string | null;
+}
+
+export interface SkillNote {
+  id: string;
+  date: string;
+  title: string;
+  text: string;
+  createdAt: string;
+}
+
+export type SkillResourceKind = "COURSE" | "VIDEO" | "BOOK" | "LINK";
+
+export interface SkillResource {
+  id: string;
+  kind: SkillResourceKind;
+  title: string;
+  url: string;
+}
+
+// The skill page: the skill, every day of practice (newest first), the
+// roadmap, the notes (newest first) and the resources.
+export interface SkillDetail {
+  skill: Skill;
+  logs: PracticeEntry[];
+  steps: SkillStep[];
+  notes: SkillNote[];
+  resources: SkillResource[];
 }
 
 // One month sheet (Namaz), one Ramadan, or one named challenge ("Others" --
