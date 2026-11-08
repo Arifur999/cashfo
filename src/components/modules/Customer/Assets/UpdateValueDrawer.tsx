@@ -34,6 +34,8 @@ interface UpdateValueDrawerProps {
   asset: Asset | null;
   categories: AssetCategoryOption[];
   currency: string;
+  // Opens on its details (Purchase & Sell's Edit purchase).
+  initialMode?: Mode;
 }
 
 type Mode = "value" | "details";
@@ -45,7 +47,7 @@ const CHIP = { income: "bg-mint-50 text-emerald", expense: "bg-expense-soft text
 // under it. Details: its name, type, note and (while the backend allows it)
 // purchase date set right, or the asset deleted when it was entered by
 // mistake.
-export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency }: UpdateValueDrawerProps) {
+export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency, initialMode = "value" }: UpdateValueDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -70,7 +72,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     setPrevKey(key);
     if (open && asset) {
       setSaved(null);
-      setMode("value");
+      setMode(initialMode);
       setValue(String(Number(asset.currentValue)));
       setDate(getAppToday());
       setNote("");
