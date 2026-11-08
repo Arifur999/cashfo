@@ -202,3 +202,35 @@ export function yearFigures(books: Book[], months: number[], year: number, today
     daysPerBook: spans.length ? Math.round(spans.reduce((sum, n) => sum + n, 0) / spans.length) : null,
   };
 }
+
+export interface PeriodFigures {
+  // Finished in the period, latest first.
+  finished: Book[];
+  started: Book[];
+  // Started in the period and put down since.
+  stopped: number;
+  pages: number;
+  // Pages a day over the period's days so far.
+  perDay: number;
+  daysPerBook: number | null;
+}
+
+// Library › Dashboard for any period (a month, a year, the reader's own
+// days, YYYY-MM-DD both in): the books finished and started in it, the
+// pages read (from the server's log) and the average days a book took.
+export function periodFigures(books: Book[], from: string, to: string, pages: number, today: string): PeriodFigures {
+  const inside = (iso: string | null) => !!iso && dayKey(iso) >= from && dayKey(iso) <= to;
+  const finished = books.filter((b) => b.status === "FINISHED" && inside(b.finishedAt)).sort((a, b) => (b.finishedAt ?? "").localeCompare(a.finishedAt ?? ""));
+  const started = books.filter((b) => inside(b.startedAt));
+  const end = to < today ? to : today;
+  const days = end >= from ? daysSince(from, end) + 1 : 0;
+  const spans = finished.map((b) => daysWithBook(b, today)).filter((n): n is number => n !== null);
+  return {
+    finished,
+    started,
+    stopped: started.filter(isPaused).length,
+    pages,
+    perDay: days > 0 ? Math.round(pages / days) : 0,
+    daysPerBook: spans.length ? Math.round(spans.reduce((sum, n) => sum + n, 0) / spans.length) : null,
+  };
+}

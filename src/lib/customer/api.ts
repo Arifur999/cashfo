@@ -1613,14 +1613,34 @@ export interface Book {
   totalPages: number;
   pagesRead: number;
   status: BookStatus;
-  color: string; // key into components/habit-tracker/books/bookPalette.ts
+  color: string; // key into components/modules/Customer/HabitTracker/Books/bookPalette.ts
   startedAt: string | null;
   finishedAt: string | null;
   finishedYear: number | null;
   // Put down for now while being read (still READING, its page kept).
   pausedAt?: string | null;
+  // What the reader paid, in taka; null when they didn't say.
+  price?: number | null;
+  // A built-in shelf key (libraryBoard.ts BUILT_IN_SHELVES) or the id of one
+  // of the reader's own shelves.
+  shelf?: string;
+  // Whether a summary is written (the text comes with the book page).
+  hasSummary?: boolean;
+  summaryAt?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// The book page's book: the summary itself too.
+export interface BookWithSummary extends Book {
+  summary: string;
+}
+
+// A shelf of the reader's own on My books ("Poetry").
+export interface BookShelf {
+  id: string;
+  name: string;
+  color: string; // a bookPalette key
 }
 
 // Library › Dashboard: one Asia/Dhaka year of reading, month by month
@@ -1632,14 +1652,41 @@ export interface BookYear {
   years: number[];
   months: number[];
   bookMonths: Record<string, number[]>;
+  // Every month ('YYYY-MM') with reading in it or a book started or finished.
+  activeMonths?: string[];
 }
 
-// A note on a book, or a line the reader liked, with its page.
+// The pages read from one day to another (both in), in all and per book.
+export interface BookPages {
+  from: string;
+  to: string;
+  total: number;
+  byBook: Record<string, number>;
+}
+
+// What a note is: a line the reader loved, a point marked to remember, or
+// a thought of their own.
+export type BookNoteKind = "HIGHLIGHT" | "UNDERLINE" | "THOUGHT";
+export type NoteMarkColor = "yellow" | "green" | "pink";
+
+// Words highlighted while reading a note: [s, e) character offsets into its text.
+export interface NoteMark {
+  s: number;
+  e: number;
+  c: NoteMarkColor;
+}
+
+// A note on a page of a book: the line from the book ('' when none) and the
+// reader's words, on a day they pick.
 export interface BookNote {
   id: string;
   bookId: string;
   page: number | null;
+  kind?: BookNoteKind;
+  line?: string;
   text: string;
+  date?: string; // YYYY-MM-DD
+  marks?: NoteMark[];
   createdAt: string;
 }
 
@@ -1647,6 +1694,13 @@ export interface BookNote {
 export interface ReadingDay {
   date: string; // YYYY-MM-DD
   pages: number;
+}
+
+// A book's latest day of reading: the day and the page it began and ended on.
+export interface ReadingDayRange {
+  date: string;
+  from: number;
+  to: number;
 }
 
 export interface BooksOverview {
@@ -1661,6 +1715,21 @@ export interface BooksOverview {
   pagesToday: Record<string, number>;
   // The notes on each book being read, oldest first, by book id.
   notes: Record<string, BookNote[]>;
+  // The reader's own shelves, oldest first.
+  shelves?: BookShelf[];
+  // Every book with notes: how many, and the days of the first and last.
+  noteStats?: Record<string, { count: number; first: string; last: string }>;
+  // The pages read in each book on each of the last seven days.
+  lastWeek?: { bookId: string; date: string; pages: number }[];
+  // Each book being read: its latest day of reading, and the day before it.
+  lastLogs?: Record<string, { latest: ReadingDayRange; before: string | null }>;
+}
+
+// The book page: the book with its summary, every note, the shelves.
+export interface BookDetail {
+  book: BookWithSummary;
+  notes: BookNote[];
+  shelves: BookShelf[];
 }
 
 // Habit Tracker -> Skills (the "Course" category): something being learned,
