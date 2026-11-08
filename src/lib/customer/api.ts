@@ -1454,12 +1454,14 @@ export type GroupActivityAction = "ADDED" | "EDITED" | "DELETED" | "MONTH";
 export interface GroupActivity {
   id: string;
   action: GroupActivityAction;
-  // EXPENSE, CONTRIBUTION, SETTLE, MEMBER, CATEGORY, BUDGET, SETTINGS, SPLIT, MEALS, MONTH
+  // EXPENSE, CONTRIBUTION, SETTLE, HANDOVER, MEMBER, CATEGORY, BUDGET, SETTINGS, SPLIT, MEALS, MONTH
   entity: string;
   entityId: string | null;
   summary: Record<string, unknown>;
   change: { field: string; from: unknown; to: unknown }[] | null;
+  // Who made the change (their initials when they hide their name in groups).
   actorName: string | null;
+  actorUserId?: string | null;
   createdAt: string;
 }
 

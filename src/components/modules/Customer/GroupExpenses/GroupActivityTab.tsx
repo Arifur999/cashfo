@@ -86,10 +86,12 @@ export function GroupActivityTab({ data, onKind, onPage, busy }: GroupActivityTa
                 {group.items.map((entry) => {
                   const line = activityLine(entry, data.members, data.currency, t, fmt);
                   const who = entry.actorName ?? owner?.name ?? t("You");
+                // The owner's photo for their own lines; anyone else by name (or initials).
+                const byOwner = !entry.actorName || entry.actorName === owner?.name;
                   return (
                     <li key={entry.id} className="flex items-start gap-3 border-b border-divider py-3 last:border-b-0">
                       <span className="relative shrink-0">
-                        <MemberAvatar member={owner ?? { id: "you", name: who, photoUrl: null }} members={data.members} size={36} />
+                        <MemberAvatar member={byOwner && owner ? owner : { id: entry.actorUserId ?? entry.id, name: who, photoUrl: null }} members={data.members} size={36} />
                         <span aria-hidden="true" className={cn("absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2 border-surface", ACTION_DOTS[entry.action])} />
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col gap-1">
