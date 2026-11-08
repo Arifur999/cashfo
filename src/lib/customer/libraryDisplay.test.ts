@@ -3,7 +3,7 @@ import { fillText } from "@/lib/i18n/fill";
 import type { Translate } from "@/lib/i18n/message";
 import { translate } from "@/lib/i18n/translate";
 import type { Book } from "./api";
-import { applyProgress, bookShelf, daysSince, daysToFinish, daysWithBook, finishedByMonth, finishedIn, goalPace, isPaused, monthBooks, nowReading, pageOfText, paceSentence, pagesLeft, progressPct, readingPace, shelves, weekPages, yearFigures } from "./libraryDisplay";
+import { applyProgress, bookShelf, daysSince, daysToFinish, daysWithBook, finishedByMonth, finishedIn, goalPace, isPaused, monthBooks, nowReading, pageOfText, paceSentence, pagesLeft, periodFigures, progressPct, readingPace, shelves, weekPages, yearFigures } from "./libraryDisplay";
 
 // The Bangla dictionary, the way useLocale().t reads it.
 const bn: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
@@ -172,5 +172,42 @@ describe("goalPace", () => {
     expect(paceSentence(0.1)).toBe("About one book a day to finish by December.");
     expect(paceSentence(2.3, bn, "bn")).toBe("ডিসেম্বরের মধ্যে শেষ করতে মোটামুটি প্রতি ২ সপ্তাহে একটি বই।");
     expect(pageOfText({ pagesRead: 120, totalPages: 320 }, bn, "bn")).toBe("পৃষ্ঠা ১২০ / ৩২০");
+  });
+});
+
+describe("periodFigures", () => {
+  const book = (id: string, more: Partial<Book>): Book => ({
+    id,
+    title: id,
+    author: "",
+    totalPages: 200,
+    pagesRead: 0,
+    status: "WANT_TO_READ",
+    color: "walnut",
+    startedAt: null,
+    finishedAt: null,
+    finishedYear: null,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    ...more,
+  });
+  const books = [
+    book("a", { status: "FINISHED", startedAt: "2026-09-01T04:00:00.000Z", finishedAt: "2026-09-10T04:00:00.000Z", pagesRead: 200 }),
+    book("b", { status: "READING", startedAt: "2026-09-20T04:00:00.000Z", pausedAt: "2026-10-01T04:00:00.000Z", pagesRead: 50 }),
+    book("c", { status: "FINISHED", startedAt: "2026-07-01T04:00:00.000Z", finishedAt: "2026-07-05T04:00:00.000Z", pagesRead: 200 }),
+  ];
+
+  it("counts a month's books, its pages a day and the days a book took", () => {
+    const figures = periodFigures(books, "2026-09-01", "2026-09-30", 300, "2026-11-08");
+    expect(figures.finished.map((b) => b.id)).toEqual(["a"]);
+    expect(figures.started.map((b) => b.id)).toEqual(["a", "b"]);
+    expect(figures.stopped).toBe(1);
+    expect(figures.perDay).toBe(10);
+    expect(figures.daysPerBook).toBe(10);
+  });
+
+  it("counts only the days so far of a period still running", () => {
+    expect(periodFigures(books, "2026-11-01", "2026-11-30", 80, "2026-11-08").perDay).toBe(10);
+    expect(periodFigures([], "2026-12-01", "2026-12-31", 0, "2026-11-08")).toMatchObject({ perDay: 0, daysPerBook: null });
   });
 });

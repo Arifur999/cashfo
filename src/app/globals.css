@@ -314,6 +314,33 @@
   --worth-up: #86efac;
   --worth-down: #fca5a5;
   --worth-note: #9cc7be;
+  /* My Library (v16): the note reader's paper and desk, the wooden bookshelf
+     of My books, and the three colours words are highlighted in. */
+  --paper-desk: #f1efe9;
+  --paper: #fffdf8;
+  --paper-edge: #e7e2d6;
+  --paper-rule: #eee8da;
+  --paper-ink: #2a2418;
+  --paper-muted: #8a7f66;
+  --paper-faint: #a39878;
+  --shelf-wall: #fdfbf7;
+  --shelf-wall-end: #f8f4ec;
+  --shelf-back: #f3ebdd;
+  --shelf-back-end: #eadfcb;
+  --shelf-plank: #d9b48a;
+  --shelf-plank-mid: #c39466;
+  --shelf-plank-end: #a97a4e;
+  --shelf-ink: #3b2f22;
+  --shelf-chip: #efe6d8;
+  --shelf-chip-ink: #6b5844;
+  --shelf-slot: #c9b79c;
+  --shelf-slot-ink: #8a7356;
+  --mark-yellow: #fef08a;
+  --mark-yellow-edge: #eab308;
+  --mark-green: #bbf7d0;
+  --mark-green-edge: #22c55e;
+  --mark-pink: #fbcfe8;
+  --mark-pink-edge: #ec4899;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -572,6 +599,31 @@
   --pink-wash: #34172a;
   --nav-on: #162623;
   --emerald-tint: #1c4536;
+  --paper-desk: #12100c;
+  --paper: #1d1a15;
+  --paper-edge: #3a352b;
+  --paper-rule: #2f2a22;
+  --paper-ink: #ece4d2;
+  --paper-muted: #b3a88c;
+  --paper-faint: #8c8268;
+  --shelf-wall: #16130f;
+  --shelf-wall-end: #1b1712;
+  --shelf-back: #29231a;
+  --shelf-back-end: #231e16;
+  --shelf-plank: #7a5a3a;
+  --shelf-plank-mid: #6a4c30;
+  --shelf-plank-end: #563c25;
+  --shelf-ink: #efe3d0;
+  --shelf-chip: #3a3226;
+  --shelf-chip-ink: #d6c4a8;
+  --shelf-slot: #6b5c46;
+  --shelf-slot-ink: #b7a383;
+  --mark-yellow: #6b5a0a;
+  --mark-yellow-edge: #eab308;
+  --mark-green: #14532d;
+  --mark-green-edge: #22c55e;
+  --mark-pink: #831843;
+  --mark-pink-edge: #ec4899;
 
   --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --elevation-float: 0 10px 28px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -986,6 +1038,31 @@ html:not(.dark) [data-app="habit"] {
   --color-worth-up: var(--worth-up);
   --color-worth-down: var(--worth-down);
   --color-worth-note: var(--worth-note);
+  --color-paper-desk: var(--paper-desk);
+  --color-paper: var(--paper);
+  --color-paper-edge: var(--paper-edge);
+  --color-paper-rule: var(--paper-rule);
+  --color-paper-ink: var(--paper-ink);
+  --color-paper-muted: var(--paper-muted);
+  --color-paper-faint: var(--paper-faint);
+  --color-shelf-wall: var(--shelf-wall);
+  --color-shelf-wall-end: var(--shelf-wall-end);
+  --color-shelf-back: var(--shelf-back);
+  --color-shelf-back-end: var(--shelf-back-end);
+  --color-shelf-plank: var(--shelf-plank);
+  --color-shelf-plank-mid: var(--shelf-plank-mid);
+  --color-shelf-plank-end: var(--shelf-plank-end);
+  --color-shelf-ink: var(--shelf-ink);
+  --color-shelf-chip: var(--shelf-chip);
+  --color-shelf-chip-ink: var(--shelf-chip-ink);
+  --color-shelf-slot: var(--shelf-slot);
+  --color-shelf-slot-ink: var(--shelf-slot-ink);
+  --color-mark-yellow: var(--mark-yellow);
+  --color-mark-yellow-edge: var(--mark-yellow-edge);
+  --color-mark-green: var(--mark-green);
+  --color-mark-green-edge: var(--mark-green-edge);
+  --color-mark-pink: var(--mark-pink);
+  --color-mark-pink-edge: var(--mark-pink-edge);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);

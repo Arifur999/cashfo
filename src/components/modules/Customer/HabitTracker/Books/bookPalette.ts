@@ -1,5 +1,5 @@
 // Cover colours a book can have. The keys match the backend's BOOK_COLORS
-// (backend/src/books/book-colors.ts) -- keep the two in sync.
+// (backend src/books/book-colors.ts) -- keep the two in sync.
 export interface BookPalette {
   key: string;
   label: string; // English, passed through t()
@@ -8,19 +8,19 @@ export interface BookPalette {
   ink: string; // title colour on the cover
 }
 
-// design-v4 draws the covers in deeper, cleaner colours (the LibraryHome
-// board: Atomic Habits in #9A3412 with a #7C2D12 spine).
+// The v16 boards draw a cover in one of their colours, darkening to 40% of
+// it at the bottom right, with white type (LibraryHome, LibraryBooks).
 export const BOOK_PALETTE: BookPalette[] = [
-  { key: "walnut", label: "Walnut", from: "#9a3412", to: "#7c2d12", ink: "#ffedd5" },
-  { key: "oxblood", label: "Oxblood", from: "#b91c1c", to: "#7f1d1d", ink: "#fee2e2" },
-  { key: "forest", label: "Forest", from: "#047857", to: "#065f46", ink: "#d1fae5" },
-  { key: "navy", label: "Navy", from: "#1e3a8a", to: "#172554", ink: "#dbeafe" },
-  { key: "mustard", label: "Mustard", from: "#a16207", to: "#713f12", ink: "#fef9c3" },
-  { key: "teal", label: "Teal", from: "#0f766e", to: "#134e4a", ink: "#ccfbf1" },
-  { key: "plum", label: "Plum", from: "#6d28d9", to: "#4c1d95", ink: "#ede9fe" },
-  { key: "slate", label: "Slate", from: "#334155", to: "#1e293b", ink: "#e2e8f0" },
-  { key: "terracotta", label: "Terracotta", from: "#b45309", to: "#78350f", ink: "#fef3c7" },
-  { key: "sage", label: "Sage", from: "#4d7c0f", to: "#365314", ink: "#ecfccb" },
+  { key: "walnut", label: "Walnut", from: "#c2410c", to: "#742707", ink: "#ffffff" },
+  { key: "oxblood", label: "Oxblood", from: "#be185d", to: "#720e38", ink: "#ffffff" },
+  { key: "forest", label: "Forest", from: "#15803d", to: "#0d4d25", ink: "#ffffff" },
+  { key: "navy", label: "Navy", from: "#1d4ed8", to: "#112f82", ink: "#ffffff" },
+  { key: "mustard", label: "Mustard", from: "#a16207", to: "#613b04", ink: "#ffffff" },
+  { key: "teal", label: "Teal", from: "#0f766e", to: "#094742", ink: "#ffffff" },
+  { key: "plum", label: "Plum", from: "#7c3aed", to: "#4a238e", ink: "#ffffff" },
+  { key: "slate", label: "Slate", from: "#334155", to: "#1f2733", ink: "#ffffff" },
+  { key: "terracotta", label: "Terracotta", from: "#b45309", to: "#6c3205", ink: "#ffffff" },
+  { key: "sage", label: "Sage", from: "#4d7c0f", to: "#2e4a09", ink: "#ffffff" },
 ];
 
 export function paletteFor(key: string): BookPalette {
