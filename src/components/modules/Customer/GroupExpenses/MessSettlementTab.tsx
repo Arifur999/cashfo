@@ -16,6 +16,7 @@ import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { ReopenMonthButton } from "./ReopenMonthButton";
 import { BalanceCell, Figure, MemberAvatar, SETTLE_UP_ID } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
@@ -154,6 +155,7 @@ export function MessSettlementTab({ data, view, onRecordPayment, canPay, onClose
           </span>
         )}
         <span className="flex-1" />
+        {view.closed && onCloseMonth && <ReopenMonthButton data={data} />}
         {view.closed ? (
           <span className="flex items-center gap-2 text-small font-semibold text-ink-2">
             <Lock className="size-4" aria-hidden="true" />

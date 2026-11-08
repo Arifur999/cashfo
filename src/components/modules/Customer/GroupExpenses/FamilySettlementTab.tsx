@@ -24,6 +24,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
 import { FamilyCloseDialog } from "./FamilyCloseDialog";
+import { ReopenMonthButton } from "./ReopenMonthButton";
 import { Figure, MemberAvatar, SETTLE_UP_ID } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
@@ -367,9 +368,12 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
             <span className="text-small text-ink-muted">{note}</span>
           </div>
           {closed ? (
-            <span className="flex items-center gap-1.5 text-small font-semibold text-ink-2">
-              <Lock className="size-4" aria-hidden="true" />
-              {t("{month} is closed", { month: monthLong })}
+            <span className="flex flex-wrap items-center gap-3">
+              <span className="flex items-center gap-1.5 text-small font-semibold text-ink-2">
+                <Lock className="size-4" aria-hidden="true" />
+                {t("{month} is closed", { month: monthLong })}
+              </span>
+              {manage && <ReopenMonthButton data={data} />}
             </span>
           ) : (
             manage && (

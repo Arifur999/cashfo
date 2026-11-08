@@ -170,6 +170,7 @@ export function activityLine(entry: GroupActivity, members: GroupMember[], curre
     case "MONTH": {
       const month = text(s.periodStart) ? monthName(text(s.periodStart).slice(0, 7), fmt, "long", true) : "";
       const open = Number(s.open ?? 0);
+      if (s.reopened) return { verb: t("reopened"), what: month, changes, meta: Number(s.carriedRemoved ?? 0) > 0 ? t("the balances it carried were taken back") : "" };
       return {
         verb: t("closed"),
         what: month,

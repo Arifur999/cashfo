@@ -1446,4 +1446,14 @@ export const groupExpensesDictionary: Record<string, string> = {
   "added the group to their account as": "গ্রুপটা নিজের অ্যাকাউন্টে যোগ করেছেন:",
   "changed the access of": "অ্যাক্সেস বদলেছেন:",
   "username {name}": "ইউজারনেম {name}",
+  // v16 Group: reopen a closed month
+  "reopened": "আবার খুলেছেন",
+  "the balances it carried were taken back": "পরের মাসে নেওয়া ব্যালেন্স ফেরত নেওয়া হয়েছে",
+  "Failed to reopen the month": "মাস আবার খোলা যায়নি",
+  "{month} is open again": "{month} আবার খোলা হয়েছে",
+  "Reopen month": "মাস আবার খুলুন",
+  "Reopen {month} first": "আগে {month} খুলুন",
+  "{later} is closed too and starts from {month}’s balances. Reopen the newest month first, then this one.": "{later}-ও বন্ধ, আর সেটা {month}-এর ব্যালেন্স থেকে শুরু হয়। আগে সবচেয়ে নতুন মাসটা খুলুন, তারপর এটা।",
+  "Reopen {month}?": "{month} আবার খুলবেন?",
+  "Its entries can be added, changed and deleted again. If anything changes, the balances carried into {next} change too. This is written to the Activity log.": "এর এন্ট্রি আবার যোগ, বদল ও মোছা যাবে। কিছু বদলালে {next}-এ যাওয়া ব্যালেন্সও বদলাবে। এটা অ্যাক্টিভিটি লগে লেখা থাকবে।",
 };
