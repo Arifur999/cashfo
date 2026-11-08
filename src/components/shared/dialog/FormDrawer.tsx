@@ -23,6 +23,8 @@ interface FormDrawerProps {
   title: string;
   // Under the title, small and muted ("132 people are on this plan").
   description?: React.ReactNode;
+  // Beside the close button (a status chip).
+  aside?: React.ReactNode;
   trigger?: React.ReactNode;
   width?: keyof typeof WIDTH_CLASSES;
   // A drawer that only shows something (an audit entry) closes on a click
@@ -36,7 +38,7 @@ interface FormDrawerProps {
 // strip foot pinned to the bottom (give the form FormDialogFooter's
 // `pinned`). Its 24px corners come from globals.css. Like FormDialog, a
 // stray outside click doesn't throw the form away; Escape still closes.
-const FormDrawer = ({ open, onOpenChange, title, description, trigger, width = "md", closeOnOutsideClick = false, children }: FormDrawerProps) => {
+const FormDrawer = ({ open, onOpenChange, title, description, aside, trigger, width = "md", closeOnOutsideClick = false, children }: FormDrawerProps) => {
   const { translate } = useLocale();
   const shownDescription = typeof description === "string" ? translate(description) : description;
   return (
@@ -49,10 +51,11 @@ const FormDrawer = ({ open, onOpenChange, title, description, trigger, width = "
         onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
       >
         <SheetHeader className="flex-row items-start justify-between gap-3 border-b border-line px-6 py-4.5">
-          <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{translate(title)}</SheetTitle>
             <SheetDescription className={description ? "text-small text-ink-muted" : "sr-only"}>{shownDescription ?? translate(title)}</SheetDescription>
           </div>
+          {aside && <div className="mt-0.5 shrink-0">{aside}</div>}
           <SheetClose asChild>
             <Button variant="ghost" size="icon-xs" aria-label={translate("Close")} className="-my-0.5 -mr-1.5 size-8.5 text-ink-muted">
               <X className="size-4.5" aria-hidden="true" />
