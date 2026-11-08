@@ -18,6 +18,7 @@ const CreateCouponButton = () => {
 
   return (
     <FormDrawer
+      variant="dialog"
       open={defaults !== null}
       onOpenChange={(open) => setDefaults(open ? getNewCouponDefaults(new Date()) : null)}
       title="New coupon"

@@ -13,6 +13,9 @@ import PaidPeopleChart from "./PaidPeopleChart";
 import PlanCard from "./PlanCard";
 import PlanDrawer from "./PlanDrawer";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+
+const PLAN_COLUMNS: Record<number, string> = { 1: "sm:grid-cols-1 xl:grid-cols-1", 2: "xl:grid-cols-2", 3: "xl:grid-cols-3", 4: "xl:grid-cols-4" };
 
 const PlansBoard = ({ canManage }: { canManage: boolean }) => {
   const { translate } = useLocale();
@@ -52,7 +55,8 @@ const PlansBoard = ({ canManage }: { canManage: boolean }) => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* As many columns as plans (the board's three), four at most. */}
+      <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", PLAN_COLUMNS[Math.min(plans.length, 4)] ?? "xl:grid-cols-4")}>
         {plans.map((item) => (
           <PlanCard
             key={item.id}
