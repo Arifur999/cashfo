@@ -5,7 +5,7 @@ import { getTranslator } from "@/lib/i18n/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getTranslator();
-  return { title: t("Plans") };
+  return { title: t("Plans & billing") };
 }
 
 // Settings › Plans (design-v4 UpgradePlan), where every Upgrade and See

@@ -2,6 +2,8 @@
 // helpers the Plans page (Settings › Plans, design-v4 UpgradePlan) builds
 // its cards, its comparison and its usage strip from.
 
+import type { BillingDetails } from "./billingDetails";
+
 export type BillingCycle = "FREE" | "MONTHLY" | "YEARLY";
 export type SubscriptionStatus = "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED";
 // The ways to send the money yourself, then paying online (CARD).
@@ -112,6 +114,8 @@ export interface BillingOverview {
   pendingPayment: PendingPayment | null;
   referralDiscount: { percent: number } | null;
   trialAvailable: boolean;
+  // What receipts carry (Billing details); absent from an older backend.
+  billingDetails?: BillingDetails;
 }
 
 export interface CouponPreview {
