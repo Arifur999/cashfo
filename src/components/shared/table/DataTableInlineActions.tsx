@@ -58,7 +58,7 @@ const DataTableInlineActions = <TData,>({ row, actions }: DataTableInlineActions
           {translate(label)}
         </Button>
       ))}
-      {split && <DataTableRowActions row={row} actions={{ ...actions, onView: undefined }} variant="outline" />}
+      {split && <DataTableRowActions row={row} actions={{ ...actions, onView: undefined }} variant={actions.menuStyle === "act" ? "act" : "outline"} />}
     </div>
   );
 };

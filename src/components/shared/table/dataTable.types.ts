@@ -75,6 +75,9 @@ export interface DataTableActions<TData> {
   display?: "menu" | "inline" | "split";
   // What the View button says when drawn inline ("Who used it").
   viewLabel?: string;
+  // The "..." beside the inline buttons: the bordered pill, or "act", the
+  // v16 boards' small square row action (.sm-act).
+  menuStyle?: "outline" | "act";
   // false leaves the inline buttons' column without a heading, as the
   // design's Payments list draws its Retry column.
   heading?: boolean;
