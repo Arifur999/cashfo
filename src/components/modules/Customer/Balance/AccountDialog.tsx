@@ -107,7 +107,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
     startTransition(async () => {
       try {
         const result = editing
-          ? await updateAccountAction(businessId, editing.id, { name: trimmed, accountNumber: numbered ? digits : "", ...(ownColor && { color: ownColor }), ...(openingChanged && { openingBalance: opening }) })
+          ? await updateAccountAction(businessId, editing.id, { name: trimmed, accountNumber: numbered ? digits : "", ...(ownColor && { color: ownColor }), ...(openingChanged && { openingBalance: String(Number(opening)) }) })
           : await createAccountAction(businessId, {
               name: trimmed,
               accountType: "ASSET",
@@ -117,7 +117,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
               ...(ownColor && { color: ownColor }),
             });
         if (result.success) {
-          onSaved(trimmed, !editing, openingChanged ? opening : undefined);
+          onSaved(trimmed, !editing, openingChanged ? String(Number(opening)) : undefined);
           onClose();
           router.refresh();
         } else {
