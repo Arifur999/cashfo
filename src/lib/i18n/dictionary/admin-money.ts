@@ -538,4 +538,7 @@ export const adminMoneyDictionary: Record<string, string> = {
   "Looks like self-referral": "নিজেকেই রেফার করা মনে হচ্ছে",
   "Wrong account number": "ভুল অ্যাকাউন্ট নম্বর",
   "Write a short reason": "সংক্ষেপে কারণ লিখুন",
+  // Invoice: what the plan allows (v16)
+  "No monthly limit on transactions": "লেনদেনে মাসিক কোনো সীমা নেই",
+  "PDF reports": "PDF রিপোর্ট",
 };

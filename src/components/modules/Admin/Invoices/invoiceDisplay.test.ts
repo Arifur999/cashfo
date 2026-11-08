@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IInvoiceDetail } from "@/types/invoice.types";
-import { invoiceHref, invoiceListQuery, invoicePaymentStatus, invoiceRefund, invoicesListHref, invoiceStamp, splitIssuedTo } from "./invoiceDisplay";
+import { invoiceHref, invoiceListQuery, invoicePaymentStatus, invoiceRefund, invoicesListHref, invoiceStamp, planSummaryParts, splitIssuedTo } from "./invoiceDisplay";
 
 describe("invoiceListQuery", () => {
   it("keeps the list's dates and page, in order", () => {
@@ -107,5 +107,17 @@ describe("invoiceStamp", () => {
 
   it("stamps a refund it couldn't read REFUNDED", () => {
     expect(invoiceStamp("299.00", true, null)).toBe("refunded");
+  });
+});
+
+describe("planSummaryParts", () => {
+  it("says what a plan allows, as the invoice line writes it", () => {
+    expect(planSummaryParts({ maxTransactionsPerMonth: -1, pdfExport: true, incomeGoalTracking: true, advancedReports: true }).map((part) => part.key)).toEqual([
+      "No monthly limit on transactions",
+      "PDF reports",
+      "income goals",
+    ]);
+    expect(planSummaryParts({ maxTransactionsPerMonth: 500, pdfExport: false })).toEqual([{ key: "{count} transactions a month", values: { count: 500 } }]);
+    expect(planSummaryParts(undefined)).toEqual([]);
   });
 });
