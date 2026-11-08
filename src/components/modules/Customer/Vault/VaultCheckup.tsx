@@ -115,6 +115,16 @@ export function VaultCheckup({ entries, checkup, failed, onRetry, busy, onBack, 
         </div>
       </Card>
 
+      {flagged === 0 && (
+        <section className="flex max-w-228.5 flex-col items-center gap-2 rounded-[18px] border border-emerald-line bg-surface p-8 text-center">
+          <h3 className="text-[15px] leading-normal font-semibold text-brand-ink">{t("Nothing to fix right now")}</h3>
+          <p className="text-small text-ink-soft">{t("We'll point out new problems here when they come up.")}</p>
+          <Button onClick={onBack} className="mt-1.5 h-9.5 px-4 text-[13.5px]">
+            {t("Back to your logins")}
+          </Button>
+        </section>
+      )}
+
       {GROUPS.map((group) => {
         const items = checkup[group.issue].map((id) => byId.get(id)).filter((entry): entry is VaultEntrySummary => !!entry);
         if (items.length === 0) return null;

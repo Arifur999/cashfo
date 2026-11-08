@@ -16,8 +16,15 @@ import { CommissionStatusCell } from "./CommissionStatusCell";
 import { useEarningLine } from "./DashboardCards";
 import { StatusChip } from "./ReferralBits";
 
+// A friend known only by name (an Earnings row): the rest loads in the popup.
+export interface FriendStub {
+  // The referral's id.
+  id: string;
+  name: string;
+}
+
 interface FriendDialogProps {
-  friend: FriendRow | null;
+  friend: FriendRow | FriendStub | null;
   onClose: () => void;
   currency: string;
   today: string;
@@ -45,12 +52,22 @@ export function FriendDialog({ friend, onClose, currency, today }: FriendDialogP
   }, [friend]);
 
   const loaded = friend && detail?.id === friend.id ? detail : null;
-  const shown = loaded?.data ?? friend;
+  const shown = loaded?.data ?? (friend && "standing" in friend ? friend : null);
   const look = shown ? FRIEND_STANDING[shown.standing] : null;
 
   return (
     <Dialog open={friend !== null} onOpenChange={(next) => !next && onClose()}>
       <DialogContent showCloseButton={false} className="w-140 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 shadow-overlay ring-0">
+        {friend && !shown && (
+          <div className="flex flex-col items-center gap-3 px-6 py-8 text-center">
+            <Avatar name={friend.name} size={44} tone="soft" alt="" />
+            <DialogTitle className="text-h3 text-ink">{friend.name}</DialogTitle>
+            {loaded ? <DialogDescription className="text-small text-expense">{t("Couldn't load this friend.")}</DialogDescription> : <Loader size={20} label={t("Loading...")} />}
+            <Button variant="secondary" onClick={onClose}>
+              {t("Close")}
+            </Button>
+          </div>
+        )}
         {shown && look && (
           <>
             <div className="flex items-start gap-3 px-6 pt-5">

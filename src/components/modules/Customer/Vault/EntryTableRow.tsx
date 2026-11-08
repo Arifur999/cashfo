@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Eye, KeyRound, PenLine, Star, UserRound } from "lucide-react";
+import { Check, Eye, KeyRound, PencilLine, Star, UserRound } from "lucide-react";
 import { memo } from "react";
 import { SOFT_TONE } from "@/components/smartly/tones";
 import type { VaultEntrySummary } from "@/lib/customer/api";
@@ -75,7 +75,7 @@ export const EntryTableRow = memo(function EntryTableRow({ entry, number, safety
             problem ? "border-warning-line bg-warning-soft text-warning hover:bg-warning-soft/70" : "border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken",
           )}
         >
-          <PenLine className="size-3.25" strokeWidth={2.25} aria-hidden="true" />
+          <PencilLine className="size-3.25" strokeWidth={2.25} aria-hidden="true" />
           {t("Change")}
         </button>
       </span>
