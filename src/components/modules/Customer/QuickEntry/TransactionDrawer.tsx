@@ -222,10 +222,12 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         setWallets(list);
         setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
         // The member's default wallet here (Settings › App preferences),
-        // while it is still one of them. Without one the popup starts with
-        // none picked (design: TxnDrawer); the phone sheet with the first.
+        // while it is still one of them. Without one, the Income & Expense
+        // popup (opened with no kind) starts with none picked (design:
+        // TxnDrawer); the Add menu's drawer and the phone sheet with the first.
         const preferred = list.find((wallet) => wallet.id === defaultAccountId)?.id;
-        setAccountId((current) => current || preferred || (isWideNow() ? "" : list[0]?.id) || "");
+        const startEmpty = initialKind === null && isWideNow();
+        setAccountId((current) => current || preferred || (startEmpty ? "" : list[0]?.id) || "");
         // Only a transfer has a second wallet: an edit of an income or an
         // expense never gets one, so opening it changes nothing.
         if (editingKind === undefined || editingKind === "TRANSFER") setToAccountId((current) => current || list.find((wallet) => wallet.id !== (preferred ?? list[0]?.id))?.id || "");
@@ -246,7 +248,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     return () => {
       live = false;
     };
-  }, [open, businessId, editingKind, attempt, defaultAccountId]);
+  }, [open, businessId, editingKind, attempt, defaultAccountId, initialKind]);
 
   const date = parseDayText(dateText);
   const today = getAppToday();
@@ -841,7 +843,17 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   if (wide) {
     return (
       <Dialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-        <DialogContent showCloseButton={false} className="flex max-h-[calc(100dvh-48px)] w-135 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-48px)]">
+        <DialogContent
+          showCloseButton={false}
+          // With no kind picked nothing has focus yet: start on the first
+          // kind card rather than the close button.
+          onOpenAutoFocus={(event) => {
+            const first = (event.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>("[data-txn-body] button:not([disabled]), [data-txn-body] input:not([disabled])");
+            if (!first) return;
+            event.preventDefault();
+            first.focus();
+          }}
+          className="flex max-h-[calc(100dvh-48px)] w-135 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-48px)]">
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line py-4 pr-4 pl-6">
             {editing ? (
               <span className="flex min-w-0 flex-col gap-1">
