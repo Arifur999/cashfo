@@ -499,4 +499,11 @@ export const assetsDictionary: Record<string, string> = {
   "Add an asset you bought or own": "কেনা বা আগের সম্পদ যোগ করুন",
   "Sell an active asset": "সক্রিয় সম্পদ বিক্রি করুন",
   "vs current value": "এখনকার মূল্যের তুলনায়",
+  // v16 Update value popup
+  "Save value": "দাম সেভ করুন",
+  "New value ({symbol})": "নতুন দাম ({symbol})",
+  "Change from current value": "বর্তমান মূল্য থেকে পরিবর্তন",
+  "Compared with what you paid": "কেনা দামের তুলনায়",
+  "Update date": "আপডেটের তারিখ",
+  "e.g. Checked with local broker": "যেমন: স্থানীয় দালালের কাছে জেনেছি",
 };
