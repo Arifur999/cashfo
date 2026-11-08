@@ -1,14 +1,12 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
 import { sectionFor, sectionOf } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
+import { SettingsBack } from "./SettingsBack";
 
 // Every Settings page (SettingsProfile and its sisters): the "Settings"
 // heading over the section, at most 880px wide. The sections are the
@@ -17,7 +15,7 @@ import { cn } from "@/lib/utils";
 // its heading is for screen readers only) and each section gets a way back
 // to it and its name. Plans (UpgradePlan) is a page of its own: its heading
 // and full width, and so is its payment page (Checkout).
-const FULL_WIDTH = ["/settings/notifications", "/settings/data"];
+const FULL_WIDTH = ["/settings/profile", "/settings/notifications", "/settings/data"];
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
@@ -26,26 +24,17 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   const section = sectionOf(sectionFor(pathname));
 
   if (pathname === PLANS_ROUTE || pathname.startsWith(`${PLANS_ROUTE}/`)) return <PageFrame className="gap-5 md:pt-6.5 md:pb-10">{children}</PageFrame>;
-  // The v16 boards draw these two at full width with their own title.
-  if (FULL_WIDTH.includes(pathname)) return <>{children}</>;
+  // The v16 boards draw these at full width with their own title; so does
+  // the index on a wide screen, where it is the profile.
+  if (FULL_WIDTH.includes(pathname) || isIndex) return <>{children}</>;
 
   return (
-    <PageFrame className={cn("gap-5.5 md:pt-7 md:pb-8", isIndex && "max-md:pt-4")}>
-      {isIndex ? (
-        // Below 1024px the index is the menu: the top bar says "Settings".
-        <PageHeader title={t("Settings")} className="max-lg:sr-only" />
-      ) : (
-        <>
-          <PageHeader title={t("Settings")} className="hidden lg:flex" />
-          <div className="flex flex-col gap-1 lg:hidden">
-            <Link href="/settings" className="-ml-1 flex min-h-11 w-fit items-center gap-1 rounded-md px-1 text-body font-medium text-ink-2">
-              <ChevronLeft className="size-4.5" aria-hidden="true" />
-              {t("Settings")}
-            </Link>
-            <h1 className="text-h2 text-ink">{t(section.label)}</h1>
-          </div>
-        </>
-      )}
+    <PageFrame className="gap-5.5 md:pt-7 md:pb-8">
+      <PageHeader title={t("Settings")} className="hidden lg:flex" />
+      <div className="flex flex-col gap-1 lg:hidden">
+        <SettingsBack />
+        <h1 className="text-h2 text-ink">{t(section.label)}</h1>
+      </div>
       {/* A size container: the sections lay themselves out by their own
           width (@xl:, @2xl:), not the window's. */}
       <div className="@container w-full max-w-220 min-w-0">{children}</div>

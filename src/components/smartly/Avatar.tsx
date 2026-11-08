@@ -9,6 +9,9 @@ const SIZES = {
   44: "size-11 text-body-lg",
   // Settings: the phone menu's card, the profile, the photo dialog's preview.
   48: "size-12 text-body-lg",
+  // Settings › Profile (v16): the side card's and the photo row's.
+  52: "size-13 text-body-lg",
+  64: "size-16 text-h3",
   72: "size-18 text-h2",
   // The shareable profile card, over the edge of its cover.
   88: "size-22 text-h1",

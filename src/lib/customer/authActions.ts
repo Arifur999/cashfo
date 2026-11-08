@@ -37,6 +37,13 @@ export interface UpdateProfileInput {
   phone?: string;
   // One line; an empty string clears it.
   address?: string;
+  // The rest of Settings › Profile; an empty string clears each.
+  occupation?: string;
+  dateOfBirth?: string;
+  gender?: "" | "MALE" | "FEMALE" | "UNSAID";
+  district?: string;
+  phone2?: string;
+  phone2WhatsApp?: boolean;
 }
 
 // Settings > Profile page's "Save Changes" -- name/phone only, email stays

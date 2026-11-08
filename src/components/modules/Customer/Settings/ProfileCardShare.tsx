@@ -1,18 +1,17 @@
 "use client";
 
-import { Check, Copy, ExternalLink, Share2 } from "lucide-react";
+import { Camera, Check, Copy, ExternalLink, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSyncExternalStore, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
-import { Switch } from "@/components/ui/switch";
 import { profileCardPath } from "@/lib/authUtils";
 import { setProfileCardSharedAction } from "@/lib/customer/authActions";
 import { formatDate } from "@/lib/customer/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CARD, SmallSwitch } from "./boardUi";
 import { ProfileCard } from "./ProfileCard";
 
 // The site's own address, known only in the browser (empty on the server).
@@ -26,8 +25,9 @@ const useOrigin = () =>
 // Settings › Profile › Share profile card: a card with the cover, photo and
 // name (never the phone, email or address) at a public link that works like
 // an invite. Off until turned on; turning it off takes the page down. The
-// Referral Program page keeps its own plain link.
-export function ProfileCardShare() {
+// Referral Program page keeps its own plain link. The cover is the card's,
+// so it is changed here (onCover).
+export function ProfileCardShare({ onCover }: { onCover: () => void }) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
@@ -72,18 +72,20 @@ export function ProfileCardShare() {
   }
 
   return (
-    <Card padding="none" className="overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5">
-        <div className="flex min-w-0 flex-col gap-0.75">
-          <h2 className="text-h3 text-ink">{t("Share your profile card")}</h2>
-          <span className="text-[13.5px] text-ink-muted">{t("A card with your cover, photo and name to post anywhere. Friends who join from it use your invite. Your phone, email and address are never on it.")}</span>
+    <section aria-labelledby="pf-card" className={cn(CARD, "overflow-hidden")}>
+      <div className="flex flex-wrap items-start justify-between gap-3 px-5.5 pt-4.5 pb-3.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.75">
+          <h2 id="pf-card" className="text-[16px] leading-[1.35] font-semibold text-ink">
+            {t("Share your profile card")}
+          </h2>
+          <span className="text-small leading-normal text-ink-muted">{t("A card with your cover, photo and name to post anywhere. Friends who join from it use your invite. Your phone, email and address are never on it.")}</span>
         </div>
-        <label className="flex shrink-0 items-center gap-2.5 text-body font-medium text-ink pointer-coarse:min-h-11">
+        <span className="flex shrink-0 items-center gap-2.5 text-body font-medium text-ink pointer-coarse:min-h-11">
           {t(shared ? "On@@sharing" : "Off@@sharing")}
-          <Switch checked={shared} onCheckedChange={toggle} disabled={isPending || readOnly} aria-label={t("Share my profile card")} />
-        </label>
+          <SmallSwitch on={shared} label={t("Share my profile card")} disabled={isPending || readOnly} onClick={() => toggle(!shared)} />
+        </span>
       </div>
-      <div className="grid items-start gap-5 px-6 py-5 @2xl:grid-cols-[minmax(0,440px)_minmax(0,1fr)]">
+      <div className="grid items-start gap-5 border-t border-divider px-5.5 py-4.5 @2xl:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
         <ProfileCard
           name={user.name}
           avatarUrl={user.avatarUrl}
@@ -121,8 +123,12 @@ export function ProfileCardShare() {
           ) : (
             <span className="text-small leading-normal text-ink-muted">{t("Turn it on to get a link you can post on Facebook, WhatsApp or anywhere.")}</span>
           )}
+          <Button type="button" variant="secondary" size="sm" onClick={onCover} disabled={readOnly} className="h-8.5 w-fit px-3.5 text-small pointer-coarse:h-11">
+            <Camera className="size-3.75" aria-hidden="true" />
+            {t(user.coverUrl ? "Change cover" : "Add a cover")}
+          </Button>
         </div>
       </div>
-    </Card>
+    </section>
   );
 }

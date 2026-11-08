@@ -45,6 +45,16 @@ export interface CurrentUser {
   // and a one-line address. Absent from an older backend.
   coverUrl?: string | null;
   address?: string | null;
+  // Settings › Profile's details (only the person sees them), a second
+  // number with its WhatsApp tick, and the number support asks for
+  // ("SM-104382"). Absent from an older backend.
+  occupation?: string | null;
+  dateOfBirth?: string | null;
+  gender?: "MALE" | "FEMALE" | "UNSAID" | null;
+  district?: string | null;
+  phone2?: string | null;
+  phone2WhatsApp?: boolean;
+  customerCode?: string;
   // The shareable profile card: whether it is on, and its code (the
   // referral code) for the /card/<code> link.
   profileCard?: { shared: boolean; code: string | null };

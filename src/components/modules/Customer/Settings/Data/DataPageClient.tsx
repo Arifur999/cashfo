@@ -7,6 +7,7 @@ import PageFrame from "@/components/smartly/PageFrame";
 import StatePanel from "@/components/smartly/StatePanel";
 import type { BackupsPage, DataPrivacyPage, ImportContext } from "@/lib/customer/dataPrivacyTypes";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { SettingsBack } from "../SettingsBack";
 import { BackupCard } from "./BackupCard";
 import { DataSide } from "./DataSide";
 import { ExportCard } from "./ExportCard";
@@ -42,6 +43,7 @@ export function DataPageClient({ data, backups, importContext, businessId, today
   return (
     <PageFrame className="gap-5.5 leading-[normal]">
       <div className="flex flex-col gap-1">
+        <SettingsBack />
         <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Data & privacy")}</h1>
         <p className="text-body text-ink-muted">{t("Take your data out, bring it in, keep backups and choose who sees what.")}</p>
       </div>

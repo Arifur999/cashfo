@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nameProblem, phoneProblem, saveBarText } from "./profileRules";
+import { birthDateProblem, nameProblem, phoneProblem, profileCompleteness, saveBarText, secondPhoneProblem } from "./profileRules";
 
 describe("nameProblem", () => {
   it("takes names in English and Bangla", () => {
@@ -31,23 +31,45 @@ describe("phoneProblem", () => {
 });
 
 describe("saveBarText", () => {
-  const none = { name: false, phone: false, phoneRemoved: false, address: false };
   const calm = { invalid: false, saving: false, justSaved: false };
 
   it("puts saving and a problem first", () => {
-    expect(saveBarText({ ...none, name: true }, { ...calm, saving: true })).toBe("Saving…");
-    expect(saveBarText({ ...none, name: true }, { ...calm, invalid: true })).toBe("Fix the field marked in red first.");
+    expect(saveBarText(["name"], { ...calm, saving: true })).toBe("Saving…");
+    expect(saveBarText(["name"], { ...calm, invalid: true })).toBe("Fix the field marked in red first.");
   });
 
   it("says what changed", () => {
-    expect(saveBarText({ ...none, name: true, phone: true }, calm)).toBe("You changed your name and phone number.");
-    expect(saveBarText({ ...none, phone: true, phoneRemoved: true }, calm)).toBe("You removed your phone number.");
-    expect(saveBarText({ ...none, address: true }, calm)).toBe("You changed your address.");
-    expect(saveBarText({ ...none, address: true, name: true }, calm)).toBe("You changed {count} things.");
+    expect(saveBarText(["name"], calm)).toBe("You changed your name.");
+    expect(saveBarText(["phone"], { ...calm, phoneRemoved: true })).toBe("You removed your phone number.");
+    expect(saveBarText(["phone"], calm)).toBe("You changed your phone number.");
+    expect(saveBarText(["name", "district"], calm)).toBe("Not saved yet: {list}.");
   });
 
   it("is calm with nothing to save", () => {
-    expect(saveBarText(none, calm)).toBe("No changes yet.");
-    expect(saveBarText(none, { ...calm, justSaved: true })).toBe("All changes saved.");
+    expect(saveBarText([], calm)).toBe("No changes yet.");
+    expect(saveBarText([], { ...calm, justSaved: true })).toBe("All changes saved.");
+  });
+});
+
+describe("the new details", () => {
+  it("takes a date of birth from 13 years back to 1920", () => {
+    expect(birthDateProblem("", "2026-11-08")).toBeNull();
+    expect(birthDateProblem("2013-11-08", "2026-11-08")).toBeNull();
+    expect(birthDateProblem("2013-11-09", "2026-11-08")).toBe("You need to be at least 13 to use Smartly.");
+    expect(birthDateProblem("2026-12-01", "2026-11-08")).toBe("That date is in the future.");
+    expect(birthDateProblem("1919-05-01", "2026-11-08")).toBe("Check the year.");
+  });
+
+  it("wants a second number unlike the first", () => {
+    expect(secondPhoneProblem("1811-000000", "1711-482915")).toBeNull();
+    expect(secondPhoneProblem("1711482915", "1711-482915")).toBe("This is the same as your main number.");
+    expect(secondPhoneProblem("1211-000000", "")).toBe("Use a Bangladesh mobile number that starts with 13 to 19.");
+  });
+
+  it("counts how complete the profile is", () => {
+    const have = { photo: true, name: true, dateOfBirth: false, gender: false, occupation: false, district: true, address: false, phone: true, email: false };
+    const { percent, missing } = profileCompleteness(have);
+    expect(percent).toBe(44);
+    expect(missing.map((check) => check.key)).toEqual(["dateOfBirth", "gender", "occupation", "address", "email"]);
   });
 });

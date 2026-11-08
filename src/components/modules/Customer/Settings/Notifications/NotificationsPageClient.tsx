@@ -15,6 +15,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PopupDialog } from "../../Shared/PopupDialog";
 import { BoardSegment, CARD, SELECT, SmallSwitch } from "../boardUi";
+import { SettingsBack } from "../SettingsBack";
 
 interface Row {
   key: string;
@@ -158,6 +159,7 @@ export function NotificationsPageClient({ initial, today }: { initial: Notificat
     <PageFrame className="gap-5.5 leading-[normal]">
       <div className="flex items-end gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <SettingsBack />
           <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Notifications")}</h1>
           <p className="text-body text-ink-muted">{t("Choose what Smartly tells you about, and where it reaches you.")}</p>
         </div>
