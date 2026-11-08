@@ -26,6 +26,9 @@ interface PaginationProps {
   labels?: { previous: string; next: string };
   // false hides it; the default is "Showing 1–20 of 54".
   summary?: React.ReactNode | false;
+  // "lg" is the Income & Expense boards' pager: 44px round arrows with a
+  // line, 44px squares for the pages, the one on show in emerald.
+  size?: "md" | "lg";
   // Offer a rows-per-page choice (with onPageSizeChange).
   pageSizes?: number[];
   onPageSizeChange?: (size: number) => void;
@@ -46,6 +49,12 @@ const IDLE = "border-line bg-surface text-ink-2 hover:bg-surface-sunken";
 const CURRENT = "cursor-default border-forest bg-forest text-white dark:border-emerald dark:bg-emerald dark:text-on-action";
 // A dead end: faded, as the boards draw it.
 const OFF = "cursor-not-allowed border-line bg-surface text-ink-2 opacity-50";
+// The lg pager (Transactions board): round 44px arrows, 10px-cornered 44px
+// pages without a line, the current one filled emerald.
+const LG_ARROW = "inline-flex size-11 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition-colors";
+const LG_PAGE = "inline-flex h-11 min-w-11 items-center justify-center rounded-field border-0 px-2 text-body font-medium tabular-nums transition-colors";
+const LG_LOOKS = { idle: "bg-transparent text-ink-2 hover:bg-surface-sunken", current: "cursor-default bg-emerald font-semibold text-white dark:text-on-action" };
+const LG_ARROW_LOOKS = { idle: "hover:bg-surface-sunken", current: "" };
 
 // Inside a focusTargetId, focus goes to the table, which a screen reader
 // names ("Transactions, table"), not to the card around it.
@@ -75,6 +84,8 @@ interface ControlProps {
   // other pages, so the one just pressed keeps focus as it becomes current.
   current?: boolean;
   className: string;
+  // The pager's own idle and current looks (lg), in place of the 32px ones.
+  looks?: { idle: string; current: string };
   hrefFor?: (page: number) => string;
   onGo: (page: number, event: React.MouseEvent) => void;
   children: React.ReactNode;
@@ -82,7 +93,7 @@ interface ControlProps {
 
 // One pager control: a link for a server list, a button otherwise. A dead
 // link is a span marked aria-disabled, since an <a> cannot be disabled.
-const Control = ({ page, label, current = false, className, hrefFor, onGo, children }: ControlProps) => {
+const Control = ({ page, label, current = false, className, looks, hrefFor, onGo, children }: ControlProps) => {
   if (page === null) {
     return hrefFor ? (
       <span role="link" aria-disabled="true" aria-label={label} className={cn(className, OFF)}>
@@ -94,7 +105,7 @@ const Control = ({ page, label, current = false, className, hrefFor, onGo, child
       </button>
     );
   }
-  const look = cn(current ? CURRENT : IDLE, className);
+  const look = cn(current ? (looks?.current ?? CURRENT) : (looks?.idle ?? IDLE), className);
   return hrefFor ? (
     <Link href={hrefFor(page)} scroll={false} aria-label={label} aria-current={current ? "page" : undefined} onClick={(event) => onGo(page, event)} className={look}>
       {children}
@@ -122,6 +133,7 @@ const Pagination = ({
   variant = "numbered",
   labels,
   summary,
+  size = "md",
   pageSizes,
   onPageSizeChange,
   focusTargetId,
@@ -206,6 +218,9 @@ const Pagination = ({
     </label>
   );
 
+  const large = size === "lg";
+  const arrow = large ? LG_ARROW : ARROW;
+  const arrowLooks = large ? LG_ARROW_LOOKS : undefined;
   const pageOf = t("Page {page} of {total}", { page: formatCount(shownPage, fmt), total: formatCount(model.totalPages, fmt) });
   const previousLabel = labels?.previous ?? t("Previous page");
   const nextLabel = labels?.next ?? t("Next page");
@@ -230,20 +245,20 @@ const Pagination = ({
               </nav>
             )}
             {model.paged && variant === "numbered" && (
-              <nav ref={nav} tabIndex={-1} aria-label={t("Pagination")} className="flex items-center gap-1 rounded-md">
-                <Control page={model.previous} label={previousLabel} className={ARROW} hrefFor={hrefFor} onGo={go}>
+              <nav ref={nav} tabIndex={-1} aria-label={t("Pagination")} className={cn("flex items-center rounded-md", large ? "gap-1.5" : "gap-1")}>
+                <Control page={model.previous} label={previousLabel} className={arrow} looks={arrowLooks} hrefFor={hrefFor} onGo={go}>
                   <ChevronLeft className="size-4" aria-hidden="true" />
                 </Control>
 
                 {/* 35rem and wider: the 7-slot window. */}
-                <span className="hidden items-center gap-1 @[35rem]:flex">
+                <span className={cn("hidden items-center @[35rem]:flex", large ? "gap-1.5" : "gap-1")}>
                   {model.items.map((item) =>
                     item.kind === "jump" ? (
                       <Control
                         key={item.direction}
                         page={item.page}
                         label={t(item.direction === "earlier" ? "Earlier pages" : "Later pages")}
-                        className={cn(ARROW, "border-transparent bg-transparent text-ink-muted")}
+                        className={cn(large ? LG_PAGE : ARROW, "border-transparent bg-transparent text-ink-muted")}
                         hrefFor={hrefFor}
                         onGo={go}
                       >
@@ -256,7 +271,8 @@ const Pagination = ({
                         current={item.current}
                         // The page on show says where the reader is; the others where they'd go.
                         label={item.current ? pageOf : t("Go to page {page}", { page: formatCount(item.page, fmt) })}
-                        className={SQUARE}
+                        className={large ? LG_PAGE : SQUARE}
+                        looks={large ? LG_LOOKS : undefined}
                         hrefFor={hrefFor}
                         onGo={go}
                       >
@@ -271,7 +287,7 @@ const Pagination = ({
                   {pageOf}
                 </span>
 
-                <Control page={model.next} label={nextLabel} className={ARROW} hrefFor={hrefFor} onGo={go}>
+                <Control page={model.next} label={nextLabel} className={arrow} looks={arrowLooks} hrefFor={hrefFor} onGo={go}>
                   <ChevronRight className="size-4" aria-hidden="true" />
                 </Control>
               </nav>
