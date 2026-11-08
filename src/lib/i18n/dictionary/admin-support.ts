@@ -219,4 +219,18 @@ export const adminSupportDictionary: Record<string, string> = {
   "Drag a card to change its status. People who voted hear about it when it moves to Planned or Shipped.":
     "অবস্থা বদলাতে কার্ড টেনে সরান। পরিকল্পিত বা চালু হয়েছে-তে গেলে যাঁরা ভোট দিয়েছেন তাঁরা জানতে পারবেন।",
   "Declined ({count})": "বাতিল ({count})",
+  // Tickets: Help page and New (v16)
+  "Showing only the tickets nobody has opened yet.": "শুধু যে টিকিটগুলো এখনো কেউ খোলেননি সেগুলো দেখানো হচ্ছে।",
+  "Sent from Settings › Help & support": "সেটিংস › সাহায্য ও সাপোর্ট থেকে পাঠানো",
+  "Help page": "সাহায্য পাতা",
+  "Pick one to put it in the reply box. You can change it before sending.": "একটি বেছে নিন, এটি উত্তরের ঘরে বসবে। পাঠানোর আগে বদলাতে পারবেন।",
+  "Reply sent. {name} sees it in My messages.": "উত্তর পাঠানো হয়েছে। {name} এটি আমার বার্তায় দেখবেন।",
+  "Write to {name}. They see it in Settings › Help & support › My messages.": "{name}-কে লিখুন। তিনি এটি সেটিংস › সাহায্য ও সাপোর্ট › আমার বার্তায় দেখবেন।",
+  "{count} new message came in from the Help page.": "সাহায্য পাতা থেকে {count}টি নতুন বার্তা এসেছে।",
+  "{count} new messages came in from the Help page.": "সাহায্য পাতা থেকে {count}টি নতুন বার্তা এসেছে।",
+  "Show all tickets": "সব টিকিট দেখান",
+  "Sent from Settings › Help & support · replies show in the user's My messages": "সেটিংস › সাহায্য ও সাপোর্ট থেকে পাঠানো · উত্তর ব্যবহারকারীর আমার বার্তায় দেখা যায়",
+  "No notes yet. Use \"Note for admins\" above; users never see notes.": "এখনো কোনো নোট নেই। ওপরের \"অ্যাডমিনদের নোট\" ব্যবহার করুন; ব্যবহারকারীরা নোট কখনো দেখেন না।",
+  "Only admins see notes.": "নোট শুধু অ্যাডমিনরা দেখেন।",
+  "Note added for admins": "অ্যাডমিনদের জন্য নোট যোগ হয়েছে",
 };
