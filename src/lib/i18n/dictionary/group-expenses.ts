@@ -1188,4 +1188,14 @@ export const groupExpensesDictionary: Record<string, string> = {
   // v16 FamilyDashboard: my balance through the cash holder
   "You keep the group cash: everyone settles with you.": "গ্রুপের নগদ আপনার কাছে: সবাই আপনার সাথে হিসাব মেটান।",
   "Settled for this month through the cash holder.": "এই মাসের হিসাব নগদ রাখার মানুষের মাধ্যমে মিটে গেছে।",
+  // v16 FamilyCategories board
+  "A category with expenses can’t be deleted. Make it inactive: old entries keep it, new ones won’t offer it.": "যে ক্যাটাগরিতে খরচ আছে সেটা মোছা যায় না। নিষ্ক্রিয় করুন: পুরোনো এন্ট্রিতে থাকবে, নতুনে দেখাবে না।",
+  "Not shown for new expenses": "নতুন খরচে দেখাবে না",
+  "Make active: {name}": "সক্রিয় করুন: {name}",
+  "Make inactive: {name}": "নিষ্ক্রিয় করুন: {name}",
+  "Inactive: not offered for new expenses. Click to make it active.": "নিষ্ক্রিয়: নতুন খরচে দেখাবে না। সক্রিয় করতে চাপুন।",
+  "Active: offered for new expenses. Click to make it inactive.": "সক্রিয়: নতুন খরচে দেখাবে। নিষ্ক্রিয় করতে চাপুন।",
+  "Hide instead of delete": "মোছার বদলে লুকান",
+  "Used in {count} expense so far": "এ পর্যন্ত {count}টি খরচে ব্যবহার হয়েছে",
+  "Used in {count} expenses so far": "এ পর্যন্ত {count}টি খরচে ব্যবহার হয়েছে",
 };
