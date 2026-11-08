@@ -38,8 +38,9 @@ export const getReferredFriends = cache((page: number, standing: FriendFilter | 
   read<FriendList | null>("/api/referrals/friends", null, { page, limit: FRIENDS_PAGE_SIZE, standing, search: search || undefined }),
 );
 
-export const getEarnings = cache((page: number, status: string | undefined, month: string | undefined, search: string | undefined) =>
-  read<EarningList | null>("/api/referrals/earnings", null, { page, limit: EARNINGS_PAGE_SIZE, status, month, search: search || undefined }),
+// `range` is the period's first and last day (periodRange()); none = all time.
+export const getEarnings = cache((page: number, status: string | undefined, range: { dateFrom?: string; dateTo?: string }, search: string | undefined) =>
+  read<EarningList | null>("/api/referrals/earnings", null, { page, limit: EARNINGS_PAGE_SIZE, status, dateFrom: range.dateFrom, dateTo: range.dateTo, search: search || undefined }),
 );
 
 // Every line ready to withdraw, oldest first.

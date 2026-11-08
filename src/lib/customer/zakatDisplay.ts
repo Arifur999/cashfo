@@ -17,7 +17,7 @@ export interface StepMeta {
   // The note at the top of the open step; "" for none.
   tip: string;
   kind: StepKind;
-  // "From your Wallets ›": the page the lines come from.
+  // "From Balance › Accounts ›": the page the lines come from.
   from: string;
   href: string;
   // "Add …" under the lines; "" where nothing can be added.
@@ -32,7 +32,7 @@ export const STEP_META: Record<ZakatStepId, StepMeta> = {
     question: "Is this all the cash and bank money you have today?",
     tip: "Cash kept at home or with family counts too. Add it if it is not in your wallets.",
     kind: "plus",
-    from: "From your Wallets",
+    from: "From Balance › Accounts",
     href: "/balance/accounts",
     addLabel: "Add cash or an account not in the app",
     suggestions: ["Cash at home", "Nagad wallet", "Foreign currency"],

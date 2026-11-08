@@ -8,6 +8,8 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { platformSettingsQuery } from "@/queries/settings.queries";
 import ConnectedServicesCard from "./ConnectedServicesCard";
 import GeneralSettingsCard from "./GeneralSettingsCard";
+import HelpCompanyCard from "./HelpCompanyCard";
+import HelpVideosCard from "./HelpVideosCard";
 import PaymentAccountsCard from "./PaymentAccountsCard";
 import SettingsSideCards from "./SettingsSideCards";
 import SignupsCard from "./SignupsCard";
@@ -42,6 +44,8 @@ const SettingsBoard = ({ canManage, canManageZakat }: { canManage: boolean; canM
             <SkeletonRows rows={4} avatar={false} />
           </Card>
         )}
+        <HelpCompanyCard canManage={canManage} />
+        <HelpVideosCard canManage={canManage} />
         <ZakatPricesCard canManage={canManageZakat} />
         <ConnectedServicesCard canCheck={canManage} />
       </div>

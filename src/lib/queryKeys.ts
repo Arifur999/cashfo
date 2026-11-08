@@ -34,6 +34,7 @@ export const queryKeys = {
   health: createDomainKeys("health"),
   settings: createDomainKeys("settings"),
   zakatPrices: createDomainKeys("zakat-prices"),
+  help: createDomainKeys("help"),
   rateLimits: createDomainKeys("rate-limits"),
   notificationTemplates: createDomainKeys("notification-templates"),
   notificationLogs: createDomainKeys("notification-logs"),

@@ -20,9 +20,10 @@ interface AmountInputProps {
   // "lg": the 48px box a form's second figure gets (New savings goal's
   // target, Move between goals), a size under the drawer's main amount.
   // "md": the Savings boards' 52px box (Withdraw, Move money), 10px corners.
+  // "sm": the 44px box beside a date (the Assets popups' Price).
   // "field": a plain 44px field among others (Balance's account and transfer
   // forms), the currency named in its label instead.
-  size?: "xl" | "lg" | "md" | "field";
+  size?: "xl" | "lg" | "md" | "sm" | "field";
   placeholder?: string;
 }
 
@@ -40,13 +41,14 @@ const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid
     xl: { strip: "h-14 w-13 text-[20px]", frame: "h-14 rounded-sm", figure: "pl-3.5 text-[24px]" },
     lg: { strip: "h-12 w-11 text-[17px]", frame: "h-12 rounded-sm", figure: "pl-3 text-h3" },
     md: { strip: "h-13 w-12 text-[19px]", frame: "h-13 rounded-field", figure: "pl-3.5 text-[22px]" },
+    sm: { strip: "h-11 w-10.5 text-[15px]", frame: "h-11 rounded-[10px]", figure: "pl-3 text-[16px] font-semibold" },
   }[size];
   return (
     <Input
       id={id}
       type="text"
       inputMode="decimal"
-      size={size === "xl" ? "xl" : "lg"}
+      size={size === "xl" ? "xl" : size === "sm" ? "md" : "lg"}
       {...field}
       placeholder={placeholder}
       autoFocus={autoFocus}
