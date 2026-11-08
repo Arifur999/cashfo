@@ -6,8 +6,8 @@ import type { IUpdatePlatformSettingsPayload } from "@/types/settings.types";
 const MESSAGE_MAX = 1000;
 
 export const generalSettingsFormZodSchema = z.object({
-  platformName: z.string().trim().min(1, "Platform name is required"),
-  supportEmail: z.email("Enter a valid email address"),
+  platformName: z.string().trim().min(1, "Type a platform name."),
+  supportEmail: z.email("Type a full email address, like support@smartly.app."),
   defaultCurrency: z
     .string()
     .trim()

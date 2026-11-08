@@ -16,8 +16,7 @@ const WORDS = { ok: "text-emerald", warn: "text-warning", bad: "text-expense", u
 const CONNECTED: State = { label: "Connected", tone: "ok" };
 const NOT_SET_UP: State = { label: "Not set up", tone: "warn" };
 
-// Each service as the server reports it. There is no SMS provider yet, so
-// SMS is never set up.
+// Each service as the server reports it (an older API reports no SMS).
 const SERVICES: { name: string; what: string; state: (health: ISystemHealth) => State }[] = [
   {
     name: "Email",
@@ -25,7 +24,11 @@ const SERVICES: { name: string; what: string; state: (health: ISystemHealth) => 
     state: ({ email }) => (!email.configured ? NOT_SET_UP : email.lastSendOk === false ? { label: "Last send failed", tone: "bad" } : CONNECTED),
   },
   { name: "Payments", what: "bKash, Nagad and SSLCommerz", state: ({ paymentGateway }) => (paymentGateway.configured ? CONNECTED : NOT_SET_UP) },
-  { name: "SMS", what: "For payment_failed and other SMS templates", state: () => NOT_SET_UP },
+  {
+    name: "SMS",
+    what: "For payment_failed and other SMS templates",
+    state: ({ sms }) => (!sms?.configured ? NOT_SET_UP : sms.lastSendOk === false ? { label: "Last send failed", tone: "bad" } : CONNECTED),
+  },
   { name: "File storage", what: "Receipts and ticket attachments", state: ({ storage }) => (storage.writable ? CONNECTED : { label: "Can't save files", tone: "bad" }) },
 ];
 

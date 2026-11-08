@@ -17,7 +17,9 @@ const SignupsCard = ({ open, canManage }: { open: boolean; canManage: boolean })
   const titleId = useId();
   const { run } = useActionMutation({
     action: updateSettingsAction,
-    successMessage: (settings) => (settings.signupsOpen ? "New sign-ups are open" : "New sign-ups are paused"),
+    successMessage: (settings) => (settings.signupsOpen ? "New sign-ups are on" : "New sign-ups are paused"),
+    // A few seconds to flip it back, as the board offers.
+    successAction: (settings) => ({ label: "Undo", onClick: () => void run({ signupsOpen: !settings.signupsOpen }) }),
     invalidateKeys: [queryKeys.settings.all],
     refreshRoute: false,
   });
@@ -30,7 +32,7 @@ const SignupsCard = ({ open, canManage }: { open: boolean; canManage: boolean })
             <T>New sign-ups</T>
           </h2>
           <span className="text-small leading-normal text-ink-soft">
-            <T>Turn this off to pause new accounts for a while. People who already have an account can still sign in.</T>
+            <T>{open ? "Turn this off to pause new accounts for a while. People who already have an account can still sign in." : "New sign-ups are paused. People who already have an account can still sign in."}</T>
           </span>
         </span>
         {canManage ? (

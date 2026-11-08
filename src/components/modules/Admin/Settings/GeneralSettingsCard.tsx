@@ -1,6 +1,5 @@
 "use client";
 
-import { dayLabel } from "@/components/modules/Admin/Dashboard/dashboardDates";
 import AppField from "@/components/shared/form/AppField";
 import AppForm from "@/components/shared/form/AppForm";
 import AppSelectField from "@/components/shared/form/AppSelectField";
@@ -8,23 +7,12 @@ import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import T from "@/components/shared/T";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import { formatDayName } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import type { Translate } from "@/lib/i18n/message";
-import type { Locale } from "@/lib/i18n/translate";
 import type { IPlatformSettings } from "@/types/settings.types";
 import { generalSettingsFormZodSchema as schema } from "@/zod/settings.validation";
+import { lastChangeText } from "./lastChange";
 import { CURRENCY_OPTIONS, TIME_ZONE_OPTIONS, withCurrent } from "./settingsOptions";
 import { useSettingsForm } from "./useSettingsForm";
-
-// "Last changed by Nadia Rahman on 14 Sep." ("১৪ সেপ্টে" in Bangla).
-const lastChangeText = (settings: IPlatformSettings, t: Translate, locale: Locale) => {
-  const change = settings.lastChange;
-  if (!change) return t("Not changed yet.");
-  const day = formatDayName(change.at);
-  const when = day === "Today" || day === "Yesterday" ? t(day.toLowerCase()) : t("on {day}", { day: dayLabel(change.at, locale) });
-  return change.by ? t("Last changed by {name} {when}.", { name: change.by, when }) : t("Last changed {when}.", { when });
-};
 
 // The design's General card: name, support email, default currency and
 // time zone, with the save bar at its foot. Other roles see it locked. Each
@@ -46,7 +34,7 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
             {(field) => <AppField field={field} label="Platform name" disabled={disabled} description="Signs every email (welcome, password reset, support replies). The browser tab still says Smartly." />}
           </form.Field>
           <form.Field name="supportEmail" validators={{ onChange: schema.shape.supportEmail }}>
-            {(field) => <AppField field={field} label="Support email" type="email" disabled={disabled} description="Shown on the maintenance page" />}
+            {(field) => <AppField field={field} label="Support email" type="email" disabled={disabled} description="Where users write from Settings › Help. Same as the email in Company and help page." />}
           </form.Field>
           <form.Field name="defaultCurrency" validators={{ onChange: schema.shape.defaultCurrency }}>
             {(field) => (
@@ -73,7 +61,7 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3">
           <span className="text-small text-ink-muted">
-            {lastChangeText(settings, translate, locale)} <T>{canManage ? "Every save goes to the audit log." : "Only super admins can change these."}</T>
+            {lastChangeText(settings.lastChange, translate, locale)} <T>{canManage ? "Every save goes to the audit log." : "Only super admins can change these."}</T>
           </span>
           {canManage && (
             <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>

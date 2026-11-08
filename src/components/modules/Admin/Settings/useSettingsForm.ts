@@ -19,8 +19,9 @@ const toFormValues = (settings: IPlatformSettings): IGeneralSettingsFormValues =
 export const useSettingsForm = (initial: IPlatformSettings) => {
   const { run, isPending } = useActionMutation({
     action: updateSettingsAction,
-    successMessage: "Settings saved",
-    invalidateKeys: [queryKeys.settings.all],
+    successMessage: "Saved",
+    // The support email is the Help page's too.
+    invalidateKeys: [queryKeys.settings.all, queryKeys.help.all],
     refreshRoute: false,
   });
 
