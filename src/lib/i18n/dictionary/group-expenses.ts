@@ -1198,4 +1198,17 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Hide instead of delete": "মোছার বদলে লুকান",
   "Used in {count} expense so far": "এ পর্যন্ত {count}টি খরচে ব্যবহার হয়েছে",
   "Used in {count} expenses so far": "এ পর্যন্ত {count}টি খরচে ব্যবহার হয়েছে",
+  // v16 GroupList board
+  "since {month}": "{month} থেকে",
+  "{count} of {total} paid in": "{total} জনের {count} জন দিয়েছেন",
+  "{percent}% of the budget used": "{percent}% বাজেট খরচ হয়েছে",
+  "Paused · nothing new is counted": "বিরতিতে · নতুন কিছু গোনা হচ্ছে না",
+  "You don’t share this group’s costs": "এই গ্রুপের খরচে আপনার ভাগ নেই",
+  "You are all square": "আপনার হিসাব সমান",
+  "The group owes you": "গ্রুপ আপনাকে দেবে",
+  "You owe the group": "আপনি গ্রুপকে দেবেন",
+  "{count} group you run. Open it to see its money.": "আপনি {count}টি গ্রুপ চালান। টাকার হিসাব দেখতে খুলুন।",
+  "{count} groups you run. Open one to see its money.": "আপনি {count}টি গ্রুপ চালান। টাকার হিসাব দেখতে একটা খুলুন।",
+  "No groups yet": "এখনো কোনো গ্রুপ নেই",
+  "Make your first group with “New group”.": "“নতুন গ্রুপ” দিয়ে প্রথম গ্রুপ বানান।",
 };
