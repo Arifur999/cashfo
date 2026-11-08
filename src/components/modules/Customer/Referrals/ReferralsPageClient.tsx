@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Lock, PauseCircle } from "lucide-react";
+import { ArrowDownToLine, Check, ChevronRight, Lock, PauseCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,12 +9,12 @@ import ErrorState from "@/components/smartly/ErrorState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
-import { programOf, showsLockedPage } from "@/lib/customer/referralDisplay";
+import { balancesOf, dayOf, friendDay, programOf, showsLockedPage } from "@/lib/customer/referralDisplay";
 import type { ReferralProgramInfo } from "@/lib/customer/referralTypes";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { EarningsByMonthCard, LatestCommissionsCard, PeopleCard, TopFriendsCard } from "./DashboardCards";
-import { EarningsHero } from "./EarningsHero";
+import { EarningsHero, WITHDRAWALS_ROUTE } from "./EarningsHero";
 import { FriendDialog, type FriendStub } from "./FriendDialog";
 import { InviteLinkCard } from "./InviteLinkCard";
 import { ReferralLocked } from "./ReferralLocked";
@@ -64,6 +64,8 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
     );
   }
 
+  const lastPaidAt = balancesOf(info).lastPaidAt;
+
   // Whether this member earns now, beside the title.
   const badge = info.canEarn ? (
     <span className="flex h-8 items-center gap-1.5 rounded-full border border-emerald-line bg-emerald-soft px-3 text-[13px] font-semibold text-brand-ink">
@@ -104,6 +106,18 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
         <TopFriendsCard info={info} currency={currency} onOpen={setFriend} />
         <LatestCommissionsCard info={info} currency={currency} today={today} />
       </div>
+      {/* Phones (ReferralMobile): the hero's figures are folded away, so the
+          withdrawals get the board's own row at the foot. */}
+      <Link href={WITHDRAWALS_ROUTE} className="flex items-center gap-3 rounded-card border border-line-card bg-surface px-4 py-3.5 shadow-card md:hidden">
+        <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-muted">
+          <ArrowDownToLine className="size-4.5" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-body-strong text-ink">{t("Withdrawals")}</span>
+          <span className="truncate text-caption text-ink-muted">{lastPaidAt ? t("Last on {date}", { date: friendDay(dayOf(lastPaidAt), today, fmt) }) : t("See withdrawals")}</span>
+        </span>
+        <ChevronRight className="size-4.5 shrink-0 text-ink-faint" aria-hidden="true" />
+      </Link>
       <FriendDialog friend={friend} onClose={() => setFriend(null)} currency={currency} today={today} />
     </PageFrame>
   );
