@@ -1233,4 +1233,13 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Average budget a month": "মাসে গড় বাজেট",
   "Months over budget": "বাজেট ছাড়ানো মাস",
   "Tap a month to open it.": "কোনো মাস খুলতে চাপুন।",
+  // v16 GroupSetup board
+  "Choose who keeps the cash": "কে নগদ রাখবেন বাছুন",
+  "{names} records spending and keeps the group cash. You can change it any time.": "{names} খরচ লেখেন আর গ্রুপের নগদ রাখেন। যেকোনো সময় বদলানো যায়।",
+  "Pick who records spending and keeps the group cash. You can change it any time.": "কে খরচ লিখবে আর গ্রুপের নগদ রাখবে, বাছুন। যেকোনো সময় বদলানো যায়।",
+  "Choose in Members": "Members-এ বাছুন",
+  "Set the monthly budget": "মাসের বাজেট ঠিক করুন",
+  "Optional, but it warns you before spending goes too high.": "ঐচ্ছিক, তবে খরচ বেশি হওয়ার আগে সতর্ক করে।",
+  "Change budget": "বাজেট বদলান",
+  "Six short steps. The dashboard fills in as soon as money is recorded.": "ছয়টা ছোট ধাপ। টাকা লেখা শুরু হলেই ড্যাশবোর্ড ভরে উঠবে।",
 };
