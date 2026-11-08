@@ -403,8 +403,8 @@ export const balanceDictionary: Record<string, string> = {
   "From account": "যে অ্যাকাউন্ট থেকে",
   "To account": "যে অ্যাকাউন্টে",
   "Savings withdraw": "সঞ্চয় থেকে ফেরত",
-  "Loan paid": "ঋণে দেওয়া",
-  "Loan received": "ঋণে পাওয়া",
+  "Loan paid": "ঋণ বাবদ দেওয়া",
+  "Loan received": "ঋণ বাবদ পাওয়া",
   "Received from": "যার থেকে এসেছে",
   "Asset purchase": "সম্পদ কেনা",
   "Asset sale": "সম্পদ বিক্রি",
@@ -477,4 +477,18 @@ export const balanceDictionary: Record<string, string> = {
   "Charge saved as {category}": "চার্জ খরচ হিসেবে: {category}",
   "Mobile banking fee": "মোবাইল ব্যাংকিং ফি",
   "Service charge": "সার্ভিস চার্জ",
+  // Edit account: the opening balance put right (v16)
+  "Opening balance {from} → {to}. The current balance moves the same way: {now} → {after}.": "শুরুর ব্যালেন্স {from} → {to}। বর্তমান ব্যালেন্সও একই হারে বদলাবে: {now} → {after}।",
+  "Entered it wrong? Fix it here. The current balance moves by the same amount.": "ভুল দিয়েছিলেন? এখানে ঠিক করুন। বর্তমান ব্যালেন্সও একই পরিমাণে বদলাবে।",
+  "Saved. Opening balance is now {amount}": "সেভ হয়েছে। শুরুর ব্যালেন্স এখন {amount}",
+  // Ledger: loan entries open in Loan transactions (v16)
+  "Money from {name}, recorded in Loan Management › Transactions.": "{name} থেকে পাওয়া টাকা, ঋণ ব্যবস্থাপনা › লেনদেন থেকে রেকর্ড করা।",
+  "Paid to {name}, recorded in Loan Management › Transactions.": "{name}-কে দেওয়া টাকা, ঋণ ব্যবস্থাপনা › লেনদেন থেকে রেকর্ড করা।",
+  "Open in Loan transactions": "ঋণের লেনদেনে খুলুন",
+  // Account and transfer forms: plain amount fields (v16)
+  "Amount ({symbol})": "পরিমাণ ({symbol})",
+  "Opening balance ({symbol})": "শুরুর ব্যালেন্স ({symbol})",
+  "0 if there is no charge": "চার্জ না থাকলে 0",
+  // Transfer statement: all time with none
+  "No transfers yet": "এখনো কোনো ট্রান্সফার নেই",
 };

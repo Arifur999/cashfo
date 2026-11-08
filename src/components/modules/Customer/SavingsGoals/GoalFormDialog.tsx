@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, CircleAlert, Landmark, Minus, Plus, Target } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, CircleAlert, Landmark, Minus, Plus, Target } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Input from "@/components/smartly/form/Input";
 import Textarea from "@/components/smartly/form/Textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Account, SavingsGoal } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -288,7 +289,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
             </span>
             <span className="text-[12px] text-ink-muted">{t("Every deposit goes here")}</span>
           </span>
-          <AccountChoice wallets={wallets} value={wallet?.id ?? ""} onChange={setAccountId} labelledBy="goal-account-label" />
+          <AccountSelect wallets={wallets} value={wallet?.id ?? ""} onChange={setAccountId} labelledBy="goal-account-label" money={money} onAddWallet={onAddWallet} />
           {movedFrom && wallet && (
             <span className="rounded-[10px] bg-warning-soft px-3 py-2 text-[12.5px] text-warning-ink">{t("Move {amount} from {from} to {to} in your bank too.", { amount: money(saved), from: movedFrom, to: wallet.name })}</span>
           )}
@@ -385,51 +386,122 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
   );
 }
 
-// The savings accounts as cards to pick from, with the arrow keys moving
-// between them as in any radio group.
-function AccountChoice({ wallets, value, onChange, labelledBy }: { wallets: Account[]; value: string; onChange: (id: string) => void; labelledBy: string }) {
+// The savings account as a dropdown (v16 board), so the form stays short
+// however many there are: each with its number and balance, the arrow keys
+// change it whether the list is open or not, and the list ends with a way to
+// add one.
+function AccountSelect({
+  wallets,
+  value,
+  onChange,
+  labelledBy,
+  money,
+  onAddWallet,
+}: {
+  wallets: Account[];
+  value: string;
+  onChange: (id: string) => void;
+  labelledBy: string;
+  money: (value: number | string) => string;
+  onAddWallet: () => void;
+}) {
   const { t } = useLocale();
-  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [open, setOpen] = useState(false);
+  const options = useRef<(HTMLButtonElement | null)[]>([]);
   const chosen = wallets.findIndex((item) => item.id === value);
+  const current = chosen === -1 ? null : wallets[chosen];
 
-  function onKeyDown(event: React.KeyboardEvent, index: number) {
-    const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
-    if (!step) return;
+  function step(event: React.KeyboardEvent) {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
-    const next = (index + step + wallets.length) % wallets.length;
+    const next = event.key === "ArrowDown" ? Math.min(wallets.length - 1, chosen + 1) : Math.max(0, chosen - 1);
     onChange(wallets[next].id);
-    refs.current[next]?.focus();
+    if (open) options.current[next]?.focus();
+    else setOpen(true);
   }
 
+  const tile = (on: boolean, small: boolean) => (
+    <span className={cn("flex shrink-0 items-center justify-center", small ? "size-7.5 rounded-[9px]" : "size-8.5 rounded-[10px]", on ? "bg-emerald text-white" : "bg-surface-sunken text-ink-soft")}>
+      <Landmark className={small ? "size-3.75" : "size-4.25"} strokeWidth={2} aria-hidden="true" />
+    </span>
+  );
+
   return (
-    <div role="radiogroup" aria-labelledby={labelledBy} className="grid gap-2 sm:grid-cols-2">
-      {wallets.map((item, index) => {
-        const on = index === chosen;
-        return (
-          <button
-            key={item.id}
-            ref={(node) => {
-              refs.current[index] = node;
-            }}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            tabIndex={on || (chosen === -1 && index === 0) ? 0 : -1}
-            onClick={() => onChange(item.id)}
-            onKeyDown={(event) => onKeyDown(event, index)}
-            className={cn("flex min-h-14.5 min-w-0 items-center gap-2.5 rounded-[12px] border-[1.5px] px-3 py-2 text-left", on ? "border-emerald bg-emerald-soft" : "border-line bg-surface hover:border-input")}
-          >
-            <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-[10px]", on ? "bg-emerald text-white" : "bg-surface-sunken text-ink-soft")}>
-              <Landmark className="size-4.25" strokeWidth={2} aria-hidden="true" />
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col gap-px">
-              <span className="truncate text-[13.5px] font-semibold text-ink">{item.name}</span>
-              <span className="truncate text-[11.5px] text-ink-muted tabular-nums">{item.accountNumber || t("Savings account")}</span>
-            </span>
-            {on && <Check className="size-4 shrink-0 text-emerald" strokeWidth={3} aria-hidden="true" />}
-          </button>
-        );
-      })}
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-haspopup="listbox"
+          aria-labelledby={`${labelledBy} ${labelledBy}-value`}
+          onKeyDown={step}
+          className={cn("flex min-h-14 w-full min-w-0 items-center gap-2.5 rounded-[12px] border-[1.5px] bg-surface px-3 py-2 text-left", open || current ? "border-emerald" : "border-line hover:border-input")}
+        >
+          {tile(Boolean(current), false)}
+          <span id={`${labelledBy}-value`} className="flex min-w-0 flex-1 flex-col gap-px">
+            {current ? (
+              <>
+                <span className="truncate text-[14px] font-semibold text-ink">{current.name}</span>
+                {current.accountNumber && <span className="truncate text-[12px] text-ink-muted tabular-nums">{current.accountNumber}</span>}
+              </>
+            ) : (
+              <span className="text-[14px] text-ink-faint">{t("Choose an account")}</span>
+            )}
+          </span>
+          {current && <span className="shrink-0 text-[13px] font-semibold text-ink-2 tabular-nums">{money(current.currentBalance)}</span>}
+          <ChevronDown className={cn("size-4.5 shrink-0 text-ink-muted transition-transform duration-150", open && "rotate-180")} strokeWidth={2} aria-hidden="true" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          options.current[Math.max(0, chosen)]?.focus();
+        }}
+        className="w-(--radix-popover-trigger-width) gap-0 rounded-[12px] border border-line bg-surface p-1.5 shadow-float ring-0"
+      >
+        <div role="listbox" aria-labelledby={labelledBy} className="flex max-h-59 flex-col overflow-y-auto">
+          {wallets.map((item, index) => {
+            const on = index === chosen;
+            return (
+              <button
+                key={item.id}
+                ref={(node) => {
+                  options.current[index] = node;
+                }}
+                type="button"
+                role="option"
+                aria-selected={on}
+                onClick={() => {
+                  onChange(item.id);
+                  setOpen(false);
+                }}
+                onKeyDown={step}
+                className={cn("flex w-full min-w-0 items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus-ring", on ? "bg-emerald-soft" : "bg-surface hover:bg-surface-sunken")}
+              >
+                {tile(on, true)}
+                <span className="flex min-w-0 flex-1 flex-col gap-px">
+                  <span className="truncate text-[13.5px] font-semibold text-ink">{item.name}</span>
+                  <span className="truncate text-[11.5px] text-ink-muted tabular-nums">{item.accountNumber || t("Savings account")}</span>
+                </span>
+                <span className="shrink-0 text-[12.5px] text-ink-soft tabular-nums">{money(item.currentBalance)}</span>
+                <span className="flex w-4 shrink-0">{on && <Check className="size-4 text-emerald" strokeWidth={3} aria-hidden="true" />}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            onAddWallet();
+          }}
+          className="mt-1 flex w-full items-center gap-2 border-t border-divider p-2.5 text-left text-[13px] font-semibold text-emerald outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+        >
+          <Plus className="size-3.75" strokeWidth={2.4} aria-hidden="true" />
+          {t("Add a savings account")}
+        </button>
+      </PopoverContent>
+    </Popover>
   );
 }

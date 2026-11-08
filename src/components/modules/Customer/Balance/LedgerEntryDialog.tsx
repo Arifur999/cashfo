@@ -56,11 +56,15 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
           : t("Moved from {account} to {other}. It also shows in the {other} ledger.", { other: party, account: accountName })
         : kind === "ADJUSTMENT"
           ? t("Added with Match real balance on the Accounts page, so this ledger matches your bank or wallet app.")
-          : (kind === "ASSET_PURCHASE" || kind === "ASSET_SALE") && party
-            ? kind === "ASSET_SALE"
-              ? t("Money from selling {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
-              : t("Paid for {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
-            : null;
+          : (kind === "LOAN_IN" || kind === "LOAN_OUT") && party
+            ? kind === "LOAN_IN"
+              ? t("Money from {name}, recorded in Loan Management › Transactions.", { name: party })
+              : t("Paid to {name}, recorded in Loan Management › Transactions.", { name: party })
+            : (kind === "ASSET_PURCHASE" || kind === "ASSET_SALE") && party
+              ? kind === "ASSET_SALE"
+                ? t("Money from selling {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
+                : t("Paid for {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
+              : null;
 
   function removeAdjustment() {
     if (isPending || !online) return;
