@@ -1220,4 +1220,17 @@ export const groupExpensesDictionary: Record<string, string> = {
   "How was it paid?": "কীভাবে দিয়েছেন?",
   "e.g. Txn ID 8XK2…": "যেমন: ট্রানজেকশন আইডি",
   "bKash": "বিকাশ",
+  // v16 GroupBudget board
+  "Budget for {month}": "{month}-এর বাজেট",
+  "Over": "বেশি",
+  "Warns at {percent}%": "{percent}%-এ সতর্ক করে",
+  "No warning": "সতর্কতা বন্ধ",
+  "What {month} spent in each category so far.": "{month}-এ এ পর্যন্ত প্রতিটি ক্যাটাগরিতে খরচ।",
+  "{percent}% of {month}’s spending": "{month}-এর খরচের {percent}%",
+  "Budget against what was spent": "বাজেট আর আসল খরচ পাশাপাশি",
+  "{month}: {spent} spent of {budget}": "{month}: {budget}-এর মধ্যে {spent} খরচ",
+  "Average spent a month": "মাসে গড় খরচ",
+  "Average budget a month": "মাসে গড় বাজেট",
+  "Months over budget": "বাজেট ছাড়ানো মাস",
+  "Tap a month to open it.": "কোনো মাস খুলতে চাপুন।",
 };

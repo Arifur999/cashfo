@@ -1,17 +1,19 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
+import Link from "next/link";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import { formatCurrency } from "@/lib/customer/currency";
-import { groupMonthOf } from "@/lib/customer/groupDisplay";
-import { budgetMonths, budgetPageMonths, budgetTotals, closedFor, firstMonthOf, spendByMonthKey } from "@/lib/customer/groupFamily";
+import { groupMonthOf, groupTabHref } from "@/lib/customer/groupDisplay";
+import { budgetMonths, budgetPageMonths, budgetTotals, categoryRows, closedFor, firstMonthOf, spendByMonthKey } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { CategoryTile } from "./GroupBits";
 import type { GroupPageData } from "./groupTypes";
 
 // Month, budget, spent, left or over, used, action.
@@ -22,8 +24,9 @@ interface GroupBudgetTabProps {
   onSet: (key: string) => void;
 }
 
-// The group's budget month by month (the v7 GroupBudget board): next month
-// back to the first, with what each spent against it.
+// The group's budget (the v16 GroupBudget board): this month against its
+// budget and the warning line, its spending by category, the last six months
+// as bars, then every month from next back to the first.
 export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
   const { t, fmt } = useLocale();
   const money = (value: number) => formatCurrency(Math.abs(value), data.currency, fmt);
@@ -34,25 +37,119 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
   const rows = budgetMonths(budgetPageMonths(currentKey, first), data.budgets, spent, currentKey);
   const totals = budgetTotals(rows);
   const warnAt = data.settings.budgetWarnPercent === undefined ? 90 : data.settings.budgetWarnPercent;
-  const left = totals.budget - totals.spent;
+
+  // The month on top (this one), by category, and the last six months.
+  const now = rows.find((row) => row.current);
+  const nowUsed = now?.budget ? (now.spent / now.budget) * 100 : null;
+  const nowOver = !!now?.budget && now.spent > now.budget;
+  const nowTone = nowOver ? "bg-expense-fill" : nowUsed !== null && warnAt !== null && nowUsed >= warnAt ? "bg-warning-fill" : "bg-emerald";
+  const cats = categoryRows(data.expenses, data.categories).filter((row) => row.amount > 0);
+  const last6 = [...rows].filter((row) => !row.future).slice(0, 6).reverse();
+  const peak = Math.max(1, ...last6.map((row) => Math.max(row.spent, row.budget ?? 0)));
+  const avgSpent = last6.length ? last6.reduce((sum, row) => sum + row.spent, 0) / last6.length : 0;
+  const withBudget = last6.filter((row) => row.budget !== null);
+  const avgBudget = withBudget.length ? withBudget.reduce((sum, row) => sum + (row.budget ?? 0), 0) / withBudget.length : null;
+  const overCount = withBudget.filter((row) => row.spent > (row.budget ?? 0)).length;
+  const monthLong = monthName(currentKey, fmt, "long", true);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-3 md:grid-cols-3">
-        <Card padding="none" className="flex flex-col gap-1 px-5 py-4">
-          <span className="text-small text-ink-muted">{t("Total budget")}</span>
-          <span className="text-[24px] font-bold text-ink tabular-nums">{money(totals.budget)}</span>
-          <span className="text-caption text-ink-muted">{t(totals.withBudget === 1 ? "{count} month with a budget" : "{count} months with a budget", { count: formatCount(totals.withBudget, fmt) })}</span>
-        </Card>
-        <Card padding="none" className="flex flex-col gap-1 px-5 py-4">
-          <span className="text-small text-ink-muted">{t("Total spent")}</span>
-          <span className="text-[24px] font-bold text-ink tabular-nums">{money(totals.spent)}</span>
-          <span className="text-caption text-ink-muted">{t("Across the months with a budget")}</span>
-        </Card>
-        <Card padding="none" className="flex flex-col gap-1 px-5 py-4">
-          <span className="text-small text-ink-muted">{left < 0 ? t("Over budget in total") : t("Left in total")}</span>
-          <span className={cn("text-[24px] font-bold tabular-nums", left < 0 ? "text-expense" : "text-income")}>{money(left)}</span>
-          <span className="text-caption text-ink-muted">{totals.over > 0 ? t("{over} of {count} months went over", { over: formatCount(totals.over, fmt), count: formatCount(totals.withBudget, fmt) }) : t("No month went over")}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <span className="flex items-center gap-2.5">
+          <h2 className="text-[19px] font-semibold text-ink">{t("Monthly budget")}</h2>
+          <Chip tone="mint" className="px-2.5">
+            {t("Current month")}
+          </Chip>
+        </span>
+        <Button onClick={() => onSet(currentKey)}>
+          <Pencil aria-hidden="true" />
+          {now?.budget ? t("Edit budget") : t("Set budget")}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Card padding="none" className="flex flex-col gap-3.5 px-5 py-4.5">
+            <h3 className="text-[17px] font-semibold text-ink">{t("Budget for {month}", { month: monthLong })}</h3>
+            <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-line">
+              <BudgetFigure label={t("Budget")} value={now?.budget ? money(now.budget) : t("Not set")} tone={now?.budget ? "text-ink" : "text-ink-faint"} />
+              <BudgetFigure label={t("Spent")} value={money(now?.spent ?? 0)} tone="text-ink" />
+              <BudgetFigure label={nowOver ? t("Over") : t("Left")} value={now?.budget ? money(now.budget - now.spent) : "—"} tone={nowOver ? "text-expense" : "text-income"} last />
+            </div>
+            {now?.budget ? (
+              <>
+                <span className="relative h-3 overflow-hidden rounded-full bg-surface-sunken" role="progressbar" aria-valuenow={Math.round(Math.min(nowUsed ?? 0, 100))} aria-valuemin={0} aria-valuemax={100} aria-label={t("Budget used")}>
+                  <span className={cn("block h-full rounded-full", nowTone)} style={{ width: `${Math.min(100, nowUsed ?? 0)}%` }} />
+                  {warnAt !== null && <span aria-hidden="true" className="absolute top-0 h-full w-0.5 bg-ink-muted" style={{ left: `${warnAt}%` }} />}
+                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-small">
+                  <span className={cn("font-semibold", nowOver ? "text-expense" : "text-emerald")}>{t("{percent}% of the budget used", { percent: formatCount(Math.round((nowUsed ?? 0) * 10) / 10, fmt) })}</span>
+                  <span className="flex items-center gap-2 text-ink-muted">
+                    {warnAt !== null ? t("Warns at {percent}%", { percent: formatCount(warnAt, fmt) }) : t("No warning")}
+                    <Button asChild variant="secondary" size="xs">
+                      <Link href={groupTabHref(data.businessId, "settings")}>{t("Change")}</Link>
+                    </Button>
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-small text-ink-muted">{t("No budget set for {month}.", { month: monthLong })}</p>
+            )}
+          </Card>
+
+          <Card padding="none" className="flex flex-col overflow-hidden">
+            <div className="flex flex-col gap-0.5 px-5 pt-4 pb-3">
+              <h3 className="text-[17px] font-semibold text-ink">{t("By category")}</h3>
+              <p className="text-caption text-ink-muted">{t("What {month} spent in each category so far.", { month: monthLong })}</p>
+            </div>
+            {cats.length === 0 && <p className="border-t border-divider px-5 py-4 text-small text-ink-muted">{t("No spending in {month} yet.", { month: monthLong })}</p>}
+            {cats.map((row) => (
+              <div key={row.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-divider px-5 py-2.5 text-body tabular-nums md:grid-cols-[minmax(0,1fr)_120px_200px]">
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <CategoryTile name={row.name} categories={data.categories} size={28} />
+                  <span className="truncate font-medium text-ink">{row.name}</span>
+                </span>
+                <span className="text-right font-semibold text-ink">{money(row.amount)}</span>
+                <span className="hidden text-caption text-ink-muted md:block">{t("{percent}% of {month}’s spending", { percent: formatCount(Math.round(row.share), fmt), month: monthName(currentKey, fmt, "long") })}</span>
+              </div>
+            ))}
+          </Card>
+        </div>
+
+        <Card padding="none" className="flex flex-col gap-3 px-5 py-4.5">
+          <div className="flex flex-col gap-0.5">
+            <h3 className="text-[17px] font-semibold text-ink">{t("Last 6 months")}</h3>
+            <p className="text-caption text-ink-muted">{t("Budget against what was spent")}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-caption text-ink-muted">
+            <span className="flex items-center gap-1.5"><span aria-hidden="true" className="size-2.5 rounded-sm bg-surface-sunken" />{t("Budget")}</span>
+            <span className="flex items-center gap-1.5"><span aria-hidden="true" className="size-2.5 rounded-sm bg-emerald" />{t("Spent")}</span>
+            <span className="flex items-center gap-1.5"><span aria-hidden="true" className="size-2.5 rounded-sm bg-warning-fill" />{t("Near limit")}</span>
+            <span className="flex items-center gap-1.5"><span aria-hidden="true" className="size-2.5 rounded-sm bg-expense-fill" />{t("Over")}</span>
+          </div>
+          <div className="grid grid-cols-6 gap-1.5" role="list" aria-label={t("Last 6 months")}>
+            {last6.map((row) => {
+              const used = row.budget ? (row.spent / row.budget) * 100 : null;
+              const tone = row.budget !== null && row.spent > row.budget ? "bg-expense-fill" : used !== null && warnAt !== null && used >= warnAt ? "bg-warning-fill" : "bg-emerald";
+              return (
+                <button key={row.key} type="button" role="listitem" onClick={() => onSet(row.key)} aria-label={t("{month}: {spent} spent of {budget}", { month: monthName(row.key, fmt, "long", true), spent: money(row.spent), budget: row.budget === null ? t("Not set") : money(row.budget) })} className={cn("flex flex-col items-center gap-1 rounded-lg border px-0.5 pt-1.5 pb-1 hover:bg-surface-sunken", row.current ? "border-emerald" : "border-transparent")}>
+                  <span className="text-[10.5px] font-semibold text-ink-2 tabular-nums">{toLocaleDigits(row.spent >= 1000 ? `${Math.round(row.spent / 100) / 10}k` : String(Math.round(row.spent)), fmt)}</span>
+                  <span className="flex h-32 items-end gap-0.5">
+                    <span className="w-2.5 rounded-t-sm bg-surface-sunken" style={{ height: `${((row.budget ?? 0) / peak) * 100}%` }} />
+                    <span className={cn("w-2.5 rounded-t-sm", tone)} style={{ height: `${(row.spent / peak) * 100}%` }} />
+                  </span>
+                  <span className={cn("text-caption", row.current ? "font-semibold text-ink" : "text-ink-2")}>{monthName(row.key, fmt, "short")}</span>
+                  <span className={cn("text-[11px] tabular-nums", tone === "bg-expense-fill" ? "text-expense" : tone === "bg-warning-fill" ? "text-warning" : "text-emerald")}>{used === null ? "—" : `${formatCount(Math.round(used * 10) / 10, fmt)}%`}</span>
+                </button>
+              );
+            })}
+          </div>
+          <dl className="flex flex-col gap-1.5 rounded-xl bg-strip px-4 py-3 text-small tabular-nums">
+            <div className="flex justify-between gap-3"><dt className="text-ink-2">{t("Average spent a month")}</dt><dd className="font-semibold text-ink">{money(avgSpent)}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-2">{t("Average budget a month")}</dt><dd className="font-semibold text-ink">{avgBudget === null ? t("Not set") : money(avgBudget)}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-2">{t("Months over budget")}</dt><dd className={cn("font-semibold", overCount > 0 ? "text-expense" : "text-income")}>{t("{count} of {total}", { count: formatCount(overCount, fmt), total: formatCount(withBudget.length, fmt) })}</dd></div>
+          </dl>
+          <p className="text-caption text-ink-muted">{t("Tap a month to open it.")}</p>
         </Card>
       </div>
 
@@ -60,11 +157,8 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
         label={t("Monthly budget")}
         header={
           <div className="flex items-center justify-between gap-3 px-4 py-3.5 md:px-5">
-            <h2 className="text-title font-semibold text-ink">{t("Monthly budget")}</h2>
-            <Button size="sm" onClick={() => onSet(currentKey)}>
-              <Plus aria-hidden="true" />
-              {t("Set budget")}
-            </Button>
+            <h2 className="text-title font-semibold text-ink">{t("Every month")}</h2>
+            <span className="text-small text-ink-muted">{totals.over > 0 ? t("{over} of {count} months went over", { over: formatCount(totals.over, fmt), count: formatCount(totals.withBudget, fmt) }) : t("No month went over")}</span>
           </div>
         }
       >
@@ -129,6 +223,15 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
           );
         })}
       </ListCard>
+    </div>
+  );
+}
+
+function BudgetFigure({ label, value, tone, last = false }: { label: string; value: string; tone: string; last?: boolean }) {
+  return (
+    <div className={cn("flex min-w-0 flex-col gap-0.5 px-4 py-3", !last && "border-r border-line", last && "bg-strip")}>
+      <span className="text-small text-ink-muted">{label}</span>
+      <span className={cn("truncate text-[24px] font-bold tabular-nums", tone)}>{value}</span>
     </div>
   );
 }
