@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Circle, X } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
@@ -35,6 +35,8 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [signOutOthers, setSignOutOthers] = useState(true);
+  // One Show link reveals all three boxes, as on the board.
+  const [show, setShow] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [prevOpen, setPrevOpen] = useState(false);
@@ -45,6 +47,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
       setPassword("");
       setConfirm("");
       setSignOutOthers(true);
+      setShow(false);
     }
   }
 
@@ -68,7 +71,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
     });
   }
 
-  const tick = (ok: boolean) => (ok ? <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" /> : <Circle className="size-3.5" aria-hidden="true" />);
+  const tick = (ok: boolean) => (ok ? <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" /> : <Minus className="size-3.5" aria-hidden="true" />);
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
@@ -83,11 +86,20 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
           <AlertDialogDescription className="sr-only">{t("Your current password, then the new one twice.")}</AlertDialogDescription>
           <div className="flex flex-col gap-3.5 overflow-y-auto px-6 py-5">
             <Field htmlFor="cp-current" label={t("Current password")}>
-              <PasswordField id="cp-current" size="md" className="text-body-lg" value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
+              <PasswordField id="cp-current" size="md" className="text-body-lg" visible={show} eye={false} value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
             </Field>
             <div className="flex flex-col gap-1.5">
-              <Field htmlFor="cp-new" label={t("New password")}>
-                <PasswordField id="cp-new" size="md" className="text-body-lg" value={password} onChange={setPassword} autoComplete="new-password" aria-describedby="cp-rules" />
+              <Field
+                htmlFor="cp-new"
+                label={t("New password")}
+                aside={
+                  <button type="button" onClick={() => setShow(!show)} aria-pressed={show} className="text-small font-semibold text-emerald hover:underline">
+                    {t(show ? "Hide" : "Show")}
+                    <span className="sr-only"> {t("passwords")}</span>
+                  </button>
+                }
+              >
+                <PasswordField id="cp-new" size="md" className="text-body-lg" visible={show} eye={false} value={password} onChange={setPassword} autoComplete="new-password" aria-describedby="cp-rules" />
               </Field>
               <StrengthMeter password={password} />
               <ul id="cp-rules" className="mt-0.5 grid gap-x-2.5 gap-y-1.5 sm:grid-cols-2" aria-label={t("Rules")}>
@@ -113,7 +125,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
                 ) : undefined
               }
             >
-              <PasswordField id="cp-confirm" size="md" className="text-body-lg" value={confirm} onChange={setConfirm} autoComplete="new-password" />
+              <PasswordField id="cp-confirm" size="md" className="text-body-lg" visible={show} eye={false} value={confirm} onChange={setConfirm} autoComplete="new-password" />
             </Field>
             {/* Ticked to start with: the API signs the other devices out
                 unless this is cleared. */}
