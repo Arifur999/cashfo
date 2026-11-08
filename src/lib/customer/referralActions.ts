@@ -43,7 +43,7 @@ export async function remindFriendsAction(referralIds: string[]): Promise<Referr
 
 // --- Earnings ---
 
-export async function listEarningsAction(query: { page: number; limit: number; status?: string; month?: string; search?: string }): Promise<ReferralResult<EarningList>> {
+export async function listEarningsAction(query: { page: number; limit: number; status?: string; dateFrom?: string; dateTo?: string; search?: string }): Promise<ReferralResult<EarningList>> {
   return callApi(async () => (await customerApi.get<EarningList>("/api/referrals/earnings", { params: query })).data, "Couldn't load your earnings.");
 }
 

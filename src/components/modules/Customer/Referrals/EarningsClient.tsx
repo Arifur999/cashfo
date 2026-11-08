@@ -3,15 +3,16 @@
 import { ArrowDownToLine, Download, Receipt } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import ErrorState from "@/components/smartly/ErrorState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
-import { segmentClassName } from "@/components/smartly/SegmentedControl";
+import { PeriodPicker, periodLabel } from "@/components/modules/Customer/Shared/PeriodPicker";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow } from "@/components/smartly/list";
 import { formatCurrency } from "@/lib/customer/currency";
+import { periodHref, periodRange, type PickedPeriod } from "@/lib/customer/period";
 import { balancesOf, COMMISSION_STATUS, EARNING_CARDS, KIND_LABEL, programOf } from "@/lib/customer/referralDisplay";
 import type { CommissionStatus, EarningList, ReferralProgramInfo } from "@/lib/customer/referralTypes";
 import { formatDate } from "@/lib/date";
@@ -19,19 +20,25 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CommissionStatusCell } from "./CommissionStatusCell";
+import { FriendDialog, type FriendStub } from "./FriendDialog";
 import { WITHDRAW_ROUTE } from "./EarningsHero";
 
 interface EarningsClientProps {
   info: ReferralProgramInfo | null;
   list: EarningList | null;
   status: CommissionStatus | null;
-  month: string | null;
+  period: PickedPeriod;
   currency: string;
   today: string;
 }
 
+const ALL_TIME: PickedPeriod = { kind: "all" };
+
 // Date | From | For | They paid | Your share | Status | Payment ID
-const COLUMNS = "md:grid-cols-[80px_minmax(0,1.2fr)_minmax(0,1.4fr)_90px_96px_minmax(0,1.1fr)_110px]";
+const COLUMNS = "md:grid-cols-[96px_minmax(0,1fr)_150px_96px_96px_170px_110px]";
+
+// The lines whose money counts toward "Your share".
+const COUNTED: CommissionStatus[] = ["ON_HOLD", "AVAILABLE", "IN_WITHDRAWAL", "UNDER_CHECK", "PAID_OUT"];
 
 // The dot before each filter card's label.
 const CARD_DOT: Record<CommissionStatus, string> = {
@@ -57,24 +64,23 @@ const CARD_NOTE: Record<CommissionStatus, string> = {
 
 // Referrals > Earnings (ReferralEarnings): every payment the member's
 // friends made and the member's share of it, newest first. The cards are
-// the totals by status and filter the list; the months narrow it; the
-// statement downloads what is shown. All of it lives in the URL.
-export function EarningsClient({ info, list, status, month, currency, today }: EarningsClientProps) {
+// the totals by status and filter the list; the Choose period picker narrows
+// it (the cards too); the statement downloads what is shown. All of it lives
+// in the URL.
+export function EarningsClient({ info, list, status, period, currency, today }: EarningsClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const [loading, startLoading] = useTransition();
+  const [friend, setFriend] = useState<FriendStub | null>(null);
   const money = (value: string | number) => formatCurrency(value, currency, fmt);
   const program = info ? programOf(info) : null;
   const available = info ? balancesOf(info).available : 0;
   const pct = program ? `${formatCount(program.commissionPct, fmt)}%` : "";
 
-  const query = (next: { status?: CommissionStatus | null; month?: string | null; page?: number }) => {
-    const params = new URLSearchParams();
+  const query = (next: { status?: CommissionStatus | null; period?: PickedPeriod; page?: number }) => {
     const s = next.status === undefined ? status : next.status;
-    const m = next.month === undefined ? month : next.month;
-    if (s) params.set("status", s);
-    if (m) params.set("month", m);
+    const params = new URLSearchParams(periodHref("", s ? { status: s } : {}, next.period ?? period).slice(1));
     if (next.page && next.page > 1) params.set("page", String(next.page));
     return params.toString();
   };
@@ -82,12 +88,13 @@ export function EarningsClient({ info, list, status, month, currency, today }: E
     const q = query(next);
     startLoading(() => router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false }));
   };
-  const statement = `/api/referrals/earnings/export${query({ page: 1 }) ? `?${query({ page: 1 })}` : ""}`;
-
-  // The months with earnings, newest first (the board's Oct · Sep · Aug).
-  const months = (info?.months ?? []).filter((m) => Number(m.amount) > 0).map((m) => m.month).reverse().slice(0, 6);
-  if (month && !months.includes(month)) months.unshift(month);
-  const monthLabel = (m: string) => formatDate(`${m}-15T06:00:00Z`, m.slice(0, 4) === today.slice(0, 4) ? "MMM" : "MMM yy", "", fmt);
+  const range = periodRange(period);
+  const exportQuery = new URLSearchParams({ ...(status && { status }), ...(range.dateFrom && { dateFrom: range.dateFrom }), ...(range.dateTo && { dateTo: range.dateTo }) }).toString();
+  const statement = `/api/referrals/earnings/export${exportQuery ? `?${exportQuery}` : ""}`;
+  const narrowed = status !== null || period.kind !== "all";
+  // The foot's "Your share": every line the filters keep (all pages), less
+  // the refunded and cancelled ones.
+  const shareShown = list ? (status ? [status] : COUNTED).filter((s) => COUNTED.includes(s)).reduce((sum, s) => sum + Number(list.totals[s].amount), 0) : 0;
   const dayLabel = (at: string) => formatDate(at, at.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy", "", fmt);
 
   return (
@@ -130,8 +137,8 @@ export function EarningsClient({ info, list, status, month, currency, today }: E
                     on ? "border-emerald ring-1 ring-emerald" : "border-line-card hover:border-line-strong",
                   )}
                 >
-                  <span className="flex items-center gap-1.5 text-caption font-medium text-ink-soft">
-                    <span aria-hidden="true" className={cn("size-1.5 rounded-full", CARD_DOT[key])} />
+                  <span className="flex items-center gap-1.5 text-[12.5px] leading-normal text-ink-muted">
+                    <span aria-hidden="true" className={cn("size-2 rounded-full", CARD_DOT[key])} />
                     {t(COMMISSION_STATUS[key].label)}
                   </span>
                   <span className="text-[20px] leading-normal font-bold text-ink tabular-nums">{money(total.amount)}</span>
@@ -151,21 +158,22 @@ export function EarningsClient({ info, list, status, month, currency, today }: E
             label={t("All commissions")}
             busy={loading}
             header={
-              <div className="flex flex-wrap items-center gap-3 px-4 py-3.5 md:px-5">
-                <h2 className="flex-1 text-title text-ink">{status ? t(COMMISSION_STATUS[status].label) : t("All commissions")}</h2>
-                <div role="tablist" aria-label={t("Month")} className="flex max-w-full gap-1 overflow-x-auto rounded-field bg-surface-sunken p-1">
-                  {[null, ...months].map((m) => (
-                    <button key={m ?? "all"} type="button" role="tab" aria-selected={month === m} onClick={() => go({ month: m, page: 1 })} className={segmentClassName({ variant: "soft", on: month === m })}>
-                      {m ? monthLabel(m) : t("All")}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex flex-wrap items-center gap-3 px-4 py-3 md:px-5">
+                <h2 className="min-w-0 flex-1 text-body-strong text-ink">
+                  {status ? t(COMMISSION_STATUS[status].label) : t("All commissions")}
+                  {period.kind !== "all" && ` · ${periodLabel(period, t, fmt)}`}
+                </h2>
+                <PeriodPicker period={period} today={today} activeMonths={list.activeMonths ?? null} allowAll defaultPeriod={ALL_TIME} busy={loading} onPick={(next) => go({ period: next, page: 1 })} />
               </div>
             }
             footer={
-              list.meta.totalPages > 1 && (
-                <ListFooter>
-                  <Pagination page={list.meta.page} totalPages={list.meta.totalPages} total={list.meta.total} pageSize={list.meta.limit} onPageChange={(page) => go({ page })} />
+              list.meta.total > 0 && (
+                <ListFooter className="gap-3">
+                  <div className="flex items-center justify-between gap-3 text-[13.5px] leading-normal tabular-nums">
+                    <span className="text-ink-2">{t(list.meta.total === 1 ? "{count} payment shown" : "{count} payments shown", { count: formatCount(list.meta.total, fmt) })}</span>
+                    <b className="font-bold text-ink">{t("Your share {amount}", { amount: money(shareShown) })}</b>
+                  </div>
+                  {list.meta.totalPages > 1 && <Pagination page={list.meta.page} totalPages={list.meta.totalPages} total={list.meta.total} pageSize={list.meta.limit} onPageChange={(page) => go({ page })} />}
                 </ListFooter>
               )
             }
@@ -180,15 +188,17 @@ export function EarningsClient({ info, list, status, month, currency, today }: E
               <ListHeadCell>{t("Payment ID")}</ListHeadCell>
             </ListHead>
             {list.data.length === 0 ? (
-              <ListEmpty icon={<Receipt />} title={status || month ? t("Nothing here") : t("No commissions yet")} description={status || month ? undefined : t("When a friend pays, the payment and your share show here.")} />
+              <ListEmpty icon={<Receipt />} title={narrowed ? t("Nothing here") : t("No commissions yet")} description={narrowed ? undefined : t("When a friend pays, the payment and your share show here.")} />
             ) : (
               list.data.map((line) => {
                 const gone = line.status === "REVERSED" || line.status === "CANCELLED";
                 return (
                   <ListRow key={line.id} columns={COLUMNS} density="relaxed">
                     <ListCell className="text-ink-2 tabular-nums max-md:hidden">{dayLabel(line.paidAt)}</ListCell>
-                    <ListCell className="flex min-w-0 flex-col">
-                      <span className="truncate font-semibold text-ink">{line.friendName}</span>
+                    <ListCell className="flex min-w-0 flex-col items-start">
+                      <button type="button" onClick={() => setFriend({ id: line.referralId, name: line.friendName })} className="max-w-full truncate rounded-sm text-left font-semibold text-ink hover:underline">
+                        {line.friendName}
+                      </button>
                       <span className="truncate text-caption text-ink-muted md:hidden">
                         {dayLabel(line.paidAt)} · {line.planName ?? t(KIND_LABEL[line.kind])}
                       </span>
@@ -216,6 +226,7 @@ export function EarningsClient({ info, list, status, month, currency, today }: E
           </ListCard>
         </>
       )}
+      <FriendDialog friend={friend} onClose={() => setFriend(null)} currency={currency} today={today} />
     </PageFrame>
   );
 }

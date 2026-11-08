@@ -106,7 +106,10 @@ export interface ReferralProgramInfo {
 export interface EarningList {
   data: Earning[];
   meta: { page: number; limit: number; total: number; totalPages: number };
-  // By status, with the month and search applied.
+  // Every month with a commission line, oldest first (the period picker's
+  // months); an older API leaves it out.
+  activeMonths?: { year: number; month: number; count: number }[];
+  // By status, with the period and search applied.
   totals: Record<CommissionStatus, { count: number; amount: string }>;
 }
 

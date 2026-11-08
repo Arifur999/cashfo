@@ -604,4 +604,8 @@ export const referralsDictionary: Record<string, string> = {
   "This code was made for an older version of the app. Start again to get a new one.": "কোডটি অ্যাপের পুরনো সংস্করণের জন্য তৈরি। নতুন কোড পেতে আবার শুরু করুন।",
   "Link not found": "লিংক পাওয়া যায়নি",
   "Friend not found": "বন্ধুকে পাওয়া যায়নি",
+  // Earnings foot (v16)
+  "{count} payment shown": "{count}টি পেমেন্ট দেখানো হচ্ছে",
+  "{count} payments shown": "{count}টি পেমেন্ট দেখানো হচ্ছে",
+  "Your share {amount}": "আপনার অংশ {amount}",
 };
