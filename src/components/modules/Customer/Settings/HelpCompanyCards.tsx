@@ -1,9 +1,9 @@
 "use client";
 
 import { Clock, ExternalLink, Globe, Lightbulb, Mail, MapPin, MessageCircle, MessagesSquare, Phone } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import Kbd from "@/components/smartly/Kbd";
-import { DAY_NAME, officeDays, officeState, telHref, webHref, whatsappHref, type HelpCompany } from "@/lib/customer/helpPage";
+import { clockIn, DAY_NAME, officeDays, officeState, telHref, webHref, whatsappHref, type HelpCompany } from "@/lib/customer/helpPage";
 import { SHORTCUTS } from "@/lib/customer/settingsDisplay";
 import { APP_TIME_ZONE } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
@@ -24,26 +24,14 @@ const YoutubeMark = () => (
   </svg>
 );
 
-const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-
-// The Dhaka day of the week and minutes since midnight, re-read every
-// minute; null on the server (the card then shows no open/closed line).
-function useDhakaClock(): { day: number; minutes: number } | null {
-  const key = useSyncExternalStore(
-    (onChange) => {
-      const timer = window.setInterval(onChange, 60_000);
-      return () => window.clearInterval(timer);
-    },
-    () => {
-      const parts = new Intl.DateTimeFormat("en-US", { timeZone: APP_TIME_ZONE, weekday: "short", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date());
-      const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "0";
-      return `${WEEKDAY_INDEX[part("weekday")] ?? 0}:${Number(part("hour")) * 60 + Number(part("minute"))}`;
-    },
-    () => "",
-  );
-  if (!key) return null;
-  const [day, minutes] = key.split(":").map(Number);
-  return { day, minutes };
+// The Dhaka clock, from the server's reading, moved on every minute.
+function useDhakaClock(initial: { day: number; minutes: number }) {
+  const [now, setNow] = useState(initial);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(clockIn(APP_TIME_ZONE)), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return now;
 }
 
 // "9:00" from "09:00", in the reader's digits.
@@ -51,9 +39,9 @@ const clock = (time: string) => time.replace(/^0(\d)/, "$1");
 
 // The SettingsHelp board's side: how to reach the company (from Admin ›
 // Settings), the average first reply, ideas, and the keyboard shortcuts.
-export function HelpCompanyCards({ company, onIdea }: { company: HelpCompany | null; onIdea: () => void }) {
+export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { company: HelpCompany | null; clock: { day: number; minutes: number }; onIdea: () => void }) {
   const { t, fmt } = useLocale();
-  const now = useDhakaClock();
+  const now = useDhakaClock(initialClock);
   const state = company && now ? officeState(company, now) : null;
   const days = company ? officeDays(company.openDays) : [];
   const daysText = days.map((run) => (run.length > 2 ? t("{first} to {last}", { first: t(DAY_NAME[run[0]]), last: t(DAY_NAME[run[run.length - 1]]) }) : run.map((day) => t(DAY_NAME[day])).join(", "))).join(", ");

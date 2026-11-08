@@ -120,3 +120,11 @@ export function youtubeIdOf(link: string): string | null {
   else if (host === "youtube.com" || host === "youtube-nocookie.com") id = url.pathname === "/watch" ? url.searchParams.get("v") : (/^\/(shorts|embed|live)\/([\w-]+)/.exec(url.pathname)?.[2] ?? null);
   return id && /^[\w-]{11}$/.test(id) ? id : null;
 }
+
+// The Dhaka day of the week (0 = Sunday) and minutes since midnight at `at`.
+const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+export function clockIn(zone: string, at: Date = new Date()): { day: number; minutes: number } {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: zone, weekday: "short", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(at);
+  const part = (type: string) => parts.find((piece) => piece.type === type)?.value ?? "0";
+  return { day: WEEKDAY_INDEX[part("weekday")] ?? 0, minutes: Number(part("hour")) * 60 + Number(part("minute")) };
+}

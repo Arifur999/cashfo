@@ -1,5 +1,7 @@
 import { HelpSection } from "@/components/modules/Customer/Settings/HelpSection";
+import { clockIn } from "@/lib/customer/helpPage";
 import { getHelpPage } from "@/lib/customer/helpPageReader";
+import { APP_TIME_ZONE } from "@/lib/date";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { getSupportMessagesAction } from "@/lib/customer/supportActions";
 
@@ -18,6 +20,7 @@ export default async function SettingsHelpPage({ searchParams }: PageProps<"/set
       openMessageId={typeof sp.message === "string" ? sp.message : undefined}
       conversations={messages.success ? (messages.data ?? []) : null}
       help={help}
+      clock={clockIn(APP_TIME_ZONE)}
     />
   );
 }

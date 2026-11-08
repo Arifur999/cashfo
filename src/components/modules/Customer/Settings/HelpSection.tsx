@@ -36,6 +36,8 @@ interface HelpSectionProps {
   // The company card and the video guides (Admin › Settings); null when
   // they couldn't be read.
   help: HelpPageData | null;
+  // The Dhaka clock when the page was read, for Open now / Closed now.
+  clock: { day: number; minutes: number };
 }
 
 type Tab = "videos" | "questions" | "contact" | "messages";
@@ -49,7 +51,7 @@ const TEXT_BUTTON = "inline-flex items-center rounded-sm font-semibold text-emer
 // guides; tabs for the guides, the questions, writing to the team and the
 // person's messages; beside them how to reach the company. A video opens
 // in the player, a message in its conversation.
-export function HelpSection({ openId, openMessageId, conversations: initialConversations, help }: HelpSectionProps) {
+export function HelpSection({ openId, openMessageId, conversations: initialConversations, help, clock }: HelpSectionProps) {
   const { t, locale } = useLocale();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(openId ?? FAQS[0]?.id ?? null);
@@ -316,7 +318,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
           )}
         </div>
 
-        <HelpCompanyCards company={help?.company ?? null} onIdea={() => setIdeasOpen(true)} />
+        <HelpCompanyCards company={help?.company ?? null} clock={clock} onIdea={() => setIdeasOpen(true)} />
       </div>
 
       <MessagesDrawer
