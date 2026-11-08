@@ -64,18 +64,18 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
     const note = row.notes ? ` · ${row.notes}` : "";
     switch (row.kind) {
       case "ALREADY_SAVED":
-        return { what: t("Already saved when goal was made"), from: t("Already saved"), to: row.to ?? "—" };
+        return { what: t("Already saved when goal was made"), from: t("Already saved"), to: row.to ?? "–" };
       case "ADDED":
-        return { what: `${t("Money added")}${note}`, from: row.from ?? "—", to: row.to ?? "—" };
+        return { what: `${t("Money added")}${note}`, from: row.from ?? "–", to: row.to ?? "–" };
       case "MOVED_IN":
         return { what: `${t("Moved in from another goal")}${note}`, from: t("{name} (goal)", { name: row.from ?? "" }), to: goal.name };
       case "MOVED_OUT":
         return { what: `${t("Moved out to another goal")}${note}`, from: goal.name, to: t("{name} (goal)", { name: row.to ?? "" }) };
       case "ACCOUNT_CHANGED":
         // The money changed savings account; the balance stays the same.
-        return { what: `${t("Moved to another savings account")}${row.moved ? ` · ${money(row.moved)}` : ""}${note}`, from: row.from ?? "—", to: row.to ?? "—" };
+        return { what: `${t("Moved to another savings account")}${row.moved ? ` · ${money(row.moved)}` : ""}${note}`, from: row.from ?? "–", to: row.to ?? "–" };
       default:
-        return { what: `${t("Withdrawn to main balance")}${note}`, from: row.from ?? "—", to: row.to ?? "—" };
+        return { what: `${t("Withdrawn to main balance")}${note}`, from: row.from ?? "–", to: row.to ?? "–" };
     }
   };
 
@@ -83,7 +83,7 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
     const firstDay = [statement.goal.startDate, ...statement.rows.map((row) => row.date.slice(0, 10))].sort()[0];
     const rows = statement.rows.map((row, index) => ({ n: formatCount(index + 1, fmt), date: day(row.date), ...rowText(row), moneyIn: row.moneyIn ? money(row.moneyIn) : "", moneyOut: row.moneyOut ? money(row.moneyOut) : "", balance: money(row.balance) }));
     const sources = statement.sources.map((source) => ({
-      label: source.kind === "ALREADY_SAVED" ? t("Already saved") : source.kind === "GOAL" ? t("Moved in from {name}", { name: source.name ?? "" }) : (source.name ?? "—"),
+      label: source.kind === "ALREADY_SAVED" ? t("Already saved") : source.kind === "GOAL" ? t("Moved in from {name}", { name: source.name ?? "" }) : (source.name ?? "–"),
       value: money(source.amount),
     }));
     const now = statement.now.map((item) => ({ label: item.name ?? t("Savings account"), value: money(item.amount) }));
@@ -125,7 +125,7 @@ footer{margin-top:16px;padding-top:10px;border-top:1px solid #e1e7e6;color:#5f6b
 <div class="info">${view.info.map((item) => `<div><small>${escape(item.label)}</small><b>${escape(item.value)}</b></div>`).join("")}</div>
 <div class="sums">${view.sums.map((item) => `<div><small>${escape(item.label)}</small><b>${escape(item.value)}</b></div>`).join("")}</div>
 <table><thead><tr>${cells(["#", t("Date"), t("Details"), t("From"), t("To"), t("In"), t("Out"), t("Balance")], "th")}</tr></thead><tbody>
-<tr>${cells(["", day(view.firstDay), t("Goal started"), "—", "—", "", "", money(0)])}</tr>
+<tr>${cells(["", day(view.firstDay), t("Goal started"), "–", "–", "", "", money(0)])}</tr>
 ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.to, row.moneyIn, row.moneyOut, row.balance])}</tr>`).join("")}
 </tbody><tfoot><tr><td colspan="5">${escape(t("Total"))}</td><td class="n">${escape(money(statement.totals.moneyIn))}</td><td class="n">${escape(money(statement.totals.moneyOut))}</td><td class="n">${escape(money(statement.totals.balance))}</td></tr></tfoot></table>
 <div class="two"><div class="box"><b>${escape(t("Money came from"))}</b>${view.sources.map((s) => `<div><span>${escape(s.label)}</span><b>${escape(s.value)}</b></div>`).join("")}<div><b>${escape(t("Total in"))}</b><b>${escape(money(statement.totals.moneyIn))}</b></div></div>
@@ -238,8 +238,8 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
                           <td className={cell} />
                           <td className={cell}>{day(view.firstDay)}</td>
                           <td className={cell}>{t("Goal started")}</td>
-                          <td className={cell}>—</td>
-                          <td className={cell}>—</td>
+                          <td className={cell}>–</td>
+                          <td className={cell}>–</td>
                           <td className={cell} />
                           <td className={cell} />
                           <td className={cn(cell, "text-right font-semibold")}>{money(0)}</td>
