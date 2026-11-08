@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Loader from "@/components/shared/Loader";
+import PageFrame from "@/components/smartly/PageFrame";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
@@ -13,7 +14,7 @@ import ErrorState from "@/components/smartly/ErrorState";
 import LoadMore from "@/components/smartly/LoadMore";
 import type { LoginHistoryEntry, SecurityAlerts, UserSessionSummary } from "@/lib/customer/api";
 import { getLoginHistoryAction, getSessionsAction, revokeSessionAction } from "@/lib/customer/authActions";
-import { formatTimeAgo, monthsSince } from "@/lib/customer/date";
+import { formatDate, formatTimeAgo } from "@/lib/customer/date";
 import { sendSetPasswordLinkAction } from "@/lib/customer/passwordVaultActions";
 import { saveSecurityAlertsAction } from "@/lib/customer/securityActions";
 import type { TwoStepStatus } from "@/lib/customer/securityDisplay";
@@ -26,10 +27,15 @@ import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { AppLockCard } from "./AppLockCard";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { RecoveryCard } from "./RecoveryCard";
+import { SecurityCheckup } from "./SecurityCheckup";
+import { SettingsBack } from "./SettingsBack";
 import { SettingSwitch } from "./SettingSwitch";
 import { SupportAccessCard } from "./SupportAccessCard";
 import { TwoStepCard } from "./TwoStepCard";
+import { useAppLock } from "./useAppLock";
 import { useVerifyEmail } from "./useVerifyEmail";
 
 // Rows shown at first, and added by each "Show more".
@@ -49,9 +55,17 @@ const ALERTS: { key: keyof Omit<SecurityAlerts, "emailReady">; title: string; bo
 // "Last changed 4 months ago", or the general advice while it is unknown.
 function passwordAge(changedAt: string | null, t: Translate, locale: FormatLocale): string {
   if (!changedAt) return t("Change it any time. Your other devices are signed out when you do.");
-  const months = monthsSince(changedAt, new Date());
-  if (months === 0) return t("Last changed this month");
-  return t(months === 1 ? "Last changed {count} month ago" : "Last changed {count} months ago", { count: formatCount(months, locale) });
+  return t("Last changed {date} · {ago}", { date: formatDate(changedAt, "d MMMM yyyy", locale), ago: formatTimeAgo(changedAt, t, locale) });
+}
+
+// The card a checkup's Fix points at: scrolled to and lit for a moment.
+const FLASH = ["ring-[3px]", "ring-primary/35"];
+function flash(id: string) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+  card.classList.add(...FLASH);
+  window.setTimeout(() => card.classList.remove(...FLASH), 1800);
 }
 
 const isPhone = (label: string) => /android|iphone|ipad|mobile|phone/i.test(label);
@@ -100,6 +114,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
   const [isSending, startSending] = useTransition();
   const verify = useVerifyEmail();
   const verified = user.emailVerified ?? Boolean(user.emailVerifiedAt);
+  const appLock = useAppLock(user.id);
 
   // The page read again (after a password change, a language switch): its
   // lists win, unless that read failed while these are fine.
@@ -211,7 +226,14 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
   }
 
   return (
-    <div className="flex flex-col gap-4.5">
+    <PageFrame className="gap-5.5 leading-[normal]">
+      <div className="flex flex-col gap-1">
+        <SettingsBack />
+        <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Security")}</h1>
+        <p className="text-body text-ink-muted">{t("Keep your money records safe: password, two-step sign-in, recovery and app lock.")}</p>
+      </div>
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="@container flex min-w-0 flex-col gap-4.5">
       {!verified && (
         <Card padding="none" className="flex flex-wrap items-center gap-3.5 border-warning-line bg-warning-50 px-4 py-4 md:px-5.5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-warning-soft text-warning [&_svg]:size-5">
@@ -235,7 +257,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
         </Card>
       )}
 
-      <Card padding="none" className="flex flex-wrap items-center gap-3.5 px-4 py-4.5 md:px-5.5">
+      <Card id="ss-pass" padding="none" className="flex scroll-mt-4 flex-wrap items-center gap-3.5 px-4 py-4.5 md:px-5.5">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-emerald-soft text-emerald [&_svg]:size-5">
           <KeyRound aria-hidden="true" />
         </span>
@@ -258,7 +280,13 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
         )}
       </Card>
 
-      <TwoStepCard initialStatus={initialTwoStep} />
+      <div id="ss-2fa" className="scroll-mt-4 rounded-card">
+        <TwoStepCard initialStatus={initialTwoStep} />
+      </div>
+
+      <RecoveryCard twoStepOn={Boolean(initialTwoStep?.enabled)} codesLeft={initialTwoStep?.backupCodesLeft ?? 0} onShowCodes={() => flash("ss-2fa")} />
+
+      <AppLockCard />
 
       <SupportAccessCard />
 
@@ -372,7 +400,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
         )}
       </Card>
 
-      <Card padding="none" className="overflow-hidden">
+      <Card id="ss-alert" padding="none" className="scroll-mt-4 overflow-hidden">
         <div className={cn("flex items-center gap-2.5", CARD_HEAD)}>
           <h2 className="flex-1 text-title font-semibold text-ink">{t("Alerts")}</h2>
           {alerts?.emailReady === false && (
@@ -398,5 +426,18 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
 
       {hasPassword && <ChangePasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} onChanged={passwordChanged} otherDevices={others.length} />}
     </div>
+        <SecurityCheckup
+          onFix={flash}
+          checks={{
+            passwordChangedAt: user.passwordChangedAt ?? null,
+            hasPassword,
+            twoStep: Boolean(initialTwoStep?.enabled ?? user.twoFactorEnabled),
+            recovery: Boolean(user.recoveryEmail) || Boolean(user.phone && user.phoneVerifiedAt),
+            appLockAfter: appLock.on ? appLock.after : null,
+            alerts: Boolean(alerts?.alertNewDevice && alerts?.alertFailedTries),
+          }}
+        />
+      </div>
+    </PageFrame>
   );
 }

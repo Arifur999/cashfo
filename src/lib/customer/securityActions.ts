@@ -107,3 +107,24 @@ export async function deleteAccountAction(input: { password?: string; code?: str
   const body = { confirm: "DELETE", ...(input.password && { password: input.password }), ...(input.code && { code: input.code }), ...(input.backupCode && { backupCode: input.backupCode }) };
   return callApi(async () => (await customerApi.post<{ scheduledFor: string }>(`${API_BASE_URL}/api/account/delete`, body)).data, "Couldn't delete your account");
 }
+
+// Settings › Security › Recovery email: the address and the account's
+// password (none for a Google-only account) send a code to it; the code
+// saves it.
+export interface RecoveryChallenge {
+  challengeId: string;
+  sentTo: string;
+  resendAfterSec: number;
+}
+
+export async function startRecoveryEmailAction(input: { email: string; password?: string }): Promise<SecurityResult<RecoveryChallenge>> {
+  return callApi(async () => (await customerApi.post<RecoveryChallenge>("/api/auth/recovery-email", input)).data, "Couldn't send the code. Try again.");
+}
+
+export async function confirmRecoveryEmailAction(input: { challengeId: string; code: string }): Promise<SecurityResult<{ recoveryEmail: string | null }>> {
+  return callApi(async () => (await customerApi.post<{ recoveryEmail: string | null }>("/api/auth/recovery-email/confirm", input)).data, "That code didn't work. Try again.");
+}
+
+export async function removeRecoveryEmailAction(): Promise<SecurityResult<{ recoveryEmail: null }>> {
+  return callApi(async () => (await customerApi.delete<{ recoveryEmail: null }>("/api/auth/recovery-email")).data, "Couldn't remove the recovery email.");
+}

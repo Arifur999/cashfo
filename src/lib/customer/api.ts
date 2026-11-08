@@ -54,6 +54,8 @@ export interface CurrentUser {
   district?: string | null;
   phone2?: string | null;
   phone2WhatsApp?: boolean;
+  // Settings › Security › Recovery email, once proved with a code.
+  recoveryEmail?: string | null;
   customerCode?: string;
   // The shareable profile card: whether it is on, and its code (the
   // referral code) for the /card/<code> link.
