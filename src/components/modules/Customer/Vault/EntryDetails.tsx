@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, PenLine, Pencil, Star, Trash2, TriangleAlert } from "lucide-react";
+import { Check, Clock, Copy, ExternalLink, Eye, EyeOff, PencilLine, Star, Trash2, TriangleAlert } from "lucide-react";
 import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
 import { SOFT_TONE } from "@/components/smartly/tones";
@@ -152,7 +152,7 @@ export function EntryDetails({ entry, onClose, issues, safety, revealed, busy, c
             {t("Close")}
           </Button>
           <Button variant="action" onClick={onEdit} className="h-10 px-4.5 pointer-coarse:h-11">
-            <Pencil className="size-3.5" />
+            <PencilLine className="size-3.5" strokeWidth={2.25} />
             {t("Edit")}
           </Button>
         </>
@@ -166,7 +166,6 @@ export function EntryDetails({ entry, onClose, issues, safety, revealed, busy, c
             <span className="flex flex-1 flex-col items-start gap-2">
               <span className="text-[13.5px] leading-normal text-warning-ink">{warning.text}</span>
               <Button size="sm" onClick={onFix} className="h-8 bg-warning px-3 text-[12.5px] text-white shadow-none hover:bg-warning/90 pointer-coarse:h-11">
-                <PenLine className="size-3.5" />
                 {t("Change this password")}
               </Button>
             </span>
