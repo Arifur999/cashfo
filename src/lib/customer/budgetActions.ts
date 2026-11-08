@@ -128,6 +128,10 @@ export interface MonthlyPlanInput {
   year: number;
   incomeTarget: number;
   expenseBudget: number;
+  // An edit that picked another month: the month the plan is in now (it
+  // moves to month/year).
+  fromMonth?: number;
+  fromYear?: number;
 }
 
 // Budget Planning > Set monthly budget: makes the month's plan or replaces it.

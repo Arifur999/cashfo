@@ -116,12 +116,26 @@ export function percentOf(value: number, target: number | null): number {
   return Math.round((value / target) * 100);
 }
 
-// Days still to come in the month, today included; 0 for a past month, the
-// whole month for one still ahead.
+// Days of the month still to come after today (the Budget board's: 3 on
+// 28 October); 0 for a past month, the whole month for one still ahead.
 export function daysLeft(year: number, month: number, today: string): number {
   const [ty, tm, td] = today.split("-").map(Number);
   const last = lastDayOf(year, month);
   if (year < ty || (year === ty && month < tm)) return 0;
   if (year > ty || month > tm) return last;
-  return last - td + 1;
+  return last - td;
+}
+
+// "Set monthly budget" opens on the first month from this one that has no
+// plan yet, looking two years ahead (then the month after those).
+export function firstFreeMonth(plans: YearMonth[], current: YearMonth): YearMonth {
+  const at = (step: number): YearMonth => {
+    const index = current.year * 12 + (current.month - 1) + step;
+    return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+  };
+  for (let step = 0; step < 24; step++) {
+    const month = at(step);
+    if (!plans.some((plan) => plan.month === month.month && plan.year === month.year)) return month;
+  }
+  return at(24);
 }
