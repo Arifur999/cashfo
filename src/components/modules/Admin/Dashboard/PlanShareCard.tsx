@@ -1,6 +1,7 @@
 "use client";
 
 import { formatAmount } from "@/lib/currency";
+import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural } from "@/lib/i18n/message";
@@ -17,12 +18,17 @@ interface PlanShareCardProps {
   plans: IDashboardPlanRow[];
   // Deleted accounts, which the shares leave out.
   deletedLeftOut: number | null;
+  // The day the counts are for, when it is not today (a period gone by).
+  on?: string | null;
 }
 
 // Accounts by plan: one stacked bar, then a row per plan with its price,
 // count and share; the deleted accounts left out are named at the foot.
-export function PlanShareCard({ plans, deletedLeftOut }: PlanShareCardProps) {
-  const { translate, locale } = useLocale();
+export function PlanShareCard({ plans, deletedLeftOut, on = null }: PlanShareCardProps) {
+  const { translate, locale, fmt } = useLocale();
+  const leftOut = deletedLeftOut !== null && deletedLeftOut > 0 ? plural(translate, deletedLeftOut, "{count} deleted account is left out.", "{count} deleted accounts are left out.", undefined, locale) : null;
+  const onDay = on ? translate("On {day}", { day: formatDay(on, "d MMM yyyy", fmt) }) : null;
+  const foot = [onDay, leftOut].filter(Boolean).join(" · ");
   const title = translate("Accounts by plan");
   return (
     <Section title={title} className="h-full">
@@ -47,11 +53,7 @@ export function PlanShareCard({ plans, deletedLeftOut }: PlanShareCardProps) {
               </div>
             ))}
           </div>
-          {deletedLeftOut !== null && deletedLeftOut > 0 && (
-            <span className="mt-auto text-[12.5px] leading-[normal] text-ink-muted">
-              {plural(translate, deletedLeftOut, "{count} deleted account is left out.", "{count} deleted accounts are left out.", undefined, locale)}
-            </span>
-          )}
+          {foot && <span className="mt-auto text-[12.5px] leading-[normal] text-ink-muted">{foot}</span>}
         </>
       )}
     </Section>
