@@ -40,7 +40,7 @@ export function sectionFor(pathname: string): SettingsSectionKey {
 export const sectionOf = (key: SettingsSectionKey): SettingsSection => SETTINGS_SECTIONS.find((section) => section.key === key) ?? SETTINGS_SECTIONS[0];
 
 // App preferences' Reminders card, which the phone menu's Reminders row
-// opens (/settings/app#reminders).
+// opens (/settings/notifications#reminders).
 export const REMINDERS_ANCHOR = "reminders";
 // The phone menu's Devices row (Security's devices card) and Numbers and
 // dates row (App preferences' card).

@@ -8,7 +8,7 @@ import { REMINDERS_ANCHOR } from "@/lib/customer/settingsDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // Where notifications are turned on: Settings › App › Reminders.
-export const PUSH_SETTINGS_HREF = `/settings/app#${REMINDERS_ANCHOR}`;
+export const PUSH_SETTINGS_HREF = `/settings/notifications#${REMINDERS_ANCHOR}`;
 
 const NOTE = {
   off: "Notifications are off on this device, so this reminder only shows in the bell.",

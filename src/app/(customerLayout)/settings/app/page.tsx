@@ -1,34 +1,26 @@
-import { unstable_rethrow } from "next/navigation";
+import { redirect } from "next/navigation";
 import { AppPreferencesSection } from "@/components/modules/Customer/Settings/AppPreferencesSection";
-import { getReminderPreferencesAction } from "@/lib/customer/notificationsActions";
+import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
+import { getCurrentUser } from "@/lib/customer/auth";
+import { homeDates } from "@/lib/customer/greeting";
+import { getPrayerSettings } from "@/lib/customer/habits";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { getPushPublicKey, getReminders, getReminderTargetNames } from "@/lib/customer/reminders";
-import { getAppToday } from "@/lib/date";
+import { getMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { APP_TIME_ZONE, getAppToday } from "@/lib/date";
+import { getLocale } from "@/lib/i18n/locale";
 
 export const generateMetadata = () => customerPageMetadata("/settings/app");
 
-// A side read that fails (an outage, a timeout) leaves its part of the card
-// saying so, with Try again, rather than taking the page down. Next's own
-// redirects (maintenance mode) still go through.
-const orNull = <T,>(read: Promise<T | null>): Promise<T | null> =>
-  read.catch((error: unknown) => {
-    unstable_rethrow(error);
-    return null;
-  });
-
-// The reminder switches are read here so they show their real state at
-// once; a failed read arrives as null, and the card offers Try again.
+// Settings › App preferences: the open workspace's wallets for the default
+// one (only for those who add entries there), and today's Hijri date for
+// the preview.
 export default async function SettingsAppPage() {
-  const [reminders, habitReminders, pushPublicKey] = await Promise.all([getReminderPreferencesAction(), orNull(getReminders()), orNull(getPushPublicKey())]);
-  // Names only for the reminders the list shows: the ones that are on.
-  const reminderNames = habitReminders ? await getReminderTargetNames(habitReminders.reminders.filter((reminder) => reminder.enabled).map((reminder) => reminder.kind)) : {};
-  return (
-    <AppPreferencesSection
-      today={getAppToday()}
-      reminders={reminders.success && reminders.data ? reminders.data : null}
-      habitReminders={habitReminders}
-      reminderNames={reminderNames}
-      pushPublicKey={pushPublicKey}
-    />
-  );
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const businessId = await resolveActiveBusinessId(user.businesses);
+  const role = user.businesses.find((business) => business.id === businessId)?.role;
+  const adds = Boolean(businessId) && (role === "OWNER" || role === "ACCOUNTANT");
+  const [wallets, prayer, locale] = await Promise.all([adds && businessId ? getMoneyAccountsAction(businessId) : [], getPrayerSettings(), getLocale()]);
+  const hijri = homeDates(new Date(), locale, APP_TIME_ZONE, prayer.hijriAdjust).hijri;
+  return <AppPreferencesSection today={getAppToday()} businessId={adds ? businessId : null} wallets={wallets} hijri={hijri} />;
 }

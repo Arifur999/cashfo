@@ -15,6 +15,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PopupDialog } from "../../Shared/PopupDialog";
 import { BoardSegment, CARD, SELECT, SmallSwitch } from "../boardUi";
+import { RemindersCard, type RemindersCardProps } from "../RemindersCard";
 import { SettingsBack } from "../SettingsBack";
 
 interface Row {
@@ -109,7 +110,7 @@ const GRID = "grid grid-cols-[minmax(0,1fr)_repeat(4,108px)] items-center";
 // The SettingsNotifications board: every alert on or off in the bell,
 // email, SMS (Pro) and push, saved as each is switched; quiet hours, the
 // summary, where things go and a test push.
-export function NotificationsPageClient({ initial, today }: { initial: NotificationSettingsPage | null; today: string }) {
+export function NotificationsPageClient({ initial, today, reminderProps }: { initial: NotificationSettingsPage | null; today: string; reminderProps?: RemindersCardProps }) {
   const { t, fmt } = useLocale();
   const [page, setPage] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -167,6 +168,7 @@ export function NotificationsPageClient({ initial, today }: { initial: Notificat
       </div>
 
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="@container flex min-w-0 flex-col gap-5">
         <section aria-labelledby="nt-m" className={cn(CARD, "overflow-x-auto")}>
           <div className="flex flex-wrap items-start justify-between gap-3 px-5.5 pt-5 pb-4">
             <div>
@@ -270,6 +272,8 @@ export function NotificationsPageClient({ initial, today }: { initial: Notificat
             </div>
           </div>
         </section>
+        {reminderProps && <RemindersCard {...reminderProps} />}
+        </div>
 
         <div className="flex flex-col gap-4 xl:sticky xl:top-0">
           <section aria-labelledby="nt-q" className={cn(CARD, "flex flex-col gap-3.5 px-5.5 py-5")}>
