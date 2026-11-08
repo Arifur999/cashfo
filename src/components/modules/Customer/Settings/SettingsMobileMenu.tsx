@@ -1,14 +1,15 @@
 "use client";
 
-import { Bell, BookOpen, ChevronRight, CircleHelp, Hash, Languages, LogOut, Moon, Shield, Smartphone, Star, type LucideIcon } from "lucide-react";
+import { Bell, BookOpen, ChevronRight, CircleHelp, CreditCard, Database, Hash, Languages, LogOut, Moon, Shield, Smartphone, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
+import { usePlanChip } from "@/components/modules/Customer/Providers/PlanProvider";
 import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
 import Avatar from "@/components/smartly/Avatar";
 import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
 import { DEFAULT_PREFERENCES, digitsInForce, sampleAmount } from "@/lib/customer/securityDisplay";
-import { APP_VERSION, DEVICES_ANCHOR, NUMBERS_ANCHOR, REMINDERS_ANCHOR } from "@/lib/customer/settingsDisplay";
+import { APP_VERSION, DEVICES_ANCHOR, NUMBERS_ANCHOR } from "@/lib/customer/settingsDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -32,16 +33,16 @@ interface SettingsMobileMenuProps {
 }
 
 
-// Settings on a phone (design-v4 SettingsMobile): the profile card, then
-// every setting as a row with where it stands. Theme shows only while the
-// dark_mode flag is on. Plans has a row too (the board has none, but the
-// phone has no other way there besides Home's upgrade card).
+// Settings on a phone (SettingsMobile board): the profile card, then every
+// setting as a row with where it stands. Theme shows only while the
+// dark_mode flag is on.
 export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuProps) {
   const { t, locale, fmt } = useLocale();
   const { user, askSignOut } = useAuth();
   const { preference, allowDark } = useTheme();
   const prefs = user.preferences ?? DEFAULT_PREFERENCES;
   const twoStepOn = Boolean(user.twoFactorEnabled);
+  const plan = usePlanChip();
 
   const groups: { label: string; rows: MenuRow[] }[] = [
     {
@@ -49,7 +50,7 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
       rows: [
         { key: "security", href: "/settings/security", label: "Security", icon: Shield, tone: "warning", value: t(twoStepOn ? "2-step on" : "2-step off"), valueTone: twoStepOn ? undefined : "warning" },
         { key: "devices", href: `/settings/security#${DEVICES_ANCHOR}`, label: "Devices", icon: Smartphone, tone: "money", value: devices === null ? undefined : t("{count} signed in", { count: formatCount(devices, fmt) }) },
-        { key: "plans", href: PLANS_ROUTE, label: "Plans", icon: Star, tone: "money" },
+        { key: "plans", href: PLANS_ROUTE, label: "Plans & billing", icon: CreditCard, tone: "warning", value: plan.status === "free" ? t("Free") : plan.label },
       ],
     },
     {
@@ -58,7 +59,8 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
         { key: "language", href: "/settings/app", label: "Language", icon: Languages, tone: "money", value: locale === "bn" ? "বাংলা" : "English", lang: locale === "bn" ? "bn" : undefined },
         ...(allowDark ? [{ key: "theme", href: "/settings/app", label: "Theme", icon: Moon, tone: "neutral" as const, value: t(preference === "dark" ? "Dark" : preference === "light" ? "Light" : "Match device") }] : []),
         { key: "numbers", href: `/settings/app#${NUMBERS_ANCHOR}`, label: "Numbers and dates", icon: Hash, tone: "income", value: sampleAmount(123456, prefs.numberGrouping, digitsInForce(prefs.digitStyle, locale), locale) },
-        { key: "reminders", href: `/settings/notifications#${REMINDERS_ANCHOR}`, label: "Reminders", icon: Bell, tone: "rose", value: remindersOn === null ? undefined : t("{count} on", { count: formatCount(remindersOn, fmt) }) },
+        { key: "notifications", href: "/settings/notifications", label: "Notifications", icon: Bell, tone: "rose", value: remindersOn === null ? undefined : t("{count} on", { count: formatCount(remindersOn, fmt) }) },
+        { key: "data", href: "/settings/data", label: "Data & privacy", icon: Database, tone: "insights", value: t("Export, backup") },
       ],
     },
     {

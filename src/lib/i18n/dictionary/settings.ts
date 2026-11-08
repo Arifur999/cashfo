@@ -1319,4 +1319,5 @@ export const settingsDictionary: Record<string, string> = {
   "You are on the free trial, so there is nothing to pay. When you pick Monthly or Yearly, every payment and its receipt shows up here.": "আপনি ফ্রি ট্রায়ালে আছেন, তাই কিছু দিতে হবে না। মাসিক বা বার্ষিক বেছে নিলে প্রতিটি পেমেন্ট আর তার রসিদ এখানে দেখাবে।",
   "You are on Free, so there is nothing to pay. When you pick Monthly or Yearly, every payment and its receipt shows up here.": "আপনি Free-তে আছেন, তাই কিছু দিতে হবে না। মাসিক বা বার্ষিক বেছে নিলে প্রতিটি পেমেন্ট আর তার রসিদ এখানে দেখাবে।",
   "Type it in English letters to see it on the PDF receipt too.": "PDF রসিদেও দেখতে চাইলে ইংরেজি অক্ষরে লিখুন।",
+  "Export, backup": "ডাউনলোড, ব্যাকআপ",
 };
