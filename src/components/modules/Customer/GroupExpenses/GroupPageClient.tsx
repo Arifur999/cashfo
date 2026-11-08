@@ -359,7 +359,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       </div>
 
       <MealDrawer day={mealDay} onClose={() => setMealDay(null)} businessId={data.businessId} members={data.members} meals={data.meals} units={unitsOf(data.settings)} range={data.range} closedGuard={closedGuard} />
-      <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} members={data.members} editing={member.editing} defaultJoin={view.setup ? "" : data.today} />
+      <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} groupName={data.name} members={data.members} editing={member.editing} defaultJoin={view.setup ? "" : data.today} costSplit={data.settings.costSplit ?? "EQUAL"} onRemove={(target) => (setMember({ open: false, editing: null }), removeMember(target))} />
       <ContributionDrawer selfOnly={selfOnly} open={contribution.open} onClose={() => setContribution({ open: false, editing: null, memberId: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} cashInHand={view.cash} holderId={holderId} range={data.range} today={data.today} editing={contribution.editing} presetMemberId={contribution.memberId} closedGuard={closedGuard} />
       <ExpenseDrawer
         open={expense.open}

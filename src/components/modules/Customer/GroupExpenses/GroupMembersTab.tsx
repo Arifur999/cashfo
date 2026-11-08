@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, FileText, KeyRound, Pencil, PencilLine, PieChart, Search, Trash2, TriangleAlert, UserCheck, UserMinus, UserPlus, UserRound, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, FileText, KeyRound, Pencil, PencilLine, PieChart, Search, Trash2, TriangleAlert, UserCheck, UserMinus, UserPlus, UserRound, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import Banner from "@/components/smartly/Banner";
@@ -12,7 +12,8 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { GroupAccessLink, GroupMember } from "@/lib/customer/api";
 import { MEMBER_ROLE_HINTS, MEMBER_ROLE_LABELS, memberAccessRole, type MemberAccessRole } from "@/lib/customer/groupAccess";
 import { groupTabHref, memberSince } from "@/lib/customer/groupDisplay";
-import { accountantsOf, addsUpToHundred, costShares, isAccountant } from "@/lib/customer/groupFamily";
+import { addsUpToHundred, costShares, isAccountant } from "@/lib/customer/groupFamily";
+import { formatCurrency } from "@/lib/customer/currency";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -41,8 +42,10 @@ interface GroupMembersTabProps {
 
 const ROLE_TONES: Record<MemberAccessRole, ChipTone> = { ADMIN: "mint", EDITOR: "warning", VIEWER: "info", NONE: "neutral" };
 
-// Member, phone, member since, cost share, role and access, balance now, actions.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_116px_96px_140px_176px_132px_168px]";
+// #, member, phone (and since when), shares, role, login, balance now, actions
+// (the v16 FamilyMembers board), ten to a page.
+const COLUMNS = "md:grid-cols-[34px_minmax(0,1fr)_124px_56px_112px_200px_124px_168px]";
+const PER_PAGE = 10;
 
 // The group's people (the v7 FamilyMembers board): who is in, their role
 // -- accountants keep the cash -- and their part of the costs, with the
@@ -55,7 +58,6 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
   const shares = costShares(data.members, data.settings);
   const custom = data.settings.costSplit === "CUSTOM";
   const active = view.activeMembers;
-  const accountants = accountantsOf(data.members);
   const counts: Record<Filter, number> = { ACTIVE: active.length, ARCHIVED: data.members.length - active.length, ALL: data.members.length };
   const words = query.trim().toLowerCase();
   // The role tiles (the FamilyMembers board): everyone active, then by
@@ -69,7 +71,16 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
     { key: "VIEWER", label: t("Viewer access"), count: byRole("VIEWER").length, sub: onEdit ? t("{count} can log in", { count: formatCount(loggedIn("VIEWER"), fmt) }) : t("See everything"), tone: "bg-info-soft text-info", icon: Eye },
     { key: "NONE", label: t("No access"), count: byRole("NONE").length, sub: t("In the costs, no portal"), tone: "bg-surface-sunken text-ink-soft", icon: UserRound },
   ];
-  const rows = data.members.filter((member) => (roleFilter === "ALL" || memberAccessRole(member) === roleFilter) && (filter === "ALL" || member.status === filter) && (!words || member.name.toLowerCase().includes(words) || (member.household ?? "").toLowerCase().includes(words) || (member.phone ?? "").replace(/\D/g, "").includes(words.replace(/\D/g, "") || "\u0000")));
+  const [pageAsked, setPage] = useState(1);
+  const shown = data.members.filter((member) => (roleFilter === "ALL" || memberAccessRole(member) === roleFilter) && (filter === "ALL" || member.status === filter) && (!words || member.name.toLowerCase().includes(words) || (member.household ?? "").toLowerCase().includes(words) || (member.phone ?? "").replace(/\D/g, "").includes(words.replace(/\D/g, "") || "\u0000")));
+  // Ten to a page; a filter that leaves fewer pages lands on the last.
+  const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
+  const page = Math.min(pageAsked, pages);
+  const from = (page - 1) * PER_PAGE;
+  const rows = shown.slice(from, from + PER_PAGE);
+  const totalShares = active.reduce((sum, member) => sum + Number(member.shareUnits || 1), 0);
+  const logins = active.filter((member) => member.access?.login).length;
+  const cashOf = Object.fromEntries((data.settlement.accountantCash ?? []).map((row) => [row.groupMemberId, Number(row.cash)]));
   const broken = custom && active.length > 0 && !addsUpToHundred(active.map((member) => shares[member.id] ?? 0));
   const unshared = custom ? active.filter((member) => !(shares[member.id] > 0)) : [];
   const filterWord = filter === "ACTIVE" ? t("active") : filter === "ARCHIVED" ? t("inactive") : t("all");
@@ -173,29 +184,48 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
         }
         footer={
           <ListFooter className="flex-col items-start gap-1 text-small text-ink-soft md:px-5">
-            <span className="font-semibold text-ink-2">{t("{active} active members · {accountants} accountants", { active: formatCount(active.length, fmt), accountants: formatCount(accountants.length, fmt) })}</span>
+            <span className="flex w-full flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold text-ink-2">
+                {onEdit
+                  ? t("{count} members · {shares} shares in total · {logins} can log in", { count: formatCount(active.length, fmt), shares: formatCount(totalShares, fmt), logins: formatCount(logins, fmt) })
+                  : t("{count} members · {shares} shares in total", { count: formatCount(active.length, fmt), shares: formatCount(totalShares, fmt) })}
+              </span>
+              {shown.length > PER_PAGE && (
+                <span className="flex items-center gap-2.5">
+                  <span className="text-ink-muted">{t("{from} to {to} of {total}", { from: formatCount(from + 1, fmt), to: formatCount(from + rows.length, fmt), total: formatCount(shown.length, fmt) })}</span>
+                  <button type="button" onClick={() => setPage(page - 1)} disabled={page <= 1} aria-label={t("Previous page")} className="flex size-8 items-center justify-center rounded-full border border-line bg-surface text-ink-2 disabled:opacity-40 pointer-coarse:size-11">
+                    <ChevronLeft className="size-4" aria-hidden="true" />
+                  </button>
+                  <button type="button" onClick={() => setPage(page + 1)} disabled={page >= pages} aria-label={t("Next page")} className="flex size-8 items-center justify-center rounded-full border border-line bg-surface text-ink-2 disabled:opacity-40 pointer-coarse:size-11">
+                    <ChevronRight className="size-4" aria-hidden="true" />
+                  </button>
+                </span>
+              )}
+            </span>
             <span>{t("Balance now: above 0 the group owes them, below 0 they owe the group. Members with money entries can’t be deleted; mark them inactive and they stay in the history.")}</span>
           </ListFooter>
         }
       >
         <ListHead columns={COLUMNS} className="gap-x-3 border-t md:px-5">
+          <ListHeadCell align="center">#</ListHeadCell>
           <ListHeadCell>{t("Member")}</ListHeadCell>
           <ListHeadCell>{t("Phone")}</ListHeadCell>
-          <ListHeadCell>{t("Member since")}</ListHeadCell>
-          <ListHeadCell>{t("Cost share")}</ListHeadCell>
-          <ListHeadCell>{t("Role and access")}</ListHeadCell>
+          <ListHeadCell align="center">{t("Shares")}</ListHeadCell>
+          <ListHeadCell>{t("Role")}</ListHeadCell>
+          <ListHeadCell>{t("Login")}</ListHeadCell>
           <ListHeadCell align="end">{t("Balance now")}</ListHeadCell>
           <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {rows.length === 0 && <ListEmpty title={words ? t("No member matches \"{query}\".", { query: query.trim() }) : t("No {filter} members.", { filter: filterWord })} />}
-        {rows.map((member) => {
+        {rows.map((member, index) => {
           const inactive = member.status !== "ACTIVE";
           const share = shares[member.id];
           const accountant = isAccountant(member);
           const accessRole = memberAccessRole(member);
           const line = accessLine(member);
           return (
-            <ListRow key={member.id} columns={COLUMNS} className={cn("min-h-14 grid-cols-[minmax(0,1fr)_auto] gap-x-3 tabular-nums md:px-5 md:py-1.5", inactive && "opacity-60")}>
+            <ListRow key={member.id} columns={COLUMNS} className={cn("min-h-16 grid-cols-[minmax(0,1fr)_auto] gap-x-3 tabular-nums md:px-5 md:py-2", inactive && "opacity-60")}>
+              <ListCell className="hidden text-center text-[13px] font-bold text-ink-faint md:block">{formatCount(from + index + 1, fmt)}</ListCell>
               <ListCell className="flex items-center gap-3">
                 <MemberAvatar member={member} members={data.members} size={36} />
                 <span className="flex min-w-0 flex-col gap-0.5">
@@ -215,21 +245,15 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                   <span className="truncate text-caption text-ink-muted">{[member.household, accountant ? t("Keeps the family cash") : t("Gives money to the accountant")].filter(Boolean).join(" · ")}</span>
                 </span>
               </ListCell>
-              <ListCell className="hidden text-ink-2 md:block">{member.phone || "—"}</ListCell>
-              <ListCell className="hidden text-ink-2 md:block">{monthName(memberSince(member), fmt, "short", true)}</ListCell>
-              <ListCell className="hidden items-center gap-2.5 md:flex">
-                {inactive || share === undefined ? (
-                  <span className="text-input">—</span>
-                ) : (
-                  <>
-                    <span className="w-12 font-semibold text-ink">{formatCount(Math.round(share * 10) / 10, fmt)}%</span>
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-                      <span className="block h-full rounded-full bg-emerald" style={{ width: `${Math.min(100, share)}%` }} />
-                    </span>
-                  </>
-                )}
+              <ListCell className="hidden min-w-0 flex-col gap-0.5 md:flex">
+                <span className="truncate text-[13.5px] text-ink-2">{member.phone || "—"}</span>
+                <span className="truncate text-[11.5px] text-ink-muted">{t("Since {month}", { month: monthName(memberSince(member), fmt, "short", true) })}</span>
               </ListCell>
-              <ListCell className="hidden min-w-0 flex-col items-start gap-1 md:flex">
+              <ListCell className="hidden flex-col items-center gap-0.5 md:flex" title={share === undefined ? undefined : t("{percent} of the costs shared by shares", { percent: `${formatCount(Math.round(share * 10) / 10, fmt)}%` })}>
+                <span className="font-semibold text-ink">{formatCount(Number(member.shareUnits || 1), fmt)}</span>
+                {!inactive && share !== undefined && custom && <span className="text-[11px] text-ink-muted">{formatCount(Math.round(share * 10) / 10, fmt)}%</span>}
+              </ListCell>
+              <ListCell className="hidden min-w-0 flex-col items-start gap-0.75 md:flex">
                 {accountant ? (
                   <Link href={groupTabHref(data.businessId, "cashbook", { accountant: member.id })} title={t("Open cash book")} className="rounded-full">
                     <Chip tone={ROLE_TONES[accessRole]} size="sm" title={t(MEMBER_ROLE_HINTS[accessRole])}>
@@ -241,11 +265,19 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                     {t(MEMBER_ROLE_LABELS[accessRole])}
                   </Chip>
                 )}
-                {line && (
-                  <span className="flex max-w-full min-w-0 items-center gap-1.5 text-caption text-ink-muted">
-                    <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", line.tone)} />
-                    <span className="truncate">{line.text}</span>
-                  </span>
+                {accountant && cashOf[member.id] !== undefined && <span className="text-[11.5px] whitespace-nowrap text-ink-muted">{t("Holds {amount}", { amount: formatCurrency(cashOf[member.id], data.currency, fmt) })}</span>}
+              </ListCell>
+              <ListCell className="hidden min-w-0 items-start gap-1.75 md:flex" title={t(MEMBER_ROLE_HINTS[accessRole])}>
+                {line ? (
+                  <>
+                    <span aria-hidden="true" className={cn("mt-1.5 size-2 shrink-0 rounded-full", line.tone)} />
+                    <span className="flex min-w-0 flex-col gap-px">
+                      <span className="truncate text-[13px] font-semibold text-ink-2">{line.text}</span>
+                      {member.access?.login && <span className="truncate text-[12px] text-ink-muted">{member.access.login.ownAccount ? t("Their own Smartly account") : t("username {name}", { name: member.access.login.username ?? "" })}</span>}
+                    </span>
+                  </>
+                ) : (
+                  <span className="truncate text-[12.5px] text-ink-muted">{member.isOwner ? t("Your app login") : t(MEMBER_ROLE_HINTS[accessRole])}</span>
                 )}
               </ListCell>
               <ListCell className="hidden md:block">

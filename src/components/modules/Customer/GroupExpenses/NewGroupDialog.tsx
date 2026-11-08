@@ -58,7 +58,7 @@ const sharesOf = (raw: string): number | null => (/^\d{1,2}$/.test(raw.trim()) &
 
 // Shares as percents (hundredths, the last taking the rounding): 3:1:4 is
 // 37.5% · 12.5% · 50%.
-function percentsOf(shares: number[]): number[] {
+export function percentsOf(shares: number[]): number[] {
   const total = shares.reduce((sum, value) => sum + value, 0);
   const hundredths = shares.map((value) => Math.floor((value * 10000) / total));
   hundredths[hundredths.length - 1] += 10000 - hundredths.reduce((sum, value) => sum + value, 0);
