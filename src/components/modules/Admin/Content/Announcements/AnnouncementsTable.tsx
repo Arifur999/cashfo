@@ -53,7 +53,7 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
         actions={actions}
         emptyMessage="No announcements yet."
       />
-      <FormDrawer title={announcement ? translate("Edit: {title}", { title: announcement.title }) : "Edit announcement"} width="lg" {...getDialogProps("edit")}>
+      <FormDrawer title={announcement ? translate("Edit: {title}", { title: announcement.title }) : "Edit announcement"} width="lg" centered {...getDialogProps("edit")}>
         {announcement && <AnnouncementForm announcement={announcement} defaultValues={toAnnouncementFormValues(announcement)} onDone={closeDialog} />}
       </FormDrawer>
     </>

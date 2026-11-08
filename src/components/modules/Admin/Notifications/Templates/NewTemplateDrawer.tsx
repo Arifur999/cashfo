@@ -31,7 +31,7 @@ interface NewTemplateDrawerProps {
 // how it is sent, the subject for email, and the message in both languages.
 // The {{placeholders}} it uses become its variables.
 const NewTemplateDrawer = ({ open, onOpenChange, onCreated }: NewTemplateDrawerProps) => (
-  <FormDrawer open={open} onOpenChange={onOpenChange} title="New template" description="For campaigns. The key is how a campaign picks it." width="lg">
+  <FormDrawer open={open} onOpenChange={onOpenChange} title="New template" description="For campaigns. The key is how a campaign picks it." width="lg" centered>
     {open && <NewTemplateForm onCreated={onCreated} />}
   </FormDrawer>
 );

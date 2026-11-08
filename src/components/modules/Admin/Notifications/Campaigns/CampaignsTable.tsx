@@ -148,7 +148,7 @@ const CampaignsTable = ({ canManage }: { canManage: boolean }) => {
           if (campaign && (await send.run(campaign.id))) closeDialog();
         }}
       />
-      <FormDrawer title="New campaign" description={campaign ? translate("Starting from the draft {title}", { title: campaign.title }) : undefined} width="lg" {...getDialogProps("reuse")}>
+      <FormDrawer title="New campaign" description={campaign ? translate("Starting from the draft {title}", { title: campaign.title }) : undefined} width="lg" centered {...getDialogProps("reuse")}>
         {campaign && (
           <CampaignForm
             defaultValues={campaignToFormValues(campaign, templatesResponse?.data ?? [])}

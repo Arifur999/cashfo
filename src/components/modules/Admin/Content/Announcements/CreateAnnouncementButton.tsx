@@ -18,6 +18,7 @@ const CreateAnnouncementButton = () => {
       open={defaults !== null}
       onOpenChange={(open) => setDefaults(open ? getNewAnnouncementDefaults(new Date()) : null)}
       title="New announcement"
+      centered
       width="lg"
       trigger={
         <CreateButton>New announcement</CreateButton>
