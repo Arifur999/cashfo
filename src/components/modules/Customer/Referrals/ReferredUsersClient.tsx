@@ -34,7 +34,7 @@ interface ReferredUsersClientProps {
 }
 
 // Person | Came from | Plan | Status | They paid | You earned | Next payment
-const COLUMNS = "md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_90px_100px_110px]";
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_130px_110px_130px_100px_100px_120px]";
 
 // Referrals > Referred users (ReferralUsers): everyone who signed up with
 // the member's links, by how they stand, with what they paid and what each

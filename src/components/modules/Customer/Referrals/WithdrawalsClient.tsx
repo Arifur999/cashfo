@@ -35,7 +35,7 @@ interface WithdrawalsClientProps {
 }
 
 // Request | Date | Amount | To | Status
-const COLUMNS = "md:grid-cols-[84px_100px_96px_minmax(0,1fr)_130px]";
+const COLUMNS = "md:grid-cols-[92px_104px_100px_minmax(0,1fr)_150px]";
 
 // The note under each request: its colours and icon.
 const NOTE_LOOK: Record<PayoutRequest["status"], { className: string; icon: typeof Clock }> = {
@@ -244,10 +244,10 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
                       )}
                     </div>
                     {expanded && request.lines.length > 0 && (
-                      <div id={linesId} className="overflow-hidden rounded-lg border border-line bg-surface">
+                      <div id={linesId} className="overflow-hidden rounded-xl border border-divider bg-surface">
                         <ul>
                           {request.lines.map((line) => (
-                            <li key={line.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 border-b border-divider px-3.5 py-2 text-[13px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_80px_90px]">
+                            <li key={line.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 border-b border-divider px-3 py-2 text-[13px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_150px_90px_90px] sm:gap-x-3">
                               <span className="truncate font-semibold text-ink">{line.friendName}</span>
                               <span className="truncate text-ink-muted max-sm:order-3">{[line.planName, formatDate(line.paidAt, "d MMM", "", fmt)].filter(Boolean).join(" · ")}</span>
                               <span className="text-right text-ink-muted tabular-nums max-sm:hidden">{Number(line.paidAmount) > 0 ? money(line.paidAmount) : "—"}</span>
