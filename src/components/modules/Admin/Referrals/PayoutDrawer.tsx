@@ -401,6 +401,8 @@ const PayoutDrawer = ({ payoutId, onClose, canManage }: PayoutDrawerProps) => {
           )
         }
         closeOnOutsideClick={!payout || !canManage || (payout.status !== "APPROVED" && payout.status !== "REQUESTED")}
+        // The board's widths: 560 to pay, 820 to go through the lines.
+        width={payout?.status === "APPROVED" && canManage ? "xl" : "2xl"}
       >
         {!payout ? (
           query.isError ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check } from "lucide-react";
+import { AlertTriangle, Check, Minus, X } from "lucide-react";
 import { useState } from "react";
 import { cancelCommissionAction, releaseCommissionAction } from "@/app/(dashboardLayout)/admin/referrals/_action";
 import StatusBadgeCell from "@/components/shared/cell/StatusBadgeCell";
@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,99 @@ const REACHED: Record<IPayoutLine["reached"], { label: string; className: string
   REFUNDED: { label: "Refunded", className: "text-expense" },
   UNKNOWN: { label: "No payment to check", className: "text-ink-muted" },
 };
+
+// "Did it reach us?": the chip's look for each answer.
+const REACHED_CHIP: Record<IPayoutLine["reached"], { className: string; icon: typeof Check }> = {
+  RECEIVED: { className: "bg-emerald-soft text-brand-ink", icon: Check },
+  REFUNDED: { className: "bg-expense-soft text-expense", icon: X },
+  UNKNOWN: { className: "bg-surface-sunken text-ink-muted", icon: Minus },
+};
+
+const KIND_LABEL: Record<IPayoutLine["kind"], string> = { FIRST: "First payment", RENEWAL: "Renewal", BONUS: "Sign-up bonus" };
+
+// Tick | Friend | Plan · paid on | They paid | Did it reach us? | share
+// (AdminPayoutReview); a phone keeps the tick, the words and the share.
+const REVIEW_COLUMNS = "grid grid-cols-[22px_minmax(0,1fr)_auto] gap-x-2.5 md:grid-cols-[22px_minmax(0,1fr)_132px_84px_220px_78px]";
+
+interface ReviewTableProps {
+  payout: IPayoutDetail;
+  excluded: Set<string>;
+  onToggle: (id: string, keep: boolean) => void;
+  money: (value: string | number | null) => string;
+}
+
+// The review's table: each friend payment with its tick, to match with the
+// gateway; an unticked one is struck through and held back.
+function ReviewTable({ payout, excluded, onToggle, money }: ReviewTableProps) {
+  const { translate, locale } = useLocale();
+  // The share column is headed by the rate when every line has the same one.
+  const rates = [...new Set(payout.lines.map((line) => line.rate))];
+  const share = rates.length === 1 ? `${toLocaleDigits(String(rates[0]), locale)}%` : translate("Share");
+  return (
+    <div role="table" aria-label={translate("Friend payments in this request")} className="border-t border-line">
+      <div role="row" className={cn(REVIEW_COLUMNS, "items-center bg-table-head px-3 py-2 text-[11.5px] leading-normal font-medium text-ink-muted max-md:hidden")}>
+        <span role="columnheader" aria-label={translate("Include")} />
+        <span role="columnheader">{translate("Friend")}</span>
+        <span role="columnheader">{translate("Plan · paid on")}</span>
+        <span role="columnheader" className="text-right">
+          {translate("They paid")}
+        </span>
+        <span role="columnheader">{translate("Did it reach us?")}</span>
+        <span role="columnheader" className="text-right">
+          {share}
+        </span>
+      </div>
+      {payout.lines.map((line) => {
+        const on = !excluded.has(line.id);
+        const chip = REACHED_CHIP[line.reached];
+        const paidOn = line.payment?.paidAt ? formatDate(line.payment.paidAt, "d MMM", "", locale) : "";
+        return (
+          <div key={line.id} role="row" className={cn(REVIEW_COLUMNS, "items-center gap-y-1 border-t border-divider px-3 py-2.25 text-[13px] leading-normal tabular-nums", !on && "bg-warning-50/50")}>
+            <span role="cell" className="flex">
+              <Checkbox
+                checked={on}
+                onCheckedChange={(next) => onToggle(line.id, next === true)}
+                aria-label={translate("Include {name}", { name: line.friend.name })}
+                className="size-4.5 rounded-[5px] border-line-strong data-checked:border-emerald data-checked:bg-emerald"
+              />
+            </span>
+            <span role="cell" className="flex min-w-0 flex-col gap-px">
+              <span className="truncate font-semibold text-ink">{line.friend.name}</span>
+              <span className="truncate text-[11.5px] text-ink-muted">{line.friend.phone ?? line.friend.email}</span>
+              {line.paidFromMemberNumber && (
+                <span className="flex items-center gap-1 text-[11.5px] text-warning">
+                  <AlertTriangle className="size-3 shrink-0" aria-hidden="true" />
+                  {translate("Paid from {name}'s own number", { name: firstName(payout.user.name) })}
+                </span>
+              )}
+            </span>
+            <span role="cell" className="flex min-w-0 flex-col gap-px max-md:col-start-2">
+              <span className="truncate text-ink">{line.payment?.planName ?? "—"}</span>
+              <span className="truncate text-[11.5px] text-ink-muted">{[paidOn, translate(KIND_LABEL[line.kind])].filter(Boolean).join(" · ")}</span>
+            </span>
+            <span role="cell" className="text-right text-ink-2 max-md:hidden">
+              {line.paidAmount !== null && Number(line.paidAmount) > 0 ? money(line.paidAmount) : "—"}
+            </span>
+            <span role="cell" className="flex min-w-0 flex-col gap-0.5 max-md:col-start-2">
+              <span className={cn("inline-flex w-fit items-center gap-1.25 rounded-full px-2 py-0.5 text-[11.5px] font-semibold", chip.className)}>
+                <chip.icon className="size-3" strokeWidth={2.5} aria-hidden="true" />
+                {translate(REACHED[line.reached].label)}
+              </span>
+              {line.payment && (
+                <span className="truncate font-mono text-[11px] text-ink-muted">
+                  {GATEWAY_NAMES[line.payment.gateway] ?? line.payment.gateway} · {line.payment.reference ?? line.payment.displayId}
+                </span>
+              )}
+            </span>
+            <span role="cell" className={cn("text-right font-bold max-md:col-start-3 max-md:row-start-1", on ? "text-ink" : "text-ink-muted line-through")}>
+              {money(line.amount)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // The request's checks and the member's facts, warnings in amber.
 export function ChecksCard({ payout }: { payout: IPayoutDetail }) {
@@ -112,30 +205,23 @@ export function LinesCard({ payout, excluded, onToggle, canManage }: LinesCardPr
       </div>
       {payout.lines.length === 0 ? (
         <p className="border-t border-divider px-4 py-3 text-small text-ink-muted">{translate("This request has no lines (it was made before lines). Pay the amount asked.")}</p>
+      ) : excluded && onToggle ? (
+        <ReviewTable payout={payout} excluded={excluded} onToggle={onToggle} money={money} />
       ) : (
         <ul>
           {payout.lines.map((line) => {
-            const on = !excluded?.has(line.id);
             const reached = REACHED[line.reached];
             const chip = COMMISSION_STATUS_CHIP[line.status];
             const paidOn = line.payment?.paidAt ? formatDate(line.payment.paidAt, "d MMM", "", locale) : "";
             return (
-              <li key={line.id} className={cn("flex items-start gap-3 border-t border-divider px-4 py-2.5", !on && "bg-warning-50/50")}>
-                {reviewing && (
-                  <Checkbox
-                    checked={on}
-                    onCheckedChange={(next) => onToggle?.(line.id, next === true)}
-                    aria-label={translate("Include {name}", { name: line.friend.name })}
-                    className="mt-0.5 size-4.5 rounded-[5px] border-line-strong data-checked:border-emerald data-checked:bg-emerald"
-                  />
-                )}
+              <li key={line.id} className="flex items-start gap-3 border-t border-divider px-4 py-2.5">
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="truncate text-body font-semibold text-ink">{line.friend.name}</span>
-                    {!reviewing && <StatusBadgeCell status={line.status} label={chip.label} tone={chip.tone} dot />}
+                    <StatusBadgeCell status={line.status} label={chip.label} tone={chip.tone} dot />
                   </span>
                   <span className="truncate text-caption text-ink-muted">
-                    {[line.payment?.planName, paidOn, translate(line.kind === "FIRST" ? "First payment" : line.kind === "RENEWAL" ? "Renewal" : "Sign-up bonus")].filter(Boolean).join(" · ")}
+                    {[line.payment?.planName, paidOn, translate(KIND_LABEL[line.kind])].filter(Boolean).join(" · ")}
                   </span>
                   <span className={cn("text-caption", reached.className)}>
                     {translate(reached.label)}
@@ -159,7 +245,7 @@ export function LinesCard({ payout, excluded, onToggle, canManage }: LinesCardPr
                   )}
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-0.5 tabular-nums">
-                  <span className={cn("text-body font-bold", on ? "text-ink" : "text-ink-muted line-through")}>{money(line.amount)}</span>
+                  <span className="text-body font-bold text-ink">{money(line.amount)}</span>
                   <span className="text-caption text-ink-muted">{translate("of {amount}", { amount: money(line.paidAmount) })}</span>
                 </span>
               </li>

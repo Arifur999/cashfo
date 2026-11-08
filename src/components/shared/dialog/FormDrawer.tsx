@@ -7,11 +7,14 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 // The design's drawers: 480 for a coupon, 500 for a plan, 520 for an
-// announcement.
+// announcement, 560 to pay a referral payout, 820 to review one line by
+// line.
 const WIDTH_CLASSES = {
   sm: "sm:max-w-120!",
   md: "sm:max-w-125!",
   lg: "sm:max-w-130!",
+  xl: "sm:max-w-140!",
+  "2xl": "sm:max-w-205!",
 } as const;
 
 interface FormDrawerProps {
