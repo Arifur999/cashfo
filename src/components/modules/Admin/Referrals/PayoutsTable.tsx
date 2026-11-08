@@ -35,6 +35,7 @@ const STATUS_TABS: { value: PayoutStatus; label: string }[] = [
 
 const buildConfig = (counts: PayoutStatusCounts | undefined): ServerDataTableConfig => ({
   ...PAYOUTS_TABLE_BASE_CONFIG,
+  search: { placeholder: "Search name or WD-", width: "sm" },
   filters: [
     {
       id: "status",
@@ -82,6 +83,18 @@ const ExportLink = () => {
         {translate("Export")}
       </a>
     </Button>
+  );
+};
+
+// The board's note under the desk, with Review in bold.
+const ReviewNote = () => {
+  const { translate } = useLocale();
+  return (
+    <>
+      {translate('Each request lists the exact friend payments it is made of. Open <b>Review</b> to match every payment ID with SSLCommerz, bKash or Nagad. Untick anything that did not reach us; it goes back to the user as "Under check" and is not paid.')
+        .split(/<\/?b>/)
+        .map((part, index) => (index === 1 ? <b key={index} className="font-semibold text-ink">{part}</b> : part))}
+    </>
   );
 };
 
@@ -140,7 +153,8 @@ const PayoutsTable = ({ canManage }: PayoutsTableProps) => {
         toolbarAction={<ExportLink />}
         // A waiting request whose checks found something gets the amber wash.
         rowClassName={(row) => (row.status === "REQUESTED" && row.checks.some((check) => !check.ok) ? "bg-warning-50 hover:bg-warning-50" : undefined)}
-        emptyMessage={searchParams.get("status") || searchParams.get("method") ? "No requests match these filters." : "No payout requests yet."}
+        emptyMessage={searchParams.get("status") || searchParams.get("method") || searchParams.get("search") ? "No requests here." : "No payout requests yet."}
+        footer={<ReviewNote />}
       />
       <PayoutDrawer payoutId={openId} onClose={() => setOpen(null)} canManage={canManage} />
       <RejectPayoutDialog payout={rejecting?.row ?? null} open={Boolean(rejecting?.open)} onOpenChange={(open) => !open && setRejecting((current) => current && { ...current, open: false })} />

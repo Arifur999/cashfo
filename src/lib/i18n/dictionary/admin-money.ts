@@ -519,4 +519,10 @@ export const adminMoneyDictionary: Record<string, string> = {
   "9 digits": "৯ সংখ্যা",
   "Details sent": "তথ্য পাঠিয়েছেন",
   "Open the screenshot": "স্ক্রিনশট খুলুন",
+  // Payout desk (v16 board)
+  "Commission {pct}% of every payment · {days}-day hold": "প্রতিটি পেমেন্টে {pct}% কমিশন · {days} দিন অপেক্ষা",
+  "Check each friend's payment reached us, approve, send the money, then record the transaction ID.": "প্রতিটি বন্ধুর পেমেন্ট আমাদের কাছে এসেছে কিনা দেখুন, অনুমোদন করুন, টাকা পাঠান, তারপর ট্রানজেকশন আইডি লিখে রাখুন।",
+  "Search name or WD-": "নাম বা WD- দিয়ে খুঁজুন",
+  "No requests here.": "এখানে কোনো অনুরোধ নেই।",
+  "Each request lists the exact friend payments it is made of. Open <b>Review</b> to match every payment ID with SSLCommerz, bKash or Nagad. Untick anything that did not reach us; it goes back to the user as \"Under check\" and is not paid.": "প্রতিটি অনুরোধে ঠিক কোন কোন বন্ধুর পেমেন্ট আছে তা দেখানো থাকে। <b>দেখুন</b> চেপে প্রতিটি পেমেন্ট আইডি SSLCommerz, বিকাশ বা নগদের সাথে মিলিয়ে নিন। যা আমাদের কাছে আসেনি তার টিক তুলে দিন; সেটি ব্যবহারকারীর কাছে \"যাচাই চলছে\" হিসেবে ফিরে যায় এবং পরিশোধ হয় না।",
 };
