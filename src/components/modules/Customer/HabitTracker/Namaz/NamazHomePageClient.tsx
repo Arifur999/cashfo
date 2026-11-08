@@ -194,7 +194,7 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
       {/* Not on the board: how early each prayer's reminder comes, under the cards. */}
       {reminders.available && <PrayerRemindersCard book={reminders} today={today} onSettings={() => setSettingsOpen(true)} />}
 
-      <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={currentKey} />
+      <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={currentKey} start="earlier" />
       <PrayerSettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} today={today} />
     </PageFrame>
   );

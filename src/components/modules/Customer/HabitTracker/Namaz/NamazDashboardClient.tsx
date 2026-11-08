@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Target } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -16,10 +16,11 @@ import { monthName } from "@/lib/customer/insights";
 import { hijriRange, monthInsights, monthSummary, namazWeeks, prayerSummaries, trackerFor } from "@/lib/customer/namazDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { EachBars, MonthStrip, ReportHeader, ReportStats, StandsOut, WeekBars, type MonthOption } from "../Report/MonthReport";
+import { EachBars, MonthStrip, ReportHeader, ReportStats, StandsOut, WeekBars, type MonthOption, type StandOut } from "../Report/MonthReport";
 import { BoxSwatch, type BoxState } from "../Tracker/SheetBox";
 import { withCheck } from "../trackerChecks";
 import { EarlierMonthDialog } from "./EarlierMonthDialog";
+import { NamazGoalChip } from "./NamazGoalChip";
 import { INSIGHT_ICON, insightText } from "./namazWords";
 import { PrayerSheet } from "./PrayerSheet";
 import { useThisMonthSheet } from "./useThisMonthSheet";
@@ -96,6 +97,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
       today={today}
       onPrint={() => window.print()}
       action={createButton}
+      chip={sheet && <NamazGoalChip trackerId={sheet.id} goalPct={sheet.goalPct ?? null} />}
     />
   );
 
@@ -111,7 +113,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
             </Button>
           )}
         </Card>
-        <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={today.slice(0, 7)} />
+        <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={today.slice(0, 7)} onCreated={(_, key) => router.push(hrefFor(key, today))} />
       </PageFrame>
     );
   }
@@ -176,7 +178,11 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
     title: week.pct === null ? t("Days {from} to {to}: nothing yet", { from: count(week.from), to: count(week.to) }) : t("Days {from} to {to}: {pct}% prayed", { from: count(week.from), to: count(week.to), pct: count(week.pct) }),
   }));
 
-  const insights = monthInsights(sheet, previous).map((insight, i) => ({ key: `${insight.key}-${i}`, icon: INSIGHT_ICON[insight.key], tone: TONE[insight.tone], text: insightText(insight, t, fmt) }));
+  const insights: StandOut[] = monthInsights(sheet, previous).map((insight, i) => ({ key: `${insight.key}-${i}`, icon: INSIGHT_ICON[insight.key], tone: TONE[insight.tone], text: insightText(insight, t, fmt) }));
+  // The month's goal, once anything is marked: reached, or how far to go.
+  const goal = sheet.goalPct ?? null;
+  if (goal !== null && due > 0)
+    insights.push({ key: "goal", icon: Target, tone: "warn", text: pct >= goal ? t("Goal of {goal}% reached.", { goal: count(goal) }) : t("{gap}% to go to reach the goal of {goal}%.", { gap: count(goal - pct), goal: count(goal) }) });
 
   return (
     <PageFrame className="gap-3.5 md:pt-6">
@@ -208,7 +214,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
 
       <MonthStrip title={t("All months")} months={options.slice(0, 6)} selected={month} />
 
-      <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={today.slice(0, 7)} />
+      <EarlierMonthDialog open={addOpen} onClose={() => setAddOpen(false)} existing={trackers} currentMonth={today.slice(0, 7)} onCreated={(_, key) => router.push(hrefFor(key, today))} />
     </PageFrame>
   );
 }

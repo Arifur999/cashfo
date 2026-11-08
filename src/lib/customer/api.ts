@@ -1750,6 +1750,8 @@ export interface HabitMonthTracker {
   // was ended early (null while it runs its course).
   startsOn?: string | null;
   endedOnDay?: number | null;
+  // Namaz only: the share of the month's prayers aimed for (1-100), or null.
+  goalPct?: number | null;
 }
 
 // Ramadan › Today's "Get ready" steps ticked for one Ramadan (year: the

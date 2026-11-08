@@ -1070,4 +1070,18 @@ export const habitTrackerDictionary: Record<string, string> = {
   "A line you liked…": "যে লাইনটি ভালো লেগেছে…",
   // Namaz sheet: the month picker
   "Greyed-out months have no sheet.": "ধূসর মাসগুলোতে কোনো শিট নেই।",
+  // Namaz: Create month with a goal, the goal chip and its line
+  "{month} created": "{month} তৈরি হয়েছে",
+  "Make a sheet for a month you want to track or fill in later.": "যে মাসের হিসাব রাখতে চান বা পরে পূরণ করবেন, তার একটা শিট বানান।",
+  "(optional, % of prayers)": "(ঐচ্ছিক, নামাজের %)",
+  "(% of prayers)": "(নামাজের %)",
+  "e.g. 90": "যেমন: ৯০",
+  "A goal is a whole number from 1 to 100.": "লক্ষ্য ১ থেকে ১০০-এর মধ্যে একটা পূর্ণ সংখ্যা।",
+  "{month} already exists. Pick it from the month picker.": "{month} আগেই আছে। মাস বাছাই থেকে সেটা খুলুন।",
+  "Goal of {goal}% reached.": "{goal}% লক্ষ্য পূরণ হয়েছে।",
+  "{gap}% to go to reach the goal of {goal}%.": "{goal}% লক্ষ্যে পৌঁছাতে আর {gap}% বাকি।",
+  "Goal: {pct}% prayed": "লক্ষ্য: {pct}% নামাজ",
+  "Change the goal": "লক্ষ্য বদলান",
+  "Remove the goal": "লক্ষ্য মুছুন",
+  "Failed to save the goal": "লক্ষ্য সেভ করা যায়নি",
 };
