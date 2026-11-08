@@ -525,4 +525,7 @@ export const assetsDictionary: Record<string, string> = {
   "Read only": "শুধু দেখা",
   "This asset is sold, so its history is read only.": "এই সম্পদ বিক্রি হয়ে গেছে, তাই ইতিহাস শুধু দেখা যাবে।",
   "Every update adds a new row. The first row is where the asset starts.": "প্রতিটি আপডেট নতুন সারি যোগ করে। প্রথম সারি থেকেই সম্পদের শুরু।",
+  // v16 edit popups' titles
+  "Edit asset": "সম্পদ এডিট করুন",
+  "Edit purchase": "কেনা এডিট করুন",
 };

@@ -35,6 +35,8 @@ interface UpdateValueDrawerProps {
   currency: string;
   // Opens on its details (Purchase & Sell's Edit purchase).
   initialMode?: Mode;
+  // The details popup's title (All assets: Edit asset; Purchase & Sell: Edit purchase).
+  detailsTitle?: string;
 }
 
 type Mode = "value" | "details";
@@ -46,7 +48,7 @@ const BOX = { income: "bg-income-soft/60 text-income", expense: "bg-expense-soft
 // under it. Details: its name, type, note and (while the backend allows it)
 // purchase date set right, or the asset deleted when it was entered by
 // mistake.
-export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency, initialMode = "value" }: UpdateValueDrawerProps) {
+export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency, initialMode = "value", detailsTitle }: UpdateValueDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -222,7 +224,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
       open={open}
       width={520}
       lead={head}
-      title={mode === "value" ? t("Update value") : t("Edit details")}
+      title={mode === "value" ? t("Update value") : (detailsTitle ?? t("Edit asset"))}
       sub={`${asset.name} · ${t(asset.category)}`}
       busy={isPending}
       onClose={onClose}

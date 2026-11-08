@@ -316,7 +316,7 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
           <SellAssetDrawer open={popup === "sale"} onClose={() => setPopup(null)} businessId={businessId} asset={null} choices={owned} currency={currency} tabs={tabs} title={t("Record purchase or sale")} />
         </>
       )}
-      <UpdateValueDrawer open={opened !== null && opened.status !== "SOLD"} onClose={() => setOpened(null)} businessId={businessId} asset={opened?.status === "SOLD" ? null : opened} categories={categories} currency={currency} initialMode="details" />
+      <UpdateValueDrawer open={opened !== null && opened.status !== "SOLD"} onClose={() => setOpened(null)} businessId={businessId} asset={opened?.status === "SOLD" ? null : opened} categories={categories} currency={currency} initialMode="details" detailsTitle={t("Edit purchase")} />
       <SoldAssetDrawer open={opened?.status === "SOLD"} onClose={() => setOpened(null)} businessId={businessId} asset={opened?.status === "SOLD" ? opened : null} categories={categories} currency={currency} canManage={canManage} />
       {confirmDialog}
     </PageFrame>
