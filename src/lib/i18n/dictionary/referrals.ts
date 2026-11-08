@@ -617,4 +617,7 @@ export const referralsDictionary: Record<string, string> = {
   "Nothing here for this filter.": "এই ফিল্টারে কিছু নেই।",
   // Withdraw code by email (v16)
   "Send by email instead": "এর বদলে ইমেইলে পাঠান",
+  // Payout account placeholders (v16)
+  "e.g. Gulshan": "যেমন: গুলশান",
+  "e.g. {number}": "যেমন: {number}",
 };
