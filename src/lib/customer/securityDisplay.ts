@@ -111,7 +111,20 @@ export function deletionItems(preview: DeletionPreview | null): { key: string; t
 
 // ---- Numbers and dates (PATCH /api/auth/preferences) ----
 
-export const DEFAULT_PREFERENCES: DisplayPreferences = { digitStyle: null, numberGrouping: "LAKH", dateStyle: "D_MMM_YYYY", weekStart: "SATURDAY" };
+// How Smartly sets them at the start (Settings › App preferences › Reset).
+export const DEFAULT_PREFERENCES: Required<DisplayPreferences> = {
+  digitStyle: null,
+  numberGrouping: "LAKH",
+  dateStyle: "D_MMM_YYYY",
+  weekStart: "SATURDAY",
+  roundAmounts: false,
+  startPage: "DASHBOARD",
+  rowsPerPage: 20,
+  compactTables: false,
+  sidebarCollapsed: false,
+  fiscalYearStart: "JULY",
+  showHijri: false,
+};
 
 // The digits in force: the saved choice, or the language's own.
 export const digitsInForce = (style: DigitStyle | null | undefined, locale: Locale): DigitStyle => style ?? (locale === "bn" ? "BENGALI" : "LATIN");

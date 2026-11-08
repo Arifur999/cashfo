@@ -7,7 +7,7 @@ import { nameParts, type Rule } from "./vaultDisplay";
 
 export const APP_VERSION = "0.1.0";
 
-export type SettingsSectionKey = "profile" | "security" | "plans" | "workspaces" | "app" | "help" | "resources";
+export type SettingsSectionKey = "profile" | "security" | "plans" | "notifications" | "workspaces" | "app" | "data" | "help" | "resources";
 
 export interface SettingsSection {
   key: SettingsSectionKey;
@@ -21,9 +21,11 @@ export interface SettingsSection {
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   { key: "profile", href: "/settings/profile", label: "Profile" },
   { key: "security", href: "/settings/security", label: "Security" },
-  { key: "plans", href: "/settings/plans", label: "Plans" },
+  { key: "plans", href: "/settings/plans", label: "Plans & billing" },
+  { key: "notifications", href: "/settings/notifications", label: "Notifications" },
   { key: "workspaces", href: "/settings/workspaces", label: "Workspaces" },
   { key: "app", href: "/settings/app", label: "App preferences" },
+  { key: "data", href: "/settings/data", label: "Data & privacy" },
   { key: "help", href: "/settings/help", label: "Help & support" },
   { key: "resources", href: "/settings/resources", label: "Resources & legal" },
 ];
@@ -38,7 +40,7 @@ export function sectionFor(pathname: string): SettingsSectionKey {
 export const sectionOf = (key: SettingsSectionKey): SettingsSection => SETTINGS_SECTIONS.find((section) => section.key === key) ?? SETTINGS_SECTIONS[0];
 
 // App preferences' Reminders card, which the phone menu's Reminders row
-// opens (/settings/app#reminders).
+// opens (/settings/notifications#reminders).
 export const REMINDERS_ANCHOR = "reminders";
 // The phone menu's Devices row (Security's devices card) and Numbers and
 // dates row (App preferences' card).

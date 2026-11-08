@@ -43,13 +43,20 @@ const groupDigits = (value: number, grouping: string) => {
   return formatter.format(value);
 };
 
+// The amount as shown: to the paisa, or to the whole taka for a reader who
+// asked for that (Settings › App preferences).
+const toShown = (value: number, locale: FormatLocale) => {
+  if (!Number.isFinite(value)) return 0;
+  return fmtOf(locale).round ? Math.round(value) : Math.round(value * 100) / 100;
+};
+
 export function formatCurrency(amount: number | string, currencyCode: string, locale: FormatLocale = "en"): string {
   const symbol = CURRENCIES[currencyCode]?.symbol(locale) ?? currencyCode;
   const grouping = groupingFor(currencyCode, locale);
   const value = Number(amount);
   // Rounded to the paisa before the sign is chosen, so a sum that is
   // negative only by float noise (-2.8e-17) prints "TK 0", not "-TK 0".
-  const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  const rounded = toShown(value, locale);
   // "-TK 1,500", not "TK -1,500": the sign leads, as it is read. A
   // no-break space, so a narrow card never leaves "TK" alone on its line.
   return toLocaleDigits(`${rounded < 0 ? "-" : ""}${symbol} ${groupDigits(Math.abs(rounded), grouping)}`, locale);
@@ -60,7 +67,7 @@ export function formatCurrency(amount: number | string, currencyCode: string, lo
 export function formatGrouped(amount: number | string, currencyCode: string, locale: FormatLocale = "en"): string {
   const grouping = groupingFor(currencyCode, locale);
   const value = Number(amount);
-  const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  const rounded = toShown(value, locale);
   return toLocaleDigits(`${rounded < 0 ? "-" : ""}${groupDigits(Math.abs(rounded), grouping)}`, locale);
 }
 
@@ -69,7 +76,7 @@ export function formatGrouped(amount: number | string, currencyCode: string, loc
 // minus sign and a space, as the design writes it.
 export function formatSignedCurrency(amount: number | string, currencyCode: string, locale: FormatLocale = "en"): string {
   const value = Number(amount);
-  const rounded = Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+  const rounded = toShown(value, locale);
   const unsigned = formatCurrency(Math.abs(rounded), currencyCode, locale);
   if (rounded > 0) return `+ ${unsigned}`;
   if (rounded < 0) return `− ${unsigned}`;

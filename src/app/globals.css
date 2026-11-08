@@ -165,6 +165,36 @@
   /* The fifth avatar tint (rose), beside mint, blue, amber and violet. */
   --rose: #b0477a;
   --rose-soft: #f9e6ef;
+  /* Calendar & Events' seven tints, a soft ground and its ink: an event's
+     type (Wedding pink, Gaye Holud yellow, Aqiqah teal, Khatna violet,
+     Birthday orange, Milad blue, Eid green), its people's avatars and
+     where a person stands. */
+  --tint-pink: #fce7f3;
+  --tint-pink-ink: #be185d;
+  --tint-yellow: #fef9c3;
+  --tint-yellow-ink: #a16207;
+  --tint-teal: #ccfbf1;
+  --tint-teal-ink: #0f766e;
+  --tint-violet: #ede9fe;
+  --tint-violet-ink: #6d28d9;
+  --tint-orange: #ffedd5;
+  --tint-orange-ink: #c2410c;
+  --tint-blue: #dbeafe;
+  --tint-blue-ink: #1d4ed8;
+  /* Settings › Data & privacy storage meter; a v16 Settings select's chevron. */
+  --meter-records: #60a5fa;
+  /* The brands Settings › Help links to. */
+  --brand-facebook: #1877f2;
+  --brand-youtube: #ff0000;
+  --meter-backups: #f59e0b;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235F6B68' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --tint-green: #dcfce7;
+  --tint-green-ink: #15803d;
+  /* The Dashboard's net worth card is dark in both themes: its pale green
+     and red for up and down, and its note. */
+  --worth-up: #86efac;
+  --worth-down: #fca5a5;
+  --worth-note: #9cc7be;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -327,6 +357,23 @@
   --mood-4: #f87171;
   --rose: #f08fbf;
   --rose-soft: #3a1528;
+  --tint-pink: #3a1528;
+  --tint-pink-ink: #f08fbf;
+  --tint-yellow: #29250f;
+  --tint-yellow-ink: #facc15;
+  --tint-teal: #0b2e33;
+  --tint-teal-ink: #5cccdb;
+  --tint-violet: #1f1838;
+  --tint-violet-ink: #b6a2ff;
+  --tint-orange: #33200e;
+  --tint-orange-ink: #f0a46a;
+  --tint-blue: #14234a;
+  --tint-blue-ink: #86abf2;
+  --meter-records: #7cb6f7;
+  --meter-backups: #f2b84b;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A3B2AE' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --tint-green: #0f2618;
+  --tint-green-ink: #4ade80;
   --emerald-tint: #1c4536;
 
   --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -581,6 +628,10 @@ html:not(.dark) [data-app="habit"] {
   --color-info-ink: var(--info-ink);
   --color-sky: var(--sky);
   --color-sky-soft: var(--sky-soft);
+  --color-meter-records: var(--meter-records);
+  --color-brand-facebook: var(--brand-facebook);
+  --color-brand-youtube: var(--brand-youtube);
+  --color-meter-backups: var(--meter-backups);
   --color-gold-on-forest: var(--gold-on-forest);
   --color-gateway-bkash: var(--gateway-bkash);
   --color-gateway-nagad: var(--gateway-nagad);
@@ -596,6 +647,23 @@ html:not(.dark) [data-app="habit"] {
   --color-emerald-tint: var(--emerald-tint);
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
+  --color-tint-pink: var(--tint-pink);
+  --color-tint-pink-ink: var(--tint-pink-ink);
+  --color-tint-yellow: var(--tint-yellow);
+  --color-tint-yellow-ink: var(--tint-yellow-ink);
+  --color-tint-teal: var(--tint-teal);
+  --color-tint-teal-ink: var(--tint-teal-ink);
+  --color-tint-violet: var(--tint-violet);
+  --color-tint-violet-ink: var(--tint-violet-ink);
+  --color-tint-orange: var(--tint-orange);
+  --color-tint-orange-ink: var(--tint-orange-ink);
+  --color-tint-blue: var(--tint-blue);
+  --color-tint-blue-ink: var(--tint-blue-ink);
+  --color-tint-green: var(--tint-green);
+  --color-tint-green-ink: var(--tint-green-ink);
+  --color-worth-up: var(--worth-up);
+  --color-worth-down: var(--worth-down);
+  --color-worth-note: var(--worth-note);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);
@@ -740,6 +808,28 @@ html:not(.dark) [data-app="habit"] {
 /* The Referral Program's earnings card: the primary, 32% darker at its end. */
 @utility bg-referral-hero {
   background-image: linear-gradient(135deg, #1c7567 0%, #135046 100%);
+}
+/* The Dashboard's net worth card: deep green to near black. */
+@utility bg-worth-hero {
+  background-image: linear-gradient(140deg, #155c51 0%, #0f3f38 55%, #0b2f2a 100%);
+}
+/* AI Insights' month card: forest brightening to the primary. */
+/* Settings › App preferences › Compact tables: less room between the rows
+   of every table, so more fits on screen. */
+[data-compact="true"] table :is(td, th) {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+/* A v16 Settings select: no native arrow, the board's chevron instead. */
+@utility select-chevron {
+  appearance: none;
+  padding-right: 30px;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+@utility bg-ai-hero {
+  background-image: linear-gradient(135deg, #0f3f38 0%, #1c7567 100%);
 }
 /* The Zakat calculator's hero: deep green to deeper. */
 @utility bg-zakat-hero {

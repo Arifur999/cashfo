@@ -29,6 +29,8 @@ export interface UserBusiness {
   role: MemberRole;
   isDefault: boolean;
   hasPinLock: boolean;
+  // Settings › App preferences: the wallet new entries start from here.
+  defaultAccountId?: string | null;
   trialEndsAt: string | null;
 }
 
@@ -45,6 +47,18 @@ export interface CurrentUser {
   // and a one-line address. Absent from an older backend.
   coverUrl?: string | null;
   address?: string | null;
+  // Settings › Profile's details (only the person sees them), a second
+  // number with its WhatsApp tick, and the number support asks for
+  // ("SM-104382"). Absent from an older backend.
+  occupation?: string | null;
+  dateOfBirth?: string | null;
+  gender?: "MALE" | "FEMALE" | "UNSAID" | null;
+  district?: string | null;
+  phone2?: string | null;
+  phone2WhatsApp?: boolean;
+  // Settings › Security › Recovery email, once proved with a code.
+  recoveryEmail?: string | null;
+  customerCode?: string;
   // The shareable profile card: whether it is on, and its code (the
   // referral code) for the /card/<code> link.
   profileCard?: { shared: boolean; code: string | null };
@@ -88,7 +102,17 @@ export interface DisplayPreferences {
   numberGrouping: NumberGrouping;
   dateStyle: DateStyle;
   weekStart: WeekStart;
+  // Settings › App preferences (v16). Absent from an older backend.
+  roundAmounts?: boolean;
+  startPage?: StartPage;
+  rowsPerPage?: number;
+  compactTables?: boolean;
+  sidebarCollapsed?: boolean;
+  fiscalYearStart?: "JANUARY" | "JULY";
+  showHijri?: boolean;
 }
+
+export type StartPage = "DASHBOARD" | "REPORTS" | "INCOME_EXPENSE" | "GROUP" | "CALENDAR";
 
 // GET|PATCH /api/auth/alerts. emailReady: the platform can send email now.
 export interface SecurityAlerts {
@@ -116,7 +140,9 @@ export type UserNotificationType =
   | "SECURITY"
   | "CAMPAIGN"
   | "IDEA"
-  | "ZAKAT";
+  | "ZAKAT"
+  | "EVENT"
+  | "INSIGHT";
 
 export interface UserNotification {
   id: string;

@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  CalendarDays,
+  Sparkles,
   AlarmClock,
   Banknote,
   Bell,
@@ -59,6 +61,8 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
   campaign: { icon: Megaphone, tone: "insights" },
   idea: { icon: Lightbulb, tone: "insights" },
   zakat: { icon: HandCoins, tone: "money" },
+  event: { icon: CalendarDays, tone: "warning" },
+  insight: { icon: Sparkles, tone: "insights" },
   other: { icon: Bell, tone: "neutral" },
 };
 

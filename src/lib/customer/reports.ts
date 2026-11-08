@@ -4,6 +4,7 @@ import { type ActiveMonth, API_BASE_URL, type CategoryBreakdown, type IncomeVsSa
 import { getAccessToken } from "@/lib/tokenUtils";
 import { emptyUnlessOutage } from "./readFallback";
 import { customerApi } from "./apiClient";
+import type { MoneyFlow } from "@/components/modules/Customer/Dashboard/dashboardWorth";
 
 const EMPTY_CATEGORY_BREAKDOWN = (type: "INCOME" | "EXPENSE"): CategoryBreakdown => ({ type, total: "0.00", categories: [] });
 const EMPTY_MONTHLY_BREAKDOWN = (type: "INCOME" | "EXPENSE"): MonthlyBreakdown => ({ type, months: [], rows: [], totals: [], total: "0.00" });
@@ -75,5 +76,17 @@ export const getIncomeVsSavingsTrend = cache(async (businessId: string, months =
     return response.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
+  }
+});
+
+// Where a period's money went (the Dashboard's Cash flow) and how far the
+// net worth moved this month; null when it can't be read (an older backend
+// answers 404).
+export const getMoneyFlow = cache(async (businessId: string, dateFrom: string, dateTo: string): Promise<MoneyFlow | null> => {
+  try {
+    const response = await customerApi.get<MoneyFlow>(`${API_BASE_URL}/api/businesses/${encodeURIComponent(businessId)}/money-flow`, { params: { dateFrom, dateTo } });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
   }
 });

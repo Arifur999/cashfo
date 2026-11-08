@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/components/modules/Customer/Providers/ThemeProv
 import { TodayTasksProvider } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { ChooseWorkspaceRedirect } from "@/components/modules/Customer/Workspace/ChooseWorkspaceRedirect";
 import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
+import { AppLockGate } from "@/components/modules/Customer/Settings/AppLockGate";
 import { CUSTOMER_HOME_ROUTE, MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { resolveActiveWorkspace } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
@@ -96,7 +97,10 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   const unlocked = viewAs ? locked.map(() => true) : await Promise.all(locked.map((business) => hasWorkspaceUnlock(business.id)));
   const unlockedBusinessIds = locked.filter((_, index) => unlocked[index]).map((business) => business.id);
   // The sidebar folded to icons, as this browser left it.
-  const sidebarCollapsed = readSidebarCollapsed((await cookies()).get(SIDEBAR_COLLAPSED_COOKIE)?.value);
+  // Before this browser has a choice, Settings › App preferences' "Sidebar
+  // starts collapsed" decides.
+  const sidebarCookie = (await cookies()).get(SIDEBAR_COLLAPSED_COOKIE)?.value;
+  const sidebarCollapsed = sidebarCookie === undefined ? Boolean(user.preferences?.sidebarCollapsed) : readSidebarCollapsed(sidebarCookie);
 
   // A PIN-locked workspace asks for its PIN first, on whatever page was
   // opened, and stays on it once it opens.
@@ -127,6 +131,9 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                 <TodayTasksProvider>
                   <TopbarProvider>
                     <AddActionsProvider>
+                      {/* Settings › Security › App lock, on this device; never over
+                          a support admin's read-only view. */}
+                      {!user.impersonatedBy && <AppLockGate userId={user.id} />}
                       {/* The app's sidebar on the left (Money Tracker or Habit
                           Tracker, by the page); the top bar and the one
                           scrolling region on the right. */}
@@ -139,7 +146,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                               an absolute child (a screen-reader-only label) is placed
                               in this scroller, not the page, so the page itself never
                               grows taller than the window and scrolls the sidebar away. */}
-                          <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto outline-none print:overflow-visible">
+                          <main id="main-content" tabIndex={-1} data-compact={user.preferences?.compactTables ? "true" : undefined} className="relative flex-1 overflow-y-auto outline-none print:overflow-visible">
                             <OfflineBanner />
                             <AnnouncementBanner announcements={platform.announcements} />
                             {children}

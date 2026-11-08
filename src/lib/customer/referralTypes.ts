@@ -271,3 +271,10 @@ export interface ReferralInvite {
   friendDiscountPct: number;
   programLive: boolean;
 }
+
+// Settings › Profile's referral card.
+export interface ProfileReferral {
+  code: string;
+  friendDiscountPct: number;
+  commissionPct: number;
+}

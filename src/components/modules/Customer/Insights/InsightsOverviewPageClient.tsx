@@ -71,7 +71,7 @@ export function InsightsOverviewPageClient({ data }: { data: InsightsData }) {
   const topSpend = data.spend[0];
   // A rise is only news when there was spending before to rise from.
   const rise = previous.expense > 0 && data.biggestMove && data.biggestMove.change > 0 ? data.biggestMove : null;
-  const reportsHref = `/reports/detailed?period=${period}`;
+  const reportsHref = `/reports/categories?period=${period}`;
   const hadBefore = previous.income > 0 || previous.expense > 0;
   const kept = keptSay(data, when, t, fmt);
 

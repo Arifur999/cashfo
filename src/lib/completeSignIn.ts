@@ -15,13 +15,16 @@ const withNotice = (path: string, notice: string) => `${path}${path.includes("?"
 // customer app). `persist` false keeps them only until the browser closes.
 // A customer lands with a notice: theirs (a changed password), or that
 // signing in restored an account waiting to be deleted.
+// Settings › App preferences › First page after sign-in.
+const START_PAGES: Record<string, string> = { REPORTS: "/reports/detailed", INCOME_EXPENSE: "/income-expense", GROUP: "/group-expenses", CALENDAR: "/events" };
+
 export const completeSignIn = async (answer: ISignInResponse & Partial<ITwoStepSignInResponse>, redirectTo?: string | null, persist = true, notice?: string): Promise<string> => {
   const { audience, accessToken, refreshToken, account } = answer;
   await setAuthCookies(accessToken, refreshToken, persist);
   if (answer.trustedDeviceToken) {
     await setTrustedDevice(account.id, answer.trustedDeviceToken, answer.trustedDeviceExpiresAt);
   }
-  const destination = (redirectTo && safeRedirectPath(redirectTo, audience, account.role)) || homeRouteFor(audience);
+  const destination = (redirectTo && safeRedirectPath(redirectTo, audience, account.role)) || (audience === "user" && START_PAGES[(account as { startPage?: string }).startPage ?? ""]) || homeRouteFor(audience);
   const landingNotice = answer.restoredFromDeletion ? ACCOUNT_RESTORED_NOTICE : notice;
   return audience === "user" && landingNotice ? withNotice(destination, landingNotice) : destination;
 };

@@ -1,13 +1,19 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { ChartColumn, Plus } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { useAddActions } from "@/components/modules/Customer/Layout/AddActionsProvider";
 import PageFrame from "@/components/smartly/PageFrame";
 import type { AddActionKey } from "@/lib/customer/addActions";
+import { type Period, periodHref } from "@/lib/customer/period";
+import { PeriodPicker } from "@/components/modules/Customer/Shared/PeriodPicker";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { BalanceCard, FlowCard, PhoneFigures, ProfileCard, SavedCard, SetupFigures } from "./HomeHero";
-import { BudgetCard, LoansAssetsCard, SavingsCard, WalletsCard } from "./HomeMoney";
+import { PhoneFigures, SetupFigures } from "./HomeHero";
+import { AiSummaryLine, AssetsCard, CashFlowCard, GoalsCard, KpiCards, LoansCard, NetWorthHero, UpcomingEventsCard, useAmountsHidden, WealthCard } from "./DashboardCards";
+import { WalletsCard } from "./HomeMoney";
 import { SetupGuide } from "./HomeSetup";
 import type { HomeData } from "./homeTypes";
 import { IncomeExpenseChart } from "./IncomeExpenseChart";
@@ -31,6 +37,10 @@ export function HomePageClient({ data }: { data: HomeData }) {
     if (action) run(action);
   };
   const setup = data.setup !== null;
+  const router = useRouter();
+  const [isSwitching, startSwitch] = useTransition();
+  const [hidden, toggleHidden] = useAmountsHidden();
+  const thisMonth: Period = { kind: "month", year: Number(data.today.slice(0, 4)), month: Number(data.today.slice(5, 7)) };
   const title = `${t(data.greeting)}, ${data.firstName}`;
 
   // Only an owner or accountant can post (the API refuses anyone else), so
@@ -57,13 +67,22 @@ export function HomePageClient({ data }: { data: HomeData }) {
             ) : (
               <>
                 <span className="md:hidden">{data.period.label}</span>
-                <span className="max-md:hidden">{t("Here's how your money is moving in {period}.", { period: data.period.label })}</span>
+                <span className="max-md:hidden">{t("Here is your money at a glance · {period}", { period: data.period.label })}</span>
+                {data.hijri && <span className="text-ink-faint">{` · ${data.hijri}`}</span>}
               </>
             )}
           </p>
         </div>
         <div className="flex items-center gap-2.5 max-md:hidden">
-          {!setup && <PeriodSwitch variant="bar" value={data.period.key} dateFrom={data.period.dateFrom} dateTo={data.period.dateTo} today={data.today} className="max-md:hidden" />}
+          {!setup && (
+            <>
+              <PeriodPicker period={data.period.picked} today={data.today} activeMonths={data.activeMonths} defaultPeriod={thisMonth} onPick={(next) => startSwitch(() => router.push(periodHref("/dashboard", {}, next, thisMonth), { scroll: false }))} busy={isSwitching} align="end" />
+              <Link href="/reports/detailed" className="flex h-10 shrink-0 items-center gap-1.75 rounded-full border border-input bg-surface px-4 text-body font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
+                <ChartColumn className="size-4 text-ink-soft" aria-hidden="true" />
+                {t("Reports")}
+              </Link>
+            </>
+          )}
           {newTransaction}
         </div>
       </div>
@@ -85,25 +104,35 @@ export function HomePageClient({ data }: { data: HomeData }) {
         <>
           <PeriodSwitch variant="chips" value={data.period.key} dateFrom={data.period.dateFrom} dateTo={data.period.dateTo} today={data.today} className="md:hidden" />
           <PhoneFigures data={data} />
-          <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-[300px_repeat(2,minmax(0,1fr))]">
-            <ProfileCard data={data} onAdd={add} />
-            <BalanceCard data={data} />
-            <FlowCard data={data} kind="income" />
-            <FlowCard data={data} kind="expense" />
-            <SavedCard data={data} />
+          <AiSummaryLine data={data} />
+          <div className="grid gap-4 max-md:hidden xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <NetWorthHero data={data} hidden={hidden} onToggle={toggleHidden} />
+            <WealthCard data={data} hidden={hidden} />
           </div>
-          <div className="grid gap-4 md:gap-6 xl:grid-cols-3">
-            <IncomeExpenseChart points={data.chart} currency={data.currency} onAdd={data.canManage ? () => add("expense") : undefined} />
+          <div className="max-md:hidden">
+            <KpiCards data={data} />
+          </div>
+          <div className="grid gap-4 max-md:hidden xl:grid-cols-3">
+            <CashFlowCard data={data} />
             <SpendingCard data={data} />
           </div>
-          <div className="grid gap-4 md:gap-6 xl:grid-cols-3">
-            <RecentTransactionsCard businessId={data.businessId} transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={data.currency} canManage={data.canManage} onAdd={() => add("expense")} />
-            <WalletsCard data={data} />
+          <div className="grid gap-4 xl:grid-cols-3">
+            <IncomeExpenseChart points={data.chart} currency={data.currency} onAdd={data.canManage ? () => add("expense") : undefined} />
+            <div className="max-md:hidden">
+              <UpcomingEventsCard data={data} />
+            </div>
+            <div className="md:hidden">
+              <SpendingCard data={data} />
+            </div>
           </div>
-          <div className="hidden gap-6 md:grid md:grid-cols-2 xl:grid-cols-3">
-            <BudgetCard data={data} />
-            <SavingsCard data={data} />
-            <LoansAssetsCard data={data} />
+          <div className="grid gap-4 xl:grid-cols-3">
+            <RecentTransactionsCard businessId={data.businessId} transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={data.currency} canManage={data.canManage} onAdd={() => add("expense")} />
+            <WalletsCard data={data} variant="accounts" hidden={hidden} />
+          </div>
+          <div className="grid gap-4 max-md:hidden md:grid-cols-2 xl:grid-cols-3">
+            <GoalsCard data={data} />
+            {data.loans && <LoansCard data={data} hidden={hidden} />}
+            <AssetsCard data={data} hidden={hidden} />
           </div>
         </>
       )}

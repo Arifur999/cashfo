@@ -44,6 +44,8 @@ export type NavIcon =
   | "clock"
   | "journal"
   | "gift"
+  | "events"
+  | "ai"
   | "zakat"
   | "settings";
 
@@ -121,7 +123,8 @@ export const NAV_SECTIONS: NavSection[] = [
     quickAdd: true,
     items: [
       { label: "Dashboard", href: MONEY_HOME, icon: "dashboard" },
-      { label: "Reports", href: "/reports/detailed", icon: "reports", tone: "insights", quickAdd: false },
+      { label: "Reports", href: "/reports/detailed", match: ["/reports/detailed", "/reports/categories"], icon: "reports", tone: "insights", quickAdd: false },
+      { label: "AI Insights", href: "/ai-insights", icon: "ai", tone: "insights", quickAdd: false },
     ],
   },
   {
@@ -203,6 +206,16 @@ export const NAV_SECTIONS: NavSection[] = [
         ],
       },
       { label: "Group Expense", href: "/group-expenses", icon: "group" },
+      {
+        label: "Calendar & Events",
+        href: "/events",
+        icon: "events",
+        subs: [
+          { label: "Calendar", href: "/events" },
+          { label: "People@@events", href: "/events/people" },
+          { label: "My events", href: "/events/mine" },
+        ],
+      },
     ],
   },
   // "@@user": plain "Account" is Bangla's হিসাব, a ledger account, not the
@@ -349,10 +362,12 @@ export const NAV_FOOT: NavItem[] = [
     subs: [
       { label: "Profile", href: "/settings/profile" },
       { label: "Security", href: "/settings/security" },
-      { label: "Plans", href: "/settings/plans" },
+      { label: "Plans & billing", href: "/settings/plans" },
+      { label: "Notifications", href: "/settings/notifications" },
       { label: "Checkout", href: "/settings/plans/checkout", menu: false, litAs: "/settings/plans" },
       { label: "Workspaces", href: "/settings/workspaces", menu: false },
       { label: "App preferences", href: "/settings/app" },
+      { label: "Data & privacy", href: "/settings/data" },
       { label: "Help & support", href: "/settings/help" },
       { label: "Resources & legal", href: "/settings/resources" },
     ],

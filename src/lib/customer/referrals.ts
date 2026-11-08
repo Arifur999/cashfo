@@ -7,7 +7,7 @@ import { getClientHeaders } from "@/lib/axios/clientHeaders";
 import { API_BASE_URL } from "./api";
 import { customerApi } from "./apiClient";
 import { emptyUnlessOutage } from "./readFallback";
-import type { Earning, EarningList, FriendFilter, FriendList, PayoutMethod, ReferralInvite, ReferralLink, ReferralProfile, ReferralProgramInfo, WithdrawalList } from "./referralTypes";
+import type { Earning, EarningList, FriendFilter, FriendList, PayoutMethod, ReferralInvite, ReferralLink, ReferralProfile, ReferralProgramInfo, WithdrawalList, ProfileReferral } from "./referralTypes";
 
 // How many rows a page of each list shows.
 export const WITHDRAWALS_PAGE_SIZE = 10;
@@ -68,3 +68,10 @@ export const getReferralInvite = cache(async (code: string): Promise<ReferralInv
     return null;
   }
 });
+
+// The person's referral code for Settings › Profile's side card, and what
+// it gives; null when the program can't be read.
+export async function getProfileReferral(): Promise<ProfileReferral | null> {
+  const info = await getReferralInfo().catch(() => null);
+  return info?.referralCode ? { code: info.referralCode, friendDiscountPct: info.program.friendDiscountPct, commissionPct: info.program.commissionPct } : null;
+}

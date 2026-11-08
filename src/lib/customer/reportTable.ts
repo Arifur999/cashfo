@@ -100,7 +100,7 @@ export function reportHref({ period, walletId, show }: ReportView): string {
   const params = new URLSearchParams({ period });
   if (walletId) params.set("wallet", walletId);
   if (show !== "both") params.set("show", show);
-  return `/reports/detailed?${params.toString()}`;
+  return `/reports/categories?${params.toString()}`;
 }
 
 export interface ReportRow {

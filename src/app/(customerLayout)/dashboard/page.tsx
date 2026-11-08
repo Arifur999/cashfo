@@ -1,5 +1,5 @@
 import { redirect, unstable_rethrow } from "next/navigation";
-import { readDashboardPeriod, changePercent, spendingSlices } from "@/components/modules/Customer/Dashboard/dashboardFigures";
+import { readDashboardPeriod, changePercent, spendingSlices, type DashboardPeriodKey } from "@/components/modules/Customer/Dashboard/dashboardFigures";
 import { HomeNoWorkspace } from "@/components/modules/Customer/Dashboard/HomeNoWorkspace";
 import { HomePageClient } from "@/components/modules/Customer/Dashboard/HomePageClient";
 import type { HomeData, HomePart } from "@/components/modules/Customer/Dashboard/homeTypes";
@@ -9,6 +9,7 @@ import { API_BASE_URL, type CategoryBreakdown, type WalletOverviewRow, type Wall
 import { customerApi } from "@/lib/customer/apiClient";
 import { getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
+import { getEventsOverview } from "@/lib/customer/events";
 import { getBudgetCategoryNames, getBudgetOverview, getMonthlyPlan } from "@/lib/customer/budgets";
 import { appYearMonth } from "@/lib/customer/dateRangePresets";
 import { isFeatureOn } from "@/lib/customer/features";
@@ -18,9 +19,10 @@ import { getPrayerSettings } from "@/lib/customer/habits";
 import { balanceAsOfTotal, balanceChangePercent, daysLeftInMonth, loanCounts, previousMonthEnd, savingsTotals, windowStart } from "@/lib/customer/homeInsights";
 import { monthName, monthRates, rangeLabel } from "@/lib/customer/insights";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { type Period, periodRange, readPickedPeriod, type YearMonth } from "@/lib/customer/period";
 import { getPlatform } from "@/lib/customer/platform";
 import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
-import { getCategoryBreakdown, getMonthlyBreakdown } from "@/lib/customer/reports";
+import { getActiveMonths, getCategoryBreakdown, getMonthlyBreakdown, getMoneyFlow } from "@/lib/customer/reports";
 import { getSavingsGoals } from "@/lib/customer/savingsGoals";
 import { categoryIndex } from "@/lib/customer/transactionRows";
 import { getTransactions, getTransactionsSummary } from "@/lib/customer/transactions";
@@ -32,9 +34,15 @@ export const generateMetadata = () => customerPageMetadata("/dashboard");
 
 // The chart's months, this one included.
 const CHART_MONTHS = 6;
-const RECENT_ROWS = 8;
-// The goals the Savings card names under its total.
-const GOAL_ROWS = 2;
+const RECENT_ROWS = 7;
+// The next events the Upcoming events card lists.
+const EVENT_ROWS = 4;
+// The goals the Savings goals card lists.
+const GOAL_ROWS = 3;
+// The people the Loans card lists on each side, and the assets the Assets
+// card lists.
+const LOAN_ROWS = 2;
+const ASSET_ROWS = 4;
 // The categories the Monthly budget card shows.
 const BUDGET_ROWS = 3;
 // Only for a backend from before wallets-overview?asOf: the hero's trend
@@ -77,6 +85,36 @@ async function moneyInOut(businessId: string, dateFrom: string, dateTo: string, 
   return { income: Number(income.total), expense: Number(expense.total) };
 }
 
+const pad = (n: number) => String(n).padStart(2, "0");
+const lastDay = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
+const previousOf = ({ year, month }: YearMonth): YearMonth => (month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 });
+
+// The period on show: the phone chips' ?period=this-month|last-month|
+// this-year|custom (with ?from=&to=), or the desktop picker's ?month=&year=,
+// ?period=year&year=, ?from=&to= -- this month without either.
+function dashboardPeriod(params: Record<string, string | string[] | undefined>, today: string, current: YearMonth): Period {
+  const text = (value: unknown) => (typeof value === "string" ? value : undefined);
+  const chip = text(params.period);
+  if (chip === "this-month" || chip === "last-month" || chip === "this-year" || chip === "custom") {
+    const legacy = readDashboardPeriod({ period: chip, from: text(params.from), to: text(params.to) }, today);
+    if (legacy.key === "this-month") return { kind: "month", ...current };
+    if (legacy.key === "last-month") return { kind: "month", ...previousOf(current) };
+    if (legacy.key === "this-year") return { kind: "year", year: current.year };
+    return { kind: "custom", from: legacy.dateFrom, to: legacy.dateTo };
+  }
+  const picked = readPickedPeriod(params, current, { kind: "month", ...current });
+  return picked.kind === "all" ? { kind: "month", ...current } : picked;
+}
+
+// Which phone chip a period is.
+function chipOf(period: Period, current: YearMonth): DashboardPeriodKey {
+  const last = previousOf(current);
+  if (period.kind === "month" && period.year === current.year && period.month === current.month) return "this-month";
+  if (period.kind === "month" && period.year === last.year && period.month === last.month) return "last-month";
+  if (period.kind === "year" && period.year === current.year) return "this-year";
+  return "custom";
+}
+
 // The Money Tracker's Dashboard. Everything it shows comes from calls the
 // feature pages already make; the figures are derived here, on the server,
 // once. The wallets, the period's money and the newest transactions are its
@@ -109,9 +147,18 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const today = getAppToday();
   const { year, month } = appYearMonth();
   const monthStart = `${today.slice(0, 7)}-01`;
-  const chartFrom = windowStart(today, CHART_MONTHS);
-  const text = (value: unknown) => (typeof value === "string" ? value : undefined);
-  const period = readDashboardPeriod({ period: text(params.period), from: text(params.from), to: text(params.to) }, today);
+  const current: YearMonth = { year, month };
+  const picked = dashboardPeriod(params, today, current);
+  const range = periodRange(picked) as { dateFrom: string; dateTo: string };
+  // The month before a month on show, for the cards' comparison.
+  const compareMonth = picked.kind === "month" ? previousOf(picked) : null;
+  const compareRange = compareMonth ? { dateFrom: `${compareMonth.year}-${pad(compareMonth.month)}-01`, dateTo: `${compareMonth.year}-${pad(compareMonth.month)}-${pad(lastDay(compareMonth.year, compareMonth.month))}` } : null;
+  // The chart's six months end with the period's last month (this month at the latest).
+  const endMonth = [picked.kind === "month" ? `${picked.year}-${pad(picked.month)}` : picked.kind === "year" ? `${picked.year}-12` : picked.to.slice(0, 7), today.slice(0, 7)].sort()[0];
+  const chartTo = endMonth === today.slice(0, 7) ? today : `${endMonth}-${pad(lastDay(Number(endMonth.slice(0, 4)), Number(endMonth.slice(5, 7))))}`;
+  const chartFrom = windowStart(chartTo, CHART_MONTHS);
+  // Budget Planning's month: the one on show, or this one.
+  const planMonth = picked.kind === "month" ? picked : current;
   // The layout has read it already; this is the same answer.
   const loansOn = isFeatureOn((await getPlatform()).flags, "loan_management");
 
@@ -133,27 +180,32 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     const ledgers = await Promise.all(active.map((wallet) => getLedger(activeBusinessId, wallet.id, { dateFrom: monthStart, limit: 1 })));
     return ledgers.reduce((sum, ledger) => sum + Number(ledger.balanceBroughtForward), 0);
   });
-  const spendingRead = getCategoryBreakdown(activeBusinessId, "EXPENSE", period.dateFrom, period.dateTo);
+  const spendingRead = getCategoryBreakdown(activeBusinessId, "EXPENSE", range.dateFrom, range.dateTo);
 
-  const [walletsOverview, chartIncome, chartExpense, spending, money, before, recent, start, incomeNames, goals, assets, budget, loanDashboard, monthPlan] = await Promise.all([
+  const [walletsOverview, chartIncome, chartExpense, spending, money, before, recent, start, incomeNames, goals, assets, budget, loanDashboard, monthPlan, flow, events, activeMonths] = await Promise.all([
     walletsRead,
-    // The chart, in two calls: one column per month, this month up to today.
-    getMonthlyBreakdown(activeBusinessId, "INCOME", chartFrom, today),
-    getMonthlyBreakdown(activeBusinessId, "EXPENSE", chartFrom, today),
+    // The chart, in two calls: one column per month, up to the period's end.
+    getMonthlyBreakdown(activeBusinessId, "INCOME", chartFrom, chartTo),
+    getMonthlyBreakdown(activeBusinessId, "EXPENSE", chartFrom, chartTo),
     spendingRead,
-    moneyInOut(activeBusinessId, period.dateFrom, period.dateTo, spendingRead),
-    moneyInOut(activeBusinessId, period.compare.dateFrom, period.compare.dateTo),
-    getTransactions(activeBusinessId, { limit: RECENT_ROWS }),
+    moneyInOut(activeBusinessId, range.dateFrom, range.dateTo, spendingRead),
+    compareRange ? moneyInOut(activeBusinessId, compareRange.dateFrom, compareRange.dateTo) : null,
+    // The newest, up to the period's end.
+    getTransactions(activeBusinessId, { limit: RECENT_ROWS, standingOnly: true, ...(range.dateTo < today && { dateTo: range.dateTo }) }),
     startRead,
     // Income categories' icons for the rows (the budget below brings the
     // expense ones); without them the rows fall back to plain icons.
     part(() => getBudgetCategoryNames(activeBusinessId, "INCOME")),
     part(() => getSavingsGoals(activeBusinessId)),
     part(() => getAssets(activeBusinessId)),
-    part(() => getBudgetOverview(activeBusinessId, month, year)),
+    part(() => getBudgetOverview(activeBusinessId, planMonth.month, planMonth.year)),
     loansOn ? part(() => getLoanDashboard(activeBusinessId)) : null,
-    // Budget Planning's plan for this month (its expense budget), best-effort.
-    getMonthlyPlan(activeBusinessId, year, month).catch(() => null),
+    // Budget Planning's plan for the month (its target and budget), best-effort.
+    getMonthlyPlan(activeBusinessId, planMonth.year, planMonth.month).catch(() => null),
+    part(() => getMoneyFlow(activeBusinessId, range.dateFrom, range.dateTo)),
+    // Events are the owner's and accountant's.
+    canManage ? part(() => getEventsOverview(activeBusinessId)) : null,
+    getActiveMonths(activeBusinessId).catch(() => null),
   ]);
 
   const unavailable: HomePart[] = [];
@@ -186,15 +238,30 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const lastMonthKey = previousMonthEnd(today).slice(0, 7);
 
   const periodLabel =
-    period.key === "this-year"
-      ? toLocaleDigits(String(year), fmt)
-      : period.key === "custom"
-        ? rangeLabel(period.dateFrom, period.dateTo, fmt)
-        : monthName(period.dateFrom.slice(0, 7), fmt, "long", true);
+    picked.kind === "year"
+      ? toLocaleDigits(String(picked.year), fmt)
+      : picked.kind === "custom"
+        ? rangeLabel(range.dateFrom, range.dateTo, fmt)
+        : monthName(range.dateFrom.slice(0, 7), fmt, "long", true);
+  const flowRead = flow.ok ? flow.value : null;
+  const eventsRead = events?.ok ? events.value : null;
+  const loanRows = loans?.rows ?? [];
+  const sideOf = (sign: 1 | -1) =>
+    loanRows
+      .filter((row) => Number(row.currentBalance) * sign > 0)
+      .sort((a, b) => Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance)))
+      .slice(0, LOAN_ROWS)
+      .map((row) => ({ id: row.contactId, name: row.contactName, balance: Number(row.currentBalance) }));
+  const topSpend = spending.categories.filter((c) => !c.uncategorised).sort((a, b) => Number(b.amount) - Number(a.amount))[0];
+  // A month's targets only, and only where they are set.
+  const incomeTarget = picked.kind === "month" && monthPlan?.incomeTarget ? Number(monthPlan.incomeTarget) : 0;
+  const monthBudget = picked.kind === "month" ? planBudget || Number(budgetOverview?.totalBudget ?? 0) : 0;
 
+  const hijri = user.preferences?.showHijri ? homeDates(now, fmt, APP_TIME_ZONE, (await getPrayerSettings()).hijriAdjust).hijri : null;
   const data: HomeData = {
     businessId: activeBusinessId,
     currency,
+    hijri,
     canManage,
     today,
     greeting,
@@ -204,14 +271,48 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       avatarUrl: user.avatarUrl,
       since: user.createdAt ? monthName(user.createdAt.slice(0, 7), fmt, "short", true) : null,
     },
-    period: { key: period.key, dateFrom: period.dateFrom, dateTo: period.dateTo, label: periodLabel },
+    period: { key: chipOf(picked, current), picked, dateFrom: range.dateFrom, dateTo: range.dateTo, label: periodLabel, isMonth: picked.kind === "month" },
+    activeMonths,
+    compare: compareMonth && before ? { label: monthName(`${compareMonth.year}-${pad(compareMonth.month)}`, fmt, "long"), income: before.income, expense: before.expense } : null,
+    targets: { income: incomeTarget > 0 ? incomeTarget : null, budget: monthBudget > 0 ? monthBudget : null },
+    worth: {
+      parts: {
+        cash: balance,
+        savings: savings.saved,
+        assets: assetList.reduce((sum, a) => sum + Number(a.currentValue), 0),
+        pawna: Math.abs(Number(loans?.totalPawna ?? 0)),
+        dena: Math.abs(Number(loans?.totalDena ?? 0)),
+      },
+      change: flowRead ? flowRead.worthChange : null,
+      since: previousMonthEnd(today),
+      counts: { accounts: activeWallets.length, goals: savings.count, assets: assetList.length, pawna: counts.oweYou, dena: counts.youOwe },
+    },
+    flow: flowRead,
+    events: eventsRead
+      ? eventsRead.events
+          .filter((event) => event.date >= today)
+          .sort((a, b) => (a.date === b.date ? (a.time ?? "99").localeCompare(b.time ?? "99") : a.date.localeCompare(b.date)))
+          .slice(0, EVENT_ROWS)
+          .map((event) => ({ id: event.id, title: event.title, date: event.date, time: event.time, place: event.place, type: event.type }))
+      : null,
+    biggestSpend: topSpend ? { name: topSpend.name, amount: Number(topSpend.amount) } : null,
+    goalRows: goalList
+      .filter((goal) => goal.status === "ACTIVE" || goal.status === "PAUSED")
+      .sort((a, b) => Number(b.currentAmount) - Number(a.currentAmount))
+      .slice(0, GOAL_ROWS)
+      .map((goal) => ({ id: goal.id, name: goal.name, saved: Number(goal.currentAmount), target: Number(goal.targetAmount), paused: goal.status === "PAUSED" })),
+    loanPeople: [...sideOf(1), ...sideOf(-1)],
+    assetRows: [...assetList]
+      .sort((a, b) => Number(b.currentValue) - Number(a.currentValue))
+      .slice(0, ASSET_ROWS)
+      .map((asset) => ({ id: asset.id, name: asset.name, category: asset.category, value: Number(asset.currentValue), cost: Number(asset.purchasePrice) })),
     lastMonthShort: monthName(lastMonthKey, fmt, "short"),
     balance,
     balanceChangePercent: balanceChangePercent(balance, start.ok ? start.value : null),
     income: money.income,
     expense: money.expense,
-    incomeChange: changePercent(money.income, before.income),
-    expenseChange: changePercent(money.expense, before.expense),
+    incomeChange: before ? changePercent(money.income, before.income) : null,
+    expenseChange: before ? changePercent(money.expense, before.expense) : null,
     chart: monthRates(chartIncome, chartExpense).map((rate) => ({
       month: rate.month,
       label: monthName(rate.month, fmt, "short"),
