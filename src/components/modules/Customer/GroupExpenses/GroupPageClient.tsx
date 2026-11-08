@@ -289,7 +289,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
         data={data}
         view={view}
         onPeriod={onPeriod}
-        onAdd={() => openContribution()}
+        onAdd={(memberId) => openContribution(memberId ?? null)}
         onEdit={(row) => guardEdit(row.date, () => setContribution({ open: true, editing: row, memberId: null }))}
         onRemove={removeContribution}
         onEditExpense={(row) => guardEdit(row.date, () => setExpense({ open: true, editing: row }))}

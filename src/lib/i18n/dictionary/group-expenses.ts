@@ -1099,4 +1099,18 @@ export const groupExpensesDictionary: Record<string, string> = {
   "What for": "কিসের খরচ",
   "How shared": "কীভাবে ভাগ",
   "No expenses match your search or filters.": "আপনার খোঁজ বা ফিল্টারে কোনো খরচ মেলেনি।",
+  // v16 FamilyContributions board
+  "Contributions · {period}": "জমা · {period}",
+  "This month by member": "এ মাসে কে কত দিয়েছেন",
+  "{month} by member": "{month}-এ কে কত দিয়েছেন",
+  "Given in {month}": "{month}-এ জমা",
+  "Not paid yet": "এখনো দেননি",
+  "Add a contribution from {name}": "{name}-এর জমা যোগ করুন",
+  "Gave": "দিয়েছেন",
+  "Group owes them": "গ্রুপের কাছে পাবেন",
+  "Owes the group": "গ্রুপকে দেবেন",
+  "Search contributions": "জমা খুঁজুন",
+  "Received by": "কে পেয়েছেন",
+  "Add the first contribution": "প্রথম জমা যোগ করুন",
+  "No contributions match your search or filter.": "আপনার খোঁজ বা ফিল্টারে কোনো জমা মেলেনি।",
 };
