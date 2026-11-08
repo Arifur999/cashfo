@@ -2,7 +2,7 @@ import AnnouncementsTable from "@/components/modules/Admin/Content/Announcements
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
 import { canManage } from "@/lib/authUtils";
 import { announcementsQuery } from "@/queries/announcement.queries";
-import { plansQuery } from "@/queries/plan.queries";
+import { planAnalyticsQuery, plansQuery } from "@/queries/plan.queries";
 import { getUserInfo } from "@/services/auth.services";
 import { adminPageTitle } from "@/lib/i18n/locale";
 
@@ -12,8 +12,8 @@ const AnnouncementsPage = async () => {
   const admin = await getUserInfo();
 
   return (
-    // Plans name the audience of plan-targeted announcements.
-    <QueryPrefetch prefetch={(client) => Promise.all([client.prefetchQuery(announcementsQuery()), client.prefetchQuery(plansQuery())])}>
+    // Plans name the audience of plan-targeted announcements; their counts say how many get one.
+    <QueryPrefetch prefetch={(client) => Promise.all([client.prefetchQuery(announcementsQuery()), client.prefetchQuery(plansQuery()), client.prefetchQuery(planAnalyticsQuery())])}>
       <AnnouncementsTable canManage={canManage(admin?.role, "content")} />
     </QueryPrefetch>
   );
