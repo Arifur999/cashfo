@@ -18,9 +18,9 @@ interface DataTableRowActionsProps<TData> {
   row: TData;
   actions: DataTableActions<TData>;
   // "outline" is the 32px bordered button the design draws beside an
-  // inline action; "ghost" the bare dots at the end of a row; "act" the v16
-  // boards' 34px square row action (.sm-act).
-  variant?: "ghost" | "outline" | "act";
+  // inline action; "ghost" the bare dots at the end of a row; "action" the
+  // v16 canvas's 34px square row action (.sm-act, IconAction).
+  variant?: "ghost" | "outline" | "action";
   // "row" is the actions column's 32px; "sm" smartly's 36px icon button,
   // for a cell that sets it beside its own size-sm buttons (the admin
   // team's Edit).
@@ -45,7 +45,7 @@ const DataTableRowActions = <TData,>({ row, actions, variant = "ghost", size = "
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {variant === "act" ? (
+        {variant === "action" ? (
           <button
             type="button"
             className={cn(iconActionClass(), "data-[state=open]:border-mint-200 data-[state=open]:bg-emerald-soft data-[state=open]:text-emerald")}

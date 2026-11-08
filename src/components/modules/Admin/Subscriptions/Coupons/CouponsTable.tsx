@@ -50,7 +50,7 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
   const actions = useMemo<DataTableActions<ICoupon>>(
     () => ({
       display: "split",
-      menuStyle: "act",
+      menuStyle: "action",
       viewLabel: "Who used it",
       onView: (row) => openDialog("redemptions", row),
       onEdit: canManage ? (row) => openDialog("edit", row) : undefined,
@@ -97,7 +97,7 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
 
       <CouponRedemptionsDialog coupon={coupon} {...getDialogProps("redemptions")} />
 
-      <FormDrawer variant="dialog" title={translate("Edit {name}", { name: coupon?.code ?? "" })} width="sm" {...getDialogProps("edit")}>
+      <FormDrawer centered title={translate("Edit {name}", { name: coupon?.code ?? "" })} width="sm" {...getDialogProps("edit")}>
         {coupon && <CouponForm key={coupon.id} coupon={coupon} defaultValues={toCouponFormValues(coupon)} plans={plans} onDone={closeDialog} />}
       </FormDrawer>
 

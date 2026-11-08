@@ -14,6 +14,7 @@ const CreateCampaignButton = () => {
       open={open}
       onOpenChange={setOpen}
       title="New campaign"
+      centered
       width="lg"
       trigger={
         <CreateButton>New campaign</CreateButton>

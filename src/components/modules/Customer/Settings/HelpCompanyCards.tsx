@@ -3,7 +3,7 @@
 import { Clock, ExternalLink, Globe, Lightbulb, Mail, MapPin, MessageCircle, MessagesSquare, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 import Kbd from "@/components/smartly/Kbd";
-import { clockIn, DAY_NAME, officeDays, officeState, telHref, webHref, whatsappHref, type HelpCompany } from "@/lib/customer/helpPage";
+import { clockIn, companyTagline, DAY_NAME, officeDays, officeState, telHref, webHref, whatsappHref, type HelpCompany } from "@/lib/customer/helpPage";
 import { SHORTCUTS } from "@/lib/customer/settingsDisplay";
 import { APP_TIME_ZONE } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
@@ -40,10 +40,11 @@ const clock = (time: string) => time.replace(/^0(\d)/, "$1");
 // The SettingsHelp board's side: how to reach the company (from Admin ›
 // Settings), the average first reply, ideas, and the keyboard shortcuts.
 export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { company: HelpCompany | null; clock: { day: number; minutes: number }; onIdea: () => void }) {
-  const { t, fmt } = useLocale();
+  const { t, fmt, locale } = useLocale();
   const now = useDhakaClock(initialClock);
   const state = company && now ? officeState(company, now) : null;
   const days = company ? officeDays(company.openDays) : [];
+  const tagline = company ? companyTagline(company, locale === "bn") : "";
   const daysText = days.map((run) => (run.length > 2 ? t("{first} to {last}", { first: t(DAY_NAME[run[0]]), last: t(DAY_NAME[run[run.length - 1]]) }) : run.map((day) => t(DAY_NAME[day])).join(", "))).join(", ");
   const rows = company
     ? [
@@ -75,7 +76,7 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
               <span className="flex size-10.5 shrink-0 items-center justify-center rounded-xl bg-primary text-[17px] font-bold text-white">{company.name.slice(0, 1).toUpperCase()}</span>
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-body-lg font-semibold text-ink">{company.name}</span>
-                {company.tagline && <span className="text-[12.5px] leading-[1.4] text-ink-muted">{company.tagline}</span>}
+                {tagline && <span className="text-[12.5px] leading-[1.4] text-ink-muted">{tagline}</span>}
               </span>
             </div>
             {state && company.openDays.length > 0 && (

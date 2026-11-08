@@ -135,7 +135,7 @@ const InviteAdminDrawer = () => {
 
   return (
     <>
-      <FormDrawer open={open} onOpenChange={setOpen} title="Invite an admin" trigger={<CreateButton>Invite an admin</CreateButton>}>
+      <FormDrawer open={open} onOpenChange={setOpen} title="Invite an admin" centered trigger={<CreateButton>Invite an admin</CreateButton>}>
         <InviteAdminForm
           onDone={() => setOpen(false)}
           onLink={(invite) => {

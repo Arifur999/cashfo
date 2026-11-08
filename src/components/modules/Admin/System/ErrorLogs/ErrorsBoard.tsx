@@ -245,6 +245,7 @@ const ErrorsBoard = () => {
             if (!open) setDrawerOpen(false);
           }}
           title="Error details"
+          centered
           width="lg"
           closeOnOutsideClick
         >

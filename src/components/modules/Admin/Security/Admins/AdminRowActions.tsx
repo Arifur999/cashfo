@@ -41,7 +41,7 @@ const AdminRowActions = ({ admin, isSelf, onOpen }: AdminRowActionsProps) => {
       </Button>
       <DataTableRowActions
         row={admin}
-        variant="outline"
+        variant="action"
         actions={{
           rowLabel: (row) => row.name,
           extra: isSelf
@@ -83,7 +83,7 @@ export const InviteRowActions = ({ invite, isResending, onResend, onCancel }: In
       </Button>
       <DataTableRowActions
         row={invite}
-        variant="outline"
+        variant="action"
         actions={{
           rowLabel: (row) => row.email,
           extra: [{ label: "Cancel invite", icon: XCircle, destructive: true, onClick: onCancel }],
