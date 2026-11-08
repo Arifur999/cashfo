@@ -35,7 +35,7 @@ export function MemberAvatar({ member, members, size = 32, className }: { member
   return <PersonAvatar name={member?.name ?? "?"} src={member?.photoUrl} size={size} className={cn(memberTone(members, member?.id), small, className)} />;
 }
 
-// "+ ৳ 578  Gets back" / "− ৳ 351  Has to pay" / "৳ 0  Settled". Stacked,
+// "+ ৳ 578  Gets back" / "− ৳ 351  Owes" / "৳ 0  Settled" (the v16 boards). Stacked,
 // the chip goes under the figure, so a narrow column still fits it.
 export function BalanceCell({ value, currency, stacked = false, className }: { value: number; currency: string; stacked?: boolean; className?: string }) {
   const { t, fmt } = useLocale();
@@ -45,7 +45,7 @@ export function BalanceCell({ value, currency, stacked = false, className }: { v
     <span className={cn("flex justify-end", stacked ? "flex-col items-end gap-1" : "items-center gap-2", className)}>
       <span className={cn("font-bold whitespace-nowrap tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency, fmt) : formatSignedCurrency(value, currency, fmt)}</span>
       <Chip tone={even ? "neutral" : up ? "income" : "expense"} size="sm">
-        {t(even ? "Settled" : up ? "Gets back" : "Has to pay")}
+        {t(even ? "Settled" : up ? "Gets back" : "Owes@@group")}
       </Chip>
     </span>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Pencil, Plus, Printer, Receipt, Search, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
 import Input from "@/components/smartly/form/Input";
@@ -49,7 +50,9 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
   const period = data.period ?? { kind: "month" };
   const expenses = data.periodExpenses ?? data.expenses;
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("");
+  // A category the dashboard opened this page with (?category=).
+  const searchParams = useSearchParams();
+  const [category, setCategory] = useState(() => searchParams.get("category") ?? "");
   const [limit, setLimit] = useState(PAGE);
   const [printing, setPrinting] = useState(false);
   const label = periodLabel(period, data.today, startDay, t, fmt);
