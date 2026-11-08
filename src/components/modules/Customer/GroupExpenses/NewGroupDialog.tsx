@@ -1,26 +1,27 @@
 "use client";
 
-import { Check, Plus, X } from "lucide-react";
+import { Check, Copy, Info, MessageCircle, MessageSquare, Plus, TriangleAlert, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import Chip from "@/components/smartly/Chip";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
-import type { GroupMemberRole } from "@/lib/customer/api";
+import IconTile from "@/components/smartly/IconTile";
+import type { GroupAccessLink, GroupKind, GroupMemberRole, GroupSplit } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { createBusinessAction } from "@/lib/customer/businessActions";
 import { countLabel } from "@/lib/customer/groupDisplay";
-import { createGroupMemberAction, setupGroupCategoriesAction } from "@/lib/customer/groupExpensesActions";
-import { formatCount } from "@/lib/i18n/digits";
+import { createGroupAccessLinkAction, createGroupMemberAction, setGroupCostSplitAction, setupGroupCategoriesAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { type AccessLinkShown, joinUrl, linkMessage, whatsappNumber } from "./AccessLinkDialog";
+import { GROUP_KIND } from "./GroupBits";
 import { GroupDialog } from "./GroupDialog";
-import { MemberAvatar } from "./GroupBits";
 
 interface NewGroupDialogProps {
   open: boolean;
@@ -29,35 +30,60 @@ interface NewGroupDialogProps {
   takenNames: string[];
 }
 
-// What a family usually spends on, all on to start with.
+// What a group usually spends on: all nine to start with (hidden or renamed
+// later in Categories). A family shares its bazar by shares, a mess
+// everything equally.
 const STARTER_CATEGORIES = ["Bazar & grocery", "Rent", "Utility", "Medicine", "Maid", "Internet", "Education", "Transport", "Other"];
-const MAX_ACCOUNTANTS = 2;
-const STEP_NAMES = ["Name", "Members", "Categories"] as const;
+const KIND_HINTS: Record<GroupKind, string> = { FAMILY: "Bazar by family size, bills equally", MESS: "Everything shared equally" };
+// Up to two people keep the group cash (the API's limit on accountants).
+const MAX_EDITORS = 2;
+const COLUMNS = "grid-cols-[minmax(0,1fr)_136px_64px_128px_120px_34px]";
 
-interface Person {
+interface Row {
   key: string;
   name: string;
+  phone: string;
+  shares: string;
   role: GroupMemberRole;
 }
 
-// A new family group (the v7 board's 3-step dialog): its name; its
-// members, you first, each a member or an accountant (up to two keep the
-// cash); and the categories it spends on. The group, its members and its
-// categories are then made in one go.
+const blankRow = (index: number): Row => ({ key: `r${index}:${Date.now()}`, name: "", phone: "", shares: "1", role: "MEMBER" });
+// An 11-digit Bangladeshi mobile number, from what was typed ("" when blank).
+const mobileOf = (raw: string): string | null => {
+  const digits = raw.replace(/[\s-]/g, "").replace(/^\+?88/, "");
+  if (!digits) return "";
+  return /^01[3-9]\d{8}$/.test(digits) ? digits : null;
+};
+const sharesOf = (raw: string): number | null => (/^\d{1,2}$/.test(raw.trim()) && Number(raw) >= 1 && Number(raw) <= 50 ? Number(raw) : null);
+
+// Shares as percents (hundredths, the last taking the rounding): 3:1:4 is
+// 37.5% · 12.5% · 50%.
+function percentsOf(shares: number[]): number[] {
+  const total = shares.reduce((sum, value) => sum + value, 0);
+  const hundredths = shares.map((value) => Math.floor((value * 10000) / total));
+  hundredths[hundredths.length - 1] += 10000 - hundredths.reduce((sum, value) => sum + value, 0);
+  return hundredths.map((value) => value / 100);
+}
+
+// A new group (the v16 GroupList board's New group popup): its name and
+// kind, then everyone who shares the costs in one table -- you first, as
+// its Admin -- with each one's phone, shares and access (Editor, Viewer or
+// none). Creating it makes the group, its members, the nine categories and
+// the cost split by shares, then an access link for everyone given access,
+// shown once to send by SMS or WhatsApp.
 export function NewGroupDialog({ open, onClose, takenNames }: NewGroupDialogProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
-  const [step, setStep] = useState(1);
   const [name, setName] = useState("");
-  const [people, setPeople] = useState<Person[]>([]);
-  const [draft, setDraft] = useState("");
-  const [draftRole, setDraftRole] = useState<GroupMemberRole>("MEMBER");
-  const [picked, setPicked] = useState<string[]>(STARTER_CATEGORIES);
-  const [extra, setExtra] = useState<string[]>([]);
-  const [customDraft, setCustomDraft] = useState("");
-  const [error, setError] = useState("");
+  const [kind, setKind] = useState<GroupKind>("FAMILY");
+  const [ownShares, setOwnShares] = useState("1");
+  const [rows, setRows] = useState<Row[]>([]);
+  const [tried, setTried] = useState(false);
   const [isPending, startTransition] = useTransition();
+  // After Create: the links to send, and the group they open.
+  const [links, setLinks] = useState<{ businessId: string; groupName: string; list: AccessLinkShown[] } | null>(null);
+  const [copied, setCopied] = useState<number | null>(null);
   const me = user.name.trim() || t("You");
 
   // Each time it opens, a fresh group: nothing from the last attempt.
@@ -65,262 +91,289 @@ export function NewGroupDialog({ open, onClose, takenNames }: NewGroupDialogProp
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setStep(1);
       setName("");
-      setPeople([{ key: "me", name: me, role: "ACCOUNTANT" }]);
-      setDraft("");
-      setDraftRole("MEMBER");
-      setPicked(STARTER_CATEGORIES);
-      setExtra([]);
-      setCustomDraft("");
-      setError("");
+      setKind("FAMILY");
+      setOwnShares("1");
+      setRows([blankRow(0)]);
+      setTried(false);
+      setLinks(null);
+      setCopied(null);
     }
   }
 
-  const accountants = people.filter((person) => person.role === "ACCOUNTANT").length;
-  const all = [...STARTER_CATEGORIES, ...extra];
+  const updateRow = (key: string, patch: Partial<Row>) => setRows(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  const editors = rows.filter((row) => row.role === "ACCOUNTANT").length;
 
-  function addPerson() {
-    const value = draft.trim();
-    if (!value) return;
-    if (people.some((person) => person.name.toLowerCase() === value.toLowerCase())) return setError(t("{name} is already in the list.", { name: value }));
-    if (draftRole === "ACCOUNTANT" && accountants >= MAX_ACCOUNTANTS) return setError(t("A family can have up to 2 accountants."));
-    setPeople([...people, { key: `p:${value.toLowerCase()}`, name: value, role: draftRole }]);
-    setDraft("");
-    setDraftRole("MEMBER");
-    setError("");
-  }
-
-  function setRole(key: string, role: GroupMemberRole) {
-    if (role === "ACCOUNTANT" && accountants >= MAX_ACCOUNTANTS && people.find((person) => person.key === key)?.role !== "ACCOUNTANT") return setError(t("A family can have up to 2 accountants."));
-    setPeople(people.map((person) => (person.key === key ? { ...person, role } : person)));
-    setError("");
-  }
-
-  function addCategory() {
-    const value = customDraft.trim();
-    if (!value) return;
-    if (all.some((existing) => existing.toLowerCase() === value.toLowerCase())) return setError(t("{name} is already there.", { name: value }));
-    setExtra([...extra, value]);
-    setPicked([...picked, value]);
-    setCustomDraft("");
-    setError("");
-  }
-
-  const toggleCategory = (value: string) => setPicked(picked.includes(value) ? picked.filter((item) => item !== value) : [...picked, value]);
-
-  function next() {
-    if (step === 1) {
-      const trimmed = name.trim();
-      if (!trimmed) return setError(t("Give the group a name."));
-      if (takenNames.some((taken) => taken.trim().toLowerCase() === trimmed.toLowerCase())) return setError(t("Another group already has this name."));
-    }
-    if (step === 2) {
-      if (draft.trim()) return addPerson();
-      if (people.length < 2) return setError(t("Add at least one member besides you."));
-    }
-    setError("");
-    if (step < 3) {
-      setStep(step + 1);
-      return;
-    }
-    if (picked.length === 0) return setError(t("Keep at least one category."));
-    create();
-  }
+  // What is wrong, said under the field it is about.
+  const trimmed = name.trim();
+  const nameError = !trimmed ? t("Give the group a name.") : takenNames.some((taken) => taken.trim().toLowerCase() === trimmed.toLowerCase()) ? t("You already have a group with this name.") : null;
+  const ownSharesBad = sharesOf(ownShares) === null;
+  const filled = rows.filter((row) => row.name.trim() || row.phone.trim());
+  const rowProblem = (row: Row): { field: "name" | "phone" | "shares"; message: string } | null => {
+    if (!row.name.trim() && !row.phone.trim()) return null;
+    if (!row.name.trim()) return { field: "name", message: t("Write the member’s name.") };
+    const phone = mobileOf(row.phone);
+    if (phone === null) return { field: "phone", message: t("Use an 11-digit mobile number, like 01819-205377.") };
+    if (!phone && row.role !== "MEMBER") return { field: "phone", message: t("An access link needs a mobile number.") };
+    if (phone && filled.some((other) => other.key !== row.key && mobileOf(other.phone) === phone)) return { field: "phone", message: t("This number is already in the group.") };
+    if (sharesOf(row.shares) === null) return { field: "shares", message: t("Shares must be a whole number from 1 to 50.") };
+    return null;
+  };
+  const membersError = filled.length === 0 ? t("Add at least one more member.") : editors > MAX_EDITORS ? t("Up to 2 Editors keep the group cash.") : null;
+  const valid = !nameError && !ownSharesBad && !membersError && filled.every((row) => rowProblem(row) === null);
 
   function create() {
+    setTried(true);
+    if (!valid || isPending) return;
     startTransition(async () => {
       const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
-      const created = await attempt(() => createBusinessAction({ name: name.trim(), currency: "BDT", type: "GROUP" }), offline, stale);
+      const created = await attempt(() => createBusinessAction({ name: trimmed, currency: "BDT", type: "GROUP" }), offline, stale);
       if (!created.success || !created.data) {
         toast.error(created.message ?? t("Failed to create the group"));
         return;
       }
       const businessId = created.data.id;
-      // One at a time, you first: the first accountant becomes the one who
-      // keeps the cash.
+      if (kind === "MESS") await attempt(() => updateGroupSettingsAction(businessId, { kind: "MESS" }), offline, stale);
+      // You first: you keep the group cash unless two Editors do.
+      const people = [
+        { name: me, phone: undefined as string | undefined, shares: sharesOf(ownShares) ?? 1, role: (editors >= MAX_EDITORS ? "MEMBER" : "ACCOUNTANT") as GroupMemberRole, owner: true },
+        ...filled.map((row) => ({ name: row.name.trim(), phone: mobileOf(row.phone) || undefined, shares: sharesOf(row.shares) ?? 1, role: row.role, owner: false })),
+      ];
       let failed = 0;
+      const made: { id: string; shares: number; row: (typeof people)[number] }[] = [];
       for (const person of people) {
-        const result = await attempt(() => createGroupMemberAction(businessId, { name: person.name, role: person.role, ...(person.key === "me" && { isOwner: true }) }), offline, stale);
-        if (!result.success) failed++;
+        const result = await attempt(() => createGroupMemberAction(businessId, { name: person.name, ...(person.phone && { phone: person.phone }), shareUnits: person.shares, role: person.role, ...(person.owner && { isOwner: true }) }), offline, stale);
+        if (result.success && result.data) made.push({ id: result.data.id, shares: person.shares, row: person });
+        else failed++;
       }
-      const chosen = all.filter((category) => picked.includes(category));
-      const categories = await attempt(() => setupGroupCategoriesAction(businessId, chosen.map((category) => ({ name: category }))), offline, stale);
-      if (failed > 0) toast.warning(countLabel(t, fmt, failed, "{count} member could not be added", "{count} members could not be added"));
+      const split = (category: string): GroupSplit => (kind === "FAMILY" && category === "Bazar & grocery" ? "SHARES" : "EQUAL");
+      const categories = await attempt(() => setupGroupCategoriesAction(businessId, STARTER_CATEGORIES.map((category) => ({ name: category, defaultSplit: split(category) }))), offline, stale);
+      // Unequal shares become the cost split, as percents.
+      if (made.length > 1 && made.some((member) => member.shares !== made[0].shares)) {
+        const percents = percentsOf(made.map((member) => member.shares));
+        await attempt(() => setGroupCostSplitAction(businessId, { mode: "CUSTOM", members: made.map((member, index) => ({ groupMemberId: member.id, percent: percents[index] })) }), offline, stale);
+      }
+      // A link for everyone given access.
+      const list: AccessLinkShown[] = [];
+      for (const member of made.filter((entry) => !entry.row.owner && entry.row.role !== "MEMBER")) {
+        const link = await attempt(() => createGroupAccessLinkAction(businessId, member.id, "JOIN"), offline, stale);
+        if (link.success && link.data) list.push({ link: link.data as GroupAccessLink, name: member.row.name, phone: member.row.phone ?? null, roleLabel: t(member.row.role === "ACCOUNTANT" ? "Editor" : "Viewer"), groupName: trimmed });
+        else failed++;
+      }
+      if (failed > 0) toast.warning(countLabel(t, fmt, failed, "{count} member or link could not be made. Finish it in Members.", "{count} members or links could not be made. Finish them in Members."));
       if (!categories.success) toast.warning(t("Group created, but its categories didn't save. Add them in Categories."));
-      else if (failed === 0) toast.success(t("Group created"));
-      onClose();
-      router.push(`/group-expenses/${businessId}`);
-      router.refresh();
+      if (list.length > 0) {
+        setLinks({ businessId, groupName: trimmed, list });
+        return;
+      }
+      if (failed === 0) toast.success(t("Group created"));
+      finish(businessId);
     });
   }
 
+  function finish(businessId: string) {
+    onClose();
+    router.push(`/group-expenses/${businessId}`);
+    router.refresh();
+  }
+
+  const copy = async (index: number, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(index);
+    } catch {
+      toast.error(t("Couldn’t copy. Select the text and copy it yourself."));
+    }
+  };
+
+  if (links) {
+    return (
+      <GroupDialog
+        open={open}
+        onClose={() => finish(links.businessId)}
+        width={620}
+        title={
+          <span className="flex flex-col items-start gap-2">
+            <Chip tone="income" size="sm" className="gap-1 text-[12px]">
+              <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+              {t("Group created")}
+            </Chip>
+            {t("Send each person their access link")}
+          </span>
+        }
+        sub={t("Each person opens their link and sets their own username and password. Nobody else ever sees the password.")}
+        footer={<Button onClick={() => finish(links.businessId)}>{t("Done, set up the group")}</Button>}
+      >
+        {links.list.map((shown, index) => {
+          const url = joinUrl(shown.link.token);
+          const message = linkMessage(shown, url, t, fmt);
+          const wa = whatsappNumber(shown.phone);
+          return (
+            <div key={shown.link.token} className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line px-3.5 py-3">
+              <span className="flex min-w-0 flex-1 flex-col gap-0.75">
+                <span className="truncate text-body font-semibold text-ink">{shown.name}</span>
+                <span className="truncate text-[12.5px] text-ink-muted">
+                  <span className="tabular-nums">{shown.phone}</span> · {shown.roleLabel}
+                </span>
+                <input readOnly aria-label={t("Access link for {name}", { name: shown.name })} value={url} onFocus={(event) => event.currentTarget.select()} className="mt-0.75 h-8 w-full rounded-lg border border-emerald-line bg-strip px-2.5 font-mono text-[12.5px] text-ink outline-none" />
+              </span>
+              <span className="flex gap-1.5">
+                <Button variant="secondary" size="sm" onClick={() => void copy(index, url)}>
+                  {copied === index ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                  {copied === index ? t("Copied") : t("Copy")}
+                </Button>
+                {shown.phone && (
+                  <Button asChild variant="secondary" size="sm">
+                    <a href={`sms:${shown.phone}?body=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">
+                      <MessageSquare aria-hidden="true" />
+                      {t("Send by SMS")}
+                    </a>
+                  </Button>
+                )}
+                {wa && (
+                  <Button asChild variant="soft" size="sm">
+                    <a href={`https://wa.me/${wa}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle aria-hidden="true" />
+                      {t("WhatsApp")}
+                    </a>
+                  </Button>
+                )}
+              </span>
+            </div>
+          );
+        })}
+        <p className="flex gap-2.5 rounded-xl border border-warning-line bg-warning-soft px-3.5 py-3 text-[12.5px] leading-normal text-warning-ink">
+          <TriangleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />
+          {t("Send the links now. Later you can copy one again or make a new one from Members; each works once, for 7 days.")}
+        </p>
+      </GroupDialog>
+    );
+  }
+
+  const show = (error: string | null) => (tried ? error : null);
   return (
     <GroupDialog
       open={open}
       onClose={onClose}
       busy={isPending}
-      width={620}
+      width={820}
       title={t("New group")}
-      sub={t("Step {step} of 3 · {name}", { step: formatCount(step, fmt), name: t(STEP_NAMES[step - 1]) })}
+      sub={t("You will be its Admin. Add the people who share the costs.")}
       onSubmit={(event) => {
         event.preventDefault();
-        next();
+        create();
       }}
       footer={
         <>
-          {step > 1 && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setError("");
-                setStep(step - 1);
-              }}
-              disabled={isPending}
-              className="mr-auto"
-            >
-              {t("← Back")}
-            </Button>
-          )}
           <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending} className="px-5.5">
             {isPending && <Loader />}
-            {step === 3 ? t("Create group") : t("Next →")}
+            {t("Create group")}
           </Button>
         </>
       }
     >
-      <ol aria-label={t("Steps")} className="grid grid-cols-3 gap-3">
-        {STEP_NAMES.map((label, index) => {
-          const number = index + 1;
-          const done = number < step;
-          const current = number === step;
-          return (
-            <li key={label} aria-current={current ? "step" : undefined} className="flex flex-col gap-2">
-              <span className={cn("h-1 rounded-full", done || current ? "bg-emerald" : "bg-surface-sunken")} />
-              <span className="flex items-center gap-2 text-small">
-                <span className={cn("flex size-5.5 items-center justify-center rounded-full text-caption font-bold", done ? "bg-emerald text-white" : current ? "bg-emerald text-white" : "bg-surface-sunken text-ink-muted")}>{done ? <Check className="size-3" strokeWidth={3} aria-hidden="true" /> : formatCount(number, fmt)}</span>
-                <span className={cn(current ? "font-semibold text-ink" : "text-ink-muted")}>{t(label)}</span>
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+      <Field htmlFor="ng-name" label={t("Group name")} error={show(nameError)}>
+        <Input id="ng-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={40} placeholder={t("e.g. Mirpur Family")} invalid={!!show(nameError)} />
+      </Field>
 
-      {step === 1 && (
-        <Field htmlFor="ng-name" label={<span className="text-body font-medium text-ink">{t("Group name")}</span>} hint={t("Just a name your family will recognise. You can rename it any time.")}>
-          <Input id="ng-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("e.g. Mirpur Family")} invalid={!!error} aria-describedby="ng-name-hint" />
-        </Field>
-      )}
-
-      {step === 2 && (
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
-            <Input
-              size="md"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addPerson();
-                }
-              }}
-              placeholder={t("Member's name")}
-              aria-label={t("Member name")}
-              maxLength={80}
-              autoFocus
-              frameClassName="min-w-0 flex-1"
-            />
-            <NativeSelect size="md" value={draftRole} onChange={(event) => setDraftRole(event.target.value as GroupMemberRole)} aria-label={t("Designation")} frameClassName="w-42.5">
-              <option value="MEMBER">{t("Member")}</option>
-              <option value="ACCOUNTANT">{t("Accountant")}</option>
-            </NativeSelect>
-            <Button type="button" variant="secondary" onClick={addPerson} disabled={!draft.trim()}>
-              <Plus aria-hidden="true" />
-              {t("Add")}
-            </Button>
-          </div>
-          <div className="flex flex-col overflow-hidden rounded-field border border-line">
-            {people.map((person) => (
-              <div key={person.key} className="flex items-center gap-3 border-b border-divider px-3.5 py-2.5 last:border-b-0">
-                <MemberAvatar member={{ id: person.key, name: person.name, photoUrl: null }} members={people.map((p) => ({ id: p.key }))} size={32} />
-                <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                  <span className="truncate font-semibold text-ink">{person.key === "me" ? t("{name} (you)", { name: person.name }) : person.name}</span>
-                  <span className="truncate text-caption text-ink-muted">{person.key === "me" ? t("Owner · that's you") : person.role === "ACCOUNTANT" ? t("Keeps the family cash") : t("Gives money to the accountant")}</span>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-small font-semibold text-ink-2">{t("What kind of group?")}</legend>
+        <div role="radiogroup" aria-label={t("What kind of group?")} className="grid grid-cols-2 gap-2">
+          {(["FAMILY", "MESS"] as GroupKind[]).map((value) => {
+            const look = GROUP_KIND[value];
+            const on = kind === value;
+            return (
+              <button key={value} type="button" role="radio" aria-checked={on} onClick={() => setKind(value)} className={cn("flex min-h-16 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left", on ? "border-[1.5px] border-emerald bg-mint-50/60" : "border border-line bg-surface hover:border-mint-200")}>
+                <IconTile tone={look.tone} size={36} className="size-8.5 rounded-[10px] [&_svg]:size-4.5">
+                  <look.icon strokeWidth={1.9} />
+                </IconTile>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-body font-semibold text-ink">{t(look.label)}</span>
+                  <span className="text-[11.5px] leading-[1.35] text-ink-muted">{t(KIND_HINTS[value])}</span>
                 </span>
-                <SegmentedControl<GroupMemberRole>
-                  options={[
-                    { value: "MEMBER", label: "Member" },
-                    { value: "ACCOUNTANT", label: "Accountant" },
-                  ]}
-                  value={person.role}
-                  onChange={(role) => setRole(person.key, role)}
-                  label={t("Role")}
-                  variant="pill"
-                  className="rounded-[9px] [&>button]:h-7.5 [&>button]:px-2.5 [&>button]:text-caption"
-                />
-                {person.key === "me" ? (
-                  <span className="size-8" />
-                ) : (
-                  <button type="button" onClick={() => setPeople(people.filter((item) => item.key !== person.key))} aria-label={t("Remove {name}", { name: person.name })} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink">
-                    <X className="size-4" aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <p className="text-small text-ink-muted">{t("Accountants keep the family cash and do the bazar (up to 2). You record everything for them.")}</p>
+              </button>
+            );
+          })}
         </div>
-      )}
+      </fieldset>
 
-      {step === 3 && (
-        <div className="flex flex-col gap-3">
-          <p className="text-small text-ink-2">{t("Pick what this family spends on. Tap to turn on or off.")}</p>
-          <div className="flex flex-wrap gap-2">
-            {all.map((category) => {
-              const on = picked.includes(category);
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2.5">
+          <span className="text-small font-semibold text-ink-2">{t("Members")}</span>
+          <span className="text-caption text-ink-muted">{t("Shares: how many people each member pays for (used for bazar in a family).")}</span>
+        </div>
+        <div className="overflow-x-auto rounded-[14px] border border-line">
+          <div className="min-w-180">
+            <div className={cn("grid gap-2 bg-strip px-3 py-2 text-[11.5px] font-semibold text-ink-muted", COLUMNS)}>
+              <span>{t("Name")}</span>
+              <span>{t("Phone")}</span>
+              <span>{t("Shares")}</span>
+              <span>{t("Access")}</span>
+              <span>{t("Link")}</span>
+              <span />
+            </div>
+            <div className={cn("grid items-center gap-2 border-t border-divider bg-strip/50 px-3 py-2", COLUMNS)}>
+              <span className="truncate text-body font-semibold text-ink">
+                {me} <span className="font-normal text-ink-muted">{t("(you)")}</span>
+              </span>
+              <span className="truncate text-[13.5px] text-ink-2 tabular-nums">{user.phone || "—"}</span>
+              <Input size="sm" inputMode="numeric" value={ownShares} onChange={(event) => setOwnShares(event.target.value)} aria-label={t("Your shares")} invalid={tried && ownSharesBad} className="text-center" />
+              <Chip tone="mint" className="justify-self-start">
+                {t("Admin")}
+              </Chip>
+              <span className="text-caption text-ink-muted">{t("Your app login")}</span>
+              <span />
+            </div>
+            {rows.map((row, index) => {
+              const problem = tried ? rowProblem(row) : null;
+              const label = row.name.trim() || t("Member {number}", { number: String(index + 1) });
               return (
-                <button key={category} type="button" aria-pressed={on} onClick={() => toggleCategory(category)} className={cn("flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-small transition-colors", on ? "border-emerald bg-emerald-soft font-semibold text-emerald" : "border-line bg-surface text-ink-2 hover:border-input")}>
-                  {on && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}
-                  {t(category)}
-                </button>
+                <div key={row.key} className="flex flex-col gap-1 border-t border-divider px-3 py-2">
+                  <div className={cn("grid items-center gap-2", COLUMNS)}>
+                    <Input size="sm" value={row.name} onChange={(event) => updateRow(row.key, { name: event.target.value })} maxLength={40} placeholder={t("Member’s name")} aria-label={t("{label}: name", { label })} invalid={problem?.field === "name"} />
+                    <Input size="sm" type="tel" value={row.phone} onChange={(event) => updateRow(row.key, { phone: event.target.value })} maxLength={14} placeholder="01XXX-XXXXXX" aria-label={t("{label}: phone", { label })} invalid={problem?.field === "phone"} className="tabular-nums" />
+                    <Input size="sm" inputMode="numeric" value={row.shares} onChange={(event) => updateRow(row.key, { shares: event.target.value })} aria-label={t("{label}: shares", { label })} invalid={problem?.field === "shares"} className="text-center" />
+                    <NativeSelect size="sm" value={row.role} onChange={(event) => updateRow(row.key, { role: event.target.value as GroupMemberRole })} aria-label={t("{label}: access", { label })}>
+                      <option value="MEMBER">{t("No access")}</option>
+                      <option value="VIEWER">{t("Viewer")}</option>
+                      <option value="ACCOUNTANT">{t("Editor")}</option>
+                    </NativeSelect>
+                    <span className={cn("text-[12.5px] font-semibold whitespace-nowrap", row.role === "MEMBER" ? "text-ink-faint" : "text-emerald")}>{row.role === "MEMBER" ? "–" : t("Link after create")}</span>
+                    <button type="button" onClick={() => setRows(rows.filter((item) => item.key !== row.key))} aria-label={t("Remove {name}", { name: label })} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink">
+                      <X className="size-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                  {problem && (
+                    <span role="alert" className="text-caption text-expense">
+                      {problem.message}
+                    </span>
+                  )}
+                </div>
               );
             })}
+            <div className="border-t border-divider px-3 py-2">
+              <button type="button" onClick={() => setRows([...rows, blankRow(rows.length)])} className="flex h-9 items-center gap-1.5 rounded-full px-3 text-small font-semibold text-emerald hover:bg-mint-50">
+                <Plus className="size-3.75" strokeWidth={2.5} aria-hidden="true" />
+                {t("Add another member")}
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Input
-              size="md"
-              value={customDraft}
-              onChange={(event) => setCustomDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addCategory();
-                }
-              }}
-              placeholder={t("Add your own, e.g. School fees")}
-              aria-label={t("Add your own category")}
-              maxLength={60}
-              frameClassName="min-w-0 flex-1"
-            />
-            <Button type="button" variant="secondary" onClick={addCategory} disabled={!customDraft.trim()}>
-              <Plus aria-hidden="true" />
-              {t("Add")}
-            </Button>
-          </div>
-          <p className="text-caption text-ink-muted">{t("{count} selected. You can change categories later.", { count: formatCount(picked.length, fmt) })}</p>
         </div>
-      )}
+        {show(membersError) && (
+          <span role="alert" className="text-small text-expense">
+            {membersError}
+          </span>
+        )}
+        <p className="text-caption leading-normal text-ink-muted">{t("Editor: adds money entries in their own name and keeps group cash. Viewer: sees everything, changes nothing. A mobile number is needed only to send an access link. You can change all of this later in Members.")}</p>
+      </div>
 
-      {error && (
-        <p role="alert" className="text-small font-semibold text-expense">
-          {error}
-        </p>
-      )}
+      <p className="flex gap-2.5 rounded-xl border border-emerald-line bg-mint-50/50 px-3.5 py-3 text-[12.5px] leading-normal text-ink-2">
+        <Info className="mt-px size-4 shrink-0 text-emerald" aria-hidden="true" />
+        {t("We add 9 common categories (Bazar, Rent, Bills and more). You can rename, hide or add categories later.")}
+      </p>
     </GroupDialog>
   );
 }

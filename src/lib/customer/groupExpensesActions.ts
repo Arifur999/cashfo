@@ -4,6 +4,8 @@ import axios from "axios";
 import {
   API_BASE_URL,
   getApiErrorMessage,
+  type GroupAccessLink,
+  type GroupAccessLinkKind,
   type GroupContribution,
   type GroupContributionKind,
   type GroupCostSplit,
@@ -367,4 +369,29 @@ export async function closeGroupSettlementAction(
     });
     return res.data;
   }, "Failed to close settlement");
+}
+
+// ---- Members & access: a member's access link (the owner's) ----
+
+// A new access link (JOIN: make a login; RESET: a new password); any older
+// one stops working. The token comes back once, to build /join/<token>.
+export async function createGroupAccessLinkAction(businessId: string, memberId: string, kind: GroupAccessLinkKind): Promise<ActionResult<GroupAccessLink>> {
+  return callApi(async () => {
+    const res = await customerApi.post<GroupAccessLink>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}/access-link`, { kind }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to make the link");
+}
+
+// The waiting link again ("Copy the link again").
+export async function readGroupAccessLinkAction(businessId: string, memberId: string): Promise<ActionResult<GroupAccessLink>> {
+  return callApi(async () => {
+    const res = await customerApi.get<GroupAccessLink>(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}/access-link`, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to read the link");
+}
+
+export async function cancelGroupAccessLinkAction(businessId: string, memberId: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/members/${memberId}/access-link`, { headers: await authHeaders() });
+  }, "Failed to cancel the link");
 }

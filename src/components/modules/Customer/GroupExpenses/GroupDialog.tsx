@@ -13,7 +13,7 @@ interface GroupDialogProps {
   // A tile before the title (a category's preview).
   lead?: React.ReactNode;
   // Width: 420 (rename), 460 (most forms), 520, 620 (New group).
-  width?: 420 | 460 | 520 | 620;
+  width?: 420 | 460 | 520 | 620 | 820;
   // The bottom bar's buttons, right-aligned.
   footer: React.ReactNode;
   children: React.ReactNode;
@@ -23,7 +23,7 @@ interface GroupDialogProps {
   className?: string;
 }
 
-const WIDTHS = { 420: "w-105", 460: "w-115", 520: "w-130", 620: "w-155" } as const;
+const WIDTHS = { 420: "w-105", 460: "w-115", 520: "w-130", 620: "w-155", 820: "w-205" } as const;
 
 // The v7 boards' centered dialog: a head with the title and X, the form,
 // and a strip with the buttons. Every group form uses it.
