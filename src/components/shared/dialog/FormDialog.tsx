@@ -26,20 +26,22 @@ interface FormDialogProps {
   // A dialog that only shows something (who used a coupon) closes on a click
   // outside it, as FormDrawer's can; a form keeps what was typed.
   closeOnOutsideClick?: boolean;
+  // Another width than the three sizes (the saved replies' 560px card).
+  className?: string;
   children: React.ReactNode;
 }
 
 // The shell every create/edit dialog shares: header, scrollable body, and a
 // guard so a half-filled form doesn't vanish on a stray outside click
 // (Escape still closes it, for keyboard users).
-const FormDialog = ({ open, onOpenChange, title, description, trigger, size = "md", closeOnOutsideClick = false, children }: FormDialogProps) => {
+const FormDialog = ({ open, onOpenChange, title, description, trigger, size = "md", closeOnOutsideClick = false, className, children }: FormDialogProps) => {
   const { translate } = useLocale();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
         showCloseButton={false}
-        className={cn("max-h-[90vh] gap-0 overflow-hidden rounded-[20px] border-line bg-surface p-0 shadow-overlay ring-0", SIZE_CLASSES[size])}
+        className={cn("max-h-[90vh] gap-0 overflow-hidden rounded-[20px] border-line bg-surface p-0 shadow-overlay ring-0", SIZE_CLASSES[size], className)}
         onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
       >
         {/* The design's dialog head: 18px title, the explanation under it,

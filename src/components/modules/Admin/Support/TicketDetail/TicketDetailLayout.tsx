@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleHelp } from "lucide-react";
 import { useMemo, useOptimistic } from "react";
 import BackLink from "@/components/shared/BackLink";
 import T from "@/components/shared/T";
@@ -48,9 +49,17 @@ const TicketDetailLayout = ({ ticket, admins, currentAdminId, canManage, backHre
 
   return (
     <div className="flex flex-col gap-4.5">
-      <BackLink href={backHref} className="gap-1.5 text-[13.5px] leading-[normal]">
-        <T>All tickets</T>
-      </BackLink>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <BackLink href={backHref} className="gap-1.5 text-[13.5px] leading-[normal]">
+          <T>All tickets</T>
+        </BackLink>
+        {ticket.fromHelpPage && (
+          <span className="flex items-center gap-1.5 rounded-full bg-emerald-soft px-2.5 py-0.75 text-[12.5px] leading-[normal] font-semibold text-brand-ink">
+            <CircleHelp className="size-3.25 shrink-0" strokeWidth={2} aria-hidden="true" />
+            <T>{"Sent from Settings › Help & support · replies show in the user's My messages"}</T>
+          </span>
+        )}
+      </div>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section aria-labelledby="ticket-subject" className="flex flex-col overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
           <TicketHeader ticket={view} />

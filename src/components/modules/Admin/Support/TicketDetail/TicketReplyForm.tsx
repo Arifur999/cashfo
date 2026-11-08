@@ -13,6 +13,7 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { useActionMutation } from "@/hooks/useActionMutation";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { asStatus } from "@/lib/i18n/message";
+import { cn } from "@/lib/utils";
 import { queryKeys } from "@/lib/queryKeys";
 import { TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { ticketRequesterQuery } from "@/queries/ticket.queries";
@@ -71,7 +72,8 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
 
   const reply = useActionMutation({
     action: (payload: ITicketReplyPayload) => replyToTicketAction(ticket.id, payload),
-    successMessage: (sent) => (sent.isInternal ? "Note saved" : "Reply sent"),
+    // A customer reads replies in Settings › Help & support › My messages.
+    successMessage: (sent) => (sent.isInternal ? "Note added for admins" : customerId ? translate("Reply sent. {name} sees it in My messages.", { name: requesterName }) : "Reply sent"),
     invalidateKeys: [queryKeys.tickets.all],
     refreshRoute: false,
   });
@@ -144,8 +146,8 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
               field={field}
               label={<span className="sr-only">{translate(note ? "Note for admins" : "Reply")}</span>}
               rows={3}
-              placeholder={note ? "Only admins see this. The user gets no message." : translate("Write a reply to {name}", { name: requesterName })}
-              className="leading-[1.55]"
+              placeholder={note ? "Only admins see notes." : translate("Write to {name}. They see it in Settings › Help & support › My messages.", { name: requesterName })}
+              className={cn("min-h-21 resize-y leading-[1.55]", note && "bg-warning-50")}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !isSending) {
                   event.preventDefault();
@@ -156,7 +158,13 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
           )}
         </form.Field>
         <div className="flex flex-wrap items-center gap-2">
-          <SavedReplyPicker language={language?.toLowerCase() === "bn" ? "bn" : "en"} onPick={insert} />
+          <SavedReplyPicker
+            language={language?.toLowerCase() === "bn" ? "bn" : "en"}
+            onPick={(text) => {
+              setMode("reply");
+              insert(text);
+            }}
+          />
           <AttachLinkButton value={link} onChange={setLink} />
           <span className="flex-1" />
           {!note && (
@@ -176,7 +184,7 @@ const TicketReplyForm = ({ ticket, requesterName, currentAdminId, onSending }: T
               />
             </>
           )}
-          <AppSubmitButton isPending={isSending} pendingLabel={note ? "Saving..." : "Sending..."} variant="action" size="sm" className="w-auto text-[13.5px]">
+          <AppSubmitButton isPending={isSending} pendingLabel={note ? "Saving..." : "Sending..."} variant="action" size="sm" className={cn("w-auto text-[13.5px]", note && "bg-warning hover:bg-warning/90")}>
             {translate(note ? "Add note" : "Send reply")}
           </AppSubmitButton>
         </div>
