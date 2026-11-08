@@ -608,4 +608,11 @@ export const referralsDictionary: Record<string, string> = {
   "{count} payment shown": "{count}টি পেমেন্ট দেখানো হচ্ছে",
   "{count} payments shown": "{count}টি পেমেন্ট দেখানো হচ্ছে",
   "Your share {amount}": "আপনার অংশ {amount}",
+  // QR popup and earnings (v16)
+  "Couldn't save the QR code.": "QR কোডটি সেভ করা যায়নি।",
+  "Saved the QR code to your downloads.": "QR কোডটি আপনার ডাউনলোডে সেভ হয়েছে।",
+  "QR code · {name}": "QR কোড · {name}",
+  "Friends scan it to sign up with your link. Print it for a poster or your shop counter.": "বন্ধুরা এটি স্ক্যান করে আপনার লিংক দিয়ে সাইন আপ করবেন। পোস্টার বা দোকানের কাউন্টারের জন্য প্রিন্ট করে নিন।",
+  "Download PNG": "PNG ডাউনলোড করুন",
+  "Nothing here for this filter.": "এই ফিল্টারে কিছু নেই।",
 };

@@ -188,7 +188,7 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
               <ListHeadCell>{t("Payment ID")}</ListHeadCell>
             </ListHead>
             {list.data.length === 0 ? (
-              <ListEmpty icon={<Receipt />} title={narrowed ? t("Nothing here") : t("No commissions yet")} description={narrowed ? undefined : t("When a friend pays, the payment and your share show here.")} />
+              <ListEmpty icon={<Receipt />} title={narrowed ? t("Nothing here for this filter.") : t("No commissions yet")} description={narrowed ? undefined : t("When a friend pays, the payment and your share show here.")} />
             ) : (
               list.data.map((line) => {
                 const gone = line.status === "REVERSED" || line.status === "CANCELLED";

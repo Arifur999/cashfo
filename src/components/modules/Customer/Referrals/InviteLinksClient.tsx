@@ -35,7 +35,7 @@ interface InviteLinksClientProps {
 }
 
 // Link | Clicks | Joined | Paying | Earned | Share
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_72px_72px_72px_100px_150px]";
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_80px_80px_80px_100px_190px]";
 
 // Referrals > Invite links (ReferralLinks): one link for each place the
 // member shares, so they see which place brings paying people. Each counts
@@ -47,7 +47,7 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
   const copy = useCopy();
   const [links, setLinks] = useState(initial);
   const [creating, setCreating] = useState(false);
-  const [qr, setQr] = useState<string | null>(null);
+  const [qr, setQr] = useState<{ url: string; label: string; tag: string } | null>(null);
   const [removing, setRemoving] = useState<ReferralLink | null>(null);
   const [isRemoving, startRemove] = useTransition();
   const money = (value: string | number) => formatCurrency(value, currency, fmt);
@@ -110,8 +110,8 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
       />
       <div className="grid gap-2.5 sm:grid-cols-3 md:gap-3.5">
         {stats.map((stat) => (
-          <Card key={stat.label} padding="none" className="flex flex-col gap-0.5 px-4.5 py-3.5">
-            <span className="text-caption text-ink-muted">{stat.label}</span>
+          <Card key={stat.label} padding="none" className="flex flex-col gap-1 px-4.5 py-3.5">
+            <span className="text-[12.5px] leading-normal text-ink-muted">{stat.label}</span>
             <span className="truncate text-[22px] leading-normal font-bold text-ink tabular-nums">{stat.value}</span>
             <span className="text-caption text-ink-muted">{stat.sub}</span>
           </Card>
@@ -170,7 +170,7 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
                 <Button size="sm" onClick={() => copy(url, t("Link copied"))} className="rounded-full">
                   {t("Copy")}
                 </Button>
-                <button type="button" onClick={() => setQr(url)} aria-label={t("QR code for {name}", { name: link.main ? t("Main link") : link.label })} className="flex h-8 items-center justify-center rounded-full border border-line-strong bg-surface px-2.5 text-[12.5px] font-semibold text-ink hover:bg-surface-sunken">
+                <button type="button" onClick={() => setQr({ url, label: link.main ? t("Main link") : link.label, tag: link.tag })} aria-label={t("QR code for {name}", { name: link.main ? t("Main link") : link.label })} className="flex h-8 items-center justify-center rounded-full border border-line-strong bg-surface px-2.5 text-[12.5px] font-semibold text-ink hover:bg-surface-sunken">
                   <QrCode className="size-3.75 md:hidden" aria-hidden="true" />
                   <span aria-hidden="true" className="max-md:hidden">
                     QR
@@ -197,7 +197,7 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
           toast.success(t("Link made. Copy it and share it there."));
         }}
       />
-      <QrDialog open={qr !== null} onClose={() => setQr(null)} link={qr ?? ""} code={code} />
+      <QrDialog open={qr !== null} onClose={() => setQr(null)} link={qr?.url ?? ""} code={code} label={qr?.label} tag={qr?.tag || undefined} />
       <ConfirmDialog
         open={removing !== null}
         onClose={() => setRemoving(null)}
