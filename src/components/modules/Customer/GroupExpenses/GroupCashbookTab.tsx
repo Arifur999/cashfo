@@ -1,17 +1,23 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, Check, ChevronDown, Printer, Receipt } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Check, ChevronDown, Pencil, Printer, Receipt, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import DayInput from "@/components/smartly/form/DayInput";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow } from "@/components/smartly/list";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { GroupCashbookRow } from "@/lib/customer/api";
+import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { formatCurrency } from "@/lib/customer/currency";
 import { countLabel, groupTabHref, shortName } from "@/lib/customer/groupDisplay";
-import type { GroupPeriod } from "@/lib/customer/groupPeriod";
+import { deleteGroupHandoverAction } from "@/lib/customer/groupExpensesActions";
+import { isAccountant, mainAccountantId } from "@/lib/customer/groupFamily";
+import { type GroupPeriod, periodLabel } from "@/lib/customer/groupPeriod";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
@@ -20,11 +26,12 @@ import { cn } from "@/lib/utils";
 import { groupLine, MemberAvatar } from "./GroupBits";
 import { GroupPeriodPicker } from "./GroupPeriodPicker";
 import { GroupStatement, type StatementSpec } from "./GroupStatement";
+import { type HandoverDraft, HandoverDialog } from "./HandoverDialog";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 const PERIODS = ["month", "year", "all", "custom"] as const;
-// #, date, accountant, from / spent on, note, in, out, cash in hand.
-const COLUMNS = "md:grid-cols-[32px_72px_140px_minmax(0,1fr)_minmax(0,1fr)_110px_110px_120px]";
+// #, date, accountant, from / spent on, note, in, out, cash in hand, actions.
+const COLUMNS = "md:grid-cols-[32px_72px_140px_minmax(0,1fr)_minmax(0,1fr)_110px_110px_120px_76px]";
 
 interface GroupCashbookTabProps {
   data: GroupPageData;
@@ -32,14 +39,26 @@ interface GroupCashbookTabProps {
   onPeriod: (period: GroupPeriod) => void;
   onAccountant: (id: string | null) => void;
   busy: boolean;
+  // A paused group takes no new handovers.
+  canAdd: boolean;
 }
 
-// Each accountant's cash (the v7 FamilyCashbook board): money in from the
+// Each accountant's cash (the FamilyCashbook boards): money in from the
 // deposits given to them, money out for the expenses they paid and what
-// they returned, with the cash in hand after each. Read only: entries are
-// added on Contributions and Expenses.
-export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: GroupCashbookTabProps) {
+// they returned, and cash handed from one holder to another (v16), with
+// the cash in hand after each. Deposits and expenses are added on their own
+// pages; handovers are added, edited and deleted here.
+export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, canAdd }: GroupCashbookTabProps) {
   const { t, fmt } = useLocale();
+  const router = useRouter();
+  const [handover, setHandover] = useState<{ open: boolean; editing: HandoverDraft | null }>({ open: false, editing: null });
+  const [removing, setRemoving] = useState<HandoverDraft | null>(null);
+  const [isPending, startTransition] = useTransition();
+  // Who can keep group cash, and what each holds at the end of the month on show.
+  const holderId = mainAccountantId(data.settings, data.members);
+  const holders = data.members.filter((member) => isAccountant(member) || member.id === holderId);
+  const holderCash = Object.fromEntries((data.settlement.accountantCash ?? []).map((row) => [row.groupMemberId, Number(row.cash)]));
+  const groupCash = Object.values(holderCash).reduce((sum, value) => sum + value, 0);
   const { currency, startDay } = data;
   const period = data.period ?? { kind: "month" };
   const book = data.cashbook;
@@ -59,8 +78,26 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: G
   const opening = Number(book?.opening ?? 0);
   const memberOf = (id: string) => view.memberById[id];
 
-  const kindText = (row: GroupCashbookRow) => (row.kind === "IN" ? t("Received from member") : row.returned ? t("Returned to member") : t("Expense category"));
-  const partyText = (row: GroupCashbookRow) => (row.kind === "IN" ? t("From {name}", { name: row.party }) : row.returned ? t("To {name}", { name: row.party }) : row.party);
+  const kindText = (row: GroupCashbookRow) => (row.source === "HANDOVER" ? (row.kind === "IN" ? t("Handed in") : t("Handed out")) : row.kind === "IN" ? t("Received from member") : row.returned ? t("Returned to member") : t("Expense category"));
+  const partyText = (row: GroupCashbookRow) => (row.source === "HANDOVER" ? (row.kind === "IN" ? t("Handover from {name}", { name: row.party }) : t("Handover to {name}", { name: row.party })) : row.kind === "IN" ? t("From {name}", { name: row.party }) : row.returned ? t("To {name}", { name: row.party }) : row.party);
+  // A handover row as the dialog edits it: OUT is the giver's side, IN the receiver's.
+  const draftOf = (row: GroupCashbookRow): HandoverDraft | null =>
+    row.source === "HANDOVER" && row.otherId ? { id: row.id, fromId: row.kind === "OUT" ? row.accountantId : row.otherId, toId: row.kind === "OUT" ? row.otherId : row.accountantId, amount: Number(row.amount), date: row.date, note: row.note } : null;
+
+  function removeHandover() {
+    if (!removing) return;
+    const id = removing.id;
+    startTransition(async () => {
+      const result = await attempt(() => deleteGroupHandoverAction(data.businessId, id), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
+      if (!result.success) {
+        toast.error(result.message ?? t("Failed to delete the handover"));
+        return;
+      }
+      toast.success(t("Handover deleted"));
+      setRemoving(null);
+      router.refresh();
+    });
+  }
 
   function openPrint() {
     setPrintFrom(data.periodRange?.from ?? "");
@@ -102,12 +139,35 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: G
       rows: inside.map((row, i) => [formatCount(i + 1, fmt), formatDay(row.date, "d MMM yyyy", fmt), row.accountantName ?? "", partyText(row), row.note || "—", row.kind === "IN" ? money(row.amount) : "—", row.kind === "OUT" ? money(row.amount) : "—", signed(Number(row.balance))]),
       tail: ["", t("Closing balance"), "", "", "", money(totalIn), money(totalOut), signed(close)],
       empty: t("No entries between these dates."),
-      footer: t("Money in comes from Contributions, money out from Expenses."),
+      footer: t("Money in comes from Contributions, money out from Expenses; handovers move cash between holders."),
     };
   };
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <h2 className="text-[19px] font-semibold text-ink">{t("Cash book · {period}", { period: periodLabel(period, data.today, startDay, t, fmt) })}</h2>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="flex items-baseline gap-2 text-small text-ink-muted">
+            {t("Group cash in hand")}
+            <b className={cn("text-[17px] font-bold tabular-nums", groupCash < -0.004 ? "text-warning" : "text-ink")}>
+              {groupCash < -0.004 ? "− " : ""}
+              {money(groupCash)}
+            </b>
+          </span>
+          <Button variant="secondary" onClick={openPrint}>
+            <Printer aria-hidden="true" />
+            {t("Print statement")}
+          </Button>
+          {canAdd && holders.length > 1 && (
+            <Button onClick={() => setHandover({ open: true, editing: null })}>
+              <ArrowLeftRight aria-hidden="true" />
+              {t("Hand over cash")}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
           <PopoverTrigger asChild>
@@ -194,9 +254,6 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: G
                     </span>
                   );
                 })}
-              <Button variant="outline" size="icon" aria-label={t("Print statement")} onClick={openPrint}>
-                <Printer aria-hidden="true" />
-              </Button>
             </span>
           </div>
         }
@@ -228,6 +285,7 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: G
           <ListHeadCell align="end">{t("In")}</ListHeadCell>
           <ListHeadCell align="end">{t("Out")}</ListHeadCell>
           <ListHeadCell align="end">{t("Cash in hand")}</ListHeadCell>
+          <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {rows.length > 0 && Math.abs(opening) >= 0.005 && (
           <ListRow columns={COLUMNS} className="min-h-10 gap-x-3 bg-strip text-small tabular-nums md:px-5">
@@ -239,14 +297,16 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: G
               {opening < 0 ? "− " : ""}
               {money(opening)}
             </ListCell>
+            <ListCell className="hidden md:block" />
           </ListRow>
         )}
         {rows.length === 0 && <ListEmpty icon={<Receipt />} tone="neutral" title={period.kind === "month" ? t("No entries yet this month.") : t("No entries in this period.")} />}
         {rows.map((row, index) => {
           const balance = Number(row.balance);
           const into = row.kind === "IN";
+          const draft = draftOf(row);
           return (
-            <ListRow key={`${row.source}:${row.id}`} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto] gap-x-3 tabular-nums md:px-5 md:py-1">
+            <ListRow key={`${row.source}:${row.kind}:${row.id}`} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 tabular-nums md:px-5 md:py-1">
               <ListCell className="hidden text-ink-muted md:block">{formatCount(index + 1, fmt)}</ListCell>
               <ListCell className="hidden text-ink-soft md:block">{formatDay(row.date, "d MMM", fmt)}</ListCell>
               <ListCell className="hidden items-center gap-2 md:flex">
@@ -254,12 +314,12 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: G
                 <span className="truncate text-ink">{shortName(row.accountantName ?? "")}</span>
               </ListCell>
               <ListCell className="flex items-center gap-2.5">
-                <span aria-hidden="true" className={cn("flex size-7 shrink-0 items-center justify-center rounded-full", into ? "bg-income-soft text-income" : "bg-expense-soft text-expense")}>
-                  {into ? <ArrowDownLeft className="size-3.5" /> : <ArrowUpRight className="size-3.5" />}
+                <span aria-hidden="true" className={cn("flex size-7 shrink-0 items-center justify-center rounded-full", draft ? "bg-surface-sunken text-ink-2" : into ? "bg-income-soft text-income" : "bg-expense-soft text-expense")}>
+                  {draft ? <ArrowLeftRight className="size-3.5" /> : into ? <ArrowDownLeft className="size-3.5" /> : <ArrowUpRight className="size-3.5" />}
                 </span>
                 <span className="flex min-w-0 flex-col leading-tight">
                   <span className="truncate font-medium text-ink">{partyText(row)}</span>
-                  <span className={cn("truncate text-[11.5px] font-medium", into ? "text-income" : "text-expense")}>{kindText(row)}</span>
+                  <span className={cn("truncate text-[11.5px] font-medium", draft ? "text-ink-2" : into ? "text-income" : "text-expense")}>{kindText(row)}</span>
                   <span className="truncate text-caption text-ink-muted md:hidden">{[formatDay(row.date, "d MMM", fmt), row.accountantName && shortName(row.accountantName), row.note].filter(Boolean).join(" · ")}</span>
                 </span>
               </ListCell>
@@ -280,11 +340,41 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy }: G
                   {money(row.amount)}
                 </span>
               </ListCell>
+              <ListCell className="flex justify-end gap-1.5">
+                {draft ? (
+                  canAdd && (
+                    <>
+                      <button type="button" onClick={() => setHandover({ open: true, editing: draft })} aria-label={t("Edit handover")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                        <Pencil className="size-3.75" aria-hidden="true" />
+                      </button>
+                      <button type="button" onClick={() => setRemoving(draft)} aria-label={t("Delete handover")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
+                        <Trash2 className="size-3.75" aria-hidden="true" />
+                      </button>
+                    </>
+                  )
+                ) : (
+                  <Link href={groupTabHref(data.businessId, row.source === "EXPENSE" ? "expenses" : "contributions")} aria-label={row.source === "EXPENSE" ? t("Open in Expenses") : t("Open in Contributions")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                    <ArrowUpRight className="size-3.75" aria-hidden="true" />
+                  </Link>
+                )}
+              </ListCell>
             </ListRow>
           );
         })}
       </ListCard>
 
+      <HandoverDialog open={handover.open} onClose={() => setHandover({ open: false, editing: null })} businessId={data.businessId} currency={currency} holders={holders} cash={holderCash} today={data.today} editing={handover.editing} />
+      <ConfirmDialog
+        open={removing !== null}
+        onClose={() => !isPending && setRemoving(null)}
+        onConfirm={removeHandover}
+        icon={<Trash2 />}
+        title={t("Delete this handover?")}
+        description={removing ? `${shortName(memberOf(removing.fromId)?.name)} → ${shortName(memberOf(removing.toId)?.name)} · ${money(removing.amount)}. ${t("Only who keeps the cash changes back. Nobody’s balance changes.")}` : ""}
+        confirmLabel={t("Delete handover")}
+        danger
+        isPending={isPending}
+      />
       <GroupStatement
         open={printing}
         onClose={() => setPrinting(false)}

@@ -1,4 +1,4 @@
-import type { GroupActivityAction, GroupActivityPage, GroupCashbook, GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMeal, GroupMember, GroupMonthlyBudget, GroupSettings, GroupSettlementRecord, GroupSettlementResult, WorkspaceListItem } from "@/lib/customer/api";
+import type { GroupActivityAction, GroupActivityPage, GroupCashbook, GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMeal, GroupMember, GroupMonthlyBudget, GroupSettings, GroupSettlementRecord, GroupSettlementResult, MemberRole, WorkspaceListItem } from "@/lib/customer/api";
 import type { BudgetStatus, CategorySpend, GroupTab, MonthRange, Transfer } from "@/lib/customer/groupDisplay";
 import type { GroupPeriod, PeriodRange } from "@/lib/customer/groupPeriod";
 
@@ -27,6 +27,10 @@ export interface GroupPageData {
   businessId: string;
   name: string;
   currency: string;
+  // The signed-in customer's role in the group's workspace (OWNER: its Admin).
+  role: MemberRole;
+  // The customer's groups, for the header's Switch group.
+  groups: { id: string; name: string }[];
   today: string;
   tab: GroupTab;
   // The day the group's months start on.

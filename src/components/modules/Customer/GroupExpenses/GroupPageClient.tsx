@@ -282,14 +282,14 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     ) : messLayout ? (
       <MessDashboard data={data} view={view} onRecordPayment={openPayment} onStatement={setStatement} onSetBudget={() => setBudgetKey(data.range.key)} />
     ) : (
-      <FamilyDashboard data={data} view={view} onPeriod={onPeriod} onStatement={setStatement} busy={moving} />
+      <FamilyDashboard data={data} view={view} canAdd={canAdd} onMonth={(key) => go("dashboard", { month: key })} onAddExpense={openExpense} onAddContribution={() => openContribution()} onRecordPayment={openPayment} onStatement={setStatement} busy={moving} />
     ),
     contributions: (
       <GroupContributionsTab
         data={data}
         view={view}
         onPeriod={onPeriod}
-        onAdd={() => openContribution()}
+        onAdd={(memberId) => openContribution(memberId ?? null)}
         onEdit={(row) => guardEdit(row.date, () => setContribution({ open: true, editing: row, memberId: null }))}
         onRemove={removeContribution}
         onEditExpense={(row) => guardEdit(row.date, () => setExpense({ open: true, editing: row }))}
@@ -299,7 +299,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       />
     ),
     expenses: <GroupExpensesTab data={data} view={view} onPeriod={onPeriod} onAdd={openExpense} onEdit={(row) => guardEdit(row.date, () => setExpense({ open: true, editing: row }))} onRemove={removeExpense} busy={moving} canAdd={canAdd} />,
-    cashbook: <GroupCashbookTab data={data} view={view} onPeriod={onPeriod} onAccountant={(id) => go("cashbook", { ...currentPeriod(), ...(id && { accountant: id }) })} busy={moving} />,
+    cashbook: <GroupCashbookTab data={data} view={view} onPeriod={onPeriod} onAccountant={(id) => go("cashbook", { ...currentPeriod(), ...(id && { accountant: id }) })} busy={moving} canAdd={canAdd} />,
     settlement: messLayout ? (
       <MessSettlementTab data={data} view={view} onRecordPayment={openPayment} onCloseMonth={() => setCloseOpen(true)} />
     ) : (
@@ -315,7 +315,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
 
   return (
     <PageFrame className="gap-5">
-      <GroupHeader businessId={data.businessId} name={data.name} settings={data.settings} tab={data.tab} />
+      <GroupHeader businessId={data.businessId} name={data.name} settings={data.settings} tab={data.tab} memberCount={view.activeMembers.length} role={data.role} groups={data.groups} />
       <div aria-busy={moving || undefined} className={cn("flex flex-col transition-opacity motion-reduce:transition-none", moving && "pointer-events-none opacity-60")}>
         {pages[data.tab]}
       </div>

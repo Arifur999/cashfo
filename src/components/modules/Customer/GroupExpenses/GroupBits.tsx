@@ -35,7 +35,7 @@ export function MemberAvatar({ member, members, size = 32, className }: { member
   return <PersonAvatar name={member?.name ?? "?"} src={member?.photoUrl} size={size} className={cn(memberTone(members, member?.id), small, className)} />;
 }
 
-// "+ ৳ 578  Gets back" / "− ৳ 351  Has to pay" / "৳ 0  Settled". Stacked,
+// "+ ৳ 578  Gets back" / "− ৳ 351  Owes" / "৳ 0  Settled" (the v16 boards). Stacked,
 // the chip goes under the figure, so a narrow column still fits it.
 export function BalanceCell({ value, currency, stacked = false, className }: { value: number; currency: string; stacked?: boolean; className?: string }) {
   const { t, fmt } = useLocale();
@@ -45,18 +45,19 @@ export function BalanceCell({ value, currency, stacked = false, className }: { v
     <span className={cn("flex justify-end", stacked ? "flex-col items-end gap-1" : "items-center gap-2", className)}>
       <span className={cn("font-bold whitespace-nowrap tabular-nums", even ? "text-ink" : up ? "text-income" : "text-expense")}>{even ? formatCurrency(0, currency, fmt) : formatSignedCurrency(value, currency, fmt)}</span>
       <Chip tone={even ? "neutral" : up ? "income" : "expense"} size="sm">
-        {t(even ? "Settled" : up ? "Gets back" : "Has to pay")}
+        {t(even ? "Settled" : up ? "Gets back" : "Owes@@group")}
       </Chip>
     </span>
   );
 }
 
-// One figure on a strip across the top of a tab.
-export function Figure({ label, value, tone = "text-ink", divided = true }: { label: React.ReactNode; value: React.ReactNode; tone?: string; divided?: boolean }) {
+// One figure on a strip across the top of a tab, with a line under it if given.
+export function Figure({ label, value, sub, tone = "text-ink", divided = true }: { label: React.ReactNode; value: React.ReactNode; sub?: React.ReactNode; tone?: string; divided?: boolean }) {
   return (
     <div className={cn("flex flex-col gap-0.5 pr-5", divided && "border-r border-line")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-h3 font-bold tabular-nums md:text-[19px] md:leading-normal", tone)}>{value}</span>
+      {sub && <span className="text-caption text-ink-muted">{sub}</span>}
     </div>
   );
 }
@@ -82,6 +83,12 @@ export function CategoryTile({ name, categories, size = 26 }: { name: string; ca
       {option?.icon ? createElement(budgetCategoryIcon(option.icon), {}) : <span className="size-2 rounded-full bg-current" />}
     </span>
   );
+}
+
+// A category's name chip, in its colours (the v16 expense rows).
+export function categoryChipClass(name: string, categories: GroupExpenseCategoryOption[]): string {
+  const tone = categoryTone(categories.find((c) => c.name === name)?.color);
+  return cn(tone.bg, tone.fg);
 }
 
 // The bar colour of a category, for the spend rows.
