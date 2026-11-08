@@ -9,6 +9,7 @@ import {
   type GroupExpense,
   type GroupExpenseCategory,
   type GroupExpenseCategoryOption,
+  type GroupInvitePreview,
   type GroupMeal,
   type GroupMember,
   type GroupMonthlyBudget,
@@ -187,3 +188,27 @@ export const getGroupMonthBudgets = cache(async (businessId: string): Promise<Gr
     return emptyUnlessOutage(error, []);
   }
 });
+
+// What the group spent in each of its months ("YYYY-MM" → taka), for the
+// header's month picker. Empty from an older backend.
+export const getGroupMonthTotals = cache(async (businessId: string): Promise<Record<string, number>> => {
+  const headers = await authHeaders();
+  if (!headers) return {};
+  try {
+    const res = await customerApi.get<{ month: string; spent: string }[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-totals`, { headers });
+    return Object.fromEntries(res.data.map((row) => [row.month, Number(row.spent)]));
+  } catch (error) {
+    return emptyUnlessOutage(error, {});
+  }
+});
+
+// What an access link is for (/join/<token>), or null for a link that no
+// longer works. Needs no sign-in: the link is the proof.
+export async function getGroupInvite(token: string): Promise<GroupInvitePreview | null> {
+  try {
+    const res = await customerApi.get<GroupInvitePreview>(`${API_BASE_URL}/api/group-invites/${encodeURIComponent(token)}`);
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
+  }
+}

@@ -75,7 +75,10 @@ function Topbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t, fmt } = useLocale();
-  const { activeBusinessId } = useAuth();
+  const { activeBusinessId, user } = useAuth();
+  // A group member's portal login has only its groups: no search, tasks,
+  // bell, other app, account menu or Add menu (the sidebar signs it out).
+  const portal = Boolean(user.portalOnly);
   const darkModeOn = useFeature("dark_mode");
   const { openCount } = useTodayTasks();
   const { tasksOpen, setTasksOpen, attachTasksPanel } = useAddActions();
@@ -176,6 +179,7 @@ function Topbar() {
         </ol>
       </nav>
 
+      {!portal && (
       <div className="flex shrink-0 max-md:order-3">
         <CustomerSearch
           iconClassName={iconButton}
@@ -183,7 +187,9 @@ function Topbar() {
           kbdClassName={habit ? "rounded-xs" : "rounded-full"}
         />
       </div>
+      )}
 
+      {!portal && (
       <TodayTasksPanel open={tasksOpen} onOpenChange={setTasksOpen}>
         <button type="button" aria-label={tasksLabel} title={t("Today’s tasks")} className={cn(
             "relative flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink max-md:order-1",
@@ -202,13 +208,17 @@ function Topbar() {
           )}
         </button>
       </TodayTasksPanel>
+      )}
 
-      <div className="flex shrink-0 max-md:order-4">
-        <NotificationsBell className={iconButton} badgeClassName={COUNT_BADGE} />
-      </div>
+      {!portal && (
+        <div className="flex shrink-0 max-md:order-4">
+          <NotificationsBell className={iconButton} badgeClassName={COUNT_BADGE} />
+        </div>
+      )}
 
       {darkModeOn && <ThemeToggle className={cn("max-md:hidden", iconButton)} />}
 
+      {!portal && (
       <Link
         href={habit ? MONEY_HOME : HABIT_HOME}
         aria-label={switchLabel}
@@ -224,17 +234,20 @@ function Topbar() {
           {t(habit ? "Money Tracker" : HABIT_APP_LABEL)}
         </span>
       </Link>
+      )}
 
       {extras?.action && <div className="max-md:order-5 md:hidden">{extras.action}</div>}
-      <div className={cn("flex shrink-0 max-md:order-5 max-md:mx-0.5 md:ml-1", (NO_AVATAR_ON_PHONE.has(pathname) || extras?.action) && "max-md:hidden")}>
+      <div className={cn("flex shrink-0 max-md:order-5 max-md:mx-0.5 md:ml-1", (NO_AVATAR_ON_PHONE.has(pathname) || extras?.action) && "max-md:hidden", portal && "hidden")}>
         <AccountMenu />
       </div>
 
       {/* N's Add menu hangs here, under the account button; not on phones,
           which have the +. */}
-      <div className="hidden md:contents">
-        <AddMenu />
-      </div>
+      {!portal && (
+        <div className="hidden md:contents">
+          <AddMenu />
+        </div>
+      )}
     </header>
   );
 }

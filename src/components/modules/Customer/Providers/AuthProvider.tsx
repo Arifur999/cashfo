@@ -62,7 +62,8 @@ export function AuthProvider({ initialUser, initialActiveBusinessId, unlockedBus
   // Only a real true counts: a button wired straight to logout hands it its
   // click event.
   function logout(everywhere?: boolean) {
-    startTransition(() => logoutAction(everywhere === true));
+    // A group member's portal login goes back to the member sign-in page.
+    startTransition(() => logoutAction(everywhere === true, user.portalOnly ? "member" : undefined));
   }
 
   return (

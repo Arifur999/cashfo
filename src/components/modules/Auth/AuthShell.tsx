@@ -7,7 +7,7 @@ import { Suspense } from "react";
 import LegalLinks from "@/components/modules/Legal/LegalLinks";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import Logo from "@/components/smartly/Logo";
-import { REGISTER_ROUTE } from "@/lib/authUtils";
+import { MEMBER_JOIN_ROUTE, MEMBER_LOGIN_ROUTE, REGISTER_ROUTE } from "@/lib/authUtils";
 import { BRAND_NAME } from "@/lib/brand";
 import { useLocale, type Locale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,8 @@ import MaintenanceNotice, { MaintenanceContext, type MaintenanceState } from "./
 // Register's for signing up, Main's for signing in and everything else.
 const variantFor = (pathname: string): AuthVariant => {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return "admin";
+  // Group Expense's member portal: its sign-in and its access links.
+  if (pathname === MEMBER_LOGIN_ROUTE || pathname.startsWith(`${MEMBER_JOIN_ROUTE}/`)) return "member";
   return pathname === REGISTER_ROUTE ? "register" : "login";
 };
 
@@ -111,7 +113,7 @@ const AuthShell = ({ maintenance, children }: AuthShellProps) => {
   const admin = variant === "admin";
 
   return (
-    <div className={cn("min-h-dvh lg:grid", admin ? "bg-strip lg:grid-cols-[minmax(0,7fr)_minmax(0,11fr)]" : "bg-surface lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)]")}>
+    <div className={cn("min-h-dvh lg:grid", admin ? "bg-strip lg:grid-cols-[minmax(0,7fr)_minmax(0,11fr)]" : variant === "member" ? "bg-page lg:grid-cols-[560px_minmax(0,1fr)]" : "bg-surface lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)]")}>
       <AuthHeroPanel variant={variant} />
 
       <div className="relative flex min-h-dvh min-w-0 flex-col">
@@ -135,7 +137,7 @@ const AuthShell = ({ maintenance, children }: AuthShellProps) => {
           tabIndex={-1}
           className={cn("flex flex-1 flex-col px-5 outline-none lg:items-center lg:justify-center lg:px-12", variant === "register" ? "pt-4 pb-7 lg:py-12" : "pt-7 pb-8 lg:py-12")}
         >
-          <div className={cn("mx-auto flex w-full flex-1 flex-col lg:flex-none", admin ? "max-w-105 gap-5.5" : "max-w-100 gap-7 lg:gap-8", variant === "register" && "gap-6 lg:gap-7")}>
+          <div className={cn("mx-auto flex w-full flex-1 flex-col lg:flex-none", admin ? "max-w-105 gap-5.5" : variant === "member" ? "max-w-110 gap-5" : "max-w-100 gap-7 lg:gap-8", variant === "register" && "gap-6 lg:gap-7")}>
             {/* One read for the notice and the form, so they always agree. */}
             <MaintenanceContext value={maintenance}>
               <Suspense fallback={null}>
