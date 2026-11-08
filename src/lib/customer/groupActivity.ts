@@ -56,7 +56,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 const VALUE_WORDS: Record<string, Record<string, string>> = {
   paidFrom: { FUND: "Accountant's cash", MEMBER: "Own pocket" },
-  role: { MEMBER: "Member", ACCOUNTANT: "Accountant" },
+  role: { MEMBER: "No access", ACCOUNTANT: "Editor", VIEWER: "Viewer" },
   status: { ACTIVE: "Active", ARCHIVED: "Inactive" },
   defaultSplit: { EQUAL: "Equally", SHARES: "By cost split", MEALS: "By meals", EXACT: "Exact amounts" },
   hidden: { true: "Hidden", false: "Shown" },
@@ -64,6 +64,16 @@ const VALUE_WORDS: Record<string, Record<string, string>> = {
   mealsOn: { true: "On", false: "Off" },
   paused: { true: "Paused", false: "Running" },
   mode: { EQUAL: "Equal", CUSTOM: "Custom %" },
+};
+
+// What each access event says ("made an access link for Rakib").
+const ACCESS_VERBS: Record<string, string> = {
+  LINK: "made an access link for",
+  RESET_LINK: "made a password reset link for",
+  LINK_CANCELLED: "cancelled the access link of",
+  JOINED: "joined with their access link as",
+  RESET: "set a new password from the reset link as",
+  ATTACHED: "added the group to their account as",
 };
 
 export function activityLine(entry: GroupActivity, members: GroupMember[], currency: string, t: Translate, fmt: FormatLocale): ActivityLine {
@@ -119,6 +129,14 @@ export function activityLine(entry: GroupActivity, members: GroupMember[], curre
         what: join(`${text(s.from)} → ${text(s.to)}`, money(s.amount)),
         changes,
         meta: join(text(s.note), day(s.date)),
+      };
+    // A member's access: a link made, cancelled or used, a new password.
+    case "ACCESS":
+      return {
+        verb: t(ACCESS_VERBS[text(s.event)] ?? "changed the access of"),
+        what: text(s.member),
+        changes,
+        meta: join(s.role ? value("role", s.role) : "", s.username ? t("username {name}", { name: text(s.username) }) : ""),
       };
     case "MEMBER":
       return {

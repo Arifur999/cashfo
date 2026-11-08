@@ -1437,4 +1437,13 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Sign in first.": "আগে সাইন ইন করুন।",
   // v16 Group: member sign-in
   "Log in": "লগইন",
+  // v16 Group: access lines in the activity log
+  "made an access link for": "অ্যাক্সেস লিংক বানিয়েছেন:",
+  "made a password reset link for": "পাসওয়ার্ড রিসেট লিংক বানিয়েছেন:",
+  "cancelled the access link of": "অ্যাক্সেস লিংক বাতিল করেছেন:",
+  "joined with their access link as": "অ্যাক্সেস লিংক দিয়ে যোগ দিয়েছেন:",
+  "set a new password from the reset link as": "রিসেট লিংক থেকে নতুন পাসওয়ার্ড দিয়েছেন:",
+  "added the group to their account as": "গ্রুপটা নিজের অ্যাকাউন্টে যোগ করেছেন:",
+  "changed the access of": "অ্যাক্সেস বদলেছেন:",
+  "username {name}": "ইউজারনেম {name}",
 };
