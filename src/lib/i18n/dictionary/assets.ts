@@ -467,4 +467,14 @@ export const assetsDictionary: Record<string, string> = {
   "Price paid": "কেনা দাম",
   "Biggest rise at last update": "শেষ আপডেটে সবচেয়ে বেশি বেড়েছে",
   "Biggest drop at last update": "শেষ আপডেটে সবচেয়ে বেশি কমেছে",
+  // v16 All assets board
+  "Use this for an asset added by mistake. It is removed from every Assets page.": "ভুল করে যোগ করা সম্পদের জন্য এটা ব্যবহার করুন। সব সম্পদ পেজ থেকে এটা মুছে যাবে।",
+  "The {amount} payment leaves the Balance ledger, so that balance goes back up.": "{amount} পেমেন্টটা ব্যালেন্সের লেজার থেকে সরে যাবে, তাই ওই ব্যালেন্স আবার বাড়বে।",
+  "No assets match your search or filters.": "আপনার খোঁজ বা ফিল্টারে কোনো সম্পদ মেলেনি।",
+  "Assets table": "সম্পদের টেবিল",
+  "Gain or loss": "লাভ বা ক্ষতি",
+  "Its {count} value update will be deleted too.": "এর {count}টি দামের আপডেটও মুছে যাবে।",
+  "Its {count} value updates will be deleted too.": "এর {count}টি দামের আপডেটও মুছে যাবে।",
+  "Sold total": "বিক্রি মোট",
+  "Active total": "সক্রিয় মোট",
 };
