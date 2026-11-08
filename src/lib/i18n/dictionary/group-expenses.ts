@@ -1185,4 +1185,7 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Name, first day of the month, budget warning, how costs and categories are shared, and pausing the group.": "নাম, মাসের প্রথম দিন, বাজেট সতর্কতা, খরচ আর ক্যাটাগরি কীভাবে ভাগ হবে, আর গ্রুপ বিরতি।",
   "The group is paused: new entries are off until you resume it. Everything stays visible.": "গ্রুপ বিরতিতে আছে: আবার চালু না করা পর্যন্ত নতুন এন্ট্রি বন্ধ। সব দেখা যাবে।",
   "Stops new money entries for a while (for example during a long trip). Turn it off again any time.": "কিছুদিনের জন্য নতুন টাকার এন্ট্রি বন্ধ রাখে (যেমন লম্বা ছুটিতে)। যেকোনো সময় আবার চালু করতে পারবেন।",
+  // v16 FamilyDashboard: my balance through the cash holder
+  "You keep the group cash: everyone settles with you.": "গ্রুপের নগদ আপনার কাছে: সবাই আপনার সাথে হিসাব মেটান।",
+  "Settled for this month through the cash holder.": "এই মাসের হিসাব নগদ রাখার মানুষের মাধ্যমে মিটে গেছে।",
 };

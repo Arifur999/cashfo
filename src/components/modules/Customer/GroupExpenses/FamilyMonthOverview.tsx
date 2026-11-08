@@ -10,7 +10,7 @@ import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRo
 import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, groupTabHref, paidIn, shortName, type Transfer, unclosedPreviousMonth } from "@/lib/customer/groupDisplay";
-import { categoryRows } from "@/lib/customer/groupFamily";
+import { categoryRows, mainAccountantId, type SettleCard, settlementCards } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -69,9 +69,18 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   // Tile 3: the cash each holder keeps.
   const holders = [...(settlement.accountantCash ?? [])].sort((a, b) => Number(b.cash) - Number(a.cash));
 
+  // Everyone settles with the cash holder, as on Settlement: each open
+  // card is a payment to or from them.
+  const holderId = mainAccountantId(data.settings, data.members);
+  const cards = settlementCards(settlement.members, data.contributions, holderId);
+  const transferOf = (card: SettleCard | undefined): Transfer | null =>
+    card && holderId && (card.state.kind === "pays" || card.state.kind === "gets") ? { fromId: card.state.kind === "pays" ? card.memberId : holderId, toId: card.state.kind === "pays" ? holderId : card.memberId, amount: Math.round(Math.abs(card.after) * 100) / 100 } : null;
+  const firstOpen = transferOf(cards.find((card) => card.state.kind === "pays" || card.state.kind === "gets"));
+
   // Tile 4: my balance, and the payment that settles it.
   const mine = me ? (view.balances[me.id] ?? 0) : 0;
-  const myTransfer = me ? (view.transfers.find((tr) => tr.fromId === me.id || tr.toId === me.id) ?? null) : null;
+  const myCard = me ? cards.find((card) => card.memberId === me.id) : undefined;
+  const myTransfer = transferOf(myCard);
   const firstName = (id: string | undefined) => shortName(id ? view.memberById[id]?.name : undefined);
 
   // The members' balances: everyone active, and anyone who left but still has money in the month.
@@ -135,7 +144,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                 </Link>
               </Button>
             )}
-            <Button variant="secondary" className="text-[13.5px]" onClick={() => onRecordPayment(view.transfers[0] ?? null)}>
+            <Button variant="secondary" className="text-[13.5px]" onClick={() => onRecordPayment(firstOpen)}>
               <ArrowLeftRight className="text-ink-2" aria-hidden="true" />
               {t("Record payment")}
             </Button>
@@ -212,17 +221,21 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                 <span className={cn("text-[24px] leading-tight font-bold tracking-[-0.01em] tabular-nums", mine < -0.5 ? "text-expense" : mine > 0.5 ? "text-income" : "text-ink-2")}>{money(Math.abs(mine) < 0.5 ? 0 : Math.abs(mine))}</span>
               </span>
               <span className="text-caption leading-[1.45] text-ink-muted">
-                {mine < -0.5 && myTransfer
-                  ? t("Pay {name} {amount} to settle", { name: firstName(myTransfer.toId), amount: money(myTransfer.amount) })
-                  : mine > 0.5 && myTransfer
-                    ? t("{name} pays you {amount}", { name: firstName(myTransfer.fromId), amount: money(myTransfer.amount) })
-                    : mine > 0.5
-                      ? t("The group owes you this")
-                      : t("You don’t owe anything and nobody owes you.")}
+                {myCard?.state.kind === "holder" && Math.abs(mine) > 0.5
+                  ? t("You keep the group cash: everyone settles with you.")
+                  : myTransfer && myTransfer.fromId === me.id
+                    ? t("Pay {name} {amount} to settle", { name: firstName(myTransfer.toId), amount: money(myTransfer.amount) })
+                    : myTransfer
+                      ? t("{name} pays you {amount}", { name: firstName(myTransfer.fromId), amount: money(myTransfer.amount) })
+                      : mine > 0.5
+                        ? t("The group owes you this")
+                        : mine < -0.5
+                          ? t("Settled for this month through the cash holder.")
+                          : t("You don’t owe anything and nobody owes you.")}
               </span>
-              {actions && myTransfer && Math.abs(mine) > 0.5 && (
-                <Button size="sm" variant={mine < 0 ? "danger" : "primary"} className="mt-0.5 self-start text-[13px]" onClick={() => onRecordPayment(myTransfer)}>
-                  {mine < 0 ? t("Pay now") : t("Record payment")}
+              {actions && myTransfer && (
+                <Button size="sm" variant={myTransfer.fromId === me.id ? "danger" : "primary"} className="mt-0.5 self-start text-[13px]" onClick={() => onRecordPayment(myTransfer)}>
+                  {myTransfer.fromId === me.id ? t("Pay now") : t("Record payment")}
                 </Button>
               )}
             </>
