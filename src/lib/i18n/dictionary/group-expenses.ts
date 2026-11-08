@@ -1456,4 +1456,13 @@ export const groupExpensesDictionary: Record<string, string> = {
   "{later} is closed too and starts from {month}’s balances. Reopen the newest month first, then this one.": "{later}-ও বন্ধ, আর সেটা {month}-এর ব্যালেন্স থেকে শুরু হয়। আগে সবচেয়ে নতুন মাসটা খুলুন, তারপর এটা।",
   "Reopen {month}?": "{month} আবার খুলবেন?",
   "Its entries can be added, changed and deleted again. If anything changes, the balances carried into {next} change too. This is written to the Activity log.": "এর এন্ট্রি আবার যোগ, বদল ও মোছা যাবে। কিছু বদলালে {next}-এ যাওয়া ব্যালেন্সও বদলাবে। এটা অ্যাক্টিভিটি লগে লেখা থাকবে।",
+  // v16 Group: members role tiles
+  "Total members": "মোট সদস্য",
+  "Editor access": "এডিটর অ্যাক্সেস",
+  "Viewer access": "ভিউয়ার অ্যাক্সেস",
+  "{count} can log in": "{count} জন লগইন করতে পারেন",
+  "Keep group cash": "গ্রুপের নগদ রাখেন",
+  "See everything": "সব দেখতে পারেন",
+  "In the costs, no portal": "খরচে আছেন, পোর্টাল নেই",
+  "Filter by role": "রোল অনুযায়ী দেখুন",
 };

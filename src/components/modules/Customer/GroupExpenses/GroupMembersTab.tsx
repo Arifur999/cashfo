@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, KeyRound, Pencil, PieChart, Search, Trash2, TriangleAlert, UserCheck, UserMinus, UserPlus } from "lucide-react";
+import { Eye, FileText, KeyRound, Pencil, PencilLine, PieChart, Search, Trash2, TriangleAlert, UserCheck, UserMinus, UserPlus, UserRound, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import Banner from "@/components/smartly/Banner";
@@ -58,7 +58,18 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
   const accountants = accountantsOf(data.members);
   const counts: Record<Filter, number> = { ACTIVE: active.length, ARCHIVED: data.members.length - active.length, ALL: data.members.length };
   const words = query.trim().toLowerCase();
-  const rows = data.members.filter((member) => (filter === "ALL" || member.status === filter) && (!words || member.name.toLowerCase().includes(words) || (member.household ?? "").toLowerCase().includes(words) || (member.phone ?? "").replace(/\D/g, "").includes(words.replace(/\D/g, "") || "\u0000")));
+  // The role tiles (the FamilyMembers board): everyone active, then by
+  // access; a tile filters the table to its people (again for all).
+  const [roleFilter, setRoleFilter] = useState<"ALL" | MemberAccessRole>("ALL");
+  const byRole = (role: MemberAccessRole) => active.filter((member) => memberAccessRole(member) === role);
+  const loggedIn = (role: MemberAccessRole) => byRole(role).filter((member) => member.access?.login).length;
+  const tiles: { key: "ALL" | MemberAccessRole; label: string; count: number; sub: string; tone: string; icon: React.ElementType }[] = [
+    { key: "ALL", label: t("Total members"), count: active.length, sub: t("Cost split · {mode}", { mode: t(custom ? "Custom %" : "Equal") }), tone: "bg-mint-50 text-emerald", icon: Users },
+    { key: "EDITOR", label: t("Editor access"), count: byRole("EDITOR").length, sub: onEdit ? t("{count} can log in", { count: formatCount(loggedIn("EDITOR"), fmt) }) : t("Keep group cash"), tone: "bg-warning-soft text-warning", icon: PencilLine },
+    { key: "VIEWER", label: t("Viewer access"), count: byRole("VIEWER").length, sub: onEdit ? t("{count} can log in", { count: formatCount(loggedIn("VIEWER"), fmt) }) : t("See everything"), tone: "bg-info-soft text-info", icon: Eye },
+    { key: "NONE", label: t("No access"), count: byRole("NONE").length, sub: t("In the costs, no portal"), tone: "bg-surface-sunken text-ink-soft", icon: UserRound },
+  ];
+  const rows = data.members.filter((member) => (roleFilter === "ALL" || memberAccessRole(member) === roleFilter) && (filter === "ALL" || member.status === filter) && (!words || member.name.toLowerCase().includes(words) || (member.household ?? "").toLowerCase().includes(words) || (member.phone ?? "").replace(/\D/g, "").includes(words.replace(/\D/g, "") || "\u0000")));
   const broken = custom && active.length > 0 && !addsUpToHundred(active.map((member) => shares[member.id] ?? 0));
   const unshared = custom ? active.filter((member) => !(shares[member.id] > 0)) : [];
   const filterWord = filter === "ACTIVE" ? t("active") : filter === "ARCHIVED" ? t("inactive") : t("all");
@@ -99,6 +110,30 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           </span>
         </Banner>
       )}
+
+      <div role="group" aria-label={t("Filter by role")} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {tiles.map((tile) => {
+          const on = roleFilter === tile.key;
+          return (
+            <button
+              key={tile.key}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setRoleFilter(on && tile.key !== "ALL" ? "ALL" : tile.key)}
+              className={cn("flex items-center gap-3.5 rounded-[18px] border-[1.5px] px-4.5 py-4 text-left shadow-card transition-colors", on ? "border-emerald bg-mint-50/50" : "border-line-card bg-surface hover:border-mint-200")}
+            >
+              <span aria-hidden="true" className={cn("flex size-11.5 shrink-0 items-center justify-center rounded-[14px] [&_svg]:size-5.5", tile.tone)}>
+                <tile.icon strokeWidth={2} />
+              </span>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-[28px] leading-none font-bold tracking-[-0.02em] text-ink tabular-nums">{formatCount(tile.count, fmt)}</span>
+                <span className="truncate text-[13px] font-semibold text-ink-2">{tile.label}</span>
+                <span className="truncate text-[11.5px] text-ink-muted">{tile.sub}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       <ListCard
         label={t("Members")}
