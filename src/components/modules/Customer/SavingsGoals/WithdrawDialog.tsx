@@ -123,7 +123,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
         <label htmlFor="wd-amount" className="text-body font-medium text-ink">
           {t("Amount")}
         </label>
-        <AmountInput id="wd-amount" value={amount} onChange={setAmount} currency={currency} autoFocus />
+        <AmountInput id="wd-amount" value={amount} onChange={setAmount} currency={currency} size="md" autoFocus />
         <div className="flex gap-1.5">
           <button type="button" onClick={() => setAmount(String(saved))} className="h-8 rounded-full border border-line bg-surface px-3 text-caption font-semibold text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11">
             {t("All · {amount}", { amount: money(saved) })}
