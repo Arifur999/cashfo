@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 export const WITHDRAW_ROUTE = "/referrals/withdraw";
 export const WITHDRAWALS_ROUTE = "/referrals/withdrawals";
+const EARNINGS = "/referrals/earnings";
 
 interface EarningsHeroProps {
   info: ReferralProgramInfo;
@@ -55,22 +56,32 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
   });
   const line = canWithdraw ? methodsLine : balances.available > 0 ? t("You can withdraw once you have {min}", { min: money(program.minWithdrawal) }) : t("Nothing to withdraw right now");
 
-  const stats: { label: string; value: string; sub: React.ReactNode }[] = [
+  // Each figure opens what it counts: the lines on hold, this month's,
+  // every line, the withdrawals.
+  const stats: { label: string; value: string; sub: string; href: string }[] = [
     {
       label: t("On hold"),
       value: money(balances.onHold),
       sub: balances.onHold <= 0 ? t("Nothing waiting") : daysToHold <= 1 ? t("Ready tomorrow") : t("Ready in {count} days", { count: formatCount(daysToHold, fmt) }),
+      href: `${EARNINGS}?status=ON_HOLD`,
     },
-    { label: t("This month"), value: money(thisMonth?.amount ?? 0), sub: monthName(`${today.slice(0, 7)}-15`, false) },
-    { label: t("Total earned"), value: money(balances.lifetime), sub: since ? t("Since {month}", { month: monthName(since, since.slice(0, 4) !== today.slice(0, 4)) }) : t("Nothing yet") },
+    {
+      label: t("This month"),
+      value: money(thisMonth?.amount ?? 0),
+      sub: monthName(`${today.slice(0, 7)}-15`, false),
+      href: `${EARNINGS}?month=${Number(today.slice(5, 7))}&year=${today.slice(0, 4)}`,
+    },
+    {
+      label: t("Total earned"),
+      value: money(balances.lifetime),
+      sub: since ? t("Since {month}", { month: monthName(since, since.slice(0, 4) !== today.slice(0, 4)) }) : t("Nothing yet"),
+      href: EARNINGS,
+    },
     {
       label: t("Paid to you"),
       value: money(balances.paidOut),
-      sub: (
-        <Link href={WITHDRAWALS_ROUTE} className="underline decoration-white/50 underline-offset-2 hover:decoration-white">
-          {balances.lastPaidAt ? t("Last on {date}", { date: friendDay(dayOf(balances.lastPaidAt), today, fmt) }) : t("See withdrawals")}
-        </Link>
-      ),
+      sub: balances.lastPaidAt ? t("Last on {date}", { date: friendDay(dayOf(balances.lastPaidAt), today, fmt) }) : t("See withdrawals"),
+      href: WITHDRAWALS_ROUTE,
     },
   ];
 
@@ -132,11 +143,11 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
 
       <div className="relative hidden grid-cols-4 gap-3 border-t border-white/18 pt-4 md:grid">
         {stats.map((stat) => (
-          <div key={stat.label} className="flex min-w-0 flex-col gap-0.75">
+          <Link key={stat.label} href={stat.href} className="group flex min-w-0 flex-col items-start gap-0.75 rounded-sm focus-visible:outline-mint-200">
             <span className="text-[12.5px] leading-normal text-white/80">{stat.label}</span>
-            <span className="text-[20px] leading-normal font-bold tabular-nums">{stat.value}</span>
-            <span className="text-caption leading-normal text-white/75">{stat.sub}</span>
-          </div>
+            <span className="text-[19px] leading-normal font-bold tabular-nums">{stat.value}</span>
+            <span className="text-caption leading-normal text-white/75 underline decoration-white/35 underline-offset-3 group-hover:decoration-white">{stat.sub}</span>
+          </Link>
         ))}
       </div>
     </section>

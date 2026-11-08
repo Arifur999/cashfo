@@ -4,20 +4,19 @@ import { Info, Minus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { deleteAssetAction, updateAssetAction, updateAssetValueAction, type UpdateAssetInput } from "@/lib/customer/assetActions";
 import { categoryVisual, gainChip, lastValued, latestPurchaseDay, newValueFloor, valueTimeline } from "@/lib/customer/assetDisplay";
 import type { ActionResult } from "@/lib/customer/authActions";
-import { formatCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getAppToday } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
@@ -34,18 +33,20 @@ interface UpdateValueDrawerProps {
   asset: Asset | null;
   categories: AssetCategoryOption[];
   currency: string;
+  // Opens on its details (Purchase & Sell's Edit purchase).
+  initialMode?: Mode;
 }
 
 type Mode = "value" | "details";
 
-const CHIP = { income: "bg-mint-50 text-emerald", expense: "bg-expense-soft text-expense", neutral: "bg-surface-sunken text-ink-2" } as const;
+const BOX = { income: "bg-income-soft/60 text-income", expense: "bg-expense-soft/60 text-expense", neutral: "bg-strip text-ink-2" } as const;
 
 // An owned asset, for those who can change it. Value: what it is worth now,
 // against the last value and what was paid, with the whole value history
 // under it. Details: its name, type, note and (while the backend allows it)
 // purchase date set right, or the asset deleted when it was entered by
 // mistake.
-export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency }: UpdateValueDrawerProps) {
+export function UpdateValueDrawer({ open, onClose, businessId, asset, categories, currency, initialMode = "value" }: UpdateValueDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -70,7 +71,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     setPrevKey(key);
     if (open && asset) {
       setSaved(null);
-      setMode("value");
+      setMode(initialMode);
       setValue(String(Number(asset.currentValue)));
       setDate(getAppToday());
       setNote("");
@@ -167,6 +168,9 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     if (confirmed) run("delete", () => deleteAssetAction(businessId, asset.id), "Asset deleted", "Failed to delete the asset");
   }
 
+  const head = <AssetTypeTile visual={visual} size="lg" glossy className="rounded-[10px] [&_svg]:size-5" />;
+  const signed = (amount: number) => `${amount > 0 ? "+" : amount < 0 ? "−" : ""} ${formatCurrency(Math.abs(amount), currency, fmt)}`.trim();
+
   const label = (text: string, optional = false) => (
     <span className="text-body font-medium text-ink">
       {text} {optional && <span className="font-normal text-ink-muted">({t("optional")})</span>}
@@ -180,16 +184,16 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
     const paidMove = saved.after - paid;
     const Icon = move > 0 ? TrendingUp : move < 0 ? TrendingDown : Minus;
     return (
-      <Drawer
+      <PopupDialog
         open={open}
-        popup
-        width={460}
-        icon={<AssetTypeTile visual={visual} size="lg" className="rounded-field" />}
+        width={520}
+        lead={head}
         title={t("Update value")}
-        description={`${asset.name} · ${t(asset.category)}`}
+        sub={`${asset.name} · ${t(asset.category)}`}
         onClose={onClose}
+        footerClassName="bg-surface"
         footer={
-          <Button type="button" onClick={onClose} className="px-5">
+          <Button type="button" onClick={onClose} className="h-11 rounded-full px-5">
             {t("Done@@sheet")}
           </Button>
         }
@@ -209,21 +213,22 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
             {t("Compared with what you paid: {change}", { change: `${paidMove > 0 ? "+" : paidMove < 0 ? "−" : ""} ${formatCurrency(Math.abs(paidMove), currency, fmt)} · ${toLocaleDigits(paidChip.label, fmt)}`.trim() })}
           </span>
         </div>
-      </Drawer>
+      </PopupDialog>
     );
   }
 
   return (
-    <Drawer
+    <PopupDialog
       open={open}
-      popup
-      width={460}
-      icon={<AssetTypeTile visual={visual} size="lg" className="rounded-field" />}
+      width={520}
+      lead={head}
       title={mode === "value" ? t("Update value") : t("Edit details")}
-      description={`${asset.name} · ${t(asset.category)}`}
+      sub={`${asset.name} · ${t(asset.category)}`}
       busy={isPending}
       onClose={onClose}
       onSubmit={submit}
+      bodyClassName="gap-4 py-5"
+      footerClassName="bg-surface"
       footer={
         // On a phone Delete takes a row of its own under the buttons, so
         // Save never runs off the edge, whatever the language.
@@ -235,76 +240,63 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
             </Button>
           )}
           <div className="ml-auto flex items-center gap-2.5">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending} className="h-11 rounded-full px-4.5">
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={(mode === "value" ? !valid : !detailsValid) || isPending} className="px-4.5">
+            <Button type="submit" disabled={(mode === "value" ? !valid : !detailsValid) || isPending} className="h-11 rounded-full px-5">
               {isPending && running === "save" && <Loader size={16} onDark label={t("Loading...")} />}
-              {mode === "value" ? t("Save new value") : t("Save changes")}
+              {mode === "value" ? t("Save value") : t("Save changes")}
             </Button>
           </div>
         </div>
       }
     >
-      <div className="-my-1 flex flex-col gap-4">
-        <SegmentedControl
-          options={[
-            { value: "value", label: "Value" },
-            { value: "details", label: "Details" },
-          ]}
-          value={mode}
-          onChange={setMode}
-          label="What to change"
-          size="lg"
-          stretch
-        />
-
-        {/* Both parts stay mounted, so the new value keeps its focus
-            and nothing typed is lost on a switch. */}
         <div hidden={mode !== "value"} className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3 rounded-[14px] border border-line bg-strip p-4 tabular-nums">
-            <span className="flex flex-col gap-0.5 *:leading-[normal]">
-              <span className="text-caption font-normal text-ink-muted">{t("Current value")}</span>
-              <span className="text-title text-ink">{formatCurrency(current, currency, fmt)}</span>
-              <span className="text-caption font-normal text-ink-muted">{since ? t("since {date}", { date: formatDate(since, "d MMM yyyy", fmt) }) : t("Not checked since bought")}</span>
+          <div className="grid grid-cols-2 gap-3 rounded-[12px] border border-line bg-strip px-4 py-3.5 tabular-nums">
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[12px] text-ink-muted">{t("You paid")}</span>
+              <span className="text-[17px] font-bold text-ink">{formatCurrency(paid, currency, fmt)}</span>
+              <span className="text-[12px] text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", fmt) })}</span>
             </span>
-            <span className="flex flex-col gap-0.5 *:leading-[normal]">
-              <span className="text-caption font-normal text-ink-muted">{t("You paid")}</span>
-              <span className="text-title text-ink">{formatCurrency(paid, currency, fmt)}</span>
-              <span className="text-caption font-normal text-ink-muted">{t("Bought on {date}", { date: formatDate(asset.purchaseDate, "d MMM yyyy", fmt) })}</span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[12px] text-ink-muted">{t("Current value")}</span>
+              <span className="text-[17px] font-bold text-ink">{formatCurrency(current, currency, fmt)}</span>
+              <span className="text-[12px] text-ink-muted">{since ? t("Updated on {date}", { date: formatDate(since, "d MMM yyyy", fmt) }) : t("No updates yet")}</span>
             </span>
           </div>
 
-          <Field htmlFor="upd-value" label={label(t("New value"))}>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="upd-value" className="text-[14px] font-medium text-ink">
+              {t("New value ({symbol})", { symbol: currencySymbol(currency, fmt) })}
+            </label>
             <AmountInput id="upd-value" value={value} onChange={setValue} currency={currency} autoFocus />
-            {next > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {/* A value for an earlier day leaves today's alone; the line below says so. */}
-                {!backdated && (
-                  <span className={cn("inline-flex items-center gap-2 rounded-full px-3 py-1 text-caption font-semibold tabular-nums", CHIP[sinceLast.tone])}>
-                    {sinceLast.tone === "income" ? <TrendingUp className="size-3.5" aria-hidden="true" /> : sinceLast.tone === "expense" ? <TrendingDown className="size-3.5" aria-hidden="true" /> : null}
-                    {changed ? t("{change} since the last value", { change: `${next > current ? "+" : "−"} ${formatCurrency(Math.abs(next - current), currency, fmt)} (${toLocaleDigits(sinceLast.label, fmt)})` }) : t("Same as the last value")}
-                  </span>
-                )}
-                <span className="inline-flex items-center rounded-full bg-surface-sunken px-3 py-1 text-caption font-semibold text-ink-2 tabular-nums">{t("{change} vs what you paid", { change: toLocaleDigits(vsPaid.label, fmt) })}</span>
-              </div>
-            )}
             {backdated && (
               <p className="flex items-start gap-2 text-caption text-ink-muted">
                 <Info className="mt-px size-3.5 shrink-0" aria-hidden="true" />
                 {t("An earlier date fills in the history; the value today stays {amount}.", { amount: formatCurrency(current, currency, fmt) })}
               </p>
             )}
-          </Field>
-
-          <div className="grid gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
-            <Field htmlFor="upd-date" label={label(t("Date"))}>
-              <DayInput id="upd-date" size="md" value={date} onChange={setDate} min={floor} max={today} />
-            </Field>
-            <Field htmlFor="upd-note" label={label(t("Note"), true)}>
-              <Input id="upd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Mouza rate went up")} className="px-0" frameClassName="px-3" />
-            </Field>
           </div>
+          {next > 0 && (
+            <div className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-[12px] px-3.5 py-3 tabular-nums", BOX[backdated ? vsPaid.tone : sinceLast.tone])}>
+              {/* A value for an earlier day leaves today's alone; the line above says so. */}
+              {!backdated && (
+                <>
+                  <span className="text-[13px] text-ink-2">{t("Change from current value")}</span>
+                  <span className="text-right text-[13.5px] font-bold">{changed ? `${signed(next - current)} · ${toLocaleDigits(sinceLast.label, fmt)}` : t("Same as the last value")}</span>
+                </>
+              )}
+              <span className="text-[12px] text-ink-muted">{t("Compared with what you paid")}</span>
+              <span className="text-right text-[12.5px] font-semibold">{`${signed(next - paid)} · ${toLocaleDigits(vsPaid.label, fmt)}`}</span>
+            </div>
+          )}
+
+          <Field htmlFor="upd-date" label={label(t("Update date"))}>
+            <DayInput id="upd-date" size="md" value={date} onChange={setDate} min={floor} max={today} />
+          </Field>
+          <Field htmlFor="upd-note" label={label(t("Note"), true)}>
+            <Input id="upd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. Checked with local broker")} frameClassName="rounded-[10px]" />
+          </Field>
 
           <AssetValueHistory entries={timeline} currency={currency} today={today} />
         </div>
@@ -338,8 +330,7 @@ export function UpdateValueDrawer({ open, onClose, businessId, asset, categories
             <Input id="upd-notes" size="md" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={200} placeholder={t("e.g. 4 ana, from Baitul Mukarram")} className="px-0" frameClassName="px-3" />
           </Field>
         </div>
-      </div>
       {confirmDialog}
-    </Drawer>
+    </PopupDialog>
   );
 }

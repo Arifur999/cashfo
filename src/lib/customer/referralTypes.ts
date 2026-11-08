@@ -99,14 +99,19 @@ export interface ReferralProgramInfo {
   expectedNext30Days: string;
   expectedRenewals: number;
   firstEarnedAt: string | null;
-  topFriends: { referralId: string; name: string; earned: string }[];
+  // planName: the plan they are on now; payments: how many of theirs earned
+  // a share (an older API leaves both out).
+  topFriends: { referralId: string; name: string; planName?: string | null; payments?: number; earned: string }[];
   latest: Earning[];
 }
 
 export interface EarningList {
   data: Earning[];
   meta: { page: number; limit: number; total: number; totalPages: number };
-  // By status, with the month and search applied.
+  // Every month with a commission line, oldest first (the period picker's
+  // months); an older API leaves it out.
+  activeMonths?: { year: number; month: number; count: number }[];
+  // By status, with the period and search applied.
   totals: Record<CommissionStatus, { count: number; amount: string }>;
 }
 

@@ -16,7 +16,7 @@ import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { MemberAvatar } from "./GroupBits";
+import { BalanceCell, MemberAvatar } from "./GroupBits";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 type Filter = "ACTIVE" | "ARCHIVED" | "ALL";
@@ -34,7 +34,8 @@ interface GroupMembersTabProps {
 }
 
 // Member, phone, member since, cost share, actions.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_140px_120px_200px_152px]";
+// Member, phone, member since, cost share, balance now, actions.
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_130px_110px_180px_150px_152px]";
 
 // The group's people (the v7 FamilyMembers board): who is in, their role
 // -- accountants keep the cash -- and their part of the costs, with the
@@ -50,13 +51,17 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
   const accountants = accountantsOf(data.members);
   const counts: Record<Filter, number> = { ACTIVE: active.length, ARCHIVED: data.members.length - active.length, ALL: data.members.length };
   const words = query.trim().toLowerCase();
-  const rows = data.members.filter((member) => (filter === "ALL" || member.status === filter) && (!words || member.name.toLowerCase().includes(words) || (member.phone ?? "").replace(/\D/g, "").includes(words.replace(/\D/g, "") || "\u0000")));
+  const rows = data.members.filter((member) => (filter === "ALL" || member.status === filter) && (!words || member.name.toLowerCase().includes(words) || (member.household ?? "").toLowerCase().includes(words) || (member.phone ?? "").replace(/\D/g, "").includes(words.replace(/\D/g, "") || "\u0000")));
   const broken = custom && active.length > 0 && !addsUpToHundred(active.map((member) => shares[member.id] ?? 0));
   const unshared = custom ? active.filter((member) => !(shares[member.id] > 0)) : [];
   const filterWord = filter === "ACTIVE" ? t("active") : filter === "ARCHIVED" ? t("inactive") : t("all");
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-[19px] font-semibold text-ink">{t("Members")}</h2>
+        <p className="text-small text-ink-muted">{t("Who is in the group, each person’s share of the costs and where their balance stands.")}</p>
+      </div>
       {broken && (
         <Banner tone="warning" icon={<TriangleAlert />}>
           <span className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -88,7 +93,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
               }))}
             />
             <div className="flex flex-wrap gap-2.5">
-              <Input size="sm" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search members")} frameClassName="min-w-0 flex-1 md:w-60 md:flex-none" />
+              <Input size="sm" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leading={<Search />} placeholder={t("Search name, phone or who it covers…")} aria-label={t("Search members")} frameClassName="min-w-0 flex-1 md:w-60 md:flex-none" />
               <Button variant="secondary" size="sm" onClick={onCostSplit} className="h-9.5 [&_svg]:text-ink-soft">
                 <PieChart />
                 {t("Cost split · {mode}", { mode: t(custom ? "Custom %" : "Equal") })}
@@ -103,7 +108,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
         footer={
           <ListFooter className="flex-col items-start gap-1 text-small text-ink-soft md:px-5">
             <span className="font-semibold text-ink-2">{t("{active} active members · {accountants} accountants", { active: formatCount(active.length, fmt), accountants: formatCount(accountants.length, fmt) })}</span>
-            <span>{t("Members with records can't be deleted. Mark them inactive to leave them out from the next month.")}</span>
+            <span>{t("Balance now: above 0 the group owes them, below 0 they owe the group. Members with money entries can’t be deleted; mark them inactive and they stay in the history.")}</span>
           </ListFooter>
         }
       >
@@ -112,6 +117,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
           <ListHeadCell>{t("Phone")}</ListHeadCell>
           <ListHeadCell>{t("Member since")}</ListHeadCell>
           <ListHeadCell>{t("Cost share")}</ListHeadCell>
+          <ListHeadCell align="end">{t("Balance now")}</ListHeadCell>
           <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {rows.length === 0 && <ListEmpty title={words ? t("No member matches \"{query}\".", { query: query.trim() }) : t("No {filter} members.", { filter: filterWord })} />}
@@ -160,6 +166,9 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onR
                     </span>
                   </>
                 )}
+              </ListCell>
+              <ListCell className="hidden md:block">
+                {view.balances[member.id] === undefined ? <span className="block text-right text-input">—</span> : <BalanceCell value={view.balances[member.id]} currency={data.currency} stacked />}
               </ListCell>
               <ListRowActions className="flex justify-end gap-0.5">
                 <IconAction label={t("{name}'s statement", { name: member.name })} onClick={() => onStatement(member)}>

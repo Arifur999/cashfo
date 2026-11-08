@@ -3,7 +3,7 @@ import { GroupPageClient } from "@/components/modules/Customer/GroupExpenses/Gro
 import type { GroupPageData } from "@/components/modules/Customer/GroupExpenses/groupTypes";
 import type { GroupActivityAction } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
-import { getWorkspace } from "@/lib/customer/businesses";
+import { getWorkspace, listWorkspaces } from "@/lib/customer/businesses";
 import { closedRecordFor, groupMonthOf, groupPickerMonths, groupTabFrom, type GroupTab, inMonth, isNewGroup, monthKeyFrom, monthRangeOf, shiftMonth } from "@/lib/customer/groupDisplay";
 import {
   getGroupActivity,
@@ -32,7 +32,6 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/gro
 
 // Each page's own period choices (the v7 boards' dropdowns), and its default.
 const PERIODS: Partial<Record<GroupTab, { options: readonly GroupPeriodKind[]; fallback: GroupPeriod }>> = {
-  dashboard: { options: ["month", "year", "custom"], fallback: { kind: "month" } },
   expenses: { options: ["today", "week", "month", "year", "custom"], fallback: { kind: "month" } },
   contributions: { options: ["month", "all", "year", "custom"], fallback: { kind: "month" } },
   cashbook: { options: ["month", "year", "all", "custom"], fallback: { kind: "month" } },
@@ -70,13 +69,13 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   const choice = PERIODS[tab];
   const period = choice ? groupPeriodFrom(sp, choice.options, choice.fallback) : null;
   const span = period ? periodRange(period, today, startDay, EVER) : null;
-  const yearKey = groupMonthOf(span?.to ?? today, startDay).slice(0, 4);
+  const yearKey = groupMonthOf(span?.to ?? range.to, startDay).slice(0, 4);
   const year = { from: monthRangeOf(`${yearKey}-01`, startDay).from, to: monthRangeOf(`${yearKey}-12`, startDay).to };
   const activityAction = typeof sp.action === "string" && (ACTIVITY_ACTIONS as readonly string[]).includes(sp.action) ? (sp.action as GroupActivityAction) : undefined;
   const activityPage = Math.max(1, Math.floor(Number(sp.page)) || 1);
   const accountantId = typeof sp.accountant === "string" && sp.accountant ? sp.accountant : undefined;
 
-  const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals] = await Promise.all([
+  const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals, workspaces] = await Promise.all([
     getGroupMembers(businessId),
     getGroupContributions(businessId, { from: range.from, to: range.to }),
     getGroupExpenses(businessId, { from: sixFrom, to: range.to }),
@@ -85,6 +84,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     getGroupSettlementHistory(businessId),
     getGroupMonthBudgets(businessId),
     getGroupMeals(businessId, range.from, range.to),
+    listWorkspaces(),
   ]);
 
   // What the page on show needs beyond the month.
@@ -102,6 +102,9 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     businessId,
     name: business.name,
     currency: business.currency,
+    // The list names the customer's role; a group they reached is theirs to use.
+    role: workspaces.find((workspace) => workspace.id === businessId)?.role ?? "OWNER",
+    groups: workspaces.filter((workspace) => workspace.type === "GROUP").map(({ id, name }) => ({ id, name })),
     today,
     tab,
     startDay,

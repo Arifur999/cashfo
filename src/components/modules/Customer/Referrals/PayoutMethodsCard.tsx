@@ -1,10 +1,11 @@
 "use client";
 
-import { Pencil, Plus, TriangleAlert } from "lucide-react";
+import { PencilLine, Plus, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Card from "@/components/smartly/Card";
+import IconAction from "@/components/smartly/IconAction";
 import { makeDefaultPayoutMethodAction } from "@/lib/customer/referralActions";
 import { formatWalletNumber, maskAccount, METHOD_BRANDS } from "@/lib/customer/referralDisplay";
 import type { PayoutMethod, PayoutMethodType } from "@/lib/customer/referralTypes";
@@ -107,14 +108,9 @@ export function PayoutMethodsCard({ methods: initial, userName, allowed }: Payou
                   </button>
                 )}
               </span>
-              <button
-                type="button"
-                onClick={() => setDrawer({ open: true, method })}
-                aria-label={t("Edit {name}", { name: title })}
-                className="flex size-8 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11"
-              >
-                <Pencil className="size-3.75" aria-hidden="true" />
-              </button>
+              <IconAction onClick={() => setDrawer({ open: true, method })} aria-label={t("Edit {name}", { name: title })}>
+                <PencilLine aria-hidden="true" />
+              </IconAction>
             </div>
             {warning && (
               <span className="flex gap-1.5 rounded-lg bg-warning-50 px-2.5 py-2 text-caption leading-[1.45] text-warning-ink">
