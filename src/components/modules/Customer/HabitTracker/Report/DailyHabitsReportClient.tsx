@@ -119,8 +119,11 @@ export function DailyHabitsReportClient({ habits, logs, month, today, firstMonth
             </button>
           </PopoverAnchor>
           <PopoverContent align="center" className="w-60 p-1.5">
-            <p className="px-2.5 pt-1.5 pb-1 text-caption font-semibold text-ink-muted">
-              {row.habit.name} · {dayText(day.key, fmt, "dayMonth")}
+            <p className="flex flex-col gap-0.5 px-2.5 pt-2 pb-1.5">
+              <span className="text-[15px] leading-[normal] font-semibold text-ink">
+                {row.habit.name} · {dayText(day.key, fmt, "dayMonth")}
+              </span>
+              <span className="text-[12.5px] leading-[normal] text-ink-muted">{t("Was it done that day?")}</span>
             </p>
             {[
               { done: true, title: t("Done"), sub: t("Ticked off that day"), state: "done" as const },

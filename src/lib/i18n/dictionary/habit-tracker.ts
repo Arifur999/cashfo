@@ -1084,4 +1084,8 @@ export const habitTrackerDictionary: Record<string, string> = {
   "Change the goal": "লক্ষ্য বদলান",
   "Remove the goal": "লক্ষ্য মুছুন",
   "Failed to save the goal": "লক্ষ্য সেভ করা যায়নি",
+  // New habit: the name's example
+  "e.g. Morning walk": "যেমন: সকালের হাঁটা",
+  // Monthly report: a box's question
+  "Was it done that day?": "সেদিন কি করা হয়েছিল?",
 };
