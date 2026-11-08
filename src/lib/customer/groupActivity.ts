@@ -31,6 +31,9 @@ const FIELD_LABELS: Record<string, string> = {
   paidFrom: "Paid from",
   member: "Member",
   receivedBy: "Given to",
+  // A cash handover's two holders.
+  from: "From",
+  to: "To",
   note: "Note",
   name: "Name",
   phone: "Phone",
@@ -109,6 +112,13 @@ export function activityLine(entry: GroupActivity, members: GroupMember[], curre
         what: join(`${text(s.from)} → ${text(s.to)}`, money(s.amount)),
         changes,
         meta: day(s.date),
+      };
+    case "HANDOVER":
+      return {
+        verb: t(entry.action === "ADDED" ? "handed over cash" : entry.action === "DELETED" ? "deleted a cash handover" : "changed a cash handover"),
+        what: join(`${text(s.from)} → ${text(s.to)}`, money(s.amount)),
+        changes,
+        meta: join(text(s.note), day(s.date)),
       };
     case "MEMBER":
       return {

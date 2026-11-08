@@ -299,7 +299,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       />
     ),
     expenses: <GroupExpensesTab data={data} view={view} onPeriod={onPeriod} onAdd={openExpense} onEdit={(row) => guardEdit(row.date, () => setExpense({ open: true, editing: row }))} onRemove={removeExpense} busy={moving} canAdd={canAdd} />,
-    cashbook: <GroupCashbookTab data={data} view={view} onPeriod={onPeriod} onAccountant={(id) => go("cashbook", { ...currentPeriod(), ...(id && { accountant: id }) })} busy={moving} />,
+    cashbook: <GroupCashbookTab data={data} view={view} onPeriod={onPeriod} onAccountant={(id) => go("cashbook", { ...currentPeriod(), ...(id && { accountant: id }) })} busy={moving} canAdd={canAdd} />,
     settlement: messLayout ? (
       <MessSettlementTab data={data} view={view} onRecordPayment={openPayment} onCloseMonth={() => setCloseOpen(true)} />
     ) : (

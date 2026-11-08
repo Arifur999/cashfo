@@ -1418,7 +1418,8 @@ export interface GroupSettlementResult {
 // with the running cash.
 export interface GroupCashbookRow {
   id: string;
-  source: "CONTRIBUTION" | "EXPENSE";
+  // HANDOVER: cash one holder handed to another (two rows, one each side).
+  source: "CONTRIBUTION" | "EXPENSE" | "HANDOVER";
   kind: "IN" | "OUT";
   date: string;
   accountantId: string;
@@ -1430,6 +1431,8 @@ export interface GroupCashbookRow {
   note: string | null;
   amount: string;
   balance: string;
+  // A handover's other holder: who got the cash (OUT) or gave it (IN).
+  otherId?: string;
 }
 
 export interface GroupCashbook {
