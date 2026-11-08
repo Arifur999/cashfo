@@ -134,7 +134,7 @@ export function WithdrawSubmitted({ request, left, pending, pendingNextAt, incom
           )}
           <span className="flex-1 max-sm:hidden" />
           <Link href="/referrals" className="flex h-10 items-center justify-center rounded-full border border-input bg-surface px-3.5 text-body font-semibold text-ink hover:bg-surface-sunken max-sm:flex-1">
-            {t("Back to Referral Program")}
+            {t("Back to dashboard")}
           </Link>
           <Link href={WITHDRAWALS_TAB} className="flex h-10 items-center justify-center rounded-full bg-emerald px-4 text-body font-semibold text-on-action hover:bg-emerald-hover max-sm:flex-1">
             {t("See my withdrawals")}

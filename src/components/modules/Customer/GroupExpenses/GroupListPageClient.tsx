@@ -14,6 +14,7 @@ import PageHeader from "@/components/smartly/PageHeader";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { updateBusinessAction } from "@/lib/customer/businessActions";
 import { updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { GroupCard } from "./GroupCard";
 import { GroupDialog } from "./GroupDialog";
@@ -30,7 +31,7 @@ interface GroupListPageClientProps {
 // last. A group is renamed, paused or resumed from its card's menu, and
 // deleted from its Settings.
 export function GroupListPageClient({ groups, today }: GroupListPageClientProps) {
-  const { t } = useLocale();
+  const { t, fmt } = useLocale();
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [renaming, setRenaming] = useState<GroupCardData | null>(null);
@@ -80,8 +81,8 @@ export function GroupListPageClient({ groups, today }: GroupListPageClientProps)
   return (
     <PageFrame className="gap-6">
       <PageHeader
-        title={t("Group Expense")}
-        description={<span className="inline-flex h-6 items-center rounded-full bg-emerald-soft px-3 text-caption font-semibold text-emerald">{t("Free forever · unlimited groups and members")}</span>}
+        title={t("All groups")}
+        description={groups.length > 0 ? t(groups.length === 1 ? "{count} group you run. Open it to see its money." : "{count} groups you run. Open one to see its money.", { count: formatCount(groups.length, fmt) }) : t("Free forever · unlimited groups and members")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
             <Plus strokeWidth={2.25} />
@@ -93,8 +94,8 @@ export function GroupListPageClient({ groups, today }: GroupListPageClientProps)
       {groups.length === 0 ? (
         <EmptyState
           icon={<Users />}
-          title={t("No group yet")}
-          description={t("A family running one home: add the members and record who paid what.")}
+          title={t("No groups yet")}
+          description={t("Make your first group with “New group”.")}
           action={
             <Button onClick={() => setCreateOpen(true)}>
               <Plus strokeWidth={2.25} />

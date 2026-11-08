@@ -604,4 +604,23 @@ export const referralsDictionary: Record<string, string> = {
   "This code was made for an older version of the app. Start again to get a new one.": "কোডটি অ্যাপের পুরনো সংস্করণের জন্য তৈরি। নতুন কোড পেতে আবার শুরু করুন।",
   "Link not found": "লিংক পাওয়া যায়নি",
   "Friend not found": "বন্ধুকে পাওয়া যায়নি",
+  // Earnings foot (v16)
+  "{count} payment shown": "{count}টি পেমেন্ট দেখানো হচ্ছে",
+  "{count} payments shown": "{count}টি পেমেন্ট দেখানো হচ্ছে",
+  "Your share {amount}": "আপনার অংশ {amount}",
+  // QR popup and earnings (v16)
+  "Couldn't save the QR code.": "QR কোডটি সেভ করা যায়নি।",
+  "Saved the QR code to your downloads.": "QR কোডটি আপনার ডাউনলোডে সেভ হয়েছে।",
+  "QR code · {name}": "QR কোড · {name}",
+  "Friends scan it to sign up with your link. Print it for a poster or your shop counter.": "বন্ধুরা এটি স্ক্যান করে আপনার লিংক দিয়ে সাইন আপ করবেন। পোস্টার বা দোকানের কাউন্টারের জন্য প্রিন্ট করে নিন।",
+  "Download PNG": "PNG ডাউনলোড করুন",
+  "Nothing here for this filter.": "এই ফিল্টারে কিছু নেই।",
+  // Withdraw code by email (v16)
+  "Send by email instead": "এর বদলে ইমেইলে পাঠান",
+  // Payout account placeholders (v16)
+  "e.g. Gulshan": "যেমন: গুলশান",
+  "e.g. {number}": "যেমন: {number}",
+  // Locked page plan picker (v16)
+  "Pick a plan to start earning": "আয় শুরু করতে একটি প্ল্যান বাছুন",
+  "Your invite link is ready as soon as you pay.": "পেমেন্ট করার সাথে সাথেই আপনার ইনভাইট লিংক তৈরি হয়ে যাবে।",
 };

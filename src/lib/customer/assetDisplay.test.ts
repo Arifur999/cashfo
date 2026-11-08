@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Asset, AssetCategoryOption } from "./api";
 import {
+  assetSeries,
+  lastUpdateMovers,
   portfolioSeries,
+  recentValueChanges,
   sortAssets,
   valueOn,
   statementLines,
@@ -308,6 +311,61 @@ describe("the Dashboard's value chart", () => {
       ["2026-10-29", 200, 150, ["Car"], true],
     ]);
     expect(portfolioSeries([], "2026-10-29")).toEqual([]);
+  });
+
+  it("counts a sold asset until the day it was sold, and names the sale", () => {
+    const bike = asset({ id: "bike", name: "Bike", status: "SOLD", purchaseDate: "2025-01-10T00:00:00.000Z", purchasePrice: "40.00", currentValue: "40.00", soldAt: "2026-08-12T00:00:00.000Z", soldPrice: "30.00", valueHistory: [] });
+    expect(portfolioSeries([land, bike], "2026-10-29").map((point) => [point.date, point.value, point.paid, point.added, point.sold])).toEqual([
+      ["2024-12-31", 100, 100, ["Land"], []],
+      ["2025-12-31", 190, 140, ["Bike"], []],
+      ["2026-10-29", 150, 100, [], ["Bike"]],
+    ]);
+  });
+
+  it("skips years when there are many, keeping the last year and today", () => {
+    const old = asset({ id: "old", name: "Old", purchaseDate: "2000-05-01T00:00:00.000Z", purchasePrice: "10.00", currentValue: "10.00", valueHistory: [] });
+    const days = portfolioSeries([old], "2026-10-29").map((point) => point.date);
+    expect(days.length).toBeLessThanOrEqual(10);
+    expect(days.slice(-2)).toEqual(["2025-12-31", "2026-10-29"]);
+  });
+
+  it("starts at the first purchase when everything was bought this year", () => {
+    expect(portfolioSeries([car], "2026-10-29").map((point) => [point.date, point.value, point.added])).toEqual([
+      ["2026-02-01", 50, ["Car"]],
+      ["2026-10-29", 50, []],
+    ]);
+  });
+
+  it("ends a sold asset's own line at its sale", () => {
+    const sold = asset({ ...land, status: "SOLD", soldAt: "2026-03-01T00:00:00.000Z", soldPrice: "120.00" });
+    expect(assetSeries(sold).map((point) => [point.date, point.value, point.paid, point.sold, point.today])).toEqual([
+      ["2024-03-01", 100, 100, [], false],
+      ["2025-06-01", 150, 100, [], false],
+      ["2026-03-01", 120, 100, ["Land"], false],
+    ]);
+    expect(assetSeries(land).at(-1)?.today).toBe(true);
+  });
+
+  it("lists the latest value updates and sales, and the biggest moves at the last update", () => {
+    const laptop = asset({
+      id: "laptop",
+      name: "Laptop",
+      purchaseDate: "2024-08-01T00:00:00.000Z",
+      purchasePrice: "200.00",
+      valueHistory: [
+        { id: "p1", value: "200.00", recordedAt: "2024-08-01T00:00:00.000Z", note: "Initial purchase value" },
+        { id: "p2", value: "160.00", recordedAt: "2026-08-20T00:00:00.000Z", note: null },
+      ] as Asset["valueHistory"],
+    });
+    const changes = recentValueChanges([land, laptop]);
+    expect(changes.map((change) => [change.date, change.kind, change.from, change.to])).toEqual([
+      ["2026-08-20", "update", 200, 160],
+      ["2025-06-01", "update", 100, 150],
+    ]);
+    const { rise, drop } = lastUpdateMovers([land, laptop]);
+    expect(rise?.asset.id).toBe("land");
+    expect(drop?.asset.id).toBe("laptop");
+    expect(lastUpdateMovers([car])).toEqual({ rise: null, drop: null });
   });
 
   it("sorts by gain, value or purchase date", () => {

@@ -7,6 +7,7 @@ import Card from "@/components/smartly/Card";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { namesList, shortName } from "@/lib/customer/groupDisplay";
+import { accountantsOf } from "@/lib/customer/groupFamily";
 import { formatCount } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -39,7 +40,9 @@ const SHARE_OF_COSTS: Record<BazarRule, string> = {
   EQUAL: "everything spent in the month ÷ the members. If the month costs TK 40,000 and five people share it, each owes TK 8,000.",
 };
 
-// A brand-new group: four short steps, and how a balance is worked out.
+// A brand-new group: six short steps (the v16 GroupSetup board, without its
+// access links, which wait for the member portal), and how a balance is
+// worked out.
 // The dashboard takes over as soon as money is recorded.
 export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMeals, onAddExpense }: GroupSetupProps) {
   const { t, fmt } = useLocale();
@@ -50,6 +53,10 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMe
   // New groups get their bazar rule when created (NewGroupDialog); say the one it has.
   const bazar = data.categories.find((c) => /bazar|grocery/i.test(c.name))?.defaultSplit;
   const rule: BazarRule = bazar === "MEALS" && data.settings.mealsOn ? "MEALS" : bazar === "SHARES" ? "SHARES" : "EQUAL";
+  const [year, month] = data.range.key.split("-").map(Number);
+  const hasBudget = data.budgets.some((budget) => budget.year === year && budget.month === month);
+  const keepers = accountantsOf(data.members);
+  const tab = (name: string) => ({ pathname: `/group-expenses/${data.businessId}`, query: { tab: name, month: data.range.key } });
   const steps = [
     {
       done: names.length > 0,
@@ -61,11 +68,23 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMe
       actions: [{ label: names.length > 0 ? t("Add more") : t("Add members"), onClick: onAddMember, primary: names.length === 0 }],
     },
     {
+      done: keepers.length > 0,
+      title: t("Choose who keeps the cash"),
+      body: keepers.length > 0 ? t("{names} records spending and keeps the group cash. You can change it any time.", { names: namesList(t, keepers.map((m) => shortName(m.name))) }) : t("Pick who records spending and keeps the group cash. You can change it any time."),
+      actions: [{ label: t("Choose in Members"), href: tab("members"), primary: false }],
+    },
+    {
+      done: hasBudget,
+      title: t("Set the monthly budget"),
+      body: t("Optional, but it warns you before spending goes too high."),
+      actions: [{ label: hasBudget ? t("Change budget") : t("Set budget"), href: tab("budget"), primary: false }],
+    },
+    {
       done: false,
       title: t("Check how costs are shared"),
       body: t(mess ? "These defaults suit most messes. Change a category if, say, rooms pay different rent." : "These defaults suit most families. Change a category if a cost should be shared another way."),
       rules: true,
-      actions: [{ label: t("Review rules"), href: { pathname: `/group-expenses/${data.businessId}`, query: { tab: "settings", month: data.range.key } }, primary: false }],
+      actions: [{ label: t("Review rules"), href: tab("settings"), primary: false }],
     },
     {
       done: false,
@@ -98,7 +117,7 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onAddMe
         <div className="flex flex-wrap items-center gap-4 border-b border-divider px-6 py-5">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <h2 className="text-h3 text-ink">{t("Set up {name}", { name: data.name })}</h2>
-            <span className="text-small text-ink-muted">{t("Four short steps. The dashboard fills in as soon as money is recorded.")}</span>
+            <span className="text-small text-ink-muted">{t("Six short steps. The dashboard fills in as soon as money is recorded.")}</span>
           </div>
           <span className="text-small font-semibold text-ink-2">{t("{done} of {total} done", { done: formatCount(doneCount, fmt), total: formatCount(steps.length, fmt) })}</span>
           <ProgressBar value={(doneCount / steps.length) * 100} label={t("Setup progress")} className="w-30" />
