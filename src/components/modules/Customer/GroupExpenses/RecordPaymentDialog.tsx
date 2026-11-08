@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
+import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -21,6 +22,10 @@ import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
 import { CloseX } from "./GroupBits";
 import { MemberPicker } from "./MemberPicker";
+
+// How a payment was made (the v16 board's choices); it goes into the notes.
+type PayHow = "cash" | "bkash" | "nagad" | "bank";
+const PAY_HOW: Record<PayHow, string> = { cash: "Cash", bkash: "bKash", nagad: "Nagad", bank: "Bank" };
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -49,6 +54,9 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   const [amount, setAmount] = useState("");
   const amountField = useAmountField(amount, setAmount, currency);
   const [note, setNote] = useState("");
+  // How it was paid, and the day (inside the month it settles, not after today).
+  const [how, setHow] = useState<PayHow>("cash");
+  const [day, setDay] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const [prevKey, setPrevKey] = useState("closed");
@@ -60,6 +68,8 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
       setToId(preset?.toId ?? "");
       setAmount(preset ? String(preset.amount) : "");
       setNote("");
+      setHow("cash");
+      setDay(dayInMonth(range, today));
     }
   }
 
@@ -67,12 +77,13 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   const to = active.find((m) => m.id === toId);
   const value = Number(amount) || 0;
   const valid = !!from && !!to && from.id !== to.id && value > 0;
-  const date = dayInMonth(range, today);
+  const lastDay = range.to < today ? range.to : today;
+  const date = day && day >= range.from && day <= lastDay ? day : dayInMonth(range, today);
   const monthLabel = monthName(range.key, fmt);
   const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
 
-  // Each entry's note, one sentence each, with the person's own note when there is one.
-  const extra = note.trim();
+  // Each entry's note, one sentence each, with how it was paid and the person's own note.
+  const extra = [t(PAY_HOW[how]), note.trim()].filter(Boolean).join(" · ");
   const payerNote = to ? (extra ? t("Paid to {name} · {note}", { name: to.name, note: extra }) : t("Paid to {name}", { name: to.name })) : "";
   const receiverNote = from ? (extra ? t("Received from {name} · {note}", { name: from.name, note: extra }) : t("Received from {name}", { name: from.name })) : "";
 
@@ -145,8 +156,24 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
               </dl>
             </div>
 
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[190px_minmax(0,1fr)]">
+              <Field htmlFor="pay-date" label={label(t("Date paid"))}>
+                <DayInput id="pay-date" size="md" value={date} onChange={setDay} min={range.from} max={lastDay} aria-label={t("Date paid")} />
+              </Field>
+              <fieldset className="flex min-w-0 flex-col gap-2">
+                <legend className="mb-2 text-body font-medium text-ink">{t("How was it paid?")}</legend>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(PAY_HOW) as PayHow[]).map((key) => (
+                    <button key={key} type="button" aria-pressed={how === key} onClick={() => setHow(key)} className={cn("h-10 rounded-full border px-3.5 text-small font-semibold", how === key ? "border-emerald bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-2 hover:bg-surface-sunken")}>
+                      {t(PAY_HOW[key])}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            </div>
+
             <Field htmlFor="pay-note" label={label(t("Note"), true)}>
-              <Input id="pay-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={120} placeholder={t("Cash, handed over")} />
+              <Input id="pay-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={120} placeholder={t("e.g. Txn ID 8XK2…")} />
             </Field>
 
             {from && to && (
