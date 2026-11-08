@@ -11,7 +11,6 @@ import Card from "@/components/smartly/Card";
 import Input from "@/components/smartly/form/Input";
 import IconAction from "@/components/smartly/IconAction";
 import PageFrame from "@/components/smartly/PageFrame";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { deleteAssetAction, undoAssetSaleAction } from "@/lib/customer/assetActions";
@@ -22,6 +21,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AssetDrawer } from "./AssetDrawer";
+import { AssetTradeTabs } from "./AssetTradeTabs";
 import { AssetTypeTile } from "./AssetTypeTile";
 import { ReadOnlyNote } from "./ReadOnlyNote";
 import { SellAssetDrawer } from "./SellAssetDrawer";
@@ -74,7 +74,7 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
     return wallet ? accountDisplayName(wallet, lang) : t("No account");
   };
   const money = (value: number) => formatCurrency(value, currency, fmt);
-  const { owned, totalValue, sold, soldGain } = assetsSummary(assets);
+  const { owned, sold, soldGain } = assetsSummary(assets);
   const all = tradeRows(assets);
   const q = search.trim().toLowerCase();
   const details = (row: TradeRow) =>
@@ -117,19 +117,7 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
     },
   ];
 
-  const tabs = (
-    <SegmentedControl
-      options={[
-        { value: "purchase", label: "Purchase", icon: <ArrowDown className="size-4 text-expense" aria-hidden="true" /> },
-        { value: "sale", label: "Sale", icon: <ArrowUp className="size-4 text-income" aria-hidden="true" /> },
-      ]}
-      value={popup ?? "purchase"}
-      onChange={(next) => setPopup(next)}
-      label="Transaction type"
-      size="lg"
-      stretch
-    />
-  );
+  const tabs = <AssetTradeTabs value={popup ?? "purchase"} onChange={setPopup} />;
 
   function run(row: TradeRow, action: () => Promise<{ success: boolean; message?: string }>, done: string, failed: string) {
     setBusyKey(row.key);
@@ -320,13 +308,12 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
             onClose={() => setPopup(null)}
             businessId={businessId}
             categories={categories}
-            totalValue={totalValue}
             currency={currency}
             initialMode="buy"
             tabs={tabs}
             title={t("Record purchase or sale")}
           />
-          <SellAssetDrawer open={popup === "sale"} onClose={() => setPopup(null)} businessId={businessId} asset={null} choices={owned} categories={categories} currency={currency} tabs={tabs} title={t("Record purchase or sale")} />
+          <SellAssetDrawer open={popup === "sale"} onClose={() => setPopup(null)} businessId={businessId} asset={null} choices={owned} currency={currency} tabs={tabs} title={t("Record purchase or sale")} />
         </>
       )}
       <UpdateValueDrawer open={opened !== null && opened.status !== "SOLD"} onClose={() => setOpened(null)} businessId={businessId} asset={opened?.status === "SOLD" ? null : opened} categories={categories} currency={currency} initialMode="details" />

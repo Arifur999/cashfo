@@ -16,7 +16,7 @@ import IconAction from "@/components/smartly/IconAction";
 import PageFrame from "@/components/smartly/PageFrame";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
 import { deleteAssetAction } from "@/lib/customer/assetActions";
-import { assetGain, assetsSummary, assetWorth, categoryVisual, gainChip, updateCount } from "@/lib/customer/assetDisplay";
+import { assetGain, assetWorth, categoryVisual, gainChip, updateCount } from "@/lib/customer/assetDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
@@ -73,7 +73,6 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
   const [busyId, setBusyId] = useState<string | null>(null);
   const [, startDelete] = useTransition();
 
-  const { totalValue } = assetsSummary(assets);
   const counts = new Map<string, number>();
   for (const asset of assets) counts.set(asset.category, (counts.get(asset.category) ?? 0) + 1);
   // The categories in use first as the category list orders them, then any
@@ -343,7 +342,7 @@ export function MyAssetsPageClient({ businessId, assets, categories, currency, c
         </>
       )}
 
-      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} totalValue={totalValue} currency={currency} variant="add" initialCategory={active || undefined} />
+      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} currency={currency} variant="add" initialCategory={active || undefined} />
       <UpdateValueDrawer
         open={opened !== null && opened.asset.status !== "SOLD"}
         onClose={() => setOpened(null)}

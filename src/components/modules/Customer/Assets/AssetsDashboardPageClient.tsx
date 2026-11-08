@@ -427,7 +427,7 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
         </>
       )}
 
-      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} totalValue={summary.totalValue} currency={currency} variant="add" />
+      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} currency={currency} variant="add" />
       <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading} categories={categories} currency={currency} />
     </PageFrame>
   );

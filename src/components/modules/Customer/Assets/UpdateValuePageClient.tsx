@@ -244,7 +244,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
 
       <UpdateValueDrawer open={valuing !== null} onClose={() => setValuing(null)} businessId={businessId} asset={valuing} categories={categories} currency={currency} />
       <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading} categories={categories} currency={currency} />
-      <AssetDrawer open={adding} onClose={() => setAdding(false)} businessId={businessId} categories={categories} totalValue={total} currency={currency} variant="add" />
+      <AssetDrawer open={adding} onClose={() => setAdding(false)} businessId={businessId} categories={categories} currency={currency} variant="add" />
     </PageFrame>
   );
 }
