@@ -613,6 +613,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             )
           ) : (
             <CategoryListbox
+              // A new kind starts with its list closed.
+              key={categoryKind ?? "none"}
               id="txn-cat"
               businessId={businessId}
               kind={categoryKind}
