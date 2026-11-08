@@ -313,7 +313,7 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
           <label htmlFor="stmt-value" className="text-[14px] font-medium text-ink">
             {t("Value")}
           </label>
-          <AmountInput id="stmt-value" size="md" value={form.value} onChange={(value) => setForm({ ...form, value })} currency={currency} autoFocus />
+          <AmountInput id="stmt-value" size="sm" value={form.value} onChange={(value) => setForm({ ...form, value })} currency={currency} autoFocus />
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="stmt-date" className="text-[14px] font-medium text-ink">

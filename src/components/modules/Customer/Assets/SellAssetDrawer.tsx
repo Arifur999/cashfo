@@ -179,7 +179,7 @@ export function SellAssetDrawer({ open, onClose, businessId, asset: given, curre
           <label htmlFor="sell-price" className={LABEL}>
             {t("Sale price")}
           </label>
-          <AmountInput id="sell-price" size="md" value={price} onChange={setPrice} currency={currency} />
+          <AmountInput id="sell-price" size="sm" value={price} onChange={setPrice} currency={currency} />
         </div>
       </div>
 

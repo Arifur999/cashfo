@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import Logo from "@/components/smartly/Logo";
 import { ACCOUNT_TYPE_LABELS, accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
 import type { Account, LanguagePreference, LedgerRow } from "@/lib/customer/api";
 import { directionOf, kindOf, LEDGER_KIND_META, partyOf } from "@/lib/customer/balanceDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
+import { formatDate, formatDateTime } from "@/lib/customer/date";
 import { isDebitPositive, readsAsMoney } from "@/lib/customer/ledger";
 import { cancelledLabel } from "@/lib/customer/transactionDisplay";
 import { WALLET_TYPE_META, walletType } from "@/lib/customer/walletVisuals";
@@ -44,6 +45,8 @@ const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] f
 export function LedgerStatement({ account, rows, figures, capped, periodLabel, range, month = null, today, currency, preferredLanguage }: LedgerStatementProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
+  // When the statement was made, to the minute (the board's "Generated 29 Oct 2026, 7:54 PM").
+  const [generated] = useState(() => new Date());
   const debitPositive = isDebitPositive(account.accountType);
   const money = readsAsMoney(account);
 
@@ -70,7 +73,7 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
         <div className="flex flex-col items-end gap-0.75 text-right">
           <span className="text-[17px] font-bold tracking-[0.06em] uppercase">{t("Account statement")}</span>
           <span className="text-[11px] text-ink-muted">{t("Statement no. {number}", { number: `LDG-${account.id.slice(0, 4).toUpperCase()}-${(month ?? today.slice(0, 7)).replace("-", "")}` })}</span>
-          <span className="text-[11px] text-ink-muted">{t("Generated {date}", { date: formatDate(today, undefined, fmt) })}</span>
+          <span className="text-[11px] text-ink-muted">{t("Generated {date}", { date: formatDateTime(generated, fmt) })}</span>
         </div>
       </header>
 
