@@ -151,6 +151,15 @@ export async function updateTodoItemAction(listId: string, itemId: string, input
   }, "Failed to update task");
 }
 
+// The same change, the task found by its id alone (an Undo, after the task
+// may have moved to another day's list).
+export async function updateTodoTaskAction(itemId: string, input: TodoItemChanges): Promise<ActionResult<TodoList>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<TodoList>(`${API_BASE_URL}/api/todos/items/${itemId}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to update task");
+}
+
 export async function removeTodoItemAction(listId: string, itemId: string): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
     const res = await customerApi.delete<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}`, { headers: await authHeaders() });

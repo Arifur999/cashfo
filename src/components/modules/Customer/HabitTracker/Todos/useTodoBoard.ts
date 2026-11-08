@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import type { TodoCategory, TodoColor, TodoItem, TodoList } from "@/lib/customer/api";
 import { actionError, shiftDay } from "@/lib/customer/habitDisplay";
-import { boardTasks, type BoardTask, dayWord, nextOnRule } from "@/lib/customer/todoBoard";
+import { type BoardTask, dayWord, nextOnRule } from "@/lib/customer/todoBoard";
 import { withList } from "@/lib/customer/todoDisplay";
 import {
   createTaskAction,
@@ -17,6 +17,7 @@ import {
   removeTodoItemAction,
   type TodoItemChanges,
   updateTodoItemAction,
+  updateTodoTaskAction,
 } from "@/lib/customer/todosActions";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -74,7 +75,7 @@ export function useTodoBoard({ lists: serverLists, categories: serverCategories,
   }
   // Tasks with a change on its way (dimmed, not clickable).
   const [busy, setBusy] = useState<Set<string>>(new Set());
-  // The latest lists, for an Undo pressed after later changes.
+  // The latest lists, to tell which task an add made.
   const latest = useRef(lists);
   useEffect(() => {
     latest.current = lists;
@@ -101,9 +102,6 @@ export function useTodoBoard({ lists: serverLists, categories: serverCategories,
       }
       return next;
     });
-
-  // Where a task is now (it may have moved since the toast came up).
-  const locate = (itemId: string): BoardTask | undefined => boardTasks(latest.current).find((task) => task.item.id === itemId);
 
   const undoable = (message: string, undo: () => Promise<void> | void) => toast.success(message, { action: { label: t("Undo"), onClick: () => void undo() } });
 
@@ -157,9 +155,10 @@ export function useTodoBoard({ lists: serverLists, categories: serverCategories,
       return;
     }
     take(result.data);
-    const back = () => {
-      const now = locate(item.id);
-      if (now && now.item.completed === completed) void toggle(now);
+    const back = async () => {
+      const undone = await updateTodoTaskAction(item.id, { completed: !completed });
+      if (undone.success && undone.data) take(undone.data);
+      else fail(undone.message, "Failed to update task");
     };
     if (!completed) undoable(t("Back on the to do list"), back);
     else if (item.repeat && task.day) undoable(t("Done · next one on {date}", { date: dayWord(nextOnRule(item.repeat, task.day < today ? today : task.day), today, t, fmt) }), back);
@@ -188,14 +187,9 @@ export function useTodoBoard({ lists: serverLists, categories: serverCategories,
     refresh();
     if (quiet || moved === 0) return;
     const undo = async () => {
-      await Promise.all(
-        moving.map(async (was) => {
-          const now = locate(was.item.id);
-          if (!now || now.day === was.day) return;
-          const result = await updateTodoItemAction(now.listId, was.item.id, { date: was.day, movedFrom: was.item.movedFrom, moveCount: was.item.moveCount });
-          if (!result.success) fail(result.message, "Failed to move task");
-        }),
-      );
+      const results = await Promise.all(moving.map((was) => updateTodoTaskAction(was.item.id, { date: was.day, movedFrom: was.item.movedFrom, moveCount: was.item.moveCount })));
+      const failed = results.find((result) => !result.success);
+      if (failed) fail(failed.message, "Failed to move task");
       refresh();
     };
     undoable(movedMessage(to, moved), undo);
@@ -239,9 +233,7 @@ export function useTodoBoard({ lists: serverLists, categories: serverCategories,
     if (moving) Object.assign(back, { date: task.day, movedFrom: item.movedFrom, moveCount: item.moveCount });
     if (changes.repeat !== undefined) back.repeat = item.repeat ? { kind: item.repeat.kind, ...(item.repeat.kind === "WEEKLY" && { weekdays: item.repeat.weekdays }) } : null;
     undoable(t("Changes saved"), async () => {
-      const now = locate(item.id);
-      if (!now) return;
-      const undone = await updateTodoItemAction(now.listId, item.id, back);
+      const undone = await updateTodoTaskAction(item.id, back);
       if (undone.success && undone.data) take(undone.data);
       else fail(undone.message, "Failed to update task");
       refresh();
