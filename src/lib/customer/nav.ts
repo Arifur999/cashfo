@@ -322,10 +322,23 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: "library",
         subs: [
           { label: "Reading now", href: "/habit-tracker/habits", query: { category: "Book" } },
+          // A book's own page (/library/books/<id>) lights My books.
+          { label: "My books", href: "/habit-tracker/habits/library/books" },
           { label: "Dashboard", href: "/habit-tracker/habits/library", heading: "Library dashboard" },
         ],
       },
-      { label: "Skills", href: "/habit-tracker/habits", query: { category: "Course" }, icon: "skills" },
+      {
+        label: "Skills",
+        href: "/habit-tracker/habits",
+        query: { category: "Course" },
+        icon: "skills",
+        subs: [
+          { label: "Learning now", href: "/habit-tracker/habits", query: { category: "Course" } },
+          // A skill's own page (/skills/<id>) lights My skills.
+          { label: "My skills", href: "/habit-tracker/habits/skills" },
+          { label: "Dashboard", href: "/habit-tracker/habits/skills/dashboard", heading: "Skills dashboard" },
+        ],
+      },
     ],
   },
   // "@@habits": a to-do plan (পরিকল্পনা), not a subscription plan.
