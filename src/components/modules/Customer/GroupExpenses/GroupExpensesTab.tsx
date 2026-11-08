@@ -4,6 +4,7 @@ import { Lock, Pencil, Plus, Printer, Receipt, Search, Trash2 } from "lucide-rea
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/smartly/Button";
+import Card from "@/components/smartly/Card";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
@@ -16,7 +17,7 @@ import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { CategoryTile, groupLine, MemberAvatar } from "./GroupBits";
+import { CategoryTile, categoryChipClass, Figure, groupLine } from "./GroupBits";
 import { GroupPeriodPicker } from "./GroupPeriodPicker";
 import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import type { GroupPageData, GroupView } from "./groupTypes";
@@ -34,8 +35,10 @@ interface GroupExpensesTabProps {
 }
 
 const PERIODS = ["today", "week", "month", "year", "custom"] as const;
-// #, date, category, who paid, description, amount, edit, delete.
-const COLUMNS = "md:grid-cols-[36px_64px_168px_160px_minmax(0,1fr)_110px_76px]";
+// Date, what for, category, paid by, how shared, amount, edit and delete.
+const COLUMNS = "md:grid-cols-[60px_minmax(0,1fr)_132px_minmax(0,190px)_minmax(0,130px)_104px_76px]";
+
+type Sort = "new" | "old" | "high" | "low";
 const PAGE = 25;
 
 const SPLIT_WORDS = { EQUAL: "Equally", SHARES: "By cost split", MEALS: "By meals", EXACT: "Exact amounts" } as const;
@@ -53,6 +56,8 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
   // A category the dashboard opened this page with (?category=).
   const searchParams = useSearchParams();
   const [category, setCategory] = useState(() => searchParams.get("category") ?? "");
+  const [from, setFrom] = useState<"" | "FUND" | "MEMBER">("");
+  const [sort, setSort] = useState<Sort>("new");
   const [limit, setLimit] = useState(PAGE);
   const [printing, setPrinting] = useState(false);
   const label = periodLabel(period, data.today, startDay, t, fmt);
@@ -60,10 +65,17 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
   const words = query.trim().toLowerCase();
   const rows = [...expenses]
     .filter((e) => !category || e.category === category)
-    .filter((e) => !words || [e.description ?? "", e.category, e.paidByMember?.name ?? ""].some((text) => text.toLowerCase().includes(words)))
-    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+    .filter((e) => !from || e.paidFrom === from)
+    .filter((e) => !words || [e.description ?? "", e.category, e.paidByMember?.name ?? "", String(Number(e.amount))].some((text) => text.toLowerCase().includes(words)))
+    .sort((a, b) => (sort === "high" ? Number(b.amount) - Number(a.amount) : sort === "low" ? Number(a.amount) - Number(b.amount) : 0) || (sort === "old" ? a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt) : b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)));
   const shown = rows.slice(0, limit);
   const total = rows.reduce((sum, e) => sum + Number(e.amount), 0);
+  // The strip: the period's spending, from the group cash or own pockets, and
+  // the month's budget (budgets are by month, so only on a month).
+  const spent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const fromPocket = expenses.filter((e) => e.paidFrom === "MEMBER").reduce((sum, e) => sum + Number(e.amount), 0);
+  const fromCash = spent - fromPocket;
+  const budget = period.kind === "month" ? view.budget : null;
   // The chosen one too, so the select still names it in a period without it.
   const categoryNames = [...new Set([...data.categories.filter((c) => !c.hidden).map((c) => c.name), ...expenses.map((e) => e.category), ...(category ? [category] : [])])];
   const accountants = accountantsOf(data.members);
@@ -118,18 +130,38 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2.5">
-        <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
-        {canAdd && (
-          <Button onClick={onAdd}>
-            <Plus aria-hidden="true" />
-            {t("Add expense")}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <h2 className="text-[19px] font-semibold text-ink">{t("Expenses · {period}", { period: label })}</h2>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
+          <Button variant="secondary" onClick={() => setPrinting(true)}>
+            <Printer aria-hidden="true" />
+            {t("Print")}
           </Button>
-        )}
+          {canAdd && (
+            <Button onClick={onAdd}>
+              <Plus aria-hidden="true" />
+              {t("Add expense")}
+            </Button>
+          )}
+        </div>
       </div>
 
+      <Card padding="none" className="grid grid-cols-2 gap-x-5 gap-y-4 px-5 py-4 lg:grid-cols-4 lg:gap-y-0 max-lg:[&>*:nth-child(2)]:border-r-0">
+        <Figure label={t("Spent in {period}", { period: label })} value={money(spent)} sub={countLabel(t, fmt, expenses.length, "{count} expense", "{count} expenses")} />
+        <Figure label={t("Paid from group cash")} value={money(fromCash)} tone="text-emerald" sub={t("Out of the money members gave")} />
+        <Figure label={t("Paid from own pocket")} value={money(fromPocket)} tone="text-warning" sub={t("Counts as their contribution")} />
+        <Figure
+          label={t("Budget left")}
+          value={budget ? (budget.left >= 0 ? money(budget.left) : `− ${money(-budget.left)}`) : "—"}
+          tone={budget ? (budget.left < 0 ? "text-expense" : "text-income") : "text-ink-muted"}
+          sub={budget ? t("{percent}% of {amount} used", { percent: formatCount(budget.percent, fmt), amount: money(budget.budget) }) : period.kind === "month" ? t("No budget set for this month") : t("Budgets are by month")}
+          divided={false}
+        />
+      </Card>
+
       <ListCard
-        label={t("Expenses")}
+        label={t("Expenses list")}
         header={
           <div className="flex flex-wrap items-center gap-2.5 px-4 py-3 md:px-5">
             <Input
@@ -140,21 +172,12 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
                 setQuery(event.target.value);
                 setLimit(PAGE);
               }}
-              placeholder={t("Search description or category…")}
+              placeholder={t("Search what, who or amount…")}
               aria-label={t("Search expenses")}
               leading={<Search className="ml-2.5 size-4 text-ink-muted" aria-hidden="true" />}
-              frameClassName="w-full sm:w-64"
+              frameClassName="w-full sm:w-60"
             />
-            <NativeSelect
-              size="sm"
-              aria-label={t("Category")}
-              value={category}
-              onChange={(event) => {
-                setCategory(event.target.value);
-                setLimit(PAGE);
-              }}
-              className="font-medium"
-            >
+            <NativeSelect size="sm" aria-label={t("Category")} value={category} onChange={(event) => { setCategory(event.target.value); setLimit(PAGE); }} className="font-medium">
               <option value="">{t("All categories")}</option>
               {categoryNames.map((name) => (
                 <option key={name} value={name}>
@@ -162,14 +185,20 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
                 </option>
               ))}
             </NativeSelect>
-            <span className="ml-auto flex items-center gap-3">
-              <span className="flex flex-col items-end leading-tight">
-                <span className="text-caption text-ink-muted">{t("Total spent · {period}", { period: label })}</span>
-                <span className="text-[18px] font-bold text-ink tabular-nums">{money(total)}</span>
-              </span>
-              <Button variant="outline" size="icon" aria-label={t("Print statement")} onClick={() => setPrinting(true)}>
-                <Printer aria-hidden="true" />
-              </Button>
+            <NativeSelect size="sm" aria-label={t("Paid from")} value={from} onChange={(event) => { setFrom(event.target.value as typeof from); setLimit(PAGE); }} className="font-medium">
+              <option value="">{t("Paid from: all")}</option>
+              <option value="FUND">{t("Group cash")}</option>
+              <option value="MEMBER">{t("Own pocket")}</option>
+            </NativeSelect>
+            <NativeSelect size="sm" aria-label={t("Sort")} value={sort} onChange={(event) => setSort(event.target.value as Sort)} className="font-medium">
+              <option value="new">{t("Newest first")}</option>
+              <option value="old">{t("Oldest first")}</option>
+              <option value="high">{t("Amount: high to low")}</option>
+              <option value="low">{t("Amount: low to high")}</option>
+            </NativeSelect>
+            <span className="ml-auto flex flex-col items-end leading-tight">
+              <span className="text-caption text-ink-muted">{t("Total · {count}", { count: countLabel(t, fmt, rows.length, "{count} expense", "{count} expenses") })}</span>
+              <span className="text-[18px] font-bold text-expense tabular-nums">{money(total)}</span>
             </span>
           </div>
         }
@@ -185,15 +214,13 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
         }
       >
         <ListHead columns={COLUMNS} className="gap-x-3 border-t md:px-5">
-          <ListHeadCell>#</ListHeadCell>
           <ListHeadCell>{t("Date")}</ListHeadCell>
+          <ListHeadCell>{t("What for")}</ListHeadCell>
           <ListHeadCell>{t("Category")}</ListHeadCell>
-          <ListHeadCell>{accountants.length ? t("Accountant") : t("Paid by")}</ListHeadCell>
-          <ListHeadCell>{t("Description")}</ListHeadCell>
+          <ListHeadCell>{t("Paid by")}</ListHeadCell>
+          <ListHeadCell>{t("How shared")}</ListHeadCell>
           <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
-          <ListHeadCell>
-            <span className="sr-only">{t("Actions")}</span>
-          </ListHeadCell>
+          <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {shown.length === 0 &&
           (expenses.length === 0 ? (
@@ -204,50 +231,53 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
               action={
                 canAdd && (
                   <Button size="sm" onClick={onAdd}>
-                    {t("Add expense")}
+                    {t("Add the first expense")}
                   </Button>
                 )
               }
             />
           ) : (
-            <ListEmpty title={t("No entry matches.")} />
+            <ListEmpty title={t("No expenses match your search or filters.")} />
           ))}
-        {shown.map((row, index) => {
+        {shown.map((row) => {
           const payer = payerOf(row);
           const pocket = row.paidFrom === "MEMBER";
-          const shared = sharedText(row);
           const closed = isDayClosed(data.history, row.date.slice(0, 10));
           return (
-            <ListRow key={row.id} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto_76px] gap-x-3 tabular-nums md:px-5 md:py-1">
-              <ListCell className="hidden text-ink-muted md:block">{formatCount(index + 1, fmt)}</ListCell>
-              <ListCell className="hidden text-ink-soft md:block">{formatDay(row.date.slice(0, 10), "d MMM", fmt)}</ListCell>
-              <ListCell className="flex items-center gap-2">
-                <CategoryTile name={row.category} categories={data.categories} />
+            <ListRow key={row.id} columns={COLUMNS} className="min-h-12.5 grid-cols-[minmax(0,1fr)_auto_76px] gap-x-3 tabular-nums md:px-5 md:py-1">
+              <ListCell className="hidden text-ink-2 md:block">{formatDay(row.date.slice(0, 10), "d MMM", fmt)}</ListCell>
+              <ListCell className="flex min-w-0 items-center gap-2 md:block">
+                <span className="md:hidden">
+                  <CategoryTile name={row.category} categories={data.categories} />
+                </span>
                 <span className="flex min-w-0 flex-col">
-                  <span className="truncate font-medium text-ink">{row.category}</span>
-                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">{[dayLabel(row.date, fmt), payerText(row), row.description].filter(Boolean).join(" · ")}</span>
+                  <span className="truncate text-ink">{row.description || row.category}</span>
+                  <span className="truncate text-caption font-normal text-ink-muted md:hidden">{[dayLabel(row.date, fmt), row.category, payerText(row)].filter(Boolean).join(" · ")}</span>
                 </span>
               </ListCell>
-              <ListCell className="hidden items-center gap-1.75 md:flex">
-                {payer && <MemberAvatar member={payer} members={data.members} size={24} />}
-                <span className="flex min-w-0 flex-col leading-tight">
-                  <span className="truncate font-medium text-ink">{pocket ? (payer ? shortName(payer.name) : t("Own pocket")) : (payer?.name ?? t("Group fund"))}</span>
-                  {pocket && <span className="truncate text-[11.5px] font-semibold text-warning">{t("Own pocket · credited")}</span>}
-                </span>
+              <ListCell className="hidden md:block">
+                <span className={cn("inline-flex h-6 max-w-full items-center gap-1 truncate rounded-full px-2 text-caption font-semibold", categoryChipClass(row.category, data.categories))}>{row.category}</span>
               </ListCell>
-              <ListCell className="hidden min-w-0 flex-col md:flex">
-                <span className={cn("truncate", row.description ? "text-ink-2" : "text-input")}>{row.description || "—"}</span>
-                {shared && <span className="truncate text-[11.5px] text-ink-muted">{shared}</span>}
+              <ListCell className="hidden min-w-0 items-center gap-1.5 text-small md:flex">
+                <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", pocket ? "bg-warning-fill" : "bg-emerald")} />
+                <span className="truncate text-ink-2">{pocket ? t("Own pocket") : t("Group cash")}</span>
+                {payer && (
+                  <>
+                    <span aria-hidden="true" className="text-ink-faint">·</span>
+                    <span className="truncate font-semibold text-ink">{shortName(payer.name)}</span>
+                  </>
+                )}
               </ListCell>
+              <ListCell className="hidden truncate text-small text-ink-2 md:block">{sharedText(row) ?? t("Equally")}</ListCell>
               <ListCell align="end" className="font-semibold text-ink">
                 {money(row.amount)}
               </ListCell>
-              <ListRowActions className="flex justify-end gap-0.5">
-                <button type="button" onClick={() => onEdit(row)} aria-label={closed ? t("Edit expense (closed month)") : t("Edit expense")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
-                  {closed ? <Lock className="size-4" aria-hidden="true" /> : <Pencil className="size-4" aria-hidden="true" />}
+              <ListRowActions className="flex justify-end gap-1.5">
+                <button type="button" onClick={() => onEdit(row)} aria-label={closed ? t("Edit expense (closed month)") : t("Edit expense")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                  {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}
                 </button>
-                <button type="button" onClick={() => onRemove(row)} aria-label={t("Delete expense")} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
-                  <Trash2 className="size-4" aria-hidden="true" />
+                <button type="button" onClick={() => onRemove(row)} aria-label={t("Delete expense")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
+                  <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
               </ListRowActions>
             </ListRow>

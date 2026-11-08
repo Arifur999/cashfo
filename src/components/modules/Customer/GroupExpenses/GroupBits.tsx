@@ -51,12 +51,13 @@ export function BalanceCell({ value, currency, stacked = false, className }: { v
   );
 }
 
-// One figure on a strip across the top of a tab.
-export function Figure({ label, value, tone = "text-ink", divided = true }: { label: React.ReactNode; value: React.ReactNode; tone?: string; divided?: boolean }) {
+// One figure on a strip across the top of a tab, with a line under it if given.
+export function Figure({ label, value, sub, tone = "text-ink", divided = true }: { label: React.ReactNode; value: React.ReactNode; sub?: React.ReactNode; tone?: string; divided?: boolean }) {
   return (
     <div className={cn("flex flex-col gap-0.5 pr-5", divided && "border-r border-line")}>
       <span className="text-caption font-normal text-ink-muted">{label}</span>
       <span className={cn("text-h3 font-bold tabular-nums md:text-[19px] md:leading-normal", tone)}>{value}</span>
+      {sub && <span className="text-caption text-ink-muted">{sub}</span>}
     </div>
   );
 }
@@ -82,6 +83,12 @@ export function CategoryTile({ name, categories, size = 26 }: { name: string; ca
       {option?.icon ? createElement(budgetCategoryIcon(option.icon), {}) : <span className="size-2 rounded-full bg-current" />}
     </span>
   );
+}
+
+// A category's name chip, in its colours (the v16 expense rows).
+export function categoryChipClass(name: string, categories: GroupExpenseCategoryOption[]): string {
+  const tone = categoryTone(categories.find((c) => c.name === name)?.color);
+  return cn(tone.bg, tone.fg);
 }
 
 // The bar colour of a category, for the spend rows.
