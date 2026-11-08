@@ -35,7 +35,8 @@ interface CategoryDialogProps {
   editing: CategoryDialogState | null;
   existing: CategoriesByType;
   onClose: () => void;
-  onSaved: () => void;
+  // The category saved (its id, to light its row).
+  onSaved: (id: string | null) => void;
 }
 
 export const KIND_OPTIONS = [
@@ -58,6 +59,11 @@ const COLOR_WORDS: Record<(typeof BUDGET_CATEGORY_COLORS)[number], string> = {
   violet: "Violet@@colour",
   lime: "Lime@@colour",
 };
+
+// The swatches in the CategoryDrawer board's order (deep teal, cyan, blue,
+// indigo, violet, purple, pink, red, orange, yellow, teal, green), each
+// name drawing the board's dot nearest its own.
+const SWATCH_ORDER = ["green", "cyan", "blue", "indigo", "violet", "purple", "pink", "red", "orange", "yellow", "teal", "lime"] as const satisfies readonly (typeof BUDGET_CATEGORY_COLORS)[number][];
 
 // The colour a new category of a type starts on: one no category of the
 // type has yet, as the API would pick.
@@ -115,7 +121,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
         : await updateBudgetCategoryAction(businessId, editing.id as string, { name: trimmed, ...(color !== editing.color && { color }), ...(type !== editing.type && { type }) });
       if (result.success) {
         toast.success(t(isNew ? "Category added" : "Category updated"));
-        onSaved();
+        onSaved(result.data?.id ?? editing.id);
         onClose();
         return;
       }
@@ -126,11 +132,11 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
   }
 
   return (
-    <IEDialog open={editing !== null} onClose={onClose} title={t(isNew ? "New category" : "Edit category")} busy={isPending} saveLabel="Save category" onSubmit={save}>
+    <IEDialog open={editing !== null} onClose={onClose} title={t(isNew ? "New category" : "Edit category")} busy={isPending} saveLabel={isNew ? "Save category" : "Save changes"} onSubmit={save}>
       <div className="flex flex-col gap-2">
         <KindCards legend="Type" value={type} onChange={pickType} options={KIND_OPTIONS} disabled={locked} />
         {locked && editing && (
-          <p className="text-caption text-ink-muted">
+          <p className="text-[12.5px] text-ink-muted">
             {plural(t, editing.used, "{count} transaction uses it, so its type stays the same.", "{count} transactions use it, so its type stays the same.", undefined, fmt)}
           </p>
         )}
@@ -142,7 +148,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
         error={error ? t(error) : undefined}
       >
         <span className="flex items-center gap-2.5">
-          <span aria-hidden="true" className={cn("flex size-12 shrink-0 items-center justify-center rounded-[12px] text-title font-bold", tone.bg, tone.fg)}>
+          <span aria-hidden="true" className={cn("flex size-12 shrink-0 items-center justify-center rounded-[12px] text-[18px] font-bold", tone.bg, tone.fg)}>
             {letter}
           </span>
           <Input
@@ -164,7 +170,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
       <fieldset className="m-0 min-w-0 border-0 p-0">
         <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
         <div role="radiogroup" aria-label={t("Colour")} className="flex flex-wrap gap-2">
-          {BUDGET_CATEGORY_COLORS.map((option) => {
+          {SWATCH_ORDER.map((option) => {
             const on = option === color;
             return (
               <button
@@ -175,12 +181,12 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
                 aria-label={t("Colour {name}", { name: t(COLOR_WORDS[option]) })}
                 onClick={() => setColor(option)}
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-full bg-current outline-offset-2 pointer-coarse:size-10",
+                  "flex size-7.5 items-center justify-center rounded-full bg-current outline-offset-2 pointer-coarse:size-10",
                   categoryTone(option).fg,
                   on && "outline-2 outline-current",
                 )}
               >
-                {on && <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />}
+                {on && <Check className="size-3.5 text-white" strokeWidth={3} aria-hidden="true" />}
               </button>
             );
           })}
