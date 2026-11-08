@@ -1486,4 +1486,8 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Normal member · no portal, no link": "সাধারণ সদস্য · পোর্টাল বা লিংক নেই",
   "Editor · adds entries in their own name": "এডিটর · নিজের নামে এন্ট্রি দেন",
   "Viewer · sees everything, changes nothing": "শুধু দেখবে · সব দেখেন, কিছু বদলান না",
+  // v16 Group: hand-set cost split note
+  "This group uses a custom split; shares won’t change it. Change the split in Settings.": "এই গ্রুপে নিজের মতো ঠিক করা ভাগ চলে; শেয়ার বদলালে সেটা বদলাবে না। Settings থেকে ভাগ বদলান।",
+  "This group uses a custom split; shares won’t change it. {name} gets 0% until you change the split in Settings.": "এই গ্রুপে নিজের মতো ঠিক করা ভাগ চলে; শেয়ার দিয়ে সেটা বদলাবে না। Settings থেকে ভাগ না বদলানো পর্যন্ত {name}-এর ভাগ ০%।",
+  "A new member": "নতুন সদস্য",
 };

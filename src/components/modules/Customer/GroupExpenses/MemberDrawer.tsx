@@ -11,14 +11,13 @@ import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
-import type { GroupCostSplit, GroupMember, GroupMemberRole } from "@/lib/customer/api";
+import type { GroupMember, GroupMemberRole } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { MEMBER_ROLE_LABELS, memberAccessRole } from "@/lib/customer/groupAccess";
-import { createGroupAccessLinkAction, createGroupMemberAction, setGroupCostSplitAction, updateGroupMemberAction, uploadGroupMemberPhotoAction } from "@/lib/customer/groupExpensesActions";
+import { createGroupAccessLinkAction, createGroupMemberAction, updateGroupMemberAction, uploadGroupMemberPhotoAction } from "@/lib/customer/groupExpensesActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { type AccessLinkShown, AccessLinkDialog } from "./AccessLinkDialog";
 import { GroupDialog } from "./GroupDialog";
-import { percentsOf } from "./NewGroupDialog";
 
 interface MemberDrawerProps {
   open: boolean;
@@ -30,7 +29,8 @@ interface MemberDrawerProps {
   // The day a new member starts sharing costs: today, or empty (from the
   // start) while the group has nothing recorded yet.
   defaultJoin: string;
-  costSplit: GroupCostSplit;
+  // A custom split the owner set by hand: shares leave it alone (the API decides).
+  handSplit: boolean;
   // "Remove from the group" for a member being edited (asks first).
   onRemove?: (member: GroupMember) => void;
 }
@@ -61,10 +61,10 @@ const initialsOf = (name: string) =>
 // Add or edit a member (the v16 FamilyMembers board's popup): a coloured
 // head with their initials, the group and their role; name and mobile
 // number, member since and shares, who the share covers, and their access
-// (Editor, Viewer or none -- the owner stays Admin). Shares become the cost
-// split when they change. A new member given access gets their access link
+// (Editor, Viewer or none -- the owner stays Admin). Shares drive the cost
+// split unless the owner set it by hand (then the popup says so). A new member given access gets their access link
 // at once, to send. The photo stays from the v7 popup.
-export function MemberDrawer({ open, onClose, businessId, groupName, members, editing, defaultJoin, costSplit, onRemove }: MemberDrawerProps) {
+export function MemberDrawer({ open, onClose, businessId, groupName, members, editing, defaultJoin, handSplit, onRemove }: MemberDrawerProps) {
   const { t } = useLocale();
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -142,21 +142,6 @@ export function MemberDrawer({ open, onClose, businessId, groupName, members, ed
   };
   const show = (error: string | null) => (tried ? error : null);
 
-  // Shares decide "by shares" costs through the cost split: when they
-  // change, the split follows them (equal when everyone has the same).
-  async function followShares(memberId: string) {
-    const active = members.filter((member) => member.status === "ACTIVE" && member.id !== memberId);
-    const list = [...active.map((member) => ({ id: member.id, units: Number(member.shareUnits || 1) })), { id: memberId, units: shares }];
-    const equal = list.every((entry) => entry.units === list[0].units);
-    if (equal && costSplit === "EQUAL") return;
-    const percents = percentsOf(list.map((entry) => entry.units));
-    await attempt(
-      () => setGroupCostSplitAction(businessId, equal ? { mode: "EQUAL" } : { mode: "CUSTOM", members: list.map((entry, index) => ({ groupMemberId: entry.id, percent: percents[index] })) }),
-      t(OFFLINE_MESSAGE),
-      t(STALE_MESSAGE),
-    );
-  }
-
   function save(addAnother: boolean) {
     setTried(true);
     if (busy || Object.values(errors).some(Boolean)) return;
@@ -167,9 +152,8 @@ export function MemberDrawer({ open, onClose, businessId, groupName, members, ed
         toast.error(result.message ?? (editing ? t("Failed to update member") : t("Failed to add member")));
         return;
       }
+      // The API makes the cost split follow shares, unless it was set by hand.
       const saved = result.data;
-      const sharesChanged = !editing || Number(editing.shareUnits || 1) !== shares;
-      if (sharesChanged && saved.status === "ACTIVE") await followShares(saved.id);
       // A new member given access gets their link at once.
       if (!editing && wantsLink) {
         const link = await attempt(() => createGroupAccessLinkAction(businessId, saved.id, "JOIN"), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
@@ -285,6 +269,12 @@ export function MemberDrawer({ open, onClose, businessId, groupName, members, ed
           </span>
         </div>
       </div>
+
+      {handSplit && (
+        <p role="note" className="-mt-1 rounded-xl border border-warning-line bg-warning-soft px-3.5 py-2.5 text-caption leading-[1.45] text-warning-ink">
+          {editing ? t("This group uses a custom split; shares won’t change it. Change the split in Settings.") : t("This group uses a custom split; shares won’t change it. {name} gets 0% until you change the split in Settings.", { name: trimmed || t("A new member") })}
+        </p>
+      )}
 
       {showWho ? (
         <Field htmlFor="mem-household" label={t("Who this covers")}>

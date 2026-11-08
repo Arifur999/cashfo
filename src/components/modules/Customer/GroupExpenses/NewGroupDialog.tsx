@@ -16,7 +16,7 @@ import type { GroupAccessLink, GroupKind, GroupMemberRole, GroupSplit } from "@/
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { createBusinessAction } from "@/lib/customer/businessActions";
 import { countLabel } from "@/lib/customer/groupDisplay";
-import { createGroupAccessLinkAction, createGroupMemberAction, setGroupCostSplitAction, setupGroupCategoriesAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
+import { createGroupAccessLinkAction, createGroupMemberAction, setupGroupCategoriesAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { type AccessLinkShown, joinUrl, linkMessage, whatsappNumber } from "./AccessLinkDialog";
@@ -56,14 +56,6 @@ const mobileOf = (raw: string): string | null => {
 };
 const sharesOf = (raw: string): number | null => (/^\d{1,2}$/.test(raw.trim()) && Number(raw) >= 1 && Number(raw) <= 50 ? Number(raw) : null);
 
-// Shares as percents (hundredths, the last taking the rounding): 3:1:4 is
-// 37.5% · 12.5% · 50%.
-export function percentsOf(shares: number[]): number[] {
-  const total = shares.reduce((sum, value) => sum + value, 0);
-  const hundredths = shares.map((value) => Math.floor((value * 10000) / total));
-  hundredths[hundredths.length - 1] += 10000 - hundredths.reduce((sum, value) => sum + value, 0);
-  return hundredths.map((value) => value / 100);
-}
 
 // A new group (the v16 GroupList board's New group popup): its name and
 // kind, then everyone who shares the costs in one table -- you first, as
@@ -148,11 +140,7 @@ export function NewGroupDialog({ open, onClose, takenNames }: NewGroupDialogProp
       }
       const split = (category: string): GroupSplit => (kind === "FAMILY" && category === "Bazar & grocery" ? "SHARES" : "EQUAL");
       const categories = await attempt(() => setupGroupCategoriesAction(businessId, STARTER_CATEGORIES.map((category) => ({ name: category, defaultSplit: split(category) }))), offline, stale);
-      // Unequal shares become the cost split, as percents.
-      if (made.length > 1 && made.some((member) => member.shares !== made[0].shares)) {
-        const percents = percentsOf(made.map((member) => member.shares));
-        await attempt(() => setGroupCostSplitAction(businessId, { mode: "CUSTOM", members: made.map((member, index) => ({ groupMemberId: member.id, percent: percents[index] })) }), offline, stale);
-      }
+      // Unequal shares become the cost split by themselves (the API follows shares).
       // A link for everyone given access.
       const list: AccessLinkShown[] = [];
       for (const member of made.filter((entry) => !entry.row.owner && entry.row.role !== "MEMBER")) {

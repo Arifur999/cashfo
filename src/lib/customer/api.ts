@@ -1405,6 +1405,9 @@ export interface GroupSettings {
   lunchUnits: string;
   dinnerUnits: string;
   costSplit?: GroupCostSplit;
+  // The custom split was worked out from shares (and follows them); false:
+  // the owner set it by hand, and shares leave it alone.
+  splitFromShares?: boolean;
   // Warn once this much of a month's budget is spent; null = never.
   budgetWarnPercent?: number | null;
   // Paused: kept out of new entries and listed last.
