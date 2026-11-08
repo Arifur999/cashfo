@@ -477,4 +477,8 @@ export const balanceDictionary: Record<string, string> = {
   "Charge saved as {category}": "চার্জ খরচ হিসেবে: {category}",
   "Mobile banking fee": "মোবাইল ব্যাংকিং ফি",
   "Service charge": "সার্ভিস চার্জ",
+  // Edit account: the opening balance put right (v16)
+  "Opening balance {from} → {to}. The current balance moves the same way: {now} → {after}.": "শুরুর ব্যালেন্স {from} → {to}। বর্তমান ব্যালেন্সও একই হারে বদলাবে: {now} → {after}।",
+  "Entered it wrong? Fix it here. The current balance moves by the same amount.": "ভুল দিয়েছিলেন? এখানে ঠিক করুন। বর্তমান ব্যালেন্সও একই পরিমাণে বদলাবে।",
+  "Saved. Opening balance is now {amount}": "সেভ হয়েছে। শুরুর ব্যালেন্স এখন {amount}",
 };

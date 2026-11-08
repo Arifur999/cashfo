@@ -29,8 +29,9 @@ interface AccountDialogProps {
   // Every account's name, for "you already have one called that".
   takenNames: { id: string; name: string }[];
   currency: string;
-  // The new account is saved: the page shows it.
-  onSaved: (name: string, created: boolean) => void;
+  // The account is saved: the page shows it. openingNow is the new opening
+  // balance when an edit changed it.
+  onSaved: (name: string, created: boolean, openingNow?: string) => void;
 }
 
 // What each kind's name and number look like.
@@ -42,8 +43,8 @@ const PLACEHOLDERS: Record<WalletType, { name: string; numberLabel: string; numb
 
 // Add or edit an account (board: Balance — Add account popup): a live
 // preview of its card, its colour, its kind (fixed once made), its name and
-// number, and for a new one what it holds right now. The opening balance
-// can't change later; Match real balance puts a wrong one right.
+// number, and what it held at the start. An edit can put a wrong opening
+// balance right; the current balance moves by the same amount.
 export function AccountDialog({ open, onClose, businessId, editing, takenNames, currency, onSaved }: AccountDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
@@ -69,7 +70,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
       setColorPicked(Boolean(editing?.color));
       setName(editing?.name ?? "");
       setNumber(editing?.accountNumber ?? "");
-      setOpening("");
+      setOpening(editing ? String(Number(editing.openingBalance)) : "");
       setError("");
     }
   }
@@ -77,7 +78,10 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
   const placeholders = PLACEHOLDERS[type];
   const numbered = type !== "cash";
   const digits = number.replace(/\D/g, "");
-  const previewBalance = editing ? editing.currentBalance : opening || 0;
+  // An edit's opening balance, left empty, stays as it was.
+  const openingShift = editing && opening.trim() !== "" ? Number(opening) - Number(editing.openingBalance) : 0;
+  const openingChanged = Boolean(editing) && Number.isFinite(openingShift) && Math.abs(openingShift) >= 0.005;
+  const previewBalance = editing ? Number(editing.currentBalance) + (openingChanged ? openingShift : 0) : opening || 0;
 
   function pickType(next: WalletType) {
     if (editing) return;
@@ -103,7 +107,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
     startTransition(async () => {
       try {
         const result = editing
-          ? await updateAccountAction(businessId, editing.id, { name: trimmed, accountNumber: numbered ? digits : "", ...(ownColor && { color: ownColor }) })
+          ? await updateAccountAction(businessId, editing.id, { name: trimmed, accountNumber: numbered ? digits : "", ...(ownColor && { color: ownColor }), ...(openingChanged && { openingBalance: opening }) })
           : await createAccountAction(businessId, {
               name: trimmed,
               accountType: "ASSET",
@@ -113,7 +117,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
               ...(ownColor && { color: ownColor }),
             });
         if (result.success) {
-          onSaved(trimmed, !editing);
+          onSaved(trimmed, !editing, openingChanged ? opening : undefined);
           onClose();
           router.refresh();
         } else {
@@ -242,16 +246,21 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
         >
           <Input id="account-number" size="md" inputMode="numeric" value={numbered ? number : ""} onChange={(event) => setNumber(event.target.value)} disabled={!numbered} maxLength={40} placeholder={placeholders.number} />
         </Field>
-        <Field htmlFor="account-opening" label={<span className={cn("text-small font-semibold text-ink-2", editing && "opacity-60")}>{t("Opening balance")}</span>}>
-          {editing ? (
-            <div className="flex h-11 items-center rounded-field border border-line bg-strip px-3 text-body font-semibold text-ink-2 tabular-nums">{formatCurrency(editing.openingBalance, currency, fmt)}</div>
-          ) : (
-            <AmountInput id="account-opening" size="lg" value={opening} onChange={setOpening} currency={currency} />
-          )}
+        <Field htmlFor="account-opening" label={<span className="text-small font-semibold text-ink-2">{t("Opening balance")}</span>}>
+          <AmountInput id="account-opening" size="lg" value={opening} onChange={setOpening} currency={currency} describedBy="account-opening-hint" />
         </Field>
       </div>
-      <p className="-mt-1.5 text-caption text-ink-muted">
-        {t(editing ? "The opening balance can't change once money has moved. If the balance is off, use Match real balance in the ⋯ menu." : "How much is in this account right now.")}
+      <p id="account-opening-hint" aria-live="polite" className={cn("-mt-1.5 text-caption leading-[1.45]", openingChanged ? "text-warning" : "text-ink-muted")}>
+        {editing
+          ? openingChanged
+            ? t("Opening balance {from} → {to}. The current balance moves the same way: {now} → {after}.", {
+                from: formatCurrency(editing.openingBalance, currency, fmt),
+                to: formatCurrency(opening, currency, fmt),
+                now: formatCurrency(editing.currentBalance, currency, fmt),
+                after: formatCurrency(previewBalance, currency, fmt),
+              })
+            : t("Entered it wrong? Fix it here. The current balance moves by the same amount.")
+          : t("How much is in this account right now.")}
       </p>
       {error && (
         <p role="alert" className="-mt-1 text-small text-expense">
