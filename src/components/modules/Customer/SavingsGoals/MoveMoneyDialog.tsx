@@ -158,7 +158,7 @@ export function MoveMoneyDialog({ open, onClose, businessId, goals, setup, curre
         <label htmlFor="mv-amount" className="text-body font-medium text-ink">
           {t("Amount")}
         </label>
-        <AmountInput id="mv-amount" value={amount} onChange={setAmount} currency={currency} />
+        <AmountInput id="mv-amount" value={amount} onChange={setAmount} currency={currency} size="md" />
         <div className="flex flex-wrap gap-1.5">
           {chips.map((chip) => (
             <button key={chip.label} type="button" onClick={() => setAmount(String(chip.amount))} className="h-8 rounded-full border border-line bg-surface px-3 text-caption font-semibold text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11">

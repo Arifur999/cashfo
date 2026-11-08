@@ -440,12 +440,13 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
         editing={typeof dialog === "object" ? dialog : null}
         takenNames={accounts.map((account) => ({ id: account.id, name: account.name }))}
         currency={currency}
-        onSaved={(name, created) => {
+        onSaved={(name, created, openingNow) => {
           if (created) {
             setTab("active");
             setQuery("");
           }
-          toast.success(t(created ? "{name} added" : "Saved", { name }));
+          if (openingNow !== undefined) toast.success(t("Saved. Opening balance is now {amount}", { amount: formatCurrency(openingNow, currency, fmt) }));
+          else toast.success(t(created ? "{name} added" : "Saved", { name }));
         }}
       />
       <AdjustBalanceDialog

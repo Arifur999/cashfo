@@ -251,6 +251,12 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
     };
   });
 
+  // The statement's days: the period's, or for all time the first and last
+  // transfer's (the board), or that there are none yet.
+  const statementDays = statementRows.map((row) => row.date).sort();
+  const statementRange =
+    periodFrom || periodTo ? periodText(t, periodFrom, periodTo, fmt) : statementDays.length ? periodText(t, statementDays[0], statementDays[statementDays.length - 1], fmt) : t("No transfers yet");
+
   const party = (id: string | null, name: string, after: string | null | undefined) => {
     const wallet = id ? walletById.get(id) : undefined;
     return (
@@ -274,7 +280,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
             transfers={statementRows}
             account={accountName}
             periodLabel={periodLabel}
-            range={periodText(t, periodFrom, periodTo, fmt)}
+            range={statementRange}
             moved={totals.moved}
             charges={totals.charges}
             standing={totals.count}
