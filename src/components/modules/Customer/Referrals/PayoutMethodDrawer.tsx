@@ -248,7 +248,7 @@ export function PayoutMethodDrawer({ open, method, userName, allowed, isFirst, o
               </Field>
               <div className="grid grid-cols-[minmax(0,1fr)_150px] gap-2.5">
                 <Field htmlFor="pm-branch" label={t("Branch")}>
-                  <Input id="pm-branch" size="md" value={form.branch} onChange={(event) => set("branch", event.target.value)} />
+                  <Input id="pm-branch" size="md" placeholder={t("e.g. Gulshan")} value={form.branch} onChange={(event) => set("branch", event.target.value)} />
                 </Field>
                 <fieldset className="m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0">
                   <legend className="mb-1.5 p-0 text-body leading-normal font-medium text-ink">{t("Account type")}</legend>
@@ -276,10 +276,10 @@ export function PayoutMethodDrawer({ open, method, userName, allowed, isFirst, o
           {!wallet && (
             <>
               <Field htmlFor="pm-accountNumber" label={t("Account number")} error={errorFor("accountNumber")}>
-                <Input id="pm-accountNumber" size="md" inputMode="numeric" autoComplete="off" value={form.accountNumber} onChange={(event) => set("accountNumber", event.target.value)} invalid={!!errorFor("accountNumber")} className="text-[15px] tracking-[0.04em] tabular-nums" />
+                <Input id="pm-accountNumber" size="md" inputMode="numeric" autoComplete="off" placeholder={t("e.g. {number}", { number: "1503 2041 2201" })} value={form.accountNumber} onChange={(event) => set("accountNumber", event.target.value)} invalid={!!errorFor("accountNumber")} className="text-[15px] tracking-[0.04em] tabular-nums" />
               </Field>
               <Field htmlFor="pm-routingNumber" label={t("Routing number")} error={errorFor("routingNumber")} hint={t("9 digits. It's on your cheque book or in your bank's app.")}>
-                <Input id="pm-routingNumber" size="md" inputMode="numeric" autoComplete="off" value={form.routingNumber} onChange={(event) => set("routingNumber", event.target.value)} invalid={!!errorFor("routingNumber")} className="text-[15px] tracking-[0.04em] tabular-nums" />
+                <Input id="pm-routingNumber" size="md" inputMode="numeric" autoComplete="off" placeholder={t("9 digits")} value={form.routingNumber} onChange={(event) => set("routingNumber", event.target.value)} invalid={!!errorFor("routingNumber")} className="text-[15px] tracking-[0.04em] tabular-nums" />
               </Field>
             </>
           )}

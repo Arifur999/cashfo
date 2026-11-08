@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, Banknote, Check, ChevronDown, ChevronUp, Gem, PiggyBank, Plus, Scale, Trash2, TrendingUp, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
+import IconAction from "@/components/smartly/IconAction";
 import IconTile from "@/components/smartly/IconTile";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { Tone } from "@/components/smartly/tones";
@@ -231,9 +232,9 @@ function LineRow({ line, step, summary, money, busy, readOnly, onToggleLine, onD
         {minus ? `− ${money(line.amount)}` : money(line.amount)}
       </span>
       {extra && !readOnly && (
-        <button type="button" disabled={busy} onClick={() => onRemoveExtra(line, step)} aria-label={t("Remove {name}", { name })} title={t("Remove {name}", { name })} className="flex size-7 shrink-0 items-center justify-center rounded-full text-ink-faint hover:bg-surface-sunken hover:text-expense disabled:opacity-60 pointer-coarse:size-11">
-          <Trash2 className="size-3.5" aria-hidden="true" />
-        </button>
+        <IconAction tone="danger" disabled={busy} onClick={() => onRemoveExtra(line, step)} aria-label={t("Remove {name}", { name })} title={t("Remove {name}", { name })}>
+          <Trash2 aria-hidden="true" />
+        </IconAction>
       )}
     </li>
   );

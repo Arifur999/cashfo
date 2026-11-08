@@ -184,6 +184,7 @@ const MarkPaidForm = ({ payout, canManage, onDone, onReject }: { payout: IPayout
             <AppField
               field={field}
               label={payout.method.type === "BANK" ? translate("Bank reference") : translate("{method} transaction ID", { method: translate(method) })}
+              placeholder="e.g. 8K2M4N7QXA"
               autoComplete="off"
               className="font-mono tracking-[0.06em]"
             />
@@ -390,17 +391,12 @@ const PayoutDrawer = ({ payoutId, onClose, canManage }: PayoutDrawerProps) => {
         open={Boolean(payoutId) && !rejecting}
         onOpenChange={(open) => !open && onClose()}
         title={translate(titleKey(payout, canManage), { id: payout?.displayId ?? "" })}
-        description={
-          subtitle && chip ? (
-            <span className="flex flex-wrap items-center gap-2">
-              {subtitle}
-              <StatusBadgeCell status={payout!.status} label={chip.label} tone={chip.tone} dot />
-            </span>
-          ) : (
-            subtitle
-          )
-        }
+        description={subtitle}
+        // The board's status chip, on the right of the head.
+        aside={payout && chip ? <StatusBadgeCell status={payout.status} label={chip.label} tone={chip.tone} dot /> : undefined}
         closeOnOutsideClick={!payout || !canManage || (payout.status !== "APPROVED" && payout.status !== "REQUESTED")}
+        // The board's widths: 560 to pay, 820 to go through the lines.
+        width={payout?.status === "APPROVED" && canManage ? "xl" : "2xl"}
       >
         {!payout ? (
           query.isError ? (

@@ -2,11 +2,15 @@
 
 import { ArrowRight, Gift, Lock, PauseCircle } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
+import { checkoutHref } from "@/components/modules/Customer/Settings/Plans/checkoutRoute";
+import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import { formatCurrency } from "@/lib/customer/currency";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
 import { programOf } from "@/lib/customer/referralDisplay";
-import type { ReferralProgramInfo } from "@/lib/customer/referralTypes";
+import type { PlanExample, ReferralProgramInfo } from "@/lib/customer/referralTypes";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -17,8 +21,9 @@ const EXAMPLE_FRIENDS = 5;
 
 // The Referral Program for a member who can't earn yet and has nothing from
 // it (ReferralLocked): why, and what one friend could earn on each paid
-// plan; "See plans" opens the plans. While the admin has paused the program
-// it says that instead, with no plans to buy.
+// plan; "See plans" opens the board's "Pick a plan" popup, whose Pay goes to
+// that plan's checkout. While the admin has paused the program it says that
+// instead, with no plans to buy.
 export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; currency: string }) {
   const { t, fmt } = useLocale();
   const program = programOf(info);
@@ -31,6 +36,7 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
   const planName = info.myPlan?.planName ?? "Free";
   // "Monthly Pro, Yearly Pro or Business", by price.
   const planList = examples.map((plan) => plan.planName);
+  const [picking, setPicking] = useState(false);
 
   return (
     <div className="flex flex-col gap-5">
@@ -54,10 +60,17 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
           </div>
           {!paused && (
             <div className="mt-1 flex flex-wrap items-center gap-3">
-              <Link href={PLANS_ROUTE} className="flex h-11 items-center gap-2 rounded-full bg-emerald px-5 text-[15px] font-semibold text-on-action shadow-button hover:bg-emerald-hover">
-                {t("See plans")}
-                <ArrowRight className="size-4" strokeWidth={2.25} aria-hidden="true" />
-              </Link>
+              {examples.length > 0 ? (
+                <button type="button" onClick={() => setPicking(true)} className="flex h-11 items-center gap-2 rounded-full bg-emerald px-5 text-[15px] font-semibold text-on-action shadow-button hover:bg-emerald-hover">
+                  {t("See plans")}
+                  <ArrowRight className="size-4" strokeWidth={2.25} aria-hidden="true" />
+                </button>
+              ) : (
+                <Link href={PLANS_ROUTE} className="flex h-11 items-center gap-2 rounded-full bg-emerald px-5 text-[15px] font-semibold text-on-action shadow-button hover:bg-emerald-hover">
+                  {t("See plans")}
+                  <ArrowRight className="size-4" strokeWidth={2.25} aria-hidden="true" />
+                </Link>
+              )}
               <span className="flex items-center gap-1.5 text-[13px] text-ink-muted">
                 <Lock className="size-3.75" aria-hidden="true" />
                 {t("You're on the {plan} plan", { plan: planName })}
@@ -89,6 +102,8 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
         )}
       </Card>
 
+      <PlanPicker open={picking} onClose={() => setPicking(false)} plans={examples} initial={best?.planId ?? examples.at(-1)?.planId ?? null} money={money} />
+
       <Card padding="none" aria-labelledby="rl-how" role="region" className="flex flex-col gap-4 px-5 py-5 md:px-6">
         <h2 id="rl-how" className="text-title text-ink">
           {t("How it works")}
@@ -106,5 +121,60 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
         </div>
       </Card>
     </div>
+  );
+}
+
+// "Pick a plan to start earning": the paid plans as radio cards, and Pay
+// takes the one picked to its checkout (bKash, Nagad or card there).
+function PlanPicker({ open, onClose, plans, initial, money }: { open: boolean; onClose: () => void; plans: PlanExample[]; initial: string | null; money: (value: string | number) => string }) {
+  const { t } = useLocale();
+  const [picked, setPicked] = useState(initial);
+  const chosen = plans.find((plan) => plan.planId === picked) ?? plans.find((plan) => plan.planId === initial) ?? plans[0];
+  const per = (plan: PlanExample) => (plan.billingCycle === "MONTHLY" ? t("{price} a month", { price: money(plan.price) }) : plan.billingCycle === "YEARLY" ? t("{price} a year", { price: money(plan.price) }) : null);
+  return (
+    <PopupDialog
+      open={open}
+      onClose={onClose}
+      width={520}
+      title={t("Pick a plan to start earning")}
+      sub={t("Your invite link is ready as soon as you pay.")}
+      bodyClassName="gap-2.5"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {t("Not now")}
+          </Button>
+          {chosen && (
+            <Button asChild>
+              <Link href={checkoutHref({ plan: chosen.planId })}>{t("Pay {amount}", { amount: money(chosen.price) })}</Link>
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div role="radiogroup" aria-label={t("Plan")} className="flex flex-col gap-2.5">
+        {plans.map((plan) => {
+          const on = plan.planId === chosen?.planId;
+          const sub = per(plan);
+          return (
+            <button
+              key={plan.planId}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setPicked(plan.planId)}
+              className={cn("flex items-center gap-3.5 rounded-[14px] border px-4 py-3.5 text-left transition-colors", on ? "border-emerald bg-emerald-soft ring-[0.5px] ring-emerald" : "border-line bg-surface hover:border-line-strong")}
+            >
+              <span aria-hidden="true" className={cn("size-4.5 shrink-0 rounded-full bg-surface", on ? "border-[5px] border-emerald" : "border-[1.5px] border-ink-faint")} />
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="text-[15px] leading-normal font-semibold text-ink">{plan.planName}</span>
+                {sub && <span className="text-[12.5px] leading-normal text-ink-muted tabular-nums">{sub}</span>}
+              </span>
+              <span className="text-title font-bold text-ink tabular-nums">{money(plan.price)}</span>
+            </button>
+          );
+        })}
+      </div>
+    </PopupDialog>
   );
 }
