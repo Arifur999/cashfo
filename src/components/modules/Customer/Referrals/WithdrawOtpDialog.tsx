@@ -232,7 +232,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
               <span className="flex flex-wrap items-center gap-x-4">
                 <button type="button" onClick={() => resend()} disabled={waiting || busy || (!gone && sendsLeft === 0)} className="flex min-h-9 items-center gap-1.5 font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
                   {isResending ? <Loader size={14} label={t("Loading...")} /> : gone ? <RefreshCw className="size-3.5" aria-hidden="true" /> : null}
-                  {gone ? t("Get a new code") : t("Send the code again")}
+                  {gone ? t("Get a new code") : t("Resend code")}
                 </button>
                 {channel === "SMS" && !gone && (
                   <button type="button" onClick={() => resend(true)} disabled={waiting || busy || sendsLeft === 0} className="flex min-h-9 items-center font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
