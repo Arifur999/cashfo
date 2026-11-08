@@ -183,6 +183,9 @@
   --tint-blue-ink: #1d4ed8;
   /* Settings › Data & privacy storage meter; a v16 Settings select's chevron. */
   --meter-records: #60a5fa;
+  /* The brands Settings › Help links to. */
+  --brand-facebook: #1877f2;
+  --brand-youtube: #ff0000;
   --meter-backups: #f59e0b;
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235F6B68' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --tint-green: #dcfce7;
@@ -626,6 +629,8 @@ html:not(.dark) [data-app="habit"] {
   --color-sky: var(--sky);
   --color-sky-soft: var(--sky-soft);
   --color-meter-records: var(--meter-records);
+  --color-brand-facebook: var(--brand-facebook);
+  --color-brand-youtube: var(--brand-youtube);
   --color-meter-backups: var(--meter-backups);
   --color-gold-on-forest: var(--gold-on-forest);
   --color-gateway-bkash: var(--gateway-bkash);
