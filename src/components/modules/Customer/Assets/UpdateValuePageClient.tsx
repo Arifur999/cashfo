@@ -67,6 +67,8 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
   const total = owned.reduce((sum, asset) => sum + Number(asset.currentValue), 0);
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const day = (value: string) => formatDate(value, "d MMM yyyy", fmt);
+  // The open statement, as the page last read it (an update made from it shows at once).
+  const statement = reading && (assets.find((asset) => asset.id === reading.id) ?? reading);
 
   function pickTab(next: Tab) {
     setTab(next);
@@ -243,7 +245,19 @@ export function UpdateValuePageClient({ businessId, assets, categories, currency
       </Card>
 
       <UpdateValueDrawer open={valuing !== null} onClose={() => setValuing(null)} businessId={businessId} asset={valuing} categories={categories} currency={currency} />
-      <AssetStatementDialog open={reading !== null} onClose={() => setReading(null)} asset={reading && (assets.find((asset) => asset.id === reading.id) ?? reading)} categories={categories} currency={currency} businessId={businessId} canManage={canManage} />
+      <AssetStatementDialog
+        open={reading !== null}
+        onClose={() => setReading(null)}
+        asset={statement}
+        categories={categories}
+        currency={currency}
+        businessId={businessId}
+        canManage={canManage}
+        onUpdate={() => {
+          setValuing(statement);
+          setReading(null);
+        }}
+      />
       <AssetDrawer open={adding} onClose={() => setAdding(false)} businessId={businessId} categories={categories} currency={currency} variant="add" />
     </PageFrame>
   );

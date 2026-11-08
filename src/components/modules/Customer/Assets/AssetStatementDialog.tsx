@@ -1,10 +1,9 @@
 "use client";
 
-import { FileDown, Pencil, Printer, Trash2 } from "lucide-react";
+import { Pencil, Printer, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Drawer } from "@/components/modules/Customer/Books/shared/Drawer";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
@@ -34,17 +33,20 @@ interface AssetStatementDialogProps {
   // (the owner or an accountant; never a sold asset's history).
   businessId?: string;
   canManage?: boolean;
+  // The footer's Update value (an owned asset, for those who may).
+  onUpdate?: () => void;
 }
 
-const COLUMNS = "grid-cols-[32px_100px_minmax(8rem,1fr)_110px_110px_110px_84px]";
-const COLUMNS_EDIT = "grid-cols-[32px_100px_minmax(8rem,1fr)_110px_110px_110px_84px_76px]";
+// The board's table: #, Date, Entry, Previous value, New value, Difference
+// (with its percent), Actions.
+const COLUMNS = "grid-cols-[30px_104px_minmax(8rem,1fr)_116px_116px_132px_76px]";
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
 // An asset's value statement: where it started, where it stands, the
 // whole change, and every value it was recorded at with the move from the
 // one before. Print (or save as PDF) opens it on a page of its own.
-export function AssetStatementDialog({ open, onClose, asset, categories, currency, businessId, canManage = false }: AssetStatementDialogProps) {
+export function AssetStatementDialog({ open, onClose, asset, categories, currency, businessId, canManage = false, onUpdate }: AssetStatementDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -55,7 +57,6 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
   const [isPending, startTransition] = useTransition();
   if (!asset) return null;
   const editable = canManage && !!businessId && asset.status === "ACTIVE";
-  const columns = editable ? COLUMNS_EDIT : COLUMNS;
   const today = getAppToday();
   const bought = asset.purchaseDate.slice(0, 10);
   const formValue = Number(form.value) || 0;
@@ -151,95 +152,140 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
     view.print();
   }
 
+  const isSold = asset.status === "SOLD";
+  // A sale closes the statement: the price it went for, against the last value.
+  const sale =
+    isSold && asset.soldAt && last
+      ? { date: asset.soldAt, previous: last.value, value: Number(asset.soldPrice ?? 0), change: Number(asset.soldPrice ?? 0) - last.value }
+      : null;
+  const chip = (change: number | null, previous: number | null) => {
+    if (change === null || !previous) return null;
+    const pct = (change / previous) * 100;
+    if (Math.abs(pct) < 0.05) return { text: "0%", tone: "bg-surface-sunken text-ink-2" };
+    return { text: toLocaleDigits(`${pct > 0 ? "+" : "−"}${Math.abs(pct).toFixed(1)}%`, fmt), tone: pct > 0 ? "bg-income-soft text-income" : "bg-expense-soft text-expense" };
+  };
+  const difference = (change: number | null, previous: number | null) => {
+    const badge = chip(change, previous);
+    return (
+      <span className="flex flex-col items-end gap-0.5">
+        <span className={cn("font-semibold whitespace-nowrap", tone(change))}>{change === null ? "—" : signed(change)}</span>
+        {badge && <span className={cn("rounded-full px-1.75 py-px text-[11px] font-bold", badge.tone)}>{badge.text}</span>}
+      </span>
+    );
+  };
+  const locked = (text: string) => <span className="text-[12px] whitespace-nowrap text-ink-faint">{t(text)}</span>;
+
   return (
-    <Drawer
+    <PopupDialog
       open={open}
-      popup
-      popupClassName="w-205"
-      icon={<AssetTypeTile visual={categoryVisual(categories, asset.category)} size="lg" className="rounded-field" />}
-      title={asset.name}
-      description={`${t("Asset value statement")} · ${t(asset.category)}`}
       onClose={onClose}
-      actions={
-        <span className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={print} className="rounded-full max-sm:hidden">
-            <FileDown className="size-4" aria-hidden="true" />
-            {t("Download PDF")}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={print} className="rounded-full">
-            <Printer className="size-4" aria-hidden="true" />
-            {t("Print")}
-          </Button>
+      width={940}
+      lead={<AssetTypeTile visual={categoryVisual(categories, asset.category)} size="lg" glossy className="size-11 rounded-[12px] [&_svg]:size-5.5" />}
+      title={
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[12px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Asset value statement")}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">{asset.name}</span>
+            <span className="shrink-0 font-medium text-ink-muted">· {t(asset.category)}</span>
+            {isSold && <span className="shrink-0 rounded-full bg-surface-sunken px-2.25 py-0.5 text-[12px] font-semibold text-ink-soft">{t("Sold")}</span>}
+          </span>
         </span>
       }
-      footer={
-        <Button type="button" variant="secondary" onClick={onClose}>
-          {t("Close")}
+      actions={
+        <Button variant="secondary" onClick={print} className="h-11 gap-1.5 rounded-full px-3.5 text-[13px] font-semibold max-sm:hidden">
+          <Printer className="size-4" aria-hidden="true" />
+          {t("Print statement")}
         </Button>
       }
+      bodyClassName="gap-4 py-5"
+      footerClassName="justify-between bg-surface"
+      footer={
+        <>
+          <span className="text-[12.5px] text-ink-muted">{t(isSold ? "This asset is sold, so its history is read only." : "Every update adds a new row. The first row is where the asset starts.")}</span>
+          <span className="flex gap-2.5">
+            {editable && onUpdate && (
+              <Button variant="secondary" onClick={onUpdate} className="h-11 rounded-full px-4.5">
+                {t("Update value@@action")}
+              </Button>
+            )}
+            <Button onClick={onClose} className="h-11 rounded-full px-5.5">
+              {t("Close")}
+            </Button>
+          </span>
+        </>
+      }
     >
-      <div className="flex flex-col gap-4">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {summary.map((card) => (
-            <div key={card.label} className="flex flex-col gap-1 rounded-[14px] border border-line bg-strip px-4 py-3">
-              <span className="text-caption text-ink-muted">{card.label}</span>
-              <span className={cn("text-[18px] font-bold tabular-nums", card.tone)}>{card.value}</span>
-              <span className="text-caption text-ink-muted">{card.sub}</span>
-            </div>
-          ))}
-        </div>
+      <div className="grid rounded-[12px] border border-line bg-strip sm:grid-cols-3">
+        {summary.map((card, index) => (
+          <div key={card.label} className={cn("flex flex-col gap-0.5 px-4 py-3", index > 0 && "border-line max-sm:border-t sm:border-l")}>
+            <span className="text-[12px] text-ink-muted">{card.label}</span>
+            <span className={cn("text-[18px] font-bold tabular-nums", card.tone)}>{card.value}</span>
+            <span className="text-[12px] text-ink-muted">{card.sub}</span>
+          </div>
+        ))}
+      </div>
 
-        <div className="overflow-x-auto rounded-[14px] border border-line">
-          <div className={editable ? "min-w-200" : "min-w-180"}>
-            <div className={cn("grid items-center gap-x-3 bg-table-head px-4 py-2.5 text-caption font-semibold text-ink-muted", columns)}>
-              <span>#</span>
-              <span>{t("Date")}</span>
-              <span>{t("Entry")}</span>
-              <span className="text-right">{t("Previous value")}</span>
-              <span className="text-right">{t("New value")}</span>
-              <span className="text-right">{t("Difference")}</span>
-              <span>{t("Trend")}</span>
-              {editable && <span className="text-right">{t("Actions")}</span>}
-            </div>
-            <ul>
-              {lines.map((line, index) => {
-                const what = entry(line, index);
-                return (
-                  <li key={line.id} aria-busy={busyId === line.id || undefined} className={cn("grid items-center gap-x-3 border-t border-divider px-4 py-2.5 text-small", columns)}>
-                    <span className="text-ink-muted tabular-nums">{formatCount(index + 1, fmt)}</span>
-                    <span className="whitespace-nowrap text-ink-2 tabular-nums">{day(line.date)}</span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="font-semibold text-ink">{what.title}</span>
-                      {what.note && <span className="line-clamp-2 text-caption text-ink-muted">{what.note}</span>}
-                    </span>
-                    <span className="text-right text-ink-2 tabular-nums">{line.previous === null ? "—" : money(line.previous)}</span>
-                    <span className="text-right font-semibold text-ink tabular-nums">{money(line.value)}</span>
-                    <span className={cn("text-right font-semibold whitespace-nowrap tabular-nums", tone(line.change))}>{line.change === null ? "—" : signed(line.change)}</span>
-                    <span>
-                      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-caption font-semibold", index === 0 || !line.change ? "bg-surface-sunken text-ink-2" : line.change > 0 ? "bg-income-soft text-income" : "bg-expense-soft text-expense")}>
-                        {trend(line, index)}
-                      </span>
-                    </span>
-                    {editable && (
-                      // The first line is where the asset starts: its purchase is edited instead.
-                      <span className="flex justify-end gap-1">
-                        {index > 0 && (
-                          <>
-                            <IconAction onClick={() => openEdit(line)} disabled={isPending} aria-label={t("Edit the value update of {date}", { date: day(line.date) })} title={t("Edit")}>
-                              <Pencil aria-hidden="true" />
-                            </IconAction>
-                            <IconAction tone="danger" onClick={() => removeLine(line)} disabled={isPending} aria-label={t("Delete the value update of {date}", { date: day(line.date) })} title={t("Delete")}>
-                              {busyId === line.id && !editing ? <Loader size={14} label={t("Loading...")} /> : <Trash2 aria-hidden="true" />}
-                            </IconAction>
-                          </>
-                        )}
+      <div className="overflow-x-auto rounded-[12px] border border-line">
+        <div className="min-w-190">
+          <div className={cn("grid items-center gap-x-3 border-b border-line bg-table-head px-4 py-2.5 text-caption font-semibold text-ink-muted", COLUMNS)}>
+            <span>#</span>
+            <span>{t("Date")}</span>
+            <span>{t("Entry")}</span>
+            <span className="text-right">{t("Previous value")}</span>
+            <span className="text-right">{t("New value")}</span>
+            <span className="text-right">{t("Difference")}</span>
+            <span className="text-right">{t("Actions")}</span>
+          </div>
+          <ul>
+            {lines.map((line, index) => {
+              const what = entry(line, index);
+              return (
+                <li key={line.id} aria-busy={busyId === line.id || undefined} className={cn("grid min-h-14 items-center gap-x-3 border-b border-divider px-4 py-2 text-[13px] tabular-nums last:border-b-0", COLUMNS)}>
+                  <span className="text-ink-muted">{formatCount(index + 1, fmt)}</span>
+                  <span className="whitespace-nowrap text-ink-2">{day(line.date)}</span>
+                  <span className="flex min-w-0 flex-col gap-px">
+                    <span className="font-semibold text-ink">{what.title}</span>
+                    {what.note && (
+                      <span title={what.note} className="truncate text-[12px] text-ink-muted">
+                        {what.note}
                       </span>
                     )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+                  </span>
+                  <span className="text-right whitespace-nowrap text-ink-soft">{line.previous === null ? "—" : money(line.previous)}</span>
+                  <span className="text-right font-bold whitespace-nowrap text-ink">{money(line.value)}</span>
+                  {difference(line.change, line.previous)}
+                  <span className="flex justify-end gap-1.5">
+                    {/* The first line is where the asset starts: its purchase is edited instead. */}
+                    {index === 0 ? (
+                      locked("Fixed@@history")
+                    ) : editable ? (
+                      <>
+                        <IconAction onClick={() => openEdit(line)} disabled={isPending} aria-label={t("Edit the value update of {date}", { date: day(line.date) })} title={t("Edit")}>
+                          <Pencil aria-hidden="true" />
+                        </IconAction>
+                        <IconAction tone="danger" onClick={() => removeLine(line)} disabled={isPending} aria-label={t("Delete the value update of {date}", { date: day(line.date) })} title={t("Delete")}>
+                          {busyId === line.id && !editing ? <Loader size={14} label={t("Loading...")} /> : <Trash2 aria-hidden="true" />}
+                        </IconAction>
+                      </>
+                    ) : (
+                      locked("Read only")
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+            {sale && (
+              <li className={cn("grid min-h-14 items-center gap-x-3 px-4 py-2 text-[13px] tabular-nums", COLUMNS)}>
+                <span className="text-ink-muted">{formatCount(lines.length + 1, fmt)}</span>
+                <span className="whitespace-nowrap text-ink-2">{day(sale.date)}</span>
+                <span className="font-semibold text-ink">{t("Sold")}</span>
+                <span className="text-right whitespace-nowrap text-ink-soft">{money(sale.previous)}</span>
+                <span className="text-right font-bold whitespace-nowrap text-ink">{money(sale.value)}</span>
+                {difference(sale.change, sale.previous)}
+                <span className="flex justify-end">{locked("Read only")}</span>
+              </li>
+            )}
+          </ul>
         </div>
       </div>
       <PopupDialog
@@ -283,6 +329,6 @@ export function AssetStatementDialog({ open, onClose, asset, categories, currenc
         </div>
       </PopupDialog>
       {confirmDialog}
-    </Drawer>
+    </PopupDialog>
   );
 }

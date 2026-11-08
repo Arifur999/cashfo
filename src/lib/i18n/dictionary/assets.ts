@@ -520,4 +520,9 @@ export const assetsDictionary: Record<string, string> = {
   "This is where the asset starts. Edit the purchase instead.": "এখান থেকেই সম্পদের শুরু। এর বদলে কেনার তথ্য এডিট করুন।",
   "This asset is sold. Its value can't change.": "এই সম্পদ বিক্রি হয়ে গেছে। এর দাম আর বদলানো যায় না।",
   "Value update not found": "দামের আপডেট পাওয়া যায়নি",
+  // v16 value history popup
+  "Fixed@@history": "স্থির",
+  "Read only": "শুধু দেখা",
+  "This asset is sold, so its history is read only.": "এই সম্পদ বিক্রি হয়ে গেছে, তাই ইতিহাস শুধু দেখা যাবে।",
+  "Every update adds a new row. The first row is where the asset starts.": "প্রতিটি আপডেট নতুন সারি যোগ করে। প্রথম সারি থেকেই সম্পদের শুরু।",
 };
