@@ -179,15 +179,8 @@ function Topbar() {
         </ol>
       </nav>
 
-      {!portal && (
-      <div className="flex shrink-0 max-md:order-3">
-        <CustomerSearch
-          iconClassName={iconButton}
-          boxClassName={habit ? "rounded-sm border-line bg-strip" : "rounded-full border-line-card bg-surface shadow-control"}
-          kbdClassName={habit ? "rounded-xs" : "rounded-full"}
-        />
-      </div>
-      )}
+      {/* The boards took the search box off the bar; Ctrl K still opens it (not for a group member login). */}
+      {!portal && <CustomerSearch showTriggers={false} />}
 
       {!portal && (
       <TodayTasksPanel open={tasksOpen} onOpenChange={setTasksOpen}>
