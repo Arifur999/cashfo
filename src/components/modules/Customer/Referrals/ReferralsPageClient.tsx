@@ -3,6 +3,7 @@
 import { Check, Lock, PauseCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import ErrorState from "@/components/smartly/ErrorState";
 import PageFrame from "@/components/smartly/PageFrame";
@@ -14,6 +15,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { EarningsByMonthCard, LatestCommissionsCard, PeopleCard, TopFriendsCard } from "./DashboardCards";
 import { EarningsHero } from "./EarningsHero";
+import { FriendDialog, type FriendStub } from "./FriendDialog";
 import { InviteLinkCard } from "./InviteLinkCard";
 import { ReferralLocked } from "./ReferralLocked";
 
@@ -33,6 +35,8 @@ interface ReferralsPageClientProps {
 export function ReferralsPageClient({ info, currency, origin, today }: ReferralsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
+  // The friend a "Who earns you the most" row opened.
+  const [friend, setFriend] = useState<FriendStub | null>(null);
 
   if (!info) {
     return (
@@ -97,9 +101,10 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
         <PeopleCard info={info} currency={currency} />
       </div>
       <div className="grid items-start gap-3.5 md:gap-5 lg:grid-cols-2">
-        <TopFriendsCard info={info} currency={currency} />
+        <TopFriendsCard info={info} currency={currency} onOpen={setFriend} />
         <LatestCommissionsCard info={info} currency={currency} today={today} />
       </div>
+      <FriendDialog friend={friend} onClose={() => setFriend(null)} currency={currency} today={today} />
     </PageFrame>
   );
 }

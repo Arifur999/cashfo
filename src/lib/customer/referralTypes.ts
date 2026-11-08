@@ -99,7 +99,9 @@ export interface ReferralProgramInfo {
   expectedNext30Days: string;
   expectedRenewals: number;
   firstEarnedAt: string | null;
-  topFriends: { referralId: string; name: string; earned: string }[];
+  // planName: the plan they are on now; payments: how many of theirs earned
+  // a share (an older API leaves both out).
+  topFriends: { referralId: string; name: string; planName?: string | null; payments?: number; earned: string }[];
   latest: Earning[];
 }
 

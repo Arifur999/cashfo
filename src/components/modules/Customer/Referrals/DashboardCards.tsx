@@ -117,9 +117,9 @@ export function PeopleCard({ info, currency }: { info: ReferralProgramInfo; curr
   );
 }
 
-// "Who earns you the most": the friends with the biggest total, with a bar
-// against the first.
-export function TopFriendsCard({ info, currency }: { info: ReferralProgramInfo; currency: string }) {
+// "Who earns you the most": the friends with the biggest total, their plan
+// and payments, with a bar against the first; a row opens the friend.
+export function TopFriendsCard({ info, currency, onOpen }: { info: ReferralProgramInfo; currency: string; onOpen: (friend: { id: string; name: string }) => void }) {
   const { t, fmt } = useLocale();
   const top = Math.max(1, ...info.topFriends.map((f) => Number(f.earned)));
   return (
@@ -132,16 +132,28 @@ export function TopFriendsCard({ info, currency }: { info: ReferralProgramInfo; 
         <p className="border-t border-divider px-4 py-4 text-small text-ink-muted md:px-5">{t("When friends pay, the ones who earn you the most show here.")}</p>
       ) : (
         <ul>
-          {info.topFriends.map((friend) => (
-            <li key={friend.referralId} className="flex items-center gap-3 border-t border-divider px-4 py-2.5 md:px-5">
-              <Avatar name={friend.name} size={32} tone="soft" alt="" />
-              <span className="min-w-0 flex-1 truncate text-body font-semibold text-ink">{friend.name}</span>
-              <span aria-hidden="true" className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-surface-sunken sm:block">
-                <span style={{ width: `${(Number(friend.earned) / top) * 100}%` }} className="block h-full rounded-full bg-emerald" />
-              </span>
-              <span className="w-24 text-right text-body font-bold text-ink tabular-nums">{formatCurrency(friend.earned, currency, fmt)}</span>
-            </li>
-          ))}
+          {info.topFriends.map((friend) => {
+            const planLine = [friend.planName ?? (friend.payments === undefined ? null : t("Free")), friend.payments === undefined ? null : t(friend.payments === 1 ? "{count} payment" : "{count} payments", { count: formatCount(friend.payments, fmt) })].filter(Boolean).join(" · ");
+            return (
+              <li key={friend.referralId} className="border-t border-divider">
+                <button
+                  type="button"
+                  onClick={() => onOpen({ id: friend.referralId, name: friend.name })}
+                  className="grid w-full grid-cols-[32px_minmax(0,1fr)_86px] items-center gap-x-3 px-4 py-2.5 text-left tabular-nums hover:bg-surface-sunken/60 sm:grid-cols-[32px_minmax(0,1fr)_110px_86px] md:px-5"
+                >
+                  <Avatar name={friend.name} size={32} tone="soft" alt="" />
+                  <span className="flex min-w-0 flex-col gap-px">
+                    <span className="truncate text-body font-semibold text-ink">{friend.name}</span>
+                    {planLine && <span className="truncate text-caption text-ink-muted">{planLine}</span>}
+                  </span>
+                  <span aria-hidden="true" className="hidden h-2 overflow-hidden rounded-full bg-surface-sunken sm:block">
+                    <span style={{ width: `${(Number(friend.earned) / top) * 100}%` }} className="block h-full rounded-full bg-emerald" />
+                  </span>
+                  <span className="text-right text-body font-bold text-ink">{formatCurrency(friend.earned, currency, fmt)}</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Card>
@@ -183,8 +195,8 @@ export function LatestCommissionsCard({ info, currency, today }: { info: Referra
                 <span className="truncate text-body font-semibold text-ink">{line.friendName}</span>
                 <span className="truncate text-caption text-ink-muted">{describe(line, today)}</span>
               </span>
-              <span className={cn("text-body font-bold tabular-nums", line.status === "REVERSED" || line.status === "CANCELLED" ? "text-ink-muted line-through" : "text-ink")}>{formatCurrency(line.amount, currency, fmt)}</span>
-              <CommissionStatusCell line={line} today={today} align="end" className="w-30 shrink-0" />
+              <span className={cn("w-22.5 shrink-0 text-right text-body font-bold tabular-nums", line.status === "REVERSED" || line.status === "CANCELLED" ? "text-ink-muted line-through" : "text-ink")}>{formatCurrency(line.amount, currency, fmt)}</span>
+              <CommissionStatusCell line={line} today={today} align="end" className="w-32 shrink-0" />
             </li>
           ))}
         </ul>
