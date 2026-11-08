@@ -91,7 +91,7 @@ export function SidebarPanel({ app, collapsed = false, onToggle, touch = false, 
     <>
       {header ?? <BrandBlock app={app} collapsed={collapsed} />}
       {habit ? (
-        <HabitMenu navRef={ref} style={style} collapsed={collapsed} touch={touch} className={collapsed ? "mt-4" : "mt-5.5"} />
+        <HabitMenu navRef={ref} style={style} collapsed={collapsed} touch={touch} className="mt-4" />
       ) : (
         <MoneyMenu navRef={ref} style={style} collapsed={collapsed} touch={touch} className="mt-2.5" />
       )}

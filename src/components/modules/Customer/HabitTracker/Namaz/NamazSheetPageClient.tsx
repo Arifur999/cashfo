@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, Fragment, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -28,13 +27,16 @@ import { withCheck } from "../trackerChecks";
 import { INSIGHT_ICON, insightText } from "./namazWords";
 import { PrayerSheet } from "./PrayerSheet";
 import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
+import { PeriodPicker } from "@/components/modules/Customer/Shared/PeriodPicker";
 import { usePrayerSettings } from "@/components/modules/Customer/Providers/PrayerSettingsProvider";
 
 interface NamazSheetPageClientProps {
   tracker: HabitMonthTracker;
-  // The sheets of the month before and after, if they exist.
+  // The sheet of the month before, if there is one.
   previous: HabitMonthTracker | null;
-  next: HabitMonthTracker | null;
+  // Every month with a sheet, for the month picker.
+  months: { year: number; month: number; id: string }[];
+  today: string;
   // What is still owed, for the Missed figure; null when it couldn't be read.
   qaza?: QazaSummary | null;
 }
@@ -60,7 +62,7 @@ const SPLIT: { key: "jamaat" | "onTime" | "qaza" | "missed"; label: string; bar:
 // One month of the five prayers: the sheet with a box per prayer per day,
 // the month's figures, each prayer on its own, and what stands out. An
 // earlier month with nothing marked (added by mistake) can be deleted.
-export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: NamazSheetPageClientProps) {
+export function NamazSheetPageClient({ tracker, previous, months, today, qaza = null }: NamazSheetPageClientProps) {
   const { t, fmt } = useLocale();
   const { hijriAdjust } = usePrayerSettings().settings;
   const router = useRouter();
@@ -113,18 +115,6 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
   const jamaatShare = summary.prayedSoFar > 0 ? Math.round((summary.jamaat / summary.prayedSoFar) * 100) : 0;
   const missedSub = summary.missed === 0 ? t("Nothing new to make up") : qaza ? t("Added to qaza · {count} still to make up", { count: count(qaza.totalLeft) }) : t("Added to qaza");
 
-  const monthLink = (target: HabitMonthTracker | null, label: string, icon: React.ReactNode, edge: boolean) =>
-    target ? (
-      <Link href={`/habit-tracker/habits/namaz/${target.id}`} aria-label={label} className={cn("flex size-9.5 items-center justify-center text-ink-soft hover:bg-surface-sunken pointer-coarse:size-11", edge && "border-r border-line")}>
-        {icon}
-      </Link>
-    ) : (
-      // No sheet that way: a dead button, out of the Tab order.
-      <button type="button" disabled aria-label={label} className={cn("flex size-9.5 items-center justify-center text-input pointer-coarse:size-11", edge && "border-r border-line")}>
-        {icon}
-      </button>
-    );
-
   return (
     <PageFrame className="gap-5">
       <TopbarExtras record={monthName(key, fmt, "long", true)} />
@@ -147,10 +137,19 @@ export function NamazSheetPageClient({ tracker, previous, next, qaza = null }: N
                   {t("Delete this sheet")}
                 </Button>
               )}
-              <div role="group" aria-label={t("Month")} className="flex overflow-hidden rounded-sm border border-input bg-surface">
-                {monthLink(previous, t(MONTH_NAMES[(month + 10) % 12]), <ChevronLeft className="size-4" aria-hidden="true" />, true)}
-                {monthLink(next, t(MONTH_NAMES[month % 12]), <ChevronRight className="size-4" aria-hidden="true" />, false)}
-              </div>
+              {/* The board's period picker, months only: those with a sheet. */}
+              <PeriodPicker
+                period={{ kind: "month", year, month }}
+                defaultPeriod={{ kind: "month", year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) }}
+                today={today}
+                activeMonths={months.map((each) => ({ year: each.year, month: each.month, count: 1 }))}
+                modes={["month"]}
+                greyNote="Greyed-out months have no sheet."
+                onPick={(picked) => {
+                  const target = picked.kind === "month" && months.find((each) => each.year === picked.year && each.month === picked.month);
+                  if (target && target.id !== tracker.id) router.push(`/habit-tracker/habits/namaz/${target.id}`);
+                }}
+              />
             </>
           }
         />

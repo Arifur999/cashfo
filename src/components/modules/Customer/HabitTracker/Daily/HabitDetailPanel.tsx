@@ -6,6 +6,7 @@ import { createElement, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Card from "@/components/smartly/Card";
 import Textarea from "@/components/smartly/form/Textarea";
+import IconAction from "@/components/smartly/IconAction";
 import type { Habit, HabitMonthLog } from "@/lib/customer/api";
 import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
@@ -122,9 +123,9 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, logs, mon
           <Heading className="truncate text-title leading-[normal] font-semibold text-ink">{habit.name}</Heading>
           <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{subtitle}</span>
         </span>
-        <button type="button" onClick={onEdit} aria-label={t("Edit {name}", { name: habit.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-sm border border-line bg-surface text-ink-soft hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
-          <Pencil className="size-4" aria-hidden="true" />
-        </button>
+        <IconAction onClick={onEdit} aria-label={t("Edit {name}", { name: habit.name })}>
+          <Pencil strokeWidth={2} aria-hidden="true" />
+        </IconAction>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5">

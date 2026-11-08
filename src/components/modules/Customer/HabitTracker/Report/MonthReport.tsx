@@ -1,10 +1,11 @@
 "use client";
 
-import { CalendarDays, ChevronDown, Printer, type LucideIcon } from "lucide-react";
+import { Printer, type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { PeriodPicker } from "@/components/modules/Customer/Shared/PeriodPicker";
 import Card from "@/components/smartly/Card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -23,9 +24,13 @@ export interface MonthOption {
 // The month list's percent: forest when good, amber below 80%.
 const pctTone = (pct: number | null) => (pct === null ? "text-ink-faint" : pct >= 80 ? "text-emerald" : "text-warning-ink");
 
-export function ReportHeader({ title, current, chip, subtitle, months, selected, onPrint, action }: { title: string; current: boolean; chip?: React.ReactNode; subtitle: string; months: MonthOption[]; selected: string; onPrint: () => void; action?: React.ReactNode }) {
-  const { t, fmt } = useLocale();
-  const years = [...new Set(months.map((month) => month.key.slice(0, 4)))];
+// The header: the month and its line, then the board's one period picker
+// (months only; months the page has nothing for are greyed out), the
+// page's own action and Print.
+export function ReportHeader({ title, current, chip, subtitle, months, selected, today, onPrint, action }: { title: string; current: boolean; chip?: React.ReactNode; subtitle: string; months: MonthOption[]; selected: string; today: string; onPrint: () => void; action?: React.ReactNode }) {
+  const { t } = useLocale();
+  const router = useRouter();
+  const ym = (key: string) => ({ year: Number(key.slice(0, 4)), month: Number(key.slice(5, 7)) });
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div className="flex min-w-0 flex-col gap-0.75">
@@ -37,32 +42,19 @@ export function ReportHeader({ title, current, chip, subtitle, months, selected,
         <p className="text-body text-ink-muted">{subtitle}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2.5 print:hidden">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex h-10 min-w-50 items-center justify-between gap-2.5 rounded-sm border border-input bg-surface px-3 text-body font-semibold text-ink hover:bg-surface-sunken pointer-coarse:h-11">
-            <span className="flex items-center gap-2">
-              <CalendarDays className="size-4 text-ink-muted" aria-hidden="true" />
-              {months.find((month) => month.key === selected)?.label ?? title}
-            </span>
-            <ChevronDown className="size-4 text-ink-muted" aria-hidden="true" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-105 w-65 overflow-y-auto p-1.5">
-            {years.map((year) => (
-              <DropdownMenuGroup key={year}>
-                <DropdownMenuLabel className="px-2.5 pt-2 pb-1 text-[11px] font-bold tracking-[0.06em] text-ink-muted">{toLocaleDigits(year, fmt)}</DropdownMenuLabel>
-                {months
-                  .filter((month) => month.key.startsWith(year))
-                  .map((month) => (
-                    <DropdownMenuItem key={month.key} asChild className={cn("h-9 justify-between rounded-sm px-2.5 text-[13.5px]", month.key === selected ? "bg-emerald-soft font-bold text-emerald" : "font-medium text-ink")}>
-                      <Link href={month.href} aria-current={month.key === selected ? "page" : undefined}>
-                        <span>{month.label}</span>
-                        <span className={cn("text-[12.5px] font-bold tabular-nums", pctTone(month.pct))}>{month.pct === null ? "—" : `${formatCount(month.pct, fmt)}%`}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-              </DropdownMenuGroup>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <PeriodPicker
+          period={{ kind: "month", ...ym(selected) }}
+          defaultPeriod={{ kind: "month", ...ym(today.slice(0, 7)) }}
+          today={today}
+          activeMonths={months.map((month) => ({ ...ym(month.key), count: 1 }))}
+          modes={["month"]}
+          onPick={(picked) => {
+            if (picked.kind !== "month") return;
+            const key = `${picked.year}-${String(picked.month).padStart(2, "0")}`;
+            const href = months.find((month) => month.key === key)?.href;
+            if (href) router.push(href);
+          }}
+        />
         {action}
         <button type="button" onClick={onPrint} aria-label={t("Print this month")} title={t("Print this month")} className="flex size-10 items-center justify-center rounded-sm border border-input bg-surface text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11">
           <Printer className="size-4.5" aria-hidden="true" />
