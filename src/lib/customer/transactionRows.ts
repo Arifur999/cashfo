@@ -290,13 +290,9 @@ export interface TransactionListFilters {
   categoryId?: string;
   // Only what files under no category (?uncategorised=1).
   uncategorised?: boolean;
-  accountId?: string;
   dateFrom?: string;
   dateTo?: string;
   search?: string;
-  // Deleted (voided) rows and their reversals listed too (?deleted=1): a
-  // view, not a filter, so it isn't counted as one.
-  deleted?: boolean;
 }
 
 // A query's values, from useSearchParams() or a page's searchParams.
@@ -315,17 +311,15 @@ export function readTransactionFilters(get: QueryValue): TransactionListFilters 
     type: type === "INCOME" || type === "EXPENSE" ? type : undefined,
     categoryId: text("categoryId"),
     uncategorised: get("uncategorised") === "1" || get("uncategorised") === "true" ? true : undefined,
-    accountId: text("accountId"),
     dateFrom: day("dateFrom"),
     dateTo: day("dateTo"),
     search: text("search"),
-    deleted: get("deleted") === "1" ? true : undefined,
   };
 }
 
 // How many filters are on, the date range counting once.
 export const activeFilterCount = (filters: TransactionListFilters): number =>
-  [filters.type, filters.categoryId || filters.uncategorised, filters.accountId, filters.dateFrom || filters.dateTo, filters.search].filter(Boolean).length;
+  [filters.type, filters.categoryId || filters.uncategorised, filters.dateFrom || filters.dateTo, filters.search].filter(Boolean).length;
 
 // A From day after the To day: nothing can match.
 export const isReversedRange = (filters: Pick<TransactionListFilters, "dateFrom" | "dateTo">): boolean => !!filters.dateFrom && !!filters.dateTo && filters.dateFrom > filters.dateTo;

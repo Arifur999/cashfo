@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { monthLabel } from "@/components/modules/Customer/Budget/MonthSwitcher";
 import Button from "@/components/smartly/Button";
@@ -152,7 +152,7 @@ export function PeriodPicker({ period, today, activeMonths, allowAll = false, de
             busy && "opacity-60",
           )}
         >
-          <CalendarDays className="size-4 text-ink-muted" strokeWidth={2} aria-hidden="true" />
+          <Calendar className="size-4 text-ink-muted" strokeWidth={2} aria-hidden="true" />
           {periodLabel(period, t, fmt)}
           {open ? <ChevronUp className="size-3.5 text-ink-muted" aria-hidden="true" /> : <ChevronDown className="size-3.5 text-ink-muted" aria-hidden="true" />}
         </button>

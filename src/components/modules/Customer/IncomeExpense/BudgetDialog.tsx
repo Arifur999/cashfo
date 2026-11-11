@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { monthLabel, monthOnlyLabel } from "@/components/modules/Customer/Budget/MonthSwitcher";
@@ -7,7 +8,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { MonthlyPlan } from "@/lib/customer/api";
-import { saveMonthlyPlanAction } from "@/lib/customer/budgetActions";
+import { deleteMonthlyPlanAction, saveMonthlyPlanAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import type { YearMonth } from "@/lib/customer/period";
 import { toLocaleDigits } from "@/lib/i18n/digits";
@@ -37,7 +38,7 @@ interface BudgetDialogProps {
 }
 
 const SELECT =
-  "h-12 w-full rounded-field border bg-surface px-3 text-body text-ink outline-none transition-[border-color,box-shadow] focus:border-focus-ring focus:focus-halo disabled:bg-strip disabled:text-ink-2";
+  "h-12 w-full cursor-pointer rounded-field border bg-surface px-3 text-body text-ink outline-none transition-[border-color,box-shadow] focus:border-focus-ring focus:focus-halo";
 
 const same = (a: YearMonth, b: YearMonth) => a.month === b.month && a.year === b.year;
 
@@ -49,12 +50,12 @@ function MoneyInput({ id, value, onChange, currency, invalid }: { id: string; va
   return (
     <Input
       id={id}
-      size="md"
+      size="lg"
       inputMode="decimal"
       placeholder="0"
       invalid={invalid}
       {...field}
-      leading={<span className="text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
+      leading={<span className="text-title font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>}
       className="text-title font-semibold tabular-nums"
     />
   );
@@ -63,9 +64,11 @@ function MoneyInput({ id, value, onChange, currency, invalid }: { id: string; va
 // Budget Planning's "Set monthly budget" popup (design: BudgetDialog): the
 // month, its income target and expense budget, and the savings the two plan
 // for. A month that has a plan already is said, with a way to edit that one;
-// an empty form can take the last plan's amounts.
+// an empty form can take the last plan's amounts. An edit may pick another
+// month: the plan moves there.
 export function BudgetDialog({ businessId, currency, editing, plans, current, onClose, onSaved }: BudgetDialogProps) {
   const { t, fmt } = useLocale();
+  const router = useRouter();
   const [month, setMonth] = useState(current.month);
   const [year, setYear] = useState(current.year);
   const [target, setTarget] = useState("");
@@ -118,10 +121,42 @@ export function BudgetDialog({ businessId, currency, editing, plans, current, on
       return;
     }
     const wasPlan = editingPlan !== null;
+    const moved = editingPlan && !same(editingPlan, picked) ? { fromMonth: editingPlan.month, fromYear: editingPlan.year } : {};
+    // What the toast's Undo puts back: the plan as it was (in its own month),
+    // or no plan at all.
+    const before = editingPlan ? plans.find((plan) => same(plan, editingPlan)) : undefined;
     startTransition(async () => {
-      const result = await saveMonthlyPlanAction(businessId, { month, year, incomeTarget: targetValue, expenseBudget: budgetValue });
+      const result = await saveMonthlyPlanAction(businessId, { month, year, incomeTarget: targetValue, expenseBudget: budgetValue, ...moved });
       if (result.success) {
-        toast.success(wasPlan ? t("Plan updated") : t("Budget saved for {month}", { month: pickedLabel }));
+        const savedId = result.data?.id ?? null;
+        const undo = before
+          ? () =>
+              saveMonthlyPlanAction(businessId, {
+                month: before.month,
+                year: before.year,
+                incomeTarget: Number(before.incomeTarget ?? 0),
+                expenseBudget: Number(before.expenseBudget ?? 0),
+                ...(!same(before, picked) && { fromMonth: month, fromYear: year }),
+              })
+          : savedId
+            ? () => deleteMonthlyPlanAction(businessId, savedId)
+            : null;
+        toast.success(wasPlan ? t("Plan updated") : t("Budget saved for {month}", { month: pickedLabel }), {
+          ...(undo && {
+            action: {
+              label: t("Undo"),
+              onClick: async () => {
+                const back = await undo();
+                if (back.success) {
+                  toast.success(t("Change undone"));
+                  router.refresh();
+                } else {
+                  toast.error(t(back.message ?? "Couldn't undo the change"));
+                }
+              },
+            },
+          }),
+        });
         onSaved(picked);
         onClose();
       } else {
@@ -137,17 +172,16 @@ export function BudgetDialog({ businessId, currency, editing, plans, current, on
       title={editingPlan ? t("Edit {month} plan", { month: monthLabel(editingPlan.month, editingPlan.year, fmt) }) : t("Set monthly budget")}
       busy={isPending}
       saveLabel={editingPlan ? "Save changes" : "Save budget"}
-      saveDisabled={!!clash}
       onSubmit={save}
+      bodyClassName="gap-4"
     >
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2.5">
         <div className="grid grid-cols-2 gap-3">
           <Field htmlFor="bud-month" label={<span className="text-body font-medium text-ink">{t("Month")}</span>}>
             <select
               id="bud-month"
               value={month}
               onChange={(event) => setMonth(Number(event.target.value))}
-              disabled={editingPlan !== null}
               aria-invalid={clash ? true : undefined}
               aria-describedby={clash ? "bud-clash" : undefined}
               className={cn(SELECT, clash ? "border-expense" : "border-input")}
@@ -164,7 +198,6 @@ export function BudgetDialog({ businessId, currency, editing, plans, current, on
               id="bud-year"
               value={year}
               onChange={(event) => setYear(Number(event.target.value))}
-              disabled={editingPlan !== null}
               aria-invalid={clash ? true : undefined}
               aria-describedby={clash ? "bud-clash" : undefined}
               className={cn(SELECT, clash ? "border-expense" : "border-input")}
@@ -178,12 +211,12 @@ export function BudgetDialog({ businessId, currency, editing, plans, current, on
           </Field>
         </div>
         {clash && (
-          <p id="bud-clash" role="alert" className="flex flex-wrap items-center gap-x-2 text-caption text-expense">
-            {t("{month} already has a plan.", { month: pickedLabel })}
-            <button type="button" onClick={editClash} className="rounded-sm font-semibold text-emerald hover:underline">
+          <div id="bud-clash" role="alert" className="flex items-center justify-between gap-2.5 rounded-field bg-expense-soft/50 px-3 py-2.5 text-small text-expense">
+            <span>{t("{month} already has a plan.", { month: pickedLabel })}</span>
+            <button type="button" onClick={editClash} className="h-7.5 shrink-0 rounded-full border border-expense-line bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-expense hover:bg-expense-soft">
               {t("Edit that plan")}
             </button>
-          </p>
+          </div>
         )}
       </div>
       {last && !target && !budget && (
@@ -194,7 +227,7 @@ export function BudgetDialog({ businessId, currency, editing, plans, current, on
             setBudget(last.expenseBudget ? String(Number(last.expenseBudget)) : "");
             setErrors({});
           }}
-          className="self-start rounded-full bg-mint-50 px-3.5 py-1.5 text-small font-semibold text-brand-ink hover:bg-mint-200 dark:hover:bg-emerald/20"
+          className="-mt-1.5 self-start rounded-sm text-small font-semibold text-emerald hover:underline"
         >
           {t("Use {month}'s amounts", { month: monthLabel(last.month, last.year, fmt) })}
         </button>
@@ -231,12 +264,12 @@ export function BudgetDialog({ businessId, currency, editing, plans, current, on
           invalid={!!errors.budget}
         />
       </Field>
-      <div aria-live="polite" className={cn("flex items-center justify-between gap-3 rounded-[12px] px-4 py-3.5", planned < 0 ? "bg-expense-soft" : "bg-income-soft")}>
+      <div aria-live="polite" className={cn("flex items-center justify-between gap-3 rounded-[12px] px-4 py-3.5", planned < 0 ? "bg-expense-soft/50" : "bg-success-soft/50")}>
         <span className="flex flex-col gap-0.5">
           <span className="text-body font-semibold text-ink">{t("Planned savings")}</span>
-          <span className={cn("text-caption", planned < 0 ? "text-expense" : "text-ink-2")}>{t(planned < 0 ? "Your budget is more than your income target" : "Income target − Expense budget")}</span>
+          <span className={cn("text-caption", planned < 0 ? "text-expense" : "text-ink-soft")}>{t(planned < 0 ? "Your budget is more than your income target" : "Income target − Expense budget")}</span>
         </span>
-        <span className={cn("text-[20px] font-bold tabular-nums", planned < 0 ? "text-expense" : "text-income")}>{formatSignedCurrency(planned, currency, fmt)}</span>
+        <span className={cn("text-[20px] font-bold whitespace-nowrap tabular-nums", planned < 0 ? "text-expense" : "text-tint-green-ink")}>{planned < 0 ? formatSignedCurrency(planned, currency, fmt) : formatCurrency(planned, currency, fmt)}</span>
       </div>
     </IEDialog>
   );

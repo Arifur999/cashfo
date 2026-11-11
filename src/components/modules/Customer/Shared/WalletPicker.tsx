@@ -15,8 +15,10 @@ export interface WalletPickerProps {
   label: string;
   // 56px in the transaction drawer, 52px in the loan one, 64px with a 36px
   // tile in the transfer drawer; "compact" is the phone sheet's half-width
-  // picker (52px, the icon and the name only, under a 13px label).
-  size?: "lg" | "xl" | "2xl" | "compact";
+  // picker (52px, the icon and the name only, under a 13px label); "field"
+  // the transaction popup's Account box (design: TxnDrawer: 48px, the icon
+  // and the name, under the 14px field label).
+  size?: "lg" | "xl" | "2xl" | "compact" | "field";
   // The word before the balance: "Balance", or "Available" on the side the
   // money leaves.
   balanceLabel?: string;
@@ -107,12 +109,12 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
             aria-haspopup="listbox"
             aria-describedby={describedBy}
             disabled={loading || all.length === 0}
-            className={cn(invalid ? "border-expense" : "border-input", "flex min-w-0 items-center gap-3 rounded-field border bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
+            className={cn(invalid ? "border-expense" : "border-input", "flex min-w-0 items-center gap-3 rounded-field border bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : size === "field" ? "h-12 px-3" : "h-13")}
           >
-            {selected && size === "compact" ? (
+            {selected && (size === "compact" || size === "field") ? (
               <>
-                {createElement(isSavings(selected) ? PiggyBank : walletIcon(selected), { className: "size-4.5 shrink-0 text-ink-2", "aria-hidden": true })}
-                <span id={`${id}-value`} className="min-w-0 flex-1 truncate text-body-lg text-ink">{nameOf(selected)}</span>
+                {createElement(isSavings(selected) ? PiggyBank : walletIcon(selected), { className: cn("shrink-0 text-ink-2", size === "field" ? "size-4" : "size-4.5"), "aria-hidden": true })}
+                <span id={`${id}-value`} className={cn("min-w-0 flex-1 truncate text-ink", size === "field" ? "text-body" : "text-body-lg")}>{nameOf(selected)}</span>
               </>
             ) : selected ? (
               <>

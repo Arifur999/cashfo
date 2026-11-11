@@ -1,10 +1,9 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { useAddActions } from "@/components/modules/Customer/Layout/AddActionsProvider";
 import { PeriodPicker } from "@/components/modules/Customer/Shared/PeriodPicker";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -33,6 +32,19 @@ interface IEOverviewPageClientProps {
   canManage: boolean;
 }
 
+// The board's figure card: 18px corners, 20px in, and on hover a darker
+// edge, a deeper shadow and a round arrow in the top corner.
+const KPI_CARD = "group relative flex min-w-0 flex-col gap-1.5 p-5 transition-[border-color,box-shadow] hover:border-input hover:shadow-[0_2px_4px_rgba(18,32,29,0.06),0_10px_28px_rgba(18,32,29,0.08)]";
+const KPI_VALUE = "truncate text-[24px] font-bold tracking-[-0.02em] tabular-nums";
+
+function KpiArrow() {
+  return (
+    <span aria-hidden="true" className="absolute top-4 right-4 flex size-7 items-center justify-center rounded-full bg-surface-sunken text-ink-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+      <ArrowRight className="size-3.5" strokeWidth={2.25} />
+    </span>
+  );
+}
+
 // Income & Expense > Overview (the IEOverview board): a month's (a year's,
 // or any days') totals, the net and the share kept, each a way into its
 // transactions; then each kind by category, every category opening its own.
@@ -40,7 +52,6 @@ export function IEOverviewPageClient({ period, current, today, activeMonths, inc
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const { actions, run } = useAddActions();
   const [isSwitching, startSwitch] = useTransition();
   const thisMonth: Period = { kind: "month", ...current };
   const totalIncome = Number(income.total);
@@ -49,10 +60,6 @@ export function IEOverviewPageClient({ period, current, today, activeMonths, inc
   const rate = savingsRate(totalIncome, totalExpense);
 
   const goTo = (next: PickedPeriod) => startSwitch(() => router.push(periodHref(pathname, {}, next, thisMonth)));
-  const newTransaction = () => {
-    const action = actions.find((candidate) => candidate.key === "expense");
-    if (action) run(action);
-  };
   // Counted over real categories: the money with none is not one.
   const fromCategories = (breakdown: CategoryBreakdown) => {
     const count = breakdown.categories.filter((row) => !row.uncategorised).length;
@@ -63,9 +70,9 @@ export function IEOverviewPageClient({ period, current, today, activeMonths, inc
     {
       key: "income",
       label: t("Total income"),
-      dot: "bg-income",
+      dot: "bg-success",
       value: formatCurrency(totalIncome, currency, fmt),
-      tone: "text-income",
+      tone: "text-success",
       sub: fromCategories(income),
       href: transactionsHref(period, current, { type: "INCOME" }),
       tip: t("See all income"),
@@ -73,9 +80,9 @@ export function IEOverviewPageClient({ period, current, today, activeMonths, inc
     {
       key: "expense",
       label: t("Total expense"),
-      dot: "bg-expense",
+      dot: "bg-expense-fill",
       value: formatCurrency(totalExpense, currency, fmt),
-      tone: "text-expense",
+      tone: "text-expense-fill",
       sub: fromCategories(expense),
       href: transactionsHref(period, current, { type: "EXPENSE" }),
       tip: t("See all expenses"),
@@ -91,18 +98,24 @@ export function IEOverviewPageClient({ period, current, today, activeMonths, inc
       tip: t("See every transaction"),
     },
   ];
+  const rateText = rate === null ? "–" : `${rate < 0 ? "− " : ""}${toLocaleDigits(oneDecimal(Math.abs(rate)), fmt)}%`;
 
   return (
-    <PageFrame className="gap-4">
+    <PageFrame className="gap-4 leading-[normal]">
       <PageHeader
         title={t("Income & Expense Overview")}
+        className="md:items-center"
         actions={
           <>
             <PeriodPicker period={period} today={today} activeMonths={activeMonths} defaultPeriod={thisMonth} onPick={goTo} busy={isSwitching} align="end" />
-            {canManage && actions.some((action) => action.key === "expense") && (
-              <Button onClick={newTransaction} className="rounded-sm">
-                <Plus strokeWidth={2.25} />
-                {t("Transaction")}
+            {/* The board's button opens the New transaction popup on Transactions,
+                where the saved entry then shows. */}
+            {canManage && (
+              <Button asChild size="lg" className="gap-1.5 px-4.5">
+                <Link href="/transactions?new=1">
+                  <Plus strokeWidth={2.5} />
+                  {t("Transaction")}
+                </Link>
               </Button>
             )}
           </>
@@ -111,32 +124,44 @@ export function IEOverviewPageClient({ period, current, today, activeMonths, inc
 
       <div aria-busy={isSwitching || undefined} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.key} padding="none" interactive asChild className="rounded-[14px]">
-            <Link href={kpi.href} title={kpi.tip} className="flex min-w-0 flex-col gap-1.5 px-5 py-4.5">
+          <Card key={kpi.key} padding="none" asChild className={KPI_CARD}>
+            <Link href={kpi.href} title={kpi.tip}>
               <span className="flex items-center gap-2 text-small text-ink-muted">
                 {kpi.dot && <span aria-hidden="true" className={cn("size-2 rounded-full", kpi.dot)} />}
                 {kpi.label}
               </span>
-              <span className={cn("truncate text-[26px] leading-tight font-bold tracking-[-0.02em] tabular-nums", kpi.tone)}>{kpi.value}</span>
+              <span title={kpi.value} className={cn(KPI_VALUE, kpi.tone)}>
+                {kpi.value}
+              </span>
               <span className="text-small text-ink-muted">{kpi.sub}</span>
+              <KpiArrow />
             </Link>
           </Card>
         ))}
-        <Card padding="none" interactive asChild className="rounded-[14px]">
-          <Link href={budgetHref(period)} title={t("Open Budget Planning")} className="flex min-w-0 flex-col gap-1.5 px-5 py-4.5">
+        <Card padding="none" asChild className={KPI_CARD}>
+          <Link href={budgetHref(period)} title={t("Open Budget Planning")}>
             <span className="text-small text-ink-muted">{t("Savings rate")}</span>
-            <span className={cn("text-[26px] leading-tight font-bold tracking-[-0.02em] tabular-nums", rate === null ? (totalExpense > 0 ? "text-expense" : "text-ink-muted") : rate < 0 ? "text-expense" : "text-emerald")}>
-              {rate === null ? "–" : `${rate < 0 ? "− " : ""}${toLocaleDigits(oneDecimal(Math.abs(rate)), fmt)}%`}
+            <span title={rateText} className={cn(KPI_VALUE, rate === null ? (totalExpense > 0 ? "text-expense" : "text-ink-muted") : rate < 0 ? "text-expense" : "text-emerald")}>
+              {rateText}
             </span>
             {rate === null ? (
               <span className="text-small text-ink-muted">{totalExpense > 0 ? t("No income, only spending") : t("No transactions in this period")}</span>
             ) : rate < 0 ? (
-              <span className="text-small text-expense">{t("Spent more than you earned")}</span>
+              <span className="text-small text-ink-muted">{t("Spent more than you earned")}</span>
             ) : (
-              <span role="img" aria-label={t("{pct}% of income kept", { pct: toLocaleDigits(oneDecimal(rate), fmt) })} className="mt-2 block h-2 overflow-hidden rounded-full bg-surface-sunken">
+              <span
+                role="progressbar"
+                aria-label={t("Savings rate")}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(Math.min(100, rate))}
+                aria-valuetext={t("{pct}% of income kept", { pct: toLocaleDigits(oneDecimal(rate), fmt) })}
+                className="mt-1 block h-2 overflow-hidden rounded-full bg-surface-sunken"
+              >
                 <span className="block h-full rounded-full bg-emerald" style={{ width: `${Math.min(100, rate)}%` }} />
               </span>
             )}
+            <KpiArrow />
           </Link>
         </Card>
       </div>

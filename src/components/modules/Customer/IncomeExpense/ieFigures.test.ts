@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { budgetHref, budgetState, categoryName, daysLeft, donutGradient, oneDecimal, percentOf, planMatches, planMonthToShow, readMonth, savingsRate, transactionsHref } from "./ieFigures";
+import { budgetHref, budgetState, categoryName, daysLeft, donutGradient, firstFreeMonth, oneDecimal, percentOf, planMatches, planMonthToShow, readMonth, savingsRate, transactionsHref } from "./ieFigures";
 
 const NOW = { month: 10, year: 2026 };
 
@@ -65,10 +65,18 @@ describe("budget figures", () => {
     expect(percentOf(500, 0)).toBe(0);
   });
 
-  it("counts the days left, today included", () => {
-    expect(daysLeft(2026, 10, "2026-10-29")).toBe(3);
+  it("counts the days left after today", () => {
+    expect(daysLeft(2026, 10, "2026-10-28")).toBe(3);
+    expect(daysLeft(2026, 10, "2026-10-31")).toBe(0);
     expect(daysLeft(2026, 9, "2026-10-29")).toBe(0);
     expect(daysLeft(2026, 11, "2026-10-29")).toBe(30);
+  });
+});
+
+describe("firstFreeMonth", () => {
+  it("is this month when it has no plan, else the next free one, across a new year", () => {
+    expect(firstFreeMonth([], NOW)).toEqual(NOW);
+    expect(firstFreeMonth([{ month: 10, year: 2026 }, { month: 11, year: 2026 }, { month: 12, year: 2026 }], NOW)).toEqual({ month: 1, year: 2027 });
   });
 });
 

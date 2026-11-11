@@ -11,16 +11,15 @@ import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker"
 import Loader from "@/components/shared/Loader";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
-import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import Textarea from "@/components/smartly/form/Textarea";
-import Kbd from "@/components/smartly/Kbd";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAmountField } from "@/hooks/useAmountField";
 import { CategoryListbox } from "./CategoryListbox";
+import { DayTextField } from "./DayTextField";
 import { NewCategoryForm } from "./NewCategoryForm";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { budgetTone } from "@/lib/budgetTone";
@@ -30,8 +29,10 @@ import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
+import { dayText, dayTextProblem, parseDayText } from "@/lib/customer/dayText";
 import { correctTransactionAction, createExpenseAction, createIncomeAction, createTransferAction, listExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
-import { transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
+import { DELETED_REASON, transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
+import { undoEditAction, voidTransactionAction } from "@/lib/customer/transactionActions";
 import { categoryLabel, editChanges, type EditableEntry, relativeDayKey } from "@/lib/customer/transactionRows";
 import { getAppToday } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
@@ -42,24 +43,43 @@ import { cn } from "@/lib/utils";
 
 export type EntryKind = "INCOME" | "EXPENSE" | "TRANSFER";
 
+// What a save posted, for the page that opened the popup (Transactions
+// shows it and lights its row).
+export interface SavedEntry {
+  id: string;
+  kind: EntryKind;
+  // YYYY-MM-DD.
+  day: string;
+  category: string;
+  accountId: string;
+  note: string;
+}
+
 interface TransactionDrawerProps {
   open: boolean;
   onClose: () => void;
   businessId: string;
   currency: string;
-  // Which tab is open when the drawer opens.
-  initialKind?: EntryKind;
+  // Which kind is picked when the drawer opens; null picks none, as the
+  // Income & Expense pages' popup starts (design: TxnDrawer).
+  initialKind?: EntryKind | null;
+  // The kinds the popup offers (all three unless a page says: the Income &
+  // Expense pages offer income and expense).
+  kinds?: EntryKind[];
   // A saved entry to edit (decision D2): no tabs, the entry's values filled
   // in, and saving voids it and posts the corrected one.
   editing?: EditableEntry | null;
   // An edit made from a list: stay on the list (refreshed) rather than open
   // the corrected entry's page.
   stayOnEdit?: boolean;
+  // Told what each save posted.
+  onSaved?: (saved: SavedEntry) => void;
 }
 
 const TILE_LIMIT = 7;
 // The backend's cap on an entry's description (quick-entries DTOs).
 const NOTE_MAX = 500;
+const ALL_KINDS: EntryKind[] = ["INCOME", "EXPENSE", "TRANSFER"];
 
 // The board's tab arrows: money coming in points down-left, money going out
 // up-right. The picked tab's words take the kind's colour (selected).
@@ -82,8 +102,8 @@ function walletEffect(walletId: string, kind: EntryKind, accountId: string, toAc
   return (walletId === accountId ? -amount : 0) + (kind === "TRANSFER" && walletId === toAccountId ? amount : 0);
 }
 
-// The desktop board leads with Income; the phone board with Expense.
-const KIND_ORDER: Record<"phone", EntryKind[]> = { phone: ["EXPENSE", "INCOME", "TRANSFER"] };
+// The phone board leads with Expense.
+const PHONE_ORDER: EntryKind[] = ["EXPENSE", "INCOME", "TRANSFER"];
 
 // The desktop popup's kind cards: money in points up, money out down.
 const WIDE_KINDS = [
@@ -94,6 +114,10 @@ const WIDE_KINDS = [
 
 // A phone field's label: 13px semibold over its 52px box.
 const PHONE_LABEL = "text-small font-semibold text-ink-2";
+// A desktop field's label (the board's 14px medium).
+const WIDE_LABEL = "text-body font-medium text-ink";
+// The board's line under a field that needs fixing.
+const FIELD_ERROR = "text-[12.5px] leading-normal text-expense";
 
 // The month's budget hint, by how much of the limit this entry would use:
 // a quiet note under 70%, amber to 90%, red past it.
@@ -106,19 +130,26 @@ const HINT_TONE = {
 const NO_CATEGORIES: Record<"INCOME" | "EXPENSE", BudgetCategoryName[]> = { INCOME: [], EXPENSE: [] };
 const NO_FAILURES = { wallets: false, expenseAccounts: false, INCOME: false, EXPENSE: false };
 
-// New transaction: Income, Expense or Transfer in one drawer -- the amount
-// first, the category tiles, the wallet with what it will hold after this,
-// the date and a note. On phones it comes up from the bottom as the phone
-// board draws it: plain tabs, the amount large in the middle, the wallet and
-// the day side by side. Enter saves; "Save & add another" keeps it open and
-// clears the amount and note.
-export function TransactionDrawer({ open, onClose, businessId, currency, initialKind = "EXPENSE", editing = null, stayOnEdit = false }: TransactionDrawerProps) {
+// Wide screens get the popup; read when the drawer opens, so a phone that
+// opens it with no kind picked still starts on one (its board leads with
+// Expense).
+const isWideNow = () => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
+
+// New transaction: Income, Expense or Transfer in one drawer. On wide
+// screens it is the board's popup (TxnDrawer): the type, the date and the
+// account side by side, the amount, the category list and a description;
+// Save says what is still missing under each field. On phones it comes up
+// from the bottom as the phone board draws it: plain tabs, the amount large
+// in the middle, the category tiles, the wallet and the day side by side.
+// Enter saves; on a phone "Save & add another" keeps it open and clears the
+// amount and note. A saved or edited entry's toast offers Undo.
+export function TransactionDrawer({ open, onClose, businessId, currency, initialKind = "EXPENSE", kinds = ALL_KINDS, editing = null, stayOnEdit = false, onSaved }: TransactionDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { user } = useAuth();
   const defaultAccountId = user.businesses.find((business) => business.id === businessId)?.defaultAccountId ?? null;
   const wide = useMediaQuery("(min-width: 768px)");
-  const [kind, setKind] = useState<EntryKind>(initialKind);
+  const [kind, setKind] = useState<EntryKind | null>(initialKind);
   const [amount, setAmount] = useState("");
   const amountField = useAmountField(amount, setAmount, currency);
   const [category, setCategory] = useState("");
@@ -127,7 +158,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const [addingCategory, setAddingCategory] = useState(false);
   const [accountId, setAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
-  const [date, setDate] = useState(getAppToday());
+  // The day as typed in the popup's box (DD/MM/YYYY); the phone's own
+  // picker writes it too.
+  const [dateText, setDateText] = useState(() => dayText(getAppToday()));
   const [note, setNote] = useState("");
   const [wallets, setWallets] = useState<Account[]>([]);
   const [walletsError, setWalletsError] = useState<string | null>(null);
@@ -137,6 +170,10 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const [failed, setFailed] = useState(NO_FAILURES);
   const [budget, setBudget] = useState<BudgetOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  // Save was pressed with something missing: each field says what.
+  const [showErrors, setShowErrors] = useState(false);
+  // The category box was opened before a type was picked.
+  const [kindNudge, setKindNudge] = useState(false);
   // Bumped by Try again, and by a save that changes the month's spending.
   const [attempt, setAttempt] = useState(0);
   const [budgetVersion, setBudgetVersion] = useState(0);
@@ -148,24 +185,30 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const workspace = user.businesses.find((b) => b.id === businessId);
   const canAdd = workspace?.role !== "STAFF";
   const editingKind = editing?.kind;
+  // An income or expense may become the other when edited (the board's
+  // Type cards stay on); a transfer stays one.
+  const offered: EntryKind[] = editing ? (editing.kind === "TRANSFER" ? ["TRANSFER"] : ["INCOME", "EXPENSE"]) : kinds;
 
   // Reset the instant the drawer transitions closed → open (React's
-  // render-time pattern for "reset state when a prop changes").
-  const [prevOpen, setPrevOpen] = useState(open);
+  // render-time pattern for "reset state when a prop changes"). It starts
+  // as closed, so a drawer mounted open (a list's Edit) fills in too.
+  const [prevOpen, setPrevOpen] = useState(false);
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setKind(editing?.kind ?? initialKind);
+      setKind(editing?.kind ?? initialKind ?? (isWideNow() ? null : (PHONE_ORDER.find((option) => kinds.includes(option)) ?? "EXPENSE")));
       setAmount(editing ? String(editing.amount) : "");
       setCategory(editing?.category ?? "");
       setShowAll(false);
       setAccountId(editing?.accountId ?? "");
       setToAccountId(editing?.toAccountId ?? "");
-      setDate(editing?.day ?? getAppToday());
+      setDateText(dayText(editing?.day ?? getAppToday()));
       setNote(editing?.note ?? "");
       setLoading(true);
       setWalletsError(null);
       setFailed(NO_FAILURES);
+      setShowErrors(false);
+      setKindNudge(false);
     }
   }
 
@@ -181,12 +224,15 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         setWallets(list);
         setWalletsError(money.success ? null : (money.message ?? "Failed to load your wallets"));
         // The member's default wallet here (Settings › App preferences),
-        // while it is still one of them; else the first.
+        // while it is still one of them. Without one, the Income & Expense
+        // popup (opened with no kind) starts with none picked (design:
+        // TxnDrawer); the Add menu's drawer and the phone sheet with the first.
         const preferred = list.find((wallet) => wallet.id === defaultAccountId)?.id;
-        setAccountId((current) => current || preferred || list[0]?.id || "");
+        const startEmpty = initialKind === null && isWideNow();
+        setAccountId((current) => current || preferred || (startEmpty ? "" : list[0]?.id) || "");
         // Only a transfer has a second wallet: an edit of an income or an
         // expense never gets one, so opening it changes nothing.
-        if (editingKind === undefined || editingKind === "TRANSFER") setToAccountId((current) => current || list[1]?.id || "");
+        if (editingKind === undefined || editingKind === "TRANSFER") setToAccountId((current) => current || list.find((wallet) => wallet.id !== (preferred ?? list[0]?.id))?.id || "");
         setExpenseAccounts(expense.data ?? []);
         setCategories({ EXPENSE: expenseCategories.data ?? [], INCOME: incomeCategories.data ?? [] });
         setFailed({ wallets: !money.success, expenseAccounts: !expense.success, EXPENSE: !expenseCategories.success, INCOME: !incomeCategories.success });
@@ -204,13 +250,16 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     return () => {
       live = false;
     };
-  }, [open, businessId, editingKind, attempt, defaultAccountId]);
+  }, [open, businessId, editingKind, attempt, defaultAccountId, initialKind]);
+
+  const date = parseDayText(dateText);
+  const today = getAppToday();
 
   // The budget of the month the entry is dated in, for the "left this
   // month" hint: an entry for last month counts against last month.
   const entryMonth = date.slice(0, 7);
   useEffect(() => {
-    if (!open) return;
+    if (!open || !entryMonth) return;
     let live = true;
     const [year, month] = entryMonth.split("-").map(Number);
     getBudgetOverviewAction(businessId, month, year)
@@ -229,8 +278,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   }
 
   const isTransfer = kind === "TRANSFER";
-  const options = isTransfer ? [] : categories[kind];
-  const categoriesFailed = !isTransfer && failed[kind];
+  const categoryKind = kind === "INCOME" || kind === "EXPENSE" ? kind : null;
+  const options = categoryKind ? categories[categoryKind] : [];
+  const categoriesFailed = categoryKind !== null && failed[categoryKind];
   const loadFailed = failed.wallets || failed.expenseAccounts || failed.EXPENSE || failed.INCOME;
   const hiddenChoice = options.findIndex((option) => option.name === category) >= TILE_LIMIT;
   const visible = showAll || hiddenChoice || options.length <= TILE_LIMIT + 1 ? options : options.slice(0, TILE_LIMIT);
@@ -240,7 +290,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   // A wallet's balance once this is saved. An edit first takes the saved
   // entry back out, since the balance already holds it.
   const afterFor = (target: Account) =>
-    Number(target.currentBalance) - (editing ? walletEffect(target.id, editing.kind, editing.accountId, editing.toAccountId, editing.amount) : 0) + walletEffect(target.id, kind, accountId, toAccountId, value);
+    Number(target.currentBalance) - (editing ? walletEffect(target.id, editing.kind, editing.accountId, editing.toAccountId, editing.amount) : 0) + (kind ? walletEffect(target.id, kind, accountId, toAccountId, value) : 0);
   const after = wallet ? afterFor(wallet) : null;
   const toAfter = toWallet ? afterFor(toWallet) : null;
 
@@ -262,52 +312,85 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const keptAccountId = editing && category === editing.category ? editing.otherAccountId : undefined;
   const expenseAccountId = keptAccountId ?? expenseAccounts.find((a) => a.name.toLowerCase().includes(category.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
   // How many of the entry's values an edit has changed.
-  const changes = editing ? editChanges(editing, { amount: value, category, accountId, toAccountId, day: date, note }) : 0;
+  const changes = editing ? editChanges(editing, { amount: value, category, accountId, toAccountId, day: date, note }) + (kind !== null && kind !== editing.kind ? 1 : 0) : 0;
   // A category is needed whenever there are some to pick; when the read
   // failed it is still needed, so an outage can't save an untagged entry.
   // An entry saved without one may be edited and stay without.
   const keepsNoCategory = editing !== null && editing.category === "" && category === "";
-  const categoryReady = options.length > 0 ? category.length > 0 || keepsNoCategory : !categoriesFailed;
-  const valid =
-    canAdd &&
-    value > 0 &&
-    accountId.length > 0 &&
-    (isTransfer ? toAccountId.length > 0 && toAccountId !== accountId : categoryReady && (kind === "INCOME" || expenseAccountId.length > 0)) &&
-    (!editing || changes > 0);
-  // The one thing still missing, said by the disabled button.
-  const pickCategory = canAdd && !isTransfer && value > 0 && accountId.length > 0 && options.length > 0 && !category;
+
+  // What is still missing, each said under its field once Save is pressed
+  // (the board's checks).
+  const problems = {
+    kind: kind === null,
+    date: dayTextProblem(dateText),
+    account: accountId.length === 0,
+    toAccount: isTransfer && (toAccountId.length === 0 || toAccountId === accountId),
+    amount: !(value >= 0.01),
+    category: categoryKind !== null && (options.length > 0 ? category.length === 0 && !keepsNoCategory : categoriesFailed),
+    // An expense has no expense account to post against (said under the category).
+    expenseAccount: kind === "EXPENSE" && expenseAccountId.length === 0,
+  };
+  const complete = !problems.kind && !problems.date && !problems.account && !problems.toAccount && !problems.amount && !problems.category && !problems.expenseAccount;
+  const valid = canAdd && complete && (!editing || changes > 0);
+  // Undo of what a save just posted, from its toast.
+  const undo = async (run: () => Promise<{ success: boolean; message?: string }>, done: string) => {
+    const result = await run();
+    if (result.success) {
+      toast.success(t(done));
+      router.refresh();
+    } else {
+      toast.error(t(result.message ?? "Couldn't undo the change"));
+    }
+  };
+  // The phone's one thing still missing, said by its disabled button.
+  const pickCategory = canAdd && categoryKind !== null && value > 0 && accountId.length > 0 && options.length > 0 && !category;
+  const typeError = (showErrors || kindNudge) && problems.kind;
 
   function switchKind(next: EntryKind) {
     setKind(next);
     setCategory("");
     setShowAll(false);
     setAddingCategory(false);
+    setKindNudge(false);
   }
 
   // A category added from the popup joins its kind's list and is picked.
   function categoryAdded(added: BudgetCategoryName) {
-    const type = kind === "INCOME" ? "INCOME" : "EXPENSE";
-    setCategories((current) => ({ ...current, [type]: [...current[type].filter((option) => option.id !== added.id), added] }));
+    if (!categoryKind) return;
+    setCategories((current) => ({ ...current, [categoryKind]: [...current[categoryKind].filter((option) => option.id !== added.id), added] }));
     setCategory(added.name);
     setAddingCategory(false);
   }
 
   function save(another: boolean) {
-    if (!valid || isPending) return;
+    if (isPending || !canAdd) return;
+    // Nothing changed: there is nothing to correct.
+    if (editing && changes === 0 && complete) {
+      onClose();
+      return;
+    }
+    if (!complete || !kind) {
+      setShowErrors(true);
+      return;
+    }
+    const savedKind = kind;
     startTransition(async () => {
       // An edit keeps a loan profit's bank or person.
       const contactId = editing?.contactId ?? undefined;
       const income = { toAccountId: accountId, incomeAccountId: keptAccountId, amount: value, date, categoryId: category || undefined, note: note || undefined, contactId };
       const expense = { fromAccountId: accountId, expenseAccountId, amount: value, date, categoryId: category || undefined, note: note || undefined, contactId };
       const transfer = { fromAccountId: accountId, toAccountId, amount: value, date, description: note || undefined };
+      const saved = (id: string): SavedEntry => ({ id, kind: savedKind, day: date, category, accountId, note: note.trim() });
       if (editing) {
-        const corrected = await correctTransactionAction(businessId, editing.id, kind, kind === "INCOME" ? income : kind === "EXPENSE" ? expense : transfer);
+        const corrected = await correctTransactionAction(businessId, editing.id, savedKind, savedKind === "INCOME" ? income : savedKind === "EXPENSE" ? expense : transfer);
         if (!corrected.success || !corrected.data) {
           toast.error(t(corrected.message ?? "Failed to save the changes"));
           return;
         }
-        toast.success(t("Changes saved"));
+        const correctedId = corrected.data.id;
+        toast.success(t("Transaction updated"), { action: { label: t("Undo"), onClick: () => void undo(() => undoEditAction(businessId, correctedId), "Change undone") } });
         onClose();
+        onSaved?.(saved(corrected.data.id));
         // From a list, the list shows the corrected entry in its place.
         if (stayOnEdit) {
           router.refresh();
@@ -318,7 +401,6 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
         router.replace(transactionPageHref(corrected.data.id, transactionBackLink(new URLSearchParams(window.location.search).get("from"))));
         return;
       }
-      const savedKind = kind;
       const result = savedKind === "INCOME" ? await createIncomeAction(businessId, income) : savedKind === "EXPENSE" ? await createExpenseAction(businessId, expense) : await createTransferAction(businessId, transfer);
       if (!result.success) {
         toast.error(t(result.message ?? KIND_META[savedKind].failed));
@@ -328,13 +410,19 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       // land on another page or outside the filters: say where it is.
       const created = result.data;
       toast.success(
-        t(KIND_META[savedKind].done),
-        created ? { action: { label: t("View"), onClick: () => router.push(savedKind === "TRANSFER" ? "/balance/transfer" : `/transactions/${created.id}`) } } : undefined,
+        t(savedKind === "TRANSFER" ? KIND_META.TRANSFER.done : "Transaction saved"),
+        created
+          ? savedKind === "TRANSFER"
+            ? { action: { label: t("View"), onClick: () => router.push("/balance/transfer") } }
+            : { action: { label: t("Undo"), onClick: () => void undo(() => voidTransactionAction(businessId, created.id, DELETED_REASON), "Transaction removed") } }
+          : undefined,
       );
+      if (created) onSaved?.(saved(created.id));
       router.refresh();
       if (another) {
         setAmount("");
         setNote("");
+        setShowErrors(false);
         // The next entry's balances and budget hint include this one.
         setBudgetVersion((version) => version + 1);
         const money = await listMoneyAccountsAction(businessId);
@@ -349,7 +437,15 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const fromLabel = kind === "INCOME" ? "Deposit to" : kind === "EXPENSE" ? "Pay from" : "From";
   // The phone's half-width label: income goes into the wallet, the rest leaves it.
   const phoneFromLabel = kind === "INCOME" ? "Into@@wallet" : "From";
-  const dayWord = relativeDayKey(date, getAppToday());
+  const dayWord = date ? relativeDayKey(date, today) : null;
+  const errorLine = (on: boolean, text: string, id?: string) =>
+    on && (
+      <span id={id} role="alert" className={FIELD_ERROR}>
+        {text}
+      </span>
+    );
+  const dateError = showErrors && problems.date ? t(problems.date === "empty" ? "Pick a date." : problems.date === "missing" ? "That date does not exist." : "Write the date as DD/MM/YYYY.") : null;
+  const atLeast = t("Enter an amount of at least {amount}.", { amount: `${currencySymbol(currency, fmt)} ${toLocaleDigits("0.01", fmt)}` });
 
   // The phone's day: a 52px box saying "Today" over the real date input,
   // which opens the phone's own picker.
@@ -357,17 +453,15 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     <Field htmlFor="txn-date" label={<span className={PHONE_LABEL}>{t("Date")}</span>}>
       <span className="relative flex h-13 items-center gap-3 rounded-md border border-line-strong bg-surface px-4 focus-within:border-emerald focus-within:shadow-[0_0_0_3px_rgba(31,122,90,0.18)]">
         <CalendarDays className="size-4.5 shrink-0 text-ink-2" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{dayWord ? t(dayWord) : formatDate(`${date}T00:00:00.000Z`, "d MMM", fmt)}</span>
+        <span className="min-w-0 flex-1 truncate text-body-lg text-ink">{dayWord ? t(dayWord) : date ? formatDate(`${date}T00:00:00.000Z`, "d MMM", fmt) : t("Pick a date.")}</span>
         <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-        <input id="txn-date" type="date" value={date} onChange={(event) => event.target.value && setDate(event.target.value)} max={getAppToday()} className="absolute inset-0 opacity-0" />
+        <input id="txn-date" type="date" value={date} onChange={(event) => event.target.value && setDateText(dayText(event.target.value))} max={today} className="absolute inset-0 opacity-0" />
       </span>
     </Field>
   );
 
-  const categoryKind = kind === "INCOME" ? "INCOME" : "EXPENSE";
-  const newCategory = (cancel: boolean) => (
-    <NewCategoryForm businessId={businessId} kind={categoryKind} taken={options.map((option) => option.name)} onAdded={categoryAdded} onCancel={cancel ? () => setAddingCategory(false) : undefined} autoFocus={cancel} />
-  );
+  const newCategory = (cancel: boolean) =>
+    categoryKind && <NewCategoryForm businessId={businessId} kind={categoryKind} taken={options.map((option) => option.name)} onAdded={categoryAdded} onCancel={cancel ? () => setAddingCategory(false) : undefined} autoFocus={cancel} />;
 
   // The description box with its count of the 500 it holds.
   const noteCount = (
@@ -376,38 +470,32 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     </span>
   );
 
-  const body = (
+  const expenseAccountMissing = !loading && kind === "EXPENSE" && !failed.expenseAccounts && expenseAccounts.length === 0 && (
+    <p className="mt-2 text-caption text-expense">
+      {workspace?.type === "BUSINESS"
+        ? fillNodes(t("No expense account exists in this workspace yet. Add one under {link}."), {
+            link: (
+              <Link href="/accounts" onNavigate={onClose} className="font-semibold underline">
+                {t("Books › Accounts")}
+              </Link>
+            ),
+          })
+        : t("No expense account exists in this workspace yet, so an expense can't be saved here.")}
+    </p>
+  );
+
+  const banners = (
     <>
       {!canAdd && (
         <Banner tone="warning" inline icon={<Lock />}>
           {t("Only an owner or accountant can add transactions")}
         </Banner>
       )}
-
-      {editing ? (
+      {editing && !wide && (
         <Banner tone="info" inline icon={<Info />}>
           {t("You're editing a saved transaction. When you save, the original stays in History marked as corrected, and your balances update straight away.")}
         </Banner>
-      ) : wide ? (
-        // The board's two kind cards (a transfer, which the quick add and the
-        // Add menu still open, keeps a third).
-        <KindCards legend="Type" value={kind} onChange={switchKind} options={WIDE_KINDS} compact />
-      ) : (
-        <SegmentedControl
-          options={KIND_ORDER.phone.map((option) => ({ value: option, label: KIND_META[option].label }))}
-          value={kind}
-          onChange={switchKind}
-          label="Type"
-          variant="pill"
-          size="lg"
-          stretch
-          className={cn(
-            "gap-1 [&_svg]:size-3.75 [&>button]:gap-1.5 [&>button]:text-body [&>button]:pointer-coarse:h-11 [&>button[aria-pressed=true]]:shadow-[0_1px_3px_rgba(18,32,29,0.12)]",
-            KIND_META[kind].selected,
-          )}
-        />
       )}
-
       {loadFailed && !loading && (
         <Banner tone="danger" inline icon={<TriangleAlert />}>
           <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -418,33 +506,177 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           </span>
         </Banner>
       )}
+    </>
+  );
 
-      {/* The board: the date and the account side by side under the type,
-          then the amount, the category and the note. */}
-      {wide && !isTransfer && (
+  const wasLine = editing && value !== editing.amount && (
+    <span className={cn("flex items-center gap-1.5 text-small font-semibold text-expense", !wide && "self-center")}>
+      <Undo2 className="size-3.5" aria-hidden="true" />
+      {t("Was {amount}", { amount: formatCurrency(editing.amount, currency, fmt) })}
+    </span>
+  );
+
+  const dateField = (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <label htmlFor="txn-date" className={WIDE_LABEL}>
+        {t("Date")}
+      </label>
+      <DayTextField id="txn-date" text={dateText} onTextChange={setDateText} invalid={!!dateError} describedBy={dateError ? "txn-date-error" : undefined} />
+      {errorLine(!!dateError, dateError ?? "", "txn-date-error")}
+      {!dateError && date > today && <span className="text-[12.5px] leading-normal text-warning">{t("This date is after today.")}</span>}
+    </div>
+  );
+
+  // The desktop popup (design: TxnDrawer).
+  const wideBody = (
+    <>
+      {banners}
+
+      <div className="flex flex-col">
+        <KindCards legend="Type" value={kind ?? ("" as EntryKind)} onChange={switchKind} options={WIDE_KINDS.filter((option) => offered.includes(option.value))} compact />
+        {typeError && <span className={cn(FIELD_ERROR, "mt-1.5")}>{t("Choose Income or Expense.")}</span>}
+      </div>
+
+      {!isTransfer && (
         <div className="grid grid-cols-2 gap-3">
-          <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
-            <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
-          </Field>
-          <WalletPicker size="compact" label={t("Account")} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+          {dateField}
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <WalletPicker
+              size="field"
+              label={t("Account")}
+              placeholder={t("Select an account")}
+              wallets={wallets}
+              value={accountId}
+              onChange={setAccountId}
+              after={after}
+              currency={currency}
+              loading={loading}
+              error={walletsError}
+              onClose={onClose}
+              invalid={showErrors && problems.account}
+            />
+            {errorLine(showErrors && problems.account && wallets.length > 0, t("Choose an account."))}
+          </div>
+        </div>
+      )}
+
+      {isTransfer && (
+        <>
+          <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} invalid={showErrors && problems.account} />
+          <WalletPicker
+            label={t("To@@wallet")}
+            wallets={wallets.filter((w) => w.id !== accountId)}
+            value={toAccountId}
+            onChange={setToAccountId}
+            after={toAfter}
+            afterInWords
+            currency={currency}
+            loading={loading}
+            error={null}
+            onClose={onClose}
+            invalid={showErrors && problems.toAccount}
+          />
+          <div className="grid grid-cols-2 gap-3">{dateField}</div>
+        </>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={amountId} className={WIDE_LABEL}>
+          {t("Amount ({symbol})", { symbol: currencySymbol(currency, fmt) })}
+        </label>
+        <div className={cn("flex h-13 items-center gap-2 rounded-field border bg-surface px-3.5 transition-[border-color,box-shadow] focus-within:border-focus-ring focus-within:focus-halo", showErrors && problems.amount ? "border-expense-fill" : "border-input")}>
+          <span aria-hidden="true" className="text-[20px] font-semibold text-ink-soft">
+            {currencySymbol(currency, fmt)}
+          </span>
+          <input
+            id={amountId}
+            type="text"
+            inputMode="decimal"
+            {...amountField}
+            placeholder="0"
+            autoFocus={kind !== null}
+            aria-invalid={(showErrors && problems.amount) || undefined}
+            className="min-w-0 flex-1 bg-transparent text-[20px] font-semibold text-ink tabular-nums outline-none placeholder:text-ink-faint"
+          />
+        </div>
+        {errorLine(showErrors && problems.amount, atLeast)}
+        {wasLine}
+      </div>
+
+      {!isTransfer && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="txn-cat" className={WIDE_LABEL}>
+            {t("Category")}
+          </label>
+          {loading ? (
+            <span className="block h-12 animate-pulse rounded-field bg-surface-sunken" />
+          ) : categoriesFailed ? null : categoryKind !== null && options.length === 0 ? (
+            canAdd ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-small text-ink-muted">{t("No categories yet. Add the first one here.")}</p>
+                {newCategory(false)}
+              </div>
+            ) : (
+              <p className="text-small text-ink-muted">{t("No categories yet.")}</p>
+            )
+          ) : (
+            <CategoryListbox
+              // A new kind starts with its list closed.
+              key={categoryKind ?? "none"}
+              id="txn-cat"
+              businessId={businessId}
+              kind={categoryKind}
+              options={options}
+              value={category}
+              onChange={setCategory}
+              onAdded={categoryAdded}
+              canAddCategory={canAdd}
+              onNeedKind={() => setKindNudge(true)}
+              invalid={showErrors && problems.category}
+            />
+          )}
+          {errorLine(showErrors && problems.category && options.length > 0, t("Pick a category."))}
+          {expenseAccountMissing}
         </div>
       )}
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor={amountId} className="hidden text-body font-medium text-ink md:block">
-          {t("Amount")}
+        <label htmlFor="txn-note" className={WIDE_LABEL}>
+          {t("Description")} <span className="font-normal text-ink-muted">{t("(optional)")}</span>
         </label>
-        <div
+        <Textarea id="txn-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("e.g. Weekly groceries from the local market")} maxLength={NOTE_MAX} className="max-h-65 min-h-19 resize-y leading-[1.45]" />
+        <span className="text-caption text-ink-muted">{noteCount}</span>
+      </div>
+    </>
+  );
+
+  // The phone sheet (its own board): tabs, the big amount, tiles, then the
+  // wallet and the day.
+  const phoneBody = (
+    <>
+      {banners}
+      {!editing && (
+        <SegmentedControl
+          options={PHONE_ORDER.filter((option) => offered.includes(option)).map((option) => ({ value: option, label: KIND_META[option].label }))}
+          value={kind ?? ("" as EntryKind)}
+          onChange={switchKind}
+          label="Type"
+          variant="pill"
+          size="lg"
+          stretch
           className={cn(
-            "flex items-center rounded-md",
-            // The amount box in the shared field frame's look (InputFrame).
-            wide ? "h-16 gap-2.5 rounded-field border border-input bg-surface px-4 transition-[border-color,box-shadow] focus-within:border-focus-ring focus-within:focus-halo" : "justify-center gap-2 py-2",
+            "gap-1 [&_svg]:size-3.75 [&>button]:gap-1.5 [&>button]:text-body [&>button]:pointer-coarse:h-11 [&>button[aria-pressed=true]]:shadow-[0_1px_3px_rgba(18,32,29,0.12)]",
+            kind && KIND_META[kind].selected,
           )}
-        >
-          <span aria-hidden="true" className={cn("font-semibold", wide ? "text-[26px]" : "text-h1", kind === "INCOME" ? "text-income" : kind === "EXPENSE" ? "text-expense-fill" : "text-ink-muted")}>
+        />
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-center gap-2 rounded-md py-2">
+          <span aria-hidden="true" className={cn("text-h1 font-semibold", kind === "INCOME" ? "text-income" : kind === "EXPENSE" ? "text-expense-fill" : "text-ink-muted")}>
             {kind === "INCOME" ? "+" : kind === "EXPENSE" ? "−" : "↔"}
           </span>
-          <span className={cn("font-semibold", wide ? "text-[26px] text-ink-soft" : "text-h1 text-ink-2")}>{currencySymbol(currency, fmt)}</span>
+          <span className="text-h1 font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>
           <input
             id={amountId}
             type="text"
@@ -453,36 +685,27 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             placeholder="0"
             autoFocus
             aria-label={t("Amount")}
-            style={wide ? undefined : { width: `${Math.max(1, amountField.value.length)}ch` }}
-            className={cn("min-w-0 bg-transparent font-bold text-ink tabular-nums outline-none placeholder:text-ink-faint", wide ? "flex-1 text-[30px] tracking-[-0.02em]" :"box-content text-display-xl leading-[normal] caret-emerald")}
+            style={{ width: `${Math.max(1, amountField.value.length)}ch` }}
+            className="box-content min-w-0 bg-transparent text-display-xl leading-[normal] font-bold text-ink tabular-nums caret-emerald outline-none placeholder:text-ink-faint"
           />
         </div>
-        {!wide && showBudget && (
+        {showBudget && (
           <span className="self-center text-small text-ink-muted">
             {fillNodes(t("{category}: {amount} left after this"), { category: categoryLabel(category, t), amount: <b className={hint.figure}>{formatCurrency(budgetLeft - value, currency, fmt)}</b> })}
           </span>
         )}
-        {editing && value !== editing.amount && (
-          <span className={cn("flex items-center gap-1.5 text-small font-semibold text-expense", !wide && "self-center")}>
-            <Undo2 className="size-3.5" aria-hidden="true" />
-            {t("Was {amount}", { amount: formatCurrency(editing.amount, currency, fmt) })}
-          </span>
-        )}
+        {wasLine}
       </div>
 
-      {!isTransfer && (
+      {categoryKind && (
         <fieldset className="m-0 min-w-0 border-0 p-0">
-          <legend className={cn("text-body font-medium text-ink", wide ? "mb-2" : "sr-only")}>{t("Category")}</legend>
+          <legend className="sr-only">{t("Category")}</legend>
           {loading ? (
-            wide ? (
-              <span className="block h-12 animate-pulse rounded-field bg-surface-sunken" />
-            ) : (
-              <div className="grid grid-cols-4 gap-2">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <span key={i} className="h-19 animate-pulse rounded-[10px] bg-surface-sunken" />
-                ))}
-              </div>
-            )
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from({ length: 8 }, (_, i) => (
+                <span key={i} className="h-19 animate-pulse rounded-[10px] bg-surface-sunken" />
+              ))}
+            </div>
           ) : categoriesFailed ? null : options.length === 0 ? (
             canAdd ? (
               <div className="flex flex-col gap-2">
@@ -492,8 +715,6 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             ) : (
               <p className="text-small text-ink-muted">{t("No categories yet.")}</p>
             )
-          ) : wide ? (
-            <CategoryListbox id="txn-cat" businessId={businessId} kind={categoryKind} options={options} value={category} onChange={setCategory} onAdded={categoryAdded} canAddCategory={canAdd} />
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {visible.map((option) => {
@@ -527,7 +748,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
             </div>
           )}
           {/* The phone adds a category under its tiles. */}
-          {!wide && !loading && !categoriesFailed && options.length > 0 && canAdd && (
+          {!loading && !categoriesFailed && options.length > 0 && canAdd && (
             <div className="mt-2">
               {addingCategory ? (
                 newCategory(true)
@@ -539,160 +760,100 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
               )}
             </div>
           )}
-          {!loading && kind === "EXPENSE" && !failed.expenseAccounts && expenseAccounts.length === 0 && (
-            <p className="mt-2 text-caption text-expense">
-              {workspace?.type === "BUSINESS"
-                ? fillNodes(t("No expense account exists in this workspace yet. Add one under {link}."), {
-                    link: (
-                      <Link href="/accounts" onNavigate={onClose} className="font-semibold underline">
-                        {t("Books › Accounts")}
-                      </Link>
-                    ),
-                  })
-                : t("No expense account exists in this workspace yet, so an expense can't be saved here.")}
-            </p>
-          )}
+          {expenseAccountMissing}
         </fieldset>
       )}
 
-      {wide && showBudget && (
-        <div className={cn("flex gap-2.5 rounded-[10px] border px-3.5 py-3 text-small leading-normal", hint.box)}>
-          {hint.icon}
-          <span>
-            {fillNodes(t("{category} has {left} left this month. After this, {after} of {limit} will be left."), {
-              category: categoryLabel(category, t),
-              left: <b className="font-semibold">{formatCurrency(budgetLeft, currency, fmt)}</b>,
-              after: <b className={cn("font-semibold", hint.figure)}>{formatCurrency(budgetLeft - value, currency, fmt)}</b>,
-              limit: formatCurrency(budgetLimit, currency, fmt),
-            })}
-          </span>
-        </div>
-      )}
-
-      {wide ? (
-        // A transfer's two wallets come first, then the date and the note
-        // side by side; an income or expense ends with its note.
-        <>
-          {isTransfer && (
-            <>
-              <WalletPicker label={t(fromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} afterInWords currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-              <WalletPicker label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} afterInWords currency={currency} loading={loading} error={null} onClose={onClose} />
-              <div className="grid grid-cols-2 gap-3">
-                <Field htmlFor="txn-date" label={<span className="text-body font-medium text-ink">{t("Date")}</span>}>
-                  <DayInput id="txn-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
-                </Field>
-                <Field htmlFor="txn-note" label={<span className="text-body font-medium text-ink">{t("Description")}</span>}>
-                  <Input id="txn-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={NOTE_MAX} />
-                </Field>
-              </div>
-            </>
-          )}
-          {!isTransfer && (
-            <Field
-              htmlFor="txn-note"
-              hint={noteCount}
-              label={
-                <span className="text-body font-medium text-ink">
-                  {t("Description")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-                </span>
-              }
-            >
-              <Textarea id="txn-note" rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("e.g. Weekly groceries from the local market")} maxLength={NOTE_MAX} />
-            </Field>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3">
-            <WalletPicker size="compact" label={t(phoneFromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
-            {isTransfer ? <WalletPicker size="compact" label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} /> : phoneDate}
-          </div>
-          {isTransfer && phoneDate}
-          <Field htmlFor="txn-note" label={<span className={PHONE_LABEL}>{t("Description")}</span>}>
-            <Input id="txn-note" size="xl" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={NOTE_MAX} />
-          </Field>
-        </>
-      )}
+      <div className="grid grid-cols-2 gap-3">
+        <WalletPicker size="compact" label={t(phoneFromLabel)} wallets={wallets} value={accountId} onChange={setAccountId} after={after} currency={currency} loading={loading} error={walletsError} onClose={onClose} />
+        {isTransfer ? <WalletPicker size="compact" label={t("To@@wallet")} wallets={wallets.filter((w) => w.id !== accountId)} value={toAccountId} onChange={setToAccountId} after={toAfter} currency={currency} loading={loading} error={null} onClose={onClose} /> : phoneDate}
+      </div>
+      {isTransfer && phoneDate}
+      <Field htmlFor="txn-note" label={<span className={PHONE_LABEL}>{t("Description")}</span>}>
+        <Input id="txn-note" size="xl" value={note} onChange={(event) => setNote(event.target.value)} placeholder={t("Weekly groceries")} maxLength={NOTE_MAX} />
+      </Field>
     </>
   );
 
   const missing = pickCategory && <p className="text-caption text-ink-muted">{t("Pick a category to save")}</p>;
+  const spinner = isPending && <Loader size={16} onDark label={t("Loading...")} />;
 
-  const footer = editing ? (
-    <div className={cn("flex items-center gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-8")}>
-      <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, fmt)}</span>
-      <Button type="button" variant="ghost" onClick={onClose} disabled={isPending} className="px-2.5">
+  // The board's foot: Cancel and Save on the right.
+  const wideFooter = (
+    <div className="flex items-center justify-end gap-2.5 border-t border-line px-6 py-4">
+      <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
         {t("Cancel")}
       </Button>
-      <Button type="submit" variant="action" disabled={!valid || isPending} className="px-3.5">
-        {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <Check strokeWidth={2.5} />}
-        {t("Save changes")}
+      <Button type="submit" size="lg" disabled={isPending || !canAdd} className="px-5">
+        {spinner}
+        {editing ? t("Save changes") : t(isTransfer ? KIND_META.TRANSFER.save : "Save transaction")}
       </Button>
     </div>
-  ) : (
-    <div className={cn("flex flex-col gap-2 border-t border-line bg-surface", wide ? "px-6 py-3.5" : "px-4 pt-3 pb-8")}>
-      {missing}
-      <div className={cn("flex items-center", wide ? "gap-2" : "gap-3")}>
-        <Button
-          type="button"
-          variant="secondary"
-          size={wide ? "md" : "xl"}
-          onClick={() => save(true)}
-          disabled={!valid || isPending}
-          className={cn("px-3", !wide && "h-13 flex-1")}
-        >
-          {t("Save & add another")}
-        </Button>
-        <span className="hidden flex-1 md:block" />
-        <Button type="button" variant="ghost" onClick={onClose} className="hidden px-2.5 md:inline-flex">
-          {t("Cancel")}
-        </Button>
-        <Button type="submit" variant={wide ? "action" : "primary"} size={wide ? "md" : "xl"} disabled={!valid || isPending} className={wide ? "px-3.5" : "h-13 flex-1 px-4"}>
-          {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : !wide && <Check strokeWidth={2.5} />}
-          {wide ? t(isTransfer ? KIND_META.TRANSFER.save : "Save transaction") : t("Save")}
-          {wide && (
-            <Kbd aria-hidden="true" className="rounded-[4px] border-0 bg-white/18 px-1.25 py-px font-sans text-[11px] font-semibold text-white">
-              Enter
-            </Kbd>
-          )}
-        </Button>
-      </div>
+  );
+
+  const phoneFooter = (
+    <div className="flex flex-col gap-2 border-t border-line bg-surface px-4 pt-3 pb-8">
+      {editing ? (
+        <div className="flex items-center gap-2">
+          <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, fmt)}</span>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isPending} className="px-2.5">
+            {t("Cancel")}
+          </Button>
+          <Button type="submit" variant="action" disabled={!valid || isPending} className="px-3.5">
+            {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <Check strokeWidth={2.5} />}
+            {t("Save changes")}
+          </Button>
+        </div>
+      ) : (
+        <>
+          {missing}
+          <div className="flex items-center gap-3">
+            <Button type="button" variant="secondary" size="xl" onClick={() => save(true)} disabled={!valid || isPending} className="h-13 flex-1 px-3">
+              {t("Save & add another")}
+            </Button>
+            <Button type="submit" size="xl" disabled={!valid || isPending} className="h-13 flex-1 px-4">
+              {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <Check strokeWidth={2.5} />}
+              {t("Save")}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 
   const form = (
     <form
+      noValidate
       onSubmit={(event) => {
         event.preventDefault();
         save(false);
       }}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto", wide ? "gap-4.5 px-6 py-5" : "gap-4 px-4 py-2")}>{body}</div>
-      {footer}
+      <div data-txn-body="" className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto", wide ? "gap-4 px-6 py-4.5" : "gap-4 px-4 py-2")}>
+        {wide ? wideBody : phoneBody}
+      </div>
+      {wide ? wideFooter : phoneFooter}
     </form>
   );
 
-  // Wide screens: the board's popup near the top of the screen (TxnDrawer).
+  // Wide screens: the board's popup in the middle of the screen (TxnDrawer).
   if (wide) {
     return (
       <Dialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
         <DialogContent
           showCloseButton={false}
-          className="top-[max(16px,8vh)] flex max-h-[calc(100dvh-32px)] w-135 translate-y-0 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-none"
-        >
-          <div className="flex items-center justify-between gap-3 border-b border-divider py-4 pr-4 pl-6">
-            {editing ? (
-              <span className="flex min-w-0 flex-col gap-1">
-                <DialogTitle className="text-[18px] font-semibold text-ink">{t("Edit transaction")}</DialogTitle>
-                <DialogDescription className="truncate text-small text-ink-muted">
-                  {editing.title} · {formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", fmt)}
-                </DialogDescription>
-              </span>
-            ) : (
-              <DialogTitle className="text-[18px] font-semibold text-ink">{t("New transaction")}</DialogTitle>
-            )}
-            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken">
+          // The popup itself takes focus (no ring on a field, as the board
+          // opens); Tab goes on to the first kind card.
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            (event.currentTarget as HTMLElement | null)?.focus();
+          }}
+          className="flex max-h-[calc(100dvh-48px)] w-135 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-48px)]">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line py-4 pr-4 pl-6">
+            <DialogTitle className="text-[18px] font-semibold text-ink">{t(editing ? "Edit transaction" : "New transaction")}</DialogTitle>
+            <DialogDescription className="sr-only">{editing ? `${editing.title} · ${formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", fmt)}` : t("New transaction")}</DialogDescription>
+            <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-11 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken">
               <X className="size-4.5" aria-hidden="true" />
             </button>
           </div>
@@ -704,16 +865,9 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent
-        side={wide ? "right" : "bottom"}
-        showCloseButton={false}
-        className={cn(
-          "gap-0 border-0 bg-surface p-0 text-ink",
-          wide ? "w-115 rounded-l-xl shadow-drawer data-[side=right]:sm:max-w-115" :"rounded-t-xl shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)] data-[side=bottom]:h-[90vh]",
-        )}
-      >
-        {!wide && <span aria-hidden="true" className="mt-2 block h-1.25 w-10 shrink-0 self-center rounded-full bg-line-strong" />}
-        <SheetHeader className={cn("flex-row items-center justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-4.5" : "px-4 pt-2 pb-1")}>
+      <SheetContent side="bottom" showCloseButton={false} className="gap-0 rounded-t-xl border-0 bg-surface p-0 text-ink shadow-[0_-20px_60px_-16px_rgba(11,61,46,0.35)] data-[side=bottom]:h-[90vh]">
+        <span aria-hidden="true" className="mt-2 block h-1.25 w-10 shrink-0 self-center rounded-full bg-line-strong" />
+        <SheetHeader className="flex-row items-center justify-between gap-3 space-y-0 px-4 pt-2 pb-1">
           {editing ? (
             <span className="flex min-w-0 flex-col gap-1">
               <SheetTitle className="text-h3 text-ink">{t("Edit transaction")}</SheetTitle>
@@ -722,18 +876,11 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
               </span>
             </span>
           ) : (
-            <SheetTitle className={cn("text-ink", wide ? "text-h3" : "text-h3 font-bold")}>{t("New transaction")}</SheetTitle>
+            <SheetTitle className="text-h3 font-bold text-ink">{t("New transaction")}</SheetTitle>
           )}
-          <span className="flex items-center gap-2">
-            {wide && !editing && (
-              <Kbd aria-hidden="true" className="rounded-[4px] bg-strip px-1.5 py-0.5 font-sans text-[11px] font-semibold text-ink-muted">
-                Esc
-              </Kbd>
-            )}
-            <button type="button" onClick={onClose} aria-label={t("Close")} className={cn("flex items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken",wide ? "size-9 pointer-coarse:size-11" : "size-11")}>
-              <X className={wide ? "size-4.5" : "size-5"} aria-hidden="true" />
-            </button>
-          </span>
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken">
+            <X className="size-5" aria-hidden="true" />
+          </button>
         </SheetHeader>
         {form}
       </SheetContent>

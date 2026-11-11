@@ -9,7 +9,7 @@ import type { BudgetCategoryType } from "@/lib/customer/api";
 import { createBudgetCategoryAction, updateBudgetCategoryAction } from "@/lib/customer/budgetActions";
 import { BUDGET_CATEGORY_COLORS } from "@/lib/customer/budgetCategoryVisuals";
 import { CATEGORY_NAME_MAX, CATEGORY_NAME_WORDS, categoryNameProblem, categoryServerProblem } from "@/lib/customer/categoryName";
-import { categoryTone } from "@/lib/customer/categoryTone";
+import { IE_CATEGORY_COLORS, ieCategoryColor, ieCategoryInk } from "@/lib/customer/categoryTone";
 import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,8 @@ interface CategoryDialogProps {
   editing: CategoryDialogState | null;
   existing: CategoriesByType;
   onClose: () => void;
-  onSaved: () => void;
+  // The category saved (its id, to light its row).
+  onSaved: (id: string | null) => void;
 }
 
 export const KIND_OPTIONS = [
@@ -59,9 +60,12 @@ const COLOR_WORDS: Record<(typeof BUDGET_CATEGORY_COLORS)[number], string> = {
   lime: "Lime@@colour",
 };
 
-// The colour a new category of a type starts on: one no category of the
-// type has yet, as the API would pick.
-export const freeColor = (taken: readonly string[]): string => BUDGET_CATEGORY_COLORS.find((color) => !taken.includes(color)) ?? BUDGET_CATEGORY_COLORS[taken.length % BUDGET_CATEGORY_COLORS.length];
+// The swatches in the CategoryDrawer board's order, each its own colour.
+const SWATCH_ORDER = IE_CATEGORY_COLORS satisfies readonly (typeof BUDGET_CATEGORY_COLORS)[number][];
+
+// The colour a new category starts on (the board's): the first swatch no
+// category of either type has yet.
+export const freeColor = (taken: readonly string[]): string => SWATCH_ORDER.find((color) => !taken.includes(color)) ?? SWATCH_ORDER[taken.length % SWATCH_ORDER.length];
 
 // Category Set's New / Edit category popup (design: CategoryDrawer): the
 // type (locked once transactions use it), the name beside its letter tile,
@@ -82,21 +86,18 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
     if (editing) {
       setType(editing.type);
       setName(editing.name);
-      setColor(editing.color ?? freeColor(existing[editing.type].colors));
+      setColor(editing.color ?? freeColor([...existing.INCOME.colors, ...existing.EXPENSE.colors]));
       setError(null);
     }
   }
 
   const isNew = editing?.id === null;
   const locked = !!editing && editing.used > 0;
-  const tone = categoryTone(color);
   const letter = [...name.trim()][0]?.toUpperCase() ?? "";
 
   function pickType(next: BudgetCategoryType) {
     setType(next);
     setError(null);
-    // A new category takes the next type's free colour, unless one was picked.
-    if (isNew && color === freeColor(existing[type].colors)) setColor(freeColor(existing[next].colors));
   }
 
   function save() {
@@ -115,7 +116,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
         : await updateBudgetCategoryAction(businessId, editing.id as string, { name: trimmed, ...(color !== editing.color && { color }), ...(type !== editing.type && { type }) });
       if (result.success) {
         toast.success(t(isNew ? "Category added" : "Category updated"));
-        onSaved();
+        onSaved(result.data?.id ?? editing.id);
         onClose();
         return;
       }
@@ -126,11 +127,11 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
   }
 
   return (
-    <IEDialog open={editing !== null} onClose={onClose} title={t(isNew ? "New category" : "Edit category")} busy={isPending} saveLabel="Save category" onSubmit={save}>
+    <IEDialog open={editing !== null} onClose={onClose} title={t(isNew ? "New category" : "Edit category")} busy={isPending} saveLabel={isNew ? "Save category" : "Save changes"} onSubmit={save}>
       <div className="flex flex-col gap-2">
         <KindCards legend="Type" value={type} onChange={pickType} options={KIND_OPTIONS} disabled={locked} />
         {locked && editing && (
-          <p className="text-caption text-ink-muted">
+          <p className="text-[12.5px] text-ink-muted">
             {plural(t, editing.used, "{count} transaction uses it, so its type stays the same.", "{count} transactions use it, so its type stays the same.", undefined, fmt)}
           </p>
         )}
@@ -142,7 +143,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
         error={error ? t(error) : undefined}
       >
         <span className="flex items-center gap-2.5">
-          <span aria-hidden="true" className={cn("flex size-12 shrink-0 items-center justify-center rounded-[12px] text-title font-bold", tone.bg, tone.fg)}>
+          <span aria-hidden="true" style={{ "--cat": ieCategoryColor(color) } as React.CSSProperties} className="cat-tile flex size-12 shrink-0 items-center justify-center rounded-[12px] text-[18px] font-bold">
             {letter}
           </span>
           <Input
@@ -164,7 +165,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
       <fieldset className="m-0 min-w-0 border-0 p-0">
         <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
         <div role="radiogroup" aria-label={t("Colour")} className="flex flex-wrap gap-2">
-          {BUDGET_CATEGORY_COLORS.map((option) => {
+          {SWATCH_ORDER.map((option) => {
             const on = option === color;
             return (
               <button
@@ -175,12 +176,12 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
                 aria-label={t("Colour {name}", { name: t(COLOR_WORDS[option]) })}
                 onClick={() => setColor(option)}
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-full bg-current outline-offset-2 pointer-coarse:size-10",
-                  categoryTone(option).fg,
+                  "flex size-7.5 items-center justify-center rounded-full bg-current outline-offset-2 pointer-coarse:size-10",
+                  ieCategoryInk(option),
                   on && "outline-2 outline-current",
                 )}
               >
-                {on && <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />}
+                {on && <Check className="size-3.5 text-white" strokeWidth={3} aria-hidden="true" />}
               </button>
             );
           })}

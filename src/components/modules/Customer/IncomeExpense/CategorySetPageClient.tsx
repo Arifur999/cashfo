@@ -3,17 +3,14 @@
 import { ArrowUpRight, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import Chip from "@/components/smartly/Chip";
 import { LIST_ROW_ACTION, LIST_ROW_DELETE } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { BudgetCategoryType, CategorySet, CategorySetRow } from "@/lib/customer/api";
-import { addStarterCategoriesAction } from "@/lib/customer/budgetActions";
-import { categoryTone } from "@/lib/customer/categoryTone";
+import { ieCategoryColor } from "@/lib/customer/categoryTone";
 import { categoryLabel } from "@/lib/customer/transactionRows";
 import { formatCount } from "@/lib/i18n/digits";
 import { plural } from "@/lib/i18n/message";
@@ -30,16 +27,21 @@ interface CategorySetPageClientProps {
   openNew: BudgetCategoryType | null;
 }
 
+// The two lists, in the board's green and red (the dot and the count).
 const GROUPS = [
-  { key: "income" as const, type: "INCOME" as const, title: "Income categories", add: "Add income category", dot: "bg-income", chip: "income" as const },
-  { key: "expense" as const, type: "EXPENSE" as const, title: "Expense categories", add: "Add expense category", dot: "bg-expense", chip: "expense" as const },
+  { key: "income" as const, type: "INCOME" as const, title: "Income categories", add: "Add income category", dot: "bg-success", badge: "bg-success-soft text-tint-green-ink" },
+  { key: "expense" as const, type: "EXPENSE" as const, title: "Expense categories", add: "Add expense category", dot: "bg-expense-fill", badge: "bg-expense-soft text-expense" },
 ];
 
-// Where an automatic row's money is recorded, and what it says about it.
+// Where an automatic row's money is recorded, what it says about it, and
+// its link's colour.
 const SOURCES = {
-  zakat: { href: "/zakat", label: "Zakat page", tip: "Made by the Zakat page. Zakat you pay there is listed here." },
-  charges: { href: "/balance/transfer", label: "Transfers page", tip: "Made from transfer charges on Balance > Transfers." },
+  zakat: { href: "/zakat", label: "Zakat page", tip: "Made by the Zakat page. Zakat you pay there is listed here.", tone: "text-tint-green-ink" },
+  charges: { href: "/balance/transfer", label: "Transfers page", tip: "Made from transfer charges on Balance > Transfers.", tone: "text-ink-2" },
 } as const;
+
+// How long a saved category's row stays lit.
+const HIGHLIGHT_MS = 3000;
 
 // A category's transactions, of all time.
 const transactionsOf = (type: BudgetCategoryType, name: string) => `/transactions?${new URLSearchParams({ type, categoryId: name, period: "all" }).toString()}`;
@@ -53,34 +55,29 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
   const router = useRouter();
   const [editing, setEditing] = useState<CategoryDialogState | null>(openNew && canManage ? { id: null, type: openNew, name: "", color: null, used: 0 } : null);
   const [deleting, setDeleting] = useState<CategorySetRow | null>(null);
-  const [isAdding, startAdding] = useTransition();
+  // The category just saved, lit for a moment (the board's highlight).
+  const [highlight, setHighlight] = useState<string | null>(null);
   const automatic = categories.automatic ?? [];
+
+  useEffect(() => {
+    if (!highlight) return;
+    const timer = setTimeout(() => setHighlight(null), HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [highlight]);
 
   const existing: CategoriesByType = {
     INCOME: { names: categories.income.map((row) => row.name), colors: categories.income.map((row) => row.color) },
     EXPENSE: { names: categories.expense.map((row) => row.name), colors: categories.expense.map((row) => row.color) },
   };
 
-  function addStarters() {
-    startAdding(async () => {
-      const result = await addStarterCategoriesAction(businessId);
-      if (result.success) {
-        toast.success(t("Categories added"));
-        router.refresh();
-      } else {
-        toast.error(t(result.message ?? "Failed to add the categories"));
-      }
-    });
-  }
-
   return (
-    <PageFrame>
+    <PageFrame className="leading-[normal]">
       <PageHeader
         title={t("Category Set")}
         description={t("These names show in the category list when you add a transaction. Counts are for all time.")}
         actions={
           canManage && (
-            <Button onClick={() => setEditing({ id: null, type: "EXPENSE", name: "", color: null, used: 0 })} className="rounded-full px-4.5">
+            <Button size="lg" onClick={() => setEditing({ id: null, type: "EXPENSE", name: "", color: null, used: 0 })} className="gap-1.5 px-4.5">
               <Plus strokeWidth={2.5} aria-hidden="true" />
               {t("New category")}
             </Button>
@@ -95,37 +92,28 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
           const headingId = `grp-${group.key}`;
           return (
             <Card key={group.key} padding="none" className="overflow-hidden" role="region" aria-labelledby={headingId}>
-              <div className="flex items-center gap-2.5 border-b border-divider py-3.5 pr-3 pl-5">
+              <div className="flex items-center gap-2.5 border-b border-line py-3 pr-3 pl-5">
                 <span aria-hidden="true" className={cn("size-2.5 rounded-full", group.dot)} />
                 <h2 id={headingId} className="text-title font-semibold text-ink">
                   {t(group.title)}
                 </h2>
-                <Chip tone={group.chip} size="sm" className="tabular-nums">
-                  {formatCount(rows.length + extra.length, fmt)}
-                </Chip>
+                <span className={cn("rounded-full px-2.5 py-0.5 text-small font-semibold tabular-nums", group.badge)}>{formatCount(rows.length + extra.length, fmt)}</span>
                 <span className="flex-1" />
                 {canManage && (
-                  <Button variant="ghost" size="sm" onClick={() => setEditing({ id: null, type: group.type, name: "", color: null, used: 0 })} aria-label={t(group.add)} className="text-emerald hover:text-emerald">
-                    <Plus strokeWidth={2.5} aria-hidden="true" />
+                  <Button variant="ghost" size="sm" onClick={() => setEditing({ id: null, type: group.type, name: "", color: null, used: 0 })} aria-label={t(group.add)} className="gap-1 px-3 text-[13.5px] text-emerald hover:bg-emerald-soft hover:text-emerald">
+                    <Plus strokeWidth={2.5} className="size-3.75" aria-hidden="true" />
                     {t("Add")}
                   </Button>
                 )}
               </div>
               {rows.length === 0 && extra.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 px-5 py-8 text-center">
-                  <p className="text-small text-ink-muted">{t("No categories yet.")}</p>
-                  {canManage && (
-                    <Button variant="secondary" size="sm" onClick={addStarters} disabled={isAdding} className="rounded-full">
-                      {t("Add the usual ones")}
-                    </Button>
-                  )}
-                </div>
+                <p className="p-5 text-body text-ink-muted">{t("No categories yet.")}</p>
               ) : (
                 <ul>
                   {rows.map((row) => {
                     const source = row.system === "zakat" ? SOURCES.zakat : null;
                     return (
-                      <CategoryRow key={row.id} name={categoryLabel(row.name, t)} color={row.color} count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={source}>
+                      <CategoryRow key={row.id} name={categoryLabel(row.name, t)} color={source ? "lime" : row.color} count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={source} lit={row.id === highlight}>
                         {canManage && !source && (
                           <>
                             <button
@@ -135,7 +123,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
                               title={t("Edit")}
                               className={LIST_ROW_ACTION}
                             >
-                              <Pencil className="size-4" aria-hidden="true" />
+                              <Pencil aria-hidden="true" />
                             </button>
                             <button
                               type="button"
@@ -144,7 +132,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
                               title={t("Delete")}
                               className={cn(LIST_ROW_ACTION, LIST_ROW_DELETE)}
                             >
-                              <Trash2 className="size-4" aria-hidden="true" />
+                              <Trash2 aria-hidden="true" />
                             </button>
                           </>
                         )}
@@ -152,7 +140,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
                     );
                   })}
                   {extra.map((row) => (
-                    <CategoryRow key={`auto-${row.name}`} name={categoryLabel(row.name, t)} color={null} count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={SOURCES[row.kind]} />
+                    <CategoryRow key={`auto-${row.name}`} name={categoryLabel(row.name, t)} color="slate" count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={SOURCES[row.kind]} />
                   ))}
                 </ul>
               )}
@@ -161,7 +149,16 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
         })}
       </div>
 
-      <CategoryDialog businessId={businessId} editing={editing} existing={existing} onClose={() => setEditing(null)} onSaved={() => router.refresh()} />
+      <CategoryDialog
+        businessId={businessId}
+        editing={editing}
+        existing={existing}
+        onClose={() => setEditing(null)}
+        onSaved={(id) => {
+          setHighlight(id);
+          router.refresh();
+        }}
+      />
       {deleting && (
         <DeleteCategoryDialog
           businessId={businessId}
@@ -184,6 +181,7 @@ function CategoryRow({
   count,
   href,
   source,
+  lit = false,
   children,
 }: {
   name: string;
@@ -191,22 +189,22 @@ function CategoryRow({
   count: number;
   href: string;
   source: (typeof SOURCES)[keyof typeof SOURCES] | null;
+  lit?: boolean;
   children?: React.ReactNode;
 }) {
   const { t, fmt } = useLocale();
-  const tone = categoryTone(color);
   return (
-    <li className="flex min-h-16 items-center gap-3 border-b border-divider py-2.5 pr-3 pl-5 last:border-b-0">
-      <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] text-title font-bold", tone.bg, tone.fg)}>
+    <li className={cn("flex min-h-[65px] items-center gap-3 border-b border-divider py-2.5 pr-3 pl-5 transition-colors duration-500 hover:bg-hover in-data-[compact=true]:min-h-12 in-data-[compact=true]:py-1", lit && "bg-emerald-soft hover:bg-emerald-soft")}>
+      <span aria-hidden="true" style={{ "--cat": ieCategoryColor(color) } as React.CSSProperties} className="cat-tile flex size-10 shrink-0 items-center justify-center rounded-[12px] text-title font-bold">
         {[...name][0]?.toUpperCase()}
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-body font-semibold text-ink">{name}</span>
           {source && (
-            <Chip tone="income" size="sm" className="h-auto shrink-0 py-0.5 text-[11px] font-semibold" title={t(source.tip)}>
+            <span title={t(source.tip)} className="shrink-0 rounded-full bg-success-soft/50 px-2 py-px text-[11.5px] font-semibold text-tint-green-ink">
               {t("Automatic")}
-            </Chip>
+            </span>
           )}
         </span>
         {count > 0 ? (
@@ -214,16 +212,16 @@ function CategoryRow({
             {plural(t, count, "{count} transaction", "{count} transactions", undefined, fmt)}
           </Link>
         ) : (
-          <span className="text-small text-ink-faint">{t("Not used yet")}</span>
+          <span className="text-small text-ink-muted">{t("Not used yet")}</span>
         )}
       </span>
       {source ? (
-        <Link href={source.href} title={t(source.tip)} className="flex shrink-0 items-center gap-1 rounded-sm text-small font-semibold text-ink-2 hover:text-emerald hover:underline">
+        <Link href={source.href} title={t(source.tip)} className={cn("flex h-8.5 shrink-0 items-center gap-1 rounded-full px-3 text-[12.5px] font-semibold whitespace-nowrap hover:bg-surface-sunken", source.tone)}>
           {t(source.label)}
-          <ArrowUpRight className="size-3.5" aria-hidden="true" />
+          <ArrowUpRight className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
         </Link>
       ) : (
-        <span className="flex shrink-0 gap-2">{children}</span>
+        <span className="flex shrink-0 gap-1.5">{children}</span>
       )}
     </li>
   );
