@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import type { CategorySetRow } from "@/lib/customer/api";
-import { createBudgetCategoryAction, deleteBudgetCategoryAction } from "@/lib/customer/budgetActions";
+import { deleteBudgetCategoryAction, restoreBudgetCategoryAction } from "@/lib/customer/budgetActions";
 import { categoryLabel } from "@/lib/customer/transactionRows";
 import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -19,12 +19,13 @@ interface DeleteCategoryDialogProps {
   onDeleted: () => void;
 }
 
-// How long the toast offers Undo for a category nothing used.
+// How long the toast offers Undo.
 const UNDO_MS = 6000;
 
-// Category Set's Delete (design: CategoryDelete). Nothing uses it: it goes,
-// with Undo. Transactions use it: they move to another category of the type
-// first, so none is left without one; the only one of its type can't go.
+// Category Set's Delete (design: CategoryDelete). Nothing uses it: it goes.
+// Transactions use it: they move to another category of the type first, so
+// none is left without one; the only one of its type can't go. Either way
+// the toast's Undo makes it again and takes back the transactions it moved.
 export function DeleteCategoryDialog({ businessId, row, others, onClose, onDeleted }: DeleteCategoryDialogProps) {
   const { t, fmt } = useLocale();
   const [moveTo, setMoveTo] = useState(others[0]?.id ?? "");
@@ -45,20 +46,26 @@ export function DeleteCategoryDialog({ businessId, row, others, onClose, onDelet
       onDeleted();
       const moved = result.data?.moved ?? 0;
       const target = others.find((other) => other.id === moveTo);
-      if (moved > 0 && target) {
-        toast.success(t("Category deleted"), {
-          description: plural(t, moved, "{count} transaction moved to {name}.", "{count} transactions moved to {name}.", { name: categoryLabel(target.name, t) }, fmt),
-        });
+      const movedEntryIds = result.data?.movedEntryIds ?? [];
+      // An older backend doesn't say which moved: then there is no Undo.
+      if (moved > 0 && (!target || movedEntryIds.length === 0)) {
+        toast.success(t("Category deleted"));
         return;
       }
-      // Nothing used it: Undo makes it again as it was.
-      const again = { type: row.type, name: row.name, icon: row.icon, color: row.color };
+      const again = {
+        type: row.type,
+        name: row.name,
+        icon: row.icon,
+        color: row.color,
+        ...(row.monthlyLimit !== null && row.type === "EXPENSE" && { monthlyLimit: Number(row.monthlyLimit) }),
+        ...(moved > 0 && target && { movedTo: target.name, entryIds: movedEntryIds }),
+      };
       toast.success(t("Category deleted"), {
         duration: UNDO_MS,
         action: {
           label: t("Undo"),
           onClick: async () => {
-            const back = await createBudgetCategoryAction(businessId, again);
+            const back = await restoreBudgetCategoryAction(businessId, again);
             if (back.success) {
               toast.success(t("Category restored"));
               onDeleted();

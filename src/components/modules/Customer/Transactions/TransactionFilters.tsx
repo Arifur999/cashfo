@@ -13,7 +13,7 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { ActiveMonth } from "@/lib/customer/api";
-import { categoryTone } from "@/lib/customer/categoryTone";
+import { ieCategoryInk } from "@/lib/customer/categoryTone";
 import { type PickedPeriod, samePeriod, type YearMonth } from "@/lib/customer/period";
 import { activeFilterCount, categoryLabel, readTransactionFilters } from "@/lib/customer/transactionRows";
 import { formatCount } from "@/lib/i18n/digits";
@@ -26,7 +26,7 @@ export interface FilterCategory {
   id: string;
   name: string;
   type: "INCOME" | "EXPENSE";
-  // Its colour name (categoryTone), for the dot in the menu.
+  // Its colour name (ieCategoryInk), for the dot in the menu.
   color?: string | null;
 }
 
@@ -232,12 +232,12 @@ export function TransactionFilters({ categories, counts, period, current, today,
     if (list.length === 0) continue;
     categoryEntries.push({ kind: "head", label: t(side === "INCOME" ? "Income" : "Expense") });
     for (const category of list) {
-      categoryEntries.push({ kind: "item", value: category.name, label: categoryLabel(category.name, t), dot: categoryTone(category.color).fg, count: countOf(side, category.name), selected: categoryValue === category.name });
+      categoryEntries.push({ kind: "item", value: category.name, label: categoryLabel(category.name, t), dot: ieCategoryInk(category.color), count: countOf(side, category.name), selected: categoryValue === category.name });
     }
   }
   if (noCategory > 0 || filters.uncategorised) categoryEntries.push({ kind: "item", value: NO_CATEGORY, label: t("Uncategorised"), dot: "text-ink-faint", count: noCategory, selected: !!filters.uncategorised });
   const categoryButton = filters.uncategorised ? t("Uncategorised") : filters.categoryId ? categoryLabel(filters.categoryId, t) : t("All categories");
-  const categoryDot = filters.uncategorised ? "text-ink-faint" : pickedCategory ? categoryTone(pickedCategory.color).fg : null;
+  const categoryDot = filters.uncategorised ? "text-ink-faint" : pickedCategory ? ieCategoryInk(pickedCategory.color) : null;
 
   // In the phone sheet the category is a plain select filling the row.
   const selects = (

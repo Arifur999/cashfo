@@ -9,7 +9,7 @@ import type { BudgetCategoryType } from "@/lib/customer/api";
 import { createBudgetCategoryAction, updateBudgetCategoryAction } from "@/lib/customer/budgetActions";
 import { BUDGET_CATEGORY_COLORS } from "@/lib/customer/budgetCategoryVisuals";
 import { CATEGORY_NAME_MAX, CATEGORY_NAME_WORDS, categoryNameProblem, categoryServerProblem } from "@/lib/customer/categoryName";
-import { categoryTone } from "@/lib/customer/categoryTone";
+import { IE_CATEGORY_COLORS, ieCategoryColor, ieCategoryInk } from "@/lib/customer/categoryTone";
 import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -60,14 +60,12 @@ const COLOR_WORDS: Record<(typeof BUDGET_CATEGORY_COLORS)[number], string> = {
   lime: "Lime@@colour",
 };
 
-// The swatches in the CategoryDrawer board's order (deep teal, cyan, blue,
-// indigo, violet, purple, pink, red, orange, yellow, teal, green), each
-// name drawing the board's dot nearest its own.
-const SWATCH_ORDER = ["green", "cyan", "blue", "indigo", "violet", "purple", "pink", "red", "orange", "yellow", "teal", "lime"] as const satisfies readonly (typeof BUDGET_CATEGORY_COLORS)[number][];
+// The swatches in the CategoryDrawer board's order, each its own colour.
+const SWATCH_ORDER = IE_CATEGORY_COLORS satisfies readonly (typeof BUDGET_CATEGORY_COLORS)[number][];
 
-// The colour a new category of a type starts on: one no category of the
-// type has yet, as the API would pick.
-export const freeColor = (taken: readonly string[]): string => BUDGET_CATEGORY_COLORS.find((color) => !taken.includes(color)) ?? BUDGET_CATEGORY_COLORS[taken.length % BUDGET_CATEGORY_COLORS.length];
+// The colour a new category starts on (the board's): the first swatch no
+// category of either type has yet.
+export const freeColor = (taken: readonly string[]): string => SWATCH_ORDER.find((color) => !taken.includes(color)) ?? SWATCH_ORDER[taken.length % SWATCH_ORDER.length];
 
 // Category Set's New / Edit category popup (design: CategoryDrawer): the
 // type (locked once transactions use it), the name beside its letter tile,
@@ -88,21 +86,18 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
     if (editing) {
       setType(editing.type);
       setName(editing.name);
-      setColor(editing.color ?? freeColor(existing[editing.type].colors));
+      setColor(editing.color ?? freeColor([...existing.INCOME.colors, ...existing.EXPENSE.colors]));
       setError(null);
     }
   }
 
   const isNew = editing?.id === null;
   const locked = !!editing && editing.used > 0;
-  const tone = categoryTone(color);
   const letter = [...name.trim()][0]?.toUpperCase() ?? "";
 
   function pickType(next: BudgetCategoryType) {
     setType(next);
     setError(null);
-    // A new category takes the next type's free colour, unless one was picked.
-    if (isNew && color === freeColor(existing[type].colors)) setColor(freeColor(existing[next].colors));
   }
 
   function save() {
@@ -148,7 +143,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
         error={error ? t(error) : undefined}
       >
         <span className="flex items-center gap-2.5">
-          <span aria-hidden="true" className={cn("flex size-12 shrink-0 items-center justify-center rounded-[12px] text-[18px] font-bold", tone.bg, tone.fg)}>
+          <span aria-hidden="true" style={{ "--cat": ieCategoryColor(color) } as React.CSSProperties} className="cat-tile flex size-12 shrink-0 items-center justify-center rounded-[12px] text-[18px] font-bold">
             {letter}
           </span>
           <Input
@@ -182,7 +177,7 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
                 onClick={() => setColor(option)}
                 className={cn(
                   "flex size-7.5 items-center justify-center rounded-full bg-current outline-offset-2 pointer-coarse:size-10",
-                  categoryTone(option).fg,
+                  ieCategoryInk(option),
                   on && "outline-2 outline-current",
                 )}
               >

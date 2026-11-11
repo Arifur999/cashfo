@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import type { CategoryBreakdown, CategoryBreakdownRow } from "@/lib/customer/api";
-import { categoryColorVar, categoryTone } from "@/lib/customer/categoryTone";
+import { ieCategoryColor, ieCategoryInk } from "@/lib/customer/categoryTone";
 import { formatCurrency } from "@/lib/customer/currency";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { plural } from "@/lib/i18n/message";
@@ -38,7 +38,7 @@ export function CategoryBars({ id, title, totalLabel, viewAll, breakdown, curren
   const total = Number(breakdown.total);
   const totalText = formatCurrency(breakdown.total, currency, fmt);
   const pie = donutGradient(
-    rows.map((row) => ({ amount: Number(row.amount), color: categoryColorVar(row.color) })),
+    rows.map((row) => ({ amount: Number(row.amount), color: ieCategoryColor(row.uncategorised ? null : row.color) })),
     total,
     "var(--line-strong)",
     "var(--surface-sunken)",
@@ -73,7 +73,7 @@ export function CategoryBars({ id, title, totalLabel, viewAll, breakdown, curren
         <ul className="flex flex-col gap-0.5 px-2.5 pt-2 pb-3.5">
           {rows.map((row) => {
             const share = total > 0 ? (Number(row.amount) / total) * 100 : 0;
-            const color = categoryTone(row.color).fg;
+            const color = ieCategoryInk(row.uncategorised ? null : row.color);
             const name = categoryName(row, t);
             return (
               <li key={`${row.uncategorised ? "-" : ""}${row.name}`}>

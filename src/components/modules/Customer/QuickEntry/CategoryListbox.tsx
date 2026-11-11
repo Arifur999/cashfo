@@ -3,7 +3,7 @@
 import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { BudgetCategoryName } from "@/lib/customer/budgetActions";
-import { categoryTone } from "@/lib/customer/categoryTone";
+import { ieCategoryInk } from "@/lib/customer/categoryTone";
 import { categoryLabel } from "@/lib/customer/transactionRows";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export function CategoryListbox({ id, businessId, kind, options, value, onChange
           shown ? "border-[1.5px] border-emerald" : invalid ? "border border-expense-fill" : "border border-input hover:border-line-strong",
         )}
       >
-        {picked && <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", categoryTone(picked.color).fg)} />}
+        {picked && <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", ieCategoryInk(picked.color))} />}
         <span className={cn("min-w-0 flex-1 truncate", picked || value ? "text-ink" : "text-ink-muted")}>
           {value ? categoryLabel(picked?.name ?? value, t) : kind === null ? t("Choose Income or Expense first") : t("Select a category")}
         </span>
@@ -110,7 +110,7 @@ export function CategoryListbox({ id, businessId, kind, options, value, onChange
                   }}
                   className={cn("flex min-h-10 shrink-0 items-center gap-2.5 rounded-sm px-2.5 text-left text-body text-ink", on ? "bg-surface-sunken font-semibold" : "hover:bg-surface-sunken")}
                 >
-                  <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", categoryTone(option.color).fg)} />
+                  <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", ieCategoryInk(option.color))} />
                   <span className="min-w-0 flex-1 truncate">{categoryLabel(option.name, t)}</span>
                   {on && <Check className="size-4 shrink-0 text-emerald" strokeWidth={2.5} aria-hidden="true" />}
                 </button>

@@ -104,15 +104,27 @@ export async function updateBudgetCategoryAction(
 }
 
 // A category its transactions use is deleted only with `moveTo`, the
-// category of the same type they move to; `moved` says how many did.
-export async function deleteBudgetCategoryAction(businessId: string, id: string, moveTo?: string): Promise<ActionResult<{ id: string; moved: number }>> {
+// category of the same type they move to; `movedEntryIds` names the
+// entries that did (an older backend leaves it out), for Undo.
+export async function deleteBudgetCategoryAction(businessId: string, id: string, moveTo?: string): Promise<ActionResult<{ id: string; moved: number; movedEntryIds?: string[] }>> {
   return callApi(async () => {
-    const res = await customerApi.delete<{ id: string; moved: number }>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, {
+    const res = await customerApi.delete<{ id: string; moved: number; movedEntryIds?: string[] }>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/${id}`, {
       headers: await authHeaders(),
       params: moveTo ? { moveTo } : undefined,
     });
     return res.data;
   }, "Failed to delete category");
+}
+
+// Undo of a category delete: the category made again as it was, and the
+// entries the delete moved carried back from the category they went to.
+export async function restoreBudgetCategoryAction(businessId: string, input: BudgetCategoryFormInput & { movedTo?: string; entryIds?: string[] }): Promise<ActionResult<BudgetCategory>> {
+  return callApi(async () => {
+    const res = await customerApi.post<BudgetCategory>(`${API_BASE_URL}/api/businesses/${businessId}/budget/categories/restore`, input, {
+      headers: await authHeaders(),
+    });
+    return res.data;
+  }, "Failed to create category");
 }
 
 // Category Set's "Add the usual ones": the starter categories the workspace

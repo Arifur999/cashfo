@@ -20,7 +20,7 @@ import Pagination from "@/components/smartly/Pagination";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account, ActiveMonth, Transaction } from "@/lib/customer/api";
 import { categoryIconFor } from "@/lib/customer/budgetCategoryVisuals";
-import { categoryTone, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
+import { categoryTone, ieCategoryInk, NEUTRAL_CATEGORY_TONE } from "@/lib/customer/categoryTone";
 import { formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { type PickedPeriod, periodRange, type YearMonth } from "@/lib/customer/period";
@@ -460,7 +460,7 @@ function DesktopRow({ number, row, currency, canManage, lit, onVoid, onEdit, onS
   const { t, fmt } = useLocale();
   const href = `/transactions/${row.transaction.id}`;
   const kind = row.transaction.transactionType;
-  const tone = kind === "TRANSFER" ? NEUTRAL_CATEGORY_TONE : categoryTone(row.category?.color);
+  const dot = ieCategoryInk(row.uncategorised ? null : row.category?.color);
   const title = rowTitle(row, t);
   const category = row.uncategorised && !owningFeature(row.transaction) ? t("Uncategorised") : row.category && categoryLabel(row.category.name, t);
   const filterable = row.uncategorised || !!row.entryCategory;
@@ -481,12 +481,12 @@ function DesktopRow({ number, row, currency, canManage, lit, onVoid, onEdit, onS
         {category ? (
           filterable ? (
             <button type="button" onClick={onShowOnly} title={t("Show only {name}", { name: category })} className="relative z-10 flex min-w-0 items-center gap-2 rounded-sm text-left hover:underline">
-              <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", row.uncategorised ? "text-ink-faint" : tone.fg)} />
+              <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", dot)} />
               <span className="truncate">{category}</span>
             </button>
           ) : (
             <>
-              <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", tone.fg)} />
+              <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", dot)} />
               <span className="truncate">{category}</span>
             </>
           )

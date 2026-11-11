@@ -3,16 +3,14 @@
 import { ArrowUpRight, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import { LIST_ROW_ACTION, LIST_ROW_DELETE } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import type { BudgetCategoryType, CategorySet, CategorySetRow } from "@/lib/customer/api";
-import { addStarterCategoriesAction } from "@/lib/customer/budgetActions";
-import { categoryTone } from "@/lib/customer/categoryTone";
+import { ieCategoryColor } from "@/lib/customer/categoryTone";
 import { categoryLabel } from "@/lib/customer/transactionRows";
 import { formatCount } from "@/lib/i18n/digits";
 import { plural } from "@/lib/i18n/message";
@@ -57,7 +55,6 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
   const router = useRouter();
   const [editing, setEditing] = useState<CategoryDialogState | null>(openNew && canManage ? { id: null, type: openNew, name: "", color: null, used: 0 } : null);
   const [deleting, setDeleting] = useState<CategorySetRow | null>(null);
-  const [isAdding, startAdding] = useTransition();
   // The category just saved, lit for a moment (the board's highlight).
   const [highlight, setHighlight] = useState<string | null>(null);
   const automatic = categories.automatic ?? [];
@@ -72,18 +69,6 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
     INCOME: { names: categories.income.map((row) => row.name), colors: categories.income.map((row) => row.color) },
     EXPENSE: { names: categories.expense.map((row) => row.name), colors: categories.expense.map((row) => row.color) },
   };
-
-  function addStarters() {
-    startAdding(async () => {
-      const result = await addStarterCategoriesAction(businessId);
-      if (result.success) {
-        toast.success(t("Categories added"));
-        router.refresh();
-      } else {
-        toast.error(t(result.message ?? "Failed to add the categories"));
-      }
-    });
-  }
 
   return (
     <PageFrame className="leading-[normal]">
@@ -122,20 +107,13 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
                 )}
               </div>
               {rows.length === 0 && extra.length === 0 ? (
-                <div className="flex flex-col items-start gap-3 p-5">
-                  <p className="text-body text-ink-muted">{t("No categories yet.")}</p>
-                  {canManage && (
-                    <Button variant="secondary" size="sm" onClick={addStarters} disabled={isAdding} className="rounded-full">
-                      {t("Add the usual ones")}
-                    </Button>
-                  )}
-                </div>
+                <p className="p-5 text-body text-ink-muted">{t("No categories yet.")}</p>
               ) : (
                 <ul>
                   {rows.map((row) => {
                     const source = row.system === "zakat" ? SOURCES.zakat : null;
                     return (
-                      <CategoryRow key={row.id} name={categoryLabel(row.name, t)} color={row.color} count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={source} lit={row.id === highlight}>
+                      <CategoryRow key={row.id} name={categoryLabel(row.name, t)} color={source ? "lime" : row.color} count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={source} lit={row.id === highlight}>
                         {canManage && !source && (
                           <>
                             <button
@@ -162,7 +140,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, openN
                     );
                   })}
                   {extra.map((row) => (
-                    <CategoryRow key={`auto-${row.name}`} name={categoryLabel(row.name, t)} color={null} count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={SOURCES[row.kind]} />
+                    <CategoryRow key={`auto-${row.name}`} name={categoryLabel(row.name, t)} color="slate" count={row.transactionCount} href={transactionsOf(row.type, row.name)} source={SOURCES[row.kind]} />
                   ))}
                 </ul>
               )}
@@ -215,10 +193,9 @@ function CategoryRow({
   children?: React.ReactNode;
 }) {
   const { t, fmt } = useLocale();
-  const tone = categoryTone(color);
   return (
-    <li className={cn("flex min-h-16 items-center gap-3 border-b border-divider py-2.5 pr-3 pl-5 transition-colors duration-500 last:border-b-0 hover:bg-hover in-data-[compact=true]:min-h-12 in-data-[compact=true]:py-1", lit && "bg-emerald-soft hover:bg-emerald-soft")}>
-      <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] text-title font-bold", tone.bg, tone.fg)}>
+    <li className={cn("flex min-h-[65px] items-center gap-3 border-b border-divider py-2.5 pr-3 pl-5 transition-colors duration-500 hover:bg-hover in-data-[compact=true]:min-h-12 in-data-[compact=true]:py-1", lit && "bg-emerald-soft hover:bg-emerald-soft")}>
+      <span aria-hidden="true" style={{ "--cat": ieCategoryColor(color) } as React.CSSProperties} className="cat-tile flex size-10 shrink-0 items-center justify-center rounded-[12px] text-title font-bold">
         {[...name][0]?.toUpperCase()}
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">

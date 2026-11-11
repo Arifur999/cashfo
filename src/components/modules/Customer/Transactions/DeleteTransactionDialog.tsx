@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { IEConfirmDialog } from "@/components/modules/Customer/IncomeExpense/IEConfirmDialog";
 import AmountText from "@/components/smartly/AmountText";
-import { categoryTone } from "@/lib/customer/categoryTone";
+import { ieCategoryInk } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
 import { restoreTransactionAction, voidTransactionAction } from "@/lib/customer/transactionActions";
 import { DELETED_REASON } from "@/lib/customer/transactionDisplay";
@@ -71,7 +71,7 @@ export function DeleteTransactionDialog({ row, businessId, currency, onClose }: 
       busy={isPending}
     >
       <div className="mt-1 flex items-center gap-3 rounded-[14px] border border-line px-3.5 py-3">
-        <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", row.uncategorised ? "text-ink-faint" : categoryTone(row.category?.color).fg)} />
+        <span aria-hidden="true" className={cn("size-2.5 shrink-0 rounded-full bg-current", ieCategoryInk(row.uncategorised ? null : row.category?.color))} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span title={title} className="truncate text-body font-semibold text-ink">{title}</span>
           <span className="truncate text-caption text-ink-muted">{details}</span>
