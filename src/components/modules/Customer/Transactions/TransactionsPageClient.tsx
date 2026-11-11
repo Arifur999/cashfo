@@ -295,7 +295,9 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   );
 
   return (
-    <PageFrame className="leading-[normal]">
+    // Desktop: the frame is the window's height and the list card takes the
+    // rest, its rows scrolling inside it with the pager pinned (the board).
+    <PageFrame className="leading-[normal] md:h-full">
       {/* On a phone the floating + adds, and the title stands alone. */}
       <PageHeader title={t("Every income and expense transaction.")} actions={addButton} hideActionsOnPhone className="md:items-center" />
 
@@ -333,7 +335,8 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         id={LIST_ID}
         label={t("Transactions list")}
         busy={isPending}
-        className={cn("transition-opacity", transactions.length > 0 && "hidden md:block", isPending && "opacity-60")}
+        className={cn("transition-opacity md:flex md:min-h-80 md:flex-1 md:flex-col", transactions.length > 0 && "max-md:hidden", isPending && "opacity-60")}
+        tableClassName="md:min-h-0 md:flex-1 md:overflow-y-auto"
         footer={<ListFooter>{meta.total > 0 ? pager(LIST_ID) : showing}</ListFooter>}
       >
         {/* Above the rows' buttons (z-10) as they scroll under it. */}

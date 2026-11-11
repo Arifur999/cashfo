@@ -155,7 +155,8 @@ export function BudgetPlanPageClient({ businessId, currency, canManage, plans, s
   const emptyButton = "mt-1 h-10 px-4";
 
   return (
-    <PageFrame className="leading-[normal]">
+    // Desktop: the plans card reaches the bottom of the window, as the board draws it.
+    <PageFrame className="leading-[normal] md:min-h-full">
       <PageHeader
         title={t("Monthly Income and Expense Planning")}
         className="md:items-center"
@@ -200,7 +201,7 @@ export function BudgetPlanPageClient({ businessId, currency, canManage, plans, s
 
       {plan && shown && <PlanFigures plan={plan} shown={shown} current={current} today={today} money={money} signedMoney={signedMoney} busy={isSwitching} />}
 
-      <Card padding="none" className="overflow-hidden" role="region" aria-label={t("Monthly plans")}>
+      <Card padding="none" className="overflow-hidden md:flex-1" role="region" aria-label={t("Monthly plans")}>
         <div className="border-b border-line px-4 py-3 md:px-6">
           <Input type="search" size="sm" value={query} onChange={(event) => setQuery(event.target.value)} leading={<Search />} placeholder={t("Search month or amount…")} aria-label={t("Search month or amount…")} className="text-small" />
         </div>
