@@ -121,7 +121,7 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(location)).toEqual({ crumbs: ["Balance"], heading: "Transfers", tone: "money" });
     // The old Overview and Wallet addresses still name Accounts while they redirect.
     expect(locate("/balance/wallet")!.sub?.label).toBe("Accounts@@wallets");
-    expect(breadcrumbFor(locate("/balance/ledger")!).heading).toBe("Account ledger");
+    expect(breadcrumbFor(locate("/balance/ledger")!).heading).toBe("Ledger");
   });
 
   it("names a Habit Tracker page under its section, and the Money Tracker's pages alone", () => {

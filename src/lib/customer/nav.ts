@@ -142,7 +142,7 @@ export const NAV_SECTIONS: NavSection[] = [
         subs: [
           { label: "Accounts@@wallets", href: "/balance/accounts", match: ["/balance/overview", "/balance/wallet"] },
           { label: "Transfers", href: "/balance/transfer" },
-          { label: "Ledger", heading: "Account ledger", href: "/balance/ledger" },
+          { label: "Ledger", href: "/balance/ledger" },
         ],
       },
       {
