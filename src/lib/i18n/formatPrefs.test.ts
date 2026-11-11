@@ -41,11 +41,11 @@ describe("resolveFmt", () => {
 
 describe("takaSign", () => {
   it("follows the language, not the digits", () => {
-    expect(takaSign("en")).toBe("TK");
+    expect(takaSign("en")).toBe("Tk");
     expect(takaSign("bn")).toBe("৳");
-    expect(takaSign(resolveFmt({ digitStyle: "BENGALI" }, "en"))).toBe("TK");
+    expect(takaSign(resolveFmt({ digitStyle: "BENGALI" }, "en"))).toBe("Tk");
     expect(takaSign(resolveFmt({ digitStyle: "LATIN" }, "bn"))).toBe("৳");
-    expect(takaSign(null)).toBe("TK");
+    expect(takaSign(null)).toBe("Tk");
   });
 });
 
@@ -146,20 +146,20 @@ describe("the formatters with a Fmt", () => {
   });
 
   it("formatCurrency follows the digits and the grouping", () => {
-    expect(formatCurrency(1250000, "BDT", bnDigitsEn)).toBe(`TK${NBSP}১২,৫০,০০০`);
+    expect(formatCurrency(1250000, "BDT", bnDigitsEn)).toBe(`Tk${NBSP}১২,৫০,০০০`);
     expect(formatCurrency(1250000, "BDT", latinBn)).toBe(`৳${NBSP}12,50,000`);
-    expect(formatCurrency(1250000, "BDT", intl)).toBe(`TK${NBSP}1,250,000`);
+    expect(formatCurrency(1250000, "BDT", intl)).toBe(`Tk${NBSP}1,250,000`);
     expect(formatCurrency(1250000, "BDT", intlBn)).toBe(`৳${NBSP}১,২৫০,০০০`);
     // The paisa only when there are some, either way.
-    expect(formatCurrency(2699.1, "BDT", intl)).toBe(`TK${NBSP}2,699.10`);
-    expect(formatCurrency(-1500, "BDT", intl)).toBe(`-TK${NBSP}1,500`);
+    expect(formatCurrency(2699.1, "BDT", intl)).toBe(`Tk${NBSP}2,699.10`);
+    expect(formatCurrency(-1500, "BDT", intl)).toBe(`-Tk${NBSP}1,500`);
     // Other currencies keep their own grouping.
     expect(formatCurrency(1250000, "USD", "en")).toBe(`$${NBSP}1,250,000`);
   });
 
   it("formatSignedCurrency and formatGrouped follow them too", () => {
-    expect(formatSignedCurrency(1250000, "BDT", intl)).toBe(`+ TK${NBSP}1,250,000`);
-    expect(formatSignedCurrency(-52300, "BDT", bnDigitsEn)).toBe(`− TK${NBSP}৫২,৩০০`);
+    expect(formatSignedCurrency(1250000, "BDT", intl)).toBe(`+ Tk${NBSP}1,250,000`);
+    expect(formatSignedCurrency(-52300, "BDT", bnDigitsEn)).toBe(`− Tk${NBSP}৫২,৩০০`);
     expect(formatGrouped(1250000, "BDT", intl)).toBe("1,250,000");
     expect(formatGrouped(1250000, "BDT", latinBn)).toBe("12,50,000");
   });

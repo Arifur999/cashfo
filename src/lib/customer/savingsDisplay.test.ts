@@ -154,11 +154,11 @@ describe("ENTRY_META", () => {
 describe("savingsError", () => {
   it("rewords the wallet refusal with the amounts in money", () => {
     const message = '"Islami Bank DPS" only has 2000.00 -- cannot withdraw 5000.00 from it. Pick a different Savings Wallet.';
-    expect(savingsError(message, "Failed to withdraw", inEnglish, "BDT")).toBe("Islami Bank DPS only has TK 2,000, not the TK 5,000 this goal holds. Pick another savings wallet.");
+    expect(savingsError(message, "Failed to withdraw", inEnglish, "BDT")).toBe("Islami Bank DPS only has Tk 2,000, not the Tk 5,000 this goal holds. Pick another savings wallet.");
   });
 
   it("rewords the move refusals", () => {
-    expect(savingsError('"Hajj" only has 1500.50 saved -- cannot transfer 3000.00', "Failed to move", inEnglish, "BDT")).toBe("Hajj only has TK 1,500.50 saved, so TK 3,000 can't be moved.");
+    expect(savingsError('"Hajj" only has 1500.50 saved -- cannot transfer 3000.00', "Failed to move", inEnglish, "BDT")).toBe("Hajj only has Tk 1,500.50 saved, so Tk 3,000 can't be moved.");
     expect(savingsError('"Bike" has been withdrawn -- pick another goal to move the money to.', "Failed to move", inEnglish, "BDT")).toBe("Bike has been withdrawn. Pick another goal to move the money to.");
   });
 

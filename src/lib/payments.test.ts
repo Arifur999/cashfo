@@ -49,19 +49,19 @@ describe("paymentNote", () => {
     expect(paymentNote({ ...base, status: "FAILED", failureReason: "Not enough balance" })).toEqual({ text: "Not enough balance", tone: "danger" });
     expect(paymentNote({ ...base, status: "PENDING" })).toEqual({ text: "Waiting for bKash to confirm", tone: "muted" });
     expect(paymentNote({ ...base, status: "REFUNDED" })).toEqual({ text: "Refunded", tone: "muted" });
-    expect(paymentNote({ ...base, couponCode: "PRO100", discountApplied: "100.00" })).toEqual({ text: `PRO100 · TK${NBSP}100 off`, tone: "muted" });
+    expect(paymentNote({ ...base, couponCode: "PRO100", discountApplied: "100.00" })).toEqual({ text: `PRO100 · Tk${NBSP}100 off`, tone: "muted" });
     expect(paymentNote({ ...base, gateway: "MANUAL" })).toEqual({ text: "Entered by hand", tone: "muted" });
     expect(paymentNote(base)).toEqual({ text: "Invoice INV-2026-000403", tone: "muted" });
   });
 
   it("keeps the paisa of a discount", () => {
-    expect(paymentNote({ ...base, couponCode: "EID20", discountApplied: "59.80", currency: "BDT" })).toEqual({ text: `EID20 · TK${NBSP}59.80 off`, tone: "muted" });
+    expect(paymentNote({ ...base, couponCode: "EID20", discountApplied: "59.80", currency: "BDT" })).toEqual({ text: `EID20 · Tk${NBSP}59.80 off`, tone: "muted" });
   });
 
   it("says how much of a partial refund went back", () => {
     const refunded = { ...base, status: "REFUNDED" as const, amount: "299.00", currency: "BDT" };
     expect(paymentNote({ ...refunded, refund: { amount: "100.50", status: "COMPLETED", createdAt: "2026-10-02T04:00:00.000Z" } })).toEqual({
-      text: `Partly refunded: TK${NBSP}100.50`,
+      text: `Partly refunded: Tk${NBSP}100.50`,
       tone: "muted",
     });
     expect(paymentNote({ ...refunded, refund: { amount: "299.00", status: "COMPLETED", createdAt: "2026-10-02T04:00:00.000Z" } })).toEqual({ text: "Refunded", tone: "muted" });
@@ -86,8 +86,8 @@ describe("paymentSteps", () => {
       tone: "danger",
     });
     const refund = { id: "r", paymentId: "x", amount: "299.00", reason: "Double charge", processedBy: "a", status: "COMPLETED" as const, createdAt: "2026-10-02T04:00:00.000Z" };
-    expect(paymentSteps({ ...detail, status: "REFUNDED", refund }).at(-1)).toMatchObject({ what: `Refunded TK${NBSP}299`, tone: "neutral" });
-    expect(paymentSteps({ ...detail, status: "REFUNDED", refund: { ...refund, amount: "59.80" } }).at(-1)).toMatchObject({ what: `Refunded TK${NBSP}59.80` });
+    expect(paymentSteps({ ...detail, status: "REFUNDED", refund }).at(-1)).toMatchObject({ what: `Refunded Tk${NBSP}299`, tone: "neutral" });
+    expect(paymentSteps({ ...detail, status: "REFUNDED", refund: { ...refund, amount: "59.80" } }).at(-1)).toMatchObject({ what: `Refunded Tk${NBSP}59.80` });
   });
 });
 

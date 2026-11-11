@@ -4,18 +4,18 @@
 // `style: "currency"`: that API's rendered symbol for BDT varies by
 // environment/ICU data (sometimes "BDT", sometimes "৳").
 //
-// Taka is grouped the South Asian way (lakh/crore: TK 12,50,000), other
+// Taka is grouped the South Asian way (lakh/crore: Tk 12,50,000), other
 // currencies the international way. Whole amounts drop the paisa, as the
-// design writes money ("TK 85,000", "TK 2,699.10"). The grouping locale is
+// design writes money ("Tk 85,000", "Tk 2,699.10"). The grouping locale is
 // always explicit, never the machine default, so the server and every
 // browser print the same text.
 //
 // Every formatter takes the reader's language last: a Bangla reader gets
 // taka's sign and Bangla digits ("৳ ১২,৫০,০০০"), grouped the same way, and
-// an English reader "TK" (takaSign). Leave it out only where the text must
+// an English reader "Tk" (takaSign). Leave it out only where the text must
 // stay Latin -- a CSV export, an input's value. Given the reader's Fmt
 // (formatPrefs.ts) instead, the digits and the taka grouping follow
-// Settings' "Digits" and "Big amounts": "TK 1,250,000" in groups of three,
+// Settings' "Digits" and "Big amounts": "Tk 1,250,000" in groups of three,
 // Bangla digits under an English page.
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { type FormatLocale, fmtOf, langOf, takaGroupingLocale, takaSign } from "@/lib/i18n/formatPrefs";
@@ -55,10 +55,10 @@ export function formatCurrency(amount: number | string, currencyCode: string, lo
   const grouping = groupingFor(currencyCode, locale);
   const value = Number(amount);
   // Rounded to the paisa before the sign is chosen, so a sum that is
-  // negative only by float noise (-2.8e-17) prints "TK 0", not "-TK 0".
+  // negative only by float noise (-2.8e-17) prints "Tk 0", not "-Tk 0".
   const rounded = toShown(value, locale);
-  // "-TK 1,500", not "TK -1,500": the sign leads, as it is read. A
-  // no-break space, so a narrow card never leaves "TK" alone on its line.
+  // "-Tk 1,500", not "Tk -1,500": the sign leads, as it is read. A
+  // no-break space, so a narrow card never leaves "Tk" alone on its line.
   return toLocaleDigits(`${rounded < 0 ? "-" : ""}${symbol} ${groupDigits(Math.abs(rounded), grouping)}`, locale);
 }
 
@@ -71,7 +71,7 @@ export function formatGrouped(amount: number | string, currencyCode: string, loc
   return toLocaleDigits(`${rounded < 0 ? "-" : ""}${groupDigits(Math.abs(rounded), grouping)}`, locale);
 }
 
-// "+ TK 85,000" for money in, "− TK 52,300" for money out, "TK 0" for
+// "+ Tk 85,000" for money in, "− Tk 52,300" for money out, "Tk 0" for
 // nothing: the explicit sign the dashboards and statements show, with a real
 // minus sign and a space, as the design writes it.
 export function formatSignedCurrency(amount: number | string, currencyCode: string, locale: FormatLocale = "en"): string {
@@ -108,7 +108,7 @@ export function formatCompactAmount(amount: number, locale: FormatLocale = "en")
   return toLocaleDigits(`${sign}${Math.round(abs)}`, locale);
 }
 
-// Just the symbol in the reader's language ("TK", "৳"), e.g. for an inline
+// Just the symbol in the reader's language ("Tk", "৳"), e.g. for an inline
 // prefix inside an amount input -- callers that need the formatted number
 // too should use formatCurrency().
 export function currencySymbol(currencyCode: string, locale: FormatLocale): string {
