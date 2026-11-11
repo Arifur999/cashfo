@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Lock, Pencil, Plus, Receipt, Search, Trash2 } from "lucide-react";
+import { ArrowUpRight, Pencil, Plus, Receipt, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useRef, useState, useTransition } from "react";
@@ -13,7 +13,6 @@ import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
-import Kbd from "@/components/smartly/Kbd";
 import { LIST_ROW_ACTION, LIST_ROW_DELETE, ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
@@ -29,10 +28,9 @@ import { listIncomeExpenseForPrintAction } from "@/lib/customer/transferActions"
 import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { type CategoryCounts, categoryIndex, categoryLabel, dayHeading, describeTransaction, type EditableEntry, editableEntry, groupByDay, owningFeature, readTransactionFilters, rowTitle, type TransactionRow } from "@/lib/customer/transactionRows";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
 import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { pageHref, readPageParam, readPageSizeParam } from "@/lib/table/pageParams";
+import { pageHref } from "@/lib/table/pageParams";
 import { cn } from "@/lib/utils";
 import { type FilterCategory, TransactionFilters } from "./TransactionFilters";
 import { IEStatement, type StatementLine } from "./IEStatement";
@@ -41,10 +39,9 @@ import { DeleteTransactionDialog } from "./DeleteTransactionDialog";
 export interface TransactionTotals {
   income: number;
   expense: number;
-  voided: number;
   // "all": every matching transaction (the summary, or the category
   // breakdown on an older backend); "page": only the rows on this page,
-  // when an older backend can't total a search, wallet or category filter.
+  // when an older backend can't total a search or category filter.
   scope: "all" | "page";
 }
 
@@ -61,8 +58,6 @@ interface TransactionsPageClientProps {
   activeMonths: ActiveMonth[] | null;
   meta: { page: number; limit: number; total: number; totalPages: number };
   pageSize: number;
-  pageSizes: number[];
-  defaultPageSize: number;
   currency: string;
   today: string;
   totals: TransactionTotals;
@@ -94,7 +89,7 @@ const COMPACT_ROW = "in-data-[compact=true]:min-h-12 in-data-[compact=true]:py-1
 // strip, the filters with the period and Print, and the list, newest first.
 // A category opens its own; a feature's own posting (zakat, a charge, an
 // asset, a savings move, a referral payout) is changed on its own page.
-export function TransactionsPageClient({ businessId, transactions, accounts, categories, categoryCounts, period, current, activeMonths, meta, pageSize, pageSizes, defaultPageSize, currency, today, totals, dayTotals, splitDays, canManage, openNew }: TransactionsPageClientProps) {
+export function TransactionsPageClient({ businessId, transactions, accounts, categories, categoryCounts, period, current, activeMonths, meta, pageSize, currency, today, totals, dayTotals, splitDays, canManage, openNew }: TransactionsPageClientProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -114,7 +109,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   const categoriesById = categoryIndex(categories);
   const groups = groupByDay(transactions.map((transaction) => describeTransaction(transaction, categoriesById, accountNames, locale)));
   const filters = readTransactionFilters((key) => searchParams.get(key));
-  const filtered = !!(filters.type || filters.categoryId || filters.uncategorised || filters.accountId || filters.search);
+  const filtered = !!(filters.type || filters.categoryId || filters.uncategorised || filters.search);
 
   // A new account (no income or expense in any month): nothing to find yet.
   const blank = activeMonths !== null && activeMonths.length === 0 && meta.total === 0 && !filtered;
@@ -144,7 +139,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   }, [isPending, shownQuery]);
   const baseQuery = () => new URLSearchParams(requested.current ? new URL(requested.current, window.location.origin).search : shownQuery);
 
-  // Filter and page-size changes run in a transition, so the list can dim
+  // Filter changes run in a transition, so the list can dim
   // while the next one loads (the API may take its time).
   const navigate = (href: string, mode: "push" | "replace" = "push") => {
     requested.current = href;
@@ -155,22 +150,6 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   };
 
   const hrefFor = (page: number) => pageHref("/transactions", searchParams, page);
-
-  // The footer's "Show N voided" / "Hide voided": the same list with the
-  // voided rows (and their reversals) in or out, from its first page.
-  const toggleDeleted = () => {
-    const next = baseQuery();
-    next.delete("page");
-    if (filters.deleted) next.delete("deleted");
-    else next.set("deleted", "1");
-    const query = next.toString();
-    navigate(query ? `/transactions?${query}` : "/transactions");
-  };
-
-  // Clearing the filters keeps the page size the reader picked, as the
-  // filter bar's Clear does.
-  const limitParam = searchParams.get("limit");
-  const clearHref = limitParam ? `/transactions?${new URLSearchParams({ limit: limitParam }).toString()}` : "/transactions";
 
   // A row's category opens just that category, the rest kept.
   const showOnly = (row: TransactionRow) => {
@@ -188,7 +167,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
   // A saved entry is lit in the list. A filter that would hide it is let go
   // (the board widens them): its month for the period, then the type, the
-  // category, the wallet and a search it doesn't match; the first page,
+  // category and a search it doesn't match; the first page,
   // where the newest are.
   function showSaved(saved: SavedEntry) {
     setHighlight(saved.id);
@@ -206,7 +185,6 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       drop("categoryId");
       drop("uncategorised");
     }
-    if (filters.accountId && filters.accountId !== saved.accountId) drop("accountId");
     const words = filters.search?.toLowerCase();
     if (words && ![saved.note, saved.category].some((text) => text.toLowerCase().includes(words))) drop("search");
     if (!inPeriod) {
@@ -226,7 +204,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   function print() {
     const { dateFrom, dateTo } = periodRange(period);
     startPrint(async () => {
-      const result = await listIncomeExpenseForPrintAction(businessId, { dateFrom, dateTo, type: filters.type, categoryId: filters.categoryId, uncategorised: filters.uncategorised, accountId: filters.accountId, search: filters.search });
+      const result = await listIncomeExpenseForPrintAction(businessId, { dateFrom, dateTo, type: filters.type, categoryId: filters.categoryId, uncategorised: filters.uncategorised, search: filters.search });
       if (result.success && result.data) setPrinting(result.data);
       else toast.error(t("Couldn't load the transactions to print. Try again."));
     });
@@ -247,20 +225,6 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       };
     });
 
-  // A new page size keeps the first row of the page on show (or asked for)
-  // in view.
-  function changePageSize(size: number) {
-    const next = baseQuery();
-    const firstRow = (readPageParam(next) - 1) * readPageSizeParam(next, pageSizes, defaultPageSize);
-    if (size === defaultPageSize) next.delete("limit");
-    else next.set("limit", String(size));
-    const page = Math.floor(firstRow / size) + 1;
-    if (page > 1) next.set("page", String(page));
-    else next.delete("page");
-    const query = next.toString();
-    navigate(query ? `/transactions?${query}` : "/transactions");
-  }
-
   // A band's net is the day's own: the rows here, or for a day that goes
   // on past this page, the day's total. Without one it says it goes on.
   const dayBand = (day: string, net: number) => {
@@ -274,22 +238,13 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
 
   const netText = (net: number) => <span className={cn("tabular-nums", net > 0 ? "text-income" : net < 0 ? "text-expense" : "text-ink-muted")}>{formatSignedCurrency(net, currency, fmt)}</span>;
 
-  // "Showing 1–10 of 29", and the voided rows' switch when there are some.
+  // "Showing 1–10 of 29".
   const first = (meta.page - 1) * meta.limit + 1;
   const last = Math.min(meta.page * meta.limit, meta.total);
-  const voidedSwitch = totals.voided > 0 && (
-    <>
-      {" · "}
-      <button type="button" onClick={toggleDeleted} className="rounded-sm font-semibold text-emerald hover:underline">
-        {filters.deleted ? t("Hide voided") : t("Show {count} voided", { count: formatCount(totals.voided, fmt) })}
-      </button>
-    </>
-  );
   const showing = (
     <span>
       {meta.total > 0 ? t("Showing {range} of {total}", { range: toLocaleDigits(`${first}–${last}`, fmt), total: formatCount(meta.total, fmt) }) : t("No transactions")}
       {totals.scope === "page" && ` · ${t("Totals: this page")}`}
-      {voidedSwitch}
     </span>
   );
 
@@ -300,26 +255,17 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       total={meta.total}
       pageSize={pageSize}
       hrefFor={hrefFor}
-      pageSizes={pageSizes}
-      onPageSizeChange={changePageSize}
       focusTargetId={focusTargetId}
       summary={showing}
       size="lg"
     />
   );
 
-  // A view-only member is told why there is nothing to add with, rather
-  // than finding out from a refused save.
-  const addButton = canManage ? (
+  const addButton = canManage && (
     <Button size="lg" onClick={() => setAddOpen(true)} className="gap-1.5 px-4.5">
       <Plus strokeWidth={2.5} className="size-4" />
       {t("Transaction")}
     </Button>
-  ) : (
-    <span className="flex items-center gap-2 text-small text-ink-muted">
-      <Lock className="size-3.5 shrink-0" aria-hidden="true" />
-      {t("Only an owner or accountant can add transactions")}
-    </span>
   );
 
   // Nothing to show: the board's empty block inside the list.
@@ -333,32 +279,16 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         <p className="max-w-105 text-body text-ink-muted">
           {!blank ? t("Try another month, type or category, or clear the search.") : canManage ? t("Add your first income or expense to see it here.") : t("Only an owner or accountant can add transactions")}
         </p>
-        <div className="mt-1 flex flex-wrap justify-center gap-2.5">
-          {!blank ? (
-            <Button variant="secondary" asChild>
-              <Link href={clearHref}>{t("Clear filters")}</Link>
+        {!blank ? (
+          <Button variant="secondary" asChild className="mt-1">
+            <Link href="/transactions">{t("Clear filters")}</Link>
+          </Button>
+        ) : (
+          canManage && (
+            <Button variant="secondary" onClick={() => setAddOpen(true)} className="mt-1">
+              {t("New transaction")}
             </Button>
-          ) : (
-            canManage && (
-              <>
-                <Button variant="secondary" onClick={() => setAddOpen(true)}>
-                  {t("New transaction")}
-                </Button>
-                <Button variant="secondary" asChild>
-                  <Link href="/category-set">{t("Set up categories first")}</Link>
-                </Button>
-              </>
-            )
-          )}
-        </div>
-        {/* N opens the New transaction popup (Layout/AddMenu); phones have
-            no keyboard to press it on. */}
-        {blank && canManage && (
-          <p className="mt-2 hidden items-center gap-1.5 text-caption text-ink-muted md:flex">
-            {fillNodes(t("Tip: press {key} anywhere to add a transaction"), {
-              key: <Kbd className="rounded-[4px] bg-strip px-1.5 py-px font-sans text-[11px] font-semibold text-ink-soft">N</Kbd>,
-            })}
-          </p>
+          )
         )}
       </div>
     </div>
@@ -385,7 +315,6 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
       </Card>
 
       <TransactionFilters
-        accounts={accounts}
         categories={categories}
         counts={categoryCounts}
         period={period}
@@ -394,7 +323,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
         activeMonths={activeMonths}
         navigate={navigate}
         baseQuery={baseQuery}
-        onPrint={meta.total > 0 ? print : undefined}
+        onPrint={print}
         printing={loadingPrint}
       />
 
@@ -470,7 +399,6 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
             range={rangeFrom && rangeTo ? `${formatDate(rangeFrom, undefined, fmt)} – ${formatDate(rangeTo, undefined, fmt)}` : null}
             type={filters.type ?? null}
             category={filters.uncategorised ? t("Uncategorised") : filters.categoryId ? categoryLabel(filters.categoryId, t) : null}
-            wallet={filters.accountId ? (accountNames[filters.accountId] ?? null) : null}
             search={filters.search ?? null}
             capped={!printing.complete}
             today={today}
@@ -540,9 +468,10 @@ function DesktopRow({ number, row, currency, canManage, lit, onVoid, onEdit, onS
   const editable = canManage && !row.cancelled && editableEntry(row.transaction, title, row.entryCategory) !== null;
   const source = !row.cancelled ? sourceOf(row) : null;
   return (
-    // A voided row fades to 60% as the board sets it back; its buttons stay
-    // solid. A row just saved is lit for a moment.
-    <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("min-h-16 gap-x-3.5 transition-colors duration-500", COMPACT_ROW, lit && "bg-emerald-soft", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
+    // The board's 64px row over its own line. A voided row fades to 60% as
+    // the board sets it back; its buttons stay solid. A row just saved is
+    // lit for a moment.
+    <ListRow columns={COLUMNS} muted={!!row.cancelled} className={cn("min-h-[65px] gap-x-3.5 border-b transition-colors [[data-slot=list-row]+&]:border-t-0 duration-500", COMPACT_ROW, lit && "bg-emerald-soft", row.cancelled && "[&>[role=cell]:not([data-slot=list-row-actions])]:opacity-60")}>
       <ListCell className="text-small text-ink-muted tabular-nums">{formatCount(number, fmt)}</ListCell>
       <ListCell className="text-small whitespace-nowrap text-ink-soft tabular-nums">{formatDate(row.transaction.transactionDate, "d MMM yyyy", fmt)}</ListCell>
       <ListCell className="hidden xl:block">

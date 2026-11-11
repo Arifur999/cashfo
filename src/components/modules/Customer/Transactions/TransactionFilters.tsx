@@ -12,8 +12,7 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
-import type { Account, ActiveMonth } from "@/lib/customer/api";
+import type { ActiveMonth } from "@/lib/customer/api";
 import { categoryTone } from "@/lib/customer/categoryTone";
 import { type PickedPeriod, samePeriod, type YearMonth } from "@/lib/customer/period";
 import { activeFilterCount, categoryLabel, readTransactionFilters } from "@/lib/customer/transactionRows";
@@ -32,7 +31,6 @@ export interface FilterCategory {
 }
 
 interface TransactionFiltersProps {
-  accounts: Account[];
   categories: FilterCategory[];
   // How many transactions each category has in the period, by type; the
   // money with no category under "".
@@ -66,7 +64,6 @@ type MenuEntry = { kind: "head"; label: string } | { kind: "item"; value: string
 // One of the bar's dropdowns (the board's category menu): a 44px button
 // with the choice on show, outlined in emerald while it narrows the list,
 // opening a 260px list in groups, each choice with its dot and how many it
-// has. The wallet menu is drawn the same way.
 function FilterMenu({ label, buttonLabel, buttonDot, active, entries, onPick }: { label: string; buttonLabel: string; buttonDot: string | null; active: boolean; entries: MenuEntry[]; onPick: (value: string) => void }) {
   const { fmt } = useLocale();
   const [open, setOpen] = useState(false);
@@ -117,26 +114,20 @@ function FilterMenu({ label, buttonLabel, buttonDot, active, entries, onPick }: 
 
 // The filters on Transactions (the board's bar): a search over the
 // description, category, account and amount, asked as you type; the type;
-// the category, with how many each has in the period; the wallet; the
-// period; and Print. All kept in the URL, so a filtered list can be shared
+// the category, with how many each has in the period; the period; and
+// Print. All kept in the URL, so a filtered list can be shared
 // and comes back on refresh. On phones the search stays and the rest opens
 // in a sheet; chips show what is on, and each one takes its filter off.
-export function TransactionFilters({ accounts, categories, counts, period, current, today, activeMonths, navigate, baseQuery, onPrint, printing = false }: TransactionFiltersProps) {
-  const { t, locale, fmt } = useLocale();
+export function TransactionFilters({ categories, counts, period, current, today, activeMonths, navigate, baseQuery, onPrint, printing = false }: TransactionFiltersProps) {
+  const { t, fmt } = useLocale();
   const searchParams = useSearchParams();
   const [sheetOpen, setSheetOpen] = useState(false);
   const filters = readTransactionFilters((key) => searchParams.get(key));
   const type: TypeFilter = filters.type ?? "";
   const categoryValue = filters.uncategorised ? NO_CATEGORY : (filters.categoryId ?? "");
-  const accountId = filters.accountId ?? "";
   const thisMonth: PickedPeriod = { kind: "month", ...current };
   const otherPeriod = !samePeriod(period, thisMonth);
   const activeCount = activeFilterCount({ ...filters, dateFrom: undefined, dateTo: undefined }) + (otherPeriod ? 1 : 0);
-  const lang = displayLanguage(locale);
-  const walletName = (id: string) => {
-    const account = accounts.find((a) => a.id === id);
-    return account ? accountDisplayName(account, lang) : null;
-  };
 
   // The search box follows the URL (Back, a chip), and keeps what is being
   // typed: while a search this box sent is on its way, the URL landing
@@ -213,9 +204,7 @@ export function TransactionFilters({ accounts, categories, counts, period, curre
     if (searchTimer.current) clearTimeout(searchTimer.current);
     setSearch("");
     setSentSearch(null);
-    const next = baseQuery();
-    const limit = next.get("limit");
-    navigate(limit ? `/transactions?${new URLSearchParams({ limit }).toString()}` : "/transactions");
+    navigate("/transactions");
   }
 
   const typeOptions = [
@@ -250,42 +239,27 @@ export function TransactionFilters({ accounts, categories, counts, period, curre
   const categoryButton = filters.uncategorised ? t("Uncategorised") : filters.categoryId ? categoryLabel(filters.categoryId, t) : t("All categories");
   const categoryDot = filters.uncategorised ? "text-ink-faint" : pickedCategory ? categoryTone(pickedCategory.color).fg : null;
 
-  const walletEntries: MenuEntry[] = [
-    { kind: "item", value: "", label: t("All accounts@@wallet"), dot: "text-line-strong", selected: accountId === "" },
-    ...accounts.map((account): MenuEntry => ({ kind: "item", value: account.id, label: accountDisplayName(account, lang), dot: "text-emerald", selected: accountId === account.id })),
-  ];
-
-  // In the phone sheet the two are plain selects filling the row.
+  // In the phone sheet the category is a plain select filling the row.
   const selects = (
-    <>
-      <NativeSelect size="sm" value={categoryValue} onChange={(event) => pickCategory(event.target.value)} aria-label={t("Category")} className="font-medium">
-        <option value="">{t("All categories")}</option>
-        {!knownCategory && filters.categoryId && <option value={filters.categoryId}>{categoryLabel(filters.categoryId, t)}</option>}
-        {sides.map((side) => {
-          const list = categories.filter((c) => c.type === side);
-          return (
-            list.length > 0 && (
-              <optgroup key={side} label={t(side === "INCOME" ? "Income categories" : "Expense categories")}>
-                {list.map((category) => (
-                  <option key={category.id} value={category.name}>
-                    {withCount(categoryLabel(category.name, t), countOf(side, category.name))}
-                  </option>
-                ))}
-              </optgroup>
-            )
-          );
-        })}
-        {(noCategory > 0 || filters.uncategorised) && <option value={NO_CATEGORY}>{withCount(t("Uncategorised"), noCategory)}</option>}
-      </NativeSelect>
-      <NativeSelect size="sm" value={accountId} onChange={(event) => update({ accountId: event.target.value })} aria-label={t("Account@@wallet")} className="font-medium">
-        <option value="">{t("All accounts@@wallet")}</option>
-        {accounts.map((account) => (
-          <option key={account.id} value={account.id}>
-            {accountDisplayName(account, lang)}
-          </option>
-        ))}
-      </NativeSelect>
-    </>
+    <NativeSelect size="sm" value={categoryValue} onChange={(event) => pickCategory(event.target.value)} aria-label={t("Category")} className="font-medium">
+      <option value="">{t("All categories")}</option>
+      {!knownCategory && filters.categoryId && <option value={filters.categoryId}>{categoryLabel(filters.categoryId, t)}</option>}
+      {sides.map((side) => {
+        const list = categories.filter((c) => c.type === side);
+        return (
+          list.length > 0 && (
+            <optgroup key={side} label={t(side === "INCOME" ? "Income categories" : "Expense categories")}>
+              {list.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {withCount(categoryLabel(category.name, t), countOf(side, category.name))}
+                </option>
+              ))}
+            </optgroup>
+          )
+        );
+      })}
+      {(noCategory > 0 || filters.uncategorised) && <option value={NO_CATEGORY}>{withCount(t("Uncategorised"), noCategory)}</option>}
+    </NativeSelect>
   );
 
   const picker = <PeriodPicker period={period} today={today} activeMonths={activeMonths} allowAll defaultPeriod={thisMonth} onPick={pickPeriod} align="end" />;
@@ -351,13 +325,7 @@ export function TransactionFilters({ accounts, categories, counts, period, curre
         {searchForm}
         <SegmentedControl options={typeOptions} value={type} onChange={pickType} label={t("Type")} variant="pill" className={BAR_SEGMENTS} />
         <FilterMenu label={t("Categories")} buttonLabel={categoryButton} buttonDot={categoryDot} active={categoryValue !== ""} entries={categoryEntries} onPick={pickCategory} />
-        <FilterMenu label={t("Account@@wallet")} buttonLabel={accountId ? (walletName(accountId) ?? t("Wallet")) : t("All accounts@@wallet")} buttonDot={accountId ? "text-emerald" : null} active={accountId !== ""} entries={walletEntries} onPick={(value) => update({ accountId: value || undefined })} />
         {picker}
-        {activeCount > 0 && (
-          <Button variant="ghost" size="lg" onClick={clearAll} className="px-3 text-ink-soft">
-            {t("Clear filters")}
-          </Button>
-        )}
         {printButton}
       </div>
 
@@ -403,7 +371,6 @@ export function TransactionFilters({ accounts, categories, counts, period, curre
         <div className="flex gap-2 overflow-x-auto scrollbar-none">
           {otherPeriod ? chip(periodLabel(period, t, fmt), () => pickPeriod(thisMonth)) : quiet(periodLabel(period, t, fmt))}
           {type ? chip(t(type === "INCOME" ? "Income" : "Expense"), () => update({ type: undefined })) : quiet(t("All types"))}
-          {accountId ? chip(walletName(accountId) ?? t("Wallet"), () => update({ accountId: undefined })) : quiet(t("All accounts@@wallet"))}
           {filters.categoryId && chip(categoryLabel(filters.categoryId, t), () => update({ categoryId: undefined }))}
           {filters.uncategorised && chip(t("Uncategorised"), () => update({ uncategorised: undefined }))}
         </div>

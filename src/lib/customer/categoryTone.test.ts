@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CATEGORY_TONE_COLORS, categoryTone, NEUTRAL_CATEGORY_TONE, pickerColor } from "./categoryTone";
+import { CATEGORY_TONE_COLORS, categoryTone, IE_CATEGORY_COLORS, ieCategoryColor, ieCategoryInk, NEUTRAL_CATEGORY_TONE, pickerColor } from "./categoryTone";
 
 describe("categoryTone", () => {
   it("maps every budget colour onto a design category colour", () => {
@@ -26,5 +26,19 @@ describe("CATEGORY_TONE_COLORS / pickerColor", () => {
     expect(pickerColor("green")).toBe("green");
     expect(pickerColor("mauve")).toBeNull();
     expect(pickerColor(null)).toBeNull();
+  });
+});
+
+describe("ieCategoryInk / ieCategoryColor", () => {
+  it("gives each of the board's twelve its own ink", () => {
+    const inks = IE_CATEGORY_COLORS.map(ieCategoryInk);
+    expect(new Set(inks).size).toBe(12);
+    expect(ieCategoryColor("purple")).toBe("var(--ie-purple)");
+  });
+
+  it("greys out an unknown name and money with no category", () => {
+    expect(ieCategoryInk("mauve")).toBe("text-input");
+    expect(ieCategoryInk(null)).toBe("text-input");
+    expect(ieCategoryColor(undefined)).toBe("var(--input)");
   });
 });

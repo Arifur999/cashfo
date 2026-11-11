@@ -7,7 +7,7 @@ import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { formatNumber } from "@/lib/number";
-import { pagerModel } from "@/lib/table/pagerModel";
+import { type PagerItem, pagerModel, plainPageWindow } from "@/lib/table/pagerModel";
 import { cn } from "@/lib/utils";
 import NativeSelect from "./form/NativeSelect";
 
@@ -27,7 +27,8 @@ interface PaginationProps {
   // false hides it; the default is "Showing 1–20 of 54".
   summary?: React.ReactNode | false;
   // "lg" is the Income & Expense boards' pager: 44px round arrows with a
-  // line, 44px squares for the pages, the one on show in emerald.
+  // line, 44px squares for the pages, the one on show in emerald; up to
+  // five pages around it and no ellipses, shown even when there is one page.
   size?: "md" | "lg";
   // Offer a rows-per-page choice (with onPageSizeChange).
   pageSizes?: number[];
@@ -219,6 +220,8 @@ const Pagination = ({
   );
 
   const large = size === "lg";
+  const showNav = large ? !model.empty : model.paged;
+  const items: PagerItem[] = large ? plainPageWindow(shownPage, model.totalPages).map((page) => ({ kind: "page", page, current: page === shownPage })) : model.items;
   const arrow = large ? LG_ARROW : ARROW;
   const arrowLooks = large ? LG_ARROW_LOOKS : undefined;
   const pageOf = t("Page {page} of {total}", { page: formatCount(shownPage, fmt), total: formatCount(model.totalPages, fmt) });
@@ -230,11 +233,11 @@ const Pagination = ({
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-small text-ink-muted">
         {summaryNode}
 
-        {(model.paged || sizePicker) && (
+        {(showNav || sizePicker) && (
           <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
             {sizePicker}
             {/* The nav takes focus (tabIndex -1) when the control pressed goes away. */}
-            {model.paged && variant === "simple" && (
+            {showNav && variant === "simple" && (
               <nav ref={nav} tabIndex={-1} aria-label={t("Pagination")} className="flex items-center gap-2 rounded-md">
                 <Control page={model.previous} className={TEXT} hrefFor={hrefFor} onGo={go}>
                   {previousLabel}
@@ -244,7 +247,7 @@ const Pagination = ({
                 </Control>
               </nav>
             )}
-            {model.paged && variant === "numbered" && (
+            {showNav && variant === "numbered" && (
               <nav ref={nav} tabIndex={-1} aria-label={t("Pagination")} className={cn("flex items-center rounded-md", large ? "gap-1.5" : "gap-1")}>
                 <Control page={model.previous} label={previousLabel} className={arrow} looks={arrowLooks} hrefFor={hrefFor} onGo={go}>
                   <ChevronLeft className="size-4" aria-hidden="true" />
@@ -252,7 +255,7 @@ const Pagination = ({
 
                 {/* 35rem and wider: the 7-slot window. */}
                 <span className={cn("hidden items-center @[35rem]:flex", large ? "gap-1.5" : "gap-1")}>
-                  {model.items.map((item) =>
+                  {items.map((item) =>
                     item.kind === "jump" ? (
                       <Control
                         key={item.direction}

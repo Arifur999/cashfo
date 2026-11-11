@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pagerModel } from "./pagerModel";
+import { pagerModel, plainPageWindow } from "./pagerModel";
 
 describe("pagerModel", () => {
   it("is empty when there are no rows", () => {
@@ -54,5 +54,21 @@ describe("pagerModel", () => {
 
   it("survives a show-all page size", () => {
     expect(pagerModel(1, 1, 12, Number.POSITIVE_INFINITY)).toMatchObject({ first: 1, last: 12, paged: false });
+  });
+});
+
+describe("plainPageWindow", () => {
+  it("keeps the page on show in the middle of five", () => {
+    expect(plainPageWindow(6, 12)).toEqual([4, 5, 6, 7, 8]);
+  });
+
+  it("stays against either end", () => {
+    expect(plainPageWindow(1, 12)).toEqual([1, 2, 3, 4, 5]);
+    expect(plainPageWindow(12, 12)).toEqual([8, 9, 10, 11, 12]);
+  });
+
+  it("shows every page when there are five or fewer", () => {
+    expect(plainPageWindow(2, 3)).toEqual([1, 2, 3]);
+    expect(plainPageWindow(1, 1)).toEqual([1]);
   });
 });

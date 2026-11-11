@@ -24,10 +24,9 @@ interface IEStatementProps {
   lines: StatementLine[];
   periodLabel: string;
   range: string | null;
-  // The filters on (null when off): the type, the category and wallet, a search.
+  // The filters on (null when off): the type, the category, a search.
   type: "INCOME" | "EXPENSE" | null;
   category: string | null;
-  wallet: string | null;
   search: string | null;
   // The period has more transactions than one printout takes.
   capped: boolean;
@@ -41,7 +40,7 @@ const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] f
 // Income and expense on paper (the Transactions board's print preview):
 // whose and which period, the type, category and how many it shows, what
 // came in and went out and the net, then every transaction.
-export function IEStatement({ lines, periodLabel, range, type, category, wallet, search, capped, today, currency }: IEStatementProps) {
+export function IEStatement({ lines, periodLabel, range, type, category, search, capped, today, currency }: IEStatementProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
 
@@ -54,7 +53,7 @@ export function IEStatement({ lines, periodLabel, range, type, category, wallet,
   const meta: { label: string; value: string; sub?: string | null }[] = [
     { label: t("Period"), value: periodLabel, sub: range },
     { label: t("Type"), value: type ? t(type === "INCOME" ? "Income" : "Expense") : t("Income and expense") },
-    { label: t("Category"), value: category ?? t("All categories"), sub: wallet && `${t("Account")}: ${wallet}` },
+    { label: t("Category"), value: category ?? t("All categories") },
     { label: t("Transactions"), value: plural(t, lines.length, "{count} transaction", "{count} transactions", undefined, fmt), sub: search && t("search \"{text}\"", { text: search }) },
   ];
   const cells = [

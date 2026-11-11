@@ -147,6 +147,22 @@
   --cat-10: #4e8f5e;
   /* The boards' category yellow, apart from the warning amber. */
   --cat-11: #ca8a04;
+  /* Income & Expense's twelve category colours: the CategorySet board's
+     swatches, in its order, by the colour name a category keeps. */
+  --ie-green: #0f766e;
+  --ie-cyan: #0891b2;
+  --ie-blue: #2563eb;
+  --ie-indigo: #4f46e5;
+  --ie-violet: #7c3aed;
+  --ie-purple: #c026d3;
+  --ie-pink: #db2777;
+  --ie-red: #e11d48;
+  --ie-orange: #ea580c;
+  --ie-yellow: #ca8a04;
+  --ie-teal: #0d9488;
+  --ie-lime: #15803d;
+  /* The app's own Bank & transfer fees row. */
+  --ie-slate: #64748b;
   /* Notes (the NotesHome board): a card's tint, and the five journal moods
      from Great to Hard. */
   --note-yellow: #fefce8;
@@ -352,6 +368,19 @@
   --cat-9: #5fcfe6;
   --cat-10: #8fcb9c;
   --cat-11: #facc15;
+  --ie-green: #4fb8a6;
+  --ie-cyan: #5fcfe6;
+  --ie-blue: #86abf2;
+  --ie-indigo: #a5b0fb;
+  --ie-violet: #b6a2ff;
+  --ie-purple: #e9a0f5;
+  --ie-pink: #f08fbf;
+  --ie-red: #fb7185;
+  --ie-orange: #f0a46a;
+  --ie-yellow: #facc15;
+  --ie-teal: #5cccdb;
+  --ie-lime: #6ee7a0;
+  --ie-slate: #94a3b8;
   --note-yellow: #29250f;
   --note-green: #0f2618;
   --note-blue: #111d33;
@@ -705,6 +734,19 @@ html:not(.dark) [data-app="habit"] {
   --color-cat-9: var(--cat-9);
   --color-cat-10: var(--cat-10);
   --color-cat-11: var(--cat-11);
+  --color-ie-green: var(--ie-green);
+  --color-ie-cyan: var(--ie-cyan);
+  --color-ie-blue: var(--ie-blue);
+  --color-ie-indigo: var(--ie-indigo);
+  --color-ie-violet: var(--ie-violet);
+  --color-ie-purple: var(--ie-purple);
+  --color-ie-pink: var(--ie-pink);
+  --color-ie-red: var(--ie-red);
+  --color-ie-orange: var(--ie-orange);
+  --color-ie-yellow: var(--ie-yellow);
+  --color-ie-teal: var(--ie-teal);
+  --color-ie-lime: var(--ie-lime);
+  --color-ie-slate: var(--ie-slate);
   --color-note-yellow: var(--note-yellow);
   --color-note-green: var(--note-green);
   --color-note-blue: var(--note-blue);
@@ -859,6 +901,17 @@ html:not(.dark) [data-app="habit"] {
    corner; the tile is a soft wash of it, lighter text on dark. */
 @utility bg-wallet-card {
   background-image: linear-gradient(135deg, var(--wallet) 0%, color-mix(in srgb, var(--wallet) 55%, black) 100%);
+}
+/* An Income & Expense category's letter tile (the CategorySet board): a 14%
+   wash of its colour (--cat, set on the element) and the colour 20% deeper;
+   lighter on dark. */
+@utility cat-tile {
+  background-color: color-mix(in srgb, var(--cat) 14%, var(--surface));
+  color: color-mix(in srgb, var(--cat) 80%, black);
+  @variant dark {
+    background-color: color-mix(in srgb, var(--cat) 24%, var(--surface));
+    color: var(--cat);
+  }
 }
 @utility wallet-tile {
   background-color: color-mix(in srgb, var(--wallet) 14%, var(--surface));

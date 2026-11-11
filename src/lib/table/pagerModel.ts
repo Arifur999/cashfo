@@ -50,3 +50,10 @@ export const pagerModel = (page: number, totalPages: number, total: number, page
     items,
   };
 };
+
+// The Transactions board's window: up to five pages in a row around the one
+// on show, no ellipses (the arrows walk past it).
+export const plainPageWindow = (current: number, pages: number, size = 5): number[] => {
+  const start = Math.max(1, Math.min(current - Math.floor(size / 2), pages - size + 1));
+  return Array.from({ length: Math.min(size, pages - start + 1) }, (_, index) => start + index);
+};

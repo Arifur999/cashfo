@@ -420,11 +420,13 @@ describe("readTransactionFilters / activeFilterCount", () => {
     expect(activeFilterCount(read("page=3&limit=50&utm_source=mail"))).toBe(0);
     expect(activeFilterCount(read("type=INCOME&dateFrom=2026-10-01&dateTo=2026-10-31"))).toBe(2);
     expect(activeFilterCount(read("search=rent"))).toBe(1);
-    expect(activeFilterCount(read("type=EXPENSE&categoryId=Food&accountId=w&dateTo=2026-10-31&search=bazar"))).toBe(5);
+    expect(activeFilterCount(read("type=EXPENSE&categoryId=Food&dateTo=2026-10-31&search=bazar"))).toBe(4);
+    // The board has no wallet filter: an old link's accountId is let go.
+    expect(activeFilterCount(read("accountId=w"))).toBe(0);
   });
 
   it("ignores what the list can't apply", () => {
-    expect(read("type=TRANSFER&dateFrom=2026-13-01&search=%20%20&uncategorised=yes")).toEqual({ type: undefined, categoryId: undefined, uncategorised: undefined, accountId: undefined, dateFrom: undefined, dateTo: undefined, search: undefined });
+    expect(read("type=TRANSFER&dateFrom=2026-13-01&search=%20%20&uncategorised=yes")).toEqual({ type: undefined, categoryId: undefined, uncategorised: undefined, dateFrom: undefined, dateTo: undefined, search: undefined });
   });
 
   it("reads the money with no category as one filter", () => {

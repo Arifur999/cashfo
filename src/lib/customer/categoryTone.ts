@@ -54,3 +54,32 @@ export function pickerColor(color: string | null | undefined): CategoryToneColor
 
 // Transfers and uncategorised rows: a wallet-grey tile.
 export const NEUTRAL_CATEGORY_TONE = NEUTRAL;
+
+// Income & Expense's own twelve (the CategorySet board's swatches, in its
+// order): each saved colour name has its own ink, a text-ie-* class drawn
+// with bg-current for a dot. A name the palette doesn't know, and money with
+// no category, take the board's quiet grey.
+export const IE_CATEGORY_COLORS = ["green", "cyan", "blue", "indigo", "violet", "purple", "pink", "red", "orange", "yellow", "teal", "lime"] as const;
+
+const IE_INKS: Record<string, string> = {
+  green: "text-ie-green",
+  cyan: "text-ie-cyan",
+  blue: "text-ie-blue",
+  indigo: "text-ie-indigo",
+  violet: "text-ie-violet",
+  purple: "text-ie-purple",
+  pink: "text-ie-pink",
+  red: "text-ie-red",
+  orange: "text-ie-orange",
+  yellow: "text-ie-yellow",
+  teal: "text-ie-teal",
+  lime: "text-ie-lime",
+  // The app's own fees row (not offered in the picker).
+  slate: "text-ie-slate",
+};
+
+export const ieCategoryInk = (color: string | null | undefined): string => (color && IE_INKS[color]) || "text-input";
+
+// The same colour as a CSS value, for a chart's gradient and the letter
+// tile's --cat (the cat-tile utility).
+export const ieCategoryColor = (color: string | null | undefined): string => (color && IE_INKS[color] ? `var(--ie-${color})` : "var(--input)");
