@@ -18,6 +18,7 @@ import { formatDate } from "@/lib/customer/date";
 import { voidTransactionAction } from "@/lib/customer/transactionActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { BALANCE_POPUP } from "./popupLook";
 
 interface LedgerEntryDialogProps {
   entry: { row: LedgerRow; kind: LedgerKind; direction: "in" | "out" } | null;
@@ -100,20 +101,21 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
       busy={isPending}
       width={460}
       title={t("Entry details")}
-      bodyClassName="gap-4 py-5"
+      {...BALANCE_POPUP}
+      bodyClassName="gap-4 px-5.5 py-5"
       footer={
         <>
           {kind === "ADJUSTMENT" && canManage && (
-            <Button variant="secondary" onClick={removeAdjustment} disabled={isPending || !online} className="mr-auto border-expense/40 text-expense hover:bg-expense-soft">
+            <Button variant="secondary" onClick={removeAdjustment} disabled={isPending || !online} className="mr-auto h-10.5 border-expense-line px-4 text-expense hover:bg-expense-soft">
               {isPending && <Loader size={16} label={t("Removing...")} />}
               {t("Remove adjustment")}
             </Button>
           )}
-          <Button variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button variant="secondary" onClick={onClose} disabled={isPending} className="h-10.5 px-4.5">
             {t("Close")}
           </Button>
           {source && (
-            <Button asChild>
+            <Button asChild className="h-10.5 gap-1.5 px-4.5 shadow-none">
               <Link href={source.href}>
                 {t(source.label)}
                 <ChevronRight className="size-3.5" strokeWidth={2.5} />
@@ -125,7 +127,7 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
     >
       <div className="flex flex-col items-start gap-2">
         <span className="flex items-center gap-2">
-          <Chip tone={meta.tone} size="sm" className="font-semibold">
+          <Chip tone={meta.tone} className="h-5.25 px-2.5">
             {t(meta.label)}
           </Chip>
           <span className={cn("inline-flex items-center gap-1.25 text-small font-semibold", isIn ? "text-income" : "text-expense")}>
@@ -135,7 +137,7 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
             {t(isIn ? "Received" : "Sent")}
           </span>
         </span>
-        <span className={cn("text-[30px] leading-tight font-bold tracking-[-0.02em] tabular-nums", isIn ? "text-income" : "text-expense")}>{`${isIn ? "+" : "−"} ${formatCurrency(amount, currency, fmt)}`}</span>
+        <span className={cn("text-[30px] font-bold tracking-[-0.02em] tabular-nums", isIn ? "text-income" : "text-expense")}>{`${isIn ? "+" : "−"} ${formatCurrency(amount, currency, fmt)}`}</span>
         <span className="text-small text-ink-muted">{formatDate(row.date, undefined, fmt)}</span>
       </div>
       <dl className="flex flex-col overflow-hidden rounded-[14px] border border-line">
@@ -146,7 +148,7 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
           </div>
         ))}
       </dl>
-      {why && <p className="rounded-xl bg-strip px-3.5 py-3 text-small leading-normal text-ink-2">{why}</p>}
+      {why && <p className="rounded-[12px] bg-strip px-3.5 py-3 text-small leading-normal text-ink-soft">{why}</p>}
     </PopupDialog>
   );
 }

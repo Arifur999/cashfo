@@ -36,16 +36,16 @@ export function TransferDeleteDialog({ transfer, currency, busy, onClose, onConf
 
   return (
     <Dialog open onOpenChange={(next) => !next && !busy && onClose()}>
-      <DialogContent showCloseButton={false} role="alertdialog" className="flex w-105 max-w-[calc(100vw-32px)] flex-col gap-2.5 rounded-[18px] border-0 bg-surface p-6 shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
+      <DialogContent showCloseButton={false} role="alertdialog" className="flex w-105 max-w-[calc(100vw-32px)] flex-col gap-2.5 leading-[normal] rounded-[18px] border-0 bg-surface p-6 shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
         <DialogTitle className="text-[18px] font-semibold text-ink">{t("Delete this transfer?")}</DialogTitle>
-        <DialogDescription className="text-body leading-normal text-ink-2">{t("{transfer}. It is removed for good, from here, from Accounts and from the Ledger.", { transfer: what })}</DialogDescription>
+        <DialogDescription className="text-body leading-normal text-ink-soft">{t("{transfer}. It is removed for good, from here, from Accounts and from the Ledger.", { transfer: what })}</DialogDescription>
         <div className="mt-1 flex flex-col overflow-hidden rounded-[14px] border border-line">
           <div className="flex items-center gap-2.5 border-b border-divider px-3.5 py-2.5">
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-body font-semibold text-ink">{transfer.from}</span>
               <span className="text-caption text-ink-muted">{transfer.charge > 0 ? t("Gets the money back, plus the {amount} charge", { amount: money(transfer.charge) }) : t("Gets the money back")}</span>
             </span>
-            <span className="text-body font-bold whitespace-nowrap text-income tabular-nums">{`+ ${money(transfer.amount + transfer.charge)}`}</span>
+            <span className="text-body font-bold whitespace-nowrap text-tint-green-ink tabular-nums">{`+ ${money(transfer.amount + transfer.charge)}`}</span>
           </div>
           <div className="flex items-center gap-2.5 px-3.5 py-2.5">
             <span className="flex min-w-0 flex-1 flex-col">
@@ -56,10 +56,10 @@ export function TransferDeleteDialog({ transfer, currency, busy, onClose, onConf
           </div>
         </div>
         <div className="mt-2 flex justify-end gap-2.5">
-          <Button variant="secondary" onClick={onClose} disabled={busy}>
+          <Button variant="secondary" onClick={onClose} disabled={busy} className="h-11 px-4.5">
             {t("Cancel")}
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={busy}>
+          <Button variant="danger" onClick={onConfirm} disabled={busy} className="h-11 px-5">
             {busy && <Loader size={16} onDark label={t("Deleting...")} />}
             {t("Delete")}
           </Button>

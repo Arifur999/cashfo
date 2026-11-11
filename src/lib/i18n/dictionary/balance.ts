@@ -491,4 +491,11 @@ export const balanceDictionary: Record<string, string> = {
   "0 if there is no charge": "চার্জ না থাকলে 0",
   // Transfer statement: all time with none
   "No transfers yet": "এখনো কোনো ট্রান্সফার নেই",
+  // Balance v16: transfer empty line, ledger footer
+  "Page {page} of {pages}": "{pages} পৃষ্ঠার {page} নম্বর",
+  "No transfers for {account} in {period}.": "{period}-এ {account}-এর কোনো ট্রান্সফার নেই।",
+  "No transfers in {period}.": "{period}-এ কোনো ট্রান্সফার নেই।",
+  // Balance v16: transfer empty line, all time
+  "No transfers for {account} in all time.": "{account}-এর এখনো কোনো ট্রান্সফার নেই।",
+  "No transfers in all time.": "এখনো কোনো ট্রান্সফার নেই।",
 };

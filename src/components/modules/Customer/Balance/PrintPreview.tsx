@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Printer, X } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ export function PrintPreview({ subtitle, onClose, children }: PrintPreviewProps)
       role="dialog"
       aria-modal="true"
       aria-label={t("Print preview")}
-      className="fixed inset-0 z-80 flex flex-col items-center gap-3.5 overflow-y-auto bg-scrim/90 px-4 pt-5 pb-8 print:static print:block print:overflow-visible print:bg-transparent print:p-0"
+      className="fixed inset-0 z-80 flex flex-col items-center gap-3.5 overflow-y-auto bg-scrim px-4 pt-5 pb-8 print:static print:block print:overflow-visible print:bg-transparent print:p-0"
     >
       <div role="toolbar" aria-label={t("Print preview")} className="flex w-full max-w-190 flex-wrap items-center justify-between gap-3 print:hidden">
         <div className="flex min-w-0 flex-col text-white">
@@ -50,7 +50,6 @@ export function PrintPreview({ subtitle, onClose, children }: PrintPreviewProps)
         </div>
         <div className="flex flex-wrap gap-2.5">
           <button type="button" onClick={onClose} className={cn(button, "border border-white/35 text-white hover:bg-white/10")}>
-            <X className="size-4" aria-hidden="true" />
             {t("Close")}
           </button>
           <button type="button" onClick={() => window.print()} title={t("Choose Save as PDF in the print window")} className={cn(button, "bg-white text-ink hover:bg-white/90 dark:bg-surface")}>

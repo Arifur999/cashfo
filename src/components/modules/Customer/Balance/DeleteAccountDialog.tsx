@@ -41,7 +41,7 @@ export function DeleteAccountDialog({ account, name, busy, onClose, onDelete, on
           <DialogTitle className="text-[18px] font-semibold text-ink">
             {history && count > 0 ? plural(t, count, "{name} has {count} transaction", "{name} has {count} transactions", { name }, fmt) : t("Delete {name}?", { name })}
           </DialogTitle>
-          <DialogDescription className="text-body leading-normal text-ink-2">
+          <DialogDescription className="text-body leading-normal text-ink-soft">
             {t(
               history
                 ? "Deleting it would break your history and balances. Archive it instead: it leaves your lists, and everything stays safe."
@@ -50,16 +50,16 @@ export function DeleteAccountDialog({ account, name, busy, onClose, onDelete, on
           </DialogDescription>
         </div>
         <div className="flex justify-end gap-2.5">
-          <Button variant="secondary" onClick={onClose} disabled={busy}>
+          <Button variant="secondary" onClick={onClose} disabled={busy} className="px-4">
             {t("Cancel")}
           </Button>
           {history ? (
-            <Button onClick={archived ? onClose : onArchive} disabled={busy}>
+            <Button onClick={archived ? onClose : onArchive} disabled={busy} className="px-4.5 shadow-none">
               {busy && <Loader size={16} onDark label={t("Saving...")} />}
               {t(archived ? "Keep it archived" : "Archive instead")}
             </Button>
           ) : (
-            <Button variant="danger" onClick={onDelete} disabled={busy}>
+            <Button variant="danger" onClick={onDelete} disabled={busy} className="bg-expense px-4.5 hover:bg-expense/90">
               {busy && <Loader size={16} onDark label={t("Deleting...")} />}
               {t("Delete")}
             </Button>

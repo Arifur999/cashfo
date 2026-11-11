@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
-import { WalletPicker } from "@/components/modules/Customer/Shared/WalletPicker";
 import Loader from "@/components/shared/Loader";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
@@ -186,14 +185,14 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       <div className="flex min-w-0 flex-col gap-1.75 rounded-xl border border-divider bg-strip px-3.5 py-3">
         <span className="flex items-center justify-between gap-2 border-b border-line pb-1.5">
           <span className="truncate text-small font-bold text-ink">{wallet ? nameOf(wallet) : "—"}</span>
-          <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold", side === "from" ? "bg-expense-soft text-expense" : "bg-income-soft text-income")}>{t(side === "from" ? "Sending" : "Receiving")}</span>
+          <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold", side === "from" ? "bg-expense-soft text-expense" : "bg-tint-green text-tint-green-ink")}>{t(side === "from" ? "Sending" : "Receiving")}</span>
         </span>
         {line(t("Current balance"), money(before))}
-        {side === "from" ? line(t("Transfer amount"), `− ${money(value)}`, "text-expense") : line(t("Amount received"), `+ ${money(value)}`, "text-income")}
+        {side === "from" ? line(t("Transfer amount"), `− ${money(value)}`, "text-expense") : line(t("Amount received"), `+ ${money(value)}`, "text-success")}
         {side === "from"
           ? line(t("Charge · {category}", { category: fee > 0 ? t(chargedCategory) : t("none") }), fee > 0 ? `− ${money(fee)}` : money(0), fee > 0 ? "text-expense" : "text-ink-faint")
           : line(t("Charge"), money(0), "text-ink-faint")}
-        <span className="mt-0.5 flex justify-between gap-2 border-t border-line pt-1.75 text-[13.5px]">
+        <span className="flex justify-between gap-2 border-t border-line pt-1.75 text-[13.5px]">
           <span className="font-semibold text-ink">{t("New balance")}</span>
           <span className={cn("font-bold whitespace-nowrap tabular-nums", after < 0 ? "text-expense" : "text-ink")}>{after < 0 ? `− ${money(-after)}` : money(after)}</span>
         </span>
@@ -207,14 +206,19 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       onClose={onClose}
       busy={isPending}
       width={560}
+      headClassName="items-center py-4.5"
+      closeClassName="my-0 size-11 text-ink-soft [&_svg]:size-4.5"
+      bodyClassName="gap-4 py-5"
+      footerClassName="bg-surface py-4"
+      className="leading-[normal]"
       title={t(editing ? "Edit transfer" : "New transfer")}
       onSubmit={save}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button variant="secondary" onClick={onClose} disabled={isPending} className="h-11 px-4.5">
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={invalid || isPending || !online}>
+          <Button type="submit" disabled={invalid || isPending || !online} className="h-11 px-5 shadow-none">
             {isPending && <Loader size={16} onDark label={t("Saving...")} />}
             {t(editing ? "Save changes" : "Save transfer")}
           </Button>
@@ -232,61 +236,52 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       </Field>
 
       <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)]">
-        <WalletPicker
-          label={t("From account (money goes out)")}
-          size="lg"
-          tone="sand"
-          wallets={wallets.filter((wallet) => wallet.id !== pair.toId)}
-          value={pair.fromId}
-          onChange={(id) => setPair((previous) => ({ ...previous, fromId: id }))}
-          after={null}
-          currency={currency}
-          loading={loading}
-          error={walletsError}
-          onClose={onClose}
-        />
-        <button
-          type="button"
-          onClick={() => setPair({ fromId: pair.toId, toId: pair.fromId })}
-          disabled={!from || !to}
-          aria-label={t("Swap From and To")}
-          title={t("Swap")}
-          className="hidden h-14 items-center justify-center rounded-full text-ink-faint hover:text-emerald disabled:opacity-60 sm:flex"
-        >
-          <ArrowRight className="size-4.5" aria-hidden="true" />
-        </button>
-        <WalletPicker
-          label={t("To account (money comes in)")}
-          size="lg"
-          wallets={wallets.filter((wallet) => wallet.id !== pair.fromId)}
-          value={pair.toId}
-          onChange={(id) => setPair((previous) => ({ ...previous, toId: id }))}
-          after={null}
-          currency={currency}
-          loading={loading}
-          error={null}
-          onClose={onClose}
-          emptyMessage={
-            tooFew && (
-              <>
-                {t("Moving money needs two accounts.")}{" "}
-                {wallets.length === 1 && (
-                  <Link href="/balance/accounts?new=1" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
-                    {t("Add an account")}
-                  </Link>
-                )}
-              </>
-            )
-          }
-        />
+        <Field htmlFor="transfer-from" label={<span className="text-small font-semibold text-ink-2">{t("From account (money goes out)")}</span>}>
+          <NativeSelect id="transfer-from" value={pair.fromId} onChange={(event) => setPair((previous) => ({ ...previous, fromId: event.target.value }))} disabled={loading || !!walletsError} className="font-normal">
+            {loading ? <option value="">{t("Loading...")}</option> : !pair.fromId && <option value="">{t("Choose an account")}</option>}
+            {wallets
+              .filter((wallet) => wallet.id !== pair.toId)
+              .map((wallet) => (
+                <option key={wallet.id} value={wallet.id}>
+                  {nameOf(wallet)}
+                </option>
+              ))}
+          </NativeSelect>
+        </Field>
+        <span aria-hidden="true" className="hidden h-11 items-center justify-center text-ink-faint sm:flex">
+          <ArrowRight className="size-4.5" />
+        </span>
+        <Field htmlFor="transfer-to" label={<span className="text-small font-semibold text-ink-2">{t("To account (money comes in)")}</span>}>
+          <NativeSelect id="transfer-to" value={pair.toId} onChange={(event) => setPair((previous) => ({ ...previous, toId: event.target.value }))} disabled={loading || !!walletsError} className="font-normal">
+            {loading ? <option value="">{t("Loading...")}</option> : !pair.toId && <option value="">{t("Choose an account")}</option>}
+            {wallets
+              .filter((wallet) => wallet.id !== pair.fromId)
+              .map((wallet) => (
+                <option key={wallet.id} value={wallet.id}>
+                  {nameOf(wallet)}
+                </option>
+              ))}
+          </NativeSelect>
+        </Field>
       </div>
+      {walletsError && <p role="alert" className="-mt-2 text-[12.5px] text-expense">{t(walletsError)}</p>}
+      {tooFew && (
+        <p className="-mt-2 text-[12.5px] text-expense">
+          {t("Moving money needs two accounts.")}{" "}
+          {wallets.length === 1 && (
+            <Link href="/balance/accounts?new=1" onNavigate={onClose} className="font-semibold text-emerald hover:underline">
+              {t("Add an account")}
+            </Link>
+          )}
+        </p>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field htmlFor="transfer-amount" label={<span className="text-small font-semibold text-ink-2">{t("Amount ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
           <AmountInput id="transfer-amount" size="field" value={amount} onChange={setAmount} currency={currency} autoFocus={!editing} />
         </Field>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <div className="flex h-5 items-center justify-between gap-2">
+          <div className="flex h-4.5 items-center justify-between gap-2">
             <label htmlFor="transfer-charge" className="text-small font-semibold text-ink-2">
               {t("Charge")} ({chargeMode === "pct" ? "%" : currencySymbol(currency, fmt)})
             </label>
@@ -355,8 +350,8 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
           {sideBox(to, "to")}
         </div>
       )}
-      {same && <p className="-mt-1 text-small text-expense">{t("From and To must be different accounts.")}</p>}
-      {short && from && <p className="-mt-1 text-small text-expense">{t("{account} doesn't have enough balance for this transfer and charge.", { account: nameOf(from) })}</p>}
+      {same && <p className="-mt-1.5 text-[12.5px] text-expense">{t("From and To must be different accounts.")}</p>}
+      {short && from && <p className="-mt-1.5 text-[12.5px] text-expense">{t("{account} doesn't have enough balance for this transfer and charge.", { account: nameOf(from) })}</p>}
       {error && (
         <p role="alert" className="text-small text-expense">
           {error}

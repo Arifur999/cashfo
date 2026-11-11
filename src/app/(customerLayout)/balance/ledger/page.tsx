@@ -41,7 +41,7 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
   const currency = activeBusiness?.currency ?? "BDT";
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
-  const accountId = typeof params.accountId === "string" ? params.accountId : "";
+  const askedId = typeof params.accountId === "string" ? params.accountId : "";
   // All time unless the address picks a month, a year or days (older
   // ?range= links still open what they meant).
   const today = getAppToday();
@@ -56,6 +56,9 @@ export default async function AccountLedgerPage({ searchParams }: PageProps<"/ba
   const [wallets, groups] = await Promise.all([getWallets(activeBusinessId), getAccounts(activeBusinessId)]);
   const walletIds = new Set(wallets.map((wallet) => wallet.id));
   const others = flatten(groups.flatMap((group) => group.accounts)).filter((account) => !walletIds.has(account.id));
+  // Nothing asked for: the cash wallet, else the first active one (the board).
+  const active = wallets.filter((wallet) => wallet.status !== "ARCHIVED");
+  const accountId = askedId || (active.find((wallet) => wallet.accountSubtype === "cash") ?? active[0])?.id || "";
 
   const { dateFrom, dateTo } = periodRange(period);
   const [account, ledger, summary, activeMonths] = accountId

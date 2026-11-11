@@ -19,6 +19,7 @@ import { maskAccountNumber, WALLET_TYPE_META, WALLET_TYPES, walletType, type Wal
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { BALANCE_POPUP } from "./popupLook";
 
 interface AccountDialogProps {
   open: boolean;
@@ -81,7 +82,8 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
   // An edit's opening balance, left empty, stays as it was.
   const openingShift = editing && opening.trim() !== "" ? Number(opening) - Number(editing.openingBalance) : 0;
   const openingChanged = Boolean(editing) && Number.isFinite(openingShift) && Math.abs(openingShift) >= 0.005;
-  const previewBalance = editing ? Number(editing.currentBalance) + (openingChanged ? openingShift : 0) : opening || 0;
+  // The current balance after an edit of the opening balance.
+  const balanceAfter = editing ? Number(editing.currentBalance) + (openingChanged ? openingShift : 0) : 0;
 
   function pickType(next: WalletType) {
     if (editing) return;
@@ -137,13 +139,14 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
       width={500}
       title={t(editing ? "Edit account" : "Add account")}
       onSubmit={submit}
-      bodyClassName="gap-3.5"
+      {...BALANCE_POPUP}
+      bodyClassName="gap-3.5 px-5.5 py-4"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button variant="secondary" onClick={onClose} disabled={isPending} className="h-10.5 px-4.5">
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={isPending || !online}>
+          <Button type="submit" disabled={isPending || !online} className="h-10.5 px-5">
             {isPending && <Loader size={16} onDark label={t("Saving...")} />}
             {t(editing ? "Save changes" : "Add account")}
           </Button>
@@ -162,7 +165,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
             <span className="truncate text-body-lg font-semibold">{name.trim() || t("Account name")}</span>
             <span className="text-caption tracking-[0.08em] text-white/75 tabular-nums">{(numbered && maskAccountNumber(digits)) || t("No account number")}</span>
           </span>
-          <span className="text-[22px] font-bold whitespace-nowrap tabular-nums">{formatCurrency(previewBalance, currency, fmt)}</span>
+          <span className="text-[22px] font-bold whitespace-nowrap tabular-nums">{formatCurrency(opening || 0, currency, fmt)}</span>
         </span>
       </div>
 
@@ -257,7 +260,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
                 from: formatCurrency(editing.openingBalance, currency, fmt),
                 to: formatCurrency(opening, currency, fmt),
                 now: formatCurrency(editing.currentBalance, currency, fmt),
-                after: formatCurrency(previewBalance, currency, fmt),
+                after: formatCurrency(balanceAfter, currency, fmt),
               })
             : t("Entered it wrong? Fix it here. The current balance moves by the same amount.")
           : t("How much is in this account right now.")}
