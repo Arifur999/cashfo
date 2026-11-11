@@ -34,7 +34,8 @@ function useMoney(data: HomeData) {
   return (value: number) => formatCurrency(value, data.currency, fmt);
 }
 
-function Head({ title, sub, href, link }: { title: string; sub?: string; href?: string; link?: string }) {
+// `arrow`: the board draws one after Full report only; Calendar and View all go without.
+function Head({ title, sub, href, link, arrow = false }: { title: string; sub?: string; href?: string; link?: string; arrow?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
@@ -44,7 +45,7 @@ function Head({ title, sub, href, link }: { title: string; sub?: string; href?: 
       {href && link && (
         <Link href={href} className={LINK}>
           {link}
-          <ArrowRight className="size-3.5" aria-hidden="true" />
+          {arrow && <ArrowRight className="size-3.5" aria-hidden="true" />}
         </Link>
       )}
     </div>
@@ -169,7 +170,7 @@ export function WealthCard({ data, hidden }: { data: HomeData; hidden: boolean }
   };
   return (
     <section aria-label={t("Where your wealth is")} className={cn(BOARD_CARD, "flex flex-col gap-3.5 px-5.5 py-5")}>
-      <Head title={t("Where your wealth is")} sub={t("Each part of your net worth, with its share")} href="/reports/detailed" link={t("Full report")} />
+      <Head title={t("Where your wealth is")} sub={t("Each part of your net worth, with its share")} href="/reports/detailed" link={t("Full report")} arrow />
       <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-line-card">
         {worthBar(parts).map((bar) => (
           <span key={bar.key} title={`${t(WEALTH[bar.key].label)}: ${hidden ? HIDDEN : money(parts[bar.key])}`} className={WEALTH[bar.key].bar} style={{ width: `${bar.width}%` }} />

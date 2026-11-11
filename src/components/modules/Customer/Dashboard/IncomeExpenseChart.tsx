@@ -52,7 +52,7 @@ function Legend({ size }: { size: "md" | "sm" }) {
 // month in full colour on a band and the earlier ones muted. Hovering (or
 // focusing) a month shows its figures and what was saved.
 export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseChartProps) {
-  const { t, locale, fmt } = useLocale();
+  const { t, fmt } = useLocale();
   const listId = useId();
   const [active, setActive] = useState<number | null>(null);
   const top = Math.max(0, ...points.map((p) => Math.max(p.income, p.expense)));
@@ -61,7 +61,13 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
   // The figures in the reader's digits, the units in the reader's words: a
   // Bangla unit is a whole word ("৫০ হাজার"), so it gets a space. Lakh and
   // crore, or million and billion for a reader who groups in threes.
-  const axisLabel = (value: number) => toLocaleDigits(formatCompactAmount(value, withLocale(fmt, "en")).replace(/(Cr|L|K|M|B)$/, (unit) => (locale === "bn" ? " " : "") + t(`${unit}@@axis`)), fmt);
+  // The board writes every tick in the top tick's unit with a space ("2 L",
+  // "0.5 L"), so a lakh-scale chart never mixes in "50K".
+  const lakhScale = (typeof fmt === "string" || fmt.grouping === "lakh") && axis !== null && axis[0] >= 100000 && axis[0] < 10000000;
+  const axisLabel = (value: number) =>
+    lakhScale
+      ? toLocaleDigits(`${Number((value / 100000).toFixed(2))} ${t("L@@axis")}`, fmt)
+      : toLocaleDigits(formatCompactAmount(value, withLocale(fmt, "en")).replace(/(Cr|L|K|M|B)$/, (unit) => ` ${t(`${unit}@@axis`)}`), fmt);
   const describe = (p: HomeChartPoint) => t("{month}: income {income}, expense {expense}", { month: p.name, income: money(p.income), expense: money(p.expense) });
   const current = points.length - 1;
   const shown = active !== null ? points[active] : null;
