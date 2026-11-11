@@ -31,7 +31,8 @@ import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { dayText, dayTextProblem, parseDayText } from "@/lib/customer/dayText";
 import { correctTransactionAction, createExpenseAction, createIncomeAction, createTransferAction, listExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
-import { transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
+import { DELETED_REASON, transactionBackLink, transactionPageHref } from "@/lib/customer/transactionDisplay";
+import { undoEditAction, voidTransactionAction } from "@/lib/customer/transactionActions";
 import { categoryLabel, editChanges, type EditableEntry, relativeDayKey } from "@/lib/customer/transactionRows";
 import { getAppToday } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
@@ -140,8 +141,8 @@ const isWideNow = () => typeof window !== "undefined" && window.matchMedia("(min
 // Save says what is still missing under each field. On phones it comes up
 // from the bottom as the phone board draws it: plain tabs, the amount large
 // in the middle, the category tiles, the wallet and the day side by side.
-// Enter saves; "Save & add another" keeps it open and clears the amount and
-// note.
+// Enter saves; on a phone "Save & add another" keeps it open and clears the
+// amount and note. A saved or edited entry's toast offers Undo.
 export function TransactionDrawer({ open, onClose, businessId, currency, initialKind = "EXPENSE", kinds = ALL_KINDS, editing = null, stayOnEdit = false, onSaved }: TransactionDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
@@ -184,13 +185,14 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const workspace = user.businesses.find((b) => b.id === businessId);
   const canAdd = workspace?.role !== "STAFF";
   const editingKind = editing?.kind;
-  // An edit keeps its kind (the backend corrects an entry as what it is):
-  // the other card shows, switched off, as the board draws the type.
+  // An income or expense may become the other when edited (the board's
+  // Type cards stay on); a transfer stays one.
   const offered: EntryKind[] = editing ? (editing.kind === "TRANSFER" ? ["TRANSFER"] : ["INCOME", "EXPENSE"]) : kinds;
 
   // Reset the instant the drawer transitions closed → open (React's
-  // render-time pattern for "reset state when a prop changes").
-  const [prevOpen, setPrevOpen] = useState(open);
+  // render-time pattern for "reset state when a prop changes"). It starts
+  // as closed, so a drawer mounted open (a list's Edit) fills in too.
+  const [prevOpen, setPrevOpen] = useState(false);
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
@@ -310,7 +312,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const keptAccountId = editing && category === editing.category ? editing.otherAccountId : undefined;
   const expenseAccountId = keptAccountId ?? expenseAccounts.find((a) => a.name.toLowerCase().includes(category.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
   // How many of the entry's values an edit has changed.
-  const changes = editing ? editChanges(editing, { amount: value, category, accountId, toAccountId, day: date, note }) : 0;
+  const changes = editing ? editChanges(editing, { amount: value, category, accountId, toAccountId, day: date, note }) + (kind !== null && kind !== editing.kind ? 1 : 0) : 0;
   // A category is needed whenever there are some to pick; when the read
   // failed it is still needed, so an outage can't save an untagged entry.
   // An entry saved without one may be edited and stay without.
@@ -330,6 +332,16 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   };
   const complete = !problems.kind && !problems.date && !problems.account && !problems.toAccount && !problems.amount && !problems.category && !problems.expenseAccount;
   const valid = canAdd && complete && (!editing || changes > 0);
+  // Undo of what a save just posted, from its toast.
+  const undo = async (run: () => Promise<{ success: boolean; message?: string }>, done: string) => {
+    const result = await run();
+    if (result.success) {
+      toast.success(t(done));
+      router.refresh();
+    } else {
+      toast.error(t(result.message ?? "Couldn't undo the change"));
+    }
+  };
   // The phone's one thing still missing, said by its disabled button.
   const pickCategory = canAdd && categoryKind !== null && value > 0 && accountId.length > 0 && options.length > 0 && !category;
   const typeError = (showErrors || kindNudge) && problems.kind;
@@ -351,7 +363,12 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   }
 
   function save(another: boolean) {
-    if (isPending || !canAdd || (editing && changes === 0)) return;
+    if (isPending || !canAdd) return;
+    // Nothing changed: there is nothing to correct.
+    if (editing && changes === 0 && complete) {
+      onClose();
+      return;
+    }
     if (!complete || !kind) {
       setShowErrors(true);
       return;
@@ -370,7 +387,8 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           toast.error(t(corrected.message ?? "Failed to save the changes"));
           return;
         }
-        toast.success(t("Changes saved"));
+        const correctedId = corrected.data.id;
+        toast.success(t("Transaction updated"), { action: { label: t("Undo"), onClick: () => void undo(() => undoEditAction(businessId, correctedId), "Change undone") } });
         onClose();
         onSaved?.(saved(corrected.data.id));
         // From a list, the list shows the corrected entry in its place.
@@ -393,7 +411,11 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       const created = result.data;
       toast.success(
         t(savedKind === "TRANSFER" ? KIND_META.TRANSFER.done : "Transaction saved"),
-        created ? { action: { label: t("View"), onClick: () => router.push(savedKind === "TRANSFER" ? "/balance/transfer" : `/transactions/${created.id}`) } } : undefined,
+        created
+          ? savedKind === "TRANSFER"
+            ? { action: { label: t("View"), onClick: () => router.push("/balance/transfer") } }
+            : { action: { label: t("Undo"), onClick: () => void undo(() => voidTransactionAction(businessId, created.id, DELETED_REASON), "Transaction removed") } }
+          : undefined,
       );
       if (created) onSaved?.(saved(created.id));
       router.refresh();
@@ -469,7 +491,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           {t("Only an owner or accountant can add transactions")}
         </Banner>
       )}
-      {editing && (
+      {editing && !wide && (
         <Banner tone="info" inline icon={<Info />}>
           {t("You're editing a saved transaction. When you save, the original stays in History marked as corrected, and your balances update straight away.")}
         </Banner>
@@ -494,20 +516,6 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
     </span>
   );
 
-  const budgetHint = showBudget && (
-    <div className={cn("flex gap-2.5 rounded-[10px] border px-3.5 py-3 text-small leading-normal", hint.box)}>
-      {hint.icon}
-      <span>
-        {fillNodes(t("{category} has {left} left this month. After this, {after} of {limit} will be left."), {
-          category: categoryLabel(category, t),
-          left: <b className="font-semibold">{formatCurrency(budgetLeft, currency, fmt)}</b>,
-          after: <b className={cn("font-semibold", hint.figure)}>{formatCurrency(budgetLeft - value, currency, fmt)}</b>,
-          limit: formatCurrency(budgetLimit, currency, fmt),
-        })}
-      </span>
-    </div>
-  );
-
   const dateField = (
     <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor="txn-date" className={WIDE_LABEL}>
@@ -525,7 +533,7 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       {banners}
 
       <div className="flex flex-col">
-        <KindCards legend="Type" value={kind ?? ("" as EntryKind)} onChange={switchKind} options={WIDE_KINDS.filter((option) => offered.includes(option.value))} compact disabled={!!editing} />
+        <KindCards legend="Type" value={kind ?? ("" as EntryKind)} onChange={switchKind} options={WIDE_KINDS.filter((option) => offered.includes(option.value))} compact />
         {typeError && <span className={cn(FIELD_ERROR, "mt-1.5")}>{t("Choose Income or Expense.")}</span>}
       </div>
 
@@ -631,8 +639,6 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
           {expenseAccountMissing}
         </div>
       )}
-
-      {budgetHint}
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="txn-note" className={WIDE_LABEL}>
@@ -772,23 +778,13 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
   const missing = pickCategory && <p className="text-caption text-ink-muted">{t("Pick a category to save")}</p>;
   const spinner = isPending && <Loader size={16} onDark label={t("Loading...")} />;
 
-  // The board's foot: Cancel and Save on the right; the app's "Save & add
-  // another" (or an edit's count of changes) on the left.
+  // The board's foot: Cancel and Save on the right.
   const wideFooter = (
-    <div className="flex items-center gap-2.5 border-t border-line px-6 py-4">
-      {editing ? (
-        <span className="flex-1 text-small text-ink-muted">{plural(t, changes, "{count} change", "{count} changes", undefined, fmt)}</span>
-      ) : (
-        <span className="flex-1">
-          <Button type="button" variant="ghost" size="lg" onClick={() => save(true)} disabled={isPending || !canAdd} className="-ml-3 px-3 text-ink-2">
-            {t("Save & add another")}
-          </Button>
-        </span>
-      )}
+    <div className="flex items-center justify-end gap-2.5 border-t border-line px-6 py-4">
       <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
         {t("Cancel")}
       </Button>
-      <Button type="submit" size="lg" disabled={isPending || !canAdd || (!!editing && changes === 0)} className="px-5">
+      <Button type="submit" size="lg" disabled={isPending || !canAdd} className="px-5">
         {spinner}
         {editing ? t("Save changes") : t(isTransfer ? KIND_META.TRANSFER.save : "Save transaction")}
       </Button>
@@ -847,29 +843,16 @@ export function TransactionDrawer({ open, onClose, businessId, currency, initial
       <Dialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
         <DialogContent
           showCloseButton={false}
-          // With no kind picked nothing has focus yet: start on the first
-          // kind card rather than the close button.
+          // The popup itself takes focus (no ring on a field, as the board
+          // opens); Tab goes on to the first kind card.
           onOpenAutoFocus={(event) => {
-            const first = (event.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>("[data-txn-body] button:not([disabled]), [data-txn-body] input:not([disabled])");
-            if (!first) return;
             event.preventDefault();
-            first.focus();
+            (event.currentTarget as HTMLElement | null)?.focus();
           }}
           className="flex max-h-[calc(100dvh-48px)] w-135 flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-48px)]">
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line py-4 pr-4 pl-6">
-            {editing ? (
-              <span className="flex min-w-0 flex-col gap-1">
-                <DialogTitle className="text-[18px] font-semibold text-ink">{t("Edit transaction")}</DialogTitle>
-                <DialogDescription className="truncate text-small text-ink-muted">
-                  {editing.title} · {formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", fmt)}
-                </DialogDescription>
-              </span>
-            ) : (
-              <>
-                <DialogTitle className="text-[18px] font-semibold text-ink">{t("New transaction")}</DialogTitle>
-                <DialogDescription className="sr-only">{t("New transaction")}</DialogDescription>
-              </>
-            )}
+            <DialogTitle className="text-[18px] font-semibold text-ink">{t(editing ? "Edit transaction" : "New transaction")}</DialogTitle>
+            <DialogDescription className="sr-only">{editing ? `${editing.title} · ${formatDate(`${editing.day}T00:00:00.000Z`, "EEE, d MMM", fmt)}` : t("New transaction")}</DialogDescription>
             <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-11 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken">
               <X className="size-4.5" aria-hidden="true" />
             </button>

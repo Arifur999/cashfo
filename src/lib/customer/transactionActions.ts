@@ -75,3 +75,11 @@ export async function restoreTransactionAction(businessId: string, id: string): 
     await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}/restore`, {}, { headers: await authHeaders() });
   }, "Couldn't bring the transaction back");
 }
+
+// Undo of an edit made minutes ago: the entry the edit posted (id) goes and
+// the one it replaced stands again.
+export async function undoEditAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}/undo-edit`, {}, { headers: await authHeaders() });
+  }, "Couldn't undo the change");
+}

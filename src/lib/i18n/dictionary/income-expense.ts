@@ -710,4 +710,9 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Pick a category.": "একটা ক্যাটাগরি বাছুন।",
   "Choose Income or Expense first": "আগে আয় বা খরচ বাছুন",
   "Open calendar": "ক্যালেন্ডার খুলুন",
+  // v16 Transactions popup toasts
+  "Transaction updated": "লেনদেন আপডেট হয়েছে",
+  "Change undone": "পরিবর্তন ফিরিয়ে নেওয়া হয়েছে",
+  "Transaction removed": "লেনদেন সরানো হয়েছে",
+  "Couldn't undo the change": "পরিবর্তনটা ফেরানো যায়নি",
 };
