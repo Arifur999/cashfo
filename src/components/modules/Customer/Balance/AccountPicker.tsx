@@ -111,7 +111,7 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
           <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         </div>
       </PopoverAnchor>
-      <PopoverContent align="start" sideOffset={6} className="w-(--radix-popover-trigger-width) gap-0 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
+      <PopoverContent align="start" sideOffset={6} className="w-(--radix-popover-trigger-width) gap-0 rounded-[12px] border border-line bg-surface p-1 shadow-overlay ring-0">
         {/* Our own matching (Bangla names too), so cmdk only drives the keys. */}
         <Command shouldFilter={false} loop label={t("Search accounts")} defaultValue={value || undefined}>
           <div className="mb-1 flex h-9.5 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-ink-muted transition-[border-color,box-shadow] focus-within:border-emerald focus-within:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]">

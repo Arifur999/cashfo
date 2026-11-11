@@ -34,7 +34,7 @@ export function DeleteAccountDialog({ account, name, busy, onClose, onDelete, on
   return (
     <Dialog open onOpenChange={(next) => !next && !busy && onClose()}>
       <DialogContent showCloseButton={false} role="alertdialog" className="flex w-105 max-w-[calc(100vw-32px)] flex-col gap-3.5 rounded-[20px] border-0 bg-surface p-6 shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
-        <span className={cn("flex size-11.5 items-center justify-center rounded-xl [&_svg]:size-5.5", history ? "bg-warning-soft text-warning" : "bg-expense-soft text-expense")}>
+        <span className={cn("flex size-11.5 items-center justify-center rounded-[12px] [&_svg]:size-5.5", history ? "bg-warning-soft text-warning" : "bg-expense-soft text-expense")}>
           {history ? <Archive aria-hidden="true" /> : <Trash2 aria-hidden="true" />}
         </span>
         <div className="flex flex-col gap-1.5">

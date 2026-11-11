@@ -208,7 +208,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
               <label
                 key={option}
                 className={cn(
-                  "flex h-15 flex-col items-center justify-center gap-1 rounded-xl border text-small transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring [&_svg]:size-4.5",
+                  "flex h-15 flex-col items-center justify-center gap-1 rounded-[12px] border text-small transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring [&_svg]:size-4.5",
                   on ? "border-[1.5px] border-emerald bg-mint-50 font-semibold text-emerald" : "border-line bg-surface font-medium text-ink-soft",
                   locked ? "cursor-not-allowed opacity-45" : !on && "cursor-pointer hover:border-line-strong",
                 )}

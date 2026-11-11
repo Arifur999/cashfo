@@ -11,7 +11,6 @@ import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Loader from "@/components/shared/Loader";
 import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
-import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
@@ -182,7 +181,7 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       </span>
     );
     return (
-      <div className="flex min-w-0 flex-col gap-1.75 rounded-xl border border-divider bg-strip px-3.5 py-3">
+      <div className="flex min-w-0 flex-col gap-1.75 rounded-[12px] border border-divider bg-strip px-3.5 py-3">
         <span className="flex items-center justify-between gap-2 border-b border-line pb-1.5">
           <span className="truncate text-small font-bold text-ink">{wallet ? nameOf(wallet) : "—"}</span>
           <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold", side === "from" ? "bg-expense-soft text-expense" : "bg-tint-green text-tint-green-ink")}>{t(side === "from" ? "Sending" : "Receiving")}</span>
@@ -232,7 +231,8 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       )}
 
       <Field htmlFor="transfer-date" label={<span className="text-small font-semibold text-ink-2">{t("Date")}</span>}>
-        <DayInput id="transfer-date" size="md" value={date} onChange={setDate} max={getAppToday()} />
+        {/* The board: a plain date box, the calendar at its right. */}
+        <Input id="transfer-date" type="date" size="md" value={date} onChange={(event) => event.target.value && setDate(event.target.value)} max={getAppToday()} className="tabular-nums" />
       </Field>
 
       <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)]">

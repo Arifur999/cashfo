@@ -48,7 +48,7 @@ const VIEWS: readonly ListView[] = ["table", "cards"];
 // The table's grid: account, five movements, the balance and the menu.
 // Phones scroll it sideways.
 const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(5,112px)_130px_40px] gap-x-3.5 min-w-240";
-const MENU_ITEM = "flex h-9.5 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75 [&_svg]:text-ink";
+const MENU_ITEM = "flex h-9.5 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75 [&_svg]:text-ink";
 // Money by type: the board's three colours.
 const TYPE_BAR = { cash: "bg-emerald", bank: "bg-info", mfs: "bg-rose" } as const;
 const TYPE_SHORT = { cash: "Cash", bank: "Bank", mfs: "Mobile" } as const;
@@ -176,7 +176,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
           {busy ? <Loader size={16} onDark={onCard} label={t("Loading...")} /> : <Ellipsis className={onCard ? "size-4.25" : undefined} aria-hidden="true" />}
         </DropdownMenuTrigger>
         {/* A popup opened from the menu keeps its own focus: the menu doesn't hand it back to the button as it closes. */}
-        <DropdownMenuContent align="end" sideOffset={6} onCloseAutoFocus={(event) => event.preventDefault()} className="w-50 rounded-xl border border-line bg-surface p-1.5 shadow-overlay ring-0">
+        <DropdownMenuContent align="end" sideOffset={6} onCloseAutoFocus={(event) => event.preventDefault()} className="w-50 rounded-[12px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
           <DropdownMenuItem asChild className={MENU_ITEM}>
             <Link href={`/balance/ledger?accountId=${account.id}`}>
               <ScrollText aria-hidden="true" />
@@ -269,7 +269,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
             <b className="font-semibold">{t(SORT_LABEL[sort])}</b>
             <ChevronDown className="size-3.75 text-ink-muted" aria-hidden="true" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8} className="w-50 rounded-xl border border-line bg-surface p-1.5 shadow-overlay ring-0">
+          <DropdownMenuContent align="end" sideOffset={8} className="w-50 rounded-[12px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
             {ACCOUNT_SORTS.map((option) => (
               <DropdownMenuItem key={option} onSelect={() => setSort(option)} className={cn(MENU_ITEM, "h-10", option === sort && "bg-mint-50 font-semibold")}>
                 {option === "bal-desc" ? <ArrowDown aria-hidden="true" /> : <ArrowUp aria-hidden="true" />}
@@ -413,7 +413,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
                 <AccountCard key={account.id} account={account} name={nameOf(account)} kind={kindOf(account)} balance={money(account.currentBalance)} menu={menu(account, true)} busy={isPending && busyId === account.id} />
               ))}
               {current === "active" && !searching && canManage && (
-                <button type="button" onClick={() => setDialog("add")} className="flex h-47.5 flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald hover:bg-strip">
+                <button type="button" onClick={() => setDialog("add")} className="flex h-47.5 flex-col items-center justify-center gap-2 rounded-[16px] border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald hover:bg-strip">
                   <span className="flex size-11 items-center justify-center rounded-[12px] bg-emerald-soft text-emerald">
                     <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
                   </span>
@@ -513,7 +513,7 @@ function AccountCard({ account, name, kind, balance, menu, busy }: AccountCardPr
     <div className={cn("relative", archived && "opacity-70", busy && "opacity-60")} style={walletColorStyle(accountColor(account))}>
       <Link
         href={`/balance/ledger?accountId=${account.id}`}
-        className="relative flex h-47.5 flex-col justify-between overflow-hidden rounded-2xl bg-wallet-card px-5 py-4.5 text-white shadow-[0_10px_24px_rgba(18,32,29,0.14)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+        className="relative flex h-47.5 flex-col justify-between overflow-hidden rounded-[16px] bg-wallet-card px-5 py-4.5 text-white shadow-[0_10px_24px_rgba(18,32,29,0.14)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
       >
         <span aria-hidden="true" className="absolute -top-22.5 -right-17.5 size-55 rounded-full bg-white/7" />
         <span className="relative inline-flex items-center gap-1.5 self-start rounded-full bg-white/16 px-2.5 py-1 text-caption font-semibold [&_svg]:size-3.5">
