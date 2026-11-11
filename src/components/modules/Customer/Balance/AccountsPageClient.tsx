@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, ArrowDown, ArrowLeftRight, ArrowUp, ArrowUpDown, Check, ChevronDown, ChevronRight, CircleCheckBig, Ellipsis, Info, Pencil, Plus, ScrollText, Search, Trash2, Wallet, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowDown, ArrowLeftRight, ArrowUp, ArrowUpDown, Check, ChevronDown, ChevronRight, CircleCheckBig, Ellipsis, Info, Pencil, Plus, ScrollText, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState, useTransition } from "react";
@@ -9,10 +9,10 @@ import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
-import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
+import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { archiveAccountAction, removeAccountAction, unarchiveAccountAction, type ActionResult } from "@/lib/customer/accountActions";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
@@ -47,8 +47,8 @@ const VIEWS: readonly ListView[] = ["table", "cards"];
 
 // The table's grid: account, five movements, the balance and the menu.
 // Phones scroll it sideways.
-const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(5,104px)_126px_40px] min-w-240";
-const MENU_ITEM = "flex h-9.5 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-small font-medium text-ink focus:bg-strip [&_svg]:size-3.75 [&_svg]:text-ink-soft";
+const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(5,112px)_130px_40px] gap-x-3.5 min-w-240";
+const MENU_ITEM = "flex h-9.5 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75 [&_svg]:text-ink";
 // Money by type: the board's three colours.
 const TYPE_BAR = { cash: "bg-emerald", bank: "bg-info", mfs: "bg-rose" } as const;
 const TYPE_SHORT = { cash: "Cash", bank: "Bank", mfs: "Mobile" } as const;
@@ -169,14 +169,14 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
           aria-label={t("Actions for {name}", { name: nameOf(account) })}
           className={
             onCard
-              ? "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-white/16 text-white hover:bg-white/26 disabled:cursor-default data-open:bg-white/30 pointer-coarse:size-11"
+              ? "relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-white/16 text-white hover:bg-white/26 disabled:cursor-default data-open:bg-white/30 pointer-coarse:size-11"
               : cn(iconActionClass(), "relative z-10 disabled:cursor-default data-open:border-mint-200 data-open:bg-emerald-soft data-open:text-emerald")
           }
         >
-          {busy ? <Loader size={16} onDark={onCard} label={t("Loading...")} /> : <Ellipsis className={onCard ? "size-4.5" : undefined} aria-hidden="true" />}
+          {busy ? <Loader size={16} onDark={onCard} label={t("Loading...")} /> : <Ellipsis className={onCard ? "size-4.25" : undefined} aria-hidden="true" />}
         </DropdownMenuTrigger>
         {/* A popup opened from the menu keeps its own focus: the menu doesn't hand it back to the button as it closes. */}
-        <DropdownMenuContent align="end" sideOffset={6} onCloseAutoFocus={(event) => event.preventDefault()} className="w-52 rounded-xl border border-line bg-surface p-1.5 shadow-overlay ring-0">
+        <DropdownMenuContent align="end" sideOffset={6} onCloseAutoFocus={(event) => event.preventDefault()} className="w-50 rounded-[12px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
           <DropdownMenuItem asChild className={MENU_ITEM}>
             <Link href={`/balance/ledger?accountId=${account.id}`}>
               <ScrollText aria-hidden="true" />
@@ -207,7 +207,6 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
                 {isArchived ? <ArchiveRestore aria-hidden="true" /> : <Archive aria-hidden="true" />}
                 {t(isArchived ? "Make active again" : "Archive")}
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="my-1 bg-line" />
               <DropdownMenuItem onSelect={() => setDeleting(account)} disabled={!online} className={cn(MENU_ITEM, "text-expense focus:bg-expense-soft [&_svg]:text-expense")}>
                 <Trash2 aria-hidden="true" />
                 {t("Delete")}
@@ -270,7 +269,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
             <b className="font-semibold">{t(SORT_LABEL[sort])}</b>
             <ChevronDown className="size-3.75 text-ink-muted" aria-hidden="true" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8} className="w-50 rounded-xl border border-line bg-surface p-1.5 shadow-overlay ring-0">
+          <DropdownMenuContent align="end" sideOffset={8} className="w-50 rounded-[12px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
             {ACCOUNT_SORTS.map((option) => (
               <DropdownMenuItem key={option} onSelect={() => setSort(option)} className={cn(MENU_ITEM, "h-10", option === sort && "bg-mint-50 font-semibold")}>
                 {option === "bal-desc" ? <ArrowDown aria-hidden="true" /> : <ArrowUp aria-hidden="true" />}
@@ -287,31 +286,25 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
   // Nothing to list: no account at all, none archived, or none matching.
   const nothing =
     shown.length === 0 ? (
-      searching ? (
-        <div className="flex flex-col items-center gap-2 border-t border-divider px-6 py-9 text-center">
-          <span className="text-body font-semibold text-ink">{t('No account matches "{query}"', { query: query.trim() })}</span>
-          <Button variant="secondary" size="sm" onClick={() => setQuery("")}>
+      <div className="flex flex-col items-center gap-2 border-t border-divider px-6 py-9 text-center">
+        <span className="text-body font-semibold text-ink">
+          {searching ? t('No account matches "{query}"', { query: query.trim() }) : t(current === "archived" ? "No archived accounts. Accounts you archive wait here." : "No accounts yet.")}
+        </span>
+        {searching && (
+          <button type="button" onClick={() => setQuery("")} className="h-8.5 rounded-full border border-input bg-surface px-3.5 text-small font-semibold text-ink hover:bg-surface-sunken">
             {t("Clear search")}
-          </Button>
-        </div>
-      ) : current === "archived" ? (
-        <p className="border-t border-divider px-6 py-9 text-center text-body text-ink-muted">{t("No archived accounts. Accounts you archive wait here.")}</p>
-      ) : (
-        <ListEmpty
-          icon={<Wallet />}
-          title={t("No accounts yet")}
-          description={t("Add your cash, bank and mobile wallets to see where your money sits.")}
-          action={canManage && <Button onClick={() => setDialog("add")}>{t("Add account")}</Button>}
-        />
-      )
+          </button>
+        )}
+      </div>
     ) : null;
 
   const movement = (value: number, sign: "+" | "−", tone: string) =>
     value === 0 ? <span className="text-ink-faint">—</span> : <span className={tone}>{signed(value, sign)}</span>;
 
   return (
-    <PageFrame className="gap-6">
+    <PageFrame className="gap-6 leading-[normal]">
       <PageHeader
+        className="md:items-center"
         title={t("Accounts@@wallets")}
         actions={
           <>
@@ -335,7 +328,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
           <span aria-hidden="true" className="mt-0.5 flex h-2 gap-0.5 overflow-hidden rounded-full bg-surface-sunken">
             {!hidden && shares.filter((share) => share.amount > 0).map((share) => <span key={share.type} className={TYPE_BAR[share.type]} style={{ width: `${share.percent}%` }} />)}
           </span>
-          <span className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-caption text-ink-2">
+          <span className="flex gap-2.5 overflow-hidden text-caption whitespace-nowrap text-ink-2">
             {shares.map((share) => (
               <span key={share.type} className="inline-flex items-center gap-1.25 whitespace-nowrap">
                 <span aria-hidden="true" className={cn("size-1.75 rounded-full", hidden ? "bg-ink-faint" : TYPE_BAR[share.type])} />
@@ -345,7 +338,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
             ))}
           </span>
         </Card>
-        <Figure label={t("Total in")} value={signed(sum((account) => account.totalIn), "+")} tone="text-income" />
+        <Figure label={t("Total in")} value={signed(sum((account) => account.totalIn), "+")} tone="text-success" />
         <Figure label={t("Total out")} value={signed(sum((account) => account.totalOut), "−")} tone="text-expense" />
         <Figure label={t("Available balance")} value={money(overview.availableBalance)} tone={!hidden && Number(overview.availableBalance) < 0 ? "text-expense" : "text-ink"} />
       </section>
@@ -359,7 +352,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
                 <ListHeadCell align="end">{t("Opening")}</ListHeadCell>
                 <ListHeadCell align="end">{t("Money in@@wallet")}</ListHeadCell>
                 <ListHeadCell align="end">
-                  <HeadInfo label={t("Money out@@wallet")} hint={t("Expenses, loans given, assets bought and transfer charges")} />
+                  <span title={t("Expenses, loans given, assets bought and transfer charges")}>{t("Money out@@wallet")}</span>
                 </ListHeadCell>
                 <ListHeadCell align="end">
                   <HeadInfo label={t("To savings")} hint={t("Moved from this account into a savings goal")} />
@@ -382,7 +375,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
                 const isArchived = account.status === "ARCHIVED";
                 const transfers = Number(account.adjustment);
                 return (
-                  <ListRow key={account.id} columns={COLUMNS} muted={isArchived} className={cn("tabular-nums md:min-h-15.5", isPending && busyId === account.id && "opacity-60")}>
+                  <ListRow key={account.id} columns={COLUMNS} muted={isArchived} className={cn("tabular-nums md:min-h-15.75", isPending && busyId === account.id && "opacity-60")}>
                     <ListCell className="flex items-center gap-3" style={walletColorStyle(accountColor(account))}>
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] wallet-tile [&_svg]:size-4.25">{createElement(walletIcon(account), { "aria-hidden": true })}</span>
                       <span className="flex min-w-0 flex-col gap-px">
@@ -402,7 +395,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
                     <ListCell align="end" className={cn("font-bold", !hidden && Number(account.currentBalance) < 0 && "text-expense")}>
                       {money(account.currentBalance)}
                     </ListCell>
-                    <ListRowActions>{menu(account)}</ListRowActions>
+                    <ListRowActions className="-mr-1.5">{menu(account)}</ListRowActions>
                   </ListRow>
                 );
               })}
@@ -417,11 +410,11 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
           ) : (
             <div className="grid gap-4.5 px-4 pt-1 pb-6 sm:grid-cols-2 md:px-6 xl:grid-cols-3">
               {shown.map((account) => (
-                <AccountCard key={account.id} account={account} name={nameOf(account)} balance={money(account.currentBalance)} menu={menu(account, true)} busy={isPending && busyId === account.id} />
+                <AccountCard key={account.id} account={account} name={nameOf(account)} kind={kindOf(account)} balance={money(account.currentBalance)} menu={menu(account, true)} busy={isPending && busyId === account.id} />
               ))}
               {current === "active" && !searching && canManage && (
-                <button type="button" onClick={() => setDialog("add")} className="flex h-47.5 flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald hover:bg-strip">
-                  <span className="flex size-11 items-center justify-center rounded-xl bg-mint-50 text-emerald">
+                <button type="button" onClick={() => setDialog("add")} className="flex h-47.5 flex-col items-center justify-center gap-2 rounded-[16px] border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald hover:bg-strip">
+                  <span className="flex size-11 items-center justify-center rounded-[12px] bg-emerald-soft text-emerald">
                     <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
                   </span>
                   <span className="text-[15px] font-semibold text-ink">{t("Add account")}</span>
@@ -479,7 +472,7 @@ function Figure({ label, value, tone }: { label: string; value: string; tone: st
   return (
     <Card padding="none" className="flex min-w-0 flex-col gap-1 px-4.5 py-3.5 shadow-xs">
       <span className="text-[12.5px] font-medium text-ink-muted">{label}</span>
-      <span className={cn("text-[22px] leading-tight font-bold tracking-[-0.02em] tabular-nums wrap-anywhere", tone)}>{value}</span>
+      <span className={cn("text-[22px] font-bold tracking-[-0.02em] tabular-nums wrap-anywhere", tone)}>{value}</span>
     </Card>
   );
 }
@@ -503,6 +496,8 @@ function HeadInfo({ label, hint }: { label: string; hint: string }) {
 interface AccountCardProps {
   account: WalletOverviewRow;
   name: string;
+  // "Bank account · 7890"
+  kind: string;
   balance: string;
   menu: React.ReactNode;
   busy: boolean;
@@ -510,7 +505,7 @@ interface AccountCardProps {
 
 // The card view's card: the account's colour, its kind, name and number,
 // the balance, and the way to its ledger.
-function AccountCard({ account, name, balance, menu, busy }: AccountCardProps) {
+function AccountCard({ account, name, kind, balance, menu, busy }: AccountCardProps) {
   const { t } = useLocale();
   const type = WALLET_TYPE_META[walletType(account)];
   const archived = account.status === "ARCHIVED";
@@ -518,13 +513,12 @@ function AccountCard({ account, name, balance, menu, busy }: AccountCardProps) {
     <div className={cn("relative", archived && "opacity-70", busy && "opacity-60")} style={walletColorStyle(accountColor(account))}>
       <Link
         href={`/balance/ledger?accountId=${account.id}`}
-        className="relative flex h-47.5 flex-col justify-between overflow-hidden rounded-2xl bg-wallet-card px-5 py-4.5 text-white shadow-[0_10px_24px_rgba(18,32,29,0.14)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+        className="relative flex h-47.5 flex-col justify-between overflow-hidden rounded-[16px] bg-wallet-card px-5 py-4.5 text-white shadow-[0_10px_24px_rgba(18,32,29,0.14)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
       >
         <span aria-hidden="true" className="absolute -top-22.5 -right-17.5 size-55 rounded-full bg-white/7" />
         <span className="relative inline-flex items-center gap-1.5 self-start rounded-full bg-white/16 px-2.5 py-1 text-caption font-semibold [&_svg]:size-3.5">
           {createElement(type.icon, { "aria-hidden": true })}
-          {t(type.label)}
-          {archived && ` · ${t("Archived@@status")}`}
+          {kind}
         </span>
         <span className="relative flex flex-col gap-0.75">
           <span className="truncate text-[17px] font-semibold">{name}</span>
@@ -533,7 +527,7 @@ function AccountCard({ account, name, balance, menu, busy }: AccountCardProps) {
         <span className="relative flex items-end justify-between gap-3">
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="text-caption text-white/78">{t("Current balance")}</span>
-            <span className="text-[25px] leading-tight font-bold tracking-[-0.02em] tabular-nums wrap-anywhere">{balance}</span>
+            <span className="text-[25px] font-bold tracking-[-0.02em] tabular-nums wrap-anywhere">{balance}</span>
           </span>
           <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/16 px-2.5 py-1.5 text-caption font-semibold">
             {t("Ledger")}

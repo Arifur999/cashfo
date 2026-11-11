@@ -18,6 +18,7 @@ import { walletIcon } from "@/lib/customer/walletVisuals";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { BALANCE_POPUP } from "./popupLook";
 
 interface AdjustBalanceDialogProps {
   account: WalletOverviewRow | null;
@@ -87,12 +88,12 @@ export function AdjustBalanceDialog({ account, name, kind, onClose, businessId, 
 
   const status =
     state.state === "idle"
-      ? { icon: Info, tone: "border-line bg-strip text-ink-2", text: t("Type the balance your bank or wallet app shows right now.") }
+      ? { icon: Info, tone: "border-divider bg-strip text-ink-soft", text: t("Type the balance your bank or wallet app shows right now.") }
       : state.state === "ok"
-        ? { icon: CircleCheck, tone: "border-income/30 bg-income-soft text-income", text: t("They match. Nothing to fix.") }
+        ? { icon: CircleCheck, tone: "border-tint-emerald-ink/30 bg-tint-emerald/45 text-tint-emerald-ink", text: t("They match. Nothing to fix.") }
         : {
             icon: TriangleAlert,
-            tone: "border-warning/30 bg-warning-soft text-warning",
+            tone: "border-warning-line bg-warning-50 text-warning-ink",
             text:
               state.difference > 0
                 ? t("Your real balance is {amount} more. Smartly adds {amount} as an adjustment so both match.", { amount: money(state.difference) })
@@ -105,6 +106,8 @@ export function AdjustBalanceDialog({ account, name, kind, onClose, businessId, 
       onClose={onClose}
       busy={isPending}
       width={480}
+      {...BALANCE_POPUP}
+      bodyClassName="gap-3.5 px-5.5 py-4.5"
       title={t("Match your real balance")}
       onSubmit={(event) => {
         event.preventDefault();
@@ -112,10 +115,10 @@ export function AdjustBalanceDialog({ account, name, kind, onClose, businessId, 
       }}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button variant="secondary" onClick={onClose} disabled={isPending} className="h-10.5 px-4.5">
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={isPending || !online || state.state === "idle"}>
+          <Button type="submit" disabled={isPending || !online || state.state === "idle"} className="h-10.5 px-5">
             {isPending && <Loader size={16} onDark label={t("Saving...")} />}
             {t(state.state === "ok" ? "Done" : "Match balance")}
           </Button>
@@ -153,7 +156,7 @@ export function AdjustBalanceDialog({ account, name, kind, onClose, businessId, 
           />
         </Field>
       </div>
-      <div role="status" className={cn("flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-[13.5px] leading-normal", status.tone)}>
+      <div role="status" className={cn("flex items-start gap-2.5 rounded-[12px] border px-3.5 py-3 text-[13.5px] leading-normal", status.tone)}>
         <status.icon className="mt-px size-4.25 shrink-0" aria-hidden="true" />
         <span>{status.text}</span>
       </div>

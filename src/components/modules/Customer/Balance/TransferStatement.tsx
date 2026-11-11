@@ -1,8 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import Logo from "@/components/smartly/Logo";
-import { formatCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -61,7 +60,7 @@ export function TransferStatement({ transfers, account, periodLabel, range, move
     <section className="flex flex-col gap-5 text-small text-ink [print-color-adjust:exact]">
       <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-4">
         <div className="flex flex-col gap-1">
-          <Logo height={28} />
+          <span className="text-[20px] font-bold">Smartly</span>
           <span className="text-[11px] text-ink-muted">{t("Statement for {name}", { name: user.name })}</span>
         </div>
         <div className="flex flex-col items-end gap-0.75 text-right">
@@ -83,7 +82,7 @@ export function TransferStatement({ transfers, account, periodLabel, range, move
         <div className="flex flex-col gap-0.75">
           <span className="text-ink-muted">{t("Transfers")}</span>
           <span className="text-[13px] font-semibold">{plural(t, transfers.length, "{count} transfer", "{count} transfers", undefined, fmt)}</span>
-          <span className="text-ink-muted">{t("Currency: {currency}", { currency })}</span>
+          <span className="text-ink-muted">{t("Currency: {currency}", { currency: `${currency} (${currencySymbol(currency, fmt)})` })}</span>
         </div>
       </div>
 

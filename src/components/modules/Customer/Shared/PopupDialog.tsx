@@ -30,6 +30,8 @@ interface PopupDialogProps {
   // Where focus starts (the dialog's first field by default).
   onOpenAutoFocus?: (event: Event) => void;
   titleClassName?: string;
+  // The X, for a board that draws it filled (Balance).
+  closeClassName?: string;
   // A save is on its way: the popup can't be closed.
   busy?: boolean;
   onSubmit?: (event: React.FormEvent) => void;
@@ -41,10 +43,10 @@ interface PopupDialogProps {
 // The boards' centred popup (Savings first, then Zakat and Balance): a head
 // with the title and X over a line, the body, and a grey strip with the
 // buttons. On a phone it fills the width less a margin and scrolls.
-export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, onOpenAutoFocus, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
+export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, closeClassName, onOpenAutoFocus, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
   const { t } = useLocale();
   const close = (
-    <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11">
+    <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className={cn("-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11", closeClassName)}>
       <X className="size-4.5" aria-hidden="true" />
     </button>
   );

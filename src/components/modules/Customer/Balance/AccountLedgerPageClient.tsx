@@ -5,6 +5,8 @@ import {
   ArrowLeft,
   ArrowUpRight,
   BookText,
+  ChevronLeft,
+  ChevronRight,
   CircleCheckBig,
   Download,
   Landmark,
@@ -33,7 +35,6 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowButton, ListSummaryRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import Pagination from "@/components/smartly/Pagination";
 import { getStatementRowsAction } from "@/lib/customer/accountActions";
 import { accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
 import type { Account, AccountLedger, AccountSummary, ActiveMonth, LanguagePreference, LedgerKind, LedgerRow } from "@/lib/customer/api";
@@ -85,7 +86,7 @@ const ALL_TIME: PickedPeriod = { kind: "all" };
 
 // #, Date, Received / Sent, Type, To / From, Note, Amount, Balance; phones
 // scroll it sideways.
-const COLUMNS = "grid-cols-[26px_92px_104px_132px_minmax(0,1.15fr)_minmax(0,1fr)_118px_112px] min-w-250";
+const COLUMNS = "grid-cols-[26px_92px_104px_132px_minmax(0,1.15fr)_minmax(0,1fr)_118px_112px] gap-x-3.5 md:px-5 min-w-250";
 const SEARCH_DELAY = 350;
 
 const KIND_ICON: Record<LedgerKind, LucideIcon> = {
@@ -176,6 +177,9 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
               to: formatDay(period.to, "d MMM yyyy", fmt),
             });
   const rangeText = periodText(t, periodFrom, periodTo, fmt);
+  // On paper, all time reads as the first to the last entry's day (the board).
+  const printDays = (printing?.rows ?? []).map((row) => row.date.slice(0, 10)).sort();
+  const printRange = periodFrom || periodTo || printDays.length === 0 ? rangeText : periodText(t, printDays[0], printDays[printDays.length - 1], fmt);
   const narrowed = !!(filters.direction || filters.kind || filters.search);
   const counts = ledger?.counts ?? { all: ledger?.meta.total ?? 0, in: 0, out: 0 };
   const kinds = ledger?.kinds ?? [];
@@ -281,7 +285,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
             : t("No entries for {name} in this period. The balance stays {amount}.", { name: accountName, amount: shown(ledger.closingBalance) });
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 leading-[normal]">
       {printing && ready && (
         <PrintPreview subtitle={`A4 · ${accountName} · ${periodLabel}`} onClose={() => setPrinting(null)}>
           <LedgerStatement
@@ -290,7 +294,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
             figures={{ opening: ledger.balanceBroughtForward, moneyIn: summary.totalIn, moneyOut: summary.totalOut, transfers: summary.adjustment, closing: ledger.closingBalance }}
             capped={!printing.complete}
             periodLabel={periodLabel}
-            range={rangeText}
+            range={printRange}
             month={period.kind === "month" ? `${period.year}-${String(period.month).padStart(2, "0")}` : null}
             today={today}
             currency={currency}
@@ -306,8 +310,18 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
           </Link>
         )}
         <PageHeader
+          className={ready ? "md:items-center" : undefined}
           title={t("Account ledger")}
+          description={ready ? undefined : t("Every movement through one account, with a running balance.")}
           actions={
+            !ready ? (
+              pdfExportOn && (
+                <Button variant="outline" disabled title={t("Pick an account first")} className="gap-2 px-3.5 text-ink-faint disabled:opacity-100">
+                  <Printer className="text-ink-faint" />
+                  {t("Print / PDF")}
+                </Button>
+              )
+            ) : (
             <>
               <HideBalancesButton hidden={hidden} onToggle={toggle} className="size-11" />
               <Button variant="secondary" onClick={downloadCsv} disabled={!ready || busy !== null} aria-label={t("Download CSV")} title={t("Download CSV")} className="h-11 pr-4 pl-3.5">
@@ -327,6 +341,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                 </Button>
               )}
             </>
+            )
           }
         />
 
@@ -351,14 +366,16 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
         </Card>
 
         {!ready || !lines ? (
-          <Card padding="none" className="flex flex-col items-center gap-2.5 p-10 text-center">
+          <Card padding="none" className="flex flex-col items-center justify-center gap-2.5 p-10 text-center">
             <span className="flex size-14 items-center justify-center rounded-[14px] bg-mint-50 text-emerald">
               <ScrollText className="size-6" aria-hidden="true" />
             </span>
-            <h2 className="mt-1.5 text-h3 text-ink">{t("Pick an account to see its ledger")}</h2>
+            <h2 className="mt-1.5 text-[18px] font-semibold text-ink">{t("Pick an account to see its ledger")}</h2>
             <p className="max-w-115 text-body leading-[1.55] text-ink-muted">{emptyPeriodText}</p>
-            {wallets.length > 0 && (
-              <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto md:grid-cols-4">
+            {wallets.some((wallet) => wallet.status !== "ARCHIVED") && (
+              <>
+              <span className="mt-4.5 text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Your wallets")}</span>
+              <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto md:grid-cols-4">
                 {wallets
                   .filter((wallet) => wallet.status !== "ARCHIVED")
                   .map((wallet) => (
@@ -367,7 +384,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                       type="button"
                       onClick={() => go({ accountId: wallet.id })}
                       style={walletColorStyle(accountColor(wallet))}
-                      className="flex h-16 items-center gap-2.5 rounded-field border border-line bg-surface px-3.5 text-left transition-colors hover:border-line-strong md:w-50"
+                      className="flex h-16 items-center gap-2.5 rounded-field border border-line bg-surface px-3.5 text-left shadow-xs transition-colors hover:border-line-strong md:w-50"
                     >
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg wallet-tile [&_svg]:size-3.75">{createElement(walletIcon(wallet), { "aria-hidden": true })}</span>
                       <span className="flex min-w-0 flex-col gap-px">
@@ -377,6 +394,8 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                     </button>
                   ))}
               </div>
+              <span className="mt-1.5 text-caption text-ink-muted">{t("Income, expense and other accounts are in the search above.")}</span>
+              </>
             )}
           </Card>
         ) : (
@@ -437,7 +456,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                       );
                     })}
                   </div>
-                  <NativeSelect size="sm" aria-label={t("Type")} value={filters.kind ?? ""} onChange={(event) => narrow({ kind: event.target.value || undefined })} frameClassName="h-9.5 min-w-37.5 rounded-full">
+                  <NativeSelect size="sm" aria-label={t("Type")} value={filters.kind ?? ""} onChange={(event) => narrow({ kind: event.target.value || undefined })} frameClassName="h-9.5 min-w-37.5 rounded-full" className="rounded-full pl-3.5 text-[13px]">
                     <option value="">{t("All types")}</option>
                     {(filters.kind && !kinds.includes(filters.kind) ? [...kinds, filters.kind] : kinds).map((kind) => (
                       <option key={kind} value={kind}>
@@ -467,9 +486,15 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                 </div>
               }
               footer={
-                ledger.meta.total > 0 && (
-                  <ListFooter>
-                    <Pagination page={ledger.meta.page} totalPages={ledger.meta.totalPages} total={ledger.meta.total} pageSize={ledger.meta.limit} hrefFor={(target) => pageHref(pathname, searchParams, target)} focusTargetId="statement-list" />
+                (
+                  <ListFooter className="flex-row items-center justify-between gap-3 border-line">
+                    <span>
+                      {plural(t, ledger.meta.total, "{count} entry", "{count} entries", undefined, fmt)} · {t("Page {page} of {pages}", { page: formatCount(ledger.meta.page, fmt), pages: formatCount(Math.max(1, ledger.meta.totalPages), fmt) })}
+                    </span>
+                    <nav aria-label={t("Pages")} className="flex gap-1.5">
+                      <PageStep label={t("Previous page")} href={ledger.meta.page > 1 ? pageHref(pathname, searchParams, ledger.meta.page - 1) : null} icon={ChevronLeft} />
+                      <PageStep label={t("Next page")} href={ledger.meta.page < ledger.meta.totalPages ? pageHref(pathname, searchParams, ledger.meta.page + 1) : null} icon={ChevronRight} />
+                    </nav>
                   </ListFooter>
                 )
               }
@@ -514,7 +539,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                       </ListRowButton>
                     </ListCell>
                     <ListCell>
-                      <Chip tone={meta.tone} size="sm" className="font-semibold">
+                      <Chip tone={meta.tone} className="h-5.25 px-2.25">
                         {t(meta.label)}
                       </Chip>
                     </ListCell>
@@ -554,7 +579,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
 // A balance line on the table-head band, under the Balance column.
 function BalanceLine({ label, kind, value, strong = false }: { label: string; kind: StatementLine["kind"]; value: string; strong?: boolean }) {
   return (
-    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("min-h-11.5 text-body", strong && "min-h-13.5")}>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("h-11.5 py-0 text-body", strong && "h-auto min-h-13.5 py-1.5")}>
       <ListCell aria-hidden="true" />
       <ListCell aria-colspan={6} className="col-span-6">
         <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-2")}>{label}</span>
@@ -563,6 +588,20 @@ function BalanceLine({ label, kind, value, strong = false }: { label: string; ki
         {value}
       </ListCell>
     </ListSummaryRow>
+  );
+}
+
+// The board's round page step: a link, or set back when there's no page that way.
+function PageStep({ label, href, icon }: { label: string; href: string | null; icon: LucideIcon }) {
+  const look = "flex size-8 items-center justify-center rounded-full border border-line bg-surface text-ink-soft [&_svg]:size-4";
+  return href ? (
+    <Link href={href} aria-label={label} title={label} scroll={false} className={cn(look, "hover:bg-surface-sunken")}>
+      {createElement(icon, { "aria-hidden": true })}
+    </Link>
+  ) : (
+    <span aria-hidden="true" className={cn(look, "opacity-50")}>
+      {createElement(icon)}
+    </span>
   );
 }
 
