@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { monthLabel, monthOnlyLabel } from "@/components/modules/Customer/Budget/MonthSwitcher";
@@ -7,7 +8,7 @@ import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { MonthlyPlan } from "@/lib/customer/api";
-import { saveMonthlyPlanAction } from "@/lib/customer/budgetActions";
+import { deleteMonthlyPlanAction, saveMonthlyPlanAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import type { YearMonth } from "@/lib/customer/period";
 import { toLocaleDigits } from "@/lib/i18n/digits";
@@ -67,6 +68,7 @@ function MoneyInput({ id, value, onChange, currency, invalid }: { id: string; va
 // month: the plan moves there.
 export function BudgetDialog({ businessId, currency, editing, plans, current, onClose, onSaved }: BudgetDialogProps) {
   const { t, fmt } = useLocale();
+  const router = useRouter();
   const [month, setMonth] = useState(current.month);
   const [year, setYear] = useState(current.year);
   const [target, setTarget] = useState("");
@@ -120,10 +122,41 @@ export function BudgetDialog({ businessId, currency, editing, plans, current, on
     }
     const wasPlan = editingPlan !== null;
     const moved = editingPlan && !same(editingPlan, picked) ? { fromMonth: editingPlan.month, fromYear: editingPlan.year } : {};
+    // What the toast's Undo puts back: the plan as it was (in its own month),
+    // or no plan at all.
+    const before = editingPlan ? plans.find((plan) => same(plan, editingPlan)) : undefined;
     startTransition(async () => {
       const result = await saveMonthlyPlanAction(businessId, { month, year, incomeTarget: targetValue, expenseBudget: budgetValue, ...moved });
       if (result.success) {
-        toast.success(wasPlan ? t("Plan updated") : t("Budget saved for {month}", { month: pickedLabel }));
+        const savedId = result.data?.id ?? null;
+        const undo = before
+          ? () =>
+              saveMonthlyPlanAction(businessId, {
+                month: before.month,
+                year: before.year,
+                incomeTarget: Number(before.incomeTarget ?? 0),
+                expenseBudget: Number(before.expenseBudget ?? 0),
+                ...(!same(before, picked) && { fromMonth: month, fromYear: year }),
+              })
+          : savedId
+            ? () => deleteMonthlyPlanAction(businessId, savedId)
+            : null;
+        toast.success(wasPlan ? t("Plan updated") : t("Budget saved for {month}", { month: pickedLabel }), {
+          ...(undo && {
+            action: {
+              label: t("Undo"),
+              onClick: async () => {
+                const back = await undo();
+                if (back.success) {
+                  toast.success(t("Change undone"));
+                  router.refresh();
+                } else {
+                  toast.error(t(back.message ?? "Couldn't undo the change"));
+                }
+              },
+            },
+          }),
+        });
         onSaved(picked);
         onClose();
       } else {
