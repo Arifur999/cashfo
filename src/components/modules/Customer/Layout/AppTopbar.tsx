@@ -8,9 +8,8 @@ import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { useTodayTasks } from "@/components/modules/Customer/Providers/TodayTasksProvider";
 import { TodayTasksPanel } from "@/components/modules/Customer/HabitTracker/Todos/TodayTasksPanel";
-import Logo from "@/components/smartly/Logo";
 import { CUSTOMER_HOME_ROUTE } from "@/lib/authUtils";
-import { breadcrumbFor, HABIT_APP_LABEL, HABIT_HOME, MONEY_HOME } from "@/lib/customer/nav";
+import { breadcrumbFor, HABIT_APP_LABEL, HABIT_HOME, MONEY_APP_LABEL, MONEY_HOME } from "@/lib/customer/nav";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -144,12 +143,13 @@ function Topbar() {
           <span className="truncate text-[15px] leading-[normal] font-semibold text-ink">{t(HABIT_APP_LABEL)}</span>
         </Link>
       ) : (
-        <span className="flex min-w-0 flex-1 md:hidden">
-          <Link href={CUSTOMER_HOME_ROUTE} aria-label={t("Home")} className="flex items-center rounded-md">
-            <Logo height={32} alt="" className="dark:hidden" />
-            <Logo height={32} alt="" onDark className="hidden dark:block" />
-          </Link>
-        </span>
+        // The DashboardMobile board: the app's tile and name, as the Habit Tracker has.
+        <Link href={CUSTOMER_HOME_ROUTE} className="ml-0.5 flex min-w-0 flex-1 items-center gap-1 rounded-md md:hidden">
+          <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-emerald text-on-action">
+            <Wallet className="size-4" strokeWidth={2} />
+          </span>
+          <span className="truncate text-[14px] leading-[normal] font-semibold tracking-[-0.01em] text-ink">{t(MONEY_APP_LABEL)}</span>
+        </Link>
       )}
 
       <nav aria-label={t("Breadcrumb")} className="hidden min-w-0 flex-1 items-center md:flex">
@@ -177,7 +177,9 @@ function Topbar() {
       </nav>
 
       {/* The boards took the search box off the bar; Ctrl K still opens it. */}
-      <CustomerSearch showTriggers={false} />
+      <div className="flex shrink-0 max-md:order-3">
+        <CustomerSearch showTriggers={false} iconClassName={iconButton} />
+      </div>
 
       <TodayTasksPanel open={tasksOpen} onOpenChange={setTasksOpen}>
         <button type="button" aria-label={tasksLabel} title={t("Today’s tasks")} className={cn(
@@ -198,11 +200,12 @@ function Topbar() {
         </button>
       </TodayTasksPanel>
 
+      {/* The board's order: tasks, dark mode, then the bell. */}
+      {darkModeOn && <ThemeToggle className={cn("max-md:hidden", iconButton)} />}
+
       <div className="flex shrink-0 max-md:order-4">
         <NotificationsBell className={iconButton} badgeClassName={COUNT_BADGE} />
       </div>
-
-      {darkModeOn && <ThemeToggle className={cn("max-md:hidden", iconButton)} />}
 
       <Link
         href={habit ? MONEY_HOME : HABIT_HOME}

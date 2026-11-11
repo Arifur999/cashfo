@@ -270,6 +270,12 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers
 
   return (
     <>
+      {/* Without the triggers (the v16 bar), phones keep the board's search icon. */}
+      {!showTriggers && (
+        <button type="button" onClick={() => changeOpen(true)} aria-label={label} aria-keyshortcuts="Control+K Meta+K" title={t("Search")} className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink md:hidden", iconClassName)}>
+          <Search className="size-5" strokeWidth={2} aria-hidden="true" />
+        </button>
+      )}
       {showTriggers && (
         <>
           <button

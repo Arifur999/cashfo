@@ -150,7 +150,7 @@ export function RecentTransactionsCard({ businessId, transactions, categoriesByI
           return (
             <li key={row.transaction.id}>
               <Link href={`/transactions/${row.transaction.id}`} className="flex min-h-15 items-center gap-3 border-t border-divider px-4 text-ink active:bg-table-head">
-                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4", v.tone.bg, v.tone.fg, row.cancelled && "opacity-60")}>{v.letter ? <span aria-hidden="true" className="text-[13px] font-bold">{v.letter}</span> : createElement(v.icon, { strokeWidth: 2, "aria-hidden": true })}</span>
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4", v.tone.bg, v.tone.fg, row.cancelled && "opacity-60")}>{createElement(v.icon, { strokeWidth: 2, "aria-hidden": true })}</span>
                 <span className="flex min-w-0 grow flex-col gap-px">
                   <span className={cn("truncate text-body leading-[normal] font-medium", row.cancelled && "text-ink-muted line-through")}>{v.title}</span>
                   <span className="truncate text-caption text-ink-muted">
