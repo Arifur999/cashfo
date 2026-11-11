@@ -47,7 +47,7 @@ export function CategoryBars({ id, title, totalLabel, viewAll, breakdown, curren
   const toneText = tone === "income" ? "text-tint-green-ink" : "text-expense";
   return (
     <Card padding="none" className="overflow-hidden" aria-labelledby={id} role="region">
-      <div className="flex items-center justify-between gap-3 border-b border-divider px-5 py-4">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
         <h2 id={id} className="text-title font-semibold text-ink">
           {title}
         </h2>
@@ -64,8 +64,8 @@ export function CategoryBars({ id, title, totalLabel, viewAll, breakdown, curren
           </div>
         </div>
       </div>
-      <div className="border-t border-divider px-5 pt-3.5">
-        <span className="text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Category details")}</span>
+      <div className="border-t border-line px-5 pt-3.5">
+        <span className="block text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("Category details")}</span>
       </div>
       {rows.length === 0 ? (
         <p className="px-5 pt-6 pb-7.5 text-body text-ink-muted">{emptyText}</p>

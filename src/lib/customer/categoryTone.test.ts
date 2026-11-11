@@ -33,7 +33,7 @@ describe("ieCategoryInk / ieCategoryColor", () => {
   it("gives each of the board's twelve its own ink", () => {
     const inks = IE_CATEGORY_COLORS.map(ieCategoryInk);
     expect(new Set(inks).size).toBe(12);
-    expect(ieCategoryColor("purple")).toBe("var(--ie-purple)");
+    expect(ieCategoryColor("violet")).toBe("var(--ie-violet)");
   });
 
   it("greys out an unknown name and money with no category", () => {

@@ -56,10 +56,10 @@ export function pickerColor(color: string | null | undefined): CategoryToneColor
 export const NEUTRAL_CATEGORY_TONE = NEUTRAL;
 
 // Income & Expense's own twelve (the CategorySet board's swatches, in its
-// order): each saved colour name has its own ink, a text-ie-* class drawn
-// with bg-current for a dot. A name the palette doesn't know, and money with
+// order; purple is the starter House Rent's violet): each saved colour name
+// has its own ink, a text-ie-* class drawn with bg-current for a dot. A name the palette doesn't know, and money with
 // no category, take the board's quiet grey.
-export const IE_CATEGORY_COLORS = ["green", "cyan", "blue", "indigo", "violet", "purple", "pink", "red", "orange", "yellow", "teal", "lime"] as const;
+export const IE_CATEGORY_COLORS = ["green", "cyan", "blue", "indigo", "purple", "violet", "pink", "red", "orange", "yellow", "teal", "lime"] as const;
 
 const IE_INKS: Record<string, string> = {
   green: "text-ie-green",
