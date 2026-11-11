@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { getHabitTracker, getHabitTrackers, getQaza } from "@/lib/customer/habits";
 import { trackerFor } from "@/lib/customer/namazDisplay";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
+import { getAppToday } from "@/lib/date";
 
 // The list's name, read from nothing: Next runs generateMetadata for every
 // <Link> prefetch of this page, without rendering the page, so reading the
@@ -25,7 +26,7 @@ export default async function NamazSheetPage({ params }: PageProps<"/habit-track
   const year = tracker.year as number;
   const month = tracker.month as number;
   const previous = month === 1 ? trackerFor(all, year - 1, 12) : trackerFor(all, year, month - 1);
-  const next = month === 12 ? trackerFor(all, year + 1, 1) : trackerFor(all, year, month + 1);
+  const months = all.flatMap((each) => (each.year && each.month ? [{ year: each.year, month: each.month, id: each.id }] : []));
 
-  return <NamazSheetPageClient tracker={tracker} previous={previous} next={next} qaza={qaza} />;
+  return <NamazSheetPageClient tracker={tracker} previous={previous} months={months} today={getAppToday()} qaza={qaza} />;
 }

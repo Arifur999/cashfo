@@ -4,12 +4,12 @@ import { fillText } from "@/lib/i18n/fill";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
 import { translate } from "@/lib/i18n/translate";
 import { timeLabel } from "./date";
-import { byPriority, dayCount, dayCountText, dayLabel, dayOfMonthWord, doneItems, doneOfText, isDayKey, listFor, movedLabel, openItems, relativeName, repeatLabel, stripDays, upcoming, withList } from "./todoDisplay";
+import { byPriority, dayLabel, dayOfMonthWord, doneItems, doneOfText, isDayKey, listFor, movedLabel, openItems, repeatLabel, withList } from "./todoDisplay";
 
 const t = inEnglish;
 // The Bangla dictionary, the way useLocale().t reads it.
 const bn: Translate = (key, values) => fillText(translate("bn", key), values ?? {});
-const list = (id: string, date: string, items: [string, boolean][]): TodoList => ({ id, date, items: items.map(([text, completed], i) => ({ id: `${id}-${i}`, text, completed, priority: "MEDIUM", dueTime: null, movedFrom: null, repeat: null })) });
+const list = (id: string, date: string, items: [string, boolean][]): TodoList => ({ id, date, items: items.map(([text, completed], i) => ({ id: `${id}-${i}`, text, completed, completedAt: null, priority: "MEDIUM", dueTime: null, movedFrom: null, moveCount: 0, categoryId: null, note: "", steps: [], repeat: null })) });
 
 const TODAY = "2026-10-15";
 const LISTS = [
@@ -29,19 +29,7 @@ describe("days", () => {
     expect(isDayKey(undefined)).toBe(false);
   });
 
-  it("lays out the strip around the day picked", () => {
-    const days = stripDays(TODAY);
-    expect(days).toHaveLength(9);
-    expect(days[0]).toBe("2026-10-13");
-    expect(days[2]).toBe(TODAY);
-    expect(days[8]).toBe("2026-10-21");
-  });
-
-  it("names a day relative to today", () => {
-    expect(relativeName(TODAY, TODAY)).toBe("Today");
-    expect(relativeName("2026-10-16", TODAY)).toBe("Tomorrow");
-    expect(relativeName("2026-10-14", TODAY)).toBe("Yesterday");
-    expect(relativeName("2026-10-20", TODAY)).toBeNull();
+  it("names a day", () => {
     expect(dayLabel(TODAY)).toBe("Thursday, 15 Oct");
     expect(dayLabel(TODAY, "en", "short")).toBe("Thu, 15 Oct");
   });
@@ -58,31 +46,13 @@ describe("a day's list", () => {
     const today = listFor(LISTS, TODAY);
     expect(openItems(today).map((i) => i.text)).toEqual(["Pay the bill", "Call Arif"]);
     expect(doneItems(today).map((i) => i.text)).toEqual(["Buy vegetables"]);
-    expect(dayCount(today)).toEqual({ total: 3, done: 1 });
-    expect(dayCount(null)).toEqual({ total: 0, done: 0 });
     expect(listFor(LISTS, "2026-10-17")).toBeNull();
-  });
-
-  it("says the count the way the strip does", () => {
-    expect(dayCountText({ total: 0, done: 0 }, t)).toBe("");
-    expect(dayCountText({ total: 4, done: 4 }, t)).toBe("4 done");
-    expect(dayCountText({ total: 5, done: 3 }, t)).toBe("3 of 5");
-    expect(dayCountText({ total: 3, done: 0 }, t)).toBe("3 tasks");
-    expect(dayCountText({ total: 1, done: 0 }, t)).toBe("1 task");
   });
 
   // "3 of 5" must keep its numbers in the right places in Bangla too.
   it("says the count as one Bangla sentence, in Bangla digits", () => {
-    expect(dayCountText({ total: 5, done: 3 }, bn, "bn")).toBe("৫টির মধ্যে ৩টি");
-    expect(dayCountText({ total: 4, done: 4 }, bn, "bn")).toBe("৪টি হয়েছে");
     expect(doneOfText(2, 5, t)).toBe("2 of 5 done");
     expect(doneOfText(2, 5, bn, "bn")).toBe("৫টির মধ্যে ২টি শেষ");
-  });
-
-  it("finds tomorrow and the open tasks later in the week", () => {
-    const next = upcoming(LISTS, TODAY);
-    expect(next.tomorrow?.id).toBe("c");
-    expect(next.later.map((x) => `${x.day} ${x.item.text}`)).toEqual(["2026-10-18 Report", "2026-10-20 Doctor"]);
   });
 
   it("replaces or adds a list", () => {

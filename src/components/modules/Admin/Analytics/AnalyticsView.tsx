@@ -1,11 +1,13 @@
 "use client";
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import type { AnalyticsRange } from "@/lib/analyticsRange";
-import { rangeName } from "@/lib/analyticsWording";
+import { useQuery } from "@tanstack/react-query";
+import { monthLabel } from "@/components/modules/Customer/Budget/MonthSwitcher";
+import { periodLabel } from "@/components/modules/Customer/Shared/PeriodPicker";
+import { isMonthly, isThisMonth, rangeQueryOf } from "@/lib/adminPeriod";
+import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
+import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementByMonthQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
+import { usePeriodWords } from "@/components/modules/Admin/Dashboard/periodWords";
 import ActivePeopleCard from "./ActivePeopleCard";
 import AnalyticsKpis from "./AnalyticsKpis";
 import ComeBackCard from "./ComeBackCard";
@@ -13,44 +15,48 @@ import DevicesCard from "./DevicesCard";
 import FeatureUsageCard from "./FeatureUsageCard";
 import PlacesCard from "./PlacesCard";
 import { reportQuery } from "./ReportState";
-import { useAnalyticsRange } from "./useAnalyticsRange";
+import { useAnalyticsPeriod } from "./useAnalyticsPeriod";
 
-const sameRange = (a: AnalyticsRange, b: AnalyticsRange) => a.preset === b.preset && a.from === b.from && a.to === b.to;
-
-// `today` comes from the server render, so the range resolves identically
-// on both sides and the prefetched reports are used as-is. The period
-// switch sits in the page header and shares the range through the URL.
+// The AdminAnalytics board for the period in the address: the KPI row,
+// active people and devices, what people do and where they are, and the
+// monthly groups up to the period. `today` comes from the server render,
+// so the period resolves identically on both sides and the prefetched
+// reports are used as-is.
 const AnalyticsView = ({ today }: { today: string }) => {
-  const { range, rangeQuery } = useAnalyticsRange(today);
-  const { translate, locale } = useLocale();
-  // Range-bound reports keep the previous range's data on screen while the
-  // next one loads; the rest don't depend on the range at all.
-  const featureUsage = useQuery({ ...featureUsageQuery(rangeQuery), placeholderData: keepPreviousData });
-  const engagement = useQuery({ ...engagementQuery(rangeQuery), placeholderData: keepPreviousData });
-  const summary = useQuery(analyticsSummaryQuery());
-  const cohorts = useQuery(cohortsQuery());
-  const geography = useQuery(geographyQuery());
-  const devices = useQuery(devicesQuery());
+  const period = useAnalyticsPeriod(today);
+  const rangeQuery = rangeQueryOf(period, today);
+  const monthly = isMonthly(period, today);
+  const { t, fmt } = useLocale();
+  const words = usePeriodWords(period, today);
 
-  // The range the feature figures on screen belong to. While the next
-  // range loads they are still the last one's, so its name stays with them
-  // until the new figures arrive (React's "adjust state while rendering").
-  const [shownRange, setShownRange] = useState(range);
-  const settled = !featureUsage.isPlaceholderData;
-  if (settled && !sameRange(shownRange, range)) setShownRange(range);
-  const figuresRange = settled ? range : shownRange;
-  const featureQuery = reportQuery(featureUsage);
+  const summary = useQuery(analyticsSummaryQuery(rangeQuery));
+  const featureUsage = useQuery(featureUsageQuery(rangeQuery));
+  const daily = useQuery({ ...engagementQuery(rangeQuery), enabled: !monthly });
+  const byMonth = useQuery({ ...engagementByMonthQuery(rangeQuery), enabled: monthly });
+  const cohorts = useQuery(cohortsQuery(rangeQuery));
+  const geography = useQuery(geographyQuery(rangeQuery));
+  const devices = useQuery(devicesQuery(rangeQuery));
+
+  // "October 2026 so far", "In 2025", or the span.
+  const usageLabel =
+    period.kind === "month"
+      ? isThisMonth(period, today)
+        ? t("{month} so far", { month: monthLabel(period.month, period.year, fmt) })
+        : monthLabel(period.month, period.year, fmt)
+      : period.kind === "year"
+        ? t("In {year}", { year: toLocaleDigits(String(period.year), fmt) })
+        : periodLabel(period, t, fmt);
 
   return (
-    <div className="space-y-5">
-      <AnalyticsKpis summary={summary.data?.data} summaryQuery={reportQuery(summary)} featureUsage={featureUsage.data?.data} featureQuery={featureQuery} range={figuresRange} />
-      <div className="grid items-stretch gap-4.5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <ActivePeopleCard data={engagement.data?.data} query={reportQuery(engagement)} />
-        <DevicesCard data={devices.data?.data} query={reportQuery(devices)} />
+    <div className="flex flex-col gap-4.5">
+      <AnalyticsKpis summary={summary.data?.data} summaryQuery={reportQuery(summary)} featureUsage={featureUsage.data?.data} featureQuery={reportQuery(featureUsage)} period={period} today={today} />
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <ActivePeopleCard monthly={monthly} days={daily.data?.data} months={byMonth.data?.data} query={reportQuery(monthly ? byMonth : daily)} />
+        <DevicesCard data={devices.data?.data} query={reportQuery(devices)} inPeriod={words.inPeriod} />
       </div>
-      <div className="grid items-stretch gap-4.5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <FeatureUsageCard data={featureUsage.data?.data} query={featureQuery} rangeLabel={rangeName(figuresRange, translate, locale)} />
-        <PlacesCard data={geography.data?.data} query={reportQuery(geography)} />
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <FeatureUsageCard data={featureUsage.data?.data} query={reportQuery(featureUsage)} rangeLabel={usageLabel} />
+        <PlacesCard data={geography.data?.data} query={reportQuery(geography)} inPeriod={words.inPeriod} />
       </div>
       <ComeBackCard rows={cohorts.data?.data} query={reportQuery(cohorts)} currentMonth={today.slice(0, 7)} />
     </div>

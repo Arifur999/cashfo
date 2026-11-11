@@ -10,8 +10,12 @@ export const getAnnouncements = async () => httpClient.get<IAnnouncement[]>(BASE
 
 export const createAnnouncement = async (payload: IAnnouncementPayload) => httpClient.post<IAnnouncement>(BASE, payload);
 
-// Gone from the apps at once; the audit log keeps what it said.
+// Deleted for everyone: gone from the apps and their bells at once, kept
+// for the Undo (restoreAnnouncement).
 export const deleteAnnouncement = async (id: string) => httpClient.delete<{ id: string }>(`${BASE}/${encodeURIComponent(id)}`);
 
 export const updateAnnouncement = async (id: string, payload: Partial<IAnnouncementPayload> & { isActive?: boolean }) =>
   httpClient.patch<IAnnouncement>(`${BASE}/${id}`, payload);
+
+// The Undo after a delete: back in the apps and the bells it was in.
+export const restoreAnnouncement = async (id: string) => httpClient.post<IAnnouncement>(`${BASE}/${encodeURIComponent(id)}/restore`);

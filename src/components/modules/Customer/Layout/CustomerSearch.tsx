@@ -88,6 +88,9 @@ interface CustomerSearchProps {
   iconClassName?: string;
   boxClassName?: string;
   kbdClassName?: string;
+  // false: no button on the bar (the boards took the search box off the
+  // top bar); Ctrl K still opens the palette.
+  showTriggers?: boolean;
 }
 
 export function CustomerSearch(props: CustomerSearchProps) {
@@ -98,7 +101,7 @@ export function CustomerSearch(props: CustomerSearchProps) {
   );
 }
 
-function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSearchProps) {
+function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers = true }: CustomerSearchProps) {
   const { t, locale, fmt, toggleLocale } = useLocale();
   const { user, activeBusiness, askSignOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -267,27 +270,37 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName }: CustomerSe
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => changeOpen(true)}
-        aria-label={label}
-        aria-keyshortcuts="Control+K Meta+K"
-        title={t("Search")}
-        className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink xl:hidden", iconClassName)}
-      >
-        <Search className="size-5 md:size-4.5" strokeWidth={2} aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        onClick={() => changeOpen(true)}
-        aria-label={label}
-        aria-keyshortcuts="Control+K Meta+K"
-        className={cn("hidden h-9.5 w-70 shrink-0 items-center gap-2 border pr-1.5 pl-3 text-body whitespace-nowrap text-ink-muted transition-colors hover:border-line-strong xl:flex", boxClassName)}
-      >
-        <Search className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-left">{t("Search or jump to…")}</span>
-        <Kbd className={cn(KBD, kbdClassName)}>Ctrl K</Kbd>
-      </button>
+      {/* Without the triggers (the v16 bar), phones keep the board's search icon. */}
+      {!showTriggers && (
+        <button type="button" onClick={() => changeOpen(true)} aria-label={label} aria-keyshortcuts="Control+K Meta+K" title={t("Search")} className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink md:hidden", iconClassName)}>
+          <Search className="size-5" strokeWidth={2} aria-hidden="true" />
+        </button>
+      )}
+      {showTriggers && (
+        <>
+          <button
+            type="button"
+            onClick={() => changeOpen(true)}
+            aria-label={label}
+            aria-keyshortcuts="Control+K Meta+K"
+            title={t("Search")}
+            className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink xl:hidden", iconClassName)}
+          >
+            <Search className="size-5 md:size-4.5" strokeWidth={2} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => changeOpen(true)}
+            aria-label={label}
+            aria-keyshortcuts="Control+K Meta+K"
+            className={cn("hidden h-9.5 w-70 shrink-0 items-center gap-2 border pr-1.5 pl-3 text-body whitespace-nowrap text-ink-muted transition-colors hover:border-line-strong xl:flex", boxClassName)}
+          >
+            <Search className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate text-left">{t("Search or jump to…")}</span>
+            <Kbd className={cn(KBD, kbdClassName)}>Ctrl K</Kbd>
+          </button>
+        </>
+      )}
 
       <CommandPalette
         open={open}

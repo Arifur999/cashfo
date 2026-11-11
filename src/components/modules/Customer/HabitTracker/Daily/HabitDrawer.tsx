@@ -171,7 +171,7 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4.5 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <Field htmlFor="hb-name" label={label(t("Name"))}>
-              <Input id="hb-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("Morning walk")} />
+              <Input id="hb-name" size="md" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={80} placeholder={t("e.g. Morning walk")} />
             </Field>
 
             {/* Stacked on a phone, side by side from sm up; the icons wrap to fit. */}

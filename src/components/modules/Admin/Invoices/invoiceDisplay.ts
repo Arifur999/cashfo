@@ -1,6 +1,7 @@
 import { BACK_PARAM, pickParams } from "@/components/modules/Admin/Payments/paymentsDisplay";
 import type { IInvoiceDetail } from "@/types/invoice.types";
 import type { IRefundSummary, PaymentStatus } from "@/types/payment.types";
+import type { IFeatureLimits } from "@/types/plan.types";
 import { INVOICES_TABLE_CONFIG } from "./invoicesTable.config";
 
 // Plain helpers for the invoice pages. Pure, so they are tested on their own.
@@ -48,6 +49,19 @@ export const invoiceRefund = (invoice: IInvoiceDetail): IRefundSummary | null =>
 // The stamp at the top of the sheet: PAID, or once the payment went back,
 // REFUNDED, or PARTLY REFUNDED when less than the total did. A refund whose
 // amount couldn't be read stamps REFUNDED.
+// What a plan allows, as the v16 invoice writes it under the plan line:
+// "No monthly limit on transactions, PDF reports, income goals". English
+// keys, each translated by the sheet; empty without the limits.
+export function planSummaryParts(limits: Partial<IFeatureLimits> | undefined): { key: string; values?: Record<string, number> }[] {
+  if (!limits) return [];
+  const parts: { key: string; values?: Record<string, number> }[] = [];
+  const transactions = limits.maxTransactionsPerMonth;
+  if (typeof transactions === "number") parts.push(transactions < 0 ? { key: "No monthly limit on transactions" } : { key: "{count} transactions a month", values: { count: transactions } });
+  if (limits.pdfExport) parts.push({ key: "PDF reports" });
+  if (limits.incomeGoalTracking) parts.push({ key: "income goals" });
+  return parts;
+}
+
 export type InvoiceStamp = "paid" | "refunded" | "partly-refunded";
 
 export const invoiceStamp = (total: string | number, refunded: boolean, refund?: { amount: string | number } | null): InvoiceStamp => {

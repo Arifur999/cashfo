@@ -1750,6 +1750,8 @@ export interface HabitMonthTracker {
   // was ended early (null while it runs its course).
   startsOn?: string | null;
   endedOnDay?: number | null;
+  // Namaz only: the share of the month's prayers aimed for (1-100), or null.
+  goalPct?: number | null;
 }
 
 // Ramadan › Today's "Get ready" steps ticked for one Ramadan (year: the
@@ -1761,8 +1763,9 @@ export interface RamadanPrep {
 }
 
 // Habit Tracker -> To Do List: one list per calendar date, holding any number
-// of check-off tasks. Unlike the trackers above, a list has no calendar grid
-// and no protected-history delete rule -- see backend TodosService.
+// of check-off tasks, and one dateless list for Someday. Unlike the trackers
+// above, a list has no calendar grid and no protected-history delete rule --
+// see backend TodosService.
 export type TodoPriority = "HIGH" | "MEDIUM" | "LOW";
 export type TodoRepeatKind = "DAILY" | "WEEKLY" | "MONTHLY";
 
@@ -1785,9 +1788,33 @@ export interface TodoItem {
   // Minutes before dueTime to be reminded (0 = at the time); null or absent
   // = no reminder. Only meaningful with a dueTime.
   remindBefore?: number | null;
-  // "YYYY-MM-DD" the task was first planned for, once it has moved.
+  // "YYYY-MM-DD" the task was first planned for, once it was put off.
   movedFrom: string | null;
+  // How many times it was put off to a later day.
+  moveCount: number;
+  // When it was ticked off (ISO); null while open.
+  completedAt: string | null;
+  // The list (TodoCategory) it is filed under; null = Personal.
+  categoryId: string | null;
+  note: string;
+  steps: TodoStep[];
   repeat: TodoRepeatRule | null;
+}
+
+// One of a task's smaller steps.
+export interface TodoStep {
+  text: string;
+  done: boolean;
+}
+
+// A To Do "list" a task is filed under: the built-in Personal, Work, Home
+// and Deen (key set, names translated by the app) or one the person added.
+export type TodoColor = "blue" | "violet" | "orange" | "green" | "pink" | "teal" | "yellow" | "indigo" | "emerald" | "purple";
+export interface TodoCategory {
+  id: string;
+  key: "personal" | "work" | "home" | "deen" | null;
+  name: string;
+  color: TodoColor;
 }
 
 // A repeating task still going, for the board's "Repeating tasks" card.
@@ -1796,12 +1823,14 @@ export interface TodoRepeat extends TodoRepeatRule {
   priority: TodoPriority;
   dueTime: string | null;
   remindBefore?: number | null;
+  categoryId?: string | null;
   startsOn: string;
 }
 
 export interface TodoList {
   id: string;
-  date: string; // "YYYY-MM-DD"
+  // "YYYY-MM-DD", or null on the Someday list.
+  date: string | null;
   items: TodoItem[];
 }
 

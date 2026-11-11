@@ -51,6 +51,10 @@ export const ticketReplyServerZodSchema = ticketReplyFormZodSchema.extend({
   attachmentUrl: z.url("Enter a link that starts with https://").max(2000).optional(),
 }) satisfies z.ZodType<ITicketReplyPayload>;
 
+// A picture on a reply, by the API's rules for a customer's screenshot.
+export const REPLY_PICTURE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const REPLY_PICTURE_MAX_BYTES = 5 * 1024 * 1024;
+
 export const SAVED_REPLY_TITLE_MAX_LENGTH = 120;
 
 // A saved reply: a short name the team picks it by, and its English and

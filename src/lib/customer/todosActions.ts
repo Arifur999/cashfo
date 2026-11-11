@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type TodoList, type TodoPriority, type TodoRepeatKind } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type TodoCategory, type TodoColor, type TodoList, type TodoPriority, type TodoRepeatKind, type TodoStep } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { getAppToday } from "@/lib/date";
 import { customerApi } from "./apiClient";
@@ -63,6 +63,56 @@ export interface NewTodoItem {
   // Minutes before dueTime to be reminded (0 = at the time, at most 120);
   // null = no reminder.
   remindBefore?: number | null;
+  // The list it is filed under; null = Personal.
+  categoryId?: string | null;
+  note?: string;
+  steps?: TodoStep[];
+}
+
+type RepeatInput = { kind: TodoRepeatKind; weekdays?: number[]; remindBefore?: number | null };
+
+// A task for a day ("YYYY-MM-DD") or Someday (null), its list made on the
+// way. The restore fields put a just-deleted task back as it was (Undo).
+export interface NewTask extends NewTodoItem {
+  date: string | null;
+  repeat?: RepeatInput;
+  completed?: boolean;
+  completedAt?: string;
+  movedFrom?: string | null;
+  moveCount?: number;
+  repeatId?: string;
+}
+
+// Answers with the list the task went on.
+export async function createTaskAction(task: NewTask): Promise<ActionResult<TodoList>> {
+  return callApi(async () => {
+    const res = await customerApi.post<TodoList>(`${API_BASE_URL}/api/todos/items`, task, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to add task");
+}
+
+// Several tasks to one day, or to Someday (date null). A repeating task's
+// copy whose rule is already on that day stays (skipped).
+export async function moveTodoItemsAction(itemIds: string[], date: string | null): Promise<ActionResult<{ moved: number; skipped: number }>> {
+  return callApi(async () => {
+    const res = await customerApi.post<{ moved: number; skipped: number }>(`${API_BASE_URL}/api/todos/items/move`, { itemIds, date }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to move task");
+}
+
+export async function createTodoCategoryAction(name: string, color: TodoColor): Promise<ActionResult<TodoCategory>> {
+  return callApi(async () => {
+    const res = await customerApi.post<TodoCategory>(`${API_BASE_URL}/api/todos/categories`, { name, color }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to add the list");
+}
+
+// Its tasks go back under Personal.
+export async function deleteTodoCategoryAction(id: string): Promise<ActionResult<{ id: string }>> {
+  return callApi(async () => {
+    const res = await customerApi.delete<{ id: string }>(`${API_BASE_URL}/api/todos/categories/${id}`, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to delete the list");
 }
 
 export async function addTodoItemAction(listId: string, item: NewTodoItem): Promise<ActionResult<TodoList>> {
@@ -82,14 +132,30 @@ export interface TodoItemChanges {
   // Minutes before dueTime to be reminded (0 = at the time, at most 120);
   // null = no reminder.
   remindBefore?: number | null;
-  date?: string;
+  // A day, or null for Someday.
+  date?: string | null;
   // A repeat's copies remind as the task does unless remindBefore says otherwise.
-  repeat?: { kind: TodoRepeatKind; weekdays?: number[]; remindBefore?: number | null } | null;
+  repeat?: RepeatInput | null;
+  categoryId?: string | null;
+  note?: string;
+  steps?: TodoStep[];
+  // Undo of a move: how it stood before.
+  movedFrom?: string | null;
+  moveCount?: number;
 }
 
 export async function updateTodoItemAction(listId: string, itemId: string, input: TodoItemChanges): Promise<ActionResult<TodoList>> {
   return callApi(async () => {
     const res = await customerApi.patch<TodoList>(`${API_BASE_URL}/api/todos/${listId}/items/${itemId}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to update task");
+}
+
+// The same change, the task found by its id alone (an Undo, after the task
+// may have moved to another day's list).
+export async function updateTodoTaskAction(itemId: string, input: TodoItemChanges): Promise<ActionResult<TodoList>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<TodoList>(`${API_BASE_URL}/api/todos/items/${itemId}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to update task");
 }

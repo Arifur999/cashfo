@@ -19,6 +19,8 @@ export const DAY_NAME: Record<WeekDay, string> = { sun: "Sunday", mon: "Monday",
 export interface HelpCompany {
   name: string;
   tagline: string;
+  // The tagline in Bangla; the English one shows when it is empty.
+  taglineBn: string;
   legalName: string;
   tradeLicence: string;
   hotline: string;
@@ -86,6 +88,9 @@ export function officeDays(days: WeekDay[]): WeekDay[][] {
   }
   return runs;
 }
+
+// The company tagline in the reader's language (an older API sends no Bangla one).
+export const companyTagline = (company: Pick<HelpCompany, "tagline" | "taglineBn">, bangla: boolean) => (bangla && company.taglineBn ? company.taglineBn : company.tagline);
 
 // A video's title in the reader's language.
 export const videoTitle = (video: HelpVideo, bangla: boolean) => (bangla && video.titleBn ? video.titleBn : video.titleEn);

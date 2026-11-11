@@ -426,7 +426,7 @@ export function HabitMenu({ collapsed = false, touch = false, className, style, 
 
   return (
     <nav ref={navRef} aria-label={t("Habit Tracker")} style={style} className={cn(SCROLLER, className)}>
-      <div ref={rows} className={cn("flex flex-col", collapsed ? "gap-3" : "gap-4.5")}>
+      <div ref={rows} className={cn("flex flex-col", collapsed ? "gap-3" : "gap-2.5")}>
         {sections.map((section, index) => (
           <div key={section.label ?? index} className="flex flex-col gap-0.5">
             {collapsed ? (
@@ -478,7 +478,7 @@ export function HabitMenu({ collapsed = false, touch = false, className, style, 
                             aria-current={subOn ? "page" : undefined}
                             className={cn(
                               "flex items-center rounded-[7px] px-2.5 text-[13.5px] whitespace-nowrap transition-colors",
-                              touch ? "h-10" : "h-8",
+                              touch ? "h-10" : "h-7.5",
                               subOn ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-soft hover:bg-surface-sunken hover:text-ink",
                             )}
                           >

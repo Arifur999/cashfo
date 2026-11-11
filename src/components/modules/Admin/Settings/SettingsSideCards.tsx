@@ -5,6 +5,7 @@ import Link from "next/link";
 import T from "@/components/shared/T";
 import Chip from "@/components/smartly/Chip";
 import type { IPlatformSettings } from "@/types/settings.types";
+import HelpPreviewCard from "./HelpPreviewCard";
 import ReferralRulesCard from "./ReferralRulesCard";
 import SettingsSideCard, { SIDE_CARD_LINK } from "./SettingsSideCard";
 
@@ -15,7 +16,7 @@ interface SettingsSideCardsProps {
   loadFailed: boolean;
 }
 
-// The column beside General: referral rules (changed in Referrals &
+// The column beside General: what users see on the Help page, referral rules (changed in Referrals &
 // Payouts), maintenance (switched from System) and where message wording
 // lives, then who may change what. A setting that isn't loaded says so:
 // maintenance never reads as Off on a guess.
@@ -23,7 +24,8 @@ const SettingsSideCards = ({ canManage, settings, loadFailed }: SettingsSideCard
   const on = settings?.maintenanceMode === true;
 
   return (
-    <aside className="flex flex-col gap-4">
+    <aside className="flex flex-col gap-4 xl:sticky xl:top-3">
+      <HelpPreviewCard />
       <ReferralRulesCard />
       <SettingsSideCard
         icon={Wrench}

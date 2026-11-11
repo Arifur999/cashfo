@@ -16,6 +16,8 @@ interface UseActionMutationOptions<TVariables, TData> {
   onSuccess?: (data: TData) => void;
   // Re-render the Server Component half of the page (summary cards, ...).
   refreshRoute?: boolean;
+  // A button on the success toast (an Undo); the label is an English key.
+  successAction?: (data: TData) => { label: string; onClick: () => void };
 }
 
 // The post-mutation sequence every create/edit/delete dialog needs, in one
@@ -48,7 +50,7 @@ export function useActionMutation<TVariables, TData = unknown>(options: UseActio
 
   const run = useCallback(
     async (variables: TVariables): Promise<boolean> => {
-      const { successMessage, errorMessage = "Something went wrong", invalidateKeys = [], onSuccess, refreshRoute = true } = optionsRef.current;
+      const { successMessage, errorMessage = "Something went wrong", invalidateKeys = [], onSuccess, refreshRoute = true, successAction } = optionsRef.current;
 
       let result: ApiResult<TData>;
       try {
@@ -65,7 +67,8 @@ export function useActionMutation<TVariables, TData = unknown>(options: UseActio
         return false;
       }
 
-      toast.success(translateRef.current(result.message || (typeof successMessage === "function" ? successMessage(result.data) : successMessage)));
+      const action = successAction?.(result.data);
+      toast.success(translateRef.current(result.message || (typeof successMessage === "function" ? successMessage(result.data) : successMessage)), action && { action: { label: translateRef.current(action.label), onClick: action.onClick } });
       onSuccess?.(result.data);
       await Promise.all(invalidateKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
       if (refreshRoute) {

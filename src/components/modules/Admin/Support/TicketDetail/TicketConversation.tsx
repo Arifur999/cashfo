@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import T from "@/components/shared/T";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { ISupportTicketDetail, ITicketMessage } from "@/types/ticket.types";
@@ -17,14 +18,21 @@ interface TicketConversationProps {
   onSending: (message: ThreadMessage) => void;
 }
 
-// The thread on the strip ground, and the reply box under it.
+// The thread on the strip ground, 520px at most (it scrolls, opening on
+// the newest message, as the board's does), and the reply box under it.
 const TicketConversation = ({ ticket, messages, senderName, currentAdminId, canReply, onSending }: TicketConversationProps) => {
   const { translate } = useLocale();
   const requesterName = ticket.platformUser?.name ?? translate("the user");
+  const thread = useRef<HTMLDivElement>(null);
+  // The newest message in view on opening, and again after each one sent.
+  useEffect(() => {
+    const box = thread.current;
+    if (box) box.scrollTop = box.scrollHeight;
+  }, [messages.length]);
 
   return (
     <>
-      <div className="flex flex-col gap-3.5 bg-strip px-5 py-4.5">
+      <div ref={thread} className="flex max-h-130 flex-col gap-3.5 overflow-y-auto bg-strip px-5 py-4.5">
         {messages.length === 0 ? (
           <p className="py-8 text-center text-small text-ink-muted">
             <T>No messages yet.</T>

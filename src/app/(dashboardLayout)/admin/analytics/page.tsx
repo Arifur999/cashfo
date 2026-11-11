@@ -1,35 +1,33 @@
-import AnalyticsRangePicker from "@/components/modules/Admin/Analytics/AnalyticsRangePicker";
+import AnalyticsPeriodPicker from "@/components/modules/Admin/Analytics/AnalyticsPeriodPicker";
 import AnalyticsView from "@/components/modules/Admin/Analytics/AnalyticsView";
 import PageHeader from "@/components/shared/PageHeader";
 import QueryPrefetch from "@/components/shared/QueryPrefetch";
-import { resolveAnalyticsRange, toAnalyticsRangeQuery } from "@/lib/analyticsRange";
+import { adminPeriodOf, isMonthly, rangeQueryOf } from "@/lib/adminPeriod";
 import { getAppToday } from "@/lib/date";
-import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
 import { adminPageTitle } from "@/lib/i18n/locale";
+import { analyticsSummaryQuery, cohortsQuery, devicesQuery, engagementByMonthQuery, engagementQuery, featureUsageQuery, geographyQuery } from "@/queries/analytics.queries";
 
 export const generateMetadata = adminPageTitle("Analytics");
 
-const firstValue = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
-
+// Every report is for the period in the address (this month by default),
+// read here and in the view alike, so the prefetch is the one used.
 const AnalyticsPage = async ({ searchParams }: PageProps<"/admin/analytics">) => {
-  const params = await searchParams;
   const today = getAppToday();
-  // A range longer than the API takes falls back to 30 days here and in the
-  // view alike, so the prefetch still matches.
-  const rangeQuery = toAnalyticsRangeQuery(resolveAnalyticsRange({ range: firstValue(params.range), from: firstValue(params.from), to: firstValue(params.to) }, today));
+  const period = adminPeriodOf(await searchParams, today);
+  const rangeQuery = rangeQueryOf(period, today);
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="Analytics" description="How people use Smartly, counted from what they save in the app." actions={<AnalyticsRangePicker today={today} />} />
+    <div className="space-y-4.5">
+      <PageHeader title="Analytics" description="How people use Smartly, counted from what they save in the app." actions={<AnalyticsPeriodPicker today={today} />} />
       <QueryPrefetch
         prefetch={(client) =>
           Promise.all([
-            client.prefetchQuery(analyticsSummaryQuery()),
+            client.prefetchQuery(analyticsSummaryQuery(rangeQuery)),
             client.prefetchQuery(featureUsageQuery(rangeQuery)),
-            client.prefetchQuery(engagementQuery(rangeQuery)),
-            client.prefetchQuery(cohortsQuery()),
-            client.prefetchQuery(geographyQuery()),
-            client.prefetchQuery(devicesQuery()),
+            isMonthly(period, today) ? client.prefetchQuery(engagementByMonthQuery(rangeQuery)) : client.prefetchQuery(engagementQuery(rangeQuery)),
+            client.prefetchQuery(cohortsQuery(rangeQuery)),
+            client.prefetchQuery(geographyQuery(rangeQuery)),
+            client.prefetchQuery(devicesQuery(rangeQuery)),
           ])
         }
       >

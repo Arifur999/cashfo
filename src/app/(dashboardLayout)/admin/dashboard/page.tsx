@@ -5,11 +5,14 @@ import { SuperDashboard } from "@/components/modules/Admin/Dashboard/SuperDashbo
 import { SupportDashboard } from "@/components/modules/Admin/Dashboard/SupportDashboard";
 import type { ApiCheck } from "@/components/modules/Admin/Dashboard/SystemCard";
 import { hourIn } from "@/lib/adminDashboard";
+import { adminPeriodOf, periodDays } from "@/lib/adminPeriod";
+import type { Params } from "@/lib/customer/period";
+import { getAppToday } from "@/lib/date";
 import { adminPageTitle } from "@/lib/i18n/locale";
 import { getAnnouncements } from "@/services/announcement.services";
 import { getUserInfo } from "@/services/auth.services";
 import { getCategories } from "@/services/category.services";
-import { getDashboardSummary } from "@/services/dashboard.services";
+import { getDashboardOverview, getDashboardSummary } from "@/services/dashboard.services";
 import { getLegalDocuments } from "@/services/legalDocument.services";
 import { getPayments } from "@/services/payment.services";
 import { getPlanAnalytics, getPlans } from "@/services/plan.services";
@@ -17,7 +20,6 @@ import { getChurn, getRevenueOverview, getRevenueSummary } from "@/services/reve
 import { getHealth } from "@/services/system.services";
 import { getTranslations } from "@/services/translation.services";
 import type { IAdminUser } from "@/types/auth.types";
-import { DASHBOARD_PERIODS, type DashboardPeriod } from "@/types/dashboard.types";
 
 export const generateMetadata = adminPageTitle("Dashboard");
 
@@ -80,15 +82,15 @@ async function supportData() {
   return { support: summary?.support ?? null, now: Date.now() };
 }
 
-async function superData(period: DashboardPeriod) {
-  const [{ data: summary }, api] = await Promise.all([getDashboardSummary(period), apiCheck()]);
-  return { summary, api, now: Date.now() };
+// The period the address asks for (this month by default), read on the
+// server so the figures and the picker agree.
+async function superData(params: Params) {
+  const today = getAppToday();
+  const period = adminPeriodOf(params, today);
+  const { from, to } = periodDays(period);
+  const [{ data: overview }, api] = await Promise.all([getDashboardOverview(from, to), apiCheck()]);
+  return { overview, period, today, api, now: Date.now() };
 }
-
-const periodOf = (value: string | string[] | undefined): DashboardPeriod => {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return DASHBOARD_PERIODS.find((period) => period === raw) ?? "30d";
-};
 
 // Each role gets the dashboard cut to its work: the super admin sees it all
 // (AdminDashboard), a support admin their tickets (AdminDashboardSupport);
@@ -106,7 +108,7 @@ const DashboardPage = async ({ searchParams }: PageProps<"/admin/dashboard">) =>
     case "CONTENT_ADMIN":
       return <ContentDashboard adminName={admin.name} hour={hour} {...await contentData()} />;
     default:
-      return <SuperDashboard adminName={admin.name} hour={hour} {...await superData(periodOf((await searchParams).period))} />;
+      return <SuperDashboard adminName={admin.name} hour={hour} {...await superData(await searchParams)} />;
   }
 };
 

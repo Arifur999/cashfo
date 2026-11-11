@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { ANNOUNCEMENT_STATUS_LABEL, audienceText, scheduleText } from "@/lib/announcements";
 import T from "@/components/shared/T";
+import { formatDate } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { AnnouncementStatus, IAnnouncement } from "@/types/announcement.types";
@@ -34,9 +35,16 @@ const AudienceCell = ({ targetPlan, planNames }: { targetPlan: string | null; pl
   return <span className="text-[13.5px] leading-[normal] whitespace-normal text-ink-2">{plan ? translate("{name} plan", { name: plan }) : audienceText(targetPlan, planNames, translate)}</span>;
 };
 
+// When it went (or goes) to the bells, as the board says it ("31 Oct, 10:30 am"),
+// and when its banner leaves the app, if it does.
 const ScheduleCell = ({ announcement }: { announcement: IAnnouncement }) => {
   const { translate, locale } = useLocale();
-  return <span className="text-small whitespace-normal text-ink-2">{scheduleText(announcement, translate, locale)}</span>;
+  return (
+    <span className="flex flex-col text-[13px] whitespace-nowrap text-ink-2">
+      {formatDate(announcement.startAt, "d MMM, h:mm aaa", "—", locale)}
+      {announcement.endAt && <span className="text-caption text-ink-muted">{translate("Until {date}", { date: formatDate(announcement.endAt, "d MMM, h:mm aaa", "—", locale) })}</span>}
+    </span>
+  );
 };
 
 // The design's announcements list: the kind as a chip with its icon, the
@@ -71,7 +79,7 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
           </span>
         ) : (
           <span className="truncate text-small text-warning">
-            <T>No Bangla text yet</T>
+            <T>No Bangla text yet, users see English</T>
           </span>
         )}
       </span>
@@ -81,22 +89,22 @@ export const buildAnnouncementsColumns = (planNames: Map<string, string>): Colum
   {
     id: "audience",
     accessorFn: (row) => audienceText(row.targetPlan, planNames),
-    header: "Shown to",
+    header: "Sent to",
     cell: ({ row }) => <AudienceCell targetPlan={row.original.targetPlan} planNames={planNames} />,
-    meta: { width: 150 },
+    meta: { width: 120 },
   },
   {
     id: "startAt",
     accessorKey: "startAt",
     header: "When",
     cell: ({ row }) => <ScheduleCell announcement={row.original} />,
-    meta: { width: 190, exportValue: (row) => scheduleText(row) },
+    meta: { width: 170, exportValue: (row) => scheduleText(row) },
   },
   {
     id: "status",
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusChip status={row.original.status} />,
-    meta: { width: 100, exportValue: (row) => ANNOUNCEMENT_STATUS_LABEL[row.status] },
+    meta: { width: 110, exportValue: (row) => ANNOUNCEMENT_STATUS_LABEL[row.status] },
   },
 ];

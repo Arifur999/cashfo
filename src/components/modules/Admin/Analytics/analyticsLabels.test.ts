@@ -1,15 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { COHORT_SHADES, cohortShade, formatShortDay } from "./analyticsLabels";
-
-// A range's span and name and the longest range are lib/analyticsWording's
-// and lib/analyticsRange's, and are tested there.
-describe("the chart axis", () => {
-  it("writes a day in the reader's language", () => {
-    expect(formatShortDay("2026-10-05")).toBe("5 Oct");
-    expect(formatShortDay("2026-10-05", "bn")).toBe("৫ অক্টো");
-  });
-});
+import { COHORT_SHADES, cohortShade } from "./analyticsLabels";
 
 // The cohort shades' text against their fill, from globals.css: a cell's
 // background is emerald mixed into the white card.

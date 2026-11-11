@@ -43,3 +43,33 @@ export interface IDeviceBreakdownEntry {
   count: number;
   percentage: number;
 }
+
+// GET /admin/analytics/summary?from&to: the KPI row for the period the
+// "Choose period" picker shows.
+export interface IAnalyticsPeriodSummary {
+  from: string;
+  // Never after today.
+  to: string;
+  // The period runs to today: its last seven days end now.
+  isNow: boolean;
+  // Yesterday while it runs, else its last day.
+  lastDay: string;
+  // The first customer's sign-up day: months before it have nothing.
+  since: string | null;
+  activeInPeriod: number;
+  activeLast7d: number;
+  activePrevious7d: number;
+  activeLastDay: number;
+  // Live accounts at the period's end.
+  accounts: number;
+}
+
+// GET /admin/analytics/engagement?group=month: a year or a long span.
+export interface IEngagementMonth {
+  // yyyy-MM
+  month: string;
+  // People active on an average day of the month (its days in the range).
+  avgDau: number;
+  // Everyone active in the month.
+  mau: number;
+}

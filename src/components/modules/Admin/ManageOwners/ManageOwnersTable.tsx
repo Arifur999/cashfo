@@ -65,7 +65,7 @@ const ManageOwnersTable = ({ canResetData }: { canResetData: boolean }) => {
         // column: the table is 1060px at least (960 of tracks, 100 of
         // padding) and scrolls sideways in a card narrower than that, which
         // includes a 1280 laptop's.
-        layout={{ rowHeight: 58, actionsWidth: 210, flexMinWidth: 220 }}
+        layout={{ rowHeight: 58, actionsWidth: 190, flexMinWidth: 220 }}
         getRowId={(row) => row.userId}
         actions={actions}
         // A click opens the person. (Not rowHref yet: its row link would

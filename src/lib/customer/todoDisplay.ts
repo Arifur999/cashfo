@@ -1,15 +1,11 @@
-// The sums behind Habits › To-do list: the day strip, what a day's list
-// holds, and what is coming up after it. Pure, so the page and its tests
+// The To Do List's words: what a day's list holds, priority, repeating
+// and moves (the board's own sums are in todoBoard.ts). Pure, so the page and its tests
 // agree. A list's `date` is a plain "YYYY-MM-DD".
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { type FormatLocale, langOf } from "@/lib/i18n/formatPrefs";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
 import type { TodoItem, TodoList, TodoPriority, TodoRepeatRule } from "./api";
 import { type DayStyle, dayText, shiftDay, WEEK_ORDER, WEEKDAY_LONG, WEEKDAY_SHORT } from "./habitDisplay";
-
-// Days shown on the strip before and after the one picked.
-export const STRIP_BEFORE = 2;
-export const STRIP_AFTER = 6;
 
 export const isDayKey = (value: string | undefined): value is string => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`));
 
@@ -18,57 +14,12 @@ export const listFor = (lists: TodoList[], day: string): TodoList | null => list
 export const openItems = (list: TodoList | null): TodoItem[] => list?.items.filter((item) => !item.completed) ?? [];
 export const doneItems = (list: TodoList | null): TodoItem[] => list?.items.filter((item) => item.completed) ?? [];
 
-// The strip of days around the one picked.
-export const stripDays = (day: string): string[] => Array.from({ length: STRIP_BEFORE + 1 + STRIP_AFTER }, (_, i) => shiftDay(day, i - STRIP_BEFORE));
-
-export interface DayCount {
-  total: number;
-  done: number;
-}
-
-export const dayCount = (list: TodoList | null): DayCount => ({ total: list?.items.length ?? 0, done: doneItems(list).length });
-
-// What a strip day says under its number: "4 done", "3 of 5", "3 tasks",
-// or nothing, each one sentence with the counts in the reader's digits.
-export function dayCountText(count: DayCount, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
-  if (count.total === 0) return "";
-  const total = formatCount(count.total, locale);
-  if (count.done === count.total) return t("{count} done", { count: total });
-  if (count.done > 0) return t("{done} of {total}", { done: formatCount(count.done, locale), total });
-  return t(count.total === 1 ? "{count} task" : "{count} tasks", { count: total });
-}
-
 // "3 of 5 done": a day's tasks, as one sentence.
 export const doneOfText = (done: number, total: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string =>
   t("{done} of {total} done", { done: formatCount(done, locale), total: formatCount(total, locale) });
 
-// "Today", "Tomorrow", "Yesterday" or nothing, for a heading.
-export function relativeName(day: string, today: string): "Today" | "Tomorrow" | "Yesterday" | null {
-  if (day === today) return "Today";
-  if (day === shiftDay(today, 1)) return "Tomorrow";
-  if (day === shiftDay(today, -1)) return "Yesterday";
-  return null;
-}
-
 // "Friday, 2 Oct" in the reader's language, in any of dayText's styles.
 export const dayLabel = (day: string, locale: FormatLocale = "en", style: DayStyle = "long"): string => dayText(day, locale, style);
-
-export interface Upcoming {
-  tomorrow: TodoList | null;
-  // Open tasks from the day after tomorrow through a week out, oldest first.
-  later: { day: string; item: TodoItem }[];
-}
-
-export function upcoming(lists: TodoList[], day: string): Upcoming {
-  const tomorrow = listFor(lists, shiftDay(day, 1));
-  const from = shiftDay(day, 2);
-  const to = shiftDay(day, 7);
-  const later = lists
-    .filter((list) => list.date >= from && list.date <= to)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .flatMap((list) => openItems(list).map((item) => ({ day: list.date, item })));
-  return { tomorrow, later };
-}
 
 // The lists with one replaced (by id), or added when it is new.
 export function withList(lists: TodoList[], list: TodoList): TodoList[] {

@@ -8,6 +8,8 @@ export type IHelpVideoCategory = VideoCategory;
 export interface IAdminHelp {
   company: IHelpCompany;
   videos: IHelpVideo[];
+  // Who saved the company card last, and when (absent from an older API).
+  lastChange?: { at: string; by: string | null } | null;
 }
 
 export type IUpdateHelpCompanyPayload = Partial<IHelpCompany>;

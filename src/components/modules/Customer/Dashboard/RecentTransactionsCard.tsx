@@ -25,7 +25,9 @@ interface RecentTransactionsCardProps {
   onAdd: () => void;
 }
 
-const COLUMNS = "grid-cols-[minmax(0,1fr)_150px_64px_120px_68px] gap-x-4";
+// The board: Transaction, Account, Date and Amount to the card's right edge.
+// View and Void sit at the end of the name cell on hover.
+const COLUMNS = "grid-cols-[minmax(0,1fr)_124px_72px_120px] gap-x-4";
 // The phone board lists five.
 const PHONE_ROWS = 5;
 // The row's round View / Void buttons: shown on hover or focus, and always
@@ -79,7 +81,9 @@ export function RecentTransactionsCard({ businessId, transactions, categoriesByI
     const kind = isTransfer ? t("Transfer") : row.category ? categoryLabel(row.category.name, t) : t(TRANSACTION_TYPE_LABELS[row.transaction.transactionType]);
     const amount = isTransfer ? formatCurrency(Math.abs(row.signedAmount), currency, fmt) : formatSignedCurrency(row.signedAmount, currency, fmt);
     const amountTone = row.cancelled || isTransfer ? "text-ink-muted" : row.signedAmount >= 0 ? "text-emerald" : "text-expense";
-    return { tone, icon, title, kind, amount, amountTone, day: dayMonth(toDateInputValue(row.transaction.transactionDate)) };
+    // The board's tile: the category's first letter in its colour.
+    const letter = !isTransfer && row.category ? Array.from(categoryLabel(row.category.name, t).trim())[0]?.toUpperCase() : undefined;
+    return { tone, icon, letter, title, kind, amount, amountTone, day: dayMonth(toDateInputValue(row.transaction.transactionDate)) };
   };
 
   return (
@@ -91,23 +95,20 @@ export function RecentTransactionsCard({ businessId, transactions, categoriesByI
 
       {/* Desktop: the board's table. */}
       <div role="table" aria-label={t("Recent transactions")} className="hidden md:block">
-        <div role="row" className={cn("grid border-y border-line bg-table-head px-6 py-2.5 text-caption font-medium text-ink-muted", COLUMNS)}>
+        <div role="row" className={cn("grid border-y border-line bg-table-head px-5.5 py-2.5 text-caption font-medium text-ink-muted", COLUMNS)}>
           <span role="columnheader">{t("Transaction")}</span>
           <span role="columnheader">{t("Account")}</span>
           <span role="columnheader">{t("Date")}</span>
           <span role="columnheader" className="text-right">
             {t("Amount")}
           </span>
-          <span role="columnheader" className="sr-only">
-            {t("Actions")}
-          </span>
         </div>
         {rows.map((row) => {
           const v = look(row);
           return (
-            <div key={row.transaction.id} role="row" className={cn("group grid h-14 items-center border-b border-divider px-6 transition-colors last:border-b-0 hover:bg-table-head", COLUMNS)}>
+            <div key={row.transaction.id} role="row" className={cn("group grid h-14 items-center border-b border-divider px-5.5 transition-colors last:border-b-0 hover:bg-table-head", COLUMNS)}>
               <div role="cell" className="flex min-w-0 items-center gap-3">
-                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.25", v.tone.bg, v.tone.fg, row.cancelled && "opacity-60")}>{createElement(v.icon, { strokeWidth: 2, "aria-hidden": true })}</span>
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.25", v.tone.bg, v.tone.fg, row.cancelled && "opacity-60")}>{v.letter ? <span aria-hidden="true" className="text-[13px] font-bold">{v.letter}</span> : createElement(v.icon, { strokeWidth: 2, "aria-hidden": true })}</span>
                 <span className="flex min-w-0 flex-col gap-px">
                   <span className="flex min-w-0 items-center gap-2">
                     <Link href={`/transactions/${row.transaction.id}`} className={cn("truncate text-body leading-[normal] font-medium text-ink hover:underline", row.cancelled && "text-ink-muted line-through")}>
@@ -116,6 +117,16 @@ export function RecentTransactionsCard({ businessId, transactions, categoriesByI
                     {row.cancelled && <span className="shrink-0 rounded-full bg-expense-soft px-1.5 py-px text-[11px] leading-[normal] font-semibold text-expense">{t(row.cancelled)}</span>}
                   </span>
                   <span className="truncate text-caption text-ink-muted">{v.kind}</span>
+                </span>
+                <span className="ml-auto flex shrink-0 gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100">
+                  <Link href={`/transactions/${row.transaction.id}`} aria-label={t("View details")} title={t("View details")} className={cn(ROW_ACTION, "text-ink-soft hover:bg-surface-sunken")}>
+                    <Eye strokeWidth={2} aria-hidden="true" />
+                  </Link>
+                  {canManage && row.transaction.voidable && (
+                    <button type="button" onClick={() => setVoiding(row)} aria-label={t("Void transaction")} title={t("Void transaction")} className={cn(ROW_ACTION, "text-expense-fill hover:bg-expense-soft")}>
+                      <Ban strokeWidth={2} aria-hidden="true" />
+                    </button>
+                  )}
                 </span>
               </div>
               <span role="cell" className="truncate text-[13px] leading-[normal] text-ink-soft">
@@ -126,16 +137,6 @@ export function RecentTransactionsCard({ businessId, transactions, categoriesByI
               </span>
               <span role="cell" className={cn("text-right text-body leading-[normal] font-semibold whitespace-nowrap tabular-nums", v.amountTone, row.cancelled && "line-through")}>
                 {v.amount}
-              </span>
-              <span role="cell" className="flex justify-end gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100">
-                <Link href={`/transactions/${row.transaction.id}`} aria-label={t("View details")} title={t("View details")} className={cn(ROW_ACTION, "text-ink-soft hover:bg-surface-sunken")}>
-                  <Eye strokeWidth={2} aria-hidden="true" />
-                </Link>
-                {canManage && row.transaction.voidable && (
-                  <button type="button" onClick={() => setVoiding(row)} aria-label={t("Void transaction")} title={t("Void transaction")} className={cn(ROW_ACTION, "text-expense-fill hover:bg-expense-soft")}>
-                    <Ban strokeWidth={2} aria-hidden="true" />
-                  </button>
-                )}
               </span>
             </div>
           );

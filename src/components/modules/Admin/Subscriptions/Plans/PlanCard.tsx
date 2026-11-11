@@ -2,6 +2,7 @@
 
 import { Archive, Check, Minus, MoreHorizontal, Tag, Trash2, X } from "lucide-react";
 import Button from "@/components/smartly/Button";
+import { iconActionClass } from "@/components/smartly/IconAction";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -109,9 +110,13 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon-sm" className="data-[state=open]:bg-surface-sunken" aria-label={translate("More for {name}", { name: plan.name })}>
+              <button
+                type="button"
+                className={cn(iconActionClass(), "data-[state=open]:border-mint-200 data-[state=open]:bg-emerald-soft data-[state=open]:text-emerald")}
+                aria-label={translate("More for {name}", { name: plan.name })}
+              >
                 <MoreHorizontal aria-hidden="true" />
-              </Button>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
               {plan.isActive ? (

@@ -56,7 +56,8 @@ export async function removeCheckInAction(id: string, date: string): Promise<Act
 
 // ---- Month trackers ("Create Month" sheets) ----
 
-export async function createHabitTrackerAction(input: { category: string; month: number; year: number }): Promise<ActionResult<HabitMonthTracker>> {
+// goalPct: a Namaz month's goal, the share of its prayers aimed for.
+export async function createHabitTrackerAction(input: { category: string; month: number; year: number; goalPct?: number | null }): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
     const res = await customerApi.post<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers`, input, { headers: await authHeaders() });
     return res.data;
@@ -79,6 +80,14 @@ export async function setHabitTrackerCheckAction(
 // Ramadan: the paras read on one day (0 clears it); the server also ticks
 // the sheet's Quran row.
 // "I kept one": how many of a Ramadan sheet's missed fasts were made up.
+// A Namaz month's goal (1-100), or null to clear it.
+export async function setTrackerGoalAction(id: string, goalPct: number | null): Promise<ActionResult<HabitMonthTracker>> {
+  return callApi(async () => {
+    const res = await customerApi.put<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/goal`, { goalPct }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the goal");
+}
+
 export async function setFastsMadeUpAction(id: string, count: number): Promise<ActionResult<HabitMonthTracker>> {
   return callApi(async () => {
     const res = await customerApi.put<HabitMonthTracker>(`${API_BASE_URL}/api/habit-trackers/${id}/fasts-made-up`, { count }, { headers: await authHeaders() });

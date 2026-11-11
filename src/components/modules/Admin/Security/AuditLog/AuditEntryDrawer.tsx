@@ -52,6 +52,7 @@ const AuditEntryDrawer = ({ entryId, listEntry, onClose }: AuditEntryDrawerProps
 
   return (
     <FormDrawer
+      centered
       open={Boolean(entryId)}
       onOpenChange={(open) => {
         if (!open) onClose();

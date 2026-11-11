@@ -1,16 +1,21 @@
 "use client";
 
 import { Bug, CreditCard, Gift, MessageCircle, ShieldAlert } from "lucide-react";
+import { monthOnlyLabel } from "@/components/modules/Customer/Budget/MonthSwitcher";
+import { monthKeyOf, previousMonth } from "@/lib/adminPeriod";
+import type { Period } from "@/lib/customer/period";
 import { formatAmount } from "@/lib/currency";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { takaSign } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import { cn } from "@/lib/utils";
-import type { DashboardPeriod, IDashboardOverview } from "@/types/dashboard.types";
+import type { IDashboardPeriodOverview } from "@/types/dashboard.types";
 import { ActivityCard } from "./ActivityCard";
-import { monthLabel } from "./dashboardDates";
 import { DashboardHeader } from "./DashboardHeader";
+import { compactAmount } from "./dashboardFigures";
+import { usePeriodWords } from "./periodWords";
 import { PlanShareCard } from "./PlanShareCard";
 import { RevenueCard, SignupsCard } from "./TrendCards";
 import { NeedsYou, Kpi, type Attention, type ChipTone } from "./pieces";
@@ -19,7 +24,11 @@ import { SystemCard, type ApiCheck } from "./SystemCard";
 interface SuperDashboardProps {
   adminName: string;
   hour: number;
-  summary: IDashboardOverview;
+  overview: IDashboardPeriodOverview;
+  // The period the page shows, as its address names it.
+  period: Period;
+  // YYYY-MM-DD on the platform's calendar, read on the server.
+  today: string;
   // The API's own health check, timed from this server.
   api: ApiCheck;
   // The server's clock, so the "waited 6 hours" the server prints and the
@@ -34,21 +43,19 @@ const PHONE_KPI = "max-sm:px-4 max-sm:[&>span:nth-child(2)]:text-h2";
 // A change is good news only when it is above zero: no change is grey.
 const changeTone = (value: number): ChipTone => (value > 0 ? "income" : value < 0 ? "expense" : "neutral");
 
-const PERIOD_DAYS: Record<DashboardPeriod, string> = { "7d": "in 7 days", "30d": "in 30 days", "90d": "in 90 days" };
-
 // The super admin's dashboard as the AdminDashboard board lays it out: what
-// needs action first, then users and money, the sign-ups and revenue
-// charts, and plans, admin activity and system health. One call
-// (GET /admin/dashboard/summary) feeds it; a card a role can't see comes
-// back null and stays off the page, so a finance or content admin gets the
-// same page cut to their work.
-export function SuperDashboard({ adminName, hour, summary, api, now }: SuperDashboardProps) {
-  const { translate, locale } = useLocale();
+// needs action first, then users and money for the period the picker shows
+// (this month unless another is picked), the sign-ups and revenue charts,
+// and plans, admin activity and system health. One call
+// (GET /admin/dashboard/overview?from&to) feeds it; a card a role can't see
+// comes back null and stays off the page.
+export function SuperDashboard({ adminName, hour, overview, period, today, api, now }: SuperDashboardProps) {
+  const { translate, locale, fmt } = useLocale();
   const count = (value: number) => formatCount(value, locale);
-  const percent = (value: number) => toLocaleDigits(`${value}%`, locale);
-  const signed = (value: number) => `${value > 0 ? "+" : ""}${percent(value)}`;
+  const percent = (value: number, digits?: number) => toLocaleDigits(`${digits === undefined ? value : value.toFixed(digits)}%`, locale);
   const money = (value: number | string) => formatAmount(value, undefined, locale);
-  const { attention } = summary;
+  const { attention, range } = overview;
+  const cash = overview.money;
 
   const cards: Attention[] = [];
   if (attention.payoutRequests) {
@@ -108,60 +115,68 @@ export function SuperDashboard({ adminName, hour, summary, api, now }: SuperDash
     });
   }
 
-  const paid = summary.paidUsers;
-  const mrrChange = summary.mrrChangePct;
-  const lastMonth = summary.revenueByMonth?.at(-1)?.month ?? null;
-  const mrrNote = [mrrChange !== null && lastMonth ? translate("vs {month}", { month: monthLabel(lastMonth, locale, translate) }) : null, summary.arr !== null ? translate("ARR {amount}", { amount: money(summary.arr) }) : null]
-    .filter(Boolean)
-    .join(" · ");
+  // "this month", "in September", "in 2025" or "in this period".
+  const { inPeriod, activeLabel } = usePeriodWords(period, today);
+
+  // MRR: a month against the month before it ("+20.5%"); a year or other
+  // days by how much it moved since they began ("+TK 3.2k").
+  let mrrChip: { text: string; tone: ChipTone } | null = null;
+  let mrrNote = "";
+  if (cash) {
+    const { pct, amount } = cash.mrrChange;
+    const monthKey = monthKeyOf(period);
+    if (pct === null) {
+      mrrChip = amount > 0 ? { text: translate("New"), tone: "income" } : null;
+    } else if (period.kind === "month") {
+      mrrChip = { text: toLocaleDigits(`${pct < 0 ? "−" : "+"}${Math.abs(pct).toFixed(1)}%`, locale), tone: changeTone(pct) };
+    } else {
+      const abs = Math.abs(amount);
+      const shown = abs >= 1000 ? `${takaSign(locale)} ${compactAmount(abs)}` : formatAmount(abs, undefined, locale);
+      mrrChip = { text: toLocaleDigits(`${amount < 0 ? "−" : "+"}${shown}`, locale), tone: changeTone(amount) };
+    }
+    const vs = period.kind === "month" && pct !== null && monthKey ? translate("vs {month}", { month: monthOnlyLabel(Number(previousMonth(monthKey).slice(5, 7)), fmt) }) : null;
+    mrrNote = [vs, translate("ARR {amount}", { amount: money(cash.arr) })].filter(Boolean).join(" · ");
+  }
+  const paidNote = cash ? (cash.paidUsers.byPlan.length > 0 ? cash.paidUsers.byPlan.map((plan) => `${plan.planName ?? "—"} ${count(plan.count)}`).join(" · ") : translate("of accounts")) : "";
 
   return (
     <div className="flex flex-col gap-4.5">
-      <DashboardHeader name={adminName} hour={hour} summary={summary} />
+      <DashboardHeader name={adminName} hour={hour} overview={overview} period={period} today={today} />
       <NeedsYou items={cards} />
 
       <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
         <Kpi
           size="lg"
           label="Total users"
-          value={count(summary.users.total)}
-          chip={{ text: summary.users.newInPeriod > 0 ? `+${count(summary.users.newInPeriod)}` : count(0), tone: changeTone(summary.users.newInPeriod) }}
-          note={PERIOD_DAYS[summary.period]}
+          value={count(overview.users.total)}
+          chip={{ text: overview.users.newInPeriod > 0 ? `+${count(overview.users.newInPeriod)}` : count(0), tone: changeTone(overview.users.newInPeriod) }}
+          note={inPeriod}
           className={PHONE_KPI}
         />
-        <Kpi size="lg" label="Active in 30 days" value={count(summary.activeLast30d)} chip={{ text: percent(summary.activePct), tone: "neutral" }} note="of accounts" className={PHONE_KPI} />
-        {paid && (
-          <Kpi
-            size="lg"
-            label="Paid users"
-            value={count(paid.total)}
-            chip={{ text: percent(paid.pctOfAccounts), tone: "neutral" }}
-            note={paid.byPlan.length > 0 ? paid.byPlan.map((plan) => `${plan.planName ?? "—"} ${count(plan.count)}`).join(" · ") : "of accounts"}
-            className={PHONE_KPI}
-          />
-        )}
-        {summary.mrr !== null && (
+        <Kpi size="lg" label={activeLabel} value={count(overview.active.count)} chip={{ text: percent(Math.round(overview.active.pct)), tone: "neutral" }} note="of accounts" className={PHONE_KPI} />
+        {cash && <Kpi size="lg" label="Paid users" value={count(cash.paidUsers.total)} chip={{ text: percent(cash.paidUsers.pctOfAccounts, 1), tone: "neutral" }} note={paidNote} className={PHONE_KPI} />}
+        {cash && (
           <Kpi
             size="lg"
             hero
             label="MRR"
-            value={money(summary.mrr)}
-            chip={mrrChange !== null ? { text: signed(mrrChange), tone: changeTone(mrrChange) } : null}
+            value={money(cash.mrr)}
+            chip={mrrChip}
             note={mrrNote || undefined}
-            className={cn(PHONE_KPI, money(summary.mrr).length > 11 && "max-sm:[&>span:nth-child(2)]:text-h3")}
+            className={cn(PHONE_KPI, money(cash.mrr).length > 11 && "max-sm:[&>span:nth-child(2)]:text-h3")}
           />
         )}
       </div>
 
-      <div className={cn("grid gap-3.5", summary.revenueByMonth && "lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]")}>
-        <SignupsCard period={summary.period} days={summary.signupsPerDay} newInPeriod={summary.users.newInPeriod} newLast7d={summary.users.newLast7d} />
-        {summary.revenueByMonth && <RevenueCard months={summary.revenueByMonth} changePct={summary.revenueChangePct} />}
+      <div className={cn("grid gap-3.5", cash && "lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]")}>
+        <SignupsCard range={range} period={period} signups={overview.signups} newInPeriod={overview.users.newInPeriod} newLast7d={overview.users.newLast7d} today={today} />
+        {cash && <RevenueCard range={range} period={period} revenue={cash.revenue} today={today} />}
       </div>
 
       <div className="grid items-stretch gap-3.5 lg:grid-cols-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.9fr)]">
-        {summary.accountsByPlan && <PlanShareCard plans={summary.accountsByPlan} deletedLeftOut={summary.deletedLeftOut} />}
-        {summary.recentAuditLogs && <ActivityCard logs={summary.recentAuditLogs} />}
-        {summary.system && <SystemCard system={summary.system} api={api} />}
+        {cash && <PlanShareCard plans={cash.accountsByPlan} deletedLeftOut={cash.deletedLeftOut} on={range.isNow ? null : range.to} />}
+        {overview.recentAuditLogs && <ActivityCard logs={overview.recentAuditLogs} />}
+        {overview.system && <SystemCard system={overview.system} api={api} />}
       </div>
     </div>
   );

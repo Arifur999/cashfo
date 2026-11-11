@@ -27,20 +27,35 @@ const NewReplyDot = () => {
   );
 };
 
+// A ticket no admin has opened yet: the board's blue "New".
+export const isNewTicket = (ticket: Pick<ISupportTicket, "firstSeenAt">) => ticket.firstSeenAt === null;
+
 // The subject is a real link (a new tab, a middle-click, a screen reader's
-// list of links); the row's own click stays for the rest of the row.
+// list of links); the row's own click stays for the rest of the row. A
+// ticket nobody has opened says "New", and one the customer sent from
+// Settings › Help says "Help page".
 const SubjectCell = ({ ticket }: { ticket: ISupportTicket }) => {
   const listQuery = useSearchParams().toString();
+  const { translate } = useLocale();
+  const fresh = isNewTicket(ticket);
   return (
     <span className="flex min-w-0 flex-col gap-px">
-      <Link
-        href={ticketHref(ticket.id, listQuery)}
-        onClick={(event) => event.stopPropagation()}
-        title={ticket.subject}
-        className={cn("truncate text-[13.5px] leading-[normal] text-ink hover:underline", awaitingReply(ticket) ? "font-bold" : "font-medium")}
-      >
-        {ticket.subject}
-      </Link>
+      <span className="flex min-w-0 items-center gap-2">
+        <Link
+          href={ticketHref(ticket.id, listQuery)}
+          onClick={(event) => event.stopPropagation()}
+          title={ticket.subject}
+          className={cn("truncate text-[13.5px] leading-[normal] text-ink hover:underline", awaitingReply(ticket) || fresh ? "font-bold" : "font-medium")}
+        >
+          {ticket.subject}
+        </Link>
+        {fresh && <span className="shrink-0 rounded-full bg-info px-1.75 py-px text-[10.5px] leading-[normal] font-bold tracking-[0.02em] text-white">{translate("New")}</span>}
+        {ticket.fromHelpPage && (
+          <span title={translate("Sent from Settings › Help & support")} className="shrink-0 rounded-full bg-emerald-soft px-1.75 py-px text-[10.5px] leading-[normal] font-semibold whitespace-nowrap text-brand-ink">
+            {translate("Help page")}
+          </span>
+        )}
+      </span>
       <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{ticket.platformUser?.name ?? <T>Unknown person</T>}</span>
     </span>
   );
@@ -61,7 +76,7 @@ export const ticketsColumns: ColumnDef<ISupportTicket>[] = [
         <code className="font-mono text-[12.5px] leading-[normal] font-semibold text-ink-2">{shortTicketId(row.original)}</code>
       </span>
     ),
-    meta: { width: 64 },
+    meta: { width: 76 },
   },
   {
     id: "subject",

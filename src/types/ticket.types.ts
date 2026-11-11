@@ -50,6 +50,10 @@ export interface ISupportTicket {
   lastMessageFrom: SenderType | null;
   platformUser: ITicketUser | null;
   assignedAdmin: { id: string; name: string } | null;
+  // Sent by the customer from Settings › Help (absent from an older API).
+  fromHelpPage?: boolean;
+  // When an admin first opened it; null is "New" in the queue.
+  firstSeenAt?: string | null;
 }
 
 export interface ISupportTicketDetail extends Omit<ISupportTicket, "platformUser" | "lastMessageAt" | "lastMessageFrom"> {
@@ -78,6 +82,8 @@ export interface ITicketStats {
   needsReplyCount?: number;
   needsReplyOver24hCount?: number;
   waitingOnUserCount: number;
+  // Sent from the Help page and not opened by anyone yet.
+  newFromHelpPageCount?: number;
   urgentCount: number;
   solvedThisWeekCount: number;
   avgResolutionHours: number;

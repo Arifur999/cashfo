@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import Button from "@/components/smartly/Button";
 import PageFrame from "@/components/smartly/PageFrame";
@@ -65,9 +66,12 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
         }
         actions={
           <>
-            <Button variant="secondary" onClick={() => taskField.current?.focus()} className="rounded-sm">
-              <Plus strokeWidth={2.25} />
-              {t("Add task")}
+            {/* The To Do List's New task popup (TodoNewTask), as the board links it. */}
+            <Button asChild variant="secondary" className="rounded-sm">
+              <Link href="/habit-tracker/todos?new=1">
+                <Plus strokeWidth={2.25} />
+                {t("Add task")}
+              </Link>
             </Button>
             <Button onClick={() => setHabitOpen(true)} className="rounded-sm">
               <Plus strokeWidth={2.25} />
