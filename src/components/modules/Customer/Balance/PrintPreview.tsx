@@ -62,7 +62,7 @@ export function PrintPreview({ subtitle, onClose, children }: PrintPreviewProps)
           </button>
         </div>
       </div>
-      <article className="w-full max-w-190 shrink-0 rounded-sm bg-surface px-6 py-8 text-ink shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:px-11 sm:py-10 print:max-w-none print:rounded-none print:p-0 print:shadow-none">
+      <article className="flex w-full max-w-190 shrink-0 flex-col rounded-sm bg-surface px-6 py-8 text-ink sm:min-h-200 print:block print:min-h-0 [&>section]:flex-1 shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:px-11 sm:py-10 print:max-w-none print:rounded-none print:p-0 print:shadow-none">
         {children}
       </article>
     </div>
