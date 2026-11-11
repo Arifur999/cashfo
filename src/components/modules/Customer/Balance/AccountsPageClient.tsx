@@ -328,7 +328,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
           <span aria-hidden="true" className="mt-0.5 flex h-2 gap-0.5 overflow-hidden rounded-full bg-surface-sunken">
             {!hidden && shares.filter((share) => share.amount > 0).map((share) => <span key={share.type} className={TYPE_BAR[share.type]} style={{ width: `${share.percent}%` }} />)}
           </span>
-          <span className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-caption text-ink-2">
+          <span className="flex gap-2.5 overflow-hidden text-caption whitespace-nowrap text-ink-2">
             {shares.map((share) => (
               <span key={share.type} className="inline-flex items-center gap-1.25 whitespace-nowrap">
                 <span aria-hidden="true" className={cn("size-1.75 rounded-full", hidden ? "bg-ink-faint" : TYPE_BAR[share.type])} />

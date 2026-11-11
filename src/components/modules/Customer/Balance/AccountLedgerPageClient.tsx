@@ -486,7 +486,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                 </div>
               }
               footer={
-                ledger.meta.total > 0 && (
+                (
                   <ListFooter className="flex-row items-center justify-between gap-3 border-line">
                     <span>
                       {plural(t, ledger.meta.total, "{count} entry", "{count} entries", undefined, fmt)} · {t("Page {page} of {pages}", { page: formatCount(ledger.meta.page, fmt), pages: formatCount(Math.max(1, ledger.meta.totalPages), fmt) })}
