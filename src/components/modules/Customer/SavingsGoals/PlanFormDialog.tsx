@@ -142,7 +142,7 @@ export function PlanFormDialog({ open, onClose, businessId, editing, usedColors,
       titleClassName="text-[18px] font-bold!"
       subClassName="leading-[normal]"
       closeClassName="bg-surface-sunken text-ink-soft hover:bg-line"
-      bodyClassName="gap-4 px-5.5 pt-4.5 pb-5"
+      bodyClassName="gap-4 px-5.5 pt-4.5 pb-5 [&>*]:shrink-0"
       footerClassName="px-5.5 py-3.5"
       lead={
         <span aria-hidden="true" className="flex size-10.5 shrink-0 items-center justify-center rounded-[12px] text-[20px]" style={{ background: shade(tone, 0.88) }}>

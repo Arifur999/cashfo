@@ -357,7 +357,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
                 <button
                   type="button"
                   onClick={() => setModal({ kind: "goal" })}
-                  className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
+                  className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-[18px] border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
                 >
                   <span className="flex size-10 items-center justify-center rounded-field bg-emerald-soft text-emerald">
                     <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />

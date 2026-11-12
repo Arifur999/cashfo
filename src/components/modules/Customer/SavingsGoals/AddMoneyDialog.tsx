@@ -205,7 +205,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       onSubmit={submit}
       headClassName="items-center gap-3.5 px-6 py-4"
       titleClassName="text-[17px]"
-      bodyClassName="gap-4 px-6 pt-4.5 pb-5"
+      bodyClassName="gap-4 px-6 pt-4.5 pb-5 [&>*]:shrink-0"
       footerClassName="px-6"
       lead={
         <GoalRing percent={percentNow} color={color} size={52} label={t("{percent}% saved", { percent: formatCount(percentNow, fmt) })}>

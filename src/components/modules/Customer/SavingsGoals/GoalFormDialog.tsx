@@ -227,7 +227,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
       titleClassName="text-[19px] font-bold! tracking-[-0.01em]"
       subClassName="leading-[normal]"
       closeClassName="bg-surface-sunken text-ink-soft hover:bg-line"
-      bodyClassName="gap-4.5 px-5.5 pt-1 pb-5"
+      bodyClassName="gap-4.5 px-5.5 pt-1 pb-5 [&>*]:shrink-0"
       footerClassName="bg-surface px-5.5 py-3.5"
       lead={
         <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-emerald-soft text-emerald">
