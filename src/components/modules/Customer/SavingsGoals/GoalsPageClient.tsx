@@ -327,7 +327,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
                   onClick={() => setModal({ kind: "goal" })}
                   className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
                 >
-                  <span className="flex size-10 items-center justify-center rounded-field bg-mint-50 text-emerald">
+                  <span className="flex size-10 items-center justify-center rounded-field bg-emerald-soft text-emerald">
                     <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
                   </span>
                   <span className="text-body font-semibold text-ink">{t("New goal")}</span>
@@ -439,7 +439,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
 // The note above the goals while money can't go in yet.
 function Banner({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {
   return (
-    <section className={cn("flex flex-col gap-4 rounded-[14px] border border-emerald-line bg-mint-50 p-5 md:flex-row md:items-center md:gap-5 md:px-6")}>
+    <section className={cn("flex flex-col gap-4 rounded-[14px] border border-emerald-line bg-emerald-soft p-5 md:flex-row md:items-center md:gap-5 md:px-6")}>
       <span className="flex size-14 shrink-0 items-center justify-center rounded-[14px] bg-surface text-emerald shadow-[0_4px_12px_rgba(14,26,22,0.08)]">
         <PiggyBank className="size-6.5" aria-hidden="true" />
       </span>

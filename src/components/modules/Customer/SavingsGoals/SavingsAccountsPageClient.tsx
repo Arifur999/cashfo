@@ -112,7 +112,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
                 {archived.length > 0 && Number(overview.inactiveAmount) > 0 && ` · ${t("{amount} in archived accounts", { amount: money(overview.inactiveAmount) })}`}
               </span>
             </div>
-            <div className="grid grid-cols-[repeat(3,auto)] xl:justify-end">
+            <div className="grid grid-cols-[repeat(3,auto)] justify-start xl:justify-end">
               <Stat label={t("Accounts")} value={formatCount(active.length, fmt)} first />
               <Stat label={t("Added")} value={totals.in > 0 ? `+ ${money(totals.in)}` : money(0)} tone={totals.in > 0 ? "text-emerald" : "text-ink-faint"} />
               <Stat label={t("Taken out")} value={money(totals.out)} tone="text-ink-faint" />
@@ -198,7 +198,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
         {canManage ? (
           (active.length % 3 !== 0 || active.length === 0) && (
           <button type="button" onClick={() => setForm("create")} className="flex h-50 flex-col items-center justify-center gap-2.5 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald">
-            <span className="flex size-11 items-center justify-center rounded-field bg-mint-50 text-emerald">
+            <span className="flex size-11 items-center justify-center rounded-field bg-emerald-soft text-emerald">
               <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
             </span>
             <span className="text-[15px] font-semibold text-ink">{t("Add savings account")}</span>
@@ -263,9 +263,9 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
 
 function Stat({ label, value, tone = "text-ink", first = false }: { label: string; value: string; tone?: string; first?: boolean }) {
   return (
-    <div className={cn("flex flex-col gap-1 border-l border-line px-4 sm:px-6", first && "max-xl:border-l-0 max-xl:pl-0", "last:pr-0")}>
+    <div className={cn("flex min-w-0 flex-col gap-1 border-l border-line px-3 sm:px-6", first && "max-xl:border-l-0 max-xl:pl-0", "last:pr-0")}>
       <span className="text-caption text-ink-muted">{label}</span>
-      <span className={cn("text-[18px] font-bold whitespace-nowrap tabular-nums", tone)}>{value}</span>
+      <span className={cn("text-[15px] font-bold whitespace-nowrap tabular-nums sm:text-[18px]", tone)}>{value}</span>
     </div>
   );
 }
