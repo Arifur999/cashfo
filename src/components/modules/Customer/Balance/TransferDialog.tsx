@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight, TriangleAlert } from "lucide-react";
+import { ArrowRight, Landmark, Tag, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { createElement, useEffect, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useOnline } from "@/components/modules/Customer/Layout/useOnline";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
@@ -13,18 +13,19 @@ import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDisplay";
 import type { Account } from "@/lib/customer/api";
-import { BUILT_IN_CHARGE_CATEGORIES, chargeOf, defaultChargeCategory } from "@/lib/customer/balanceDisplay";
+import { accountColor, BUILT_IN_CHARGE_CATEGORIES, chargeOf, walletColorStyle } from "@/lib/customer/balanceDisplay";
 import { listBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { correctTransactionAction, createTransferAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
 import { transferPair, type TransferPair } from "@/lib/customer/transfers";
+import { walletIcon, walletType } from "@/lib/customer/walletVisuals";
 import { getAppToday } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { type SelectOption, TransferDateField, TransferSelect } from "./TransferFields";
 
 export interface EditedTransfer {
   id: string;
@@ -53,6 +54,9 @@ interface TransferDialogProps {
 // percent), the expense category the charge is filed under, a note, and
 // both accounts before and after. A transfer the sender can't cover isn't
 // saved.
+// The kind under a wallet's name in the From and To lists.
+const WALLET_KIND = { bank: "Bank account", mfs: "Mobile banking", cash: "Cash" } as const;
+
 export function TransferDialog({ open, onClose, businessId, currency, editing = null, fromId: presetFrom = null }: TransferDialogProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
@@ -86,7 +90,9 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       setError("");
       setLoading(true);
       if (editing) setPair({ fromId: editing.fromId, toId: editing.toId });
-      else if (presetFrom) setPair((previous) => ({ fromId: presetFrom, toId: previous.toId === presetFrom ? "" : previous.toId }));
+      // Nothing is picked for you, except the account a "Transfer from
+      // here" started from.
+      else setPair({ fromId: presetFrom ?? "", toId: "" });
     }
   }
 
@@ -102,6 +108,7 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
         const list = result.data ?? [];
         setWallets(list);
         setWalletsError(result.success ? null : (result.message ?? "Failed to load your wallets"));
+        // A preset account that is no longer offered isn't kept.
         if (!editing) setPair((previous) => transferPair(list.map((wallet) => wallet.id), previous));
         setLoading(false);
       })
@@ -123,7 +130,7 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
   const to = wallets.find((wallet) => wallet.id === pair.toId);
   const value = Number(amount) || 0;
   const fee = chargeOf(value, charge, chargeMode);
-  const chargedCategory = category ?? defaultChargeCategory(from?.accountSubtype);
+  const ids = useId();
   const categoryOptions = [...BUILT_IN_CHARGE_CATEGORIES, ...categories.filter((name) => !BUILT_IN_CHARGE_CATEGORIES.includes(name))];
   if (category && !categoryOptions.includes(category)) categoryOptions.push(category);
   // Editing: the transfer being corrected gives its money back first, to
@@ -139,7 +146,9 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
   // An edit whose account has been archived since can't pick it again.
   const archivedWallet = !!editing && !loading && !walletsError && (!wallets.some((wallet) => wallet.id === editing.fromId) || !wallets.some((wallet) => wallet.id === editing.toId));
   const tooFew = !loading && !walletsError && wallets.length < 2;
-  const invalid = !from || !to || same || value <= 0 || short || pctTooHigh || archivedWallet || !date;
+  // What the form still lacks, in the board's words under the balances.
+  const needed = [!from && t("the From account"), !to && t("the To account"), value <= 0 && t("the amount"), fee > 0 && !category && t("a category for the charge")].filter(Boolean);
+  const invalid = !from || !to || same || value <= 0 || short || pctTooHigh || archivedWallet || !date || (fee > 0 && !category);
 
   function save(event: React.FormEvent) {
     event.preventDefault();
@@ -150,7 +159,7 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       amount: value,
       date,
       description: note.trim() || undefined,
-      ...(fee > 0 && { charge: fee, chargeCategory: chargedCategory }),
+      ...(fee > 0 && category && { charge: fee, chargeCategory: category }),
     };
     startTransition(async () => {
       try {
@@ -171,6 +180,21 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
   }
 
   const money = (figure: number) => formatCurrency(figure, currency, fmt);
+  // The board's lists: each wallet with its kind and balance (the one on
+  // the other side can't be picked), and the charge categories.
+  const walletOptions = (other: string): SelectOption[] =>
+    wallets.map((wallet) => ({
+      value: wallet.id,
+      name: nameOf(wallet),
+      sub: wallet.id === other ? t("Already picked on the other side") : t(WALLET_KIND[walletType(wallet)]),
+      right: money(Number(wallet.currentBalance)),
+      icon: createElement(walletIcon(wallet), { "aria-hidden": true }),
+      tileClassName: "wallet-tile",
+      tileStyle: walletColorStyle(accountColor(wallet)),
+      disabled: wallet.id === other,
+    }));
+  const categoryChoices: SelectOption[] = categoryOptions.map((name) => ({ value: name, name: t(name), icon: <Tag aria-hidden="true" />, tileClassName: "bg-warning-soft text-warning" }));
+  const balanceLine = (wallet: Account | undefined) => (wallet ? t("Balance {amount}", { amount: money(Number(wallet.currentBalance)) }) : undefined);
   const sideBox = (wallet: Account | undefined, side: "from" | "to") => {
     const before = side === "from" ? fromBefore : toBefore;
     const after = side === "from" ? fromAfter : toBefore + value;
@@ -183,13 +207,13 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
     return (
       <div className="flex min-w-0 flex-col gap-1.75 rounded-[12px] border border-divider bg-strip px-3.5 py-3">
         <span className="flex items-center justify-between gap-2 border-b border-line pb-1.5">
-          <span className="truncate text-small font-bold text-ink">{wallet ? nameOf(wallet) : "—"}</span>
+          <span className="truncate text-small font-bold text-ink">{wallet ? nameOf(wallet) : t(side === "from" ? "From account" : "To account")}</span>
           <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold", side === "from" ? "bg-expense-soft text-expense" : "bg-tint-green text-tint-green-ink")}>{t(side === "from" ? "Sending" : "Receiving")}</span>
         </span>
         {line(t("Current balance"), money(before))}
         {side === "from" ? line(t("Transfer amount"), `− ${money(value)}`, "text-expense") : line(t("Amount received"), `+ ${money(value)}`, "text-success")}
         {side === "from"
-          ? line(t("Charge · {category}", { category: fee > 0 ? t(chargedCategory) : t("none") }), fee > 0 ? `− ${money(fee)}` : money(0), fee > 0 ? "text-expense" : "text-ink-faint")
+          ? line(t("Charge · {category}", { category: fee > 0 ? (category ? t(category) : t("pick a category")) : t("none") }), fee > 0 ? `− ${money(fee)}` : money(0), fee > 0 ? "text-expense" : "text-ink-faint")
           : line(t("Charge"), money(0), "text-ink-faint")}
         <span className="flex justify-between gap-2 border-t border-line pt-1.75 text-[13.5px]">
           <span className="font-semibold text-ink">{t("New balance")}</span>
@@ -204,12 +228,12 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
       open={open}
       onClose={onClose}
       busy={isPending}
-      width={560}
+      width={580}
       headClassName="items-center py-4.5"
       closeClassName="my-0 size-11 text-ink-soft [&_svg]:size-4.5"
       bodyClassName="gap-4 py-5"
       footerClassName="bg-surface py-4"
-      className="leading-[normal]"
+      className="rounded-[18px] leading-[normal]"
       title={t(editing ? "Edit transfer" : "New transfer")}
       onSubmit={save}
       footer={
@@ -230,39 +254,47 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
         </Banner>
       )}
 
-      <Field htmlFor="transfer-date" label={<span className="text-small font-semibold text-ink-2">{t("Date")}</span>}>
-        {/* The board: a plain date box, the calendar at its right. */}
-        <Input id="transfer-date" type="date" size="md" value={date} onChange={(event) => event.target.value && setDate(event.target.value)} max={getAppToday()} className="tabular-nums" />
-      </Field>
+      <div className="flex flex-col gap-1.5">
+        <span id={`${ids}-date`} className="text-small font-semibold text-ink-2">
+          {t("Date")}
+        </span>
+        <TransferDateField labelId={`${ids}-date`} value={date} today={getAppToday()} onChange={setDate} />
+      </div>
 
       <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)]">
-        <Field htmlFor="transfer-from" label={<span className="text-small font-semibold text-ink-2">{t("From account (money goes out)")}</span>}>
-          <NativeSelect id="transfer-from" value={pair.fromId} onChange={(event) => setPair((previous) => ({ ...previous, fromId: event.target.value }))} disabled={loading || !!walletsError} className="font-normal">
-            {loading ? <option value="">{t("Loading...")}</option> : !pair.fromId && <option value="">{t("Choose an account")}</option>}
-            {wallets
-              .filter((wallet) => wallet.id !== pair.toId)
-              .map((wallet) => (
-                <option key={wallet.id} value={wallet.id}>
-                  {nameOf(wallet)}
-                </option>
-              ))}
-          </NativeSelect>
-        </Field>
-        <span aria-hidden="true" className="hidden h-11 items-center justify-center text-ink-faint sm:flex">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span id={`${ids}-from`} className="text-small font-semibold text-ink-2">
+            {t("From account (money goes out)")}
+          </span>
+          <TransferSelect
+            labelId={`${ids}-from`}
+            placeholder={t(loading ? "Loading..." : "Select an account")}
+            placeholderIcon={<Landmark aria-hidden="true" />}
+            options={walletOptions(pair.toId)}
+            value={pair.fromId}
+            pickedSub={balanceLine(from)}
+            onChange={(id) => setPair((previous) => ({ ...previous, fromId: id }))}
+            disabled={loading || !!walletsError}
+          />
+        </div>
+        <span aria-hidden="true" className="hidden h-13 items-center justify-center text-ink-faint sm:flex">
           <ArrowRight className="size-4.5" />
         </span>
-        <Field htmlFor="transfer-to" label={<span className="text-small font-semibold text-ink-2">{t("To account (money comes in)")}</span>}>
-          <NativeSelect id="transfer-to" value={pair.toId} onChange={(event) => setPair((previous) => ({ ...previous, toId: event.target.value }))} disabled={loading || !!walletsError} className="font-normal">
-            {loading ? <option value="">{t("Loading...")}</option> : !pair.toId && <option value="">{t("Choose an account")}</option>}
-            {wallets
-              .filter((wallet) => wallet.id !== pair.fromId)
-              .map((wallet) => (
-                <option key={wallet.id} value={wallet.id}>
-                  {nameOf(wallet)}
-                </option>
-              ))}
-          </NativeSelect>
-        </Field>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span id={`${ids}-to`} className="text-small font-semibold text-ink-2">
+            {t("To account (money comes in)")}
+          </span>
+          <TransferSelect
+            labelId={`${ids}-to`}
+            placeholder={t(loading ? "Loading..." : "Select an account")}
+            placeholderIcon={<Landmark aria-hidden="true" />}
+            options={walletOptions(pair.fromId)}
+            value={pair.toId}
+            pickedSub={balanceLine(to)}
+            onChange={(id) => setPair((previous) => ({ ...previous, toId: id }))}
+            disabled={loading || !!walletsError}
+          />
+        </div>
       </div>
       {walletsError && <p role="alert" className="-mt-2 text-[12.5px] text-expense">{t(walletsError)}</p>}
       {tooFew && (
@@ -326,32 +358,35 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
         </div>
       </div>
 
-      <Field
-        htmlFor="transfer-category"
-        label={<span className={cn("text-small font-semibold text-ink-2", fee <= 0 && "opacity-50")}>{t("Expense category for the charge")}</span>}
-        hint={t(fee > 0 ? "The charge is saved as an expense in this category." : "Enter a charge to choose a category. No charge, no expense.")}
-      >
-        <NativeSelect id="transfer-category" value={chargedCategory} onChange={(event) => setCategory(event.target.value)} disabled={fee <= 0} aria-describedby="transfer-category-hint">
-          {categoryOptions.map((name) => (
-            <option key={name} value={name}>
-              {t(name)}
-            </option>
-          ))}
-        </NativeSelect>
-      </Field>
-
-      <Field htmlFor="transfer-note" label={<span className="text-small font-semibold text-ink-2">{t("Note")}</span>}>
-        <Input id="transfer-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. ATM withdrawal")} />
-      </Field>
-
-      {(from || to) && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {sideBox(from, "from")}
-          {sideBox(to, "to")}
+      {fee > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span id={`${ids}-category`} className="text-small font-semibold text-ink-2">
+            {t("Expense category for the charge")}
+          </span>
+          <TransferSelect
+            labelId={`${ids}-category`}
+            placeholder={t("Choose a category")}
+            placeholderIcon={<Tag aria-hidden="true" />}
+            options={categoryChoices}
+            value={category ?? ""}
+            pickedSub={t("Saved as an expense")}
+            onChange={setCategory}
+          />
+          <span className="text-caption text-ink-muted">{t("The charge is saved as an expense in this category.")}</span>
         </div>
       )}
+
+      <Field htmlFor="transfer-note" label={<span className="text-small font-semibold text-ink-2">{t("Note")}</span>}>
+        <Input id="transfer-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Details of your transaction")} />
+      </Field>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {sideBox(from, "from")}
+        {sideBox(to, "to")}
+      </div>
       {same && <p className="-mt-1.5 text-[12.5px] text-expense">{t("From and To must be different accounts.")}</p>}
       {short && from && <p className="-mt-1.5 text-[12.5px] text-expense">{t("{account} doesn't have enough balance for this transfer and charge.", { account: nameOf(from) })}</p>}
+      {needed.length > 0 && !loading && <p className="-mt-1.5 text-[12.5px] text-ink-muted">{t("Still needed: {items}", { items: needed.join(" · ") })}</p>}
       {error && (
         <p role="alert" className="text-small text-expense">
           {error}

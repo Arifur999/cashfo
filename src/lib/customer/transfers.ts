@@ -100,11 +100,11 @@ export interface TransferPair {
   toId: string;
 }
 
-// The Move money drawer's From and To once its wallets load: the last
-// choice while those wallets are still offered, otherwise the first ones,
-// and never the same wallet on both sides. Empty where there is none.
+// The transfer popup's From and To once its wallets load: a side whose
+// wallet is no longer offered (archived since) goes back to empty, and one
+// wallet is never on both sides. Nothing is picked for the reader.
 export function transferPair(walletIds: string[], current: TransferPair): TransferPair {
-  const fromId = walletIds.includes(current.fromId) ? current.fromId : (walletIds[0] ?? "");
-  const toId = current.toId !== fromId && walletIds.includes(current.toId) ? current.toId : (walletIds.find((id) => id !== fromId) ?? "");
+  const fromId = walletIds.includes(current.fromId) ? current.fromId : "";
+  const toId = current.toId !== fromId && walletIds.includes(current.toId) ? current.toId : "";
   return { fromId, toId };
 }
