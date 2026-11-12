@@ -314,60 +314,61 @@
 }
 
 .dark {
-  --emerald: #4fb8a6;
-  --emerald-hover: #7fcdbf;
-  --brand-ink: #7fcdbf;
+  /* Design v4 dark (the boards' --sm-* dark values): the primary keeps its
+     light fill and edge with white words on it, and only its words and
+     icons take the lighter ink (--emerald-ink, read by text-emerald below). */
+  --emerald: #1c7567;
+  --emerald-ink: #5cc8b2;
+  --mint-200: #2b5a50;
+  --emerald-hover: #155c51;
+  --brand-ink: #8eddcb;
   --jade: #3cc9b0;
-  --mint-50: #0e2a26;
-  --on-action: #04140e;
+  --mint-50: #1b3b34;
+  --on-action: #ffffff;
 
-  /* The split grounds are only split in light: here every band keeps the
-     night ground the old cream token had and a divider the old sunken, so
-     the dark theme looks as it did. */
-  --page: #08120e;
-  --table-head: #08120e;
-  --strip: #08120e;
-  --hover: #08120e;
-  /* The table row hover was never the plain cream: it was
-     color-mix(in oklab, cream 60%, surface), precomputed here so it stays
-     opaque for pinned cells and the contrast test can read it. */
-  --row-hover: #0b1612;
-  --surface: #0f1c17;
-  --surface-raised: #15251f;
-  --surface-sunken: #0b1712;
-  --line: #20332b;
-  --divider: #0b1712;
-  --line-strong: #56706a;
-  --line-card: #20332b;
+  /* The boards' grounds: page, card, bands (surface-2) and row hover. */
+  --page: #0e1513;
+  --table-head: #1a2421;
+  --strip: #1a2421;
+  --hover: #2c3331;
+  --row-hover: #2c3331;
+  --surface: #151d1b;
+  --surface-raised: #151d1b;
+  --surface-sunken: #0e1513;
+  --line: #26332f;
+  --divider: #0e1513;
+  /* Not on the boards; a shade up so it still reads 3:1 on the bands. */
+  --line-strong: #5a746e;
+  --line-card: #26332f;
 
-  --ink: #eaf2ee;
-  --ink-2: #c3d2ca;
-  --ink-soft: #a9bbb2;
-  --ink-muted: #93a89d;
-  --ink-faint: #61776b;
-  --focus-ring: #7fcdbf;
+  --ink: #e6eeec;
+  --ink-2: #bcc9c6;
+  --ink-soft: #bcc9c6;
+  --ink-muted: #93a39f;
+  --ink-faint: #84938f;
+  --focus-ring: #5cc8b2;
 
-  --emerald-soft: #0e2a26;
-  --emerald-line: #1c4536;
+  --emerald-soft: #15302a;
+  --emerald-line: #2b5a50;
   --emerald-wash: #0b221f;
   --habit: #3dbdb0;
   --habit-soft: #0c2a28;
   --habit-line: #18433f;
 
-  --income: #4fb8a6;
-  --income-soft: #0e2a26;
-  --expense: #f08080;
-  --expense-fill: #e5484d;
-  --expense-soft: #3a1715;
-  --expense-line: rgba(240, 128, 128, 0.4);
-  --warning: #f2b84b;
+  --income: #5cc8b2;
+  --income-soft: #1b3b34;
+  --expense: #f87171;
+  --expense-fill: #f87171;
+  --expense-soft: #3a1a1c;
+  --expense-line: #5a2326;
+  --warning: #fbbf24;
   --warning-fill: #f2b84b;
-  --warning-soft: #33240a;
-  --warning-50: #241a08;
-  --warning-line: #5a4314;
-  --warning-ink: #f5cf86;
-  --info: #86abf2;
-  --info-soft: #14234a;
+  --warning-soft: #2e2410;
+  --warning-50: #2a2110;
+  --warning-line: #5a4612;
+  --warning-ink: #fcd34d;
+  --info: #93b4fb;
+  --info-soft: #172540;
   --orange: #fb923c;
   --orange-fill: #f97316;
   --orange-soft: #3a1d0a;
@@ -381,8 +382,8 @@
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
   --gateway-rocket: #c98bd3;
-  --success: #4ade80;
-  --success-soft: #0f2a1a;
+  --success: #22c55e;
+  --success-soft: #143320;
   --success-line: #1f5a35;
   --success-ink: #86efac;
 
@@ -393,10 +394,10 @@
   --pillar-insights: #5cccdb;
   --pillar-insights-soft: #0b2e33;
 
-  --chart-income: #4fb8a6;
+  --chart-income: #5cc8b2;
   --chart-expense: #e5484d;
   --chart-savings: #2fd6a0;
-  --chart-grid: #20332b;
+  --chart-grid: #26332f;
   --chart-other: #3a4d44;
   --cat-1: #4fb8a6;
   --cat-2: #f0a46a;
@@ -433,22 +434,22 @@
   --asset-red: #fb7185;
   --asset-leaf: #6ee7a0;
   --asset-grey: #9aa7a4;
-  --loss-ink: #fca5a5;
-  --gain-wash: #0f2618;
-  --loss-wash: #2b1316;
+  --loss-ink: #f87171;
+  --gain-wash: #10261a;
+  --loss-wash: #2a1516;
   --quiet-chip: #17241f;
   --chart-cost: #4f5f5a;
   --toggle-track: #17241f;
-  --pick-wash: #12302a;
+  --pick-wash: #2b3331;
   --sold-card: #0d1915;
-  --card-rule: #1a2b24;
-  --head-wash: #0b1712;
-  --head-rule: #20332b;
+  --card-rule: #1c2724;
+  --head-wash: #2c3331;
+  --head-rule: #1c2724;
   --due-ink: #fcd34d;
   --alert-wash: #33200e;
   --note-ink: #9cc7be;
   --note-yellow: #29250f;
-  --note-green: #0f2618;
+  --note-green: #10261a;
   --note-blue: #111d33;
   --note-pink: #2b1323;
   --note-purple: #1f1838;
@@ -465,18 +466,18 @@
   --tint-yellow-ink: #facc15;
   --tint-yellow-line: #4a3f12;
   --tint-yellow-deep: #fde68a;
-  --tint-teal: #0b2e33;
+  --tint-teal: #12302c;
   --tint-teal-ink: #5cccdb;
-  --tint-violet: #1f1838;
+  --tint-violet: #251c3d;
   --tint-violet-ink: #b6a2ff;
   --tint-orange: #33200e;
   --tint-orange-ink: #f0a46a;
-  --tint-blue: #14234a;
-  --tint-blue-ink: #86abf2;
+  --tint-blue: #172540;
+  --tint-blue-ink: #93b4fb;
   --meter-records: #7cb6f7;
   --meter-backups: #f2b84b;
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A3B2AE' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  --tint-green: #0f2618;
+  --tint-green: #143320;
   --tint-green-ink: #4ade80;
   --tint-indigo: #1b1d45;
   --tint-indigo-ink: #a5b4fc;
@@ -500,7 +501,7 @@
   --primary-foreground: var(--on-action);
   --secondary: var(--surface-raised);
   /* Between line and line-strong, as the light #c9d3d1 is. */
-  --input: #34493f;
+  --input: #3a4a46;
   --accent: var(--mint-50);
   --accent-foreground: var(--brand-ink);
   --sidebar-ring: var(--jade);
@@ -573,9 +574,52 @@ html:not(.dark) [data-app="habit"] {
 .dark[data-app="habit"],
 .dark [data-app="habit"] {
   --emerald-hover: #6fd6cb;
+  /* The Habit Tracker keeps its own dark teal: a light fill with dark words
+     on it, and the same teal for its words. */
+  --emerald-ink: var(--habit);
+  --on-action: #04140e;
   --brand-ink: #6fd6cb;
   --accent: var(--mint-50);
   --accent-foreground: var(--brand-ink);
+}
+
+/* Design v4 dark: the primary's words and icons take --emerald-ink while its
+   fills and edges keep --emerald (see .dark). The rules sit after Tailwind's
+   utilities, so the state classes that pair with text-emerald are restated
+   after it to keep winning. */
+@layer utilities {
+  .dark .text-emerald,
+  .dark .text-primary,
+  .dark .dark:text-emerald,
+  .dark .data-open:text-emerald[data-open],
+  .dark .data-[state=open]:text-emerald[data-state="open"] {
+    color: var(--emerald-ink);
+  }
+  @media (hover: hover) {
+    .dark .hover:text-emerald:hover {
+      color: var(--emerald-ink);
+    }
+    .dark .hover:text-emerald-hover:hover {
+      color: var(--brand-ink);
+    }
+  }
+  @media (width >= 48rem) {
+    .dark .md:data-[state=open]:text-emerald[data-state="open"] {
+      color: var(--emerald-ink);
+    }
+  }
+  .dark .dark:text-forest {
+    color: var(--forest);
+  }
+  .dark .disabled:text-ink-faint:disabled {
+    color: var(--ink-faint);
+  }
+  .dark .disabled:text-ink-muted:disabled {
+    color: var(--ink-muted);
+  }
+  .dark .disabled:text-white/70:disabled {
+    color: rgb(255 255 255 / 0.7);
+  }
 }
 
 @theme inline {
