@@ -232,10 +232,8 @@ export function ledgerFileName(accountName: string, today: string): string {
 
 // ---- Transfers ----
 
-// The charge categories every workspace has (the backend's too); a mobile
-// wallet's charge starts as its fee, any other as a bank charge.
-export const BUILT_IN_CHARGE_CATEGORIES = ["Bank charge", "Mobile banking fee", "Service charge"];
-export const defaultChargeCategory = (fromSubtype: string | null | undefined): string => (fromSubtype === "mfs" ? "Mobile banking fee" : "Bank charge");
+// The charge categories every workspace has (the backend's CHARGE_CATEGORIES).
+export const BUILT_IN_CHARGE_CATEGORIES = ["Bank charge", "Mobile banking fee", "Service charge", "Other"];
 
 // A charge typed in taka or as a percent of the amount, to the paisa.
 export function chargeOf(amount: number, typed: string, mode: "tk" | "pct"): number {

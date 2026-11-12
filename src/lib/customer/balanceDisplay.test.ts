@@ -4,7 +4,6 @@ import { translate } from "@/lib/i18n/translate";
 import {
   accountColor,
   chargeOf,
-  defaultChargeCategory,
   directionOf,
   entrySource,
   hasHistory,
@@ -155,12 +154,6 @@ describe("transfers", () => {
     expect(chargeOf(2000, "1.85", "pct")).toBe(37);
     expect(chargeOf(1234, "1.5", "pct")).toBe(18.51);
     expect(chargeOf(5000, "", "pct")).toBe(0);
-  });
-
-  it("files a mobile wallet's charge as its fee", () => {
-    expect(defaultChargeCategory("mfs")).toBe("Mobile banking fee");
-    expect(defaultChargeCategory("bank")).toBe("Bank charge");
-    expect(defaultChargeCategory(undefined)).toBe("Bank charge");
   });
 
   it("turns a run of months into days, in order", () => {

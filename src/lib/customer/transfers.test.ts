@@ -108,18 +108,18 @@ describe("transferPair", () => {
     expect(transferPair(["a", "b", "c"], { fromId: "c", toId: "a" })).toEqual({ fromId: "c", toId: "a" });
   });
 
-  it("starts from the first two wallets", () => {
-    expect(transferPair(["a", "b", "c"], { fromId: "", toId: "" })).toEqual({ fromId: "a", toId: "b" });
+  it("picks nothing for the reader", () => {
+    expect(transferPair(["a", "b", "c"], { fromId: "", toId: "" })).toEqual({ fromId: "", toId: "" });
+    expect(transferPair(["a", "b", "c"], { fromId: "b", toId: "" })).toEqual({ fromId: "b", toId: "" });
   });
 
-  it("drops a wallet that was archived since", () => {
-    expect(transferPair(["a", "b"], { fromId: "gone", toId: "b" })).toEqual({ fromId: "a", toId: "b" });
-    expect(transferPair(["a", "b"], { fromId: "b", toId: "gone" })).toEqual({ fromId: "b", toId: "a" });
+  it("empties a side whose wallet was archived since", () => {
+    expect(transferPair(["a", "b"], { fromId: "gone", toId: "b" })).toEqual({ fromId: "", toId: "b" });
+    expect(transferPair(["a", "b"], { fromId: "b", toId: "gone" })).toEqual({ fromId: "b", toId: "" });
   });
 
   it("never puts one wallet on both sides", () => {
-    expect(transferPair(["a", "b"], { fromId: "gone", toId: "a" })).toEqual({ fromId: "a", toId: "b" });
-    expect(transferPair(["a"], { fromId: "a", toId: "b" })).toEqual({ fromId: "a", toId: "" });
+    expect(transferPair(["a", "b"], { fromId: "a", toId: "a" })).toEqual({ fromId: "a", toId: "" });
     expect(transferPair([], { fromId: "a", toId: "b" })).toEqual({ fromId: "", toId: "" });
   });
 });

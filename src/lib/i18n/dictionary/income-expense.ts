@@ -715,4 +715,16 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Change undone": "পরিবর্তন ফিরিয়ে নেওয়া হয়েছে",
   "Transaction removed": "লেনদেন সরানো হয়েছে",
   "Couldn't undo the change": "পরিবর্তনটা ফেরানো যায়নি",
+  // Category Set v4: figures, search, tabs, sort, totals and quick add
+  "Most used@@categories": "সবচেয়ে বেশি ব্যবহার",
+  "Highest amount": "সবচেয়ে বেশি টাকা",
+  "A–Z@@categories": "নাম অনুযায়ী",
+  "All-time total": "মোট (সব সময়)",
+  "{amount} all time": "{amount} (সব সময়)",
+  "No category matches “{query}”": "কোনো ক্যাটাগরি মেলেনি: “{query}”",
+  "Quick add an income category…": "দ্রুত আয়ের ক্যাটাগরি যোগ করুন…",
+  "Quick add an expense category…": "দ্রুত খরচের ক্যাটাগরি যোগ করুন…",
+  "New income category name": "নতুন আয়ের ক্যাটাগরির নাম",
+  "New expense category name": "নতুন খরচের ক্যাটাগরির নাম",
+  "Couldn't add the category.": "ক্যাটাগরি যোগ করা যায়নি।",
 };

@@ -963,6 +963,8 @@ export interface CategorySetRow {
   color: string;
   monthlyLimit: string | null;
   transactionCount: number;
+  // Its money of all time ("1250.00"); left out by an older backend.
+  total?: string;
   // "zakat": the Zakat page's own category -- listed, changed only there.
   system?: "zakat" | null;
 }
@@ -974,6 +976,7 @@ export interface AutomaticCategoryRow {
   name: string;
   kind: "charges";
   transactionCount: number;
+  total?: string;
 }
 
 export interface CategorySet {

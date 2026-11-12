@@ -498,4 +498,14 @@ export const balanceDictionary: Record<string, string> = {
   // Balance v16: transfer empty line, all time
   "No transfers for {account} in all time.": "{account}-এর এখনো কোনো ট্রান্সফার নেই।",
   "No transfers in all time.": "এখনো কোনো ট্রান্সফার নেই।",
+  // Transfer v4: the New transfer popup's pickers and its "Still needed" line
+  "Still needed: {items}": "এখনো বাকি: {items}",
+  "the From account": "যে অ্যাকাউন্ট থেকে যাবে",
+  "the To account": "যে অ্যাকাউন্টে আসবে",
+  "the amount": "টাকার পরিমাণ",
+  "a category for the charge": "চার্জের ক্যাটাগরি",
+  "Details of your transaction": "আপনার লেনদেনের বিবরণ",
+  "Already picked on the other side": "অন্য পাশে বাছা হয়েছে",
+  "Saved as an expense": "খরচ হিসেবে সেভ হবে",
+  "Choose a category": "একটি ক্যাটাগরি বাছুন",
 };
