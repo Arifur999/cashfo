@@ -15,7 +15,7 @@ import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt"
 import { deleteBusinessAction } from "@/lib/customer/businessActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { budgetFor, budgetStatus, cashInHand, groupMonthOf, groupTabHref, type GroupTab, isDayClosed, poolsMeals, sharedEqually, shiftMonth, shortName, spendByCategory, spendByMonth, startDayOf, type Transfer, whoPaysWhom } from "@/lib/customer/groupDisplay";
-import { deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction } from "@/lib/customer/groupExpensesActions";
+import { createGroupExpenseAction, deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction } from "@/lib/customer/groupExpensesActions";
 import { budgetPageMonths, costShares, firstMonthOf, mainAccountantId, monthEndOf, spendByMonthKey } from "@/lib/customer/groupFamily";
 import { unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
@@ -191,10 +191,25 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
   const removeExpense = (row: GroupExpense) =>
     setConfirm({
       title: t("Delete this expense?"),
-      description: `${[formatDay(row.date.slice(0, 10), "d MMM yyyy", fmt), row.description || row.category, money(row.amount)].join(" · ")}. ${t("This cannot be undone.")}${closedNote(row.date)}`,
+      description: `${[formatDay(row.date.slice(0, 10), "d MMM yyyy", fmt), row.description || row.category, money(row.amount)].join(" · ")}.${closedNote(row.date)}`,
       confirmLabel: t("Delete"),
       danger: true,
-      onConfirm: () => run(() => deleteGroupExpenseAction(data.businessId, row.id), t("Expense deleted"), t("Failed to delete the expense")),
+      onConfirm: () =>
+        startTransition(async () => {
+          const result = await attempt(() => deleteGroupExpenseAction(data.businessId, row.id), offline, stale);
+          if (!result.success) return void toast.error(result.message ?? t("Failed to delete the expense"));
+          setConfirm(null);
+          router.refresh();
+          // Undo records it again with everything it had.
+          const again = { amount: String(Number(row.amount)), date: row.date.slice(0, 10), category: row.category, description: row.description ?? undefined, paidByMemberId: row.paidByMemberId ?? undefined, paidFrom: row.paidFrom, split: row.split, splits: row.splits.map((s) => ({ groupMemberId: s.groupMemberId, ...(s.units !== null && { units: Number(s.units) }), ...(s.amount !== null && { amount: String(Number(s.amount)) }) })) };
+          toast.success(t("Expense deleted"), {
+            duration: 6000,
+            action: {
+              label: t("Undo"),
+              onClick: () => void attempt(() => createGroupExpenseAction(data.businessId, again), offline, stale).then((back) => (back.success ? (toast.success(t("Expense restored")), router.refresh()) : toast.error(back.message ?? t("Failed to restore the expense")))),
+            },
+          });
+        }),
     });
 
   // Inactive from the end of this group month: they share its costs up to
@@ -310,7 +325,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       </div>
 
       <MealDrawer day={mealDay} onClose={() => setMealDay(null)} businessId={data.businessId} members={data.members} meals={data.meals} units={unitsOf(data.settings)} range={data.range} closedGuard={closedGuard} />
-      <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} members={data.members} editing={member.editing} defaultJoin={view.setup ? "" : data.today} />
+      <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} groupName={data.name} members={data.members} editing={member.editing} defaultJoin={view.setup ? "" : data.today} onLeave={toggleMember} />
       <ContributionDrawer open={contribution.open} onClose={() => setContribution({ open: false, editing: null, memberId: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} holderId={holderId} given={givenByMember} range={data.range} today={data.today} editing={contribution.editing} presetMemberId={contribution.memberId} closedGuard={closedGuard} />
       <ExpenseDrawer
         open={expense.open}

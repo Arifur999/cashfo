@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Coffee, Info, Minus, Moon, Pause, Plus, Sun } from "lucide-react";
+import { CalendarClock, Coffee, Info, Lock, Minus, Moon, Pause, Plus, Sun } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import type { GroupKind, GroupSettings } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { updateBusinessAction } from "@/lib/customer/businessActions";
-import { groupMonthOf, groupTabHref, monthRangeOf, rangeLabel } from "@/lib/customer/groupDisplay";
+import { groupMonthOf, groupTabHref, monthRangeOf, rangeLabel, shiftMonth } from "@/lib/customer/groupDisplay";
 import { updateGroupMemberAction, updateGroupSettingsAction } from "@/lib/customer/groupExpensesActions";
 import { isAccountant } from "@/lib/customer/groupFamily";
 import { mealText, unitsOf } from "@/lib/customer/groupMeals";
@@ -79,6 +79,12 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
   const custom = settings.costSplit === "CUSTOM";
   const hasAccountants = active.some(isAccountant);
   const warn = settings.budgetWarnPercent === undefined ? 90 : settings.budgetWarnPercent;
+  // The group's first month: the one saved, else its first member's. Two
+  // years back at most, up to this month.
+  const currentKey = groupMonthOf(data.today, settings.monthStartDay);
+  const memberFirst = [currentKey, ...data.members.map((member) => groupMonthOf((member.joinedOn ?? member.createdAt).slice(0, 10), settings.monthStartDay))].sort()[0];
+  const firstMonth = settings.firstMonth ?? memberFirst;
+  const firstChoices = Array.from({ length: 24 }, (_, i) => shiftMonth(currentKey, -i)).concat(firstMonth < shiftMonth(currentKey, -23) ? [firstMonth] : []);
   // Members' shares, edited here and saved together.
   const [shareDraft, setShareDraft] = useState<Record<string, number>>({});
   const draftTotal = active.reduce((sum, member) => sum + (shareDraft[member.id] ?? Number(member.shareUnits)), 0);
@@ -105,7 +111,10 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
     [t("Admin"), owner?.name ?? "—"],
     [t("Created on"), firstDay ? formatDay(firstDay, "d MMMM yyyy", fmt) : "—"],
     [t("Members"), t("{active} active · {count} can log in", { active: formatCount(active.length, fmt), count: formatCount(logins, fmt) })],
+    ...(data.entryCount !== null ? [[t("Money entries"), formatCount(data.entryCount, fmt)] as [string, string]] : []),
   ];
+  // A group with money entries can only be paused (the backend refuses too).
+  const deletable = data.entryCount === 0;
   const dayWord = (day: number) => toLocaleDigits(locale === "bn" ? String(day) : ordinal(day), fmt);
   const status = (section: Section) => (saving === section ? "saving" : saved === section ? "saved" : null);
   useEffect(
@@ -227,6 +236,57 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                 />
               </fieldset>
               <div className="grid gap-3 sm:grid-cols-2">
+                <Field htmlFor="gs-first" label={<span className="text-body font-medium text-ink">{t("First month")}</span>}>
+                  <NativeSelect id="gs-first" size="md" value={firstMonth} onChange={(event) => event.target.value !== firstMonth && save("general", { firstMonth: event.target.value })} frameClassName="w-full" className="font-normal" aria-describedby="gs-first-note">
+                    {firstChoices.map((key) => (
+                      <option key={key} value={key}>
+                        {monthName(key, fmt, "long", true)}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <Field htmlFor="gs-warn" label={<span className="text-body font-medium text-ink">{t("Warn when the budget is used")}</span>}>
+                  <NativeSelect id="gs-warn" size="md" value={warn === null ? "" : String(warn)} onChange={(event) => save("general", { budgetWarnPercent: event.target.value ? Number(event.target.value) : null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-warn-note">
+                    {[...WARN_CHOICES, ...(warn !== null && !WARN_CHOICES.includes(String(warn) as (typeof WARN_CHOICES)[number]) ? [String(warn)] : [])].map((choice) => (
+                      <option key={choice || "never"} value={choice}>
+                        {choice ? `${toLocaleDigits(choice, fmt)}%` : t("Never")}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <span id="gs-first-note" className="-mt-1.5 text-caption leading-normal text-ink-muted">
+                  {t("Months start here. It can’t be after the first entry.")}
+                </span>
+                <span id="gs-warn-note" className="-mt-1.5 text-caption leading-normal text-ink-muted">
+                  {t("The dashboard turns amber at this point.")}
+                </span>
+              </div>
+              <fieldset className="flex min-w-0 flex-col gap-2">
+                <legend className="mb-2 text-body font-medium text-ink">{t("How new categories are shared")}</legend>
+                <div role="radiogroup" aria-label={t("How new categories are shared")} className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      ["EQUAL", "Equally", "Everyone pays the same part"],
+                      ["SHARES", "By shares", "Bigger families pay a bigger part"],
+                    ] as const
+                  ).map(([value, title, sub]) => {
+                    const on = (settings.newCategorySplit ?? "EQUAL") === value;
+                    return (
+                      <button key={value} type="button" role="radio" aria-checked={on} onClick={() => !on && save("general", { newCategorySplit: value })} className={cn("flex flex-col items-start gap-0.5 rounded-[12px] px-3 py-2.5 text-left", on ? "border-[1.5px] border-emerald bg-emerald-wash" : "border border-line bg-surface hover:border-mint-200")}>
+                        <span className="text-body font-semibold text-ink">{t(title)}</span>
+                        <span className="text-caption text-ink-muted">{t(sub)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="text-caption leading-normal text-ink-muted">
+                  {t("Only the starting choice for a new category. Each category can still be changed.")}{" "}
+                  <Link href={groupTabHref(data.businessId, "categories")} className="font-semibold text-emerald hover:underline">
+                    {t("Open categories")}
+                  </Link>
+                </span>
+              </fieldset>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field htmlFor="gs-start" label={<span className="text-body font-medium text-ink">{t("Month starts on")}</span>}>
                   <NativeSelect id="gs-start" size="md" value={settings.monthStartDay} onChange={(event) => Number(event.target.value) !== settings.monthStartDay && setNewStart(Number(event.target.value))} frameClassName="w-full" className="font-normal" aria-describedby="gs-start-note">
                     {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
@@ -236,11 +296,12 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                     ))}
                   </NativeSelect>
                 </Field>
-                <Field htmlFor="gs-warn" label={<span className="text-body font-medium text-ink">{t("Warn when the budget is used")}</span>}>
-                  <NativeSelect id="gs-warn" size="md" value={warn === null ? "" : String(warn)} onChange={(event) => save("general", { budgetWarnPercent: event.target.value ? Number(event.target.value) : null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-warn-note">
-                    {WARN_CHOICES.map((choice) => (
-                      <option key={choice || "never"} value={choice}>
-                        {choice ? `${toLocaleDigits(choice, fmt)}%` : t("Never")}
+                <Field htmlFor="gs-cash" label={<span className="text-body font-medium text-ink">{t("Cash kept by")}</span>}>
+                  <NativeSelect id="gs-cash" size="md" value={settings.cashHolderMemberId ?? ""} onChange={(event) => save("general", { cashHolderMemberId: event.target.value || null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-cash-note">
+                    {(!hasAccountants || !settings.cashHolderMemberId) && <option value="">{t("No one in particular")}</option>}
+                    {active.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {isAccountant(member) ? t("{name} (accountant)", { name: member.name }) : member.name}
                       </option>
                     ))}
                   </NativeSelect>
@@ -249,19 +310,6 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
               <span id="gs-start-note" className="text-caption leading-normal text-ink-muted">
                 {t("Every month is counted from this day, the open one too. Entries keep their dates, and so do closed records.")}
               </span>
-              <span id="gs-warn-note" className="-mt-2 text-caption leading-normal text-ink-muted">
-                {t("The dashboard turns amber at this point.")}
-              </span>
-              <Field htmlFor="gs-cash" label={<span className="text-body font-medium text-ink">{t("Cash kept by")}</span>}>
-                <NativeSelect id="gs-cash" size="md" value={settings.cashHolderMemberId ?? ""} onChange={(event) => save("general", { cashHolderMemberId: event.target.value || null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-cash-note">
-                  {(!hasAccountants || !settings.cashHolderMemberId) && <option value="">{t("No one in particular")}</option>}
-                  {active.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {isAccountant(member) ? t("{name} (accountant)", { name: member.name }) : member.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </Field>
               <span id="gs-cash-note" className="text-caption leading-normal text-ink-muted">
                 {t("Everyone settles with the one who keeps the cash. Picking someone who isn't an accountant makes them one (up to 2).")}
               </span>
@@ -397,14 +445,21 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
           </Card>
 
 
-          <Card padding="none" elevated={false} className="flex items-center gap-4 rounded-md border-expense-line px-5 py-4.5">
-            <div className="flex min-w-0 flex-1 flex-col gap-0.75">
+          <Card padding="none" elevated={false} className="flex flex-col items-start gap-3 rounded-card border-expense-line px-5 py-4.5">
+            <div className="flex min-w-0 flex-col gap-0.75">
               <h2 className="text-title font-semibold text-expense">{t("Danger zone")}</h2>
-              <span className="text-small leading-normal text-ink-muted">{t("Deleting removes the group for everyone, with every entry and closed month.")}</span>
+              <span className="text-small leading-normal text-ink-soft">{t("Deleting removes the group for everyone. It is only possible while the group has no money entries.")}</span>
             </div>
-            <Button variant="secondary" size="sm" onClick={onDeleteGroup} className="h-9.5 border-expense/40 text-expense hover:bg-expense-soft">
-              {t("Delete group")}
-            </Button>
+            {deletable ? (
+              <Button variant="secondary" size="sm" onClick={onDeleteGroup} className="h-9.5 border-expense/40 text-expense hover:bg-expense-soft">
+                {t("Delete group")}
+              </Button>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-sunken px-3 py-1.5 text-[12.5px] font-semibold text-ink-2">
+                <Lock className="size-3.5" aria-hidden="true" />
+                {data.entryCount === null ? t("Can’t check the money entries right now") : t(data.entryCount === 1 ? "Has {count} money entry, so it can’t be deleted" : "Has {count} money entries, so it can’t be deleted", { count: formatCount(data.entryCount, fmt) })}
+              </span>
+            )}
           </Card>
         </div>
 

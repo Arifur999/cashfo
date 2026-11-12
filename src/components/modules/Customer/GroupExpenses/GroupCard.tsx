@@ -36,7 +36,7 @@ export function groupRowView(group: GroupCardData, today: string, t: Translate, 
   // The group's first month: its earliest member's joining.
   const startDay = settings.monthStartDay;
   const current = groupMonthOf(today, startDay);
-  const first = [current, ...members.map((member) => groupMonthOf((member.joinedOn ?? member.createdAt).slice(0, 10), startDay))].sort()[0];
+  const first = settings.firstMonth ?? [current, ...members.map((member) => groupMonthOf((member.joinedOn ?? member.createdAt).slice(0, 10), startDay))].sort()[0];
   const isAdmin = workspace.role === "OWNER";
   const me = isAdmin ? members.find((member) => member.isOwner) : undefined;
   const mine = me ? Number(settlement.members.find((row) => row.groupMemberId === me.id)?.balance ?? 0) : 0;

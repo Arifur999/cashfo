@@ -15,6 +15,7 @@ import {
   type GroupMember,
   type GroupMemberStatus,
   type GroupMonthlyBudget,
+  type GroupPayMethod,
   type GroupPaidFrom,
   type GroupSettings,
   type GroupSettlementRecord,
@@ -143,7 +144,7 @@ export async function deleteGroupContributionAction(businessId: string, id: stri
 // the reader's words. Answers both rows, the payer's first.
 export async function settleUpAction(
   businessId: string,
-  input: { fromMemberId: string; toMemberId: string; amount: string; date: string; payerNote?: string; receiverNote?: string },
+  input: { fromMemberId: string; toMemberId: string; amount: string; date: string; method?: GroupPayMethod; payerNote?: string; receiverNote?: string },
 ): Promise<ActionResult<GroupContribution[]>> {
   return callApi(async () => {
     const res = await customerApi.post<GroupContribution[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settle-up`, input, {
@@ -222,6 +223,8 @@ export interface GroupExpenseCategoryInput {
   // [] = shared by everyone again.
   defaultMemberIds?: string[];
   hidden?: boolean;
+  // What it may spend in a month; null: no limit.
+  monthlyLimit?: number | null;
 }
 
 export async function createGroupExpenseCategoryAction(
@@ -247,6 +250,14 @@ export async function updateGroupExpenseCategoryAction(
     });
     return res.data;
   }, "Failed to update category");
+}
+
+// Every category of the group, in its new order (the drag handle).
+export async function reorderGroupExpenseCategoriesAction(businessId: string, ids: string[]): Promise<ActionResult<GroupExpenseCategoryOption[]>> {
+  return callApi(async () => {
+    const res = await customerApi.put<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/order`, { ids }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to reorder the categories");
 }
 
 export async function deleteGroupExpenseCategoryAction(businessId: string, id: string): Promise<ActionResult> {

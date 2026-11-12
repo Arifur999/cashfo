@@ -9,6 +9,7 @@ import {
   getGroupActivity,
   getGroupCashbook,
   getGroupContributions,
+  getGroupEntryCount,
   getGroupExpenseCategories,
   getGroupExpenses,
   getGroupMeals,
@@ -85,7 +86,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   ]);
 
   // What the page on show needs beyond the month.
-  const [periodExpenses, periodContributions, periodSettlement, allExpenses, cashbook, cashbookAll, activity] = await Promise.all([
+  const [periodExpenses, periodContributions, periodSettlement, allExpenses, cashbook, cashbookAll, activity, entryCount] = await Promise.all([
     span && (tab === "dashboard" || tab === "expenses" || tab === "categories" || tab === "contributions") ? getGroupExpenses(businessId, span) : null,
     span && tab === "contributions" ? getGroupContributions(businessId, span) : null,
     span && tab === "dashboard" ? getGroupSettlement(businessId, span.from, span.to) : null,
@@ -93,6 +94,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     tab === "cashbook" ? getGroupCashbook(businessId, accountantId, range.from, range.to) : null,
     tab === "cashbook" ? getGroupCashbook(businessId, undefined, range.from, range.to) : null,
     tab === "activity" ? getGroupActivity(businessId, activityAction, activityPage) : null,
+    tab === "settings" ? getGroupEntryCount(businessId) : null,
   ]);
 
   const data: GroupPageData = {
@@ -110,7 +112,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     periodRange: span,
     // A year back at least, so a group that never closed a month can still
     // open the months before this one.
-    months: groupPickerMonths(today, history, range, startDay),
+    months: groupPickerMonths(today, history, range, startDay).filter((key) => !settings.firstMonth || key >= settings.firstMonth || key === range.key),
     closedRecord: closedRecordFor(history, range),
     // Only a group that never recorded anything is new: an empty month in
     // a running group keeps its dashboard.
@@ -131,6 +133,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     allExpenses,
     cashbook,
     cashbookAll,
+    entryCount,
     cashbookAccountant: accountantId ?? null,
     activity,
     activityAction: activityAction ?? null,

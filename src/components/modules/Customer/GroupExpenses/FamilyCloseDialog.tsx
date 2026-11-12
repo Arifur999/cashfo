@@ -1,23 +1,20 @@
 "use client";
 
-import { CalendarCheck, CalendarPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Input from "@/components/smartly/form/Input";
-import { useAmountField } from "@/hooks/useAmountField";
-import type { GroupMember, GroupMonthlyBudget, GroupSettlementResult } from "@/lib/customer/api";
+import type { GroupMember, GroupSettlementResult } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
-import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { type MonthRange, shiftMonth, shortName } from "@/lib/customer/groupDisplay";
-import { closeGroupSettlementAction } from "@/lib/customer/groupExpensesActions";
-import { budgetOf, type SettleCard } from "@/lib/customer/groupFamily";
+import { closeGroupSettlementAction, settleUpAction } from "@/lib/customer/groupExpensesActions";
+import type { SettleCard } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { dayInMonth } from "./ContributionDrawer";
 import { MemberAvatar } from "./GroupBits";
 import { GroupDialog } from "./GroupDialog";
 
@@ -27,174 +24,146 @@ interface FamilyCloseDialogProps {
   businessId: string;
   currency: string;
   range: MonthRange;
+  today: string;
   members: GroupMember[];
   settlement: GroupSettlementResult;
   cards: SettleCard[];
   holderId: string | null;
-  budgets: GroupMonthlyBudget[];
 }
 
-// Closing a family's month (the v7 board's dialog): what each member opens
-// next month with, the accountant's cash, and the next month itself -- ready
-// when it already has a budget, else made here with an optional one. Every
-// balance carries forward.
-export function FamilyCloseDialog({ open, onClose, businessId, currency, range, members, settlement, cards, holderId, budgets }: FamilyCloseDialogProps) {
+// Closing a month (the v16 FamilySettlement board's popup): what was spent,
+// each member's balance, and what is still unpaid. Close and carry moves
+// the unpaid amounts into next month as opening balances; or the suggested
+// payments are recorded first (each through the cash holder), then it closes.
+export function FamilyCloseDialog({ open, onClose, businessId, currency, range, today, members, settlement, cards, holderId }: FamilyCloseDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
-  const [creating, setCreating] = useState(false);
-  const [budget, setBudget] = useState("");
-  const amountField = useAmountField(budget, setBudget, currency);
   const [isPending, startTransition] = useTransition();
-  const [prevOpen, setPrevOpen] = useState(false);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
-    if (open) {
-      setCreating(false);
-      setBudget("");
-    }
-  }
-
   const money = (value: number) => formatCurrency(Math.abs(value), currency, fmt);
   const month = monthName(range.key, fmt, "long", true);
-  const nextKey = shiftMonth(range.key, 1);
-  const next = monthName(nextKey, fmt, "long", true);
-  const nextShort = monthName(nextKey, fmt, "long");
-  const nextBudget = budgetOf(budgets, nextKey);
-  const ready = nextBudget !== null;
-  const open_ = cards.filter((card) => card.state.kind === "pays" || card.state.kind === "gets").length;
+  const next = monthName(shiftMonth(range.key, 1), fmt, "long", true);
   const holder = holderId ? members.find((member) => member.id === holderId) : undefined;
-  const holderCash = Number(settlement.accountantCash?.find((row) => row.groupMemberId === holderId)?.cash ?? settlement.cashInHand);
   const memberById = Object.fromEntries(members.map((member) => [member.id, member]));
+  // The payments still to make, all through the cash holder.
+  const unpaid = holder ? cards.filter((card) => card.state.kind === "pays" || card.state.kind === "gets") : [];
+  const transfers = unpaid.map((card) => {
+    const owes = card.state.kind === "pays";
+    return { card, fromId: owes ? card.memberId : (holder?.id ?? ""), toId: owes ? (holder?.id ?? "") : card.memberId, amount: Math.round(Math.abs(card.after) * 100) / 100 };
+  });
+  const nameOf = (id: string) => memberById[id]?.name ?? "";
 
-  const subOf = (card: SettleCard): { sub: string; label: string; tone: string } => {
-    if (Math.abs(card.after) < 0.005) return { sub: t("Paid in full in {month}", { month: monthName(range.key, fmt, "long") }), label: t("Settled"), tone: "text-ink-muted" };
-    if (card.after > 0) return { sub: card.memberId === holderId ? t("Paid more than their part · kept as credit") : t("Paid more than their part · gets it back later"), label: t("Opening credit"), tone: "text-income" };
-    return { sub: t("Paid less than their part · owes this in {month}", { month: nextShort }), label: t("Opening due"), tone: "text-expense" };
-  };
+  function closeMonth() {
+    return attempt(() => closeGroupSettlementAction(businessId, { periodStart: range.from, periodEnd: range.to, carryForward: true }), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
+  }
 
-  function close() {
+  function carry() {
     startTransition(async () => {
-      const amount = Number(budget);
-      const result = await attempt(
-        () => closeGroupSettlementAction(businessId, { periodStart: range.from, periodEnd: range.to, carryForward: true, ...(creating && amount > 0 && { nextBudgetAmount: amount }) }),
-        t(OFFLINE_MESSAGE),
-        t(STALE_MESSAGE),
-      );
-      if (!result.success) {
-        toast.error(result.message ?? t("Failed to close the month"));
-        return;
-      }
+      const result = await closeMonth();
+      if (!result.success) return void toast.error(result.message ?? t("Failed to close the month"));
       toast.success(t("{month} is closed", { month }));
       onClose();
       router.refresh();
     });
   }
 
-  const closeLabel = ready ? t("Close and carry to {month}", { month: nextShort }) : creating ? t("Create {next} and close {month}", { next: nextShort, month: monthName(range.key, fmt, "long") }) : t("Create {month} first", { month: nextShort });
+  // Each suggested payment as it would be recorded on Settlement, then close.
+  function settleAndClose() {
+    startTransition(async () => {
+      for (const transfer of transfers) {
+        const result = await attempt(
+          () =>
+            settleUpAction(businessId, {
+              fromMemberId: transfer.fromId,
+              toMemberId: transfer.toId,
+              amount: transfer.amount.toFixed(2),
+              date: dayInMonth(range, today),
+              payerNote: t("Paid to {name}", { name: nameOf(transfer.toId) }),
+              receiverNote: t("Received from {name}", { name: nameOf(transfer.fromId) }),
+            }),
+          t(OFFLINE_MESSAGE),
+          t(STALE_MESSAGE),
+        );
+        if (!result.success) {
+          toast.error(result.message ?? t("Failed to record the payment"));
+          router.refresh();
+          return;
+        }
+      }
+      const result = await closeMonth();
+      if (!result.success) {
+        toast.error(result.message ?? t("Failed to close the month"));
+        router.refresh();
+        return;
+      }
+      toast.success(t("Payments recorded and {month} closed", { month }));
+      onClose();
+      router.refresh();
+    });
+  }
 
   return (
     <GroupDialog
       open={open}
       onClose={onClose}
       busy={isPending}
-      width={520}
+      width={580}
       title={t("Close {month}", { month })}
-      sub={open_ === 0 ? t("Everyone is settled for {month}. Only the accountant's cash and their own credit move forward.", { month: monthName(range.key, fmt, "long") }) : t("{count} payments are still open. Nothing is lost: what is left moves to {month} as an opening balance.", { count: formatCount(open_, fmt), month: nextShort })}
+      sub={t("Closing locks {month}: nobody can add, change or delete its entries. You can reopen it later if needed.", { month })}
+      bodyClassName="gap-4"
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="ghost" size="lg" onClick={onClose} disabled={isPending} className="mr-auto px-4 text-ink-2">
             {t("Cancel")}
           </Button>
-          <Button type="button" onClick={close} disabled={isPending || (!ready && !creating)}>
+          <Button type="button" variant={transfers.length ? "secondary" : "primary"} size="lg" onClick={carry} disabled={isPending} className="px-4.5">
             {isPending && <Loader />}
-            {closeLabel}
+            {transfers.length ? t("Close and carry balances to {month}", { month: next }) : t("Close {month}", { month })}
           </Button>
+          {transfers.length > 0 && (
+            <Button type="button" size="lg" onClick={settleAndClose} disabled={isPending} className="px-4.5">
+              {t("Record the suggested payments and close")}
+            </Button>
+          )}
         </>
       }
     >
-      <div className="flex flex-col gap-2">
-        <span className="text-small font-semibold text-ink">{t("Opening balances for {month}", { month: nextShort })}</span>
-        <div className="flex flex-col overflow-hidden rounded-field border border-line">
+      <div className="flex items-center justify-between gap-3 rounded-[12px] bg-hover px-3.5 py-3">
+        <span className="text-[13px] text-ink-muted">{t("Spent in {month}", { month })}</span>
+        <span className="text-[17px] font-bold text-ink tabular-nums">{money(Number(settlement.totalExpense))}</span>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-semibold text-ink-2">{t("Each member’s balance")}</span>
+        <div className="flex flex-col overflow-hidden rounded-[12px] border border-line">
           {cards.map((card) => {
-            const line = subOf(card);
+            const even = Math.abs(card.after) < 0.005;
             return (
               <div key={card.memberId} className="flex items-center gap-3 border-b border-divider px-3.5 py-2.5 last:border-b-0">
-                <MemberAvatar member={memberById[card.memberId] ?? { id: card.memberId, name: card.name, photoUrl: null }} members={members} size={34} />
-                <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                  <span className="truncate font-semibold text-ink">{card.name}</span>
-                  <span className="truncate text-caption text-ink-muted">{line.sub}</span>
-                </span>
-                <span className="flex flex-col items-end leading-tight">
-                  <span className={cn("text-caption font-semibold", line.tone)}>{line.label}</span>
-                  <span className={cn("font-bold tabular-nums", line.tone)}>{money(card.after)}</span>
-                </span>
+                <MemberAvatar member={memberById[card.memberId] ?? { id: card.memberId, name: card.name, photoUrl: null }} members={members} size={30} />
+                <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-ink">{card.name}</span>
+                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", even ? "bg-surface-sunken text-ink-muted" : card.after > 0 ? "bg-success-soft text-tint-green-ink" : "bg-expense-soft text-expense")}>{even ? t("Settled") : card.after > 0 ? t("Gets back") : t("Owes@@group")}</span>
+                <span className={cn("w-28 text-right text-[13.5px] font-bold tabular-nums", even ? "text-ink" : card.after > 0 ? "text-tint-green-ink" : "text-expense")}>{even ? money(0) : formatSignedCurrency(card.after, currency, fmt)}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      {holder && (
-        <div className={cn("flex items-center justify-between gap-3 rounded-field border px-3.5 py-3", holderCash < 0 ? "border-warning-line bg-warning-50" : "border-line bg-strip")}>
-          <span className="flex flex-col leading-tight">
-            <span className="font-semibold text-ink">{holderCash < 0 ? t("{name} spent more than they hold", { name: shortName(holder.name) }) : t("{name} opens {month} with cash in hand", { name: shortName(holder.name), month: nextShort })}</span>
-            <span className="text-caption text-ink-muted">{holderCash < 0 ? t("Opening shortfall of the cash book") : t("Opening balance of the cash book")}</span>
-          </span>
-          <span className={cn("text-[18px] font-bold tabular-nums", holderCash < 0 ? "text-warning" : "text-ink")}>
-            {holderCash < 0 ? "− " : ""}
-            {money(holderCash)}
-          </span>
-        </div>
-      )}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-semibold text-ink-2">{t("Still unpaid")}</span>
+        {transfers.length === 0 ? (
+          <span className="rounded-[12px] bg-success-soft/50 px-3.5 py-2.5 text-[13px] font-medium text-tint-green-ink">{t("Everyone is settled. Nothing to carry.")}</span>
+        ) : (
+          transfers.map((transfer) => (
+            <div key={transfer.card.memberId} className="flex items-center justify-between gap-3 rounded-[12px] border border-line px-3.5 py-2.5 text-[13.5px]">
+              <span className="text-ink-2">{t("{from} pays {to}", { from: shortName(nameOf(transfer.fromId)), to: shortName(nameOf(transfer.toId)) })}</span>
+              <b className="font-bold text-ink tabular-nums">{money(transfer.amount)}</b>
+            </div>
+          ))
+        )}
+      </div>
 
-      {ready ? (
-        <div className="flex items-start gap-3 rounded-field border border-emerald-line bg-emerald-soft px-3.5 py-3">
-          <CalendarCheck className="mt-0.5 size-4.5 shrink-0 text-emerald" aria-hidden="true" />
-          <span className="flex flex-col leading-tight">
-            <span className="font-semibold text-ink">{t("{month} is ready", { month: next })}</span>
-            <span className="text-caption text-ink-muted">{t("It was already created. The balances above move there automatically, budget {amount}.", { amount: money(nextBudget ?? 0) })}</span>
-          </span>
-        </div>
-      ) : creating ? (
-        <div className="flex flex-col gap-3 rounded-field border border-line bg-strip px-3.5 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <span className="flex flex-col leading-tight">
-              <span className="font-semibold text-ink">{t("New month: {month}", { month: next })}</span>
-              <span className="text-caption text-ink-muted">{t("Set a budget now, or leave it empty and set it later.")}</span>
-            </span>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setCreating(false)}>
-              {t("Cancel")}
-            </Button>
-          </div>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-small font-medium text-ink">
-              {t("Monthly budget")} <span className="font-normal text-ink-muted">({t("optional")})</span>
-            </span>
-            <Input
-              size="md"
-              inputMode="decimal"
-              {...amountField}
-              placeholder={t("Leave empty to set later")}
-              className="font-semibold tabular-nums"
-              leading={<span className="flex h-10 w-9 items-center justify-center border-r border-line bg-surface text-body font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
-              frameClassName="overflow-hidden pl-0"
-            />
-          </label>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between gap-3 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3">
-          <span className="flex flex-col leading-tight">
-            <span className="font-semibold text-ink">{t("{month} isn't created yet", { month: next })}</span>
-            <span className="text-caption text-ink-muted">{t("Create it first, so the balances have a month to move into.")}</span>
-          </span>
-          <Button type="button" variant="secondary" size="sm" onClick={() => setCreating(true)}>
-            <CalendarPlus aria-hidden="true" />
-            {t("Create {month}", { month: nextShort })}
-          </Button>
-        </div>
-      )}
-
-      <p className="text-caption text-ink-muted">{t("{month} will be locked. These amounts show up in {next} as opening due or opening credit, and settle as members pay.", { month: monthName(range.key, fmt, "long"), next: nextShort })}</p>
+      {transfers.length > 0 && <p className="text-caption leading-normal text-ink-muted">{t("Carry: the unpaid amounts move to {month} as opening balances. Record: choose this only if the money above was really handed over.", { month: next })}</p>}
     </GroupDialog>
   );
 }

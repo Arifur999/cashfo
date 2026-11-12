@@ -10,7 +10,7 @@ import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRo
 import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, groupTabHref, paidIn, shortName, type Transfer, unclosedPreviousMonth } from "@/lib/customer/groupDisplay";
-import { categoryRows, mainAccountantId, type SettleCard, settlementCards } from "@/lib/customer/groupFamily";
+import { carriedBy, categoryRows, givesMoney, mainAccountantId, totalGiven, type SettleCard, settlementCards } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -62,8 +62,9 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   const leftTone = budget?.tone === "over" ? "text-expense" : budget?.tone === "warning" ? "text-warning" : "text-income";
 
   // Tile 2: contributions (a settle-up pair is a payment, not a contribution).
-  const deposits = data.contributions.filter((row) => row.kind === "DEPOSIT" && Number(row.amount) > 0);
-  const given = deposits.reduce((sum, row) => sum + Number(row.amount), 0);
+  // Money handed in: deposits less returns; no settle-ups, no carried balance.
+  const deposits = data.contributions.filter((row) => givesMoney(row) && Number(row.amount) > 0);
+  const given = totalGiven(data.contributions);
   const givers = new Set(deposits.map((row) => row.groupMemberId)).size;
   const pocket = settlement.members.reduce((sum, row) => sum + Number(row.pocketPaid), 0);
 
@@ -81,12 +82,18 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   // Tile 4: my balance, and the payment that settles it.
   const mine = me ? (view.balances[me.id] ?? 0) : 0;
   const myCard = me ? cards.find((card) => card.memberId === me.id) : undefined;
-  const myTransfer = transferOf(myCard);
+  // The cash holder has no card of their own: as on the board, they see the
+  // first member who pays them (when they will get money) or whom they pay.
+  const isHolder = !!me && me.id === holderId;
+  const myTransfer = isHolder
+    ? transferOf(cards.find((card) => (mine > 0.5 && card.state.kind === "pays") || (mine < -0.5 && card.state.kind === "gets")))
+    : transferOf(myCard);
   const firstName = (id: string | undefined) => shortName(id ? view.memberById[id]?.name : undefined);
 
   // The members' balances: everyone active, and anyone who left but still has money in the month.
   // A balance carried in when last month was closed is its own column, not money paid in.
-  const carriedOf = (id: string) => data.contributions.filter((row) => row.kind === "CARRY" && row.groupMemberId === id).reduce((sum, row) => sum + Number(row.amount), 0);
+  const carried = carriedBy(data.contributions);
+  const carriedOf = (id: string) => carried[id] ?? 0;
   const rows = settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId], carry: carriedOf(row.groupMemberId) }));
   const totals = rows.reduce((sum, { row, member, carry }) => ({ shares: sum.shares + Number(member?.shareUnits ?? 0), paid: sum.paid + paidIn(row) - carry, share: sum.share + Number(row.share), carry: sum.carry + carry, balance: sum.balance + Number(row.balance) }), { shares: 0, paid: 0, share: 0, carry: 0, balance: 0 });
   const cashSum = holders.length > 0 ? holders.reduce((sum, row) => sum + Number(row.cash), 0) : view.cash;
@@ -219,9 +226,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                 <span className={cn("text-[24px] leading-tight font-bold tracking-[-0.01em] tabular-nums", mine < -0.5 ? "text-expense" : mine > 0.5 ? "text-income" : "text-ink-2")}>{money(Math.abs(mine) < 0.5 ? 0 : Math.abs(mine))}</span>
               </span>
               <span className="text-caption leading-[1.45] text-ink-muted">
-                {myCard?.state.kind === "holder" && Math.abs(mine) > 0.5
-                  ? t("You keep the group cash: everyone settles with you.")
-                  : myTransfer && myTransfer.fromId === me.id
+                {myTransfer && myTransfer.fromId === me.id
                     ? t("Pay {name} {amount} to settle", { name: firstName(myTransfer.toId), amount: money(myTransfer.amount) })
                     : myTransfer
                       ? t("{name} pays you {amount}", { name: firstName(myTransfer.fromId), amount: money(myTransfer.amount) })

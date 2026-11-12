@@ -74,6 +74,8 @@ export interface GroupPageData {
   cashbook: GroupCashbook | null;
   // Every accountant's book for the month (the Cash book's cards).
   cashbookAll: GroupCashbook | null;
+  // Money entries ever (Settings): a group with any can't be deleted.
+  entryCount: number | null;
   cashbookAccountant: string | null;
   // and a page of the Activity log, with its kind filter.
   activity: GroupActivityPage | null;

@@ -10,10 +10,11 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { countLabel, dayLabel, groupMonthOf, isDayClosed, paidIn } from "@/lib/customer/groupDisplay";
+import { countLabel, dayLabel, groupMonthOf, isDayClosed, paidIn, shortName } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
+import { givenBy } from "@/lib/customer/groupFamily";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { groupLine, MemberAvatar } from "./GroupBits";
@@ -34,7 +35,8 @@ interface GroupContributionsTabProps {
 }
 
 // #, date, member, received by, note (with its type), amount, actions.
-const COLUMNS = "md:grid-cols-[36px_64px_minmax(0,1.2fr)_minmax(0,160px)_minmax(0,1fr)_120px_76px]";
+// #, date, member, received by, note, amount, recorded by, actions.
+const COLUMNS = "md:grid-cols-[36px_64px_minmax(0,1.2fr)_minmax(0,160px)_minmax(0,1fr)_120px_96px_76px]";
 const PAGE = 25;
 
 type RowType = "DEPOSIT" | "POCKET" | "RETURN" | "SETTLE" | "CARRY";
@@ -92,7 +94,8 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
     .filter((row) => (!memberId || row.member?.id === memberId) && (!type || row.type === type))
     .filter((row) => !words || [row.memberName, row.note ?? "", row.givenTo?.name ?? "", String(Math.abs(row.amount))].some((text) => text.toLowerCase().includes(words))).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shown = rows.slice(0, limit);
-  const total = rows.reduce((sum, row) => sum + row.amount, 0);
+  // Money handed in among the rows shown: settle-ups and carried balances list, but aren't money given.
+  const total = rows.filter((row) => row.type === "DEPOSIT" || row.type === "RETURN").reduce((sum, row) => (Math.round(sum * 100) + Math.round(row.amount * 100)) / 100, 0);
   const memberOptions = data.members.filter((member) => member.status === "ACTIVE" || all.some((row) => row.member?.id === member.id));
   const memberLabel = memberId ? (view.memberById[memberId]?.name ?? "") : t("All members");
   const typeLabel = type ? t(TYPE_LABELS[type]) : t("All types");
@@ -100,9 +103,8 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
   // The month on show, member by member: what each gave, their share and balance.
   const month = monthName(data.range.key, fmt, "long", true);
   const current = data.range.key === groupMonthOf(data.today, startDay);
-  // What each handed in this month: their contributions, without a balance carried in.
-  const carried = (id: string) => data.contributions.filter((row) => row.kind === "CARRY" && row.groupMemberId === id).reduce((sum, row) => sum + Number(row.amount), 0);
-  const gaveOf = (row: (typeof data.settlement.members)[number]) => Number(row.contributed) - carried(row.groupMemberId);
+  const given = givenBy(data.contributions);
+  const gaveOf = (row: (typeof data.settlement.members)[number]) => given[row.groupMemberId] ?? 0;
   const byMember = data.settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId] })).filter(({ row, member }) => member?.status === "ACTIVE" || paidIn(row) !== 0 || Number(row.share) !== 0);
   const givenInMonth = byMember.reduce((sum, { row }) => sum + gaveOf(row), 0);
 
@@ -257,6 +259,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
           <ListHeadCell>{t("Received by")}</ListHeadCell>
           <ListHeadCell>{t("Note")}</ListHeadCell>
           <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
+          <ListHeadCell>{t("Recorded by")}</ListHeadCell>
           <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {shown.length === 0 &&
@@ -303,6 +306,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
               <ListCell align="end" className={cn("font-semibold", row.amount < 0 ? "text-expense" : "text-income")}>
                 {formatSignedCurrency(row.amount, currency, fmt)}
               </ListCell>
+              <ListCell className={cn("hidden truncate md:block", row.contribution?.recordedByName ? "text-ink-2" : "text-ink-faint")}>{row.contribution?.recordedByName ? shortName(row.contribution.recordedByName) : "–"}</ListCell>
               <ListRowActions className="flex justify-end gap-1.5">
                 <button type="button" onClick={edit} aria-label={row.expense ? t("Edit expense") : t("Edit contribution")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                   {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}

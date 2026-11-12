@@ -1294,6 +1294,8 @@ export type GroupSplit = "EQUAL" | "SHARES" | "MEALS" | "EXACT";
 // Trip and Office share everything equally, like a mess without meals.
 export type GroupKind = "FAMILY" | "MESS" | "TRIP" | "OFFICE";
 export type GroupPaidFrom = "FUND" | "MEMBER";
+// How a member paid another to settle up.
+export type GroupPayMethod = "CASH" | "BKASH" | "NAGAD" | "BANK";
 export type GroupContributionKind = "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY";
 // Member: gives money to an accountant. Accountant: keeps the cash and does
 // the bazar (up to 2 in a group).
@@ -1317,6 +1319,8 @@ export interface GroupExpenseCategoryOption {
   hidden?: boolean;
   // Expenses filed under it, all time (a used one can only be hidden).
   expenseCount?: number;
+  // What it may spend in a month; null or absent: no limit.
+  monthlyLimit?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1363,6 +1367,10 @@ export interface GroupContribution {
   receivedBy?: GroupMember | null;
   // Both rows of one settle-up share it, so Undo removes the pair.
   settleGroupId?: string | null;
+  // How a settle-up was paid; null on other rows and older ones.
+  payMethod?: GroupPayMethod | null;
+  // The member who recorded it; null on older rows.
+  recordedByName?: string | null;
 }
 
 export interface GroupExpenseSplit {
@@ -1388,6 +1396,8 @@ export interface GroupExpense {
   // The members it names; none: everyone in the group that day.
   splits: GroupExpenseSplit[];
   createdAt: string;
+  // The member who recorded it; null on older rows.
+  recordedByName?: string | null;
 }
 
 // A group's settings (the defaults until first saved).
@@ -1402,6 +1412,10 @@ export interface GroupSettings {
   costSplit?: GroupCostSplit;
   // Warn once this much of a month's budget is spent; null = never.
   budgetWarnPercent?: number | null;
+  // How a category made from now on is shared to start with.
+  newCategorySplit?: GroupSplit;
+  // The group's first month ("2026-04"); null: its first member's.
+  firstMonth?: string | null;
   // Paused: kept out of new entries and listed last.
   pausedAt?: string | null;
 }
