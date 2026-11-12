@@ -126,6 +126,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
   const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
   const holderId = mainAccountantId(data.settings, data.members);
   const canAdd = !data.settings.pausedAt;
+  const givenByMember = data.contributions.filter((row) => row.kind === "DEPOSIT").reduce<Record<string, number>>((sum, row) => ({ ...sum, [row.groupMemberId]: (sum[row.groupMemberId] ?? 0) + Number(row.amount) }), {});
   const accountantCash = Object.fromEntries((data.settlement.accountantCash ?? []).map((row) => [row.groupMemberId, Number(row.cash)]));
   const money = (value: number | string) => formatCurrency(value, data.currency, fmt);
 
@@ -313,7 +314,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
 
       <MealDrawer day={mealDay} onClose={() => setMealDay(null)} businessId={data.businessId} members={data.members} meals={data.meals} units={unitsOf(data.settings)} range={data.range} closedGuard={closedGuard} />
       <MemberDrawer open={member.open} onClose={() => setMember({ open: false, editing: null })} businessId={data.businessId} members={data.members} editing={member.editing} defaultJoin={view.setup ? "" : data.today} />
-      <ContributionDrawer open={contribution.open} onClose={() => setContribution({ open: false, editing: null, memberId: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} cashInHand={view.cash} holderId={holderId} range={data.range} today={data.today} editing={contribution.editing} presetMemberId={contribution.memberId} closedGuard={closedGuard} />
+      <ContributionDrawer open={contribution.open} onClose={() => setContribution({ open: false, editing: null, memberId: null })} businessId={data.businessId} currency={data.currency} members={data.members} balances={view.balances} holderId={holderId} given={givenByMember} range={data.range} today={data.today} editing={contribution.editing} presetMemberId={contribution.memberId} closedGuard={closedGuard} />
       <ExpenseDrawer
         open={expense.open}
         onClose={() => setExpense({ open: false, editing: null })}

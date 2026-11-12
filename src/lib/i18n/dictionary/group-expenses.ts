@@ -1349,4 +1349,10 @@ export const groupExpensesDictionary: Record<string, string> = {
   "{count} members can log in": "{count} জন লগইন করতে পারেন",
   "Balance carries on from earlier months.": "আগের মাসের ব্যালান্স সঙ্গে চলে আসে।",
   "Showing {from} to {to} of {count} · newest first": "{count}টির মধ্যে {from} থেকে {to} · নতুনগুলো আগে",
+  "Money an accountant paid back": "অ্যাকাউন্ট্যান্ট যে টাকা ফেরত দিয়েছেন",
+  "Money a member gave to the group": "মেম্বার গ্রুপকে যে টাকা দিয়েছেন",
+  "Save contribution": "জমা সেভ করুন",
+  "The Admin or an Editor who now keeps this cash.": "অ্যাডমিন বা এডিটর, যার কাছে এখন এই টাকা আছে।",
+  "{name} will have given {amount} in {month}, and {holder} keeps the cash.": "{month}-এ {name} মোট {amount} দেবেন, আর টাকা থাকবে {holder}-এর কাছে।",
+  "{name} will have given {amount} in {month}.": "{month}-এ {name} মোট {amount} দেবেন।",
 };

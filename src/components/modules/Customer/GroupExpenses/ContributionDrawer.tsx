@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -13,14 +12,12 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupContribution, GroupMember } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
-import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, type MonthRange, shortName, startDayOf } from "@/lib/customer/groupDisplay";
 import { createGroupContributionAction, updateGroupContributionAction } from "@/lib/customer/groupExpensesActions";
 import { accountantsOf } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
-import { FOCUS_WITHIN } from "./GroupBits";
 import { GroupDialog } from "./GroupDialog";
 import type { ClosedGuard } from "./groupTypes";
 import { MemberPicker } from "./MemberPicker";
@@ -31,11 +28,12 @@ interface ContributionDrawerProps {
   businessId: string;
   currency: string;
   members: GroupMember[];
-  // The month's balance per member and the cash in hand, for the preview.
+  // The month's balance per member, for the member picker.
   balances: Record<string, number>;
-  cashInHand: number;
   // The accountant money goes to when nobody is picked.
   holderId: string | null;
+  // What each member has given in the month so far, for the preview.
+  given: Record<string, number>;
   range: MonthRange;
   today: string;
   editing: GroupContribution | null;
@@ -56,7 +54,7 @@ export function dayInMonth(range: MonthRange, today: string): string {
 // the v7 popup: when, how much (with a chip that fills their dues), who,
 // which accountant it was given to, and a note, with the balances after
 // saving.
-export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, cashInHand, holderId, range, today, editing, presetMemberId = null, closedGuard }: ContributionDrawerProps) {
+export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, holderId, given, range, today, editing, presetMemberId = null, closedGuard }: ContributionDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE" || member.id === editing?.groupMemberId);
@@ -144,103 +142,70 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
     </span>
   );
 
-  const kinds: { value: Kind; icon: React.ReactNode; title: string; sub: string }[] = [
-    { value: "DEPOSIT", icon: <ArrowDownLeft strokeWidth={2.25} aria-hidden="true" className="text-emerald" />, title: "Deposit", sub: "Member gives money" },
-    { value: "RETURN", icon: <ArrowUpRight strokeWidth={2.25} aria-hidden="true" className="text-expense" />, title: "Return money", sub: "Accountant pays back" },
-  ];
+  const holder = givenTo ? members.find((m) => m.id === givenTo) : undefined;
+  const givenNow = (given[memberId] ?? 0) + (kind === "DEPOSIT" ? delta : 0);
+  const field = "h-11.5 rounded-[12px]";
 
   return (
     <GroupDialog
       open={open}
       onClose={onClose}
       busy={isPending}
-      width={460}
+      width={520}
       title={editing ? t("Edit contribution") : t("Add contribution")}
+      sub={kind === "RETURN" ? t("Money an accountant paid back") : t("Money a member gave to the group")}
+      bodyClassName="gap-3.5"
       onSubmit={(event) => {
         event.preventDefault();
         void save(false);
       }}
       footer={
         <>
-          {!editing && (
-            <Button type="button" variant="secondary" onClick={() => void save(true)} disabled={isPending} className="mr-auto max-sm:w-full">
-              {t("Save & add another")}
-            </Button>
-          )}
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="ghost" size="lg" onClick={onClose} disabled={isPending} className="px-4 text-ink-2">
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={isPending} className="px-4.5">
+          <Button type="submit" size="lg" disabled={isPending} className="px-5.5">
             {isPending && <Loader />}
-            {editing ? t("Save changes") : t("Save")}
+            {editing ? t("Save changes") : t("Save contribution")}
           </Button>
         </>
       }
     >
-      {!special && (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-body leading-[normal] font-medium text-ink">{t("Type")}</legend>
-          {/* Real radios under the cards: arrow keys move between them. */}
-          <div className="grid grid-cols-2 gap-2">
-            {kinds.map((option) => {
-              const on = kind === option.value;
-              return (
-                <label
-                  key={option.value}
-                  className={cn(
-                    "relative flex h-13.5 cursor-pointer items-center gap-3 rounded-md border px-3 text-left transition-colors [&_svg]:size-5 [&_svg]:shrink-0",
-                    FOCUS_WITHIN,
-                    on ? (option.value === "DEPOSIT" ? "border-[1.5px] border-emerald bg-mint-50/60 text-emerald" : "border-[1.5px] border-expense bg-expense-soft text-expense") : "border-line bg-surface text-ink-muted hover:border-input",
-                  )}
-                >
-                  <input type="radio" name="con-kind" value={option.value} checked={on} onChange={() => setKind(option.value)} className="sr-only" />
-                  {option.icon}
-                  <span className="flex min-w-0 flex-col gap-px">
-                    <span className={cn("text-small", on ? (option.value === "DEPOSIT" ? "font-bold text-brand-ink" : "font-bold text-ink") : "font-semibold text-ink")}>{t(option.title)}</span>
-                    <span className={cn("text-caption font-normal", on ? "text-current" : "text-ink-muted")}>{t(option.sub)}</span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
-      )}
+      <Field htmlFor="con-member" label={label(t("Member"))}>
+        <MemberPicker id="con-member" label={t("Member")} members={active} value={memberId} onChange={setMemberId} currency={currency} balances={balances} size="md" disabled={special} />
+      </Field>
 
-      <div className="grid grid-cols-[160px_minmax(0,1fr)] gap-3">
-        <Field htmlFor="con-date" label={label(t("Date"))} hint={t("Counts in {month}", { month: countsIn })}>
-          <DayInput id="con-date" size="lg" value={date} onChange={setDate} max={today} aria-describedby="con-date-hint" />
-        </Field>
+      <div className="grid grid-cols-2 gap-3">
         <Field htmlFor="con-amount" label={label(t("Amount"))}>
           <Input
             id="con-amount"
-            size="lg"
+            size="md"
             inputMode="decimal"
             {...amountField}
             autoFocus
             placeholder="0"
             invalid={tried && !(value > 0)}
-            className="text-h3 font-bold tabular-nums"
-            leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
-            frameClassName="overflow-hidden pl-0"
+            className="font-semibold tabular-nums"
+            leading={<span className="text-[15px] font-semibold text-ink-faint">{currencySymbol(currency, fmt)}</span>}
+            frameClassName={field}
           />
-          {kind === "DEPOSIT" && !special && dues > 0 && member && (
-            <button type="button" onClick={() => setAmount(String(dues))} className="mt-2 inline-flex h-6.5 items-center self-start rounded-full border border-mint-200 bg-mint-50 px-3 text-caption font-semibold text-brand-ink hover:bg-mint-200">
-              {t("Fill {month} dues · {amount}", { month: monthLabel, amount: formatCurrency(dues, currency, fmt) })}
-            </button>
-          )}
+        </Field>
+        <Field htmlFor="con-date" label={label(t("Date"))} hint={t("Counts in {month}", { month: countsIn })}>
+          <DayInput id="con-date" size="md" value={date} onChange={setDate} max={today} aria-describedby="con-date-hint" />
         </Field>
       </div>
-
-      <Field htmlFor="con-member" label={label(t("Member"))}>
-        <MemberPicker id="con-member" label={t("Member")} members={active} value={memberId} onChange={setMemberId} currency={currency} balances={balances} size="md" disabled={special} />
-      </Field>
+      {kind === "DEPOSIT" && !special && dues > 0 && member && (
+        <button type="button" onClick={() => setAmount(String(dues))} className="-mt-1.5 inline-flex h-6.5 items-center self-start rounded-full border border-mint-200 bg-mint-50 px-3 text-caption font-semibold text-brand-ink hover:bg-mint-200">
+          {t("Fill {month} dues · {amount}", { month: monthLabel, amount: formatCurrency(dues, currency, fmt) })}
+        </button>
+      )}
 
       {!special && accountants.length > 0 && (
-        <Field htmlFor="con-given" label={label(kind === "RETURN" ? t("Paid back by") : t("Given to"))}>
-          <NativeSelect id="con-given" size="md" value={givenTo} onChange={(event) => setGivenTo(event.target.value)} frameClassName="w-full">
+        <Field htmlFor="con-given" label={label(kind === "RETURN" ? t("Paid back by") : t("Given to"))} hint={t("The Admin or an Editor who now keeps this cash.")}>
+          <NativeSelect id="con-given" size="md" value={givenTo} onChange={(event) => setGivenTo(event.target.value)} frameClassName="w-full" className={field}>
             {accountants.map((accountant) => (
               <option key={accountant.id} value={accountant.id}>
-                {t("{name} (accountant)", { name: accountant.name })}
+                {accountant.name}
               </option>
             ))}
           </NativeSelect>
@@ -248,30 +213,15 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
       )}
 
       <Field htmlFor="con-note" label={label(t("Note"), true)}>
-        <Input id="con-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={140} placeholder={t("e.g. {month} share", { month: monthLabel })} />
+        <Input id="con-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={140} placeholder={t("e.g. {month} share", { month: monthLabel })} frameClassName={field} />
       </Field>
 
-      {member && value > 0 && (
-        <div className="flex flex-col gap-2 rounded-md border border-line bg-strip px-4 py-3 text-small tabular-nums">
-          <span className="text-caption font-semibold text-ink-muted">{t("After saving")}</span>
-          <div className="flex flex-wrap justify-between gap-x-3">
-            <span className="text-ink-2">{t("{name}'s {month} balance", { name: shortName(member.name), month: monthLabel })}</span>
-            <span>
-              <span className={balance < 0 ? "text-expense" : balance > 0 ? "text-income" : "text-ink-muted"}>{formatSignedCurrency(balance, currency, fmt)}</span>
-              <span className="text-ink-muted"> → </span>
-              <b className={cn("font-bold", balance + delta < -0.004 ? "text-expense" : balance + delta > 0.004 ? "text-income" : "text-ink")}>{Math.abs(balance + delta) < 0.005 ? `${formatCurrency(0, currency, fmt)} · ${t("settled")}` : formatSignedCurrency(balance + delta, currency, fmt)}</b>
-            </span>
-          </div>
-          {!special && (
-            <div className="flex flex-wrap justify-between gap-x-3">
-              <span className="text-ink-2">{t("Cash in hand")}</span>
-              <span>
-                <span className="text-ink-muted">{formatCurrency(cashInHand, currency, fmt)} → </span>
-                <b className="font-bold text-ink">{formatCurrency(cashInHand + delta, currency, fmt)}</b>
-              </span>
-            </div>
-          )}
-        </div>
+      {member && value > 0 && kind === "DEPOSIT" && !special && (
+        <p aria-live="polite" className="rounded-[12px] border border-emerald-line bg-emerald-wash px-3.5 py-2.5 text-[13px] leading-normal text-brand-ink">
+          {holder
+            ? t("{name} will have given {amount} in {month}, and {holder} keeps the cash.", { name: shortName(member.name), amount: formatCurrency(givenNow, currency, fmt), month: monthName(range.key, fmt, "long", true), holder: shortName(holder.name) })
+            : t("{name} will have given {amount} in {month}.", { name: shortName(member.name), amount: formatCurrency(givenNow, currency, fmt), month: monthName(range.key, fmt, "long", true) })}
+        </p>
       )}
 
       {tried && !valid && <p className="text-small font-semibold text-expense">{t("Enter an amount and pick the member.")}</p>}
