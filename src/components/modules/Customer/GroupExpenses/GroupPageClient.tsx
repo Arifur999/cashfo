@@ -15,7 +15,7 @@ import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt"
 import { deleteBusinessAction } from "@/lib/customer/businessActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { budgetFor, budgetStatus, cashInHand, groupMonthOf, groupTabHref, type GroupTab, isDayClosed, poolsMeals, sharedEqually, shiftMonth, shortName, spendByCategory, spendByMonth, startDayOf, type Transfer, whoPaysWhom } from "@/lib/customer/groupDisplay";
-import { deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupExpenseCategoryAction, deleteGroupMemberAction, updateGroupExpenseCategoryAction, updateGroupMemberAction } from "@/lib/customer/groupExpensesActions";
+import { deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction } from "@/lib/customer/groupExpensesActions";
 import { budgetPageMonths, costShares, firstMonthOf, mainAccountantId, monthEndOf, spendByMonthKey } from "@/lib/customer/groupFamily";
 import { unitsOf } from "@/lib/customer/groupMeals";
 import { type GroupPeriod, periodQuery } from "@/lib/customer/groupPeriod";
@@ -199,25 +199,6 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       onConfirm: () => run(() => deleteGroupExpenseAction(data.businessId, row.id), t("Expense deleted"), t("Failed to delete the expense")),
     });
 
-  const removeMember = (target: GroupMember) =>
-    setConfirm({
-      title: t("Remove {name} from the group?", { name: target.name }),
-      description: t("With no contribution or expense in their name they are deleted for good; otherwise they are archived and keep their past months."),
-      confirmLabel: t("Remove"),
-      danger: true,
-      onConfirm: () =>
-        startTransition(async () => {
-          const result = await attempt(() => deleteGroupMemberAction(data.businessId, target.id), offline, stale);
-          if (result.success) {
-            toast.success(result.data?.action === "archived" ? t("This member has history, so they were made inactive instead") : t("Member removed"));
-            setConfirm(null);
-            router.refresh();
-          } else {
-            toast.error(result.message ?? t("Failed to remove member"));
-          }
-        }),
-    });
-
   // Inactive from the end of this group month: they share its costs up to
   // then, and none after. Making someone active again needs no question.
   const toggleMember = (target: GroupMember) => {
@@ -311,7 +292,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     ) : (
       <FamilySettlementTab data={data} view={view} onMonth={(key) => go("settlement", { month: key })} onRecordPayment={() => openPayment(null)} busy={moving} />
     ),
-    members: <GroupMembersTab data={data} view={view} onAdd={() => setMember({ open: true, editing: null })} onEdit={(target) => setMember({ open: true, editing: target })} onToggleStatus={toggleMember} onRemove={removeMember} onStatement={setStatement} onCostSplit={() => setSplitOpen(true)} />,
+    members: <GroupMembersTab data={data} view={view} onAdd={() => setMember({ open: true, editing: null })} onEdit={(target) => setMember({ open: true, editing: target })} onToggleStatus={toggleMember} />,
     categories: <GroupCategoriesTab data={data} onPeriod={onPeriod} onAdd={() => setCategory({ open: true, editing: null })} onEdit={(editing) => setCategory({ open: true, editing })} onHide={hideCategory} onDelete={removeCategory} busy={moving} />,
     budget: <GroupBudgetTab data={data} onSet={setBudgetKey} />,
     meals: <GroupMealsTab data={data} onDay={setMealDay} closedGuard={closedGuard} />,

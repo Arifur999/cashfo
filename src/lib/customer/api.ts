@@ -1305,6 +1305,8 @@ export interface GroupMember {
   household?: string | null;
   // Their percent when the group's cost split is custom.
   costPercent?: string | null;
+  // The owner's view only: their login and a waiting access link (null for others).
+  access?: { login: { username: string | null; lastLoginAt: string | null; ownAccount: boolean } | null; link: { kind: "JOIN" | "RESET"; createdAt: string; expiresAt: string; canCopy: boolean } | null } | null;
   createdAt: string;
   updatedAt: string;
 }
