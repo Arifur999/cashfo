@@ -607,4 +607,9 @@ export const savingsGoalsDictionary: Record<string, string> = {
   // New goal: the savings account dropdown (v16)
   "Choose an account": "একটা হিসাব বেছে নিন",
   "Add a savings account": "একটা সঞ্চয়ের হিসাব যোগ করুন",
+  // Savings v16: All moves
+  "Already the To goal": "ইতিমধ্যে 'যে লক্ষ্যে' ঘরে বাছা",
+  "Already the From goal": "ইতিমধ্যে 'যে লক্ষ্য থেকে' ঘরে বাছা",
+  "Can't swap: {name} is already full.": "অদলবদল করা যাবে না: {name} ইতিমধ্যে পূর্ণ।",
+  "{name} has only {amount} saved.": "{name}-এ জমা আছে মাত্র {amount}।",
 };

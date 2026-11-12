@@ -1,11 +1,10 @@
 "use client";
 
-import { ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpDown, PiggyBank, Undo2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpDown, PiggyBank, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import AmountInput from "@/components/modules/Customer/Shared/AmountInput";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
@@ -14,7 +13,7 @@ import IconAction from "@/components/smartly/IconAction";
 import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow } from "@/components/smartly/list";
+import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
@@ -28,7 +27,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
 import { cn } from "@/lib/utils";
-import { GoalPicker } from "./GoalPicker";
+import { GoalPicker, type GoalOption } from "./GoalPicker";
 
 interface SavingsTransferPageClientProps {
   businessId: string;
@@ -55,16 +54,20 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
   const router = useRouter();
   const listId = useId();
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const { page, setPage } = usePageParam();
   const open = goals.filter((goal) => goal.status !== "WITHDRAWN");
   const funded = open.filter((goal) => Number(goal.currentAmount) > 0);
-  const [toId, setToId] = useState(presetTo && open.some((goal) => goal.id === presetTo) ? presetTo : "");
-  const [fromId, setFromId] = useState(funded.find((goal) => goal.id !== toId)?.id ?? "");
+  const hasRoom = (goal: SavingsGoal) => Number(goal.currentAmount) < Number(goal.targetAmount);
+  // The form starts filled, as the board has it: the asked-for (or first)
+  // goal with room as To, the first other goal with money as From.
+  const [fromId, setFromId] = useState(() => funded.find((goal) => goal.id !== presetTo)?.id ?? "");
+  const [toId, setToId] = useState(() => (presetTo && open.some((goal) => goal.id === presetTo && hasRoom(goal)) ? presetTo : (open.find((goal) => goal.id !== fromId && hasRoom(goal))?.id ?? "")));
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
   const [fresh, setFresh] = useState<string | null>(null);
+  // What stops the move, said under the form as the board does.
+  const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const from = open.find((goal) => goal.id === fromId);
@@ -85,22 +88,39 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
   const chips = [5000, 10000].filter((chip) => chip <= max).map((chip) => ({ label: money(chip), amount: chip }));
   if (max > 0) chips.push({ label: t("Max · {amount}", { amount: money(max) }), amount: max });
 
+  // Every open goal in both lists; the ones that can't be picked are dimmed.
+  const pickList = (role: "from" | "to"): GoalOption[] =>
+    open.map((goal) => {
+      const other = role === "from" ? toId : fromId;
+      if (goal.id === other) return { goal, off: true, note: role === "from" ? t("Already the To goal") : t("Already the From goal") };
+      return { goal, off: role === "from" ? Number(goal.currentAmount) <= 0 : !hasRoom(goal) };
+    });
+  const pick = (role: "from" | "to") => (id: string) => {
+    setError("");
+    (role === "from" ? setFromId : setToId)(id);
+  };
+
   function swap() {
     if (!from || !to) return;
-    if (Number(to.currentAmount) <= 0) return void toast.error(t("Can't swap: {name} has nothing saved to move.", { name: to.name }));
+    if (Number(to.currentAmount) <= 0) return setError(t("Can't swap: {name} has nothing saved to move.", { name: to.name }));
+    if (!hasRoom(from)) return setError(t("Can't swap: {name} is already full.", { name: from.name }));
+    setError("");
     setFromId(to.id);
     setToId(from.id);
   }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (isPending || !from || !to) return;
-    if (!value) return void toast.error(t("Enter an amount to move."));
-    if (problem) return void toast.error(problem);
+    if (isPending) return;
+    if (!from || !to) return setError(t("Pick the goal to move the money to."));
+    if (!value) return setError(t("Enter an amount to move."));
+    if (value > fromSaved) return setError(t("{name} has only {amount} saved.", { name: from.name, amount: money(fromSaved) }));
+    if (value > room) return setError(t("{name} needs only {amount} to reach its target.", { name: to.name, amount: money(room) }));
+    setError("");
     startTransition(async () => {
       const result = await createSavingsTransferAction(businessId, { fromGoalId: from.id, toGoalId: to.id, amount: value, date, notes: note.trim() || undefined });
       if (!result.success) {
-        toast.error(savingsError(result.message, "Failed to move", t, currency, fmt));
+        setError(savingsError(result.message, "Failed to move", t, currency, fmt));
         return;
       }
       toast.success(t("{amount} moved from {from} to {to}.", { amount: money(value), from: from.name, to: to.name }));
@@ -113,13 +133,8 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
     });
   }
 
-  async function undo(row: SavingsTransferRow) {
-    const ok = await confirm({
-      title: t("Undo this move?"),
-      message: t("{amount} goes back to {name}.", { amount: money(row.amount), name: row.fromGoalName }),
-      confirmLabel: "Undo move",
-    });
-    if (!ok) return;
+  function undo(row: SavingsTransferRow) {
+    if (isPending) return;
     startTransition(async () => {
       const result = await undoSavingsTransferAction(businessId, row.id);
       if (!result.success) {
@@ -155,21 +170,21 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
         )
       }
     >
+      <ListHead columns={COLUMNS} className="h-8.75 border-t border-line bg-strip">
+        <ListHeadCell>{t("Date")}</ListHeadCell>
+        <ListHeadCell>{t("From → To")}</ListHeadCell>
+        <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
+        <ListHeadCell>
+          <span className="sr-only">{t("Undo")}</span>
+        </ListHeadCell>
+      </ListHead>
       {transfers.length === 0 ? (
-        <ListEmpty tone="info" icon={<ArrowLeftRight />} title={t("No moves yet.")} description={t("Shift money from one goal to another and it shows up here.")} />
+        <p className="px-6 py-7 text-center text-body text-ink-muted">{t("No moves yet.")}</p>
       ) : (
         <>
-          <ListHead columns={COLUMNS}>
-            <ListHeadCell>{t("Date")}</ListHeadCell>
-            <ListHeadCell>{t("From → To")}</ListHeadCell>
-            <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
-            <ListHeadCell>
-              <span className="sr-only">{t("Undo")}</span>
-            </ListHeadCell>
-          </ListHead>
           {shown.rows.map((transfer, index) => (
-            <ListRow key={transfer.id} columns={COLUMNS} density="relaxed" className={cn(index === 0 && page === 1 && fresh === `${transfer.fromGoalId}|${transfer.toGoalId}` && "bg-mint-50")}>
-              <ListCell className="text-caption text-ink-2 max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.date, undefined, fmt)}</ListCell>
+            <ListRow key={transfer.id} columns={COLUMNS} density="relaxed" className={cn(index === 0 && page === 1 && fresh === `${transfer.fromGoalId}|${transfer.toGoalId}` && "bg-emerald-soft")}>
+              <ListCell className="text-caption text-ink-soft max-md:col-start-1 max-md:row-start-2 md:text-body">{formatDate(transfer.date, undefined, fmt)}</ListCell>
               <ListCell className="flex flex-col gap-0.75 max-md:col-start-1 max-md:row-start-1">
                 {/* Read as a sentence; the arrow means nothing out loud. */}
                 <span className="sr-only">{t("From {from} to {to}", { from: transfer.fromGoalName, to: transfer.toGoalName })}</span>
@@ -185,7 +200,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
               </ListCell>
               <ListCell className="max-md:col-start-2 max-md:row-start-2 max-md:justify-self-end">
                 {canManage && transfer.canUndo && (
-                  <IconAction onClick={() => void undo(transfer)} disabled={isPending} aria-label={t("Undo this move")} title={t("Undo this move")}>
+                  <IconAction onClick={() => undo(transfer)} disabled={isPending} aria-label={t("Undo this move")} title={t("Undo this move")}>
                     <Undo2 aria-hidden="true" />
                   </IconAction>
                 )}
@@ -198,7 +213,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
   );
 
   const blocked = open.length < 2 ? [t("You need at least two goals to move money between them.")] : funded.length === 0 ? [t("No goal has money saved yet."), t("Add money to a goal first, then you can move it to another.")] : null;
-  const label = "text-small font-medium text-ink-2";
+  const label = "text-small font-medium text-ink-soft";
 
   return (
     <PageFrame className="gap-5 leading-[normal]">
@@ -206,7 +221,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
         title={t("All moves between goals")}
         description={t("Shift saved money from one goal to another. Only which goal it counts toward changes.")}
         actions={
-          <Button variant="secondary" asChild>
+          <Button variant="secondary" asChild className="px-3.5">
             <Link href="/savings-goals/dashboard">
               <ArrowLeft className="text-ink-2" />
               {t("Back to goals")}
@@ -247,12 +262,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                   <label id="st-from-label" htmlFor="st-from" className={label}>
                     {t("From goal")}
                   </label>
-                  <GoalPicker id="st-from" labelId="st-from-label" goals={goals} options={funded.filter((goal) => goal.id !== toId)} value={fromId} onChange={setFromId} currency={currency} role="from" />
-                </div>
-                <div className="-my-2.5 flex justify-center">
-                  <button type="button" onClick={swap} disabled={!fromId || !toId} aria-label={t("Swap From and To")} title={t("Swap")} className="relative z-10 flex size-9 items-center justify-center rounded-full border border-input bg-surface text-emerald hover:bg-surface-sunken disabled:opacity-60 pointer-coarse:size-11">
-                    <ArrowUpDown className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
-                  </button>
+                  <GoalPicker id="st-from" labelId="st-from-label" goals={goals} options={pickList("from")} value={fromId} onChange={pick("from")} currency={currency} role="from" />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label id="st-to-label" htmlFor="st-to" className={label}>
@@ -262,25 +272,50 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                     id="st-to"
                     labelId="st-to-label"
                     goals={goals}
-                    options={open.filter((goal) => goal.id !== fromId && Number(goal.currentAmount) < Number(goal.targetAmount))}
+                    options={pickList("to")}
                     value={toId}
-                    onChange={setToId}
+                    onChange={pick("to")}
                     currency={currency}
                     role="to"
                   />
                 </div>
-                <Field htmlFor="st-amount" label={<span className={label}>{t("Amount")}</span>} hint={hint}>
-                  <AmountInput id="st-amount" value={amount} onChange={setAmount} currency={currency} size="lg" invalid={!!problem} describedBy={hint ? "st-amount-hint" : undefined} />
-                </Field>
-                {chips.length > 0 && (
-                  <div className="-mt-2 flex flex-wrap gap-1.5">
-                    {chips.map((chip) => (
-                      <button key={chip.label} type="button" onClick={() => setAmount(String(chip.amount))} className="h-7.5 rounded-full border border-line bg-surface px-2.5 text-caption font-semibold text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11">
-                        {chip.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="-my-2.5 flex justify-center">
+                  <button type="button" onClick={swap} disabled={!fromId || !toId} aria-label={t("Swap From and To")} title={t("Swap")} className="relative z-10 flex size-9 items-center justify-center rounded-full border border-input bg-surface text-emerald hover:bg-surface-sunken disabled:opacity-60 pointer-coarse:size-11">
+                    <ArrowUpDown className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="st-amount" className={label}>
+                    {t("Amount")}
+                  </label>
+                  <AmountInput
+                    id="st-amount"
+                    value={amount}
+                    onChange={(next) => {
+                      setAmount(next);
+                      setError("");
+                    }}
+                    currency={currency}
+                    size="lg"
+                    frameClassName="rounded-field"
+                    invalid={!!problem}
+                    describedBy={hint ? "st-amount-hint" : undefined}
+                  />
+                  {chips.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {chips.map((chip) => (
+                        <button key={chip.label} type="button" onClick={() => setAmount(String(chip.amount))} className="h-7.5 rounded-full border border-line bg-surface px-2.5 text-caption font-semibold text-ink-2 hover:border-line-strong pointer-coarse:h-11">
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {hint && (
+                    <span id="st-amount-hint" className="text-caption text-ink-muted tabular-nums">
+                      {hint}
+                    </span>
+                  )}
+                </div>
                 <div className="grid gap-2.5 sm:grid-cols-[150px_minmax(0,1fr)]">
                   <Field htmlFor="st-date" label={<span className={label}>{t("Date")}</span>}>
                     <DayInput id="st-date" size="md" value={date} onChange={(day) => setDate(day || today)} max={today} />
@@ -289,14 +324,19 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                     htmlFor="st-note"
                     label={
                       <span className={label}>
-                        {t("Note")} <span className="font-normal text-ink-muted">({t("optional")})</span>
+                        {t("Note")} <span className="font-normal">({t("optional")})</span>
                       </span>
                     }
                   >
                     <Input id="st-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("Why the move?")} />
                   </Field>
                 </div>
-                <Button type="submit" size="lg" disabled={isPending || !from || !to} className="w-full">
+                {error && (
+                  <p role="alert" className="text-small text-expense-fill">
+                    {error}
+                  </p>
+                )}
+                <Button type="submit" size="lg" disabled={isPending} className="w-full">
                   {isPending && <Loader size={16} onDark label={t("Loading...")} />}
                   {value > 0 ? t("Move {amount}", { amount: money(value) }) : t("Move money")}
                 </Button>
@@ -306,7 +346,6 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
         )}
         <div className={cn(canManage && "xl:col-start-1 xl:row-start-1")}>{history}</div>
       </div>
-      {confirmDialog}
     </PageFrame>
   );
 }
