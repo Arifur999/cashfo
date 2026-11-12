@@ -1,31 +1,5 @@
-import type { LucideIcon } from "lucide-react";
 import type { Asset, AssetCategoryOption, AssetValueHistoryEntry } from "./api";
-import { budgetCategoryIcon } from "./budgetCategoryVisuals";
-import { categoryTone, NEUTRAL_CATEGORY_TONE, type CategoryTone } from "./categoryTone";
 import { monthsLeft } from "./savingsDisplay";
-
-export interface CategoryVisual {
-  icon: LucideIcon;
-  tone: CategoryTone;
-  // The type's colour as a CSS value, for a bar slice or a dot. A token, so
-  // it follows dark mode like the tile does.
-  color: string;
-}
-
-// The tile's ink as a colour: "text-cat-3" draws var(--cat-3). The neutral
-// tile (a type that is gone) draws in the charts' "other" grey.
-const toneColor = (tone: CategoryTone): string => {
-  const token = /^text-(cat-\d+|warning|expense)$/.exec(tone.fg)?.[1];
-  return token ? `var(--${token})` : "var(--chart-other)";
-};
-
-// How an asset's type is drawn: the option's icon and colour by name, or a
-// neutral package tile when the option is gone.
-export function categoryVisual(categories: AssetCategoryOption[], name: string): CategoryVisual {
-  const match = categories.find((category) => category.name === name);
-  const tone = match ? categoryTone(match.color) : NEUTRAL_CATEGORY_TONE;
-  return { icon: budgetCategoryIcon(match?.icon || "package"), tone, color: toneColor(tone) };
-}
 
 // What an asset is worth: today's value while owned, the sale price once sold.
 // Whether a category is offered for new assets (an older backend sends no
@@ -127,32 +101,17 @@ export function valueByCategory(owned: Asset[]): CategoryValue[] {
   return [...byName.values()].map((entry) => ({ ...entry, share: total > 0 ? (entry.value / total) * 100 : 0 })).sort((a, b) => b.value - a.value);
 }
 
-// The owned assets that moved most against what was paid, either way. One
-// that hasn't moved (its chip would read "0%") isn't a change at all.
-export function biggestChanges(owned: Asset[], limit = 5): Asset[] {
-  return owned
-    .filter((asset) => Number(asset.purchasePrice) > 0 && gainChip(assetGain(asset).percent).tone !== "neutral")
-    .sort((a, b) => Math.abs(assetGain(b).percent) - Math.abs(assetGain(a).percent))
-    .slice(0, limit);
+// When the value was last updated: the newest history row besides the
+// purchase's own (the oldest), or null when it never was.
+export function lastValued(asset: Pick<Asset, "valueHistory">): string | null {
+  const lines = statementLines(asset);
+  return lines.length > 1 ? lines[lines.length - 1].date : null;
 }
 
-// When the value was last checked: the newest history entry after the
-// purchase itself, or null when it never was.
-export function lastValued(asset: Pick<Asset, "valueHistory" | "purchaseDate">): string | null {
-  const later = asset.valueHistory.map((entry) => entry.recordedAt).filter((recordedAt) => recordedAt.slice(0, 10) !== asset.purchaseDate.slice(0, 10));
-  return later.length === 0 ? null : later.reduce((latest, recordedAt) => (recordedAt > latest ? recordedAt : latest));
-}
-
-export function updateCount(asset: Pick<Asset, "valueHistory" | "purchaseDate">): number {
-  return asset.valueHistory.filter((entry) => entry.recordedAt.slice(0, 10) !== asset.purchaseDate.slice(0, 10)).length;
-}
-
-// The first day a new value may carry ("YYYY-MM-DD"): the purchase, since
-// nothing is worth something before it was bought. An earlier day than the
-// newest value is fine: the backend files it in the history and keeps the
-// newest as the value today.
-export function newValueFloor(asset: Pick<Asset, "purchaseDate">): string {
-  return asset.purchaseDate.slice(0, 10);
+// How many value updates the asset has had: every history row but the
+// purchase's own.
+export function updateCount(asset: Pick<Asset, "valueHistory">): number {
+  return Math.max(0, asset.valueHistory.length - 1);
 }
 
 // Owned, and not valued for this many months (the purchase counts as the
@@ -173,15 +132,6 @@ export const isInitialValueNote = (note: string | null | undefined): boolean => 
 // bought has two rows with the same date, which the backend returns in
 // either order; the purchase's own row counts as the older one.
 const newestFirst = (a: AssetValueHistoryEntry, b: AssetValueHistoryEntry): number => b.recordedAt.localeCompare(a.recordedAt) || Number(isInitialValueNote(a.note)) - Number(isInitialValueNote(b.note));
-
-// The latest day an already-owned asset's purchase date may move to
-// ("YYYY-MM-DD"): today, or the first value recorded after the purchase
-// when that is earlier, since nothing is valued before it was bought. The
-// purchase's own row moves with the date, so it doesn't count.
-export function latestPurchaseDay(asset: Pick<Asset, "valueHistory">, today: string): string {
-  const later = [...asset.valueHistory].sort(newestFirst).slice(0, -1);
-  return later.reduce((earliest, entry) => (entry.recordedAt.slice(0, 10) < earliest ? entry.recordedAt.slice(0, 10) : earliest), today);
-}
 
 export interface TimelineEntry {
   id: string;
@@ -319,7 +269,7 @@ export function recentValueChanges(assets: Asset[], limit = 5): ValueChange[] {
     lines.slice(1).forEach((line, index) => changes.push({ key: `${asset.id}:${line.id}`, asset, date: line.date.slice(0, 10), kind: "update", from: lines[index].value, to: line.value, note: line.note }));
     if (asset.status === "SOLD" && asset.soldAt) {
       const last = lines[lines.length - 1]?.value ?? Number(asset.purchasePrice);
-      changes.push({ key: `${asset.id}:sale`, asset, date: asset.soldAt.slice(0, 10), kind: "sale", from: last, to: Number(asset.soldPrice ?? 0), note: null });
+      changes.push({ key: `${asset.id}:sale`, asset, date: asset.soldAt.slice(0, 10), kind: "sale", from: last, to: Number(asset.soldPrice ?? 0), note: asset.soldNote || null });
     }
   }
   // On one day the sale comes after that day's update.
@@ -359,42 +309,4 @@ export function sortAssets(assets: Asset[], by: AssetSort): Asset[] {
     oldest: (a, b) => a.purchaseDate.localeCompare(b.purchaseDate),
   };
   return [...assets].sort((a, b) => compare[by](a, b) || a.name.localeCompare(b.name));
-}
-
-// The type chips over My assets: every type that holds something, in the
-// types' own order, then names no type carries any more. The type the page
-// was opened for (an Asset types card) stays even while it holds nothing.
-export function typeChips(categories: Pick<AssetCategoryOption, "name">[], counts: ReadonlyMap<string, number>, selected = ""): string[] {
-  const known = categories.map((option) => option.name);
-  const orphans = [...counts.keys()].filter((name) => !known.includes(name));
-  return [...known, ...orphans].filter((name) => counts.has(name) || (name === selected && known.includes(name)));
-}
-
-export interface Sparkline {
-  line: string;
-  area: string;
-  lastX: number;
-  lastY: number;
-}
-
-// The points of a small line chart through the given values, oldest first,
-// for a width × height SVG with `pad` kept clear on each side.
-export function sparkline(values: number[], width = 130, height = 40, pad = 4): Sparkline {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  const points = values.map((value, index) => {
-    const x = values.length === 1 ? width / 2 : pad + (index * (width - pad * 2)) / (values.length - 1);
-    const y = max === min ? height / 2 : height - pad - ((value - min) / span) * (height - pad * 2);
-    return [Math.round(x * 10) / 10, Math.round(y * 10) / 10] as const;
-  });
-  const line = points.map(([x, y]) => `${x},${y}`).join(" ");
-  const last = points[points.length - 1];
-  return { line, area: `${line} ${last[0]},${height} ${points[0][0]},${height}`, lastX: last[0], lastY: last[1] };
-}
-
-// The values an owned asset went through, purchase first.
-export function valueTrail(asset: Pick<Asset, "valueHistory" | "purchasePrice">): number[] {
-  const history = [...asset.valueHistory].sort((a, b) => newestFirst(b, a)).map((entry) => Number(entry.value));
-  return history.length > 0 ? history : [Number(asset.purchasePrice)];
 }

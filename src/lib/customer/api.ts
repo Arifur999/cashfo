@@ -1207,13 +1207,16 @@ export interface Asset {
   purchaseDate: string;
   purchasePrice: string;
   currentValue: string;
-  purchaseAccountId: string;
+  // The wallet that paid; null for an asset already owned (no money moved).
+  purchaseAccountId: string | null;
   status: AssetStatus;
   // Only set once sellAssetAction() has run -- an ACTIVE asset carries all
   // three as null.
   soldAt: string | null;
   soldPrice: string | null;
   soldAccountId: string | null;
+  // The note written with the sale.
+  soldNote?: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
