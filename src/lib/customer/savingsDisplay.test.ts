@@ -204,7 +204,7 @@ describe("Bangla for what this file hands to t()", () => {
 describe("savingsPalette", () => {
   it("cycles the savings colours", () => {
     expect(savingsPalette(0)).toBe(SAVINGS_PALETTES[0]);
-    expect(savingsPalette(4)).toBe(SAVINGS_PALETTES[0]);
+    expect(savingsPalette(5)).toBe(SAVINGS_PALETTES[0]);
   });
 });
 
