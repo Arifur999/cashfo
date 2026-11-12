@@ -10,7 +10,7 @@ import Button from "@/components/smartly/Button";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import Input from "@/components/smartly/form/Input";
 import PageFrame from "@/components/smartly/PageFrame";
-import type { GroupActivityAction, GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMember } from "@/lib/customer/api";
+import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMember } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { deleteBusinessAction } from "@/lib/customer/businessActions";
 import { formatCurrency } from "@/lib/customer/currency";
@@ -18,7 +18,6 @@ import { budgetFor, budgetStatus, cashInHand, groupMonthOf, groupTabHref, type G
 import { deleteGroupContributionAction, deleteGroupExpenseAction, deleteGroupExpenseCategoryAction, updateGroupExpenseCategoryAction, updateGroupMemberAction } from "@/lib/customer/groupExpensesActions";
 import { budgetPageMonths, costShares, firstMonthOf, mainAccountantId, monthEndOf, spendByMonthKey } from "@/lib/customer/groupFamily";
 import { unitsOf } from "@/lib/customer/groupMeals";
-import { type GroupPeriod, periodQuery } from "@/lib/customer/groupPeriod";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -134,8 +133,6 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
   function go(tab: GroupTab, query: Record<string, string> = {}) {
     startMoving(() => router.push(groupTabHref(data.businessId, tab, query)));
   }
-  const onPeriod = (period: GroupPeriod) => go(data.tab, { ...periodQuery(period), ...(data.tab === "cashbook" && data.cashbookAccountant && { accountant: data.cashbookAccountant }) });
-  const currentPeriod = () => (data.period ? periodQuery(data.period) : {});
 
   function closeConfirm() {
     if (isPending) return;
@@ -295,7 +292,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     categories: <GroupCategoriesTab data={data} onAdd={() => setCategory({ open: true, editing: null })} onEdit={(editing) => setCategory({ open: true, editing })} onHide={hideCategory} onDelete={removeCategory} />,
     budget: <GroupBudgetTab data={data} onSet={setBudgetKey} />,
     meals: <GroupMealsTab data={data} onDay={setMealDay} closedGuard={closedGuard} />,
-    activity: <GroupActivityTab data={data} onKind={(action: GroupActivityAction | null) => go("activity", action ? { action } : {})} onPage={(page) => go("activity", { ...(data.activityAction && { action: data.activityAction }), page: String(page) })} busy={moving} />,
+    activity: <GroupActivityTab data={data} onPage={(page) => go("activity", { ...(data.activityAction && { action: data.activityAction }), page: String(page) })} busy={moving} />,
     settings: <GroupSettingsTab data={data} onCostSplit={() => setSplitOpen(true)} onEditCategory={(editing) => setCategory({ open: true, editing })} onRemoveCategory={removeCategory} onDeleteGroup={() => setDeleting(true)} />,
   };
 
