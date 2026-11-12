@@ -4,6 +4,7 @@ import { EyeOff, Lock, Trash2, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useStoredChoice } from "@/components/modules/Customer/Balance/useStoredChoice";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
@@ -90,7 +91,11 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
   // dialog is shut without going ahead.
   const pendingAsk = useRef<((ok: boolean) => void) | null>(null);
 
-  const messLayout = data.settings.kind === "MESS" || data.settings.mealsOn;
+  // Every kind shares the v16 dashboard; only a group that counts meals
+  // keeps the meal-rate pages, since its money is worked out from them.
+  const messLayout = data.settings.mealsOn;
+  // Skip, go to dashboard: a new group shows its dashboard from then on.
+  const [setupSeen, setSetupSeen] = useStoredChoice<"open" | "skipped">(`smartly-group-setup:${data.businessId}`, ["open", "skipped"], "open");
   useTellGroupNav(data.businessId, messLayout);
 
   const view = useMemo<GroupView>(() => {
@@ -109,12 +114,12 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       // By the group's own months, as its budgets are.
       byMonth: spendByMonth(data.recentExpenses, months, startDayOf(data.range)),
       closed: data.closedRecord !== null,
-      setup: data.isNew,
-      empty: !data.isNew && data.contributions.length === 0 && data.expenses.length === 0 && data.meals.length === 0,
+      setup: data.isNew && setupSeen !== "skipped",
+      empty: data.contributions.length === 0 && data.expenses.length === 0 && data.meals.length === 0,
       mealsPooled,
       sharedEqually: sharedEqually(data.expenses, mealsPooled, data.members, data.range),
     };
-  }, [data]);
+  }, [data, setupSeen]);
 
   const monthLabel = monthName(data.range.key, fmt, "long", true);
   const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
@@ -278,7 +283,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
 
   const pages: Record<GroupTab, React.ReactNode> = {
     dashboard: view.setup ? (
-      <GroupSetup data={data} view={view} onAddMember={() => setMember({ open: true, editing: null })} onAddContribution={() => openContribution()} onAddMeals={() => setMealDay(dayInMonth(data.range, data.today))} onAddExpense={openExpense} />
+      <GroupSetup data={data} view={view} onAddMember={() => setMember({ open: true, editing: null })} onAddContribution={() => openContribution()} onSkip={() => setSetupSeen("skipped")} />
     ) : messLayout ? (
       <MessDashboard data={data} view={view} onRecordPayment={openPayment} onStatement={setStatement} onSetBudget={() => setBudgetKey(data.range.key)} />
     ) : (
