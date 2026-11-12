@@ -88,7 +88,8 @@ export interface HomeData {
   // The next invitations and own events; null when they can't be shown.
   events: { id: string; title: string; date: string; time: string | null; place: string | null; type: SocialEventType }[] | null;
   biggestSpend: { name: string; amount: number } | null;
-  goalRows: { id: string; name: string; saved: number; target: number; paused: boolean }[];
+  // color: the goal's card colour (its own, else its place in the list's).
+  goalRows: { id: string; name: string; saved: number; target: number; paused: boolean; color: string }[];
   loanPeople: { id: string; name: string; balance: number }[];
   assetRows: { id: string; name: string; category: string; value: number; cost: number }[];
   // Last month's short name ("Sep"), for the phone's "vs Sep".

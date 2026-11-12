@@ -37,11 +37,11 @@ function Legend({ size }: { size: "md" | "sm" }) {
   return (
     <div aria-hidden="true" className={cn("flex text-ink-soft", size === "md" ? "gap-4 text-[13px]" : "gap-2.5 text-caption")}>
       <span className={cn("flex items-center", size === "md" ? "gap-1.5" : "gap-1")}>
-        <span className={cn(dot, "bg-chart-income")} />
+        <span className={cn(dot, "bg-emerald")} />
         {t("Income")}
       </span>
       <span className={cn("flex items-center", size === "md" ? "gap-1.5" : "gap-1")}>
-        <span className={cn(dot, size === "md" ? "bg-chart-expense" : "bg-chart-expense/60")} />
+        <span className={cn(dot, size === "md" ? "bg-bar-expense" : "bg-bar-expense-key")} />
         {t("Expense")}
       </span>
     </div>
@@ -144,10 +144,10 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
                       onMouseEnter={() => setActive(i)}
                       onFocus={() => setActive(i)}
                       onBlur={() => setActive(null)}
-                      className={cn("flex h-full w-21 cursor-default items-end justify-center gap-1 rounded-t-lg outline-none focus-visible:ring-2 focus-visible:ring-focus-ring", now && "bg-surface-sunken")}
+                      className={cn("flex h-full w-21 cursor-default items-end justify-center gap-1 rounded-t-lg outline-none focus-visible:ring-2 focus-visible:ring-focus-ring", now && "bg-surface-sunken dark:bg-pick-wash")}
                     >
-                      <span className={cn("w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-chart-income" : "bg-chart-income/45")} style={{ height: height(point.income) }} />
-                      <span className={cn("w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-chart-expense" : "bg-chart-expense/40")} style={{ height: height(point.expense) }} />
+                      <span className={cn("w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-chart-income" : "bg-bar-income-dim")} style={{ height: height(point.income) }} />
+                      <span className={cn("w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-bar-expense" : "bg-bar-expense-dim")} style={{ height: height(point.expense) }} />
                     </button>
                   );
                 })}
@@ -182,8 +182,8 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
             const now = i === current;
             return (
               <div key={point.month} className="flex h-full items-end gap-0.75">
-                <span className={cn("w-3 rounded-[6px_6px_3px_3px]", now ? "bg-chart-income" : "bg-chart-income/45")} style={{ height: height(point.income) }} />
-                <span className={cn("w-3 rounded-[6px_6px_3px_3px]", now ? "bg-chart-expense" : "bg-chart-expense/40")} style={{ height: height(point.expense) }} />
+                <span className={cn("w-3 rounded-[6px_6px_3px_3px]", now ? "bg-chart-income" : "bg-bar-income-dim")} style={{ height: height(point.income) }} />
+                <span className={cn("w-3 rounded-[6px_6px_3px_3px]", now ? "bg-bar-expense-phone" : "bg-bar-expense-phone-dim")} style={{ height: height(point.expense) }} />
               </div>
             );
           })}

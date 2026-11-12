@@ -98,7 +98,9 @@ function colour(palette: Palette, name: string): string {
 }
 
 describe.each(Object.entries(THEMES))("%s theme tokens", (theme, palette) => {
-  const pairs = RULES.flatMap(({ fg, bg, min }) => fg.flatMap((text) => bg.map((ground) => ({ text, ground, min }))));
+  // In dark the primary's words read --emerald-ink; its fills keep --emerald.
+  const word = (name: string) => (theme === "dark" && name === "emerald" ? "emerald-ink" : name);
+  const pairs = RULES.flatMap(({ fg, bg, min }) => fg.flatMap((text) => bg.map((ground) => ({ text: word(text), ground, min }))));
 
   it.each(pairs)("--$text on --$ground is at least $min:1", ({ text, ground, min }) => {
     expect(contrast(colour(palette, text), colour(palette, ground))).toBeGreaterThanOrEqual(min);

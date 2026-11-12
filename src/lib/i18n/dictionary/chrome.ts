@@ -112,6 +112,9 @@ export const chromeDictionary: Record<string, string> = {
   Language: "ভাষা",
   "Switch to dark theme": "ডার্ক থিমে যান",
   "Switch to light theme": "লাইট থিমে যান",
+  // The top bar's moon / sun button (AppTopbar board).
+  "Switch to dark mode": "ডার্ক মোড চালু করুন",
+  "Switch to light mode": "লাইট মোড চালু করুন",
   "Open menu": "মেনু খুলুন",
   "Close menu": "মেনু বন্ধ করুন",
   Workspace: "ওয়ার্কস্পেস",
