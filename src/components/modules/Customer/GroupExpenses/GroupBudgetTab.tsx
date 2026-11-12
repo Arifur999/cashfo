@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { Info, Pencil } from "lucide-react";
 import Link from "next/link";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
@@ -12,6 +12,9 @@ import { budgetMonths, budgetPageMonths, budgetTotals, categoryRows, closedFor, 
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { useState } from "react";
+import type { GroupExpenseCategoryOption } from "@/lib/customer/api";
+import { CategoryLimitDialog } from "./CategoryLimitDialog";
 import { cn } from "@/lib/utils";
 import { CategoryTile } from "./GroupBits";
 import type { GroupPageData } from "./groupTypes";
@@ -49,6 +52,13 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
   const spentBy = categoryRows(data.expenses, data.categories);
   const cats = [...spentBy.filter((row) => row.amount > 0), ...data.categories.filter((c) => !c.hidden && !spentBy.some((row) => row.name === c.name && row.amount > 0)).map((c) => ({ name: c.name, amount: 0, share: 0 }))];
   const catTotal = cats.reduce((sum, row) => sum + row.amount, 0);
+  const optionOf = (name: string) => data.categories.find((c) => c.name === name);
+  const limitOf = (name: string) => Number(optionOf(name)?.monthlyLimit ?? 0);
+  const limitTotal = cats.reduce((sum, row) => sum + limitOf(row.name), 0);
+  const limited = cats.filter((row) => limitOf(row.name) > 0).length;
+  const [limiting, setLimiting] = useState<GroupExpenseCategoryOption | null>(null);
+  const isAdmin = data.role === "OWNER";
+  const LIMIT_COLUMNS = "md:grid-cols-[minmax(0,1fr)_110px_120px_minmax(0,1.3fr)_40px]";
   const last6 = [...rows].filter((row) => !row.future).slice(0, 6).reverse();
   const peak = Math.max(1, ...last6.map((row) => Math.max(row.spent, row.budget ?? 0)));
   const avgSpent = last6.length ? last6.reduce((sum, row) => sum + row.spent, 0) / last6.length : 0;
@@ -105,31 +115,70 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
           <Card padding="none" className="flex flex-col overflow-hidden">
             <div className="flex flex-col gap-0.5 px-5 pt-4 pb-3">
               <h3 className="text-[17px] font-semibold text-ink">{t("By category")}</h3>
-              <p className="text-caption text-ink-muted">{t("What {month} spent in each category so far.", { month: monthLong })}</p>
+              <p className="text-caption text-ink-muted">{t("Limits are optional and stay the same every month. Red means a category went over its limit.")}</p>
             </div>
-            <div className="hidden grid-cols-[minmax(0,1fr)_120px_200px] gap-x-4 border-t border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid">
+            <div className={cn("hidden gap-x-4 border-t border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid", LIMIT_COLUMNS)}>
               <span>{t("Category")}</span>
+              <span className="text-right">{t("Monthly limit")}</span>
               <span className="text-right">{t("Spent so far")}</span>
               <span>{t("Used")}</span>
+              <span />
             </div>
             {cats.length === 0 && <p className="border-t border-divider px-5 py-4 text-small text-ink-muted">{t("No spending in {month} yet.", { month: monthLong })}</p>}
             {cats.map((row) => (
-              <div key={row.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-divider px-5 py-2.5 text-body tabular-nums md:grid-cols-[minmax(0,1fr)_120px_200px]">
+              <div key={row.name} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-divider px-5 py-2.5 text-body tabular-nums", LIMIT_COLUMNS)}>
                 <span className="flex min-w-0 items-center gap-2.5">
                   <CategoryTile name={row.name} categories={data.categories} size={28} />
                   <span className="truncate font-medium text-ink">{row.name}</span>
                 </span>
-                <span className="text-right font-semibold text-ink">{money(row.amount)}</span>
-                <span className="hidden text-caption text-ink-muted md:block">{row.amount > 0 ? t("{percent}% of {month}’s spending", { percent: formatCount(Math.round(row.share), fmt), month: monthName(shownKey, fmt, "long") }) : t("Nothing spent")}</span>
+                <span className={cn("text-right max-md:hidden", limitOf(row.name) > 0 ? "text-ink" : "text-ink-faint")}>{limitOf(row.name) > 0 ? money(limitOf(row.name)) : "–"}</span>
+                <span className={cn("text-right font-semibold", limitOf(row.name) > 0 && row.amount > limitOf(row.name) ? "text-expense" : row.amount > 0 ? "text-ink" : "text-ink-faint")}>{money(row.amount)}</span>
+                {(() => {
+                  const limit = limitOf(row.name);
+                  const used = limit > 0 ? Math.round((row.amount / limit) * 1000) / 10 : 0;
+                  const over = limit > 0 && row.amount > limit;
+                  const near = limit > 0 && !over && warnAt !== null && used >= warnAt;
+                  return (
+                    <span className="hidden min-w-0 flex-col gap-1 md:flex">
+                      {limit > 0 && (
+                        <span className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
+                          <span className={cn("block h-full rounded-full", over ? "bg-expense-fill" : near ? "bg-warning-fill" : "bg-emerald")} style={{ width: `${Math.min(100, used)}%` }} />
+                        </span>
+                      )}
+                      <span className={cn("truncate text-caption", over ? "font-semibold text-expense" : near ? "font-semibold text-warning" : "text-ink-muted")}>
+                        {limit > 0
+                          ? over
+                            ? t("{amount} over · {percent}%", { amount: money(row.amount - limit), percent: formatCount(used, fmt) })
+                            : t("{amount} left · {percent}%", { amount: money(limit - row.amount), percent: formatCount(used, fmt) })
+                          : row.amount > 0
+                            ? t("{percent}% of {month}’s spending", { percent: formatCount(Math.round(row.share), fmt), month: monthName(shownKey, fmt, "long") })
+                            : t("Nothing spent")}
+                      </span>
+                    </span>
+                  );
+                })()}
+                <span className="flex justify-end max-md:hidden">
+                  {isAdmin && optionOf(row.name) && (
+                    <button type="button" onClick={() => setLimiting(optionOf(row.name) ?? null)} aria-label={t("Monthly limit for {name}", { name: row.name })} className="flex size-8.5 items-center justify-center rounded-[9px] text-ink-muted hover:bg-emerald-wash hover:text-emerald">
+                      <Pencil className="size-3.75" aria-hidden="true" />
+                    </button>
+                  )}
+                </span>
               </div>
             ))}
             {cats.length > 0 && (
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-divider bg-hover px-5 py-3 text-body font-semibold tabular-nums md:grid-cols-[minmax(0,1fr)_120px_200px]">
+              <div className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-divider bg-hover px-5 py-3 text-body font-semibold tabular-nums", LIMIT_COLUMNS)}>
                 <span className="text-ink">{t("Total")}</span>
+                <span className="text-right text-ink max-md:hidden">{limitTotal > 0 ? money(limitTotal) : "–"}</span>
                 <span className="text-right text-ink">{money(catTotal)}</span>
+                <span className="max-md:hidden" />
                 <span className="max-md:hidden" />
               </div>
             )}
+            <p className="flex items-center gap-2 border-t border-divider px-5 py-3 text-[12.5px] text-ink-soft">
+              <Info className="size-3.5 shrink-0" aria-hidden="true" />
+              {limited === 0 ? t("No category has a limit yet. The total budget still works on its own.") : t(limited === 1 ? "{count} category has a limit, {amount} in all." : "{count} categories have a limit, {amount} in all.", { count: formatCount(limited, fmt), amount: money(limitTotal) })}
+            </p>
           </Card>
         </div>
 
@@ -240,6 +289,7 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
           );
         })}
       </ListCard>
+      <CategoryLimitDialog businessId={data.businessId} currency={data.currency} categories={data.categories} category={limiting} spent={limiting ? (cats.find((row) => row.name === limiting.name)?.amount ?? 0) : 0} onClose={() => setLimiting(null)} />
     </div>
   );
 }

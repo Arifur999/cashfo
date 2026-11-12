@@ -222,6 +222,8 @@ export interface GroupExpenseCategoryInput {
   // [] = shared by everyone again.
   defaultMemberIds?: string[];
   hidden?: boolean;
+  // What it may spend in a month; null: no limit.
+  monthlyLimit?: number | null;
 }
 
 export async function createGroupExpenseCategoryAction(

@@ -1281,6 +1281,8 @@ export interface GroupExpenseCategoryOption {
   hidden?: boolean;
   // Expenses filed under it, all time (a used one can only be hidden).
   expenseCount?: number;
+  // What it may spend in a month; null or absent: no limit.
+  monthlyLimit?: string | null;
   createdAt: string;
   updatedAt: string;
 }
