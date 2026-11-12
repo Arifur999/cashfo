@@ -489,7 +489,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
           <div className={cn("grid gap-4", hasProfit && "xl:grid-cols-[minmax(0,1fr)_280px]")}>
             <Card padding="none" className="grid grid-cols-2 overflow-hidden leading-[normal] md:grid-cols-4">
               <Figure label={t("Opening balance")} sub={openedOn ? t("On {date}", { date: day(openedOn) }) : undefined}>
-                <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="flex flex-wrap items-center gap-x-1.5 whitespace-nowrap">
                   <span className="text-[19px] font-bold text-ink tabular-nums">{formatCurrency(Math.abs(openingBalance), currency, fmt)}</span>
                   <span className={cn("text-[11px] font-bold", openSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[openSide].text)}>{t(DIRECTION_META[openSide].name)}</span>
                 </span>
@@ -501,7 +501,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
                 <span className={cn("text-[19px] font-bold tabular-nums", received ? "text-income" : "text-ink-faint")}>{formatCurrency(received, currency, fmt)}</span>
               </Figure>
               <Figure label={t("Closing balance")} sub={t("On {date}", { date: day(periodTo) })} tone={closeSide} className={cn("max-md:border-t max-md:border-l max-md:border-divider", DIRECTION_META[closeSide].box)}>
-                <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="flex flex-wrap items-center gap-x-1.5 whitespace-nowrap">
                   <span className={cn("text-[21px] font-bold tabular-nums", closeSide === "SETTLED" ? "text-ink" : DIRECTION_META[closeSide].text)}>{formatCurrency(Math.abs(closing), currency, fmt)}</span>
                   <span className={cn("text-[11px] font-bold", closeSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[closeSide].text)}>{t(DIRECTION_META[closeSide].name)}</span>
                 </span>

@@ -198,7 +198,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const voidingBody =
     voiding && voidingRow
       ? [
-          t("{name}: {what}, {amount} on {date}.", { name: voidingName, what: voidingRow.title ? t(voidingRow.title) : t(TRANSACTION_TYPE_LABELS[voiding.transactionType]), amount: formatCurrency(Math.abs(voidingRow.signedAmount), currency, fmt), date: formatDate(voiding.transactionDate, "d MMM yyyy", fmt) }),
+          t("{name}: {what}, {amount} on {date}.", { name: voidingName, what: ((what: string) => (locale === "en" ? what.toLowerCase() : what))(voidingRow.title ? t(voidingRow.title) : t(TRANSACTION_TYPE_LABELS[voiding.transactionType])), amount: formatCurrency(Math.abs(voidingRow.signedAmount), currency, fmt), date: formatDate(voiding.transactionDate, "d MMM yyyy", fmt) }),
           voidingProfit
             ? voidingProfit.paid
               ? t("The money goes back to {wallet} and the expense is removed. The loan balance doesn't change.", { wallet: voidingWallet })
