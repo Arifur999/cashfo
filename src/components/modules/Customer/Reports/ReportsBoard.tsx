@@ -202,7 +202,7 @@ export function ReportsBoard({ data }: { data: ReportsData }) {
 
       <div id="summary" className="grid scroll-mt-4 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: t("Income"), Icon: ArrowDownLeft, tile: "bg-mint-50 text-emerald", value: money(income), tone: "text-emerald", sub: <>{pill(change(income, data.totals.incomeBefore), true)}<span className="truncate">{t("vs {period}", { period: data.beforeLabel })}</span></> },
+          { label: t("Income"), Icon: ArrowDownLeft, tile: "bg-mint-50 text-emerald-fill", value: money(income), tone: "text-emerald-fill", sub: <>{pill(change(income, data.totals.incomeBefore), true)}<span className="truncate">{t("vs {period}", { period: data.beforeLabel })}</span></> },
           { label: t("Expense"), Icon: ArrowUpRight, tile: "bg-expense-soft text-expense-fill", value: money(expense), tone: "text-expense-fill", sub: <>{pill(change(expense, data.totals.expenseBefore), false)}<span className="truncate">{t("vs {period}", { period: data.beforeLabel })}</span></> },
           { label: t("Saved"), Icon: PiggyBank, tile: "bg-warning-soft text-warning", value: signed(saved), tone: saved < 0 ? "text-expense-fill" : "text-ink", sub: <span className="truncate">{income > 0 ? t("Income minus expense · {percent} kept", { percent: percent(keptRate) }) : t("No income recorded")}</span> },
         ].map((card) => (

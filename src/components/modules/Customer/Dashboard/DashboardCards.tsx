@@ -224,9 +224,9 @@ export function KpiCards({ data }: { data: HomeData }) {
     {
       label: t("Income"),
       Icon: ArrowDownLeft,
-      tile: "bg-mint-50 text-emerald",
+      tile: "bg-mint-50 text-emerald-fill",
       value: money(income),
-      valueTone: "text-emerald",
+      valueTone: "text-emerald-fill",
       href: "/income-expense",
       bar: incomeRate !== null ? { width: Math.min(100, incomeRate), tone: incomeRate >= 100 ? "bg-tint-green-ink" : "bg-emerald" } : null,
       pill: incomeRate === null ? delta(income, data.compare?.income, true) : null,

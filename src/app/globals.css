@@ -135,6 +135,14 @@
   --chart-savings: #bbd9d3;
   --chart-grid: #e1e7e6;
   --chart-other: #c4cec9;
+  /* The Income vs Expense bars (Dashboard boards). The boards draw the past
+     months and the expense bars in these same hexes in both themes. */
+  --bar-income-dim: #9cc7be;
+  --bar-expense: #f07070;
+  --bar-expense-dim: #f6c1c1;
+  --bar-expense-phone: #ef6b6b;
+  --bar-expense-phone-dim: #f8c9c9;
+  --bar-expense-key: #fca5a5;
   --cat-1: #1c7567;
   --cat-2: #ea580c;
   --cat-3: #7c3aed;
@@ -851,6 +859,15 @@ html:not(.dark) [data-app="habit"] {
   --color-pillar-insights-soft: var(--pillar-insights-soft);
   --color-chart-income: var(--chart-income);
   --color-chart-expense: var(--chart-expense);
+  --color-bar-income-dim: var(--bar-income-dim);
+  --color-bar-expense: var(--bar-expense);
+  --color-bar-expense-dim: var(--bar-expense-dim);
+  --color-bar-expense-phone: var(--bar-expense-phone);
+  --color-bar-expense-phone-dim: var(--bar-expense-phone-dim);
+  --color-bar-expense-key: var(--bar-expense-key);
+  /* The primary as words that keep its fill colour in dark too (the boards'
+     Income figure and tile icon are the raw primary). */
+  --color-emerald-fill: var(--emerald);
   --color-chart-savings: var(--chart-savings);
   --color-chart-grid: var(--chart-grid);
   --color-chart-other: var(--chart-other);
