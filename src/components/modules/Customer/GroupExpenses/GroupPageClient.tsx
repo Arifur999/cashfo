@@ -300,7 +300,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     <PageFrame className="gap-5">
       <GroupHeader businessId={data.businessId} name={data.name} settings={data.settings} tab={data.tab} memberCount={view.activeMembers.length} role={data.role} groups={data.groups}
         period={
-          (data.tab === "dashboard" && !view.setup) || data.tab === "contributions" || data.tab === "expenses" || data.tab === "settlement" || data.tab === "cashbook" ? (
+          (data.tab === "dashboard" && !view.setup) || data.tab === "contributions" || data.tab === "expenses" || data.tab === "settlement" || data.tab === "cashbook" || data.tab === "budget" ? (
             <GroupMonthPicker name={data.name} currency={data.currency} value={data.range.key} current={currentKey} months={data.months} startDay={data.startDay} history={data.history} spent={data.monthTotals} onPick={(key) => go(data.tab, { month: key })} busy={moving} />
           ) : undefined
         }
