@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowLeftRight, Check, CircleAlert, CirclePause, CirclePlay, Info, Minus, PencilLine, Trash2, TrendingUp, TriangleAlert, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowLeftRight, Check, CircleAlert, CirclePause, CirclePlay, Info, List, Minus, PencilLine, Trash2, TrendingUp, TriangleAlert, type LucideIcon } from "lucide-react";
 import type { SavingsGoal } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -10,7 +10,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { Translate } from "@/lib/i18n/message";
 
-export type GoalAction = "details" | "catch" | "edit" | "pause" | "resume" | "move" | "withdraw" | "delete" | "add" | "wallet";
+export type GoalAction = "details" | "catch" | "edit" | "pause" | "resume" | "move" | "withdraw" | "delete" | "add" | "wallet" | "profit" | "toPlan";
 
 export interface GoalMenuItem {
   key: GoalAction;
@@ -18,6 +18,8 @@ export interface GoalMenuItem {
   icon: LucideIcon;
   danger?: boolean;
   good?: boolean;
+  // Add profit: the profit colour.
+  warm?: boolean;
 }
 
 // Where a goal stands, by its look (the board's colours), and its icon.
@@ -38,6 +40,8 @@ interface GoalViewOptions {
   today: string;
   canManage: boolean;
   canMoveTo: boolean;
+  // No savings account yet: no profit can be paid into one.
+  noWallet?: boolean;
 }
 
 // Where a goal stands in words, as the board's pace box says it (head and
@@ -69,7 +73,7 @@ export function paceWords(goal: SavingsGoal, look: GoalLook, need: number, t: Tr
 // look and how far along it is, the words for where it stands (long and
 // short), this month's chip, the account it keeps its money in, and the
 // menu of what can be done with it.
-export function useGoalView({ goal, color, currency, today, canManage, canMoveTo }: GoalViewOptions) {
+export function useGoalView({ goal, color, currency, today, canManage, canMoveTo, noWallet = false }: GoalViewOptions) {
   const { t, fmt } = useLocale();
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const look = goalLook(goal);
@@ -116,11 +120,15 @@ export function useGoalView({ goal, color, currency, today, canManage, canMoveTo
   const menu: GoalMenuItem[] = [{ key: "details", label: t("Details"), icon: Info }];
   if (canManage) {
     if (behind) menu.push({ key: "catch", label: t("Catch up"), icon: TrendingUp });
+    // Profit the bank paid, into the account it keeps its money in.
+    if (!closed && !noWallet && goal.accountId && saved > 0) menu.push({ key: "profit", label: t("Add profit"), icon: TrendingUp, warm: true });
     if (!closed) menu.push({ key: "edit", label: t("Edit goal"), icon: PencilLine });
     if (active) menu.push({ key: "pause", label: t("Pause goal"), icon: CirclePause });
     if (paused) menu.push({ key: "resume", label: t("Resume goal"), icon: CirclePlay });
     if (canWithdraw && canMoveTo) menu.push({ key: "move", label: t("Move money"), icon: ArrowLeftRight });
     if (canWithdraw) menu.push(completed ? { key: "withdraw", label: t("Withdraw to balance"), icon: ArrowDown, good: true } : { key: "withdraw", label: t("Withdraw"), icon: ArrowDown, danger: true });
+    // Nothing recorded yet: it can go back to being a saving plan.
+    if (!closed && goal.entryCount === 0) menu.push({ key: "toPlan", label: t("Move back to plans"), icon: List });
     if (goal.entryCount === 0) menu.push({ key: "delete", label: t("Delete goal"), icon: Trash2, danger: true });
   }
 

@@ -13,6 +13,10 @@ const LOOKS = {
   saved: { frame: "h-14 gap-1.5 border-[1.5px] border-line px-3.5", sign: "text-[18px] font-bold text-ink-faint", figure: "text-[18px] font-bold" },
   // Add money's amount.
   plain: { frame: "h-11 gap-2 px-3.5", sign: "text-[15px] font-semibold text-ink-faint", figure: "text-[15px] font-semibold max-md:text-[16px]" },
+  // Add money's amount beside its date (v4): as tall as the date.
+  tall: { frame: "h-14 gap-2 border-[1.5px] border-line px-3.5", sign: "text-[16px] font-semibold text-ink-faint", figure: "text-[18px] font-bold" },
+  // A saving plan's "About how much?".
+  plan: { frame: "h-13 gap-1.5 border-[1.5px] border-line px-3.5", sign: "text-[19px] font-bold text-emerald", figure: "text-[20px] font-bold" },
 } as const;
 
 // The Savings boards' amount box: the currency sign inline before the

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, ChevronDown, CircleAlert, Landmark, Minus, Plus, Target } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, CircleAlert, Info, Landmark, Minus, Plus, Target } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -11,15 +11,17 @@ import DayInput from "@/components/smartly/form/DayInput";
 import Input from "@/components/smartly/form/Input";
 import Textarea from "@/components/smartly/form/Textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { Account, SavingsGoal } from "@/lib/customer/api";
+import type { Account, SavingsGoal, SavingsPlan } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { createSavingsGoalAction, type SavingsGoalFormInput, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
+import { freshColor, isGoalColor } from "@/lib/customer/savingsColors";
 import { monthsAhead, monthsBetween, savingsError } from "@/lib/customer/savingsDisplay";
 import { monthsToGo } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { ColorRow } from "./ColorRow";
 import { MoneyField } from "./MoneyField";
 
 interface GoalFormDialogProps {
@@ -34,16 +36,20 @@ interface GoalFormDialogProps {
   // Active savings wallets: where the goal keeps its money.
   wallets: Account[];
   onAddWallet: () => void;
+  // Start goal on a saving plan: name, colour, end date and note come from it.
+  fromPlan?: SavingsPlan | null;
+  // The colours the goals wear now, so a new one starts on a fresh one.
+  usedColors?: string[];
 }
 
-// A new goal's name in one tap.
-const IDEAS = [
-  { emoji: "✈️", label: "Trip", name: "Family trip" },
-  { emoji: "📱", label: "Phone", name: "New phone" },
-  { emoji: "🛟", label: "Emergency fund", name: "Emergency fund" },
-  { emoji: "🕋", label: "Umrah", name: "Umrah trip" },
-  { emoji: "💻", label: "Laptop", name: "New laptop" },
-  { emoji: "🎓", label: "Education", name: "Education fund" },
+// A new goal's name in one tap (the board's chips); Others clears it to type.
+export const IDEAS = [
+  { key: "trip", emoji: "✈️", label: "Trip & tour", name: "Family trip" },
+  { key: "phone", emoji: "📱", label: "Phone", name: "New phone" },
+  { key: "umrah", emoji: "🕋", label: "Umrah", name: "Umrah trip" },
+  { key: "education", emoji: "🎓", label: "Education", name: "Education fund" },
+  { key: "wedding", emoji: "💍", label: "Wedding", name: "Wedding" },
+  { key: "others", emoji: "✨", label: "Others", name: "" },
 ] as const;
 
 const SPANS = [
@@ -61,7 +67,7 @@ const choice = (on: boolean) => (on ? "border-emerald bg-emerald-soft text-emera
 // the target and what is already saved, the savings account every deposit
 // goes into, the end date -- with the plan it works out to -- and, folded
 // away, a reminder day and a note.
-export function GoalFormDialog({ open, onClose, businessId, editing, currency, today, email, wallets, onAddWallet }: GoalFormDialogProps) {
+export function GoalFormDialog({ open, onClose, businessId, editing, currency, today, email, wallets, onAddWallet, fromPlan = null, usedColors = [] }: GoalFormDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
@@ -74,6 +80,8 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
   const [reminderDate, setReminderDate] = useState("");
   const [description, setDescription] = useState("");
   const [showMore, setShowMore] = useState(false);
+  const [color, setColor] = useState("");
+  const [other, setOther] = useState(false);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -83,19 +91,23 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
 
   // Fill the form the moment it opens, or switches to another goal.
   const [prevKey, setPrevKey] = useState("closed");
-  const key = open ? (editing?.id ?? "create") : "closed";
+  const key = open ? (editing?.id ?? (fromPlan ? `plan:${fromPlan.id}` : "create")) : "closed";
   if (key !== prevKey) {
     setPrevKey(key);
     if (open) {
-      setName(editing?.name ?? "");
+      setName(editing?.name ?? fromPlan?.name ?? "");
+      // From a plan the target is left for the customer to set (the plan's
+      // amount is offered as a chip), as the board does.
       setTargetAmount(editing ? String(Number(editing.targetAmount)) : "");
+      setColor(editing ? (isGoalColor(editing.color) ? editing.color.toLowerCase() : "") : isGoalColor(fromPlan?.color) ? fromPlan.color.toLowerCase() : freshColor(usedColors));
+      setOther(false);
       setHave("");
       // The customer picks the account, unless there is only one.
       setAccountId(homeId ?? (wallets.length === 1 ? wallets[0].id : ""));
-      setEndDate(editing?.targetDate.slice(0, 10) ?? "");
+      setEndDate(editing?.targetDate.slice(0, 10) ?? (fromPlan?.neededBy && fromPlan.neededBy > today ? fromPlan.neededBy : ""));
       setReminderDate(editing?.reminderDate?.slice(0, 10) ?? "");
-      setDescription(editing?.description ?? "");
-      setShowMore(!!(editing?.reminderDate || editing?.description));
+      setDescription(editing?.description ?? fromPlan?.note ?? "");
+      setShowMore(!!(editing?.reminderDate || editing?.description || fromPlan?.note));
       setError("");
     }
   }
@@ -168,6 +180,8 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
       description: description.trim() || undefined,
       ...(wallet && { accountId: wallet.id }),
       ...(saved > 0 && { startAmount: saved }),
+      ...(color && { color }),
+      ...(fromPlan && { fromPlanId: fromPlan.id }),
     };
   }
 
@@ -184,6 +198,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
       reminderChannel: reminderDate ? "EMAIL" : null,
       description: description.trim(),
       ...(wallet && wallet.id !== goal.accountId && { accountId: wallet.id }),
+      ...(color && color !== goal.color && { color }),
     };
   }
 
@@ -204,7 +219,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
     <PopupDialog
       open={open}
       onClose={onClose}
-      width={540}
+      width={600}
       busy={isPending}
       onSubmit={submit}
       className="rounded-[22px] leading-[normal]"
@@ -212,7 +227,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
       titleClassName="text-[19px] font-bold! tracking-[-0.01em]"
       subClassName="leading-[normal]"
       closeClassName="bg-surface-sunken text-ink-soft hover:bg-line"
-      bodyClassName="gap-4.5 px-5.5 pt-1 pb-5"
+      bodyClassName="gap-4.5 px-5.5 pt-1 pb-5 [&>*]:shrink-0"
       footerClassName="bg-surface px-5.5 py-3.5"
       lead={
         <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-emerald-soft text-emerald">
@@ -234,31 +249,49 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
         </>
       }
     >
+      {fromPlan && !editing && (
+        <p className="flex items-center gap-2.5 rounded-[12px] border border-mint-200 bg-emerald-soft px-3 py-2.5 text-[12.5px] leading-[1.45] text-note-ink">
+          <Info className="size-4 shrink-0 text-emerald" strokeWidth={2} aria-hidden="true" />
+          <span>{t("From your saving plan, planned on {date}. Name, colour and end date are filled in. Add the target, what you saved already and the account. When you create the goal, the plan leaves your list.", { date: day(fromPlan.plannedOn) })}</span>
+        </p>
+      )}
       <div className="flex flex-col gap-2">
         <label htmlFor="goal-name" className={LABEL}>
           {t("What are you saving for?")}
         </label>
-        <Input id="goal-name" size="lg" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={40} placeholder={t("e.g. Family trip to Sylhet")} frameClassName={cn(FRAME, "px-3.5")} className="text-[15px] font-medium" />
+        <Input id="goal-name" size="lg" value={name} onChange={(event) => setName(event.target.value)} autoFocus maxLength={40} placeholder={t("Type your goal")} frameClassName={cn(FRAME, "px-3.5")} className="text-[15px] font-medium" />
         {!editing && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap justify-between gap-1 sm:flex-nowrap">
             {IDEAS.map((idea) => {
-              const value = t(idea.name);
-              const on = name === value;
+              const value = idea.name ? t(idea.name) : "";
+              const on = idea.name ? name === value && !other : other;
               return (
                 <button
-                  key={idea.name}
+                  key={idea.key}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => setName(value)}
-                  className={cn("flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold pointer-coarse:h-10", choice(on))}
+                  onClick={() => {
+                    if (idea.name) {
+                      setName(value);
+                      setOther(false);
+                      return;
+                    }
+                    setName("");
+                    setOther(true);
+                    document.getElementById("goal-name")?.focus();
+                  }}
+                  className={cn("flex h-8 shrink-0 items-center gap-1.25 rounded-full border pr-2.25 pl-2 text-[12px] font-semibold whitespace-nowrap pointer-coarse:h-10", choice(on))}
                 >
-                  <span aria-hidden="true">{idea.emoji}</span>
+                  <span aria-hidden="true" className="text-[13px]">
+                    {idea.emoji}
+                  </span>
                   {t(idea.label)}
                 </button>
               );
             })}
           </div>
         )}
+        <ColorRow value={color} onChange={setColor} className="mt-1" />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
@@ -267,6 +300,16 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
             {t("Target")}
           </label>
           <MoneyField id="goal-target" value={targetAmount} onChange={setTargetAmount} currency={currency} look="target" />
+          {fromPlan && !editing && Number(fromPlan.amount) > 0 && target !== Number(fromPlan.amount) && (
+            <button
+              type="button"
+              onClick={() => setTargetAmount(String(Number(fromPlan.amount)))}
+              className="inline-flex h-7 items-center gap-1.5 self-start rounded-full border border-dashed border-mint-200 bg-emerald-soft px-2.5 text-[12px] font-semibold text-brand-ink tabular-nums"
+            >
+              <Plus className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
+              {t("In your plan: {amount} · Use it", { amount: money(fromPlan.amount) })}
+            </button>
+          )}
         </div>
         {editing ? (
           <div className="flex min-w-0 flex-col gap-2">

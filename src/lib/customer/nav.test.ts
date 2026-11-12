@@ -50,7 +50,7 @@ describe("the two menus", () => {
       [
         "Plan & track",
         [
-          ["Savings Goals", "Goals", "Savings Accounts"],
+          ["Savings Goals", "Goals", "Saving plans", "Savings Accounts"],
           ["Assets Management", "Dashboard", "Purchase & Sell", "Update", "Category", "All Assets"],
           ["Loan Management", "Dashboard", "Transactions", "Ledger", "Contacts"],
           ["Group Expense"],

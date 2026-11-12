@@ -25,7 +25,7 @@ import {
   type LucideProps,
   MoonStar,
   PenLine,
-  PiggyBank,
+  Goal,
   Settings,
   TrendingUp,
   Trophy,
@@ -60,7 +60,8 @@ export const NAV_ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
   budget: ChartPie,
   income: TrendingUp,
   loans: Banknote,
-  savings: PiggyBank,
+  // The boards' goal mark (a flag in a target), v4.
+  savings: Goal,
   assets: Box,
   group: Users,
   today: CircleCheckBig,

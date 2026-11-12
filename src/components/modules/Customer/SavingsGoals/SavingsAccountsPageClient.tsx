@@ -13,7 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { archiveAccountAction } from "@/lib/customer/accountActions";
 import type { SavingsAccountOverview, SavingsGoal, SavingsWalletGoals } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
-import { goalColor, savingsPalette } from "@/lib/customer/savingsDisplay";
+import { goalColor } from "@/lib/customer/savingsDisplay";
+import { deepBand, freshColor, ownColor } from "@/lib/customer/savingsColors";
 import { shareBarLabel, sharePercent } from "@/lib/customer/walletShares";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -67,11 +68,11 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
   // The bar and its legend share out what the active accounts hold, in the cards' order.
   const held = (row: (typeof rows)[number]) => Math.max(0, Number(row.currentBalance));
   const activeTotal = active.reduce((sum, row) => sum + held(row), 0);
-  const shares = active.map((row, index) => ({ id: row.id, name: row.name, amount: held(row), share: activeTotal > 0 ? (held(row) / activeTotal) * 100 : 0, bar: savingsPalette(index).bar }));
+  const shares = active.map((row, index) => ({ id: row.id, name: row.name, amount: held(row), share: activeTotal > 0 ? (held(row) / activeTotal) * 100 : 0, color: ownColor(row.color, index) }));
   const goalsOf = (id: string) => walletGoals.find((item) => item.accountId === id)?.goals ?? [];
   const colorOf = (goalId: string) => {
     const index = goals.findIndex((goal) => goal.id === goalId);
-    return index < 0 ? "var(--ink-faint)" : goalColor(index, goals[index].status);
+    return index < 0 ? "var(--ink-faint)" : goalColor(goals[index], index);
   };
   const viewing = viewId ? byId.get(viewId) : undefined;
 
@@ -119,13 +120,13 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
             </div>
           </div>
           <div role="img" aria-label={activeTotal > 0 ? shareBarLabel(t("Share of savings by account"), shares.filter((slice) => slice.amount > 0), fmt) : t("No money in savings accounts yet")} className="flex h-3 gap-0.75 overflow-hidden rounded-full bg-line">
-            {shares.map((slice) => slice.amount > 0 && <span key={slice.id} className={cn("h-full", slice.bar)} style={{ width: `${slice.share}%` }} />)}
+            {shares.map((slice) => slice.amount > 0 && <span key={slice.id} className="h-full" style={{ width: `${slice.share}%`, background: slice.color }} />)}
           </div>
           {shares.length > 0 && (
             <ul className="flex flex-wrap gap-x-6 gap-y-2 text-small">
               {shares.map((slice) => (
                 <li key={slice.id} className="flex items-center gap-2">
-                  <span aria-hidden="true" className={cn("size-2.5 rounded-[3px]", slice.bar)} />
+                  <span aria-hidden="true" className="size-2.5 rounded-[3px]" style={{ background: slice.color }} />
                   <span className="text-ink-2">{slice.name}</span>
                   <span className="font-semibold text-ink tabular-nums">{money(slice.amount)}</span>
                   {activeTotal > 0 && <span className="text-ink-muted tabular-nums">{sharePercent(slice.share, fmt)}</span>}
@@ -147,17 +148,26 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {active.map((row, index) => {
-          const palette = savingsPalette(index);
+          const color = ownColor(row.color, index);
           return (
-            <article key={row.id} aria-label={row.name} className={cn("relative flex h-50 flex-col justify-between gap-3 overflow-hidden rounded-lg p-5 text-white shadow-[0_10px_24px_rgba(18,32,29,0.14)]", palette.gradient, isPending && "opacity-70")}>
-              <span aria-hidden="true" className="pointer-events-none absolute -top-22.5 -right-17.5 size-55 rounded-full bg-white/7" />
+            <article
+              key={row.id}
+              aria-label={row.name}
+              className={cn("relative flex h-50 flex-col justify-between gap-3 rounded-[22px] p-5 text-white transition-transform duration-150 hover:-translate-y-0.5", isPending && "opacity-70")}
+              style={{ background: deepBand(color), boxShadow: `0 1px 2px rgb(18 32 29 / 0.06), 0 16px 32px -14px color-mix(in srgb, ${color} 70%, transparent)` }}
+            >
+              <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[22px]">
+                <span className="absolute -top-22.5 -right-17.5 size-60 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.16)_0,transparent_68%)]" />
+                <span className="absolute -right-11.5 -bottom-30 size-55 rounded-full border border-white/12" />
+                <span className="absolute right-2.5 -bottom-37.5 size-55 rounded-full border border-white/8" />
+              </span>
               <div className="relative flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/16 px-2.5 py-1 text-caption font-semibold">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/22 bg-white/14 px-2.5 py-1 text-[12px] font-semibold">
                   <PiggyBank className="size-3.5" aria-hidden="true" />
                   {t("Savings account")}
                 </span>
                 <DropdownMenu>
-                  <DropdownMenuTrigger aria-label={t("Actions for {name}", { name: row.name })} className="flex size-9 items-center justify-center rounded-full bg-white/16 hover:bg-white/24 pointer-coarse:size-11">
+                  <DropdownMenuTrigger aria-label={t("Actions for {name}", { name: row.name })} className="flex size-8.5 items-center justify-center rounded-[10px] border border-white/26 bg-white/12 hover:bg-white/20 pointer-coarse:size-11">
                     <Ellipsis className="size-4.5" aria-hidden="true" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" alignOffset={-4} sideOffset={4} className="flex w-56 flex-col gap-0.5 rounded-[14px] border border-line bg-surface p-1.5 leading-[normal] shadow-overlay ring-0">
@@ -166,7 +176,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
                     </DropdownMenuItem>
                     {canManage && (
                       <>
-                        <DropdownMenuItem onSelect={() => setForm({ id: row.id, name: row.name, accountNumber: row.accountNumber })} className={MENU_ITEM}>
+                        <DropdownMenuItem onSelect={() => setForm({ id: row.id, name: row.name, accountNumber: row.accountNumber, color })} className={MENU_ITEM}>
                           {t("Edit account")}
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => setArchiving(row)} className={cn(MENU_ITEM, "text-expense focus:bg-expense-soft focus:text-expense")}>
@@ -183,10 +193,10 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
               </div>
               <div className="relative flex items-end justify-between gap-3">
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-caption text-white/78">{t("Balance")}</span>
-                  <span className="truncate text-[26px] leading-[normal] font-bold tabular-nums">{money(row.currentBalance)}</span>
+                  <span className="text-[11px] font-bold tracking-[0.08em] text-white/70 uppercase">{t("Balance")}</span>
+                  <span className="truncate text-[28px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums">{money(row.currentBalance)}</span>
                 </span>
-                <button type="button" onClick={() => setViewId(row.id)} className="inline-flex h-8.5 shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 text-[12.5px] font-semibold hover:bg-white/28 pointer-coarse:h-11">
+                <button type="button" onClick={() => setViewId(row.id)} className="inline-flex h-8.5 shrink-0 items-center gap-1 rounded-full border border-white/24 bg-white/14 px-3 text-[12.5px] font-semibold hover:bg-white/24 pointer-coarse:h-11">
                   {t("View goals")}
                   <ArrowRight className="size-3" strokeWidth={2.5} aria-hidden="true" />
                 </button>
@@ -197,7 +207,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
         {/* The board's tile fills a row's free place (none when the rows are full). */}
         {canManage ? (
           (active.length % 3 !== 0 || active.length === 0) && (
-          <button type="button" onClick={() => setForm("create")} className="flex h-50 flex-col items-center justify-center gap-2.5 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald">
+          <button type="button" onClick={() => setForm("create")} className="flex h-50 flex-col items-center justify-center gap-2.5 rounded-[22px] border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald">
             <span className="flex size-11 items-center justify-center rounded-field bg-emerald-soft text-emerald">
               <Plus className="size-5" strokeWidth={2.5} aria-hidden="true" />
             </span>
@@ -226,7 +236,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
         </section>
       )}
 
-      <SavingsAccountDialog open={form !== "closed"} onClose={() => setForm("closed")} businessId={businessId} editing={typeof form === "object" ? form : null} names={rows.map((row) => ({ id: row.id, name: row.name }))} />
+      <SavingsAccountDialog open={form !== "closed"} onClose={() => setForm("closed")} businessId={businessId} editing={typeof form === "object" ? form : null} names={rows.map((row) => ({ id: row.id, name: row.name }))} freshColor={freshColor(active.map((row, index) => ownColor(row.color, index)))} />
       <WalletGoalsDialog
         open={!!viewing}
         onClose={() => setViewId(null)}
