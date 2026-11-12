@@ -137,7 +137,7 @@ export function sampleNumber(value: number, grouping: NumberGrouping, digits: Di
   return writeDigits(text, digits);
 }
 
-// "TK 1,23,456" in English, "৳ ১,২৩,৪৫৬" in Bangla.
+// "Tk 1,23,456" in English, "৳ ১,২৩,৪৫৬" in Bangla.
 export const sampleAmount = (value: number, grouping: NumberGrouping, digits: DigitStyle, locale: Locale): string => `${takaSign(locale)} ${sampleNumber(value, grouping, digits)}`;
 
 const pad = (n: number) => String(n).padStart(2, "0");

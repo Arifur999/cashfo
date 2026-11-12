@@ -71,14 +71,14 @@ describe("a bar's short amount", () => {
   });
 
   it("marks a money bar with the taka sign, as the board writes it", () => {
-    expect(compactMoney(4_396, "en")).toBe("TK4.4k");
-    expect(compactMoney(41_300, "en")).toBe("TK41k");
-    expect(compactMoney(0, "en")).toBe("TK0");
-    expect(compactMoney(1_250_000, "en")).toBe("TK13L");
+    expect(compactMoney(4_396, "en")).toBe("Tk4.4k");
+    expect(compactMoney(41_300, "en")).toBe("Tk41k");
+    expect(compactMoney(0, "en")).toBe("Tk0");
+    expect(compactMoney(1_250_000, "en")).toBe("Tk13L");
     expect(compactMoney(4_396, "bn")).toBe("৳4.4k");
     // The minus before the sign, and none on a refund that rounds to nothing.
-    expect(compactMoney(-2_900, "en")).toBe("-TK2.9k");
-    expect(compactMoney(-0.4, "en")).toBe("TK0");
+    expect(compactMoney(-2_900, "en")).toBe("-Tk2.9k");
+    expect(compactMoney(-0.4, "en")).toBe("Tk0");
   });
 });
 
@@ -99,10 +99,10 @@ describe("backups and empty charts", () => {
 
 describe("the dashboard's charts and report", () => {
   it("labels a revenue bar as the board does", () => {
-    expect(revenueBarLabel(41280, "en")).toBe("TK 41.3k");
-    expect(revenueBarLabel(724853, "en")).toBe("TK 7.2L");
-    expect(revenueBarLabel(850, "en")).toBe("TK 850");
-    expect(revenueBarLabel(0, "en")).toBe("TK 0");
+    expect(revenueBarLabel(41280, "en")).toBe("Tk 41.3k");
+    expect(revenueBarLabel(724853, "en")).toBe("Tk 7.2L");
+    expect(revenueBarLabel(850, "en")).toBe("Tk 850");
+    expect(revenueBarLabel(0, "en")).toBe("Tk 0");
     expect(revenueBarLabel(-850, "bn")).toBe("-৳ 850");
   });
 

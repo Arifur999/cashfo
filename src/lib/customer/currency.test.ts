@@ -19,18 +19,18 @@ describe("formatCompactAmount", () => {
 
 describe("formatSignedCurrency", () => {
   it("writes the sign in words the design uses", () => {
-    expect(formatSignedCurrency(85000, "BDT")).toBe(`+ TK${NBSP}85,000`);
-    expect(formatSignedCurrency("-52300", "BDT")).toBe(`− TK${NBSP}52,300`);
-    expect(formatSignedCurrency(0, "BDT")).toBe(`TK${NBSP}0`);
-    expect(formatSignedCurrency(-0.004, "BDT")).toBe(`TK${NBSP}0`);
+    expect(formatSignedCurrency(85000, "BDT")).toBe(`+ Tk${NBSP}85,000`);
+    expect(formatSignedCurrency("-52300", "BDT")).toBe(`− Tk${NBSP}52,300`);
+    expect(formatSignedCurrency(0, "BDT")).toBe(`Tk${NBSP}0`);
+    expect(formatSignedCurrency(-0.004, "BDT")).toBe(`Tk${NBSP}0`);
   });
 });
 
 describe("formatCurrency", () => {
   it("groups taka in lakhs and crores", () => {
-    expect(formatCurrency(1250000, "BDT")).toBe(`TK${NBSP}12,50,000`);
-    expect(formatCurrency("123456789.5", "BDT")).toBe(`TK${NBSP}12,34,56,789.50`);
-    expect(formatCurrency(999, "BDT")).toBe(`TK${NBSP}999`);
+    expect(formatCurrency(1250000, "BDT")).toBe(`Tk${NBSP}12,50,000`);
+    expect(formatCurrency("123456789.5", "BDT")).toBe(`Tk${NBSP}12,34,56,789.50`);
+    expect(formatCurrency(999, "BDT")).toBe(`Tk${NBSP}999`);
   });
 
   it("groups dollars the international way", () => {
@@ -38,12 +38,12 @@ describe("formatCurrency", () => {
   });
 
   it("puts the sign first", () => {
-    expect(formatCurrency(-1500, "BDT")).toBe(`-TK${NBSP}1,500`);
+    expect(formatCurrency(-1500, "BDT")).toBe(`-Tk${NBSP}1,500`);
   });
 
   it("never signs a sum that rounds to zero", () => {
-    expect(formatCurrency(0.3 + -0.1 + -0.2, "BDT")).toBe(`TK${NBSP}0`);
-    expect(formatCurrency(-0.004, "BDT")).toBe(`TK${NBSP}0`);
+    expect(formatCurrency(0.3 + -0.1 + -0.2, "BDT")).toBe(`Tk${NBSP}0`);
+    expect(formatCurrency(-0.004, "BDT")).toBe(`Tk${NBSP}0`);
   });
 
   it("names an unknown currency by its code", () => {
@@ -51,7 +51,7 @@ describe("formatCurrency", () => {
   });
 
   it("reads a broken amount as zero", () => {
-    expect(formatCurrency("not a number", "BDT")).toBe(`TK${NBSP}0`);
+    expect(formatCurrency("not a number", "BDT")).toBe(`Tk${NBSP}0`);
   });
 
   it("never breaks between the symbol and the digits", () => {
@@ -61,7 +61,7 @@ describe("formatCurrency", () => {
 
 describe("currencySymbol", () => {
   it("is just the symbol, for an amount input's prefix", () => {
-    expect(currencySymbol("BDT", "en")).toBe("TK");
+    expect(currencySymbol("BDT", "en")).toBe("Tk");
     expect(currencySymbol("BDT", "bn")).toBe("৳");
     expect(currencySymbol("USD", "bn")).toBe("$");
   });
@@ -85,7 +85,7 @@ describe("money in Bangla", () => {
   });
 
   it("keeps Latin digits when no language is given", () => {
-    expect(formatCurrency(1500, "BDT")).toBe("TK\u00A01,500");
+    expect(formatCurrency(1500, "BDT")).toBe("Tk\u00A01,500");
   });
 
   it("writes chart units in Bangla", () => {

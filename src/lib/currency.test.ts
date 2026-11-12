@@ -6,18 +6,18 @@ const NBSP = " ";
 
 describe("formatCurrency", () => {
   it("writes taka as the design does, symbol first", () => {
-    expect(formatCurrency(6214.5)).toBe(`TK${NBSP}6,214.50`);
-    expect(formatCurrency("72155.00", "BDT", 0)).toBe(`TK${NBSP}72,155`);
+    expect(formatCurrency(6214.5)).toBe(`Tk${NBSP}6,214.50`);
+    expect(formatCurrency("72155.00", "BDT", 0)).toBe(`Tk${NBSP}72,155`);
   });
 
   it("leads with the sign and never shows a negative zero", () => {
-    expect(formatCurrency(-1500)).toBe(`-TK${NBSP}1,500.00`);
-    expect(formatCurrency(0)).toBe(`TK${NBSP}0.00`);
+    expect(formatCurrency(-1500)).toBe(`-Tk${NBSP}1,500.00`);
+    expect(formatCurrency(0)).toBe(`Tk${NBSP}0.00`);
   });
 
   it("falls back to zero for anything that is not a number", () => {
-    expect(formatCurrency(null)).toBe(`TK${NBSP}0.00`);
-    expect(formatCurrency("abc")).toBe(`TK${NBSP}0.00`);
+    expect(formatCurrency(null)).toBe(`Tk${NBSP}0.00`);
+    expect(formatCurrency("abc")).toBe(`Tk${NBSP}0.00`);
   });
 
   it("keeps the international form for other currencies", () => {
@@ -27,23 +27,23 @@ describe("formatCurrency", () => {
 
 describe("formatAmount", () => {
   it("leaves the paisa off a whole amount", () => {
-    expect(formatAmount(299)).toBe(`TK${NBSP}299`);
-    expect(formatAmount("1500.00")).toBe(`TK${NBSP}1,500`);
+    expect(formatAmount(299)).toBe(`Tk${NBSP}299`);
+    expect(formatAmount("1500.00")).toBe(`Tk${NBSP}1,500`);
   });
 
   it("keeps both paisa digits when there are some", () => {
-    expect(formatAmount(2699.1)).toBe(`TK${NBSP}2,699.10`);
+    expect(formatAmount(2699.1)).toBe(`Tk${NBSP}2,699.10`);
   });
 
   it("treats what is not a number as zero", () => {
-    expect(formatAmount(null)).toBe(`TK${NBSP}0`);
+    expect(formatAmount(null)).toBe(`Tk${NBSP}0`);
   });
 });
 
 describe("formatAmount in Bangla", () => {
   it("prints Bangla digits", () => {
-    // Bangla keeps taka's own sign, where English writes "TK".
-    expect(formatAmount(2699.1, "BDT", "bn")).toBe(toBanglaDigits(formatAmount(2699.1)).replace("TK", "৳"));
+    // Bangla keeps taka's own sign, where English writes "Tk".
+    expect(formatAmount(2699.1, "BDT", "bn")).toBe(toBanglaDigits(formatAmount(2699.1)).replace("Tk", "৳"));
     expect(formatCurrency(-1500, "BDT", 0, "bn")).toBe(`-৳${NBSP}১,৫০০`);
     expect(formatAmount(299, "BDT", "bn")).toContain("২৯৯");
   });

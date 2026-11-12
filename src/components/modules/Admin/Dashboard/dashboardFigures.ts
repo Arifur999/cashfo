@@ -59,7 +59,7 @@ export function compactAmount(value: number): string {
   return `${sign}${Math.round(abs)}`;
 }
 
-// A money bar's figure as the board writes it: "TK4.4k", "TK0", "-TK2.9k"
+// A money bar's figure as the board writes it: "Tk4.4k", "Tk0", "-Tk2.9k"
 // ("৳4.4k" in Bangla). No space after the sign, unlike formatAmount, so it
 // still fits a phone's slot.
 export function compactMoney(value: number, locale: Locale): string {
@@ -76,8 +76,8 @@ export const backupIsDue = (daysSinceLastBackup: number | null): boolean => days
 // Every bar of a chart at zero: nothing has come in yet.
 export const allZero = (values: number[]): boolean => values.every((value) => value === 0);
 
-// A revenue bar's label as the AdminDashboard board writes it: "TK 41.3k",
-// "TK 1.2L", "TK 850" ("৳ 41.3k" in Bangla). Latin digits; the card puts
+// A revenue bar's label as the AdminDashboard board writes it: "Tk 41.3k",
+// "Tk 1.2L", "Tk 850" ("৳ 41.3k" in Bangla). Latin digits; the card puts
 // them in the reader's.
 // Over more than six bars the board leaves the taka sign off ("41.3k").
 export function revenueBarLabel(value: number, locale: Locale, withSign = true): string {

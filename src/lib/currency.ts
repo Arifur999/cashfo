@@ -7,7 +7,7 @@ import type { Locale } from "@/lib/i18n/translate";
 
 export const DEFAULT_CURRENCY = "BDT";
 
-// Taka is written "TK 6,214.50" in English and "৳ ৬,২১৪.৫০" in Bangla
+// Taka is written "Tk 6,214.50" in English and "৳ ৬,২১৪.৫০" in Bangla
 // (takaSign): our own sign (Intl's rendering of BDT varies by ICU data)
 // joined to the digits with a no-break space, so a narrow cell never leaves
 // the sign alone on its line.
@@ -29,7 +29,7 @@ const getFormatter = (currency: string, fractionDigits: number) => {
   return formatter;
 };
 
-// "TK 299", "TK 2,699.10": the paisa only when there are some, as the design
+// "Tk 299", "Tk 2,699.10": the paisa only when there are some, as the design
 // writes payments and prices in its lists. The reader's language comes last:
 // Bangla gets "৳" and Bangla digits. Leave it out where the text must stay
 // Latin (a CSV export).
@@ -39,7 +39,7 @@ export const formatAmount = (amount: number | string | null | undefined, currenc
   return formatCurrency(safeValue, currency, Number.isInteger(safeValue) ? 0 : 2, locale);
 };
 
-// formatCurrency(1500) -> "TK 1,500.00"; formatCurrency(5, "USD") -> "$5.00";
+// formatCurrency(1500) -> "Tk 1,500.00"; formatCurrency(5, "USD") -> "$5.00";
 // non-numeric input falls back to 0.
 export const formatCurrency = (amount: number | string | null | undefined, currency = DEFAULT_CURRENCY, fractionDigits = 2, locale: Locale = "en"): string => {
   const value = typeof amount === "string" ? Number(amount) : amount;
@@ -48,6 +48,6 @@ export const formatCurrency = (amount: number | string | null | undefined, curre
   if (!symbol) {
     return toLocaleDigits(getFormatter(currency, fractionDigits).format(safeValue), locale);
   }
-  // The sign leads, as it is read: "-TK 1,500.00".
+  // The sign leads, as it is read: "-Tk 1,500.00".
   return toLocaleDigits(`${safeValue < 0 ? "-" : ""}${symbol} ${getFormatter(currency, fractionDigits).format(Math.abs(safeValue))}`, locale);
 };

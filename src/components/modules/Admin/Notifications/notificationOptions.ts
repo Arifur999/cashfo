@@ -78,12 +78,12 @@ export const VARIABLE_LABELS: Record<string, string> = {
 };
 
 // What a preview puts in each placeholder; the amount in the template's
-// language ("TK 299", "৳ 299").
+// language ("Tk 299", "৳ 299").
 const SAMPLE_VALUES: Record<string, string> = {
   userName: "Sharmin",
   planName: "Monthly Pro",
   expiryDate: "12 Oct 2026",
-  amount: "TK 299",
+  amount: "Tk 299",
   invoiceNumber: "INV-2026-000403",
   ticketSubject: "Can't export my report as PDF",
   code: "PUJA15",

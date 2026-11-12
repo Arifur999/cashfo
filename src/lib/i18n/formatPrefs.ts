@@ -96,10 +96,10 @@ export const writeDigits = (text: string, value: FormatLocale): string => (fmtOf
 // (12,50,000) or groups of three (1,250,000).
 export const takaGroupingLocale = (value: FormatLocale): string => (fmtOf(value).grouping === "international" ? "en-US" : "en-IN");
 
-// Taka's sign as the reader's language writes it: "৳" in Bangla, "TK" in
+// Taka's sign as the reader's language writes it: "৳" in Bangla, "Tk" in
 // English. It follows the language, not the digits, so an English page with
-// Bangla digits still says "TK ১২,৫০০".
-export const takaSign = (value: FormatLocale | null | undefined): string => (langOf(value) === "bn" ? "৳" : "TK");
+// Bangla digits still says "Tk ১২,৫০০".
+export const takaSign = (value: FormatLocale | null | undefined): string => (langOf(value) === "bn" ? "৳" : "Tk");
 
 // The full day-month-year of a pattern, the way lists, reports and
 // statements write it ("d MMM yyyy", "MMM dd, yyyy"; a weekday or a time

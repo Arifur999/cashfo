@@ -17,7 +17,7 @@ describe("adminFeedRow", () => {
   it("words a payout request to review, and one approved to send", () => {
     expect(adminFeedRow(row("PAYOUT_REQUESTED", { payoutId: "p-1", displayId: "WD-12", name: "Tanvir Ahmed", amount: "1540.00", method: "BKASH", status: "REQUESTED" }))).toEqual({
       title: "Payout request: Tanvir Ahmed",
-      body: "WD-12 · TK 1,540 · bKash",
+      body: "WD-12 · Tk 1,540 · bKash",
       tone: "warning",
     });
     expect(adminFeedRow(row("PAYOUT_REQUESTED", { payoutId: "p-1", displayId: "WD-12", name: "Tanvir Ahmed", amount: "1540.00", method: null, status: "APPROVED" })).title).toBe("Payout to send: Tanvir Ahmed");
