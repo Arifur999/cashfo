@@ -93,6 +93,8 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
   const [view, setView] = useStoredChoice<ListView>("smartly-savings-view", LIST_VIEWS, "cards");
   const [modal, setModal] = useState<Modal | null>(null);
   const [isPending, startTransition] = useTransition();
+  // A statement's print preview is open: only it prints.
+  const [printing, setPrinting] = useState(false);
 
   // ?new=1 opens New goal (Home's "Add a goal"); ?goal=<id> opens a goal's
   // details (the bell's reminder); ?plan=<id> opens New goal filled in from
@@ -280,7 +282,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
   };
 
   return (
-    <PageFrame className="gap-5 leading-[normal]">
+    <PageFrame className={cn("gap-5 leading-[normal]", printing && "print:hidden")}>
       <PageHeader
         title={t("Savings goals")}
         description={t("Put money aside for what matters, and watch each goal fill up.")}
@@ -459,6 +461,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         goal={modal?.kind === "statement" ? current : null}
         currency={currency}
         person={person}
+        onPrinting={setPrinting}
       />
       <SavingsAccountDialog open={modal?.kind === "wallet"} onClose={close} businessId={businessId} editing={null} names={walletNames} addedNote="goals" />
       <PopupDialog
