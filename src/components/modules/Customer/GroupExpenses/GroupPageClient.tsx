@@ -293,7 +293,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     budget: <GroupBudgetTab data={data} onSet={setBudgetKey} />,
     meals: <GroupMealsTab data={data} onDay={setMealDay} closedGuard={closedGuard} />,
     activity: <GroupActivityTab data={data} onPage={(page) => go("activity", { ...(data.activityAction && { action: data.activityAction }), page: String(page) })} busy={moving} />,
-    settings: <GroupSettingsTab data={data} onCostSplit={() => setSplitOpen(true)} onEditCategory={(editing) => setCategory({ open: true, editing })} onRemoveCategory={removeCategory} onDeleteGroup={() => setDeleting(true)} />,
+    settings: <GroupSettingsTab data={data} onCostSplit={() => setSplitOpen(true)} onDeleteGroup={() => setDeleting(true)} />,
   };
 
   return (
