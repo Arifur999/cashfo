@@ -18,6 +18,7 @@ import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { CategoryIcon, CategoryTile, categoryChipClass, Figure, groupLine } from "./GroupBits";
+import { ExpenseDetailsDialog } from "./ExpenseDetailsDialog";
 import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
@@ -57,6 +58,8 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }
   const [sort, setSort] = useState<Sort>("new");
   const [limit, setLimit] = useState(PAGE);
   const [printing, setPrinting] = useState(false);
+  // The expense whose details are open (a row was clicked).
+  const [viewing, setViewing] = useState<GroupExpense | null>(null);
   const label = monthName(data.range.key, fmt, "long", true);
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const words = query.trim().toLowerCase();
@@ -243,7 +246,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }
           const pocket = row.paidFrom === "MEMBER";
           const closed = isDayClosed(data.history, row.date.slice(0, 10));
           return (
-            <ListRow key={row.id} columns={COLUMNS} className="min-h-12.5 grid-cols-[minmax(0,1fr)_auto_76px] gap-x-3 tabular-nums md:px-5 md:py-1">
+            <ListRow key={row.id} columns={COLUMNS} onClick={() => setViewing(row)} className="min-h-12.5 cursor-pointer grid-cols-[minmax(0,1fr)_auto_76px] gap-x-3 tabular-nums hover:bg-row-hover md:px-5 md:py-1">
               <ListCell className="hidden text-ink-2 md:block">{formatDay(row.date.slice(0, 10), "d MMM", fmt)}</ListCell>
               <ListCell className="flex min-w-0 items-center gap-2 md:block">
                 <span className="md:hidden">
@@ -288,6 +291,21 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }
         })}
       </ListCard>
 
+      <ExpenseDetailsDialog
+        data={data}
+        view={view}
+        expense={viewing}
+        onClose={() => setViewing(null)}
+        canEdit={canAdd}
+        onEdit={(row) => {
+          setViewing(null);
+          onEdit(row);
+        }}
+        onDelete={(row) => {
+          setViewing(null);
+          onRemove(row);
+        }}
+      />
       <GroupStatement open={printing} onClose={() => setPrinting(false)} spec={printing ? statement() : null} />
     </div>
   );
