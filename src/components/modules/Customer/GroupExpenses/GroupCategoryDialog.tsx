@@ -80,7 +80,7 @@ export function GroupCategoryDialog({ open, onClose, businessId, categories, edi
       open={open}
       onClose={onClose}
       busy={isPending}
-      width={460}
+      width={500}
       title={editing ? t("Edit category") : t("Add category")}
       lead={
         <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[11px] [&_svg]:size-5", tone.bg, tone.fg)}>

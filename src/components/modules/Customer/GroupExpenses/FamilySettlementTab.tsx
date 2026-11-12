@@ -501,7 +501,7 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
       </section>
 
       <GroupStatement open={printing} onClose={() => setPrinting(false)} spec={printing ? statement() : null} />
-      <FamilyCloseDialog open={closeOpen} onClose={() => setCloseOpen(false)} businessId={data.businessId} currency={currency} range={range} members={data.members} settlement={settlement} cards={cards} holderId={holderId} budgets={data.budgets} />
+      <FamilyCloseDialog open={closeOpen} onClose={() => setCloseOpen(false)} businessId={data.businessId} currency={currency} range={range} today={data.today} members={data.members} settlement={settlement} cards={cards} holderId={holderId} />
     </div>
   );
 }

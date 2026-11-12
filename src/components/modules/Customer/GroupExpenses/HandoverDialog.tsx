@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -84,6 +83,9 @@ export function HandoverDialog({ open, onClose, businessId, currency, holders, c
   // The giver's cash after this; an edit first gives back what it took.
   const before = from ? (cash[from.id] ?? 0) + (editing && editing.fromId === from.id ? editing.amount : 0) - (editing && editing.toId === from.id ? editing.amount : 0) : 0;
   const afterGive = before - value;
+  // The taker's cash before this; an edit first takes back what it gave.
+  const toBefore = to ? (cash[to.id] ?? 0) - (editing && editing.toId === to.id ? editing.amount : 0) + (editing && editing.fromId === to.id ? editing.amount : 0) : 0;
+  const cashText = (amount: number) => `${amount < -0.004 ? "− " : ""}${formatCurrency(Math.abs(amount), currency, fmt)}`;
   const offline = t(OFFLINE_MESSAGE), stale = t(STALE_MESSAGE);
 
   function submit(event: React.FormEvent) {
@@ -112,28 +114,25 @@ export function HandoverDialog({ open, onClose, businessId, currency, holders, c
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <AlertDialogContent className="w-135 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-[520px] max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} noValidate className="flex max-h-[calc(100dvh-32px)] flex-col">
-          <div className="flex items-start justify-between gap-3 border-b border-line px-6 py-4">
+          <div className="flex items-start justify-between gap-3 border-b border-divider pt-4 pr-5 pb-3.5 pl-6">
             <span className="flex flex-col gap-0.5">
-              <AlertDialogTitle className="text-h3 text-ink">{editing ? t("Edit handover") : t("Hand over cash")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-small text-ink-muted">{t("Group cash moving from one holder to another")}</AlertDialogDescription>
+              <AlertDialogTitle className="text-[18px] font-bold tracking-normal text-ink">{editing ? t("Edit handover") : t("Hand over cash")}</AlertDialogTitle>
+              <AlertDialogDescription className="text-[12.5px] text-ink-muted">{t("Group cash moving from one holder to another")}</AlertDialogDescription>
             </span>
-            <CloseX onClick={onClose} disabled={isPending} />
+            <CloseX onClick={onClose} disabled={isPending} className="rounded-full bg-surface-sunken" />
           </div>
 
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-6 py-5">
+          <div className="flex min-h-0 flex-col gap-3.5 overflow-y-auto px-6 py-4.5">
             {holders.length < 2 ? (
               <p className="rounded-xl bg-strip px-3.5 py-3 text-small text-ink-2">{t("Only one person keeps group cash. Make another member an accountant in Members to hand cash over.")}</p>
             ) : (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] sm:items-start">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-start">
                 <Field htmlFor="ho-from" label={label(t("From"))}>
                   <MemberPicker id="ho-from" label={t("From")} members={holders} value={fromId} onChange={setFromId} currency={currency} balances={cash} exclude={toId} />
                   {shown(errors.from)}
                 </Field>
-                <span className="flex h-6 items-center justify-center text-ink-muted sm:mt-8 sm:h-13.5">
-                  <ArrowRight className="size-4.5 max-sm:rotate-90" aria-hidden="true" />
-                </span>
                 <Field htmlFor="ho-to" label={label(t("To"))}>
                   <MemberPicker id="ho-to" label={t("To")} members={holders.filter((member) => member.status === "ACTIVE")} value={toId} onChange={setToId} currency={currency} balances={cash} exclude={fromId} />
                   {shown(errors.to)}
@@ -141,22 +140,23 @@ export function HandoverDialog({ open, onClose, businessId, currency, holders, c
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_190px]">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field htmlFor="ho-amount" label={label(t("Amount"))}>
                 <Input
                   id="ho-amount"
-                  size="lg"
+                  size="md"
                   inputMode="decimal"
                   {...amountField}
                   placeholder="0"
-                  className="text-h3 font-bold tabular-nums"
-                  leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
-                  frameClassName="overflow-hidden pl-0"
+                  className="font-semibold tabular-nums"
+                  leading={<span className="text-[15px] font-semibold text-ink-faint">{currencySymbol(currency, fmt)}</span>}
+                  frameClassName="h-11.5 rounded-[12px]"
                 />
+                {from && <span className="text-caption text-ink-muted">{t("{name} has {amount} in hand", { name: shortName(from.name), amount: formatCurrency(before, currency, fmt) })}</span>}
                 {shown(errors.amount)}
               </Field>
               <Field htmlFor="ho-date" label={label(t("Date"))}>
-                <DayInput id="ho-date" size="lg" value={date} onChange={setDate} max={today} aria-label={t("Date")} />
+                <DayInput id="ho-date" size="md" value={date} onChange={setDate} max={today} aria-label={t("Date")} />
               </Field>
             </div>
 
@@ -164,26 +164,32 @@ export function HandoverDialog({ open, onClose, businessId, currency, holders, c
               <Input id="ho-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={300} placeholder={t("e.g. For the bazar this week")} />
             </Field>
 
-            {from && value > 0 && (
-              <div className="flex flex-col gap-1.5 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-small tabular-nums">
-                <div className="flex flex-wrap justify-between gap-x-3">
-                  <span className="text-ink-2">{t("Cash in hand after this · {name}", { name: shortName(from.name) })}</span>
-                  <b className={cn("font-bold", afterGive < -0.004 ? "text-warning" : "text-ink")}>
-                    {afterGive < -0.004 ? "− " : ""}
-                    {formatCurrency(Math.abs(afterGive), currency, fmt)}
-                  </b>
-                </div>
+            {from && to && value > 0 && (
+              <div className="flex flex-col gap-1.5 rounded-[12px] border border-emerald-line bg-emerald-wash px-3.5 py-3 text-[13px] tabular-nums">
+                <span className="font-semibold text-brand-ink">{t("Cash in hand after this")}</span>
+                {[
+                  { member: from, now: before, after: afterGive },
+                  { member: to, now: toBefore, after: toBefore + value },
+                ].map((row) => (
+                  <div key={row.member.id} className="flex flex-wrap justify-between gap-x-3">
+                    <span className="text-ink-2">{shortName(row.member.name)}</span>
+                    <span>
+                      <span className="text-ink-muted">{cashText(row.now)} → </span>
+                      <b className={cn("font-bold", row.after < -0.004 ? "text-warning" : "text-ink")}>{cashText(row.after)}</b>
+                    </span>
+                  </div>
+                ))}
                 {afterGive < -0.004 && <span className="text-caption text-warning">{t("More than the cash in hand: the rest would come from their own pocket.")}</span>}
-                <span className="text-caption text-ink-muted">{t("A handover changes only who keeps the cash. Nobody’s balance changes.")}</span>
               </div>
             )}
+            <p className="text-caption text-ink-muted">{t("A handover changes only who keeps the cash. Nobody’s balance changes.")}</p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line bg-strip px-6 py-4">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-divider bg-strip px-6 py-3.5">
+            <Button type="button" variant="ghost" size="lg" onClick={onClose} disabled={isPending} className="px-4 text-ink-2">
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={isPending || holders.length < 2}>
+            <Button type="submit" size="lg" disabled={isPending || holders.length < 2} className="px-5.5">
               {isPending && <Loader />}
               {t("Save handover")}
             </Button>

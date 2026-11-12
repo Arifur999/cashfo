@@ -1,19 +1,19 @@
 "use client";
 
 import { Info, Pencil } from "lucide-react";
-import Link from "next/link";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import { formatCurrency } from "@/lib/customer/currency";
-import { groupMonthOf, groupTabHref } from "@/lib/customer/groupDisplay";
+import { groupMonthOf } from "@/lib/customer/groupDisplay";
 import { budgetMonths, budgetPageMonths, budgetTotals, categoryRows, closedFor, firstMonthOf, spendByMonthKey } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useState } from "react";
 import type { GroupExpenseCategoryOption } from "@/lib/customer/api";
+import { BudgetWarnDialog } from "./BudgetWarnDialog";
 import { CategoryLimitDialog } from "./CategoryLimitDialog";
 import { cn } from "@/lib/utils";
 import { CategoryTile } from "./GroupBits";
@@ -57,6 +57,7 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
   const limitTotal = cats.reduce((sum, row) => sum + limitOf(row.name), 0);
   const limited = cats.filter((row) => limitOf(row.name) > 0).length;
   const [limiting, setLimiting] = useState<GroupExpenseCategoryOption | null>(null);
+  const [warnOpen, setWarnOpen] = useState(false);
   const isAdmin = data.role === "OWNER";
   const LIMIT_COLUMNS = "md:grid-cols-[minmax(0,1fr)_110px_120px_minmax(0,1.3fr)_40px]";
   const last6 = [...rows].filter((row) => !row.future).slice(0, 6).reverse();
@@ -101,8 +102,8 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
                   <span className={cn("font-semibold", nowOver ? "text-expense" : "text-emerald")}>{t("{percent}% of the budget used", { percent: formatCount(Math.round((nowUsed ?? 0) * 10) / 10, fmt) })}</span>
                   <span className="flex items-center gap-2 text-ink-muted">
                     {warnAt !== null ? t("Warns at {percent}%", { percent: formatCount(warnAt, fmt) }) : t("No warning")}
-                    <Button asChild variant="secondary" size="xs">
-                      <Link href={groupTabHref(data.businessId, "settings")}>{t("Change")}</Link>
+                    <Button variant="secondary" size="xs" onClick={() => setWarnOpen(true)}>
+                      {t("Change")}
                     </Button>
                   </span>
                 </div>
@@ -289,6 +290,7 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
           );
         })}
       </ListCard>
+      <BudgetWarnDialog open={warnOpen} onClose={() => setWarnOpen(false)} businessId={data.businessId} currency={data.currency} current={warnAt} budget={now?.budget ?? null} />
       <CategoryLimitDialog businessId={data.businessId} currency={data.currency} categories={data.categories} category={limiting} spent={limiting ? (cats.find((row) => row.name === limiting.name)?.amount ?? 0) : 0} onClose={() => setLimiting(null)} />
     </div>
   );

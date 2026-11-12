@@ -247,7 +247,7 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                 </Field>
                 <Field htmlFor="gs-warn" label={<span className="text-body font-medium text-ink">{t("Warn when the budget is used")}</span>}>
                   <NativeSelect id="gs-warn" size="md" value={warn === null ? "" : String(warn)} onChange={(event) => save("general", { budgetWarnPercent: event.target.value ? Number(event.target.value) : null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-warn-note">
-                    {WARN_CHOICES.map((choice) => (
+                    {[...WARN_CHOICES, ...(warn !== null && !WARN_CHOICES.includes(String(warn) as (typeof WARN_CHOICES)[number]) ? [String(warn)] : [])].map((choice) => (
                       <option key={choice || "never"} value={choice}>
                         {choice ? `${toLocaleDigits(choice, fmt)}%` : t("Never")}
                       </option>

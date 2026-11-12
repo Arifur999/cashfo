@@ -182,7 +182,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: G
                       <Pencil strokeWidth={2} aria-hidden="true" />
                     </button>
                   )}
-                  {!member.isOwner && (
+                  {left && (
                     <button type="button" onClick={() => onToggleStatus(member)} aria-label={left ? t("Bring {name} back", { name: member.name }) : t("Mark {name} as left the group", { name: member.name })} title={left ? t("Bring back") : t("Left the group")} className={ACT}>
                       {left ? <UserCheck strokeWidth={2} aria-hidden="true" /> : <UserMinus strokeWidth={2} aria-hidden="true" />}
                     </button>

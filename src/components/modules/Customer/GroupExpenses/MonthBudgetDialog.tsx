@@ -5,9 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupMonthlyBudget } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
@@ -47,6 +45,8 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
   const [amount, setAmount] = useState("");
   const amountField = useAmountField(amount, setAmount, currency);
   const [tried, setTried] = useState(false);
+  // Apply to the months after it too (up to next month).
+  const [alsoLater, setAlsoLater] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const existingFor = (key: string) => budgets.find((budget) => keyOf(budget) === key) ?? null;
@@ -59,6 +59,7 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
       const found = existingFor(monthKey);
       setAmount(found ? String(Number(found.budgetAmount)) : "");
       setTried(false);
+      setAlsoLater(false);
     }
   }
 
@@ -67,24 +68,28 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
   const monthSpent = spent[month] ?? 0;
   const previous = budgetOf(budgets, shiftMonth(month, -1));
   const money = (number: number) => formatCurrency(Math.abs(number), currency, fmt);
-  const offered = [...new Set([...choices, month])].sort().reverse();
-
-  function pick(next: string) {
-    setMonth(next);
-    const found = existingFor(next);
-    setAmount(found ? String(Number(found.budgetAmount)) : "");
-  }
+  // The months after this one the page offers (next month at most).
+  const later = choices.filter((key) => key > month).sort();
+  const laterSpan = later.length === 0 ? "" : later.length === 1 ? monthName(later[0], fmt, "long", true) : t("{from} to {to}", { from: monthName(later[0], fmt, "long", true), to: monthName(later[later.length - 1], fmt, "long", true) });
+  const monthLong = monthName(month, fmt, "long", true);
 
   function save() {
     setTried(true);
     if (!(value > 0) || isPending) return;
-    const range = monthRangeOf(month);
+    // This month, and the later ones when asked: each one set or changed.
+    const targets = [month, ...(alsoLater ? later : [])];
     startTransition(async () => {
-      const result = await attempt(
-        () => (existing ? updateGroupMonthBudgetAction(businessId, existing.id, { budgetAmount: String(value) }) : createGroupMonthBudgetAction(businessId, { month: range.month, year: range.year, budgetAmount: String(value) })),
-        t(OFFLINE_MESSAGE),
-        t(STALE_MESSAGE),
-      );
+      let result: { success: boolean; message?: string } = { success: true };
+      for (const target of targets) {
+        const found = existingFor(target);
+        const parts = monthRangeOf(target);
+        result = await attempt(
+          () => (found ? updateGroupMonthBudgetAction(businessId, found.id, { budgetAmount: String(value) }) : createGroupMonthBudgetAction(businessId, { month: parts.month, year: parts.year, budgetAmount: String(value) })),
+          t(OFFLINE_MESSAGE),
+          t(STALE_MESSAGE),
+        );
+        if (!result.success) break;
+      }
       if (result.success) {
         toast.success(t("Budget saved"));
         onClose();
@@ -114,8 +119,9 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
       open={open}
       onClose={onClose}
       busy={isPending}
-      width={460}
-      title={existing ? t("Edit budget") : t("Set budget")}
+      width={480}
+      title={t("Budget for {month}", { month: monthLong })}
+      bodyClassName="gap-3.5"
       onSubmit={(event) => {
         event.preventDefault();
         save();
@@ -123,66 +129,53 @@ export function MonthBudgetDialog({ open, onClose, businessId, currency, budgets
       footer={
         <>
           {existing && (
-            <Button type="button" variant="ghost" onClick={remove} disabled={isPending} className="mr-auto text-expense hover:bg-expense-soft hover:text-expense">
-              {t("Remove")}
-            </Button>
+            <button type="button" onClick={remove} disabled={isPending} className="mr-auto h-11 rounded-full px-3 text-[13.5px] font-semibold text-expense hover:bg-expense-soft">
+              {t("Remove budget")}
+            </button>
           )}
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={isPending} className="px-5">
+          <Button type="submit" size="lg" disabled={isPending}>
             {isPending && <Loader />}
             {t("Save budget")}
           </Button>
         </>
       }
     >
-      <Field htmlFor="bud-month" label={<span className="text-body font-medium text-ink">{t("Month")}</span>}>
-        <NativeSelect id="bud-month" size="md" value={month} onChange={(event) => pick(event.target.value)} frameClassName="w-full">
-          {offered.map((choice) => {
-            const set = budgetOf(budgets, choice);
-            return (
-              <option key={choice} value={choice}>
-                {set !== null ? `${monthName(choice, fmt, "long", true)} · ${money(set)}` : monthName(choice, fmt, "long", true)}
-              </option>
-            );
-          })}
-        </NativeSelect>
-      </Field>
-      <Field htmlFor="bud-amount" label={<span className="text-body font-medium text-ink">{t("Total budget for the month ({symbol})", { symbol: currencySymbol(currency, fmt) })}</span>}>
-        <Input
-          id="bud-amount"
-          size="lg"
-          inputMode="decimal"
-          {...amountField}
-          autoFocus
-          placeholder={t("e.g. 65000")}
-          invalid={tried && !(value > 0)}
-          className="text-h3 font-bold tabular-nums"
-          leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-title font-semibold text-ink-2">{currencySymbol(currency, fmt)}</span>}
-          frameClassName="overflow-hidden pl-0"
-        />
-        {previous !== null && Number(previous) !== value && (
-          <button type="button" onClick={() => setAmount(String(previous))} className="mt-2 inline-flex h-6.5 items-center self-start rounded-full border border-mint-200 bg-mint-50 px-3 text-caption font-semibold text-brand-ink hover:bg-mint-200">
-            {t("Use last month's budget · {amount}", { amount: money(previous) })}
-          </button>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-semibold text-ink-2">{t("Total budget for {month}", { month: monthLong })}</span>
+        <Input id="bud-amount" size="md" inputMode="decimal" {...amountField} autoFocus placeholder={t("e.g. 65000")} invalid={tried && !(value > 0)} className="text-[15px] font-semibold tabular-nums" leading={<span className="text-body text-ink-muted">{currencySymbol(currency, fmt)}</span>} frameClassName="h-11.5 rounded-[12px]" />
+        {tried && !(value > 0) && (
+          <span role="alert" className="text-[12.5px] text-expense">
+            {t("Enter a budget amount.")}
+          </span>
         )}
-      </Field>
-      <div className="grid grid-cols-2 gap-3 rounded-field border border-line bg-strip px-3.5 py-3 text-small tabular-nums">
-        <span className="flex flex-col">
-          <span className="text-caption text-ink-muted">{t("Spent in this month")}</span>
-          <b className="font-bold text-ink">{money(monthSpent)}</b>
+      </label>
+      {previous !== null && Number(previous) !== value && (
+        <button type="button" onClick={() => setAmount(String(previous))} className="h-9 self-start rounded-full border border-input bg-surface px-3.5 text-[13px] font-semibold text-ink hover:bg-hover">
+          {t("Same as last month · {amount}", { amount: money(previous) })}
+        </button>
+      )}
+      {later.length > 0 && (
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-[12px] border border-line px-3.5 py-3">
+          <input type="checkbox" checked={alsoLater} onChange={(event) => setAlsoLater(event.target.checked)} className="mt-px size-4.5 accent-emerald" />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[13.5px] font-semibold text-ink">{t("Apply to next months too")}</span>
+            <span className="text-caption text-ink-muted">{t("Also sets it for {months}.", { months: laterSpan })}</span>
+          </span>
+        </label>
+      )}
+      <div className="flex flex-col gap-1.5 rounded-[12px] bg-hover px-3.5 py-3 text-[13px] tabular-nums">
+        <span className="flex justify-between">
+          <span className="text-ink-muted">{t("Spent in {month}", { month: monthLong })}</span>
+          <span className="font-semibold text-ink">{money(monthSpent)}</span>
         </span>
-        <span className="flex flex-col">
-          <span className="text-caption text-ink-muted">{value > 0 && monthSpent > value ? t("Over budget") : t("Left")}</span>
-          <b className={cn("font-bold", value > 0 && monthSpent > value ? "text-expense" : "text-income")}>{value > 0 ? money(value - monthSpent) : "—"}</b>
+        <span className="flex justify-between">
+          <span className="text-ink-muted">{value > 0 && monthSpent > value ? t("Over budget") : t("Left")}</span>
+          <span className={cn("font-bold", value <= 0 ? "text-ink-faint" : monthSpent > value ? "text-expense" : "text-tint-green-ink")}>{value > 0 ? money(value - monthSpent) : "–"}</span>
         </span>
       </div>
-      {tried && !(value > 0) && (
-        <p role="alert" className="text-small font-semibold text-expense">
-          {t("Enter a budget amount.")}
-        </p>
-      )}
     </GroupDialog>
   );
 }
