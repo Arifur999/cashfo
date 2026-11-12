@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDay } from "@/lib/date";
 import { toLocaleDigits } from "@/lib/i18n/digits";
-import { weekdayOrder } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -120,6 +119,7 @@ export const addDays = (iso: string, days: number): string => isoOf(new Date(day
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const SUNDAY_FIRST = [0, 1, 2, 3, 4, 5, 6] as const;
 
 interface TransferDateFieldProps {
   labelId: string;
@@ -140,7 +140,9 @@ export function TransferDateField({ labelId, value, today, onChange }: TransferD
   const monthIndex = Number(month.slice(5, 7)) - 1;
   const first = new Date(Date.UTC(year, monthIndex, 1));
   const length = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
-  const order = weekdayOrder(fmt);
+  // Sunday first, as the Transfer board draws it, whatever week start the
+  // customer picked in App preferences (this calendar only).
+  const order = SUNDAY_FIRST;
   const blanks = order.indexOf(first.getUTCDay() as (typeof order)[number]);
   const atLatest = month >= today.slice(0, 7);
   const shift = (by: number) => setMonth(isoOf(new Date(Date.UTC(year, monthIndex + by, 1))).slice(0, 7));
