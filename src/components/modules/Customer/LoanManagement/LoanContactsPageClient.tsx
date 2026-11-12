@@ -162,7 +162,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
 
   const counted = (label: string, count: number) => (
     <>
-      {label} <span className="font-medium text-ink-muted tabular-nums">{formatCount(count, fmt)}</span>
+      {label} <span className="text-ink-faint in-aria-pressed:text-emerald">{formatCount(count, fmt)}</span>
     </>
   );
   const tabs = [
@@ -217,9 +217,9 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
         />
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} size="coarse" className="max-md:w-full max-md:overflow-x-auto" />
-            <NativeSelect size="sm" value={kind} onChange={(event) => setKind(event.target.value as ContactType | "")} aria-label={t("Kind")} className="text-small pointer-coarse:h-11">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} size="coarse" className="border-line-card p-1 max-md:w-full max-md:overflow-x-auto" itemClassName="gap-1.5 aria-pressed:bg-emerald-soft aria-pressed:text-emerald" />
+            <NativeSelect size="sm" frameClassName="[&_svg]:right-2.5" value={kind} onChange={(event) => setKind(event.target.value as ContactType | "")} aria-label={t("Kind")} className="h-10 pr-7.5 pl-2.5 text-small pointer-coarse:h-11">
               <option value="">{t("All types")}</option>
               {LOAN_KINDS.map((option) => (
                 <option key={option} value={option}>
@@ -227,12 +227,12 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 </option>
               ))}
             </NativeSelect>
-            <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name, phone…")} aria-label={t("Search contacts")} frameClassName="min-w-0 flex-1 md:w-65 md:flex-none" />
+            <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name, phone…")} aria-label={t("Search contacts")} frameClassName="min-w-0 flex-1 md:h-10 md:w-65 md:flex-none" />
             <span className="hidden flex-1 md:block" />
             <span className="text-small text-ink-muted tabular-nums max-md:w-full">
               {t("Pawna")} <span className="font-semibold text-income">{formatCurrency(pawna, currency, fmt)}</span> · {t("Dena")} <span className="font-semibold text-expense">{formatCurrency(dena, currency, fmt)}</span>
             </span>
-            <ViewToggle value={view} onChange={setView} order={VIEWS} className="max-md:hidden" />
+            <ViewToggle value={view} onChange={setView} order={VIEWS} className="bg-toggle-track max-md:hidden" buttonClassName="h-8 w-9" />
           </div>
 
           {shown.length === 0 ? (
