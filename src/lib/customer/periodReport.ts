@@ -27,7 +27,8 @@ export interface PeriodReport {
     takenOut: number;
     totalSaved: number;
     completed: number;
-    goals: { id: string; name: string; added: number; saved: number; target: number; status: "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN" }[];
+    // color: the goal's card colour; missing from an older backend.
+    goals: { id: string; name: string; added: number; saved: number; target: number; status: "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN"; color?: string }[];
   };
   loans: {
     lent: number;
