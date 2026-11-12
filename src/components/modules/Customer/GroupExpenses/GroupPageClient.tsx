@@ -292,7 +292,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       <FamilySettlementTab data={data} view={view} onRecordPayment={() => openPayment(null)} />
     ),
     members: <GroupMembersTab data={data} view={view} onAdd={() => setMember({ open: true, editing: null })} onEdit={(target) => setMember({ open: true, editing: target })} onToggleStatus={toggleMember} />,
-    categories: <GroupCategoriesTab data={data} onPeriod={onPeriod} onAdd={() => setCategory({ open: true, editing: null })} onEdit={(editing) => setCategory({ open: true, editing })} onHide={hideCategory} onDelete={removeCategory} busy={moving} />,
+    categories: <GroupCategoriesTab data={data} onAdd={() => setCategory({ open: true, editing: null })} onEdit={(editing) => setCategory({ open: true, editing })} onHide={hideCategory} onDelete={removeCategory} />,
     budget: <GroupBudgetTab data={data} onSet={setBudgetKey} />,
     meals: <GroupMealsTab data={data} onDay={setMealDay} closedGuard={closedGuard} />,
     activity: <GroupActivityTab data={data} onKind={(action: GroupActivityAction | null) => go("activity", action ? { action } : {})} onPage={(page) => go("activity", { ...(data.activityAction && { action: data.activityAction }), page: String(page) })} busy={moving} />,

@@ -9,43 +9,38 @@ import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { GroupExpenseCategoryOption } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { categoryRows } from "@/lib/customer/groupFamily";
-import { type GroupPeriod, periodLabel } from "@/lib/customer/groupPeriod";
 import { formatCount } from "@/lib/i18n/digits";
+import { monthName } from "@/lib/customer/insights";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { SmallSwitch } from "../Settings/boardUi";
-import { CategoryTile, categoryBarClass } from "./GroupBits";
-import { GroupPeriodPicker } from "./GroupPeriodPicker";
+import { CategoryTile } from "./GroupBits";
 import type { GroupPageData } from "./groupTypes";
 
 type Filter = "ACTIVE" | "HIDDEN" | "ALL";
 
-const PERIODS = ["month", "year", "custom"] as const;
-// #, category, spent, share of spending, status, actions.
-const COLUMNS = "md:grid-cols-[28px_minmax(0,1fr)_130px_160px_136px_84px]";
+// #, category, status, actions.
+const COLUMNS = "md:grid-cols-[48px_minmax(0,1fr)_200px_84px]";
 
 interface GroupCategoriesTabProps {
   data: GroupPageData;
-  onPeriod: (period: GroupPeriod) => void;
   onAdd: () => void;
   onEdit: (category: GroupExpenseCategoryOption) => void;
   onHide: (category: GroupExpenseCategoryOption, hidden: boolean) => void;
   onDelete: (category: GroupExpenseCategoryOption) => void;
-  busy: boolean;
 }
 
 // What the family spends on (the v16 FamilyCategories board), in the
 // group's own order, with what the period spent in each. Inactive (hidden)
 // categories stay in old records and aren't offered for new expenses; one
 // with expenses can only be made inactive, never deleted.
-export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDelete, busy }: GroupCategoriesTabProps) {
+export function GroupCategoriesTab({ data, onAdd, onEdit, onHide, onDelete }: GroupCategoriesTabProps) {
   const { t, fmt } = useLocale();
   const [filter, setFilter] = useState<Filter>("ALL");
   const [query, setQuery] = useState("");
-  const period = data.period ?? { kind: "month" };
-  const label = periodLabel(period, data.today, data.startDay, t, fmt);
+  const label = monthName(data.range.key, fmt, "long", true);
   const money = (value: number) => formatCurrency(value, data.currency, fmt);
-  const spending = new Map(categoryRows(data.periodExpenses ?? data.expenses, data.categories).map((row) => [row.name, row]));
+  const spending = new Map(categoryRows(data.expenses, data.categories).map((row) => [row.name, row]));
   const counts: Record<Filter, number> = { ACTIVE: data.categories.filter((c) => !c.hidden).length, HIDDEN: data.categories.filter((c) => c.hidden).length, ALL: data.categories.length };
   const words = query.trim().toLowerCase();
   const rows = data.categories
@@ -61,7 +56,6 @@ export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDe
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <h2 className="text-[19px] font-semibold text-ink">{t("Categories")}</h2>
         <div className="flex flex-wrap items-center gap-2.5">
-          <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={data.startDay} onChange={onPeriod} busy={busy} />
           <Button onClick={onAdd}>
             <Plus aria-hidden="true" />
             {t("Add category")}
@@ -71,7 +65,7 @@ export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDe
       <ListCard
         label={t("Categories")}
         header={
-          <div className="flex flex-col gap-3 px-4 py-3.5 md:flex-row md:items-center md:justify-between md:px-5">
+          <div className="flex flex-col gap-3 px-4 py-3.5 md:flex-row md:items-center md:gap-4 md:px-5">
             <SegmentedControl
               label={t("Status")}
               variant="tabs"
@@ -87,26 +81,23 @@ export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDe
                 ),
               }))}
             />
-            <Input size="sm" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leading={<Search />} placeholder={t("Search category…")} aria-label={t("Search categories")} frameClassName="min-w-0 flex-1 md:max-w-140" />
+            <Input size="sm" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leading={<Search />} placeholder={t("Search category…")} aria-label={t("Search categories")} frameClassName="min-w-0 flex-1 md:max-w-140 md:flex-none md:w-140" />
           </div>
         }
         footer={
-          <ListFooter className="flex-col items-start gap-1 text-small text-ink-soft md:px-5">
-            <span className="font-semibold text-ink-2">{t("{count} active categories · {amount} spent · {period}", { count: formatCount(counts.ACTIVE, fmt), amount: money(activeSpent), period: label })}</span>
-            <span>{t("A category with expenses can’t be deleted. Make it inactive: old entries keep it, new ones won’t offer it.")}</span>
+          <ListFooter className="bg-hover text-[13px] text-ink-soft md:px-5">
+            <span>{t("{count} active categories · {amount} spent in {month}", { count: formatCount(counts.ACTIVE, fmt), amount: money(activeSpent), month: label })}</span>
           </ListFooter>
         }
       >
         <ListHead columns={COLUMNS} className="gap-x-3 border-t md:px-5">
           <ListHeadCell>#</ListHeadCell>
           <ListHeadCell>{t("Category")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Spent · {period}", { period: label })}</ListHeadCell>
-          <ListHeadCell>{t("Share of spending")}</ListHeadCell>
           <ListHeadCell>{t("Status")}</ListHeadCell>
           <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {rows.length === 0 && <ListEmpty title={words ? t("No category matches \"{query}\".", { query: query.trim() }) : t("No {filter} categories.", { filter: filterWord })} />}
-        {rows.map(({ option, spent, count, share }, index) => {
+        {rows.map(({ option, count }, index) => {
           const uses = option.expenseCount ?? count;
           const sub = option.hidden ? t("Not shown for new expenses") : uses > 0 ? t(uses === 1 ? "Used in {count} expense so far" : "Used in {count} expenses so far", { count: formatCount(uses, fmt) }) : t("Not used yet");
           return (
@@ -118,15 +109,6 @@ export function GroupCategoriesTab({ data, onPeriod, onAdd, onEdit, onHide, onDe
                   <span className="truncate font-semibold text-ink">{option.name}</span>
                   <span className="truncate text-caption text-ink-muted">{sub}</span>
                 </span>
-              </ListCell>
-              <ListCell align="end" className="font-semibold text-ink">
-                {money(spent)}
-              </ListCell>
-              <ListCell className="hidden items-center gap-2.5 md:flex">
-                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-                  <span className={cn("block h-full rounded-full bg-current", categoryBarClass(option.name, data.categories))} style={{ width: `${Math.min(100, share)}%` }} />
-                </span>
-                <span className="w-10 text-right text-caption text-ink-2">{formatCount(Math.round(share), fmt)}%</span>
               </ListCell>
               <ListCell className="hidden md:block">
                 <span className={cn("inline-flex h-8 items-center gap-2 rounded-full border py-1 pr-3 pl-1.5", option.hidden ? "border-line bg-surface-sunken" : "border-success-line bg-income-soft/50")}>

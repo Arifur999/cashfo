@@ -1362,4 +1362,5 @@ export const groupExpensesDictionary: Record<string, string> = {
   "From → to": "কে → কাকে",
   "No payments recorded for {month} yet.": "{month}-এ এখনো কোনো পেমেন্ট রেকর্ড হয়নি।",
   "Undo this payment": "এই পেমেন্ট ফিরিয়ে নিন",
+  "{count} active categories · {amount} spent in {month}": "{count}টি চালু ক্যাটাগরি · {month}-এ খরচ {amount}",
 };
