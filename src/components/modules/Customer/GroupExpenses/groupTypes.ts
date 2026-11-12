@@ -72,6 +72,8 @@ export interface GroupPageData {
   allExpenses: GroupExpense[] | null;
   // the Cash book and the accountant it shows (null for all),
   cashbook: GroupCashbook | null;
+  // Every accountant's book for the month (the Cash book's cards).
+  cashbookAll: GroupCashbook | null;
   cashbookAccountant: string | null;
   // and a page of the Activity log, with its kind filter.
   activity: GroupActivityPage | null;

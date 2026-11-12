@@ -33,7 +33,6 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/gro
 
 // Each page's own period choices (the v7 boards' dropdowns), and its default.
 const PERIODS: Partial<Record<GroupTab, { options: readonly GroupPeriodKind[]; fallback: GroupPeriod }>> = {
-  cashbook: { options: ["month", "year", "all", "custom"], fallback: { kind: "month" } },
 };
 
 // All time: from long before any group's first record.
@@ -69,7 +68,8 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   const span = period ? periodRange(period, today, startDay, EVER) : null;
   const activityAction = typeof sp.action === "string" && (ACTIVITY_ACTIONS as readonly string[]).includes(sp.action) ? (sp.action as GroupActivityAction) : undefined;
   const activityPage = Math.max(1, Math.floor(Number(sp.page)) || 1);
-  const accountantId = typeof sp.accountant === "string" && sp.accountant ? sp.accountant : undefined;
+  // The Cash book shows one accountant's ledger: the one picked, else the cash holder.
+  const accountantId = (typeof sp.accountant === "string" && sp.accountant ? sp.accountant : undefined) ?? (tab === "cashbook" ? (settings.cashHolderMemberId ?? undefined) : undefined);
 
   const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals, workspaces, monthTotals] = await Promise.all([
     getGroupMembers(businessId),
@@ -85,12 +85,13 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   ]);
 
   // What the page on show needs beyond the month.
-  const [periodExpenses, periodContributions, periodSettlement, allExpenses, cashbook, activity] = await Promise.all([
+  const [periodExpenses, periodContributions, periodSettlement, allExpenses, cashbook, cashbookAll, activity] = await Promise.all([
     span && (tab === "dashboard" || tab === "expenses" || tab === "categories" || tab === "contributions") ? getGroupExpenses(businessId, span) : null,
     span && tab === "contributions" ? getGroupContributions(businessId, span) : null,
     span && tab === "dashboard" ? getGroupSettlement(businessId, span.from, span.to) : null,
     tab === "budget" ? getGroupExpenses(businessId, { from: EVER, to: monthRangeOf(shiftMonth(groupMonthOf(today, startDay), 1), startDay).to }) : null,
-    span && tab === "cashbook" ? getGroupCashbook(businessId, accountantId, span.from, span.to) : null,
+    tab === "cashbook" ? getGroupCashbook(businessId, accountantId, range.from, range.to) : null,
+    tab === "cashbook" ? getGroupCashbook(businessId, undefined, range.from, range.to) : null,
     tab === "activity" ? getGroupActivity(businessId, activityAction, activityPage) : null,
   ]);
 
@@ -129,6 +130,7 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     periodSettlement,
     allExpenses,
     cashbook,
+    cashbookAll,
     cashbookAccountant: accountantId ?? null,
     activity,
     activityAction: activityAction ?? null,
