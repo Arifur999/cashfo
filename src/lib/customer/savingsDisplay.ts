@@ -4,16 +4,14 @@ import type { Translate } from "@/lib/i18n/message";
 import type { SavingsEntryType, SavingsGoal, SavingsGoalStatus, SavingsGoalTrend } from "./api";
 import type { GoalLook } from "./savingsPlan";
 import { formatCurrency } from "./currency";
+import { ownColor } from "./savingsColors";
 import type { WalletPalette } from "./walletVisuals";
 
-// The colours the design gives goals, cycled by position (green, blue,
-// orange, gold, then the new goals' cyan, violet, pink and teal); a paused
-// or withdrawn goal goes grey.
-const GOAL_COLORS = ["var(--cat-1)", "var(--cat-4)", "var(--cat-2)", "var(--cat-11)", "var(--cat-9)", "var(--cat-3)", "var(--cat-6)", "var(--cat-5)"];
-
-export function goalColor(index: number, status: SavingsGoalStatus): string {
-  if (status === "PAUSED" || status === "WITHDRAWN") return "var(--ink-faint)";
-  return GOAL_COLORS[((index % GOAL_COLORS.length) + GOAL_COLORS.length) % GOAL_COLORS.length];
+// A goal's colour: the card colour it was given, else the one its place
+// in the list gives it (an older goal). A withdrawn goal goes grey.
+export function goalColor(goal: { color?: string | null; status: SavingsGoalStatus }, index: number): string {
+  if (goal.status === "WITHDRAWN") return "var(--ink-faint)";
+  return ownColor(goal.color, index);
 }
 
 // A goal's status chip (design: Ahead, On track, Behind, Paused, Completed,
@@ -136,6 +134,7 @@ export const ENTRY_META: Record<SavingsEntryType, { title: string; withGoal?: st
   TRANSFER_OUT: { title: "Moved out", withGoal: "Moved out to {goal}", flow: "out", tone: "info" },
   WITHDRAWAL: { title: "Withdrawn", flow: "out", tone: "expense" },
   ACCOUNT_CHANGE: { title: "Moved to another savings account", flow: "none", tone: "info" },
+  PROFIT: { title: "Profit added", flow: "in", tone: "income" },
 };
 
 // The backend's refusals in this area, in words the dictionary has. A fixed

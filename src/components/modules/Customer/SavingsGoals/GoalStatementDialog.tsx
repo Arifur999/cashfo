@@ -67,6 +67,9 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
         return { what: t("Already saved when goal was made"), from: t("Already saved"), to: row.to ?? "–" };
       case "ADDED":
         return { what: `${t("Money added")}${note}`, from: row.from ?? "–", to: row.to ?? "–" };
+      case "PROFIT":
+        // From: the income category it counts under.
+        return { what: `${t("Profit from the bank")}${note}`, from: t("{name} (income)", { name: row.from ? t(row.from) : t("Bank profit") }), to: row.to ?? "–" };
       case "MOVED_IN":
         return { what: `${t("Moved in from another goal")}${note}`, from: t("{name} (goal)", { name: row.from ?? "" }), to: goal.name };
       case "MOVED_OUT":
@@ -83,7 +86,7 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
     const firstDay = [statement.goal.startDate, ...statement.rows.map((row) => row.date.slice(0, 10))].sort()[0];
     const rows = statement.rows.map((row, index) => ({ n: formatCount(index + 1, fmt), date: day(row.date), ...rowText(row), moneyIn: row.moneyIn ? money(row.moneyIn) : "", moneyOut: row.moneyOut ? money(row.moneyOut) : "", balance: money(row.balance) }));
     const sources = statement.sources.map((source) => ({
-      label: source.kind === "ALREADY_SAVED" ? t("Already saved") : source.kind === "GOAL" ? t("Moved in from {name}", { name: source.name ?? "" }) : (source.name ?? "–"),
+      label: source.kind === "ALREADY_SAVED" ? t("Already saved") : source.kind === "PROFIT" ? t("Profit · {name}", { name: source.name ? t(source.name) : t("Bank profit") }) : source.kind === "GOAL" ? t("Moved in from {name}", { name: source.name ?? "" }) : (source.name ?? "–"),
       value: money(source.amount),
     }));
     const now = statement.now.map((item) => ({ label: item.name ?? t("Savings account"), value: money(item.amount) }));

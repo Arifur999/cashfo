@@ -52,7 +52,7 @@ export function GoalPicker({ goals, options, value, onChange, currency, id, labe
   // Decoration: the line under the name already says the percentage.
   const ring = (goal: SavingsGoal, size: 26 | 34) => (
     <span aria-hidden="true" className="shrink-0">
-      <GoalRing percent={goal.progressPercent} color={goalColor(goals.indexOf(goal), goal.status)} size={size} label={`${formatCount(goal.progressPercent, fmt)}%`} />
+      <GoalRing percent={goal.progressPercent} color={goalColor(goal, goals.indexOf(goal))} size={size} label={`${formatCount(goal.progressPercent, fmt)}%`} />
     </span>
   );
 

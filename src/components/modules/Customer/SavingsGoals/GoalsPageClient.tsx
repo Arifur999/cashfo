@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, PiggyBank, Plus } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, List, PiggyBank, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -11,10 +11,10 @@ import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import TabBar from "@/components/smartly/TabBar";
-import type { Account, SavingsGoal, SavingsGoalStatus } from "@/lib/customer/api";
+import type { Account, SavingsGoal, SavingsGoalStatus, SavingsPlan } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { deleteSavingsGoalAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
+import { deleteSavingsGoalAction, moveGoalToPlansAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
 import { goalColor, savingsError } from "@/lib/customer/savingsDisplay";
 import { behindFirst, goalsHero, isBehind, monthlyFromNow } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
@@ -51,12 +51,15 @@ interface GoalsPageClientProps {
   walletNames: { id: string; name: string }[];
   person: { name: string; email: string };
   today: string;
+  // The saving plans waiting: the banner counts them, and Start goal on one
+  // opens New goal filled in from it (?plan=<id>).
+  plans: SavingsPlan[];
 }
 
 type Tab = "ALL" | "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN";
 type Modal =
-  | { kind: "goal"; id?: string }
-  | { kind: "add"; id: string; amount?: number }
+  | { kind: "goal"; id?: string; planId?: string }
+  | { kind: "add"; id: string; amount?: number; profit?: boolean }
   | { kind: "details"; id: string }
   | { kind: "withdraw"; id: string }
   | { kind: "catch"; id: string }
@@ -78,7 +81,7 @@ const EMPTY_TAB: Record<Tab, string> = { ALL: "", ACTIVE: "No active goals right
 // Savings goals (design: SavingsDashboard): how all goals are doing
 // together and this month, which are behind their plan, then a card per
 // goal; every action opens as a popup over the page.
-export function GoalsPageClient({ businessId, goals, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today }: GoalsPageClientProps) {
+export function GoalsPageClient({ businessId, goals, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today, plans }: GoalsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -92,25 +95,32 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
   const [isPending, startTransition] = useTransition();
 
   // ?new=1 opens New goal (Home's "Add a goal"); ?goal=<id> opens a goal's
-  // details (the bell's reminder). Then the URL forgets them.
-  const asked = searchParams.get("new") === "1" && canManage ? "new" : searchParams.get("goal");
+  // details (the bell's reminder); ?plan=<id> opens New goal filled in from
+  // a saving plan (its Start goal). Then the URL forgets them.
+  const planAsked = canManage ? searchParams.get("plan") : null;
+  const asked = searchParams.get("new") === "1" && canManage ? "new" : planAsked ? `plan:${planAsked}` : searchParams.get("goal");
   const [prevAsked, setPrevAsked] = useState<string | null>(null);
   if (asked !== prevAsked) {
     setPrevAsked(asked);
     if (asked === "new") setModal({ kind: "goal" });
+    else if (asked?.startsWith("plan:")) {
+      const planId = asked.slice(5);
+      if (plans.some((plan) => plan.id === planId)) setModal({ kind: "goal", planId });
+    }
     else if (asked && goals.some((goal) => goal.id === asked)) setModal({ kind: "details", id: asked });
   }
   useEffect(() => {
-    if (!searchParams.has("new") && !searchParams.has("goal")) return;
+    if (!searchParams.has("new") && !searchParams.has("goal") && !searchParams.has("plan")) return;
     const params = new URLSearchParams(searchParams.toString());
     params.delete("new");
     params.delete("goal");
+    params.delete("plan");
     const query = params.toString();
     window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
   }, [pathname, searchParams]);
 
   const byId = (id: string | undefined) => (id ? (goals.find((goal) => goal.id === id) ?? null) : null);
-  const colorOf = (goal: SavingsGoal | null) => (goal ? goalColor(Math.max(0, goals.findIndex((item) => item.id === goal.id)), goal.status) : "var(--emerald)");
+  const colorOf = (goal: SavingsGoal | null) => (goal ? goalColor(goal, Math.max(0, goals.findIndex((item) => item.id === goal.id))) : "var(--emerald)");
   const noWallet = savingsWallets.length === 0;
   const open = goals.filter((goal) => goal.status !== "WITHDRAWN");
   // Somewhere a goal's money can go: another open goal that isn't full.
@@ -155,8 +165,27 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
     });
   }
 
+  // Move back to plans: nothing was recorded against it yet.
+  function toPlans(goal: SavingsGoal) {
+    if (isPending) return;
+    startTransition(async () => {
+      const result = await moveGoalToPlansAction(businessId, goal.id);
+      if (!result.success) {
+        toast.error(savingsError(result.message, "Failed to move the goal", t, currency, fmt));
+        return;
+      }
+      toast.success(t("{name} moved back to your saving plans.", { name: goal.name }));
+      setModal(null);
+      router.refresh();
+    });
+  }
+
   function act(goal: SavingsGoal, action: GoalAction | "statement") {
     switch (action) {
+      case "profit":
+        return setModal({ kind: "add", id: goal.id, profit: true });
+      case "toPlan":
+        return toPlans(goal);
       case "details":
         return setModal({ kind: "details", id: goal.id });
       case "catch":
@@ -260,6 +289,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
 
       {noWallet && setupBanner()}
 
+
       {goals.length === 0 ? (
         <EmptyState
           icon={<PiggyBank />}
@@ -277,6 +307,8 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
             money={money}
             onShowBehind={() => setBehindOnly(true)}
           />
+
+          {plans.length > 0 && <PlansBanner count={plans.length} />}
 
           <div className="flex items-end gap-4 border-b border-line">
             <TabBar
@@ -345,6 +377,8 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         onClose={close}
         businessId={businessId}
         editing={modal?.kind === "goal" ? byId(modal.id) : null}
+        fromPlan={modal?.kind === "goal" && modal.planId ? (plans.find((plan) => plan.id === modal.planId) ?? null) : null}
+        usedColors={goals.map((goal, index) => goalColor(goal, index))}
         currency={currency}
         today={today}
         email={person.email}
@@ -362,6 +396,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         moneyAccounts={moneyAccounts}
         savingsWallets={savingsWallets}
         startAmount={modal?.kind === "add" ? modal.amount : undefined}
+        kind={modal?.kind === "add" && modal.profit ? "profit" : "deposit"}
         onReached={(id) => setModal({ kind: "done", id })}
       />
       <GoalDetailsDialog
@@ -433,6 +468,27 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         }
       />
     </PageFrame>
+  );
+}
+
+// The saving plans waiting (board: a dashed strip above the tabs), linking
+// to them.
+function PlansBanner({ count }: { count: number }) {
+  const { t, fmt } = useLocale();
+  return (
+    <Link href="/savings-goals/plans" className="flex items-center gap-3 rounded-[14px] border border-dashed border-input bg-surface px-4 py-3 text-ink transition-colors hover:border-emerald">
+      <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-emerald-soft text-emerald">
+        <List className="size-4" strokeWidth={2} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-px">
+        <span className="text-[14px] font-bold">{count === 1 ? t("1 saving plan is waiting") : t("{count} saving plans are waiting", { count: formatCount(count, fmt) })}</span>
+        <span className="truncate text-[12.5px] text-ink-muted">{t("Things you want to save for later. Start one as a goal when you are ready.")}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-brand-ink">
+        {t("See saving plans")}
+        <ArrowRight className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
+      </span>
+    </Link>
   );
 }
 

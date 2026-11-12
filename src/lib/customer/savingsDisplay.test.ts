@@ -23,10 +23,11 @@ import {
 } from "./savingsDisplay";
 
 describe("goalColor", () => {
-  it("cycles the ring colours and greys a paused goal", () => {
-    expect(goalColor(0, "ACTIVE")).toBe(goalColor(8, "ACTIVE"));
-    expect(goalColor(1, "ACTIVE")).not.toBe(goalColor(2, "ACTIVE"));
-    expect(goalColor(0, "PAUSED")).toBe("var(--ink-faint)");
+  it("uses the goal's own colour, else its place, and greys a withdrawn goal", () => {
+    expect(goalColor({ color: "#2B3A67", status: "ACTIVE" }, 0)).toBe("#2b3a67");
+    expect(goalColor({ color: null, status: "ACTIVE" }, 0)).toBe(goalColor({ color: null, status: "PAUSED" }, 13));
+    expect(goalColor({ color: "#123456", status: "ACTIVE" }, 1)).toBe("#6b8f71");
+    expect(goalColor({ color: "#235347", status: "WITHDRAWN" }, 0)).toBe("var(--ink-faint)");
   });
 });
 

@@ -71,6 +71,8 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
         return { title: t("Already saved for {goal}", { goal: row.goalName }), sub: t("Recorded when the goal was made"), tone: "text-income", sign: "+ " };
       case "ADDED":
         return { title: t("Added for {goal}", { goal: row.goalName }), sub: row.accountName ? t("From {account}", { account: row.accountName }) : "", tone: "text-income", sign: "+ " };
+      case "PROFIT":
+        return { title: t("Profit for {goal}", { goal: row.goalName }), sub: row.accountName ? t("Counted as income · {name}", { name: t(row.accountName) }) : "", tone: "text-income", sign: "+ " };
       case "MOVED":
         return { title: t("Moved from {from} to {to}", { from: row.goalName, to: row.otherGoalName ?? "" }), sub: t("Goal transfer · balance unchanged"), tone: "text-info", sign: "" };
       case "ACCOUNT_IN":
