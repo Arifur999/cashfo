@@ -82,7 +82,12 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   // Tile 4: my balance, and the payment that settles it.
   const mine = me ? (view.balances[me.id] ?? 0) : 0;
   const myCard = me ? cards.find((card) => card.memberId === me.id) : undefined;
-  const myTransfer = transferOf(myCard);
+  // The cash holder has no card of their own: as on the board, they see the
+  // first member who pays them (when they will get money) or whom they pay.
+  const isHolder = !!me && me.id === holderId;
+  const myTransfer = isHolder
+    ? transferOf(cards.find((card) => (mine > 0.5 && card.state.kind === "pays") || (mine < -0.5 && card.state.kind === "gets")))
+    : transferOf(myCard);
   const firstName = (id: string | undefined) => shortName(id ? view.memberById[id]?.name : undefined);
 
   // The members' balances: everyone active, and anyone who left but still has money in the month.
@@ -221,9 +226,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                 <span className={cn("text-[24px] leading-tight font-bold tracking-[-0.01em] tabular-nums", mine < -0.5 ? "text-expense" : mine > 0.5 ? "text-income" : "text-ink-2")}>{money(Math.abs(mine) < 0.5 ? 0 : Math.abs(mine))}</span>
               </span>
               <span className="text-caption leading-[1.45] text-ink-muted">
-                {myCard?.state.kind === "holder" && Math.abs(mine) > 0.5
-                  ? t("You keep the group cash: everyone settles with you.")
-                  : myTransfer && myTransfer.fromId === me.id
+                {myTransfer && myTransfer.fromId === me.id
                     ? t("Pay {name} {amount} to settle", { name: firstName(myTransfer.toId), amount: money(myTransfer.amount) })
                     : myTransfer
                       ? t("{name} pays you {amount}", { name: firstName(myTransfer.fromId), amount: money(myTransfer.amount) })

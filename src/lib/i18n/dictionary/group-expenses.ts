@@ -1186,7 +1186,6 @@ export const groupExpensesDictionary: Record<string, string> = {
   "The group is paused: new entries are off until you resume it. Everything stays visible.": "গ্রুপ বিরতিতে আছে: আবার চালু না করা পর্যন্ত নতুন এন্ট্রি বন্ধ। সব দেখা যাবে।",
   "Stops new money entries for a while (for example during a long trip). Turn it off again any time.": "কিছুদিনের জন্য নতুন টাকার এন্ট্রি বন্ধ রাখে (যেমন লম্বা ছুটিতে)। যেকোনো সময় আবার চালু করতে পারবেন।",
   // v16 FamilyDashboard: my balance through the cash holder
-  "You keep the group cash: everyone settles with you.": "গ্রুপের নগদ আপনার কাছে: সবাই আপনার সাথে হিসাব মেটান।",
   "Settled for this month through the cash holder.": "এই মাসের হিসাব নগদ রাখার মানুষের মাধ্যমে মিটে গেছে।",
   // v16 FamilyCategories board
   "A category with expenses can’t be deleted. Make it inactive: old entries keep it, new ones won’t offer it.": "যে ক্যাটাগরিতে খরচ আছে সেটা মোছা যায় না। নিষ্ক্রিয় করুন: পুরোনো এন্ট্রিতে থাকবে, নতুনে দেখাবে না।",
