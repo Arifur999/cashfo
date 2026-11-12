@@ -252,6 +252,14 @@ export async function updateGroupExpenseCategoryAction(
   }, "Failed to update category");
 }
 
+// Every category of the group, in its new order (the drag handle).
+export async function reorderGroupExpenseCategoriesAction(businessId: string, ids: string[]): Promise<ActionResult<GroupExpenseCategoryOption[]>> {
+  return callApi(async () => {
+    const res = await customerApi.put<GroupExpenseCategoryOption[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/order`, { ids }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to reorder the categories");
+}
+
 export async function deleteGroupExpenseCategoryAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/group/expenses/categories/${id}`, { headers: await authHeaders() });

@@ -200,3 +200,16 @@ export const getGroupMonthTotals = cache(async (businessId: string): Promise<{ m
     return emptyUnlessOutage(error, []);
   }
 });
+
+// How many money entries the group has ever had (Settings' danger zone):
+// a group with any can only be paused. null when it can't be read.
+export const getGroupEntryCount = cache(async (businessId: string): Promise<number | null> => {
+  const headers = await authHeaders();
+  if (!headers) return null;
+  try {
+    const res = await customerApi.get<{ total: number }>(`${API_BASE_URL}/api/businesses/${businessId}/group/entries/count`, { headers });
+    return res.data.total;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
+  }
+});

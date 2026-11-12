@@ -1376,6 +1376,10 @@ export interface GroupSettings {
   costSplit?: GroupCostSplit;
   // Warn once this much of a month's budget is spent; null = never.
   budgetWarnPercent?: number | null;
+  // How a category made from now on is shared to start with.
+  newCategorySplit?: GroupSplit;
+  // The group's first month ("2026-04"); null: its first member's.
+  firstMonth?: string | null;
   // Paused: kept out of new entries and listed last.
   pausedAt?: string | null;
 }
