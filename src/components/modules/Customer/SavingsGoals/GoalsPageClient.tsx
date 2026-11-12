@@ -11,7 +11,7 @@ import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import TabBar from "@/components/smartly/TabBar";
-import type { Account, SavingsGoal, SavingsGoalStatus, SavingsOverview } from "@/lib/customer/api";
+import type { Account, SavingsGoal, SavingsGoalStatus } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { deleteSavingsGoalAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
@@ -39,7 +39,6 @@ import { WithdrawDialog } from "./WithdrawDialog";
 interface GoalsPageClientProps {
   businessId: string;
   goals: SavingsGoal[];
-  overview: SavingsOverview;
   currency: string;
   canManage: boolean;
   // Active savings wallets (where money goes in) and the main balance
@@ -78,7 +77,7 @@ const EMPTY_TAB: Record<Tab, string> = { ALL: "", ACTIVE: "No active goals right
 // Savings goals (design: SavingsDashboard): how all goals are doing
 // together and this month, which are behind their plan, then a card per
 // goal; every action opens as a popup over the page.
-export function GoalsPageClient({ businessId, goals, overview, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today }: GoalsPageClientProps) {
+export function GoalsPageClient({ businessId, goals, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today }: GoalsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -124,7 +123,6 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
     return status ? goals.filter((goal) => goal.status === status) : goals;
   };
   const shown = behindFirst(showBehind ? goals.filter(isBehind) : tabGoals(tab));
-  const hasRate = Number(overview.savedThisMonth) > 0 && overview.savingsRatePercent > 0;
 
   const setStatus = (goal: SavingsGoal, status: "ACTIVE" | "PAUSED") => {
     if (isPending) return;
@@ -233,7 +231,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         text={canManage ? t("A savings account is where your saved money actually sits, for example a DPS or FDR account. Add one, then you can start adding money to your goals.") : t("A savings account is where your saved money actually sits, for example a DPS or FDR account. Ask the workspace owner to add one.")}
         action={
           canManage && (
-            <Button variant="action" size="lg" onClick={() => setModal({ kind: "wallet" })}>
+            <Button variant="action" onClick={() => setModal({ kind: "wallet" })} className="h-10.5 px-4.5 shadow-none">
               {t("Add savings account")}
             </Button>
           )
@@ -243,7 +241,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
   };
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 leading-[normal]">
       <PageHeader
         title={t("Savings goals")}
         description={t("Put money aside for what matters, and watch each goal fill up.")}
@@ -251,12 +249,12 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
           canManage && (
             <>
               {goals.length > 0 && (
-                <Button variant="secondary" onClick={moveAny}>
+                <Button variant="secondary" onClick={moveAny} className="px-3.5">
                   <ArrowLeftRight className="text-ink-2" />
                   {t("Move between goals")}
                 </Button>
               )}
-              <Button onClick={() => setModal({ kind: "goal" })}>
+              <Button onClick={() => setModal({ kind: "goal" })} className="gap-1.5">
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("New goal")}
               </Button>
@@ -281,7 +279,6 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
             hero={hero}
             active={goals.filter((goal) => goal.status === "ACTIVE")}
             month={month}
-            ratePercent={hasRate ? overview.savingsRatePercent : null}
             money={money}
             onShowBehind={() => setBehindOnly(true)}
           />
@@ -305,7 +302,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
               <span className="min-w-0 flex-1">
                 <b>{hero.behind === 1 ? t("Showing the 1 goal behind plan.") : t("Showing {count} goals behind plan.", { count: formatCount(hero.behind, fmt) })}</b> {t("Catch up on a card to see your options.")}
               </span>
-              <button type="button" onClick={() => setBehindOnly(false)} className="h-8.5 rounded-full border border-warning bg-surface px-3.5 text-[13px] font-semibold text-warning-ink pointer-coarse:h-11">
+              <button type="button" onClick={() => setBehindOnly(false)} className="h-8.5 rounded-full border border-warning-fill bg-surface px-3.5 text-[13px] font-semibold text-warning-ink pointer-coarse:h-11">
                 {t("Show all goals")}
               </button>
             </div>

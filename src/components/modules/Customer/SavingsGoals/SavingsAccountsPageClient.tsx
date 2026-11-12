@@ -107,7 +107,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
   }
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 leading-[normal]">
       <PageHeader
         title={t("Savings accounts")}
         description={t("Where your saved money actually sits, for example a bank DPS or FDR account.")}

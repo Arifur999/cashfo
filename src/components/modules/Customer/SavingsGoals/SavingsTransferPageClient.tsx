@@ -201,7 +201,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
   const label = "text-small font-medium text-ink-2";
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 leading-[normal]">
       <PageHeader
         title={t("All moves between goals")}
         description={t("Shift saved money from one goal to another. Only which goal it counts toward changes.")}

@@ -20,7 +20,7 @@ interface TabBarProps<T extends string> {
   className?: string;
 }
 
-// Tabs on a line (design-v4 Wallets, Transactions, Budget): the chosen one
+// Tabs on a line (SavingsDashboard board): the chosen one
 // in the primary, underlined in it, its count in the primary's tint; the
 // others muted with a sunken count. Counts are in the reader's digits.
 const TabBar = <T extends string>({ options, value, onChange, label, className }: TabBarProps<T>) => {
@@ -36,10 +36,10 @@ const TabBar = <T extends string>({ options, value, onChange, label, className }
             role="tab"
             aria-selected={on}
             onClick={() => onChange(option.value)}
-            className={cn("-mb-px flex h-10 items-center gap-1 border-b-2 px-1 text-body transition-colors", on ? "border-emerald font-semibold text-emerald" : "border-transparent font-medium text-ink-muted hover:text-ink")}
+            className={cn("flex h-10.5 items-center gap-2 border-b-2 px-1 text-body transition-colors", on ? "border-emerald font-semibold text-emerald" : "border-transparent font-medium text-ink-muted hover:text-ink")}
           >
             {option.label}
-            {option.count !== undefined && <span className={cn("ml-0.5 rounded-full px-1.75 py-px text-caption tabular-nums", on ? "bg-emerald-soft" : "bg-surface-sunken")}>{formatCount(option.count, fmt)}</span>}
+            {option.count !== undefined && <span className={cn("rounded-full px-1.75 py-px text-[12px]", on ? "bg-emerald-soft" : "bg-surface-sunken")}>{formatCount(option.count, fmt)}</span>}
           </button>
         );
       })}

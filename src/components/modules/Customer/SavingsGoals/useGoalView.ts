@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowLeftRight, Check, CircleAlert, CirclePause, Info, Minus, Pause, Pencil, Play, Trash2, TrendingUp, TriangleAlert, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowLeftRight, Check, CircleAlert, CirclePause, CirclePlay, Info, Minus, PencilLine, Trash2, TrendingUp, TriangleAlert, type LucideIcon } from "lucide-react";
 import type { SavingsGoal } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -109,9 +109,9 @@ export function useGoalView({ goal, color, currency, today, canManage, canMoveTo
   const menu: GoalMenuItem[] = [{ key: "details", label: t("Details"), icon: Info }];
   if (canManage) {
     if (behind) menu.push({ key: "catch", label: t("Catch up"), icon: TrendingUp });
-    if (!closed) menu.push({ key: "edit", label: t("Edit goal"), icon: Pencil });
-    if (active) menu.push({ key: "pause", label: t("Pause goal"), icon: Pause });
-    if (paused) menu.push({ key: "resume", label: t("Resume goal"), icon: Play });
+    if (!closed) menu.push({ key: "edit", label: t("Edit goal"), icon: PencilLine });
+    if (active) menu.push({ key: "pause", label: t("Pause goal"), icon: CirclePause });
+    if (paused) menu.push({ key: "resume", label: t("Resume goal"), icon: CirclePlay });
     if (canWithdraw && canMoveTo) menu.push({ key: "move", label: t("Move money"), icon: ArrowLeftRight });
     if (canWithdraw) menu.push(completed ? { key: "withdraw", label: t("Withdraw to balance"), icon: ArrowDown, good: true } : { key: "withdraw", label: t("Withdraw"), icon: ArrowDown, danger: true });
     if (goal.entryCount === 0) menu.push({ key: "delete", label: t("Delete goal"), icon: Trash2, danger: true });

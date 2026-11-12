@@ -111,7 +111,7 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
       lead={<span aria-hidden="true" className="mt-2.5 size-2.5 shrink-0 rounded-full" style={{ background: closed ? "var(--ink-faint)" : color }} />}
       title={goal.name}
       aside={
-        <Chip tone={meta.chip} size="sm" className="font-semibold">
+        <Chip size="sm" className={cn("font-semibold", meta.chip)}>
           {t(meta.label)}
         </Chip>
       }

@@ -18,14 +18,14 @@ export function goalColor(index: number, status: SavingsGoalStatus): string {
 
 // A goal's status chip (design: Ahead, On track, Behind, Paused, Completed,
 // Withdrawn, Achieved).
-export const LOOK_META: Record<GoalLook, { label: string; chip: "income" | "mint" | "warning" | "neutral" }> = {
-  AHEAD: { label: "Ahead", chip: "income" },
-  ON_TRACK: { label: "On track", chip: "mint" },
-  BEHIND: { label: "Behind", chip: "warning" },
-  PAUSED: { label: "Paused", chip: "neutral" },
-  COMPLETED: { label: "Completed", chip: "income" },
-  WITHDRAWN: { label: "Withdrawn", chip: "neutral" },
-  ACHIEVED: { label: "Achieved", chip: "income" },
+export const LOOK_META: Record<GoalLook, { label: string; chip: string }> = {
+  AHEAD: { label: "Ahead", chip: "bg-success-soft text-tint-green-ink" },
+  ON_TRACK: { label: "On track", chip: "bg-income-soft text-income" },
+  BEHIND: { label: "Behind", chip: "bg-warning-soft text-warning" },
+  PAUSED: { label: "Paused", chip: "bg-surface-sunken text-ink-soft" },
+  COMPLETED: { label: "Completed", chip: "bg-success-soft text-tint-green-ink" },
+  WITHDRAWN: { label: "Withdrawn", chip: "bg-surface-sunken text-ink-muted" },
+  ACHIEVED: { label: "Achieved", chip: "bg-success-soft text-success-ink" },
 };
 
 export const TREND_META: Record<NonNullable<SavingsGoalTrend>, { label: string; short: string; text: string }> = {
