@@ -9,6 +9,9 @@ import {
   type SavingsGoalDetail,
   type SavingsGoalEntry,
   type SavingsGoalStatus,
+  type SavingsPlan,
+  type SavingsPlanHorizon,
+  type SavingsPlanPriority,
   type SavingsReminderChannel,
   type SavingsStatement,
   type SavingsWalletHistoryRow,
@@ -69,6 +72,10 @@ export interface SavingsGoalFormInput {
   // there, and so does the money already saved on a new goal.
   accountId?: string;
   startAmount?: number;
+  // Its card colour (savingsColors.ts).
+  color?: string;
+  // Start goal on a saving plan: the plan is removed with the goal made.
+  fromPlanId?: string;
 }
 
 export async function createSavingsGoalAction(businessId: string, input: SavingsGoalFormInput): Promise<ActionResult<SavingsGoal>> {
@@ -205,4 +212,65 @@ export async function undoSavingsTransferAction(businessId: string, id: string):
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/transfers/${id}`, { headers: await authHeaders() });
   }, "Failed to undo the move");
+}
+
+export interface AddProfitInput {
+  amount: number;
+  date: string;
+  // The income category it counts under, by name.
+  category: string;
+  notes?: string;
+}
+
+// Profit the bank paid on a goal's savings: into the account the goal keeps
+// its money in, counted as income.
+export async function addProfitAction(businessId: string, goalId: string, input: AddProfitInput): Promise<ActionResult<SavingsGoalEntry>> {
+  return callApi(async () => {
+    const res = await customerApi.post<SavingsGoalEntry>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/profits`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to add profit");
+}
+
+// Move back to plans: a goal nothing was recorded against becomes a saving
+// plan again.
+export async function moveGoalToPlansAction(businessId: string, goalId: string): Promise<ActionResult<{ planId: string }>> {
+  return callApi(async () => {
+    const res = await customerApi.post<{ planId: string }>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/to-plan`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to move the goal");
+}
+
+export interface SavingsPlanInput {
+  name: string;
+  category: string;
+  color: string;
+  amount: number;
+  horizon: SavingsPlanHorizon;
+  // Only with BY_DATE.
+  needBy?: string;
+  priority: SavingsPlanPriority;
+  note: string;
+  link: string;
+  // Undo of a delete: the day it was first planned.
+  plannedOn?: string;
+}
+
+export async function createSavingsPlanAction(businessId: string, input: SavingsPlanInput): Promise<ActionResult<SavingsPlan>> {
+  return callApi(async () => {
+    const res = await customerApi.post<SavingsPlan>(`${API_BASE_URL}/api/businesses/${businessId}/savings-plans`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the plan");
+}
+
+export async function updateSavingsPlanEntryAction(businessId: string, id: string, input: SavingsPlanInput): Promise<ActionResult<SavingsPlan>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<SavingsPlan>(`${API_BASE_URL}/api/businesses/${businessId}/savings-plans/${id}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the plan");
+}
+
+export async function deleteSavingsPlanAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/savings-plans/${id}`, { headers: await authHeaders() });
+  }, "Failed to delete the plan");
 }

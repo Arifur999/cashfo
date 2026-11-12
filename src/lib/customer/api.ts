@@ -994,7 +994,8 @@ export type SavingsGoalStatus = "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN";
 export type SavingsReminderChannel = "EMAIL" | "PHONE";
 // ACCOUNT_CHANGE: the goal moved to another savings account and took its
 // money along; what it has saved stays the same.
-export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN" | "WITHDRAWAL" | "ACCOUNT_CHANGE";
+// PROFIT: profit the bank paid on the goal's savings, counted as income.
+export type SavingsEntryType = "CONTRIBUTION" | "TRANSFER_OUT" | "TRANSFER_IN" | "WITHDRAWAL" | "ACCOUNT_CHANGE" | "PROFIT";
 // Only ever set for an ACTIVE goal -- null for Paused/Completed/Withdrawn,
 // where "are you saving fast enough" no longer applies. paceStatus is the
 // older two-way field; pace (backend savings-plan.ts) is the plan line's.
@@ -1064,6 +1065,11 @@ export interface SavingsGoal {
   // Absent from an older API, null before one is chosen.
   accountId?: string | null;
   account?: { id: string; name: string | null; accountNumber: string | null } | null;
+  // Its card colour (one of GOAL_COLORS, savingsColors.ts); null on an
+  // older goal, which takes the colour of its place in the list.
+  color?: string | null;
+  // Profit the bank paid on it, all told. Absent from an older API.
+  profitTotal?: string;
 }
 
 export interface SavingsGoalEntry {
@@ -1076,6 +1082,8 @@ export interface SavingsGoalEntry {
   relatedGoalName: string | null;
   // Entries of one move or withdrawal across several wallets share it.
   groupId: string | null;
+  // PROFIT: the income category it counts under.
+  category?: string | null;
   notes: string | null;
 }
 
@@ -1106,6 +1114,8 @@ export interface SavingsAccountOverviewRow {
   id: string;
   name: string;
   accountNumber: string | null;
+  // Its card colour; null (or absent from an older API) takes its place's.
+  color?: string | null;
   status: AccountStatus;
   openingBalance: string;
   totalIn: string;
@@ -1147,7 +1157,8 @@ export interface SavingsWalletGoals {
 export interface SavingsWalletHistoryRow {
   id: string;
   date: string;
-  kind: "ALREADY_SAVED" | "ADDED" | "MOVED" | "WITHDRAWN" | "ACCOUNT_IN" | "ACCOUNT_OUT";
+  // PROFIT: accountName is the income category it counts under.
+  kind: "ALREADY_SAVED" | "ADDED" | "PROFIT" | "MOVED" | "WITHDRAWN" | "ACCOUNT_IN" | "ACCOUNT_OUT";
   goalName: string;
   otherGoalName: string | null;
   accountName: string | null;
@@ -1155,7 +1166,8 @@ export interface SavingsWalletHistoryRow {
   notes: string | null;
 }
 
-export type SavingsStatementKind = "ALREADY_SAVED" | "ADDED" | "MOVED_IN" | "MOVED_OUT" | "WITHDRAWN" | "ACCOUNT_CHANGED";
+// PROFIT: from is the income category, to the savings account.
+export type SavingsStatementKind = "ALREADY_SAVED" | "ADDED" | "PROFIT" | "MOVED_IN" | "MOVED_OUT" | "WITHDRAWN" | "ACCOUNT_CHANGED";
 
 // A goal's statement, oldest first. from/to are names: an account, the
 // savings wallets, or the other goal, as the kind says.
@@ -1164,8 +1176,32 @@ export interface SavingsStatement {
   today: string;
   rows: { date: string; kind: SavingsStatementKind; from: string | null; to: string | null; notes: string | null; moneyIn: string | null; moneyOut: string | null; balance: string; moved: string | null }[];
   totals: { opening: string; moneyIn: string; moneyOut: string; balance: string };
-  sources: { kind: "ACCOUNT" | "ALREADY_SAVED" | "GOAL"; name: string | null; amount: string }[];
+  sources: { kind: "ACCOUNT" | "ALREADY_SAVED" | "GOAL" | "PROFIT"; name: string | null; amount: string }[];
   now: SavingsHolding[];
+}
+
+// Savings Goals > Saving plans: something to save for later. Nothing is
+// saved until it is started as a goal.
+export type SavingsPlanHorizon = "THREE_MONTHS" | "SIX_MONTHS" | "ONE_YEAR" | "TWO_YEARS" | "BY_DATE" | "SOMEDAY";
+export type SavingsPlanPriority = "HIGH" | "MEDIUM" | "LOW";
+export interface SavingsPlan {
+  id: string;
+  name: string;
+  // trip, phone, umrah, education, wedding or others.
+  category: string;
+  color: string;
+  amount: string;
+  horizon: SavingsPlanHorizon;
+  // The date picked, for BY_DATE.
+  needBy: string | null;
+  priority: SavingsPlanPriority;
+  note: string | null;
+  link: string | null;
+  plannedOn: string;
+  // The day it is needed by, counted from today; null for some day.
+  neededBy: string | null;
+  // What starting it today means a month; "0.00" with no date.
+  monthly: string;
 }
 
 // Assets Management -- long-lived, non-cash things a business owns (a car,

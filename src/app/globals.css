@@ -222,6 +222,9 @@
   --tint-pink-ink: #be185d;
   --tint-yellow: #fef9c3;
   --tint-yellow-ink: #a16207;
+  /* The profit note in Add money (Savings): its edge and words. */
+  --tint-yellow-line: #fef08a;
+  --tint-yellow-deep: #713f12;
   --tint-teal: #ccfbf1;
   --tint-teal-ink: #0f766e;
   --tint-violet: #ede9fe;
@@ -460,6 +463,8 @@
   --tint-pink-ink: #f08fbf;
   --tint-yellow: #29250f;
   --tint-yellow-ink: #facc15;
+  --tint-yellow-line: #4a3f12;
+  --tint-yellow-deep: #fde68a;
   --tint-teal: #0b2e33;
   --tint-teal-ink: #5cccdb;
   --tint-violet: #1f1838;
@@ -759,6 +764,8 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-pink-ink: var(--tint-pink-ink);
   --color-tint-yellow: var(--tint-yellow);
   --color-tint-yellow-ink: var(--tint-yellow-ink);
+  --color-tint-yellow-line: var(--tint-yellow-line);
+  --color-tint-yellow-deep: var(--tint-yellow-deep);
   --color-tint-teal: var(--tint-teal);
   --color-tint-teal-ink: var(--tint-teal-ink);
   --color-tint-violet: var(--tint-violet);

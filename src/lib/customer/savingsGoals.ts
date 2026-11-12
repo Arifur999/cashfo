@@ -6,6 +6,7 @@ import {
   type SavingsGoal,
   type SavingsGoalDetail,
   type SavingsGoalStatus,
+  type SavingsPlan,
   type SavingsTransferRow,
   type SavingsWalletGoals,
 } from "./api";
@@ -79,6 +80,21 @@ export const getSavingsWalletGoals = cache(async (businessId: string): Promise<S
 
   try {
     const response = await customerApi.get<SavingsWalletGoals[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/wallet-goals`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});
+
+// Saving plans: things to save for later.
+export const getSavingsPlans = cache(async (businessId: string): Promise<SavingsPlan[]> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const response = await customerApi.get<SavingsPlan[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-plans`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;
