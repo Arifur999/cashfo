@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Button from "@/components/smartly/Button";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
@@ -63,7 +63,8 @@ type Modal =
   | { kind: "move"; setup: MoveSetup }
   | { kind: "done"; id: string }
   | { kind: "statement"; id: string }
-  | { kind: "wallet" };
+  | { kind: "wallet" }
+  | { kind: "delete"; id: string };
 
 const TABS: { value: Tab; label: string; status?: SavingsGoalStatus }[] = [
   { value: "ALL", label: "All" },
@@ -83,7 +84,6 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [tab, setTab] = useState<Tab>("ALL");
   const [behindOnly, setBehindOnly] = useState(false);
   // Cards or a table, as this browser last had it.
@@ -141,13 +141,8 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
     });
   };
 
-  async function remove(goal: SavingsGoal) {
-    const ok = await confirm({
-      title: t("Delete {name}?", { name: goal.name }),
-      message: Number(goal.currentAmount) > 0 ? t("The goal and its history are removed. The {amount} stays in your savings accounts, it just stops counting toward a goal.", { amount: money(goal.currentAmount) }) : t("The goal and its history are removed. This can't be undone."),
-      confirmLabel: "Delete goal",
-    });
-    if (!ok) return;
+  function remove(goal: SavingsGoal) {
+    if (isPending) return;
     startTransition(async () => {
       const result = await deleteSavingsGoalAction(businessId, goal.id);
       if (!result.success) {
@@ -177,7 +172,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
       case "withdraw":
         return setModal({ kind: "withdraw", id: goal.id });
       case "delete":
-        return void remove(goal);
+        return setModal({ kind: "delete", id: goal.id });
       case "add":
         return setModal({ kind: "add", id: goal.id });
       case "wallet":
@@ -416,7 +411,27 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         person={person}
       />
       <SavingsAccountDialog open={modal?.kind === "wallet"} onClose={close} businessId={businessId} editing={null} names={walletNames} addedNote="goals" />
-      {confirmDialog}
+      <PopupDialog
+        open={modal?.kind === "delete"}
+        onClose={close}
+        plain
+        width={440}
+        busy={isPending}
+        className="leading-[normal]"
+        titleClassName="font-bold!"
+        title={modal?.kind === "delete" && current ? t("Delete {name}?", { name: current.name }) : ""}
+        sub={modal?.kind === "delete" && current ? (Number(current.currentAmount) > 0 ? t("The goal and its history are removed. The {amount} stays in your savings accounts, it just stops counting toward a goal.", { amount: money(current.currentAmount) }) : t("The goal and its history are removed. This can't be undone.")) : ""}
+        footer={
+          <>
+            <Button variant="secondary" size="lg" onClick={close} disabled={isPending} className="px-4.5">
+              {t("Cancel")}
+            </Button>
+            <Button variant="danger" size="lg" onClick={() => current && remove(current)} disabled={isPending} className="shadow-none">
+              {t("Delete goal")}
+            </Button>
+          </>
+        }
+      />
     </PageFrame>
   );
 }

@@ -142,6 +142,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={560}
@@ -159,7 +160,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       sub={<span className="tabular-nums">{`${t("{saved} of {target}", { saved: money(saved), target: money(target) })} · ${t(LOOK_META[goalLook(goal)].label)}`}</span>}
       footer={
         <>
-          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
             {t("Cancel")}
           </Button>
           <Button type="submit" size="lg" disabled={isPending}>

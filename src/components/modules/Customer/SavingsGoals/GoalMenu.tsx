@@ -17,7 +17,7 @@ export function GoalMenu({ name, items, busy, onAction }: { name: string; items:
       <DropdownMenuTrigger aria-label={t("Actions for {name}", { name })} disabled={busy} className={cn(iconActionClass(), "data-open:border-mint-200 data-open:bg-emerald-soft data-open:text-emerald")}>
         <Ellipsis aria-hidden="true" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" alignOffset={-3} sideOffset={6} className="flex w-61 flex-col gap-0.5 rounded-[14px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
+      <DropdownMenuContent align="end" alignOffset={-3} sideOffset={6} className="flex w-61 flex-col gap-0.5 rounded-[14px] border border-line bg-surface p-1.5 leading-[normal] shadow-overlay ring-0">
         {items.map((item) => (
           <DropdownMenuItem key={item.key} onSelect={() => onAction(item.key)} className={cn(MENU_ITEM, item.danger && "text-expense focus:bg-expense-soft focus:text-expense", item.good && "text-success-ink focus:text-success-ink")}>
             <item.icon aria-hidden="true" />

@@ -81,7 +81,7 @@ export function GoalPicker({ goals, options, value, onChange, currency, id, labe
           <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" sideOffset={8} aria-labelledby={labelId} className="w-(--radix-popover-trigger-width) gap-0 rounded-[14px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
+      <PopoverContent align="start" sideOffset={8} aria-labelledby={labelId} className="w-(--radix-popover-trigger-width) gap-0 rounded-[14px] border border-line bg-surface p-1.5 leading-[normal] shadow-overlay ring-0">
         <ul aria-labelledby={labelId} className="flex max-h-72 flex-col gap-0.5 overflow-y-auto">
           {options.map(({ goal, off, note }) => {
             const on = goal.id === value;

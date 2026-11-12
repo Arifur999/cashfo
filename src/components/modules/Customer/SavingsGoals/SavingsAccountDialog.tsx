@@ -80,6 +80,7 @@ export function SavingsAccountDialog({ open, onClose, businessId, editing, names
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={480}

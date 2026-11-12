@@ -293,7 +293,7 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "pick an account": "হিসাব বেছে নিন",
   "pick a savings account": "সঞ্চয়ের হিসাব বেছে নিন",
   "Add {amount} now": "এখনই {amount} যোগ করুন",
-  "Fills the gap in one go. You choose the account on the next step.": "একবারে ঘাটতি পূরণ হয়। পরের ধাপে হিসাব বেছে নেবেন।",
+  "Fills the gap in one go. You pick where it comes from on the next step.": "একবারে ঘাটতি পূরণ হয়। টাকা কোথা থেকে আসবে, পরের ধাপে বেছে নেবেন।",
   "Fastest": "সবচেয়ে দ্রুত",
   "Save {amount} a month from now": "এখন থেকে মাসে {amount} জমান",
   "Up from the {amount} a month you have averaged.": "আপনার গড় মাসে {amount}-এর চেয়ে বেশি।",

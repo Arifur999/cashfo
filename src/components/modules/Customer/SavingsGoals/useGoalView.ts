@@ -8,6 +8,7 @@ import { keptIn } from "@/lib/customer/savingsDisplay";
 import { dueThisMonth, goalLook, monthProgress, monthsToGo, timeFraction, type GoalLook } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { Translate } from "@/lib/i18n/message";
 
 export type GoalAction = "details" | "catch" | "edit" | "pause" | "resume" | "move" | "withdraw" | "delete" | "add" | "wallet";
 
@@ -20,7 +21,7 @@ export interface GoalMenuItem {
 }
 
 // Where a goal stands, by its look (the board's colours), and its icon.
-const PACE_TONE: Record<GoalLook, { box: string; tile: string; head: string; icon: LucideIcon }> = {
+export const PACE_TONE: Record<GoalLook, { box: string; tile: string; head: string; icon: LucideIcon }> = {
   AHEAD: { box: "bg-success-soft text-success-ink", tile: "bg-success-soft text-success-ink", head: "text-success-ink", icon: TrendingUp },
   ON_TRACK: { box: "bg-emerald-soft text-brand-ink", tile: "bg-emerald-soft text-brand-ink", head: "text-brand-ink", icon: Check },
   BEHIND: { box: "bg-warning-soft text-warning-ink", tile: "bg-warning-soft text-warning-ink", head: "text-warning-ink", icon: TriangleAlert },
@@ -37,6 +38,31 @@ interface GoalViewOptions {
   today: string;
   canManage: boolean;
   canMoveTo: boolean;
+}
+
+// Where a goal stands in words, as the board's pace box says it (head and
+// text) and the table's Status column (short). The card, the row and the
+// details popup all use it.
+export function paceWords(goal: SavingsGoal, look: GoalLook, need: number, t: Translate, money: (value: number | string) => string, day: (value: string) => string) {
+  const pc = goal.pace;
+  const withdrawnOn = goal.lastWithdrawal ? day(goal.lastWithdrawal.date) : "";
+  const withdrawnTo = goal.lastWithdrawal?.accountName ?? t("your main balance");
+  switch (look) {
+    case "ACHIEVED":
+      return { head: t("Achieved on {date}", { date: goal.reachedAt ? day(goal.reachedAt) : withdrawnOn }), text: t("{amount} sent to {account} on {date}.", { amount: money(goal.withdrawnAmount), account: withdrawnTo, date: withdrawnOn }), short: t("{amount} sent to balance", { amount: money(goal.withdrawnAmount) }) };
+    case "WITHDRAWN":
+      return { head: t("Closed early"), text: t("{amount} sent to {account} on {date}.", { amount: money(goal.withdrawnAmount), account: withdrawnTo, date: withdrawnOn }), short: t("{amount} sent to balance", { amount: money(goal.withdrawnAmount) }) };
+    case "COMPLETED":
+      return { head: t("Reached on {date}", { date: goal.reachedAt ? day(goal.reachedAt) : "" }), text: t("Withdraw it to your balance when you are ready to spend."), short: t("Ready to withdraw") };
+    case "PAUSED":
+      return { head: t("Paused"), text: t("No monthly target. Resume to start a fresh plan."), short: t("No monthly target") };
+    case "BEHIND":
+      return { head: t("{amount} behind", { amount: money(-Number(pc?.difference ?? 0)) }), text: t("Save {need} a month to finish on time.", { need: money(need) }), short: t("Save {amount} a month", { amount: money(need) }) };
+    case "AHEAD":
+      return { head: t("{amount} ahead", { amount: money(pc?.difference ?? 0) }), text: t("{need} a month is enough from here.", { need: money(need) }), short: t("{amount} a month is enough", { amount: money(need) }) };
+    default:
+      return { head: t("On pace"), text: t("Save {need} a month to stay on plan.", { need: money(need) }), short: t("Save {amount} a month", { amount: money(need) }) };
+  }
 }
 
 // Everything a goal's card and its table row show, worked out once: its
@@ -60,7 +86,6 @@ export function useGoalView({ goal, color, currency, today, canManage, canMoveTo
   const left = Math.max(0, target - saved);
   const day = (value: string) => formatDate(value, "d MMM yyyy", fmt);
   const withdrawnOn = goal.lastWithdrawal ? day(goal.lastWithdrawal.date) : "";
-  const withdrawnTo = goal.lastWithdrawal?.accountName ?? t("your main balance");
   const months = monthsToGo(goal.targetDate, today);
 
   const when = closed
@@ -71,25 +96,7 @@ export function useGoalView({ goal, color, currency, today, canManage, canMoveTo
         ? t("Paused · was due {date}", { date: day(goal.targetDate) })
         : t(months === 1 ? "{count} month left · by {date}" : "{count} months left · by {date}", { count: formatCount(months, fmt), date: day(goal.targetDate) });
 
-  const pc = goal.pace;
-  const pace = (() => {
-    switch (look) {
-      case "ACHIEVED":
-        return { head: t("Achieved on {date}", { date: goal.reachedAt ? day(goal.reachedAt) : withdrawnOn }), text: t("{amount} sent to {account} on {date}.", { amount: money(goal.withdrawnAmount), account: withdrawnTo, date: withdrawnOn }), short: t("{amount} sent to balance", { amount: money(goal.withdrawnAmount) }) };
-      case "WITHDRAWN":
-        return { head: t("Closed early"), text: t("{amount} sent to {account} on {date}.", { amount: money(goal.withdrawnAmount), account: withdrawnTo, date: withdrawnOn }), short: t("{amount} sent to balance", { amount: money(goal.withdrawnAmount) }) };
-      case "COMPLETED":
-        return { head: t("Reached on {date}", { date: goal.reachedAt ? day(goal.reachedAt) : "" }), text: t("Withdraw it to your balance when you are ready to spend."), short: t("Ready to withdraw") };
-      case "PAUSED":
-        return { head: t("Paused"), text: t("No monthly target. Resume to start a fresh plan."), short: t("No monthly target") };
-      case "BEHIND":
-        return { head: t("{amount} behind", { amount: money(-Number(pc?.difference ?? 0)) }), text: t("Save {need} a month to finish on time.", { need: money(need) }), short: t("Save {amount} a month", { amount: money(need) }) };
-      case "AHEAD":
-        return { head: t("{amount} ahead", { amount: money(pc?.difference ?? 0) }), text: t("{need} a month is enough from here.", { need: money(need) }), short: t("{amount} a month is enough", { amount: money(need) }) };
-      default:
-        return { head: t("On pace"), text: t("Save {need} a month to stay on plan.", { need: money(need) }), short: t("Save {amount} a month", { amount: money(need) }) };
-    }
-  })();
+  const pace = paceWords(goal, look, need, t, money, day);
 
   // This month's share on an active goal: done, part of it, or nothing yet.
   const chip = (() => {

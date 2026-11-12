@@ -84,6 +84,7 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={620}

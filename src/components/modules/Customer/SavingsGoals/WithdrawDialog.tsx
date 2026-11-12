@@ -100,6 +100,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={540}
@@ -109,7 +110,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
       sub={t("The money goes to your main balance. Record what you buy as an expense from there.")}
       footer={
         <>
-          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
             {t("Cancel")}
           </Button>
           <Button type="submit" size="lg" disabled={isPending}>

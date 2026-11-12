@@ -160,7 +160,7 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
                   <DropdownMenuTrigger aria-label={t("Actions for {name}", { name: row.name })} className="flex size-9 items-center justify-center rounded-full bg-white/16 hover:bg-white/24 pointer-coarse:size-11">
                     <Ellipsis className="size-4.5" aria-hidden="true" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" alignOffset={-4} sideOffset={4} className="flex w-56 flex-col gap-0.5 rounded-[14px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
+                  <DropdownMenuContent align="end" alignOffset={-4} sideOffset={4} className="flex w-56 flex-col gap-0.5 rounded-[14px] border border-line bg-surface p-1.5 leading-[normal] shadow-overlay ring-0">
                     <DropdownMenuItem onSelect={() => setViewId(row.id)} className={MENU_ITEM}>
                       {t("View goals")}
                     </DropdownMenuItem>
@@ -237,10 +237,12 @@ export function SavingsAccountsPageClient({ businessId, overview, activeIds, wal
         currency={currency}
       />
       <PopupDialog
+        className="leading-[normal]"
         open={!!archiving}
         onClose={() => setArchiving(null)}
         plain
         width={440}
+        titleClassName="font-bold!"
         busy={isPending}
         title={archiving ? t("Archive {name}?", { name: archiving.name }) : ""}
         sub={archiving ? t("It stops showing in Add money and Withdraw. Its history and {amount} stay in your records, and you can restore it any time.", { amount: money(archiving.currentBalance) }) : ""}
