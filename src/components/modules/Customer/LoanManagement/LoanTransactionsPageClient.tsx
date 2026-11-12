@@ -3,10 +3,11 @@
 import { ChevronLeft, ChevronRight, HandCoins, Pencil, Plus, Printer, Search, Trash2, TriangleAlert } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { PeriodPicker, periodLabel as periodName } from "@/components/modules/Customer/Shared/PeriodPicker";
+import { PrintPreview } from "@/components/modules/Customer/Balance/PrintPreview";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
-import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
 import Loader from "@/components/shared/Loader";
 import AmountText from "@/components/smartly/AmountText";
 import Banner from "@/components/smartly/Banner";
@@ -26,12 +27,16 @@ import { formatDate } from "@/lib/customer/date";
 import { DIRECTION_META, loanDirection, loanEditOf, loanPaymentRow, loanTotals, wordInitials, type LoanEdit } from "@/lib/customer/loanDisplay";
 import { toEnglishDigits } from "@/lib/customer/money";
 import { periodHref, type PickedPeriod } from "@/lib/customer/period";
-import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { restoreTransactionAction, voidTransactionAction } from "@/lib/customer/transactionActions";
+import { DELETED_REASON, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
 import { cn } from "@/lib/utils";
+import { LoanDeleteDialog } from "./LoanDeleteDialog";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
+import { offerUndo } from "./offerUndo";
+import { LoanTransactionsPrint } from "./LoanTransactionsPrint";
 import { usePrinting } from "./usePrinting";
 
 interface LoanTransactionsPageClientProps {
@@ -87,6 +92,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   // Admin > System > Feature Flags: pdf_export off hides Print.
   const pdfExportOn = useFeature("pdf_export");
   const printing = usePrinting();
+  // The board's print preview, open over the page.
+  const [previewing, setPreviewing] = useState(false);
   const { page, setPage } = usePageParam();
   const [isPending, startTransition] = useTransition();
   // The filters as just picked, while the page loads them.
@@ -184,6 +191,52 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const voidingName = voiding ? (voiding.contact?.name ?? (voiding.contactId ? contactsById.get(voiding.contactId)?.name : undefined) ?? "—") : "—";
   const voidingWallet = voidingRow?.wallet ?? t("your wallet");
   const voidingCharge = voiding?.charge ? Number(voiding.charge) : 0;
+  // The board's words: who, what, how much and when, then how their
+  // balance moves (profit never moves it) and what else goes with it.
+  const voidingContact = voiding?.contactId ? contactsById.get(voiding.contactId) : undefined;
+  const balanceWords = (value: number) => (loanDirection(value) === "SETTLED" ? t("Settled") : `${t(DIRECTION_META[loanDirection(value)].name)} ${formatCurrency(Math.abs(value), currency, fmt)}`);
+  const voidingBody =
+    voiding && voidingRow
+      ? [
+          t("{name}: {what}, {amount} on {date}.", { name: voidingName, what: ((what: string) => (locale === "en" ? what.toLowerCase() : what))(voidingRow.title ? t(voidingRow.title) : t(TRANSACTION_TYPE_LABELS[voiding.transactionType])), amount: formatCurrency(Math.abs(voidingRow.signedAmount), currency, fmt), date: formatDate(voiding.transactionDate, "d MMM yyyy", fmt) }),
+          voidingProfit
+            ? voidingProfit.paid
+              ? t("The money goes back to {wallet} and the expense is removed. The loan balance doesn't change.", { wallet: voidingWallet })
+              : t("The money comes out of {wallet} again and the income is removed. The loan balance doesn't change.", { wallet: voidingWallet })
+            : voidingContact
+              ? t("Their balance changes from {from} to {to}.", { from: balanceWords(Number(voidingContact.currentBalance)), to: balanceWords(Number(voidingContact.currentBalance) + voidingRow.signedAmount) })
+              : null,
+          voidingCharge > 0 ? t("Its charge of {amount} is removed too.", { amount: formatCurrency(voidingCharge, currency, fmt) }) : null,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "";
+  const [deletingEntry, startDeleting] = useTransition();
+
+  // Delete is a void the toast's Undo can take back (for 10 minutes).
+  function deleteEntry(transaction: Transaction) {
+    startDeleting(async () => {
+      try {
+        const result = await voidTransactionAction(businessId, transaction.id, DELETED_REASON);
+        if (!result.success) {
+          toast.error(t(result.message ?? "Couldn't delete the entry"));
+          return;
+        }
+        setVoiding(null);
+        router.refresh();
+        offerUndo({
+          message: t("Entry deleted"),
+          run: () => restoreTransactionAction(businessId, transaction.id),
+          done: t("Entry restored"),
+          failed: t("Couldn't bring the entry back"),
+          undoLabel: t("Undo"),
+          refresh: () => router.refresh(),
+        });
+      } catch {
+        toast.error(t("Couldn't save. Check your connection and try again."));
+      }
+    });
+  }
 
   // "2026", "Nov 2026", "All time": the tiles' and the print line's period.
   const periodLabel = period.kind === "year" ? formatCount(period.year, fmt).replace(/,/g, "") : periodName(period, t, fmt);
@@ -194,7 +247,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const moneyIn = totals.in + totals.profitReceived;
   const moneyOut = totals.out + totals.profitPaid;
   const kindChip = (isProfit: boolean) => (
-    <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className="font-bold">
+    <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className={cn("px-2 font-bold", isProfit && "text-due-ink")}>
       {t(isProfit ? "Profit" : "Principal")}
     </Chip>
   );
@@ -204,16 +257,45 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     const direction = loanDirection(Number(balance));
     return (
       <span className={cn("flex flex-col items-end gap-px", className)}>
-        <span className="font-semibold text-ink tabular-nums">{formatCurrency(Math.abs(Number(balance)), currency, fmt)}</span>
-        <span className={cn("text-caption font-semibold", direction === "SETTLED" ? "text-ink-muted" : DIRECTION_META[direction].text)}>{t(DIRECTION_META[direction].name)}</span>
+        <span className="font-semibold text-ink tabular-nums xl:leading-[normal]">{formatCurrency(Math.abs(Number(balance)), currency, fmt)}</span>
+        <span className={cn("text-caption font-semibold xl:text-[11px] xl:leading-[normal]", direction === "SETTLED" ? "text-ink-muted" : DIRECTION_META[direction].text)}>{t(DIRECTION_META[direction].name)}</span>
       </span>
     );
   };
 
+  // The list on paper, every page of it, as the board's print preview shows it.
+  const preview = previewing && (
+    <PrintPreview look="bar" printLabel="Print or save PDF" subtitle={t("Pick “Save as PDF” in the print window to get a PDF.")} onClose={() => setPreviewing(false)}>
+      <LoanTransactionsPrint
+        sub={[periodLabel, selectedContactId ? contactsById.get(selectedContactId)?.name : null, show === "all" ? null : t(SHOW_LABELS[show]), t(filteredRows.length === 1 ? "{count} entry" : "{count} entries", { count: formatCount(filteredRows.length, fmt) })].filter(Boolean).join(" · ")}
+        madeOn={t("Made on {date}", { date: formatDate(today, "d MMM yyyy", fmt) })}
+        moneyIn={`+ ${formatCurrency(moneyIn, currency, fmt)}`}
+        moneyOut={`− ${formatCurrency(moneyOut, currency, fmt)}`}
+        rows={filteredRows.map(({ transaction, title, signedAmount, cancelled, name, note }) => {
+          const balance = transaction.loanBalanceAfter;
+          const after = balance === null || balance === undefined ? null : Number(balance);
+          return {
+            key: transaction.id,
+            date: formatDate(transaction.transactionDate, "d MMM yyyy", fmt),
+            name,
+            what: `${title ? t(title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}${cancelled ? ` (${t(cancelled)})` : ""}`,
+            note: note ?? "",
+            amount: `${signedAmount > 0 ? "+" : "−"} ${formatCurrency(Math.abs(signedAmount), currency, fmt)}`,
+            received: signedAmount > 0,
+            balance: after === null ? "–" : `${formatCurrency(Math.abs(after), currency, fmt)} ${t(DIRECTION_META[loanDirection(after)].name)}`,
+          };
+        })}
+      />
+    </PrintPreview>
+  );
+
   return (
     <PageFrame className="gap-5">
+      {preview}
+      {/* While the preview is open, only its page prints. */}
+      <div className={cn("contents", previewing && "print:hidden")}>
       {/* The board's title line, New loan entry at its end. */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 md:-mt-4">
         <h1 className="text-[22px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Loan transaction")}</h1>
         {canManage && (
           <Button onClick={() => setDrawerOpen(true)} aria-label={t("New loan entry")} className="shrink-0 print:hidden">
@@ -229,14 +311,14 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         </Banner>
       )}
 
-      {/* The two totals across the page. */}
-      <section>
+      {/* The two totals across the page, 16px under the title as the board has them. */}
+      <section className="md:-mt-1">
         <Card padding="none" className="grid min-w-0 grid-cols-2">
           <TotalCell label={t("Money in · {period}", { period: periodLabel })}>
-            <AmountText value={moneyIn} currency={currency} size="h2" tone={moneyIn ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyIn && "text-ink-muted")} />
+            <AmountText value={moneyIn} currency={currency} size="h2" tone={moneyIn ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyIn && "text-ink-muted", "leading-[normal]")} />
           </TotalCell>
           <TotalCell label={t("Money out · {period}", { period: periodLabel })} className="border-l">
-            <AmountText value={-moneyOut} currency={currency} size="h2" tone={moneyOut ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyOut && "text-ink-muted")} />
+            <AmountText value={-moneyOut} currency={currency} size="h2" tone={moneyOut ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyOut && "text-ink-muted", "leading-[normal]")} />
           </TotalCell>
         </Card>
       </section>
@@ -287,8 +369,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               />
               <PeriodPicker period={period} today={today} activeMonths={null} allowAll defaultPeriod={thisYear} onPick={pickPeriod} busy={isPending} />
               {pdfExportOn && transactions.length > 0 && (
-                <Button variant="secondary" size="sm" onClick={() => window.print()} title={t("Print this list")} className="max-md:hidden">
-                  <Printer className="text-ink-2" />
+                <Button variant="secondary" size="sm" onClick={() => setPreviewing(true)} aria-haspopup="dialog" title={t("Print this list")} className="h-9.5 gap-2 rounded-[10px] px-3.5 text-[13px] max-md:hidden">
+                  <Printer className="size-3.75 text-ink-soft" />
                   {t("Print")}
                 </Button>
               )}
@@ -398,18 +480,18 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                   </ListCell>
                   <ListCell className={FROM_XL}>{kindChip(profit !== null)}</ListCell>
                   <ListCell className={FROM_XL}>
-                    <Chip tone={received ? "income" : "expense"} size="sm" className="font-semibold">
+                    <Chip tone={received ? "income" : "expense"} className={cn("h-auto px-2.25 py-0.75 text-[12px] font-semibold", received ? "text-brand-ink" : "text-loss-ink")}>
                       {t(received ? "Received" : "Payment")}
                     </Chip>
                   </ListCell>
-                  <ListCell className={cn(WIDEST, "truncate text-small text-ink-2")}>{note ?? <span className="text-ink-muted">—</span>}</ListCell>
+                  <ListCell className={cn(WIDEST, "truncate text-[13px] text-ink-soft")}>{note}</ListCell>
                   <ListCell align="end" className={cn("col-start-2 row-start-1", AT_XL)}>
                     <AmountText value={signedAmount} currency={currency} size="sm" signed tone={cancelled ? "neutral" : "auto"} className={cn("font-semibold", cancelled && "text-ink-muted line-through")} />
                   </ListCell>
-                  <ListCell align="end" className={cn(FROM_XL, "text-small text-ink-2 tabular-nums")}>
-                    {transaction.charge && Number(transaction.charge) > 0 ? formatCurrency(transaction.charge, currency, fmt) : <span className="text-ink-muted">—</span>}
+                  <ListCell align="end" className={cn(FROM_XL, "text-[13px] text-ink-soft tabular-nums")}>
+                    {transaction.charge && Number(transaction.charge) > 0 ? formatCurrency(transaction.charge, currency, fmt) : "–"}
                   </ListCell>
-                  <ListCell align="end" className={cn("col-start-2 row-start-2 text-small", AT_XL)}>
+                  <ListCell align="end" className={cn("col-start-2 row-start-2 text-small xl:text-body", AT_XL)}>
                     {balanceCell(transaction.loanBalanceAfter, "max-xl:flex-row max-xl:gap-1.5 max-xl:text-caption")}
                   </ListCell>
                   <ListRowActions className="hidden md:col-start-3 md:row-[1/span_2] md:flex md:justify-end xl:col-auto xl:row-auto print:hidden">
@@ -445,51 +527,28 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         editing={editing}
       />
       {voiding && voidingRow && (
-        <VoidTransactionDialog
+        <LoanDeleteDialog
           open
           onClose={() => setVoiding(null)}
-          businessId={businessId}
-          transactionId={voiding.id}
-          title={t("Entry")}
-          heading={t("Delete this entry?")}
-          description={[
-            voidingProfit
-              ? // Profit never moved the loan: only the wallet and the expense or income change back.
-                voidingProfit.paid
-                ? t("The money goes back to {wallet} and the expense is removed. The loan balance doesn't change.", { wallet: voidingWallet })
-                : t("The money comes out of {wallet} again and the income is removed. The loan balance doesn't change.", { wallet: voidingWallet })
-              : t("The balance goes back to what it was before this entry. It stays in your history, marked as voided."),
-            voidingCharge > 0 ? t("Its charge of {amount} is removed too.", { amount: formatCurrency(voidingCharge, currency, fmt) }) : null,
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          confirmLabel="Delete entry"
-          doneLabel="Entry deleted"
-          detail={
-            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body">
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate font-medium text-ink">{voidingName}</span>
-                <span className="truncate text-caption font-normal text-ink-muted">{[voidingRow.title ? t(voidingRow.title) : null, voidingProfit?.category ?? null].filter(Boolean).join(" · ")}</span>
-              </span>
-              <span className="flex shrink-0 flex-col items-end gap-px">
-                <span className="font-bold text-ink tabular-nums">{formatCurrency(Math.abs(voidingRow.signedAmount), currency, fmt)}</span>
-                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, fmt)}</span>
-              </span>
-            </div>
-          }
+          busy={deletingEntry}
+          title={t("Delete this entry?")}
+          body={voidingBody}
+          confirmLabel={t("Delete entry")}
+          onConfirm={() => deleteEntry(voiding)}
         />
       )}
+      </div>
     </PageFrame>
   );
 }
 
 // Never past the edge: a crore still fits.
-const TOTAL_FIGURE = "min-w-0 truncate";
+const TOTAL_FIGURE = "min-w-0 truncate text-[20px] font-bold tracking-normal";
 
 function TotalCell({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-1 border-line px-4 py-3 md:px-5 md:py-4", className)}>
-      <span className="text-caption font-normal text-ink-muted">{label}</span>
+      <span className="text-[12px] leading-[normal] font-normal text-ink-muted">{label}</span>
       {children}
     </div>
   );

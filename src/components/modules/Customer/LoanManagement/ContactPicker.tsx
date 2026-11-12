@@ -99,7 +99,7 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
           className={cn(
             invalid ? "border-expense" : "border-input",
             "flex w-full min-w-0 items-center gap-3 border bg-surface text-left transition-[border-color,box-shadow] focus-visible:border-focus-ring focus-visible:focus-halo focus-visible:outline-none disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo",
-            size === "xl" ? "h-13 rounded-field px-3.5" : "h-11 rounded-field px-3",
+            size === "xl" ? "h-11.5 rounded-[12px] px-3" : "h-11 rounded-field px-3",
           )}
         >
           {selected ? (
@@ -121,8 +121,9 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
             </>
           ) : (
             <>
-              <Search className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-              <span className="min-w-0 flex-1 truncate text-body text-ink-muted">{contacts.length === 0 ? t("No banks or people yet") : t("Search name or phone…")}</span>
+              {/* The entry popup reads as the board's select; the statement's as a search. */}
+              {size === "md" && <Search className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />}
+              <span className={cn("min-w-0 flex-1 truncate text-body", size === "xl" ? "text-ink" : "text-ink-muted")}>{contacts.length === 0 ? t("No banks or people yet") : size === "xl" ? t("Select a bank or person") : t("Search name or phone…")}</span>
             </>
           )}
           <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />

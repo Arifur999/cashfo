@@ -81,7 +81,7 @@ export function LoanContactsTable({ contacts, currency, canManage, busy, lastOf,
                 <span className={cn("rounded-full px-2.5 py-0.75 text-[12px] font-bold", meta.box, direction === "SETTLED" ? "text-ink-soft" : meta.text)}>{t(meta.name)}</span>
               </span>
               <span className="truncate text-[13px] text-ink-soft">{lastOf(contact)}</span>
-              <span className="flex flex-col items-end gap-px">
+              <span className="flex flex-col items-end gap-px leading-[normal]">
                 <span className={cn("text-[15px] font-bold", direction === "SETTLED" ? "text-ink-muted" : meta.text)}>{money(Math.abs(Number(contact.currentBalance)))}</span>
                 <span className={cn("text-[11.5px]", direction === "SETTLED" ? "text-ink-muted" : meta.text)}>{t(meta.label)}</span>
               </span>
@@ -100,10 +100,11 @@ export function LoanContactsTable({ contacts, currency, canManage, busy, lastOf,
                   <IconAction
                     tone="danger"
                     onClick={() => onRemove(contact)}
-                    disabled={busy || !removable}
+                    disabled={busy}
                     aria-label={t("Delete {name}", { name: contact.name })}
                     title={removable ? t("Delete") : t("Has transactions, can’t be deleted")}
-                    className="disabled:opacity-40"
+                    // Dimmed while it can't go; pressing it says why.
+                    className={cn("disabled:opacity-40", !removable && "opacity-40")}
                   >
                     <Trash2 aria-hidden="true" />
                   </IconAction>
@@ -118,7 +119,7 @@ export function LoanContactsTable({ contacts, currency, canManage, busy, lastOf,
         <span />
         <span />
         <span />
-        <span className="flex flex-col items-end gap-px">
+        <span className="flex flex-col items-end gap-px leading-[normal]">
           <span className="text-income">+ {money(pawna)}</span>
           <span className="text-expense">− {money(dena)}</span>
         </span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, Percent, Plus, WifiOff } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Percent, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
@@ -18,15 +18,17 @@ import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDispl
 import type { Account, Contact } from "@/lib/customer/api";
 import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
-import { balanceAfterEntry, DIRECTION_META, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, loanErrorText, profitCategory, repaymentLimit, walletDeltaOf, type LoanBalanceDetail, type LoanEdit, type LoanEntryKind } from "@/lib/customer/loanDisplay";
+import { balanceAfterEntry, DIRECTION_META, hasProfitCategory, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, loanErrorText, profitCategory, repaymentLimit, walletDeltaOf, type LoanBalanceDetail, type LoanEdit, type LoanEntryKind } from "@/lib/customer/loanDisplay";
 import { correctTransactionAction, createExpenseAction, createIncomeAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { undoEditAction, voidTransactionAction } from "@/lib/customer/transactionActions";
+import { DELETED_REASON } from "@/lib/customer/transactionDisplay";
 import { correctLoanEntryAction, getContactBalanceDetailAction, payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
+import { offerUndo } from "./offerUndo";
 import { radioProps } from "./radio";
 
 interface LoanEntryDrawerProps {
@@ -50,9 +52,9 @@ type Errors = Partial<Record<"contact" | "purpose" | "what" | "account" | "date"
 const PURPOSES: Purpose[] = ["PRINCIPAL", "PROFIT"];
 const PROFIT_WAYS: ProfitWay[] = ["PAID", "RECEIVED"];
 const PICKER_ID = "loan-who";
-const LABEL = "text-[13px] font-semibold text-ink-2";
+const LABEL = "text-[13px] font-semibold text-ink-2 leading-[normal]";
 // The board's choice cards: a 1.5px edge, the brand colour once picked.
-const CHOICE = "flex rounded-[12px] border-[1.5px] px-3 py-2.25 text-left transition-colors";
+const CHOICE = "flex rounded-[12px] border-[1.5px] px-3 py-2.25 text-left leading-[normal] transition-colors";
 const choiceTone = (on: boolean, error: boolean) => (on ? "border-emerald bg-emerald-soft" : error ? "border-expense-line bg-surface hover:border-input" : "border-line bg-surface hover:border-input");
 
 // The repayment a contact's detail tells the cap of, by kind.
@@ -185,6 +187,10 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
   const profitType = profitPaid ? "EXPENSE" : "INCOME";
   const options = categories[profitType];
   const picked = category && options.includes(category) ? category : profitCategory(options);
+  // The board files profit without asking. The category is asked only when
+  // none is named for profit (the first one would be a guess) or an edit
+  // keeps another one, so money never lands somewhere unseen.
+  const askCategory = options.length > 0 && (!hasProfitCategory(options) || (!!editing && picked !== profitCategory(options)));
   // An expense posts against a real expense account; the category is its
   // label (the New transaction drawer's rule).
   const expenseAccountId = expenseAccounts.find((a) => a.name.toLowerCase().includes(picked.toLowerCase()))?.id ?? expenseAccounts[0]?.id ?? "";
@@ -275,7 +281,22 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           toast.error(loanErrorText(result.message, fallback, t, money));
           return;
         }
-        toast.success(editing ? t("Entry updated") : t("Entry saved for {name}", { name: contact?.name ?? "" }));
+        // Undo, as every save on the board offers: an edit goes back to the
+        // entry it replaced, a new entry is deleted again.
+        const savedId = result.data?.id;
+        const message = editing ? t("Entry updated") : t("Entry saved for {name}", { name: contact?.name ?? "" });
+        if (savedId) {
+          offerUndo({
+            message,
+            run: () => (editing ? undoEditAction(businessId, savedId) : voidTransactionAction(businessId, savedId, DELETED_REASON)),
+            done: editing ? t("Change undone") : t("Entry removed"),
+            failed: editing ? t("Couldn't undo the change") : t("Couldn't remove the entry"),
+            undoLabel: t("Undo"),
+            refresh: () => router.refresh(),
+          });
+        } else {
+          toast.success(message);
+        }
         router.refresh();
         // The old detail is stale now: until the fresh one is in, the cap
         // reads as being checked and Save waits, rather than allowing
@@ -346,6 +367,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
       onOpenAutoFocus={focusFirst}
       headClassName="items-center pt-4 pr-5 pb-3.5 pl-6"
       titleClassName="text-[18px] font-bold"
+      closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line"
       bodyClassName="gap-4 px-6 py-4.5"
       footerClassName="px-6"
       title={t(editing ? "Edit loan entry" : "New loan entry")}
@@ -429,7 +451,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           {t("What happened?")}
         </span>
         {!purpose ? (
-          <span className="rounded-[12px] border-[1.5px] border-dashed border-line p-3 text-center text-[12.5px] text-ink-faint">{t("Pick what the money is for first.")}</span>
+          <span className="rounded-[12px] border-[1.5px] border-dashed border-line p-3 text-center text-[12.5px] leading-[normal] text-ink-faint">{t("Pick what the money is for first.")}</span>
         ) : profit ? (
           <div role="radiogroup" aria-labelledby={`${groupId}-what`} aria-describedby={errors.what ? `${groupId}-what-error` : undefined} className="grid grid-cols-2 gap-2">
             {PROFIT_WAYS.map((option) => {
@@ -477,8 +499,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         {errorLine("what")}
       </div>
 
-      {/* Not on the board: profit is filed under a category, as income or an expense. */}
-      {profit && profitWay && (
+      {profit && profitWay && askCategory && (
         <div className="flex flex-col gap-1.5">
           <label htmlFor="loan-category" className={LABEL}>
             {t(profitPaid ? "Expense category" : "Income category")}
@@ -503,7 +524,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         <div className="flex min-w-0 flex-col gap-1.5">
           <WalletPicker
             label={t(accountLabel)}
-            size="lg"
+            size="popup"
             wallets={wallets}
             value={accountId}
             onChange={(next) => {
@@ -528,7 +549,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           <label htmlFor="loan-date" className={LABEL}>
             {t("Date")}
           </label>
-          <DayInput id="loan-date" size="lg" value={date} onChange={setDate} max={getAppToday()} invalid={!!errors.date} className="h-13 gap-2 rounded-[12px]" />
+          <DayInput id="loan-date" size="lg" value={date} onChange={setDate} max={getAppToday()} invalid={!!errors.date} className="h-11.5 gap-2 rounded-[12px]" />
           {errorLine("date")}
         </div>
       </div>
@@ -548,7 +569,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             invalid={!!errors.amount}
             aria-describedby={errors.amount ? `${groupId}-amount-error` : undefined}
             leading={<span className="text-[15px] font-semibold text-ink-faint">{currencySymbol(currency, fmt)}</span>}
-            frameClassName="gap-1.5 rounded-[12px] px-3"
+            frameClassName="h-11.5 gap-1.5 rounded-[12px] px-3"
             className="text-[16px] font-bold tabular-nums"
           />
           {errorLine("amount")}
@@ -557,12 +578,13 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           <label htmlFor="loan-ref" className={LABEL}>
             {t("Note or reference (optional)")}
           </label>
-          <Input id="loan-ref" size="lg" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={120} placeholder={t(profit ? "e.g. Sep profit · slip 4471" : "e.g. Loan no. BL-2231")} frameClassName="rounded-[12px] px-3" />
+          <Input id="loan-ref" size="lg" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={120} placeholder={t(profit ? "e.g. Sep profit · slip 4471" : "e.g. Loan no. BL-2231")} frameClassName="h-11.5 rounded-[12px] px-3" />
         </div>
       </div>
 
-      {/* Not on the board: a bank or service charge, folded away. */}
-      {showCharge ? (
+      {/* Not on the board: shown only to edit an entry that has a charge,
+          so its money stays in sight and can be changed. */}
+      {showCharge && (
         <div className="-mt-1 flex flex-col gap-1.5">
           <label htmlFor="loan-charge" className={LABEL}>
             {t("Charge")} <span className="font-normal text-ink-muted">({t("optional")})</span>
@@ -572,11 +594,6 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             <span className="text-caption text-ink-muted">{t("Paid from the same wallet, as an expense")}</span>
           </div>
         </div>
-      ) : (
-        <button type="button" onClick={() => setShowCharge(true)} className="-mt-1 flex h-8 items-center gap-1.5 self-start text-[13px] font-semibold text-emerald hover:text-emerald-hover">
-          <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
-          {t("Add a bank or service charge")}
-        </button>
       )}
 
       {contact && known && wallet && value > 0 && !errors.amount && (
@@ -589,12 +606,6 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
               {profit ? <b className="font-bold text-ink-muted">{t("no change")}</b> : <b className={cn("font-bold", DIRECTION_META[loanDirection(balanceAfter)].text)}>{directionText(balanceAfter)}</b>}
             </span>
           </div>
-          {profit && picked && (
-            <div className="flex justify-between gap-2.5">
-              <span className="truncate text-ink-2">{t(profitPaid ? "{category} expense, {month}" : "{category} income, {month}", { category: picked, month: formatDate(`${date}T00:00:00.000Z`, "MMM", fmt) })}</span>
-              <b className={cn("font-bold", profitPaid ? "text-expense" : "text-income")}>+ {money(value)}</b>
-            </div>
-          )}
           {chargeValue > 0 && (
             <div className="flex justify-between gap-2.5">
               <span className="truncate text-ink-2">{t("Charge · expense")}</span>

@@ -266,6 +266,10 @@
   --elevation-control: 0 1px 2px rgba(18, 32, 29, 0.05), 0 2px 8px rgba(18, 32, 29, 0.04);
   /* The wash behind dialogs and drawers. */
   --scrim: rgba(18, 32, 29, 0.45);
+  /* The same in both themes: WhatsApp's own green (a loan reminder's Open
+     WhatsApp), and the print preview's dark bar (LoanLedger board). */
+  --whatsapp: #128c4a;
+  --print-bar: #12201d;
 
   /* shadcn's tokens, mapped onto the palette above so its primitives and
      the design's own components agree. */
@@ -698,6 +702,8 @@ html:not(.dark) [data-app="habit"] {
   --color-surface-raised: var(--surface-raised);
   --color-surface-sunken: var(--surface-sunken);
   --color-scrim: var(--scrim);
+  --color-whatsapp: var(--whatsapp);
+  --color-print-bar: var(--print-bar);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-line-card: var(--line-card);

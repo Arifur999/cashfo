@@ -38,11 +38,10 @@ interface LoanDashboardPageClientProps {
 }
 
 type Tab = "ALL" | LoanBalanceDirection;
-type Sort = "biggest" | "smallest" | "name";
+type Sort = "biggest" | "smallest";
 const SORTS: { value: Sort; label: string }[] = [
   { value: "biggest", label: "Highest to lowest" },
   { value: "smallest", label: "Lowest to highest" },
-  { value: "name", label: "Name A–Z" },
 ];
 
 // From xl the board's columns, a little narrower so a name keeps room
@@ -53,7 +52,7 @@ const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
 const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
 
 // A grey dash for nothing, else the figure (in the column's own colour).
-const NOTHING = <span className="text-ink-muted">—</span>;
+const NOTHING = <span className="text-input">–</span>;
 const figure = (value: string, currency: string, locale: FormatLocale, className?: string) => (Number(value) === 0 ? NOTHING : <span className={cn("text-ink tabular-nums", className)}>{formatCurrency(Math.abs(Number(value)), currency, locale)}</span>);
 
 // Loans: what you are owed and what you owe, then everyone with a balance,
@@ -82,7 +81,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   const shown = rows
     .filter((row) => tab === "ALL" || row.direction === tab)
     .filter((row) => contactMatches(row.contactName, row.contactPhone, search))
-    .sort((a, b) => (sort === "name" ? a.contactName.localeCompare(b.contactName) : (Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))) * (sort === "biggest" ? 1 : -1)));
+    .sort((a, b) => (Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))) * (sort === "biggest" ? 1 : -1));
   const sums = shown.reduce(
     (sum, row) => ({ opening: sum.opening + Number(row.openingBalance), in: sum.in + Number(row.totalReceive), out: sum.out + Number(row.totalPayment), profit: sum.profit + Number(row.profitPaid), got: sum.got + Number(row.profitReceived), net: sum.net + Number(row.currentBalance) }),
     { opening: 0, in: 0, out: 0, profit: 0, got: 0, net: 0 },
@@ -308,7 +307,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
 const PHONE_FIGURE_CARD = "flex min-w-0 flex-col gap-1 max-md:shadow-none md:gap-2 md:p-5";
 const PHONE_FIGURE_LABEL = "text-small font-medium text-ink-muted max-md:font-normal";
 const PHONE_FIGURE = "text-h3 wrap-anywhere max-md:leading-[1.2] max-md:font-bold md:text-h2 xl:text-h1";
-const KPI_FIGURE = "text-[26px] leading-[1.25] font-bold tracking-[-0.02em] whitespace-nowrap";
+const KPI_FIGURE = "text-[26px] font-bold tracking-[-0.02em] whitespace-nowrap leading-[normal]";
 
 // A side's card: a dot, its name and how many are on it, the figure and
 // what it means; pressing it shows only that side (Net: everyone).
@@ -327,7 +326,7 @@ function KpiCard({ on, side, onPick, title, label, count, sub, children }: { on:
       aria-pressed={on}
       onClick={onPick}
       title={title}
-      className={cn("flex min-w-0 flex-col gap-1 rounded-[18px] border bg-surface px-5 py-4 text-left text-ink shadow-card transition-[border-color,box-shadow] hover:border-input", on ? tone.on : "border-line-card")}
+      className={cn("flex min-w-0 flex-col gap-1 rounded-[18px] border bg-surface px-5 py-4 text-left leading-[normal] text-ink shadow-card transition-[border-color,box-shadow] hover:border-input", on ? tone.on : "border-line-card")}
     >
       <span className={cn("flex w-full items-center justify-between gap-2 text-[13px] font-semibold", tone.label)}>
         <span className="flex items-center gap-1.75">
@@ -355,7 +354,7 @@ function MonthStrip({ month, today, currency }: { month: LoanMonth | undefined; 
       role="group"
       aria-label={t("Loan activity this month")}
       title={items.map((item) => `${item.label} ${item.value}`).join(" · ")}
-      className="flex h-14 min-w-0 flex-1 items-center gap-4.5 overflow-hidden rounded-2xl border border-line-card bg-surface px-4.5 whitespace-nowrap tabular-nums"
+      className="flex h-14 min-w-0 flex-1 items-center gap-4.5 overflow-hidden rounded-[16px] border border-line-card bg-surface px-4.5 whitespace-nowrap tabular-nums leading-[normal]"
     >
       <span className="flex shrink-0 items-center gap-2.5">
         <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-muted">
@@ -391,10 +390,10 @@ function SortMenu({ value, onChange }: { value: Sort; onChange: (next: Sort) => 
         {t(current.label)}
         <ChevronDown className="size-3.5 text-ink-muted" aria-hidden="true" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-xl border border-line bg-surface p-1.5 shadow-overlay ring-0">
+      <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-[12px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
         <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(next as Sort)}>
           {SORTS.map((sort) => (
-            <DropdownMenuRadioItem key={sort.value} value={sort.value} className={cn("min-h-10 justify-between rounded-lg px-2.5 text-[13.5px] [&>span:first-child]:hidden", sort.value === value ? "bg-emerald-soft/50 font-semibold" : "font-medium")}>
+            <DropdownMenuRadioItem key={sort.value} value={sort.value} className={cn("min-h-10 justify-between rounded-[8px] px-2.5 text-[13.5px] [&>span:first-child]:hidden", sort.value === value ? "bg-emerald-soft/50 font-semibold" : "font-medium")}>
               {t(sort.label)}
               {sort.value === value && <Check className="size-3.5 text-emerald" strokeWidth={2.75} aria-hidden="true" />}
             </DropdownMenuRadioItem>
@@ -425,7 +424,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
         <PersonAvatar name={row.contactName} src={contact?.photoUrl} kind={contact?.type} size={36} initials={wordInitials(row.contactName)} className="hidden xl:inline-flex" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="flex min-w-0 items-center gap-2">
-            <ListRowLink href={`/loan-management/ledger?contactId=${row.contactId}`} className="truncate text-title text-ink xl:text-body xl:font-medium">
+            <ListRowLink href={`/loan-management/ledger?contactId=${row.contactId}`} className="truncate text-title text-ink xl:text-body xl:font-semibold">
               {row.contactName}
             </ListRowLink>
             {contact && (
