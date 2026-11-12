@@ -54,7 +54,7 @@ const SPANS = [
 
 const LABEL = "text-[13px] font-semibold text-ink-2";
 // The board's fields: a 1.5px edge and 12px corners.
-const FRAME = "rounded-[12px] border-[1.5px]";
+const FRAME = "rounded-[12px] border-[1.5px] border-line";
 const choice = (on: boolean) => (on ? "border-emerald bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-2 hover:border-input");
 
 // New or edited savings goal (SavingsDashboard board's goal form): what for,
@@ -207,9 +207,11 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
       width={540}
       busy={isPending}
       onSubmit={submit}
-      className="rounded-[22px]"
+      className="rounded-[22px] leading-[normal]"
       headClassName="items-center gap-3.5 border-b-0 pt-4.5 pr-4.5 pb-3.5 pl-5.5"
-      titleClassName="text-[19px] font-bold tracking-[-0.01em]"
+      titleClassName="text-[19px] font-bold! tracking-[-0.01em]"
+      subClassName="leading-[normal]"
+      closeClassName="bg-surface-sunken text-ink-soft hover:bg-line"
       bodyClassName="gap-4.5 px-5.5 pt-1 pb-5"
       footerClassName="bg-surface px-5.5 py-3.5"
       lead={
@@ -327,7 +329,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
         <div className="relative flex items-end justify-between gap-3">
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="text-[12px] font-semibold tracking-[0.04em] text-white/75 uppercase">{plan.label}</span>
-            <span className="text-[26px] leading-[1.25] font-bold tracking-[-0.02em] tabular-nums">{plan.big}</span>
+            <span className="text-[26px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums">{plan.big}</span>
           </span>
           <span className="text-right text-[12.5px] text-white/80">{plan.side}</span>
         </div>
@@ -458,7 +460,7 @@ function AccountSelect({
           event.preventDefault();
           options.current[Math.max(0, chosen)]?.focus();
         }}
-        className="w-(--radix-popover-trigger-width) gap-0 rounded-[12px] border border-line bg-surface p-1.5 shadow-float ring-0"
+        className="w-(--radix-popover-trigger-width) gap-0 rounded-[12px] border border-line bg-surface p-1.5 leading-[normal] shadow-float ring-0"
       >
         <div role="listbox" aria-labelledby={labelledBy} className="flex max-h-59 flex-col overflow-y-auto">
           {wallets.map((item, index) => {

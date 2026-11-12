@@ -5,13 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Button from "@/components/smartly/Button";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import TabBar from "@/components/smartly/TabBar";
-import type { Account, SavingsGoal, SavingsGoalStatus, SavingsOverview } from "@/lib/customer/api";
+import type { Account, SavingsGoal, SavingsGoalStatus } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { deleteSavingsGoalAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
@@ -39,7 +39,6 @@ import { WithdrawDialog } from "./WithdrawDialog";
 interface GoalsPageClientProps {
   businessId: string;
   goals: SavingsGoal[];
-  overview: SavingsOverview;
   currency: string;
   canManage: boolean;
   // Active savings wallets (where money goes in) and the main balance
@@ -64,7 +63,8 @@ type Modal =
   | { kind: "move"; setup: MoveSetup }
   | { kind: "done"; id: string }
   | { kind: "statement"; id: string }
-  | { kind: "wallet" };
+  | { kind: "wallet" }
+  | { kind: "delete"; id: string };
 
 const TABS: { value: Tab; label: string; status?: SavingsGoalStatus }[] = [
   { value: "ALL", label: "All" },
@@ -78,13 +78,12 @@ const EMPTY_TAB: Record<Tab, string> = { ALL: "", ACTIVE: "No active goals right
 // Savings goals (design: SavingsDashboard): how all goals are doing
 // together and this month, which are behind their plan, then a card per
 // goal; every action opens as a popup over the page.
-export function GoalsPageClient({ businessId, goals, overview, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today }: GoalsPageClientProps) {
+export function GoalsPageClient({ businessId, goals, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today }: GoalsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [tab, setTab] = useState<Tab>("ALL");
   const [behindOnly, setBehindOnly] = useState(false);
   // Cards or a table, as this browser last had it.
@@ -124,7 +123,6 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
     return status ? goals.filter((goal) => goal.status === status) : goals;
   };
   const shown = behindFirst(showBehind ? goals.filter(isBehind) : tabGoals(tab));
-  const hasRate = Number(overview.savedThisMonth) > 0 && overview.savingsRatePercent > 0;
 
   const setStatus = (goal: SavingsGoal, status: "ACTIVE" | "PAUSED") => {
     if (isPending) return;
@@ -143,13 +141,8 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
     });
   };
 
-  async function remove(goal: SavingsGoal) {
-    const ok = await confirm({
-      title: t("Delete {name}?", { name: goal.name }),
-      message: Number(goal.currentAmount) > 0 ? t("The goal and its history are removed. The {amount} stays in your savings accounts, it just stops counting toward a goal.", { amount: money(goal.currentAmount) }) : t("The goal and its history are removed. This can't be undone."),
-      confirmLabel: "Delete goal",
-    });
-    if (!ok) return;
+  function remove(goal: SavingsGoal) {
+    if (isPending) return;
     startTransition(async () => {
       const result = await deleteSavingsGoalAction(businessId, goal.id);
       if (!result.success) {
@@ -179,7 +172,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
       case "withdraw":
         return setModal({ kind: "withdraw", id: goal.id });
       case "delete":
-        return void remove(goal);
+        return setModal({ kind: "delete", id: goal.id });
       case "add":
         return setModal({ kind: "add", id: goal.id });
       case "wallet":
@@ -233,7 +226,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         text={canManage ? t("A savings account is where your saved money actually sits, for example a DPS or FDR account. Add one, then you can start adding money to your goals.") : t("A savings account is where your saved money actually sits, for example a DPS or FDR account. Ask the workspace owner to add one.")}
         action={
           canManage && (
-            <Button variant="action" size="lg" onClick={() => setModal({ kind: "wallet" })}>
+            <Button variant="action" onClick={() => setModal({ kind: "wallet" })} className="h-10.5 px-4.5 shadow-none">
               {t("Add savings account")}
             </Button>
           )
@@ -243,7 +236,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
   };
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 leading-[normal]">
       <PageHeader
         title={t("Savings goals")}
         description={t("Put money aside for what matters, and watch each goal fill up.")}
@@ -251,12 +244,12 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
           canManage && (
             <>
               {goals.length > 0 && (
-                <Button variant="secondary" onClick={moveAny}>
+                <Button variant="secondary" onClick={moveAny} className="px-3.5">
                   <ArrowLeftRight className="text-ink-2" />
                   {t("Move between goals")}
                 </Button>
               )}
-              <Button onClick={() => setModal({ kind: "goal" })}>
+              <Button onClick={() => setModal({ kind: "goal" })} className="gap-1.5">
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("New goal")}
               </Button>
@@ -281,7 +274,6 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
             hero={hero}
             active={goals.filter((goal) => goal.status === "ACTIVE")}
             month={month}
-            ratePercent={hasRate ? overview.savingsRatePercent : null}
             money={money}
             onShowBehind={() => setBehindOnly(true)}
           />
@@ -305,7 +297,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
               <span className="min-w-0 flex-1">
                 <b>{hero.behind === 1 ? t("Showing the 1 goal behind plan.") : t("Showing {count} goals behind plan.", { count: formatCount(hero.behind, fmt) })}</b> {t("Catch up on a card to see your options.")}
               </span>
-              <button type="button" onClick={() => setBehindOnly(false)} className="h-8.5 rounded-full border border-warning bg-surface px-3.5 text-[13px] font-semibold text-warning-ink pointer-coarse:h-11">
+              <button type="button" onClick={() => setBehindOnly(false)} className="h-8.5 rounded-full border border-warning-fill bg-surface px-3.5 text-[13px] font-semibold text-warning-ink pointer-coarse:h-11">
                 {t("Show all goals")}
               </button>
             </div>
@@ -335,7 +327,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
                   onClick={() => setModal({ kind: "goal" })}
                   className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
                 >
-                  <span className="flex size-10 items-center justify-center rounded-field bg-mint-50 text-emerald">
+                  <span className="flex size-10 items-center justify-center rounded-field bg-emerald-soft text-emerald">
                     <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
                   </span>
                   <span className="text-body font-semibold text-ink">{t("New goal")}</span>
@@ -419,7 +411,27 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         person={person}
       />
       <SavingsAccountDialog open={modal?.kind === "wallet"} onClose={close} businessId={businessId} editing={null} names={walletNames} addedNote="goals" />
-      {confirmDialog}
+      <PopupDialog
+        open={modal?.kind === "delete"}
+        onClose={close}
+        plain
+        width={440}
+        busy={isPending}
+        className="leading-[normal]"
+        titleClassName="font-bold!"
+        title={modal?.kind === "delete" && current ? t("Delete {name}?", { name: current.name }) : ""}
+        sub={modal?.kind === "delete" && current ? (Number(current.currentAmount) > 0 ? t("The goal and its history are removed. The {amount} stays in your savings accounts, it just stops counting toward a goal.", { amount: money(current.currentAmount) }) : t("The goal and its history are removed. This can't be undone.")) : ""}
+        footer={
+          <>
+            <Button variant="secondary" size="lg" onClick={close} disabled={isPending} className="px-4.5">
+              {t("Cancel")}
+            </Button>
+            <Button variant="danger" size="lg" onClick={() => current && remove(current)} disabled={isPending} className="shadow-none">
+              {t("Delete goal")}
+            </Button>
+          </>
+        }
+      />
     </PageFrame>
   );
 }
@@ -427,7 +439,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
 // The note above the goals while money can't go in yet.
 function Banner({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {
   return (
-    <section className={cn("flex flex-col gap-4 rounded-[14px] border border-emerald-line bg-mint-50 p-5 md:flex-row md:items-center md:gap-5 md:px-6")}>
+    <section className={cn("flex flex-col gap-4 rounded-[14px] border border-emerald-line bg-emerald-soft p-5 md:flex-row md:items-center md:gap-5 md:px-6")}>
       <span className="flex size-14 shrink-0 items-center justify-center rounded-[14px] bg-surface text-emerald shadow-[0_4px_12px_rgba(14,26,22,0.08)]">
         <PiggyBank className="size-6.5" aria-hidden="true" />
       </span>

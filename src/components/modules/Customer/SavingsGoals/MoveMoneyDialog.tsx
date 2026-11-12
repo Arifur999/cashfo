@@ -98,6 +98,7 @@ export function MoveMoneyDialog({ open, onClose, businessId, goals, setup, curre
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={520}
@@ -112,7 +113,7 @@ export function MoveMoneyDialog({ open, onClose, businessId, goals, setup, curre
             {t("See all moves")}
           </Link>
           <span className="flex gap-2.5">
-            <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
+            <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
               {t("Cancel")}
             </Button>
             <Button type="submit" size="lg" disabled={isPending}>

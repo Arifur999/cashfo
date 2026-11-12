@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { getSavingsWalletHistoryAction } from "@/lib/customer/savingsGoalActions";
 import { formatCount } from "@/lib/i18n/digits";
+import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
@@ -18,8 +19,6 @@ export interface WalletView {
   name: string;
   accountNumber: string | null;
   balance: string;
-  totalIn: string;
-  totalOut: string;
 }
 
 interface WalletGoalsDialogProps {
@@ -85,15 +84,20 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={620}
       title={wallet.name}
       sub={
         <span className="tabular-nums">
-          {[wallet.accountNumber, t("balance {amount}", { amount: money(wallet.balance) })].filter(Boolean).join(" · ")}
+          {wallet.accountNumber && `${wallet.accountNumber} · `}
+          {fillNodes(t("balance {amount}"), { amount: <b className="text-ink">{money(wallet.balance)}</b> })}
         </span>
       }
+      headClassName="items-center gap-3.5 border-b-0 pt-4.5 pb-3 [&>div]:gap-0.5"
+      titleClassName="leading-[normal]!"
+      subClassName="leading-[normal]"
       bodyClassName="gap-0 px-0 py-0"
       footerClassName="justify-between"
       footer={
@@ -145,7 +149,7 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
                     key={goal.goalId}
                     href={`/savings-goals/dashboard?goal=${goal.goalId}`}
                     onNavigate={onClose}
-                    className="grid min-h-14 grid-cols-[minmax(0,1fr)_auto_52px] items-center gap-x-3.5 border-b border-divider text-ink hover:bg-hover"
+                    className="grid min-h-14 grid-cols-[minmax(0,1fr)_120px_56px] items-center gap-x-3.5 border-b border-divider text-ink hover:bg-hover"
                   >
                     <span className="flex min-w-0 items-center gap-2.5">
                       <span aria-hidden="true" className="size-2.5 shrink-0 rounded-full" style={{ background: colorOf(goal.goalId) }} />
@@ -155,7 +159,7 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
                       </span>
                     </span>
                     <span className="text-right text-body font-bold tabular-nums">{money(goal.amount)}</span>
-                    <span className="text-right text-small text-ink-muted tabular-nums">{formatCount(Math.round((Number(goal.amount) / total) * 100), fmt)}%</span>
+                    <span className="text-right text-[13px] text-ink-muted tabular-nums">{formatCount(Math.round((Number(goal.amount) / total) * 100), fmt)}%</span>
                   </Link>
                 );
               })}
@@ -165,10 +169,6 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
         </div>
       ) : (
         <div className="flex flex-col px-6 pt-2 pb-1">
-          <p className="flex flex-wrap gap-x-4 py-2 text-caption text-ink-muted tabular-nums">
-            <span>{t("Added {amount}", { amount: money(wallet.totalIn) })}</span>
-            <span>{t("Taken out {amount}", { amount: money(wallet.totalOut) })}</span>
-          </p>
           {rows === undefined ? (
             <div className="flex justify-center py-8">
               <Loader size={20} label={t("Loading...")} />
@@ -178,13 +178,13 @@ export function WalletGoalsDialog({ open, onClose, businessId, wallet, goals, co
               {t("Couldn't load this account's history.")}
             </p>
           ) : rows.length === 0 ? (
-            <p className="py-6 text-center text-small text-ink-muted">{t("No entries yet. Money you add to a goal shows up here.")}</p>
+            <p className="py-6 text-center text-[13px] text-ink-muted">{t("No entries yet. Money you add to a goal shows up here.")}</p>
           ) : (
             rows.map((row) => {
               const line = historyLine(row);
               return (
-                <div key={row.id} className="grid min-h-14 grid-cols-[88px_minmax(0,1fr)_auto] items-center gap-x-3.5 border-b border-divider text-body">
-                  <span className="text-small text-ink-2">{formatDate(row.date, "d MMM yyyy", fmt)}</span>
+                <div key={row.id} className="grid min-h-14 grid-cols-[96px_minmax(0,1fr)_120px] items-center gap-x-3.5 border-b border-divider text-body">
+                  <span className="text-[13px] text-ink-soft">{formatDate(row.date, "d MMM yyyy", fmt)}</span>
                   <span className="flex min-w-0 flex-col gap-px">
                     <span className="truncate font-medium">{line.title}</span>
                     <span className="truncate text-caption text-ink-muted">{[line.sub, row.notes].filter(Boolean).join(" · ")}</span>

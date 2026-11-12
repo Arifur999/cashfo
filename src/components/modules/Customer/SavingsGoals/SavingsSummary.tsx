@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CalendarDays } from "lucide-react";
+import { ArrowRight, Calendar } from "lucide-react";
 import type { SavingsGoal } from "@/lib/customer/api";
 import { isBehind, type GoalsHero } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
@@ -14,8 +14,6 @@ interface SavingsSummaryProps {
   active: SavingsGoal[];
   // "October"
   month: string;
-  // The month's savings rate, when there is one to tell.
-  ratePercent: number | null;
   money: (value: number | string) => string;
   onShowBehind: () => void;
 }
@@ -26,7 +24,7 @@ const CARD = "flex flex-col justify-center gap-2.5 rounded-[20px] border border-
 // saved, on the brand's green; what this month got of what it needed; and
 // how many active goals are on their plan, a bar each, with the way to the
 // ones behind.
-export function SavingsSummary({ hero, active, month, ratePercent, money, onShowBehind }: SavingsSummaryProps) {
+export function SavingsSummary({ hero, active, month, money, onShowBehind }: SavingsSummaryProps) {
   const { t, fmt } = useLocale();
   const percent = `${formatCount(hero.percent, fmt)}%`;
   const monthPercent = `${formatCount(hero.monthPercent, fmt)}%`;
@@ -59,7 +57,7 @@ export function SavingsSummary({ hero, active, month, ratePercent, money, onShow
         <div className="flex items-center justify-between gap-2.5">
           <span className="flex items-center gap-2 text-[13px] font-semibold text-ink-soft">
             <span className="flex size-7 items-center justify-center rounded-[9px] bg-emerald-soft text-emerald">
-              <CalendarDays className="size-3.75" strokeWidth={2} aria-hidden="true" />
+              <Calendar className="size-3.75" strokeWidth={2} aria-hidden="true" />
             </span>
             {t("Saved in {month}", { month })}
           </span>
@@ -73,7 +71,6 @@ export function SavingsSummary({ hero, active, month, ratePercent, money, onShow
         </span>
         <span className="text-[12px] text-ink-muted">
           {hero.active ? t(hero.active === 1 ? "{got} of {count} active goal got money in {month}" : "{got} of {count} active goals got money in {month}", { got: formatCount(hero.gotMoney, fmt), count: formatCount(hero.active, fmt), month }) : t("No active goals yet")}
-          {ratePercent !== null && ` · ${t("savings rate {percent}% of income", { percent: formatCount(ratePercent, fmt) })}`}
         </span>
       </div>
 

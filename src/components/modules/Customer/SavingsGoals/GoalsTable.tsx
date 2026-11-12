@@ -58,8 +58,8 @@ export function GoalsTable({ goals, colorOf, currency, today, canManage, noWalle
         />
       ))}
       {onNew && (
-        <div className="min-w-230 border-t border-divider p-3">
-          <button type="button" onClick={onNew} className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-dashed border-input text-[14px] font-semibold text-emerald hover:border-emerald hover:bg-emerald-soft/40">
+        <div className="min-w-230 border-t border-divider px-5 pt-3 pb-3.5">
+          <button type="button" onClick={onNew} className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border-[1.5px] border-dashed border-input bg-surface text-[14px] font-semibold text-emerald hover:border-emerald hover:bg-emerald-soft/40">
             <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
             {t("New goal")}
           </button>
@@ -95,7 +95,7 @@ function GoalRow({ goal, color, currency, today, canManage, noWallet, canMoveTo,
             <span className="flex min-w-0 items-center gap-2">
               <span className={cn("truncate text-[14.5px] font-semibold", view.closed ? "text-ink-muted" : "text-ink")}>{goal.name}</span>
               {!view.active && (
-                <Chip tone={LOOK_META[view.look].chip} size="sm" className="shrink-0 px-2 text-[11px] font-bold">
+                <Chip size="sm" className={cn("shrink-0 px-2 text-[11px] font-bold", LOOK_META[view.look].chip)}>
                   {t(LOOK_META[view.look].label)}
                 </Chip>
               )}

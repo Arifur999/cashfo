@@ -100,6 +100,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={540}
@@ -109,7 +110,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
       sub={t("The money goes to your main balance. Record what you buy as an expense from there.")}
       footer={
         <>
-          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
             {t("Cancel")}
           </Button>
           <Button type="submit" size="lg" disabled={isPending}>
@@ -170,7 +171,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
         <Input id="wd-note" size="md" value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} placeholder={t("e.g. Buying the phone this week")} />
       </Field>
 
-      <p className={cn("rounded-field px-3 py-2.5 text-small leading-normal", warn ? "bg-warning-soft text-warning-ink" : "bg-mint-50 text-brand-ink")}>{info}</p>
+      <p className={cn("rounded-field px-3 py-2.5 text-small leading-normal", warn ? "bg-warning-soft text-warning-ink" : "bg-emerald-soft text-brand-ink")}>{info}</p>
 
       {error && (
         <p role="alert" className="text-small text-expense">

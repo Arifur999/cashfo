@@ -18,14 +18,14 @@ export function goalColor(index: number, status: SavingsGoalStatus): string {
 
 // A goal's status chip (design: Ahead, On track, Behind, Paused, Completed,
 // Withdrawn, Achieved).
-export const LOOK_META: Record<GoalLook, { label: string; chip: "income" | "mint" | "warning" | "neutral" }> = {
-  AHEAD: { label: "Ahead", chip: "income" },
-  ON_TRACK: { label: "On track", chip: "mint" },
-  BEHIND: { label: "Behind", chip: "warning" },
-  PAUSED: { label: "Paused", chip: "neutral" },
-  COMPLETED: { label: "Completed", chip: "income" },
-  WITHDRAWN: { label: "Withdrawn", chip: "neutral" },
-  ACHIEVED: { label: "Achieved", chip: "income" },
+export const LOOK_META: Record<GoalLook, { label: string; chip: string }> = {
+  AHEAD: { label: "Ahead", chip: "bg-success-soft text-tint-green-ink" },
+  ON_TRACK: { label: "On track", chip: "bg-income-soft text-income" },
+  BEHIND: { label: "Behind", chip: "bg-warning-soft text-warning" },
+  PAUSED: { label: "Paused", chip: "bg-surface-sunken text-ink-soft" },
+  COMPLETED: { label: "Completed", chip: "bg-success-soft text-tint-green-ink" },
+  WITHDRAWN: { label: "Withdrawn", chip: "bg-surface-sunken text-ink-muted" },
+  ACHIEVED: { label: "Achieved", chip: "bg-success-soft text-success-ink" },
 };
 
 export const TREND_META: Record<NonNullable<SavingsGoalTrend>, { label: string; short: string; text: string }> = {
@@ -164,13 +164,15 @@ export function savingsError(message: string | undefined, fallback: string, t: T
   return t(message);
 }
 
-// The card colours for savings wallets: the design's violet and teal first,
-// then the forest and mint of the money wallets.
+// The card colours for savings accounts, as the SavingsWallets board cycles
+// them: violet, teal, amber, blue and rose (three accounts read violet,
+// teal, amber, as on the board).
 export const SAVINGS_PALETTES: WalletPalette[] = [
-  { gradient: "bg-savings-violet", bar: "bg-pillar-habits", tile: "bg-pillar-habits-soft text-pillar-habits" },
-  { gradient: "bg-wallet-teal", bar: "bg-pillar-insights", tile: "bg-pillar-insights-soft text-pillar-insights" },
-  { gradient: "bg-wallet-forest", bar: "bg-emerald", tile: "bg-mint-50 text-emerald" },
-  { gradient: "bg-wallet-mint", bar: "bg-jade", tile: "bg-mint-50 text-emerald" },
+  { gradient: "bg-savings-violet", bar: "bg-cat-3", tile: "bg-cat-3/12 text-cat-3" },
+  { gradient: "bg-savings-teal", bar: "bg-emerald", tile: "bg-mint-50 text-emerald" },
+  { gradient: "bg-savings-amber", bar: "bg-warning", tile: "bg-warning-soft text-warning" },
+  { gradient: "bg-savings-blue", bar: "bg-sky", tile: "bg-sky-soft text-sky" },
+  { gradient: "bg-savings-rose", bar: "bg-rose-deep", tile: "bg-rose-deep/12 text-rose-deep" },
 ];
 
 export function savingsPalette(index: number): WalletPalette {

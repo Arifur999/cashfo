@@ -34,7 +34,7 @@ const everyLocation: NavLocation[] = [
 ].flatMap(({ section, item }) => [{ section, item, sub: null }, ...(item.subs ?? []).map((sub) => ({ section, item, sub }))]);
 
 const labels = (ctx: NavContext, app: "money" | "habit") =>
-  menuSections(visibleNavSections(ctx), app).map((section) => [section.label, section.items.map((item) => [item.label, ...(item.subs ?? []).map((sub) => sub.label)])]);
+  menuSections(visibleNavSections(ctx), app).map((section) => [section.label, section.items.map((item) => [item.label, ...(item.subs ?? []).filter((sub) => sub.menu !== false).map((sub) => sub.label)])]);
 
 describe("the two menus", () => {
   it("draws the Money Tracker as the AppSidebar board does", () => {
@@ -230,7 +230,7 @@ describe("titleParts", () => {
     expect(titleParts(locate("/balance/ledger")!)).toEqual(["Ledger", "Balance"]);
     expect(titleParts(locate("/loan-management/ledger")!)).toEqual(["Ledger", "Loan Management"]);
     expect(titleParts(locate("/savings-goals/dashboard")!)).toEqual(["Goals", "Savings Goals"]);
-    expect(titleParts(locate("/savings-goals/transfer")!)).toEqual(["Goals", "Savings Goals"]);
+    expect(titleParts(locate("/savings-goals/transfer")!)).toEqual(["All moves", "Savings Goals"]);
     expect(titleParts(locate("/habit-tracker")!)).toEqual(["Dashboard", HABIT_APP_LABEL]);
     expect(titleParts(locate("/reports/overview")!)).toEqual(["Overview", "Insights"]);
   });

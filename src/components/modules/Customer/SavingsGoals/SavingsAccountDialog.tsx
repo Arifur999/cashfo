@@ -80,6 +80,7 @@ export function SavingsAccountDialog({ open, onClose, businessId, editing, names
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={480}
@@ -87,9 +88,13 @@ export function SavingsAccountDialog({ open, onClose, businessId, editing, names
       onSubmit={submit}
       title={editing ? t("Edit {name}", { name: editing.name }) : t("Add savings account")}
       sub={t("Where this money actually sits, like a DPS or FDR account.")}
+      headClassName="py-4.5"
+      titleClassName="leading-[normal]!"
+      subClassName="leading-[normal]"
+      bodyClassName="gap-3.5 py-5"
       footer={
         <>
-          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
             {t("Cancel")}
           </Button>
           <Button type="submit" size="lg" disabled={isPending}>

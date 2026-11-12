@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowRight, FileText, Landmark, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, FileText, Landmark, PencilLine, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Button from "@/components/smartly/Button";
 import Chip from "@/components/smartly/Chip";
+import IconAction from "@/components/smartly/IconAction";
 import type { SavingsGoal, SavingsGoalEntry } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
@@ -15,6 +16,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { GoalAction } from "./GoalCard";
 import { GoalRing } from "./GoalRing";
+import { PACE_TONE, paceWords } from "./useGoalView";
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 
 interface GoalDetailsDialogProps {
@@ -79,14 +81,8 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
   const lastDay = list[0]?.date;
   const kept = keptIn(goal);
 
-  const paceLine = (() => {
-    if (closed) return { box: "bg-surface-sunken text-ink-2", head: look === "ACHIEVED" ? t("Achieved.") : t("Closed early."), text: t("{amount} went to {account} on {date}.", { amount: money(goal.withdrawnAmount), account: goal.lastWithdrawal?.accountName ?? t("your main balance"), date: goal.lastWithdrawal ? day(goal.lastWithdrawal.date) : "" }) };
-    if (completed) return { box: "bg-income-soft text-income", head: t("Reached on {date}.", { date: goal.reachedAt ? day(goal.reachedAt) : "" }), text: t("The money is in your savings accounts. Withdraw it to your main balance when you are ready to spend.") };
-    if (paused) return { box: "bg-surface-sunken text-ink-2", head: t("Paused."), text: t("No monthly target. Resuming starts a fresh plan from today.") };
-    if (behind) return { box: "bg-warning-soft text-warning-ink", head: t("{amount} behind.", { amount: money(-Number(pace?.difference ?? 0)) }), text: t("You planned {expected} by today. Save {need} a month to still finish on time.", { expected: money(pace?.expected ?? 0), need: money(need) }) };
-    if (look === "AHEAD") return { box: "bg-income-soft text-income", head: t("{amount} ahead.", { amount: money(pace?.difference ?? 0) }), text: t("More than planned for today. {need} a month is enough from here.", { need: money(need) }) };
-    return { box: "bg-mint-50 text-brand-ink", head: t("On pace."), text: t("Save {need} a month to finish on {date}.", { need: money(need), date: day(goal.targetDate) }) };
-  })();
+  // The board's pace box: the same words as the card, in its look's colours.
+  const paceLine = { ...paceWords(goal, look, need, t, money, day), box: PACE_TONE[look].box };
 
   const stats = [
     { label: t("Started"), value: day(goal.startDate), sub: since ? t(since === 1 ? "{count} month ago" : "{count} months ago", { count: formatCount(since, fmt) }) : t("this month") },
@@ -105,22 +101,25 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
   const canWithdraw = canManage && !closed && saved > 0;
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={620}
-      lead={<span aria-hidden="true" className="mt-2.5 size-2.5 shrink-0 rounded-full" style={{ background: closed ? "var(--ink-faint)" : color }} />}
+      headClassName="items-center gap-2.5 py-4"
+      closeClassName="my-0"
+      lead={<span aria-hidden="true" className="size-2.5 shrink-0 rounded-full" style={{ background: closed ? "var(--ink-faint)" : color }} />}
       title={goal.name}
       aside={
-        <Chip tone={meta.chip} size="sm" className="font-semibold">
+        <Chip size="sm" className={cn("font-semibold", meta.chip)}>
           {t(meta.label)}
         </Chip>
       }
       actions={
         canManage &&
         !closed && (
-          <button type="button" onClick={() => onAction("edit")} aria-label={t("Edit goal")} title={t("Edit goal")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-surface-sunken pointer-coarse:size-11">
-            <Pencil className="size-4" aria-hidden="true" />
-          </button>
+          <IconAction onClick={() => onAction("edit")} aria-label={t("Edit goal")} title={t("Edit goal")}>
+            <PencilLine aria-hidden="true" />
+          </IconAction>
         )
       }
       footerClassName="justify-start"
@@ -143,9 +142,9 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
               </Button>
             )}
             {goal.entryCount === 0 && (
-              <Button variant="secondary" size="icon" onClick={() => onAction("delete")} disabled={busy} aria-label={t("Delete goal")} title={t("Delete goal")} className="text-ink-muted">
-                <Trash2 className="size-3.75" />
-              </Button>
+              <IconAction tone="danger" onClick={() => onAction("delete")} disabled={busy} aria-label={t("Delete goal")} title={t("Delete goal")}>
+                <Trash2 aria-hidden="true" />
+              </IconAction>
             )}
             <span className="flex-1" />
             {active && behind && (
@@ -176,7 +175,7 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
             </span>
           </div>
           <p className={cn("rounded-field px-2.5 py-2 text-[12.5px] leading-[1.45]", paceLine.box)}>
-            <b className="font-semibold">{paceLine.head}</b> {paceLine.text}
+            <b className="font-bold">{paceLine.head}</b> {paceLine.text}
           </p>
         </div>
       </div>

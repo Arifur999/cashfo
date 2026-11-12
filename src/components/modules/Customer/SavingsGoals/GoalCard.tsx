@@ -47,7 +47,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
           <span className="flex min-w-0 items-center gap-2">
             <h3 className={cn("min-w-0 truncate text-[16px] leading-[1.3] font-bold", view.closed ? "text-ink-muted" : "text-ink")}>{goal.name}</h3>
             {!view.active && (
-              <Chip tone={LOOK_META[view.look].chip} size="sm" className="shrink-0 px-2 text-[11px] font-bold">
+              <Chip size="sm" className={cn("shrink-0 px-2 text-[11px] font-bold", LOOK_META[view.look].chip)}>
                 {t(LOOK_META[view.look].label)}
               </Chip>
             )}
@@ -62,9 +62,9 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
           role="img"
           aria-label={t("{percent}% saved", { percent: formatCount(view.percent, fmt) })}
           className="flex size-19 shrink-0 items-center justify-center rounded-full"
-          style={{ background: `conic-gradient(${tint ?? "var(--input)"} 0 ${view.percent}%, var(--surface-sunken) ${view.percent}% 100%)` }}
+          style={{ background: `conic-gradient(${tint ?? "var(--input)"} 0 ${view.percent}%, var(--line) ${view.percent}% 100%)` }}
         >
-          <span className={cn("flex size-15 items-center justify-center rounded-full text-[16px] font-bold tabular-nums", view.completed ? "bg-success-soft text-ink" : "bg-surface text-ink", view.closed && "text-ink-faint")}>
+          <span className={cn("flex size-15 items-center justify-center rounded-full text-[16px] font-bold tabular-nums", "bg-surface text-ink", view.completed && "bg-linear-to-b from-success-soft/30 to-success-soft/30", view.closed && "text-ink-faint")}>
             {formatCount(view.percent, fmt)}%
           </span>
         </div>

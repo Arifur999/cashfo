@@ -103,6 +103,8 @@
      yearly saving's gold on the forest card. */
   --sky: #0369a1;
   --sky-soft: #e0f2fe;
+  /* The fifth savings account's colour (SavingsWallets board). */
+  --rose-deep: #be123c;
   --gold-on-forest: #f5c26b;
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
@@ -367,6 +369,7 @@
   --info-ink: #a9c4f5;
   --sky: #7cc4f0;
   --sky-soft: #0b2a3d;
+  --rose-deep: #f0718f;
   --gold-on-forest: #f5c26b;
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
@@ -726,6 +729,7 @@ html:not(.dark) [data-app="habit"] {
   --color-info-ink: var(--info-ink);
   --color-sky: var(--sky);
   --color-sky-soft: var(--sky-soft);
+  --color-rose-deep: var(--rose-deep);
   --color-meter-records: var(--meter-records);
   --color-brand-facebook: var(--brand-facebook);
   --color-brand-youtube: var(--brand-youtube);
@@ -1010,9 +1014,21 @@ html:not(.dark) [data-app="habit"] {
 @utility bg-wallet-mint {
   background-image: linear-gradient(135deg, #14b57a 0%, #1f7a5a 100%);
 }
-/* The first savings wallet card. */
+/* The savings account cards, in the SavingsWallets board's order. */
 @utility bg-savings-violet {
-  background-image: linear-gradient(135deg, #6244c4 0%, #3e2a86 100%);
+  background-image: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+}
+@utility bg-savings-teal {
+  background-image: linear-gradient(135deg, #1c7567 0%, #134e4a 100%);
+}
+@utility bg-savings-blue {
+  background-image: linear-gradient(135deg, #0369a1 0%, #0c4a6e 100%);
+}
+@utility bg-savings-amber {
+  background-image: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+}
+@utility bg-savings-rose {
+  background-image: linear-gradient(135deg, #be123c 0%, #881337 100%);
 }
 
 @layer base {
