@@ -14,7 +14,7 @@ import TabBar from "@/components/smartly/TabBar";
 import type { Account, SavingsGoal, SavingsGoalStatus, SavingsPlan } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { deleteSavingsGoalAction, moveGoalToPlansAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
+import { backToGoalAction, deleteSavingsGoalAction, moveGoalToPlansAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
 import { goalColor, savingsError } from "@/lib/customer/savingsDisplay";
 import { behindFirst, goalsHero, isBehind, monthlyFromNow } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
@@ -174,7 +174,22 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         toast.error(savingsError(result.message, "Failed to move the goal", t, currency, fmt));
         return;
       }
-      toast.success(t("{name} moved back to your saving plans.", { name: goal.name }));
+      const planId = result.data?.planId;
+      toast.success(t("{name} moved back to your saving plans.", { name: goal.name }), {
+        duration: 6000,
+        // Undo makes it the same goal again.
+        action: planId
+          ? {
+              label: t("Undo"),
+              onClick: () =>
+                void backToGoalAction(businessId, planId).then((undone) => {
+                  if (undone.success) toast.success(t("{name} is a goal again.", { name: goal.name }));
+                  else toast.error(savingsError(undone.message, "Couldn't undo that. Try again.", t, currency, fmt));
+                  router.refresh();
+                }),
+            }
+          : undefined,
+      });
       setModal(null);
       router.refresh();
     });

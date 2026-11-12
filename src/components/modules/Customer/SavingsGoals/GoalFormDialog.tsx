@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { Account, SavingsGoal, SavingsPlan } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { createSavingsGoalAction, type SavingsGoalFormInput, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
+import { createSavingsGoalAction, type SavingsGoalFormInput, undoStartGoalAction, updateSavingsGoalAction } from "@/lib/customer/savingsGoalActions";
 import { freshColor, isGoalColor } from "@/lib/customer/savingsColors";
 import { monthsAhead, monthsBetween, savingsError } from "@/lib/customer/savingsDisplay";
 import { monthsToGo } from "@/lib/customer/savingsPlan";
@@ -159,10 +159,25 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
       }
       if (editing && movedFrom && wallet) toast.success(`${t("{name} now keeps its money in {account}. Move {amount} there from {from}.", { name: goalName, account: wallet.name, amount: money(saved), from: movedFrom })}${reminder}`);
       else if (editing) toast.success(`${t("{name} was updated.", { name: goalName })}${reminder}`);
-      else
-        toast.success(
-          `${t("{name} was created.", { name: goalName })} ${leftToSave > 0 ? t("{left} left to save, about {amount} a month.", { left: money(leftToSave), amount: money(perMonth) }) : t("The full target is already saved.")}${reminder}`,
-        );
+      else {
+        const message = `${fromPlan ? t("{name} moved from your plans to goals.", { name: goalName }) : t("{name} was created.", { name: goalName })} ${leftToSave > 0 ? t("{left} left to save, about {amount} a month.", { left: money(leftToSave), amount: money(perMonth) }) : t("The full target is already saved.")}${reminder}`;
+        const goalId = result.data?.id;
+        // Started from a plan: Undo puts the plan back (the board's toast).
+        if (fromPlan && goalId)
+          toast.success(message, {
+            duration: 6000,
+            action: {
+              label: t("Undo"),
+              onClick: () =>
+                void undoStartGoalAction(businessId, goalId).then((undone) => {
+                  if (undone.success) toast.success(t("{name} is back in your plans.", { name: goalName }));
+                  else toast.error(savingsError(undone.message, "Couldn't undo that. Try again.", t, currency, fmt));
+                  router.refresh();
+                }),
+            },
+          });
+        else toast.success(message);
+      }
       onClose();
       router.refresh();
     });
