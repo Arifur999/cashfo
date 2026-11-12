@@ -113,7 +113,7 @@ export function GroupListPageClient({ groups, today }: GroupListPageClientProps)
   return (
     <PageFrame className="gap-5">
       <div className="flex flex-wrap items-center gap-3.5">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 sm:basis-auto">
           <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("All groups")}</h1>
           <span className="text-[13.5px] text-ink-muted">{groups.length === 0 ? t("Make your first group with “New group”.") : t(groups.length === 1 ? "{count} group you run. Open it to see its money." : "{count} groups you run. Open one to see its money.", { count: formatCount(groups.length, fmt) })}</span>
         </div>

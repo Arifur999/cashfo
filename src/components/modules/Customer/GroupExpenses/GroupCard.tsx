@@ -148,7 +148,9 @@ export function GroupCard({ group, today, only, actions }: GroupCardProps) {
           </span>
           <span className="text-[13px] text-ink-muted">{view.sub}</span>
         </div>
-        <RoleChip isAdmin={view.isAdmin} />
+        <span className="max-sm:hidden">
+          <RoleChip isAdmin={view.isAdmin} />
+        </span>
         {view.isAdmin && <GroupMenu group={group} only={only} open={view.href} actions={actions} withOpen />}
       </div>
 
@@ -183,7 +185,7 @@ function Stat({ label, value, tone, divided = false }: { label: string; value: s
   return (
     <div className={cn("flex min-w-0 flex-col gap-0.75 px-3 py-3 md:px-5", divided && "border-r border-divider")}>
       <span className="text-caption text-ink-muted">{label}</span>
-      <span className={cn("text-[15px] font-bold wrap-break-word text-ink tabular-nums md:text-[17px]", tone)}>{value}</span>
+      <span className={cn("text-[13.5px] font-bold whitespace-nowrap text-ink tabular-nums sm:text-[15px] md:text-[17px]", tone)}>{value}</span>
     </div>
   );
 }
