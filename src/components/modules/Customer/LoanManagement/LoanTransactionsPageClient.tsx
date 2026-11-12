@@ -341,7 +341,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 aria-label={t("Search loan transactions")}
                 frameClassName="w-full md:w-80 md:mr-auto"
               />
-              <NativeSelect size="sm" value={shownContactId} onChange={(event) => navigate({ contactId: event.target.value || undefined })} aria-label={t("Bank / person")} frameClassName="max-md:flex-1" className="text-small">
+              <NativeSelect size="sm" value={shownContactId} onChange={(event) => navigate({ contactId: event.target.value || undefined })} aria-label={t("Bank / person")} frameClassName="max-md:flex-1 [&_svg]:right-2.5" className="pr-7.5 pl-2.5 text-small">
                 <option value="">{t("All banks & people")}</option>
                 {activeContacts.map((contact) => (
                   <option key={contact.id} value={contact.id}>
@@ -428,7 +428,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           />
         ) : (
           <>
-            <ListHead columns={cn(COLUMNS, PRINT_COLUMNS)} className="hidden xl:grid print:grid">
+            <ListHead columns={cn(COLUMNS, PRINT_COLUMNS)} className="hidden xl:grid xl:h-9 print:grid">
               <ListHeadCell className={WIDEST}>#</ListHeadCell>
               <ListHeadCell>{t("Date")}</ListHeadCell>
               <ListHeadCell>{t("Bank / Person")}</ListHeadCell>
@@ -452,7 +452,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 </Chip>
               );
               return (
-                <ListRow key={transaction.id} columns={cn(COLUMNS, PRINT_COLUMNS)} muted={!!cancelled} className="print:break-inside-avoid xl:min-h-15">
+                <ListRow key={transaction.id} columns={cn(COLUMNS, PRINT_COLUMNS)} muted={!!cancelled} className="print:break-inside-avoid xl:min-h-15.25">
                   <ListCell className={cn(WIDEST, "text-small text-ink-muted tabular-nums")}>{formatCount(firstNumber + index, fmt)}</ListCell>
                   {/* Below xl the date sits under the name, past the avatar. */}
                   <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 max-xl:pl-10.5 xl:text-small print:pl-0", AT_XL)}>{formatDate(transaction.transactionDate, undefined, fmt)}</ListCell>
