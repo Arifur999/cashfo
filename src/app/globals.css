@@ -409,18 +409,21 @@
   --cat-9: #5fcfe6;
   --cat-10: #8fcb9c;
   --cat-11: #facc15;
-  --ie-green: #4fb8a6;
-  --ie-cyan: #5fcfe6;
-  --ie-blue: #86abf2;
-  --ie-indigo: #a5b0fb;
-  --ie-purple: #b6a2ff;
-  --ie-violet: #e9a0f5;
-  --ie-pink: #f08fbf;
-  --ie-red: #fb7185;
-  --ie-orange: #f0a46a;
-  --ie-yellow: #facc15;
-  --ie-teal: #5cccdb;
-  --ie-lime: #6ee7a0;
+  /* The I&E dark boards (CategorySetDark, TransactionsDark, IEOverviewDark)
+     keep the light palette for category dots, bars and charts; the letter
+     tile lightens its own ink (cat-tile). */
+  --ie-green: #0f766e;
+  --ie-cyan: #0891b2;
+  --ie-blue: #2563eb;
+  --ie-indigo: #4f46e5;
+  --ie-purple: #7c3aed;
+  --ie-violet: #c026d3;
+  --ie-pink: #db2777;
+  --ie-red: #e11d48;
+  --ie-orange: #ea580c;
+  --ie-yellow: #ca8a04;
+  --ie-teal: #0d9488;
+  --ie-lime: #15803d;
   --ie-slate: #94a3b8;
   --asset-green: #4fb8a6;
   --asset-blue: #86abf2;
@@ -997,7 +1000,7 @@ html:not(.dark) [data-app="habit"] {
   color: color-mix(in srgb, var(--cat) 80%, black);
   @variant dark {
     background-color: color-mix(in srgb, var(--cat) 24%, var(--surface));
-    color: var(--cat);
+    color: color-mix(in srgb, var(--cat) 55%, white);
   }
 }
 @utility wallet-tile {

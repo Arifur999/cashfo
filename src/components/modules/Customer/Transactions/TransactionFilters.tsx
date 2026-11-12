@@ -52,7 +52,8 @@ interface TransactionFiltersProps {
 }
 
 // The type pill's 44px segments on the bar (the Transactions board).
-const BAR_SEGMENTS = "[&>button]:h-11 [&>button]:gap-1.5 [&>button]:px-4 [&>button]:text-body";
+// TransactionsDark: the chosen type is lifted without a ring in dark too.
+const BAR_SEGMENTS = "[&>button]:h-11 [&>button]:gap-1.5 [&>button]:px-4 [&>button]:text-body dark:[&>button]:shadow-none";
 // The category select's value for the money with no category.
 // (a leading space: no category name can start with one, they are trimmed).
 const NO_CATEGORY = " none";
