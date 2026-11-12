@@ -196,7 +196,7 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
               frameClassName="h-11 w-70 rounded-full max-md:w-full"
             />
             {canManage && (
-              <Button onClick={openAdd} className={TOP_BUTTON}>
+              <Button onClick={openAdd} className={cn(TOP_BUTTON, "gap-1.5")}>
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("Add category")}
               </Button>
@@ -242,7 +242,7 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
                 <li
                   key={category.id}
                   aria-busy={busy || undefined}
-                  className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-quiet-chip px-6 py-3 hover:bg-hover md:h-17 md:py-0", COLUMNS, on ? "bg-surface" : "bg-sold-card")}
+                  className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-quiet-chip px-6 py-3 hover:bg-hover md:h-17.25 md:py-0", COLUMNS, on ? "bg-surface" : "bg-sold-card")}
                 >
                   <span className="text-[14px] text-ink-muted tabular-nums max-md:hidden">{formatCount(categories.indexOf(category) + 1, fmt)}</span>
                   <span className={cn("flex min-w-0 items-center gap-3", !on && "opacity-60")}>

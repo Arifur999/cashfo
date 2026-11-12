@@ -107,7 +107,7 @@ export function UpdateValuePageClient({ businessId, assets, categories, wallets,
             const tone = assetTone(gain);
             const updates = updateCount(asset);
             return (
-              <div key={asset.id} className={cn("grid min-h-17 min-w-245 items-center gap-x-3.5 border-b border-quiet-chip px-6 text-[14px] tabular-nums last:border-b-0 hover:bg-hover", COLUMNS)}>
+              <div key={asset.id} className={cn("grid min-h-17.25 min-w-245 items-center gap-x-3.5 border-b border-quiet-chip px-6 text-[14px] tabular-nums last:border-b-0 hover:bg-hover", COLUMNS)}>
                 <span className="text-[13px] text-ink-muted">{formatCount(index + 1, fmt)}</span>
                 <span className="flex min-w-0 items-center gap-3">
                   <AssetTile look={look} className="size-9.5 rounded-[10px]" glyph={18} />

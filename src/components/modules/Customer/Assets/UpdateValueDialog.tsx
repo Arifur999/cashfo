@@ -113,7 +113,7 @@ export function UpdateValueDialog({ asset, onClose, onSaved, businessId, categor
           <span className="flex min-w-0 flex-1 flex-col gap-px">
             <DialogTitle className="text-[17px] font-semibold text-ink">{t("Update value")}</DialogTitle>
             <DialogDescription asChild>
-              <span className="flex min-w-0 gap-1 text-[13px] text-ink-muted">
+              <span className="flex min-w-0 gap-1 text-[13px] leading-[normal] text-ink-muted">
                 <span className="truncate">{asset.name}</span>
                 <span className="shrink-0">· {t(asset.category)}</span>
               </span>

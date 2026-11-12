@@ -229,11 +229,12 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
       width={520}
       busy={isPending}
       onSubmit={submit}
-      headClassName="items-center pt-4 pr-5 pb-3.5 pl-6"
-      titleClassName="text-[18px] font-bold leading-[normal]"
-      closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line"
+      headClassName="items-center border-head-rule pt-4 pr-5 pb-3.5 pl-6 [&>div]:gap-px"
+      titleClassName="text-[18px] font-bold leading-[normal]!"
+      subClassName="flex"
+      closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line [&_svg]:size-4.25 [&_svg]:stroke-[2.25]"
       bodyClassName="gap-4 px-6 py-4.5"
-      footerClassName="px-6"
+      footerClassName="border-head-rule px-6"
       title={editing ? t("Edit contact") : t("Add contact")}
       sub={<span className="text-[12.5px] leading-[normal]">{editing ? t("Fix the name, type, phone or details.") : t("Someone you lend to or borrow from.")}</span>}
       footer={
@@ -407,8 +408,8 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
       )}
 
       {editing && hasEntries && (
-        <p className="flex gap-2.5 rounded-[12px] bg-mint-50 px-3 py-2.5 text-[12.5px] leading-normal text-brand-ink">
-          <Info className="mt-0.5 size-3.75 shrink-0" strokeWidth={2.25} aria-hidden="true" />
+        <p className="flex gap-2.5 rounded-[12px] bg-pick-wash px-3 py-2.5 text-[12.5px] leading-[1.5] text-note-ink">
+          <Info className="mt-px size-4 shrink-0 text-emerald" aria-hidden="true" />
           <span>{t("Its entries stay as they are. Changing the opening balance moves the current balance by the same amount.")}</span>
         </p>
       )}

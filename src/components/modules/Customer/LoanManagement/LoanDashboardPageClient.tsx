@@ -49,7 +49,7 @@ const SORTS: { value: Sort; label: string }[] = [
 // below xl each row is the phone's two lines.
 const COLUMNS = "xl:grid-cols-[minmax(0,1fr)_120px_136px_136px_136px_190px] xl:gap-x-3.5";
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
-const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-muted)" };
+const DOT: Record<LoanBalanceDirection, string> = { PAWNA: "var(--income)", DENA: "var(--expense-fill)", SETTLED: "var(--ink-faint)" };
 
 // A grey dash for nothing, else the figure (in the column's own colour).
 const NOTHING = <span className="text-input">–</span>;
@@ -89,7 +89,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
 
   const counted = (label: string, count: number) => (
     <>
-      {label} <span className="font-medium text-ink-muted tabular-nums">{formatCount(count, fmt)}</span>
+      {label} <span className="text-ink-faint">{formatCount(count, fmt)}</span>
     </>
   );
   const tabs = [{ value: "ALL" as Tab, label: counted(t("All"), counts.ALL) }, ...DIRECTIONS.map((direction) => ({ value: direction as Tab, label: counted(t(DIRECTION_META[direction].name), counts[direction]), dot: DOT[direction] }))];
@@ -245,7 +245,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             label={t("Loans")}
             header={
               <div className="hidden items-center justify-between gap-4 px-6 py-3.5 md:flex">
-                <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} />
+                <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} className="rounded-full p-1" itemClassName="gap-1.5 px-3" />
                 <div className="flex min-w-0 flex-1 gap-2.5 lg:ml-4">
                   <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="min-w-0 flex-1" />
                   <SortMenu value={sort} onChange={setSort} />
@@ -255,7 +255,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             className="max-md:shadow-none md:flex md:min-h-65 md:flex-1 md:flex-col"
             tableClassName="md:flex md:flex-1 md:flex-col md:border-t md:border-line"
           >
-            <ListHead columns={COLUMNS} className="md:hidden xl:grid">
+            <ListHead columns={COLUMNS} className="md:hidden xl:grid xl:h-9">
               <ListHeadCell>{t("Bank / person")}</ListHeadCell>
               <ListHeadCell align="end">{t("Opening")}</ListHeadCell>
               <ListHeadCell align="end">{t("Money in@@loan")}</ListHeadCell>

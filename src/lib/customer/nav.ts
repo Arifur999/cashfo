@@ -189,7 +189,7 @@ export const NAV_SECTIONS: NavSection[] = [
         subs: [
           { label: "Dashboard", href: "/assets-management/dashboard" },
           { label: "Purchase & Sell", href: "/assets-management/purchase-sell" },
-          { label: "Update", heading: "Asset update", href: "/assets-management/update" },
+          { label: "Update", href: "/assets-management/update" },
           { label: "Category", href: "/assets-management/category" },
           { label: "All Assets", href: "/assets-management/current" },
         ],
