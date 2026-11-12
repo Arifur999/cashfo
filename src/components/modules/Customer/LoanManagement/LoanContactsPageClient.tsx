@@ -196,6 +196,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
         eyebrow={t("Loans")}
         tone="loans"
         title={t("Contacts")}
+        className="md:items-center"
         actions={
           canManage && (
             <Button onClick={() => setDrawer("create")}>
