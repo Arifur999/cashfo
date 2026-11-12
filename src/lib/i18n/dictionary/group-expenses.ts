@@ -1476,4 +1476,6 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Counted in the costs, no login": "খরচে আছেন, লগইন নেই",
   "Sees everything, changes nothing": "সব দেখতে পারেন, কিছু বদলাতে পারেন না",
   "Adds money entries and keeps group cash": "টাকার এন্ট্রি দেন আর গ্রুপের নগদ রাখেন",
+  "You: Admin": "আপনি: অ্যাডমিন",
+  "You: Member": "আপনি: সদস্য",
 };
