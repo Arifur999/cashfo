@@ -47,6 +47,7 @@ export const loanManagementDictionary: Record<string, string> = {
   "Search contacts": "পরিচিতি খুঁজুন",
   "No banks or people yet": "এখনো কোনো ব্যাংক বা ব্যক্তি নেই",
   "Add a bank or person": "ব্যাংক বা ব্যক্তি যোগ করুন",
+  "Select a bank or person": "ব্যাংক বা ব্যক্তি বাছুন",
   "The statement could not be loaded. Try again in a moment.": "স্টেটমেন্টটি লোড করা যায়নি। একটু পরে আবার চেষ্টা করুন।",
   "New loan entry": "নতুন ঋণ এন্ট্রি",
   "New entry": "নতুন এন্ট্রি",

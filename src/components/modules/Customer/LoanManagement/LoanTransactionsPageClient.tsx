@@ -194,7 +194,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const moneyIn = totals.in + totals.profitReceived;
   const moneyOut = totals.out + totals.profitPaid;
   const kindChip = (isProfit: boolean) => (
-    <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className="font-bold">
+    <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className={cn("px-2 font-bold", isProfit && "text-due-ink")}>
       {t(isProfit ? "Profit" : "Principal")}
     </Chip>
   );
@@ -204,8 +204,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     const direction = loanDirection(Number(balance));
     return (
       <span className={cn("flex flex-col items-end gap-px", className)}>
-        <span className="font-semibold text-ink tabular-nums">{formatCurrency(Math.abs(Number(balance)), currency, fmt)}</span>
-        <span className={cn("text-caption font-semibold", direction === "SETTLED" ? "text-ink-muted" : DIRECTION_META[direction].text)}>{t(DIRECTION_META[direction].name)}</span>
+        <span className="font-semibold text-ink tabular-nums xl:leading-[normal]">{formatCurrency(Math.abs(Number(balance)), currency, fmt)}</span>
+        <span className={cn("text-caption font-semibold xl:text-[11px] xl:leading-[normal]", direction === "SETTLED" ? "text-ink-muted" : DIRECTION_META[direction].text)}>{t(DIRECTION_META[direction].name)}</span>
       </span>
     );
   };
@@ -213,7 +213,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   return (
     <PageFrame className="gap-5">
       {/* The board's title line, New loan entry at its end. */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 md:-mt-4">
         <h1 className="text-[22px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Loan transaction")}</h1>
         {canManage && (
           <Button onClick={() => setDrawerOpen(true)} aria-label={t("New loan entry")} className="shrink-0 print:hidden">
@@ -229,14 +229,14 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         </Banner>
       )}
 
-      {/* The two totals across the page. */}
-      <section>
+      {/* The two totals across the page, 16px under the title as the board has them. */}
+      <section className="md:-mt-1">
         <Card padding="none" className="grid min-w-0 grid-cols-2">
           <TotalCell label={t("Money in · {period}", { period: periodLabel })}>
-            <AmountText value={moneyIn} currency={currency} size="h2" tone={moneyIn ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyIn && "text-ink-muted")} />
+            <AmountText value={moneyIn} currency={currency} size="h2" tone={moneyIn ? "income" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyIn && "text-ink-muted", "leading-[normal]")} />
           </TotalCell>
           <TotalCell label={t("Money out · {period}", { period: periodLabel })} className="border-l">
-            <AmountText value={-moneyOut} currency={currency} size="h2" tone={moneyOut ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyOut && "text-ink-muted")} />
+            <AmountText value={-moneyOut} currency={currency} size="h2" tone={moneyOut ? "expense" : "neutral"} signed className={cn(TOTAL_FIGURE, !moneyOut && "text-ink-muted", "leading-[normal]")} />
           </TotalCell>
         </Card>
       </section>
@@ -398,18 +398,18 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                   </ListCell>
                   <ListCell className={FROM_XL}>{kindChip(profit !== null)}</ListCell>
                   <ListCell className={FROM_XL}>
-                    <Chip tone={received ? "income" : "expense"} size="sm" className="font-semibold">
+                    <Chip tone={received ? "income" : "expense"} className={cn("h-auto px-2.25 py-0.75 text-[12px] font-semibold", received ? "text-brand-ink" : "text-loss-ink")}>
                       {t(received ? "Received" : "Payment")}
                     </Chip>
                   </ListCell>
-                  <ListCell className={cn(WIDEST, "truncate text-small text-ink-2")}>{note ?? <span className="text-ink-muted">—</span>}</ListCell>
+                  <ListCell className={cn(WIDEST, "truncate text-[13px] text-ink-soft")}>{note}</ListCell>
                   <ListCell align="end" className={cn("col-start-2 row-start-1", AT_XL)}>
                     <AmountText value={signedAmount} currency={currency} size="sm" signed tone={cancelled ? "neutral" : "auto"} className={cn("font-semibold", cancelled && "text-ink-muted line-through")} />
                   </ListCell>
-                  <ListCell align="end" className={cn(FROM_XL, "text-small text-ink-2 tabular-nums")}>
-                    {transaction.charge && Number(transaction.charge) > 0 ? formatCurrency(transaction.charge, currency, fmt) : <span className="text-ink-muted">—</span>}
+                  <ListCell align="end" className={cn(FROM_XL, "text-[13px] text-ink-soft tabular-nums")}>
+                    {transaction.charge && Number(transaction.charge) > 0 ? formatCurrency(transaction.charge, currency, fmt) : "–"}
                   </ListCell>
-                  <ListCell align="end" className={cn("col-start-2 row-start-2 text-small", AT_XL)}>
+                  <ListCell align="end" className={cn("col-start-2 row-start-2 text-small xl:text-body", AT_XL)}>
                     {balanceCell(transaction.loanBalanceAfter, "max-xl:flex-row max-xl:gap-1.5 max-xl:text-caption")}
                   </ListCell>
                   <ListRowActions className="hidden md:col-start-3 md:row-[1/span_2] md:flex md:justify-end xl:col-auto xl:row-auto print:hidden">
@@ -484,12 +484,12 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
 }
 
 // Never past the edge: a crore still fits.
-const TOTAL_FIGURE = "min-w-0 truncate";
+const TOTAL_FIGURE = "min-w-0 truncate text-[20px] font-bold tracking-normal";
 
 function TotalCell({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-1 border-line px-4 py-3 md:px-5 md:py-4", className)}>
-      <span className="text-caption font-normal text-ink-muted">{label}</span>
+      <span className="text-[12px] leading-[normal] font-normal text-ink-muted">{label}</span>
       {children}
     </div>
   );

@@ -228,10 +228,18 @@ export function foldProfitRuns(rows: StatementRow[], keep = 2): LedgerItem[] {
   return items;
 }
 
+// A category named for profit, interest or a loan.
+const PROFIT_NAME = /profit|interest|loan|সুদ|মুনাফা/i;
+
 // The category a loan's profit is first filed under: one named for profit,
 // interest or a loan, else the first there is.
 export function profitCategory(names: string[]): string {
-  return names.find((name) => /profit|interest|loan|সুদ|মুনাফা/i.test(name)) ?? names[0] ?? "";
+  return names.find((name) => PROFIT_NAME.test(name)) ?? names[0] ?? "";
+}
+
+// Whether profitCategory found one named for it, rather than guessing.
+export function hasProfitCategory(names: string[]): boolean {
+  return names.some((name) => PROFIT_NAME.test(name));
 }
 
 // The contact's balance once an entry of this kind is saved (pawna is
