@@ -165,12 +165,13 @@ export function savingsError(message: string | undefined, fallback: string, t: T
 }
 
 // The card colours for savings accounts, as the SavingsWallets board cycles
-// them: violet, teal, blue, amber and rose.
+// them: violet, teal, amber, blue and rose (three accounts read violet,
+// teal, amber, as on the board).
 export const SAVINGS_PALETTES: WalletPalette[] = [
   { gradient: "bg-savings-violet", bar: "bg-cat-3", tile: "bg-cat-3/12 text-cat-3" },
   { gradient: "bg-savings-teal", bar: "bg-emerald", tile: "bg-mint-50 text-emerald" },
-  { gradient: "bg-savings-blue", bar: "bg-sky", tile: "bg-sky-soft text-sky" },
   { gradient: "bg-savings-amber", bar: "bg-warning", tile: "bg-warning-soft text-warning" },
+  { gradient: "bg-savings-blue", bar: "bg-sky", tile: "bg-sky-soft text-sky" },
   { gradient: "bg-savings-rose", bar: "bg-rose-deep", tile: "bg-rose-deep/12 text-rose-deep" },
 ];
 
