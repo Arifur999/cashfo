@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, House, X } from "lucide-react";
+import { BriefcaseBusiness, Building2, House, Plane, X } from "lucide-react";
 import { createElement } from "react";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import Chip from "@/components/smartly/Chip";
@@ -13,11 +13,13 @@ import { cn } from "@/lib/utils";
 
 // The small pieces the group tabs share.
 
-// A mess and a family look and read differently, as the boards draw them:
-// the tile, the chip and the icon.
+// Each kind of group looks and reads its own way, as the v16 boards draw
+// it: the tile and chip colours, the icon, and its line in New group.
 export const GROUP_KIND = {
-  MESS: { label: "Mess", icon: Building2, tone: "warning" as const },
-  FAMILY: { label: "Family", icon: House, tone: "insights" as const },
+  FAMILY: { label: "Family", hint: "Bazar by family size, bills equally", icon: House, cls: "bg-tint-teal text-tint-teal-ink" },
+  MESS: { label: "Mess", hint: "Everything shared equally", icon: Building2, cls: "bg-warning-soft text-warning" },
+  TRIP: { label: "Trip", hint: "Everything shared equally", icon: Plane, cls: "bg-sky-soft text-sky" },
+  OFFICE: { label: "Office", hint: "Everything shared equally", icon: BriefcaseBusiness, cls: "bg-tint-violet text-tint-violet-ink" },
 } satisfies Record<GroupKind, unknown>;
 
 // Each member keeps one colour everywhere in the group, by the order they
@@ -85,6 +87,12 @@ export function CategoryTile({ name, categories, size = 26 }: { name: string; ca
   );
 }
 
+// A category's own icon, bare (inside a chip).
+export function CategoryIcon({ name, categories }: { name: string; categories: GroupExpenseCategoryOption[] }) {
+  const option = categories.find((c) => c.name === name);
+  return option?.icon ? createElement(budgetCategoryIcon(option.icon), { "aria-hidden": true, strokeWidth: 2 }) : null;
+}
+
 // A category's name chip, in its colours (the v16 expense rows).
 export function categoryChipClass(name: string, categories: GroupExpenseCategoryOption[]): string {
   const tone = categoryTone(categories.find((c) => c.name === name)?.color);
@@ -105,4 +113,4 @@ export const SETTLE_UP_ID = "group-settle-up";
 export const FOCUS_WITHIN = "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--focus-ring)";
 
 // A statement's group line: "Mirpur Family · Family group".
-export const groupLine = (t: (key: string, values?: Record<string, string>) => string, name: string, kind: GroupKind): string => t(kind === "MESS" ? "{name} · Mess group" : "{name} · Family group", { name });
+export const groupLine = (t: (key: string, values?: Record<string, string>) => string, name: string, kind: GroupKind): string => t({ FAMILY: "{name} · Family group", MESS: "{name} · Mess group", TRIP: "{name} · Trip group", OFFICE: "{name} · Office group" }[kind], { name });

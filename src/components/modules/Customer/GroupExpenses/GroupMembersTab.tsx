@@ -1,205 +1,204 @@
 "use client";
 
-import { FileText, Pencil, PieChart, Search, Trash2, TriangleAlert, UserCheck, UserMinus, UserPlus } from "lucide-react";
-import Link from "next/link";
+import { Eye, Pencil, Search, UserCheck, UserMinus, UserPlus, Users, UserX } from "lucide-react";
 import { useState } from "react";
-import Banner from "@/components/smartly/Banner";
-import Button from "@/components/smartly/Button";
-import Chip from "@/components/smartly/Chip";
-import Input from "@/components/smartly/form/Input";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { GroupMember } from "@/lib/customer/api";
-import { groupTabHref, memberSince } from "@/lib/customer/groupDisplay";
-import { accountantsOf, addsUpToHundred, costShares, isAccountant } from "@/lib/customer/groupFamily";
-import { monthName } from "@/lib/customer/insights";
-import { formatCount } from "@/lib/i18n/digits";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { countLabel } from "@/lib/customer/groupDisplay";
+import { formatDay } from "@/lib/date";
+import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { BalanceCell, MemberAvatar } from "./GroupBits";
+import { MemberAvatar } from "./GroupBits";
+import { ROLE_CHIP, roleKey } from "./GroupSetup";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
-type Filter = "ACTIVE" | "ARCHIVED" | "ALL";
+type Filter = "all" | "ACCOUNTANT" | "VIEWER" | "MEMBER" | "left";
 
 interface GroupMembersTabProps {
   data: GroupPageData;
   view: GroupView;
   onAdd: () => void;
   onEdit: (member: GroupMember) => void;
-  // Mark inactive (asks first) or make active again.
+  // Mark someone as left the group (asks first), or bring them back.
   onToggleStatus: (member: GroupMember) => void;
-  onRemove: (member: GroupMember) => void;
-  onStatement: (member: GroupMember) => void;
-  onCostSplit: () => void;
 }
 
-// Member, phone, member since, cost share, actions.
-// Member, phone, member since, cost share, balance now, actions.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_130px_110px_180px_150px_152px]";
+// #, member, phone, shares, role, access, balance now, actions.
+const COLUMNS = "md:grid-cols-[34px_minmax(0,1fr)_124px_56px_112px_220px_124px_84px]";
+const ACT = "flex size-8.5 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted transition-colors hover:border-mint-200 hover:bg-emerald-wash hover:text-emerald [&_svg]:size-3.75";
 
-// The group's people (the v7 FamilyMembers board): who is in, their role
-// -- accountants keep the cash -- and their part of the costs, with the
-// cost split, each one's statement, and marking someone inactive from next
-// month (or deleting one added by mistake).
-export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus, onRemove, onStatement, onCostSplit }: GroupMembersTabProps) {
+// 01711-482915, as the boards write a number.
+const phoneShow = (value: string) => {
+  const digits = value.replace(/[\s-]/g, "").replace(/^\+?88/, "");
+  return /^01\d{9}$/.test(digits) ? `${digits.slice(0, 5)}-${digits.slice(5)}` : value;
+};
+
+// Members & access (the v16 FamilyMembers board): a tile per kind of access
+// that filters the list, and each member's phone, shares, role, the cash
+// they keep, whether they can log in and their balance now.
+export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: GroupMembersTabProps) {
   const { t, fmt } = useLocale();
-  const [filter, setFilter] = useState<Filter>("ACTIVE");
+  const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const shares = costShares(data.members, data.settings);
-  const custom = data.settings.costSplit === "CUSTOM";
+  const isAdmin = data.role === "OWNER";
+  const money = (value: number) => formatCurrency(value, data.currency, fmt);
   const active = view.activeMembers;
-  const accountants = accountantsOf(data.members);
-  const counts: Record<Filter, number> = { ACTIVE: active.length, ARCHIVED: data.members.length - active.length, ALL: data.members.length };
+  const gone = data.members.filter((member) => member.status !== "ACTIVE");
+  const cash = Object.fromEntries((data.settlement.accountantCash ?? []).map((row) => [row.groupMemberId, Number(row.cash)]));
+  const canLogIn = (member: GroupMember) => !!member.access?.login && !member.isOwner;
+  const totalShares = active.reduce((sum, member) => sum + Number(member.shareUnits), 0);
+  const ofRole = (role: "ACCOUNTANT" | "VIEWER" | "MEMBER") => active.filter((member) => !member.isOwner && (member.role ?? "MEMBER") === role);
+  const loggers = active.filter(canLogIn).length;
+  const loginSub = (list: GroupMember[]) => t("{count} can log in", { count: formatCount(list.filter(canLogIn).length, fmt) });
+
+  const tiles: { key: Filter; label: string; count: number; sub: string; icon: typeof Users; cls: string; on: string }[] = [
+    { key: "all", label: t("Total members"), count: active.length, sub: t("{count} shares in all", { count: formatCount(totalShares, fmt) }), icon: Users, cls: "bg-mint-50 text-emerald", on: "border-emerald bg-emerald-wash" },
+    { key: "ACCOUNTANT", label: t("Editor access"), count: ofRole("ACCOUNTANT").length, sub: loginSub(ofRole("ACCOUNTANT")), icon: Pencil, cls: "bg-warning-soft text-warning", on: "border-warning bg-warning-50" },
+    { key: "VIEWER", label: t("Viewer access"), count: ofRole("VIEWER").length, sub: loginSub(ofRole("VIEWER")), icon: Eye, cls: "bg-info-soft text-info", on: "border-info bg-info-50" },
+    { key: "MEMBER", label: t("No access"), count: ofRole("MEMBER").length, sub: t("In the costs, no portal"), icon: UserX, cls: "bg-quiet-chip text-ink-muted", on: "border-ink-muted bg-hover" },
+  ];
+
   const words = query.trim().toLowerCase();
-  const rows = data.members.filter((member) => (filter === "ALL" || member.status === filter) && (!words || member.name.toLowerCase().includes(words) || (member.household ?? "").toLowerCase().includes(words) || (member.phone ?? "").replace(/\D/g, "").includes(words.replace(/\D/g, "") || "\u0000")));
-  const broken = custom && active.length > 0 && !addsUpToHundred(active.map((member) => shares[member.id] ?? 0));
-  const unshared = custom ? active.filter((member) => !(shares[member.id] > 0)) : [];
-  const filterWord = filter === "ACTIVE" ? t("active") : filter === "ARCHIVED" ? t("inactive") : t("all");
+  const digits = words.replace(/\D/g, "");
+  const pool = filter === "left" ? gone : active.filter((member) => filter === "all" || (!member.isOwner && (member.role ?? "MEMBER") === filter));
+  const rows = pool.filter((member) => !words || member.name.toLowerCase().includes(words) || (member.household ?? "").toLowerCase().includes(words) || (!!digits && (member.phone ?? "").replace(/\D/g, "").includes(digits)));
+
+  const access = (member: GroupMember): { title: string; sub: string; dot: string; tone: string } => {
+    if (member.status !== "ACTIVE") return { title: t("No access"), sub: t("Left the group"), dot: "bg-input", tone: "text-ink-muted" };
+    if (member.isOwner) return { title: t("App owner"), sub: "", dot: "bg-emerald", tone: "text-ink-2" };
+    const login = member.access?.login;
+    const link = member.access?.link;
+    if (login && link) return { title: t("Reset link sent"), sub: t("Can still log in · username {name}", { name: login.username ?? "–" }), dot: "bg-warning-fill", tone: "text-warning" };
+    if (login) return { title: t("Can log in"), sub: `@${login.username ?? "–"} · ${login.lastLoginAt ? t("last login {date}", { date: formatDay(login.lastLoginAt.slice(0, 10), "d MMM", fmt) }) : t("not used yet")}`, dot: "bg-success", tone: "text-tint-green-ink" };
+    if (link) return { title: t("Access link sent · waiting"), sub: t("Sent {date}", { date: formatDay(link.createdAt.slice(0, 10), "d MMM", fmt) }), dot: "bg-warning-fill", tone: "text-warning" };
+    return { title: t("No access"), sub: "", dot: "bg-input", tone: "text-ink-muted" };
+  };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-0.5">
-        <h2 className="text-[19px] font-semibold text-ink">{t("Members")}</h2>
-        <p className="text-small text-ink-muted">{t("Who is in the group, each person’s share of the costs and where their balance stands.")}</p>
+    <div className="flex flex-col gap-4.5">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-[20px] leading-[1.3] font-semibold tracking-[-0.01em] text-ink">{t("Members & access")}</h2>
+        {isAdmin && (
+          <button type="button" onClick={onAdd} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-emerald px-4 text-body font-semibold whitespace-nowrap text-on-action shadow-button hover:bg-emerald-hover">
+            <UserPlus className="size-4" strokeWidth={2} aria-hidden="true" />
+            {t("Add member")}
+          </button>
+        )}
       </div>
-      {broken && (
-        <Banner tone="warning" icon={<TriangleAlert />}>
-          <span className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <span>{unshared.length > 0 ? t("The cost split doesn't add up to 100%: {names} have no share yet.", { names: unshared.map((member) => member.name).join(", ") }) : t("The cost split doesn't add up to 100%.")}</span>
-            <button type="button" onClick={onCostSplit} className="font-semibold text-warning-ink underline underline-offset-2">
-              {t("Fix the cost split")}
-            </button>
-          </span>
-        </Banner>
-      )}
 
-      <ListCard
-        label={t("Members")}
-        header={
-          <div className="flex flex-col gap-3 px-4 py-3.5 md:flex-row md:items-center md:justify-between md:px-5">
-            <SegmentedControl
-              label={t("Status")}
-              variant="tabs"
-              className="rounded-full p-1"
-              value={filter}
-              onChange={setFilter}
-              options={(["ACTIVE", "ARCHIVED", "ALL"] as Filter[]).map((value) => ({
-                value,
-                label: (
-                  <>
-                    {t(value === "ACTIVE" ? "Active" : value === "ARCHIVED" ? "Inactive" : "All")} <span className="font-normal text-ink-faint">{formatCount(counts[value], fmt)}</span>
-                  </>
-                ),
-              }))}
-            />
-            <div className="flex flex-wrap gap-2.5">
-              <Input size="sm" type="search" value={query} onChange={(event) => setQuery(event.target.value)} leading={<Search />} placeholder={t("Search name, phone or who it covers…")} aria-label={t("Search members")} frameClassName="min-w-0 flex-1 md:w-60 md:flex-none" />
-              <Button variant="secondary" size="sm" onClick={onCostSplit} className="h-9.5 [&_svg]:text-ink-soft">
-                <PieChart />
-                {t("Cost split · {mode}", { mode: t(custom ? "Custom %" : "Equal") })}
-              </Button>
-              <Button size="sm" onClick={onAdd} className="h-9.5">
-                <UserPlus />
-                {t("Add member")}
-              </Button>
-            </div>
-          </div>
-        }
-        footer={
-          <ListFooter className="flex-col items-start gap-1 text-small text-ink-soft md:px-5">
-            <span className="font-semibold text-ink-2">{t("{active} active members · {accountants} accountants", { active: formatCount(active.length, fmt), accountants: formatCount(accountants.length, fmt) })}</span>
-            <span>{t("Balance now: above 0 the group owes them, below 0 they owe the group. Members with money entries can’t be deleted; mark them inactive and they stay in the history.")}</span>
-          </ListFooter>
-        }
-      >
-        <ListHead columns={COLUMNS} className="gap-x-3 border-t md:px-5">
-          <ListHeadCell>{t("Member")}</ListHeadCell>
-          <ListHeadCell>{t("Phone")}</ListHeadCell>
-          <ListHeadCell>{t("Member since")}</ListHeadCell>
-          <ListHeadCell>{t("Cost share")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Balance now")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
-        </ListHead>
-        {rows.length === 0 && <ListEmpty title={words ? t("No member matches \"{query}\".", { query: query.trim() }) : t("No {filter} members.", { filter: filterWord })} />}
-        {rows.map((member) => {
-          const inactive = member.status !== "ACTIVE";
-          const share = shares[member.id];
-          const accountant = isAccountant(member);
+      <div role="tablist" aria-label={t("Filter by role")} className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {tiles.map((tile) => {
+          const on = filter === tile.key;
           return (
-            <ListRow key={member.id} columns={COLUMNS} className={cn("min-h-14 grid-cols-[minmax(0,1fr)_auto] gap-x-3 tabular-nums md:px-5 md:py-1.5", inactive && "opacity-60")}>
-              <ListCell className="flex items-center gap-3">
-                <MemberAvatar member={member} members={data.members} size={36} />
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <span className="truncate font-semibold text-ink">{member.name}</span>
-                    {member.isOwner && (
-                      <Chip tone="neutral" size="sm">
-                        {t("Owner")}
-                      </Chip>
-                    )}
-                    {accountant && (
-                      <Link href={groupTabHref(data.businessId, "cashbook", { accountant: member.id })} title={t("Open cash book")} className="rounded-full">
-                        <Chip tone="mint" size="sm">
-                          {t("Accountant")}
-                        </Chip>
-                      </Link>
-                    )}
-                    {inactive && (
-                      <Chip tone="neutral" size="sm">
-                        {t("Inactive")}
-                      </Chip>
-                    )}
-                  </span>
-                  <span className="truncate text-caption text-ink-muted">{[member.household, accountant ? t("Keeps the family cash") : t("Gives money to the accountant")].filter(Boolean).join(" · ")}</span>
-                </span>
-              </ListCell>
-              <ListCell className="hidden text-ink-2 md:block">{member.phone || "—"}</ListCell>
-              <ListCell className="hidden text-ink-2 md:block">{monthName(memberSince(member), fmt, "short", true)}</ListCell>
-              <ListCell className="hidden items-center gap-2.5 md:flex">
-                {inactive || share === undefined ? (
-                  <span className="text-input">—</span>
-                ) : (
-                  <>
-                    <span className="w-12 font-semibold text-ink">{formatCount(Math.round(share * 10) / 10, fmt)}%</span>
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-                      <span className="block h-full rounded-full bg-emerald" style={{ width: `${Math.min(100, share)}%` }} />
-                    </span>
-                  </>
-                )}
-              </ListCell>
-              <ListCell className="hidden md:block">
-                {view.balances[member.id] === undefined ? <span className="block text-right text-input">—</span> : <BalanceCell value={view.balances[member.id]} currency={data.currency} stacked />}
-              </ListCell>
-              <ListRowActions className="flex justify-end gap-0.5">
-                <IconAction label={t("{name}'s statement", { name: member.name })} onClick={() => onStatement(member)}>
-                  <FileText />
-                </IconAction>
-                <IconAction label={t("Edit {name}", { name: member.name })} onClick={() => onEdit(member)}>
-                  <Pencil />
-                </IconAction>
-                {!member.isOwner && (
-                  <IconAction label={inactive ? t("Make active {name}", { name: member.name }) : t("Mark inactive {name}", { name: member.name })} onClick={() => onToggleStatus(member)}>
-                    {inactive ? <UserCheck /> : <UserMinus />}
-                  </IconAction>
-                )}
-                {!member.isOwner && (
-                  <IconAction label={t("Delete {name}", { name: member.name })} onClick={() => onRemove(member)} danger>
-                    <Trash2 />
-                  </IconAction>
-                )}
-              </ListRowActions>
-            </ListRow>
+            <button
+              key={tile.key}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setFilter(on && tile.key !== "all" ? "all" : tile.key)}
+              className={cn("flex items-center gap-3.5 overflow-hidden rounded-card border-[1.5px] px-4.5 py-4 text-left", on ? cn(tile.on, "shadow-float") : "border-line-card bg-surface shadow-card")}
+            >
+              <span aria-hidden="true" className={cn("flex size-11.5 shrink-0 items-center justify-center rounded-[14px] [&_svg]:size-5.5", tile.cls)}>
+                <tile.icon strokeWidth={1.9} />
+              </span>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-[28px] leading-none font-bold tracking-[-0.02em] text-ink tabular-nums">{formatCount(tile.count, fmt)}</span>
+                <span className={cn("text-[13px] font-semibold whitespace-nowrap", tile.cls.split(" ")[1])}>{tile.label}</span>
+                <span className="truncate text-[11.5px] text-ink-muted">{tile.sub}</span>
+              </span>
+            </button>
           );
         })}
-      </ListCard>
-    </div>
-  );
-}
+      </div>
 
-function IconAction({ label, onClick, danger = false, children }: { label: string; onClick: () => void; danger?: boolean; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={label} title={label} className={cn("flex size-8 items-center justify-center rounded-full text-ink-muted pointer-coarse:size-11 [&_svg]:size-4", danger ? "hover:bg-expense-soft hover:text-expense" : "hover:bg-surface-sunken hover:text-ink")}>
-      {children}
-    </button>
+      <section aria-label={t("Members & access")} className="flex flex-col overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
+        <div className="flex flex-wrap items-center gap-2.5 px-5 py-3">
+          <label className="relative w-full md:w-75">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted" aria-hidden="true" />
+            <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} aria-label={t("Search name, phone or who it covers…")} placeholder={t("Search name, phone or who it covers…")} className="h-9.5 w-full rounded-field border border-input bg-surface pr-3 pl-9 text-[13px] text-ink outline-none focus:border-focus-ring focus:focus-halo" />
+          </label>
+          <span className="flex-1" />
+          {(gone.length > 0 || filter === "left") && (
+            <button type="button" aria-pressed={filter === "left"} onClick={() => setFilter(filter === "left" ? "all" : "left")} className={cn("h-9 rounded-full border px-3.5 text-[13px] font-semibold text-ink-2", filter === "left" ? "border-emerald bg-emerald-wash" : "border-input bg-surface")}>
+              {t("Left the group · {count}", { count: formatCount(gone.length, fmt) })}
+            </button>
+          )}
+        </div>
+        <div role="row" className={cn("hidden items-center gap-x-3 border-y border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid", COLUMNS)}>
+          <span className="text-center">#</span>
+          <span>{t("Member")}</span>
+          <span>{t("Phone")}</span>
+          <span className="text-center">{t("Shares")}</span>
+          <span>{t("Role")}</span>
+          <span>{t("Access")}</span>
+          <span className="text-right">{t("Balance now")}</span>
+          {isAdmin && <span className="text-right">{t("Actions")}</span>}
+        </div>
+        {rows.map((member, index) => {
+          const left = member.status !== "ACTIVE";
+          const role = ROLE_CHIP[roleKey(member)];
+          const held = cash[member.id] ?? 0;
+          const balance = view.balances[member.id] ?? 0;
+          const state = access(member);
+          const isMe = member.isOwner && isAdmin;
+          return (
+            <div key={member.id} role="row" className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-divider px-5 py-2 text-body tabular-nums md:min-h-16", COLUMNS, isMe && "shadow-[inset_3px_0_0_var(--color-emerald)]")}>
+              <span className="hidden text-center text-[13px] font-bold text-ink-faint md:block">{formatCount(index + 1, fmt)}</span>
+              <span className={cn("flex min-w-0 items-center gap-3", left && "opacity-60")}>
+                <MemberAvatar member={member} members={data.members} size={36} className="size-9.5 text-[13px]" />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate font-semibold text-ink">{member.name}</span>
+                    {isMe && <span className="shrink-0 rounded-full bg-emerald px-1.75 py-px text-[11px] font-bold text-on-action">{t("You")}</span>}
+                  </span>
+                  {member.household && <span className="truncate text-caption text-ink-muted">{member.household}</span>}
+                </span>
+              </span>
+              <span className={cn("hidden min-w-0 flex-col gap-0.5 md:flex", left && "opacity-60")}>
+                <span className="text-[13.5px] whitespace-nowrap text-ink-2">{member.phone ? toLocaleDigits(phoneShow(member.phone), fmt) : "–"}</span>
+                <span className="truncate text-[11.5px] text-ink-muted">{left && member.leftOn ? t("Left on {date}", { date: formatDay(member.leftOn.slice(0, 10), "d MMMM yyyy", fmt) }) : t("Since {date}", { date: formatDay((member.joinedOn ?? member.createdAt).slice(0, 10), "d MMMM yyyy", fmt) })}</span>
+              </span>
+              <span className={cn("hidden text-center font-semibold md:block", left && "opacity-60")}>{formatCount(Number(member.shareUnits), fmt)}</span>
+              <span className="hidden min-w-0 flex-col items-start gap-0.75 md:flex">
+                <span className={cn("rounded-full px-2.25 py-0.5 text-caption font-semibold whitespace-nowrap", role.cls)}>{t(role.label)}</span>
+                {!left && Math.abs(held) >= 0.5 && <span className="text-[11.5px] whitespace-nowrap text-ink-muted">{t("Keeps {amount} cash", { amount: held < 0 ? `− ${money(-held)}` : money(held) })}</span>}
+              </span>
+              <span className="hidden min-w-0 items-start gap-1.75 md:flex">
+                <span aria-hidden="true" className={cn("mt-1.5 size-2 shrink-0 rounded-full", state.dot)} />
+                <span className="flex min-w-0 flex-col gap-px">
+                  <span className={cn("truncate text-[13px] font-semibold", state.tone)}>{state.title}</span>
+                  {state.sub && <span className="truncate text-caption text-ink-muted">{state.sub}</span>}
+                </span>
+              </span>
+              <span className={cn("flex flex-col items-end gap-px", left && "opacity-60")}>
+                <span className={cn("font-bold whitespace-nowrap", balance > 0.5 ? "text-tint-green-ink" : balance < -0.5 ? "text-expense" : "text-ink")}>{Math.abs(balance) < 0.5 ? money(0) : formatSignedCurrency(balance, data.currency, fmt)}</span>
+                <span className={cn("text-[11.5px] font-semibold whitespace-nowrap", balance > 0.5 ? "text-tint-green-ink" : balance < -0.5 ? "text-expense" : "text-ink")}>{balance > 0.5 ? t("Group owes them") : balance < -0.5 ? t("Owes the group") : t("Settled")}</span>
+              </span>
+              {isAdmin && (
+                <span className="col-span-2 flex justify-end gap-1 md:col-span-1">
+                  {!left && (
+                    <button type="button" onClick={() => onEdit(member)} aria-label={t("Edit {name}", { name: member.name })} title={t("Edit")} className={ACT}>
+                      <Pencil strokeWidth={2} aria-hidden="true" />
+                    </button>
+                  )}
+                  {!member.isOwner && (
+                    <button type="button" onClick={() => onToggleStatus(member)} aria-label={left ? t("Bring {name} back", { name: member.name }) : t("Mark {name} as left the group", { name: member.name })} title={left ? t("Bring back") : t("Left the group")} className={ACT}>
+                      {left ? <UserCheck strokeWidth={2} aria-hidden="true" /> : <UserMinus strokeWidth={2} aria-hidden="true" />}
+                    </button>
+                  )}
+                </span>
+              )}
+            </div>
+          );
+        })}
+        {rows.length === 0 && <p className="px-5 py-7 text-center text-body text-ink-muted">{words ? t("No member matches “{query}”.", { query: query.trim() }) : t("Nobody here yet.")}</p>}
+        <div className="flex items-center justify-between gap-3 bg-table-head px-5 py-3 text-[13px] text-ink-soft">
+          <span>
+            {countLabel(t, fmt, active.length, "{count} member", "{count} members")} · {t("{count} shares in total", { count: formatCount(totalShares, fmt) })} · {t(loggers === 1 ? "{count} member can log in" : "{count} members can log in", { count: formatCount(loggers, fmt) })}
+          </span>
+        </div>
+      </section>
+    </div>
   );
 }

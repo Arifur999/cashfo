@@ -1,42 +1,34 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Check, ChevronDown, Pencil, Printer, Receipt, Trash2 } from "lucide-react";
+import { ArrowLeftRight, ArrowUpRight, Pencil, Printer, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import DayInput from "@/components/smartly/form/DayInput";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow } from "@/components/smartly/list";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { GroupCashbookRow } from "@/lib/customer/api";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { formatCurrency } from "@/lib/customer/currency";
-import { countLabel, groupTabHref, shortName } from "@/lib/customer/groupDisplay";
+import { groupMonthOf, groupTabHref, shiftMonth, shortName } from "@/lib/customer/groupDisplay";
+import { monthName } from "@/lib/customer/insights";
 import { deleteGroupHandoverAction } from "@/lib/customer/groupExpensesActions";
 import { isAccountant, mainAccountantId } from "@/lib/customer/groupFamily";
-import { type GroupPeriod, periodLabel } from "@/lib/customer/groupPeriod";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { groupLine, MemberAvatar } from "./GroupBits";
-import { GroupPeriodPicker } from "./GroupPeriodPicker";
+import { ROLE_CHIP, roleKey } from "./GroupSetup";
 import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import { type HandoverDraft, HandoverDialog } from "./HandoverDialog";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
-const PERIODS = ["month", "year", "all", "custom"] as const;
-// #, date, accountant, from / spent on, note, in, out, cash in hand, actions.
-const COLUMNS = "md:grid-cols-[32px_72px_140px_minmax(0,1fr)_minmax(0,1fr)_110px_110px_120px_76px]";
 
 interface GroupCashbookTabProps {
   data: GroupPageData;
   view: GroupView;
-  onPeriod: (period: GroupPeriod) => void;
   onAccountant: (id: string | null) => void;
   busy: boolean;
   // A paused group takes no new handovers.
@@ -48,7 +40,7 @@ interface GroupCashbookTabProps {
 // they returned, and cash handed from one holder to another (v16), with
 // the cash in hand after each. Deposits and expenses are added on their own
 // pages; handovers are added, edited and deleted here.
-export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, canAdd }: GroupCashbookTabProps) {
+export function GroupCashbookTab({ data, view, onAccountant, busy, canAdd }: GroupCashbookTabProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const [handover, setHandover] = useState<{ open: boolean; editing: HandoverDraft | null }>({ open: false, editing: null });
@@ -60,9 +52,7 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, can
   const holderCash = Object.fromEntries((data.settlement.accountantCash ?? []).map((row) => [row.groupMemberId, Number(row.cash)]));
   const groupCash = Object.values(holderCash).reduce((sum, value) => sum + value, 0);
   const { currency, startDay } = data;
-  const period = data.period ?? { kind: "month" };
   const book = data.cashbook;
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [printFrom, setPrintFrom] = useState("");
   const [printTo, setPrintTo] = useState("");
@@ -71,14 +61,11 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, can
   const chosenId = data.cashbookAccountant;
   const chosen = chosenId ? accountants.find((a) => a.groupMemberId === chosenId) : undefined;
   const names = accountants.map((a) => shortName(a.name));
-  const together = names.length > 1 ? t("{first} and {second}", { first: names.slice(0, -1).join(", "), second: names[names.length - 1] }) : (names[0] ?? "");
-  const who = chosen ? shortName(chosen.name) : names.length === 1 ? names[0] : t("the accountants");
   const closing = Number(book?.closing ?? 0);
   const rows = book?.rows ?? [];
   const opening = Number(book?.opening ?? 0);
   const memberOf = (id: string) => view.memberById[id];
 
-  const kindText = (row: GroupCashbookRow) => (row.source === "HANDOVER" ? (row.kind === "IN" ? t("Handed in") : t("Handed out")) : row.kind === "IN" ? t("Received from member") : row.returned ? t("Returned to member") : t("Expense category"));
   const partyText = (row: GroupCashbookRow) => (row.source === "HANDOVER" ? (row.kind === "IN" ? t("Handover from {name}", { name: row.party }) : t("Handover to {name}", { name: row.party })) : row.kind === "IN" ? t("From {name}", { name: row.party }) : row.returned ? t("To {name}", { name: row.party }) : row.party);
   // A handover row as the dialog edits it: OUT is the giver's side, IN the receiver's.
   const draftOf = (row: GroupCashbookRow): HandoverDraft | null =>
@@ -143,17 +130,44 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, can
     };
   };
 
+  // Each accountant's month from every book: what came in, went out, and moved between holders.
+  const allRows = data.cashbookAll?.rows ?? rows;
+  const statsOf = (id: string) => {
+    const mine = allRows.filter((row) => row.accountantId === id);
+    const sum = (list: GroupCashbookRow[]) => list.reduce((total, row) => total + Number(row.amount), 0);
+    return {
+      received: sum(mine.filter((row) => row.source === "CONTRIBUTION" && row.kind === "IN")),
+      paidOut: sum(mine.filter((row) => row.source !== "HANDOVER" && row.kind === "OUT")),
+      handedIn: sum(mine.filter((row) => row.source === "HANDOVER" && row.kind === "IN")),
+      handedOut: sum(mine.filter((row) => row.source === "HANDOVER" && row.kind === "OUT")),
+    };
+  };
+  const roleOf = (id: string) => ROLE_CHIP[roleKey(memberOf(id) ?? {})];
+  const signedMoney = (value: number) => `${value < -0.004 ? "− " : ""}${money(value)}`;
+  const totalIn = rows.filter((row) => row.kind === "IN").reduce((sum, row) => sum + Number(row.amount), 0);
+  const totalOut = rows.filter((row) => row.kind === "OUT").reduce((sum, row) => sum + Number(row.amount), 0);
+  const typeChip = (row: GroupCashbookRow) =>
+    row.source === "HANDOVER"
+      ? { label: row.kind === "IN" ? t("Handed in") : t("Handed out"), cls: "bg-info-soft text-info" }
+      : row.kind === "IN"
+        ? { label: t("Contribution"), cls: "bg-success-soft text-tint-green-ink" }
+        : row.returned
+          ? { label: t("Return"), cls: "bg-warning-soft text-warning" }
+          : { label: t("Expense"), cls: "bg-expense-soft text-expense" };
+  const what = (row: GroupCashbookRow) => (row.source === "EXPENSE" ? row.note || row.party : partyText(row));
+  const whatSub = (row: GroupCashbookRow) => (row.source === "EXPENSE" ? (row.note ? row.party : "") : row.note || "");
+  const LEDGER = "md:grid-cols-[82px_minmax(0,1fr)_150px_120px_124px_136px_84px]";
+  const monthLong = monthName(data.range.key, fmt, "long", true);
+  const ACTION = "flex size-8.5 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted hover:bg-emerald-wash hover:text-emerald";
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4.5">
       <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <h2 className="text-[19px] font-semibold text-ink">{t("Cash book · {period}", { period: periodLabel(period, data.today, startDay, t, fmt) })}</h2>
+        <h2 className="text-[20px] font-semibold text-ink">{t("Cash book · {period}", { period: monthLong })}</h2>
         <div className="flex flex-wrap items-center gap-2.5">
-          <span className="flex items-baseline gap-2 text-small text-ink-muted">
+          <span className="flex items-baseline gap-2 text-[13px] text-ink-muted">
             {t("Group cash in hand")}
-            <b className={cn("text-[17px] font-bold tabular-nums", groupCash < -0.004 ? "text-warning" : "text-ink")}>
-              {groupCash < -0.004 ? "− " : ""}
-              {money(groupCash)}
-            </b>
+            <b className={cn("text-[17px] font-bold tabular-nums", groupCash < -0.004 ? "text-warning" : "text-ink")}>{signedMoney(groupCash)}</b>
           </span>
           <Button variant="secondary" onClick={openPrint}>
             <Printer aria-hidden="true" />
@@ -168,200 +182,151 @@ export function GroupCashbookTab({ data, view, onPeriod, onAccountant, busy, can
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <button type="button" aria-haspopup="listbox" aria-label={t("Accountant")} className="flex h-12 items-center gap-2.5 rounded-xl border border-line bg-surface pr-3 pl-2 text-left hover:border-input">
-              {chosen ? <MemberAvatar member={memberOf(chosen.groupMemberId) ?? { id: chosen.groupMemberId, name: chosen.name, photoUrl: null }} members={data.members} size={32} /> : <span className="flex size-8 items-center justify-center rounded-full bg-mint-50 text-caption font-bold text-brand-ink">{formatCount(accountants.length, fmt)}</span>}
-              <span className="flex flex-col leading-tight">
-                <span className="text-caption text-ink-muted">{t("Accountant")}</span>
-                <span className="text-small font-semibold text-ink">{chosen ? chosen.name : t("All accountants")}</span>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {accountants.map((accountant) => {
+          const on = accountant.groupMemberId === chosenId;
+          const stat = statsOf(accountant.groupMemberId);
+          const role = roleOf(accountant.groupMemberId);
+          const cash = Number(accountant.cash);
+          return (
+            <button
+              key={accountant.groupMemberId}
+              type="button"
+              aria-pressed={on}
+              onClick={() => !on && onAccountant(accountant.groupMemberId)}
+              className={cn("flex flex-col gap-3.5 rounded-card border-[1.5px] bg-surface px-4 py-3.5 text-left shadow-card", on ? "border-emerald" : "border-line-card hover:border-mint-200", busy && "opacity-60")}
+            >
+              <span className="flex items-start gap-2.5">
+                <MemberAvatar member={memberOf(accountant.groupMemberId) ?? { id: accountant.groupMemberId, name: accountant.name, photoUrl: null }} members={data.members} size={36} />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-[14.5px] font-semibold text-ink">{accountant.name}</span>
+                  <span className={cn("text-caption font-semibold", role.cls.split(" ").find((c: string) => c.startsWith("text-")))}>{t(role.label)}</span>
+                </span>
+                <span className="flex flex-col items-end gap-0.5">
+                  <span className="text-[11.5px] text-ink-muted">{t("Cash in hand now")}</span>
+                  <span className={cn("text-[20px] font-bold tabular-nums", cash < -0.004 ? "text-warning" : "text-ink")}>{signedMoney(cash)}</span>
+                </span>
               </span>
-              <ChevronDown className="size-4 text-ink-muted" aria-hidden="true" />
+              <span className="grid grid-cols-4 gap-2 tabular-nums">
+                {(
+                  [
+                    ["Received", stat.received, "text-tint-green-ink"],
+                    ["Paid out", stat.paidOut, "text-expense"],
+                    ["Handed in", stat.handedIn, "text-ink"],
+                    ["Handed out", stat.handedOut, "text-ink"],
+                  ] as const
+                ).map(([label, value, tone]) => (
+                  <span key={label} className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-[11.5px] text-ink-muted">{t(label)}</span>
+                    <span className={cn("truncate text-[13.5px] font-semibold", tone)}>{money(value)}</span>
+                  </span>
+                ))}
+              </span>
+              <span className="text-caption text-ink-muted">{data.range.key === groupMonthOf(data.today, startDay) ? t("This month so far") : monthLong}</span>
             </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" sideOffset={6} className="w-60 gap-1 rounded-xl border border-line-card bg-surface p-1.5 ring-0">
-            <div role="listbox" aria-label={t("Accountants")} className="flex flex-col gap-0.5">
-              {[null, ...accountants].map((option) => {
-                const on = (option?.groupMemberId ?? null) === chosenId;
-                return (
-                  <button
-                    key={option?.groupMemberId ?? "all"}
-                    type="button"
-                    role="option"
-                    aria-selected={on}
-                    onClick={() => {
-                      setPickerOpen(false);
-                      onAccountant(option?.groupMemberId ?? null);
-                    }}
-                    className={cn("flex h-10 items-center gap-2.5 rounded-lg px-2 text-left text-small", on ? "bg-emerald-soft font-semibold text-emerald" : "text-ink-2 hover:bg-surface-sunken")}
-                  >
-                    {option ? <MemberAvatar member={memberOf(option.groupMemberId) ?? { id: option.groupMemberId, name: option.name, photoUrl: null }} members={data.members} size={28} /> : <span className="size-7" />}
-                    <span className="flex-1 truncate">{option ? option.name : t("All accountants")}</span>
-                    {on && <Check className="size-4" aria-hidden="true" />}
-                  </button>
-                );
-              })}
-            </div>
-            <Link href={groupTabHref(data.businessId, "members")} className="border-t border-line px-2 pt-2 pb-1 text-caption font-semibold text-emerald hover:text-emerald-hover">
-              {t("Change accountants in Members")}
-            </Link>
-          </PopoverContent>
-        </Popover>
-        <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
+          );
+        })}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <Card padding="none" className="flex flex-col gap-1 px-5 py-4">
-          <span className="text-small text-ink-muted">{t("Received from members")}</span>
-          <span className="text-[24px] font-bold text-income tabular-nums">{money(book?.totalIn ?? 0)}</span>
-          <span className="text-caption text-ink-muted">{countLabel(t, fmt, book?.inCount ?? 0, "{count} payment", "{count} payments")}</span>
-        </Card>
-        <Card padding="none" className="flex flex-col gap-1 px-5 py-4">
-          <span className="text-small text-ink-muted">{chosen || names.length === 1 ? t("Spent by {name}", { name: who }) : t("Spent by accountants")}</span>
-          <span className="text-[24px] font-bold text-expense tabular-nums">{money(book?.totalOut ?? 0)}</span>
-          <span className="text-caption text-ink-muted">{countLabel(t, fmt, book?.outCount ?? 0, "{count} entry", "{count} entries")}</span>
-        </Card>
-        <Card padding="none" className={cn("flex flex-col gap-1 px-5 py-4", closing < 0 && "border-warning-line bg-warning-50")}>
-          <span className="text-small text-ink-muted">{closing < 0 ? t("{name} spent from own pocket", { name: who }) : t("Cash in hand with {name}", { name: who })}</span>
-          <span className={cn("text-[24px] font-bold tabular-nums", closing < 0 ? "text-warning" : "text-ink")}>{money(closing)}</span>
-          <span className="text-caption text-ink-muted">{closing < 0 ? t("The group owes {name} this amount", { name: who }) : chosen || names.length === 1 ? t("Should be with {name} right now", { name: who }) : t("{names} together", { names: together })}</span>
-        </Card>
-      </div>
-
-      <ListCard
-        label={chosen ? t("{name}'s cash book", { name: chosen.name }) : t("All cash books")}
-        header={
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3.5 md:px-5">
-            <h2 id="cb-title" className="text-title font-semibold text-ink">
-              {chosen ? t("{name}'s cash book", { name: shortName(chosen.name) }) : together ? t("All cash books · {names}", { names: together }) : t("All cash books")}
-            </h2>
-            <span className="ml-auto flex flex-wrap items-center gap-2">
-              {accountants
-                .filter((a) => !chosen || a.groupMemberId === chosen.groupMemberId)
-                .map((a) => {
-                  const cash = Number(a.cash);
-                  return (
-                    <span key={a.groupMemberId} className={cn("flex items-center gap-2 rounded-full border py-1 pr-3 pl-1", cash < 0 ? "border-warning-line bg-warning-50" : "border-line bg-strip")}>
-                      <MemberAvatar member={memberOf(a.groupMemberId) ?? { id: a.groupMemberId, name: a.name, photoUrl: null }} members={data.members} size={24} />
-                      <span className="flex flex-col leading-tight">
-                        <span className="text-[11px] text-ink-muted">{cash < 0 ? t("{name} paid extra", { name: shortName(a.name) }) : t("With {name}", { name: shortName(a.name) })}</span>
-                        <span className={cn("text-caption font-bold tabular-nums", cash < 0 ? "text-warning" : "text-ink")}>
-                          {cash < 0 ? "− " : ""}
-                          {money(cash)}
-                        </span>
-                      </span>
-                    </span>
-                  );
-                })}
-            </span>
+      <section aria-label={t("Ledger")} className="flex flex-col overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
+        <div className="flex flex-wrap items-center gap-3 px-5 py-3">
+          <h3 className="text-[16px] font-semibold text-ink">{t("Ledger")}</h3>
+          <div role="tablist" aria-label={t("Accountant")} className="flex gap-0.5 rounded-full bg-quiet-chip p-0.75">
+            {accountants.map((accountant) => {
+              const on = accountant.groupMemberId === chosenId;
+              return (
+                <button
+                  key={accountant.groupMemberId}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => !on && onAccountant(accountant.groupMemberId)}
+                  className={cn("h-8.5 rounded-full px-3.5 text-[13px] font-semibold", on ? "bg-surface text-ink shadow-[0_1px_2px_rgba(18,32,29,0.12)]" : "text-ink-soft hover:text-ink")}
+                >
+                  {shortName(accountant.name)}
+                </button>
+              );
+            })}
           </div>
-        }
-        footer={
-          <ListFooter className="text-small text-ink-soft md:px-5">
-            <span>
-              {fillNodes(t("Money in comes from {contributions}, money out from {expenses}. Add entries there and they show up here."), {
-                contributions: (
-                  <Link href={groupTabHref(data.businessId, "contributions")} className="font-semibold text-emerald hover:underline">
-                    {t("Contributions")}
-                  </Link>
-                ),
-                expenses: (
-                  <Link href={groupTabHref(data.businessId, "expenses")} className="font-semibold text-emerald hover:underline">
-                    {t("Expenses")}
-                  </Link>
-                ),
-              })}
+          <span className="ml-auto flex gap-4.5 text-right tabular-nums">
+            <span className="flex flex-col">
+              <span className="text-[11.5px] text-ink-muted">{t("Opening")}</span>
+              <span className="text-[15px] font-semibold text-ink">{signedMoney(opening)}</span>
             </span>
-          </ListFooter>
-        }
-      >
-        <ListHead columns={COLUMNS} className="gap-x-3 border-t md:px-5">
-          <ListHeadCell>#</ListHeadCell>
-          <ListHeadCell>{t("Date")}</ListHeadCell>
-          <ListHeadCell>{t("Accountant")}</ListHeadCell>
-          <ListHeadCell>{t("Received from / Spent on")}</ListHeadCell>
-          <ListHeadCell>{t("Note")}</ListHeadCell>
-          <ListHeadCell align="end">{t("In")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Out")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Cash in hand")}</ListHeadCell>
-          <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
-        </ListHead>
-        {rows.length > 0 && Math.abs(opening) >= 0.005 && (
-          <ListRow columns={COLUMNS} className="min-h-10 gap-x-3 bg-strip text-small tabular-nums md:px-5">
-            <ListCell className="hidden md:block" />
-            <ListCell className="hidden md:block" />
-            <ListCell className="font-semibold text-ink-2 md:col-span-4">{t("Opening balance")}</ListCell>
-            <ListCell className="hidden md:block" />
-            <ListCell align="end" className={cn("font-semibold", opening < 0 ? "text-warning" : "text-ink")}>
-              {opening < 0 ? "− " : ""}
-              {money(opening)}
-            </ListCell>
-            <ListCell className="hidden md:block" />
-          </ListRow>
-        )}
-        {rows.length === 0 && <ListEmpty icon={<Receipt />} tone="neutral" title={period.kind === "month" ? t("No entries yet this month.") : t("No entries in this period.")} />}
-        {rows.map((row, index) => {
+            <span className="flex flex-col">
+              <span className="text-[11.5px] text-ink-muted">{t("Now")}</span>
+              <span className="text-[15px] font-bold text-ink">{signedMoney(closing)}</span>
+            </span>
+          </span>
+        </div>
+        <div role="row" className={cn("hidden gap-x-3 border-y border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid", LEDGER)}>
+          <span>{t("Date")}</span>
+          <span>{t("What")}</span>
+          <span>{t("Type")}</span>
+          <span className="text-right">{t("In")}</span>
+          <span className="text-right">{t("Out")}</span>
+          <span className="text-right">{t("Balance")}</span>
+          <span className="text-right">{t("Actions")}</span>
+        </div>
+        <div role="row" className={cn("grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-b border-divider bg-hover px-5 py-3 text-body tabular-nums", LEDGER)}>
+          <span className="text-ink-soft max-md:hidden">{formatDay(data.range.from, "d MMM", fmt)}</span>
+          <span className="font-semibold text-ink">{t("Opening cash (end of {month})", { month: monthName(shiftMonth(data.range.key, -1), fmt, "long", true) })}</span>
+          <span className="max-md:hidden" />
+          <span className="max-md:hidden" />
+          <span className="max-md:hidden" />
+          <span className="text-right font-semibold text-ink">{signedMoney(opening)}</span>
+          <span className="max-md:hidden" />
+        </div>
+        {rows.length === 0 && <p className="px-5 py-6 text-center text-body text-ink-muted">{t("No entries yet this month.")}</p>}
+        {rows.map((row) => {
           const balance = Number(row.balance);
           const into = row.kind === "IN";
           const draft = draftOf(row);
+          const chip = typeChip(row);
           return (
-            <ListRow key={`${row.source}:${row.kind}:${row.id}`} columns={COLUMNS} className="min-h-12 grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 tabular-nums md:px-5 md:py-1">
-              <ListCell className="hidden text-ink-muted md:block">{formatCount(index + 1, fmt)}</ListCell>
-              <ListCell className="hidden text-ink-soft md:block">{formatDay(row.date, "d MMM", fmt)}</ListCell>
-              <ListCell className="hidden items-center gap-2 md:flex">
-                <MemberAvatar member={memberOf(row.accountantId) ?? { id: row.accountantId, name: row.accountantName ?? "?", photoUrl: null }} members={data.members} size={26} />
-                <span className="truncate text-ink">{shortName(row.accountantName ?? "")}</span>
-              </ListCell>
-              <ListCell className="flex items-center gap-2.5">
-                <span aria-hidden="true" className={cn("flex size-7 shrink-0 items-center justify-center rounded-full", draft ? "bg-surface-sunken text-ink-2" : into ? "bg-income-soft text-income" : "bg-expense-soft text-expense")}>
-                  {draft ? <ArrowLeftRight className="size-3.5" /> : into ? <ArrowDownLeft className="size-3.5" /> : <ArrowUpRight className="size-3.5" />}
-                </span>
-                <span className="flex min-w-0 flex-col leading-tight">
-                  <span className="truncate font-medium text-ink">{partyText(row)}</span>
-                  <span className={cn("truncate text-[11.5px] font-medium", draft ? "text-ink-2" : into ? "text-income" : "text-expense")}>{kindText(row)}</span>
-                  <span className="truncate text-caption text-ink-muted md:hidden">{[formatDay(row.date, "d MMM", fmt), row.accountantName && shortName(row.accountantName), row.note].filter(Boolean).join(" · ")}</span>
-                </span>
-              </ListCell>
-              <ListCell className={cn("hidden truncate md:block", row.note ? "text-ink-2" : "text-input")}>{row.note || "—"}</ListCell>
-              <ListCell align="end" className={cn("hidden md:block", into ? "font-semibold text-income" : "text-input")}>
-                {into ? money(row.amount) : "—"}
-              </ListCell>
-              <ListCell align="end" className={cn("hidden md:block", !into ? "font-semibold text-expense" : "text-input")}>
-                {!into ? money(row.amount) : "—"}
-              </ListCell>
-              <ListCell align="end" className="flex flex-col items-end">
-                <span className={cn("font-bold", balance < 0 ? "text-warning" : "text-ink")}>
-                  {balance < 0 ? "− " : ""}
-                  {money(balance)}
-                </span>
-                <span className={cn("text-caption md:hidden", into ? "text-income" : "text-expense")}>
-                  {into ? "+ " : "− "}
-                  {money(row.amount)}
-                </span>
-              </ListCell>
-              <ListCell className="flex justify-end gap-1.5">
+            <div key={`${row.source}:${row.kind}:${row.id}`} role="row" className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-b border-divider px-5 py-2 text-body tabular-nums md:min-h-12.5", LEDGER)}>
+              <span className="text-ink-soft max-md:hidden">{formatDay(row.date, "d MMM", fmt)}</span>
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-medium text-ink">{what(row)}</span>
+                {whatSub(row) && <span className="truncate text-caption text-ink-muted">{whatSub(row)}</span>}
+              </span>
+              <span className="max-md:hidden">
+                <span className={cn("inline-flex h-6 items-center rounded-full px-2.25 text-caption font-semibold", chip.cls)}>{chip.label}</span>
+              </span>
+              <span className={cn("text-right max-md:hidden", into ? "font-semibold text-tint-green-ink" : "text-ink-faint")}>{into ? `+ ${money(row.amount)}` : "–"}</span>
+              <span className={cn("text-right max-md:hidden", !into ? "font-semibold text-expense" : "text-ink-faint")}>{!into ? `− ${money(row.amount)}` : "–"}</span>
+              <span className={cn("text-right font-semibold", balance < -0.004 ? "text-expense" : "text-ink")}>{signedMoney(balance)}</span>
+              <span className="flex justify-end gap-1 max-md:col-span-2">
                 {draft ? (
                   canAdd && (
                     <>
-                      <button type="button" onClick={() => setHandover({ open: true, editing: draft })} aria-label={t("Edit handover")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                      <button type="button" onClick={() => setHandover({ open: true, editing: draft })} aria-label={t("Edit handover")} className={ACTION}>
                         <Pencil className="size-3.75" aria-hidden="true" />
                       </button>
-                      <button type="button" onClick={() => setRemoving(draft)} aria-label={t("Delete handover")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
+                      <button type="button" onClick={() => setRemoving(draft)} aria-label={t("Delete handover")} className={cn(ACTION, "hover:bg-expense-soft hover:text-expense-fill")}>
                         <Trash2 className="size-3.75" aria-hidden="true" />
                       </button>
                     </>
                   )
                 ) : (
-                  <Link href={groupTabHref(data.businessId, row.source === "EXPENSE" ? "expenses" : "contributions")} aria-label={row.source === "EXPENSE" ? t("Open in Expenses") : t("Open in Contributions")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
+                  <Link href={groupTabHref(data.businessId, row.source === "EXPENSE" ? "expenses" : "contributions", { month: data.range.key })} aria-label={row.source === "EXPENSE" ? t("Open in Expenses") : t("Open in Contributions")} className={ACTION}>
                     <ArrowUpRight className="size-3.75" aria-hidden="true" />
                   </Link>
                 )}
-              </ListCell>
-            </ListRow>
+              </span>
+            </div>
           );
         })}
-      </ListCard>
+        <div role="row" className={cn("grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 bg-hover px-5 py-3 text-body font-semibold tabular-nums", LEDGER)}>
+          <span className="max-md:hidden" />
+          <span className="text-ink">{t("Cash in hand now")}</span>
+          <span className="max-md:hidden" />
+          <span className="text-right text-tint-green-ink max-md:hidden">+ {money(totalIn)}</span>
+          <span className="text-right text-expense max-md:hidden">− {money(totalOut)}</span>
+          <span className="text-right text-ink">{signedMoney(closing)}</span>
+          <span className="max-md:hidden" />
+        </div>
+      </section>
 
       <HandoverDialog open={handover.open} onClose={() => setHandover({ open: false, editing: null })} businessId={data.businessId} currency={currency} holders={holders} cash={holderCash} today={data.today} editing={handover.editing} />
       <ConfirmDialog

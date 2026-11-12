@@ -12,20 +12,17 @@ import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/custome
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { countLabel, dayLabel, groupMonthOf, isDayClosed, paidIn } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
-import { type GroupPeriod, periodLabel } from "@/lib/customer/groupPeriod";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { groupLine, MemberAvatar } from "./GroupBits";
-import { GroupPeriodPicker } from "./GroupPeriodPicker";
 import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 interface GroupContributionsTabProps {
   data: GroupPageData;
   view: GroupView;
-  onPeriod: (period: GroupPeriod) => void;
   // With a member: the form opens with them picked.
   onAdd: (memberId?: string) => void;
   onEdit: (row: GroupContribution) => void;
@@ -33,11 +30,9 @@ interface GroupContributionsTabProps {
   // An own-pocket row is an expense: it opens and deletes as one.
   onEditExpense: (row: GroupExpense) => void;
   onRemoveExpense: (row: GroupExpense) => void;
-  busy: boolean;
   canAdd: boolean;
 }
 
-const PERIODS = ["month", "all", "year", "custom"] as const;
 // #, date, member, received by, note (with its type), amount, actions.
 const COLUMNS = "md:grid-cols-[36px_64px_minmax(0,1.2fr)_minmax(0,160px)_minmax(0,1fr)_120px_76px]";
 const PAGE = 25;
@@ -66,16 +61,16 @@ interface Row {
 // (an expense, credited to them), by member, type and period, with a
 // printable statement. Returns, settle-ups and carried balances still list,
 // as they count in the balances.
-export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onRemove, onEditExpense, onRemoveExpense, busy, canAdd }: GroupContributionsTabProps) {
+export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onEditExpense, onRemoveExpense, canAdd }: GroupContributionsTabProps) {
   const { t, fmt } = useLocale();
   const { currency, startDay } = data;
-  const period = data.period ?? { kind: "month" };
   const [query, setQuery] = useState("");
   const [memberId, setMemberId] = useState("");
-  const [type, setType] = useState<"" | RowType>("");
+  const type = "" as "" | RowType;
   const [limit, setLimit] = useState(PAGE);
   const [printing, setPrinting] = useState(false);
-  const label = periodLabel(period, data.today, startDay, t, fmt);
+  // The month picked in the header.
+  const label = monthName(data.range.key, fmt, "long", true);
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
 
   const contributionRows: Row[] = (data.periodContributions ?? data.contributions).map((row) => ({
@@ -90,28 +85,14 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
     amount: Number(row.amount),
     contribution: row,
   }));
-  const pocketRows: Row[] = (data.periodExpenses ?? data.expenses)
-    .filter((row) => row.paidFrom === "MEMBER" && row.paidByMemberId)
-    .map((row) => ({
-      id: row.id,
-      date: row.date.slice(0, 10),
-      createdAt: row.createdAt,
-      member: view.memberById[row.paidByMemberId as string],
-      memberName: view.memberById[row.paidByMemberId as string]?.name ?? row.paidByMember?.name ?? "",
-      givenTo: null,
-      type: "POCKET",
-      note: [row.category, row.description].filter(Boolean).join(" · "),
-      amount: Number(row.amount),
-      expense: row,
-    }));
-  const all = [...contributionRows, ...pocketRows];
+  // Own-pocket spending lists on Expenses: here only money handed in.
+  const all = contributionRows;
   const words = query.trim().toLowerCase();
   const rows = all
     .filter((row) => (!memberId || row.member?.id === memberId) && (!type || row.type === type))
     .filter((row) => !words || [row.memberName, row.note ?? "", row.givenTo?.name ?? "", String(Math.abs(row.amount))].some((text) => text.toLowerCase().includes(words))).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shown = rows.slice(0, limit);
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
-  const types = (["DEPOSIT", "POCKET", "RETURN", "SETTLE", "CARRY"] as const).filter((value) => value === "DEPOSIT" || value === "POCKET" || value === type || all.some((row) => row.type === value));
   const memberOptions = data.members.filter((member) => member.status === "ACTIVE" || all.some((row) => row.member?.id === member.id));
   const memberLabel = memberId ? (view.memberById[memberId]?.name ?? "") : t("All members");
   const typeLabel = type ? t(TYPE_LABELS[type]) : t("All types");
@@ -119,8 +100,11 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
   // The month on show, member by member: what each gave, their share and balance.
   const month = monthName(data.range.key, fmt, "long", true);
   const current = data.range.key === groupMonthOf(data.today, startDay);
+  // What each handed in this month: their contributions, without a balance carried in.
+  const carried = (id: string) => data.contributions.filter((row) => row.kind === "CARRY" && row.groupMemberId === id).reduce((sum, row) => sum + Number(row.amount), 0);
+  const gaveOf = (row: (typeof data.settlement.members)[number]) => Number(row.contributed) - carried(row.groupMemberId);
   const byMember = data.settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId] })).filter(({ row, member }) => member?.status === "ACTIVE" || paidIn(row) !== 0 || Number(row.share) !== 0);
-  const givenInMonth = byMember.reduce((sum, { row }) => sum + paidIn(row), 0);
+  const givenInMonth = byMember.reduce((sum, { row }) => sum + gaveOf(row), 0);
 
   const statement = (): StatementSpec => ({
     title: t("Contributions statement"),
@@ -145,7 +129,6 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <h2 className="text-[19px] font-semibold text-ink">{t("Contributions · {period}", { period: label })}</h2>
         <div className="flex flex-wrap items-center gap-2.5">
-          <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
           <Button variant="secondary" onClick={() => setPrinting(true)}>
             <Printer aria-hidden="true" />
             {t("Print")}
@@ -162,7 +145,10 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
       {byMember.length > 0 && (
         <Card padding="none" className="flex flex-col gap-3.5 px-5 py-4">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h3 className="text-[16px] font-semibold text-ink">{current ? t("This month by member") : t("{month} by member", { month })}</h3>
+            <span className="flex flex-wrap items-baseline gap-x-3">
+              <h3 className="text-[16px] font-semibold text-ink">{current ? t("This month by member") : t("{month} by member", { month })}</h3>
+              <span className="text-caption text-ink-muted">{t("Balance carries on from earlier months.")}</span>
+            </span>
             <span className="flex items-baseline gap-3">
               <span className="text-caption text-ink-muted">{t("Given in {month}", { month })}</span>
               <span className="text-[19px] font-bold text-income tabular-nums">{money(givenInMonth)}</span>
@@ -170,7 +156,7 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
           </div>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
             {byMember.map(({ row, member }) => {
-              const gave = paidIn(row);
+              const gave = gaveOf(row);
               const balance = Number(row.balance);
               const even = Math.abs(balance) < 0.005;
               return (
@@ -245,23 +231,6 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
                 </option>
               ))}
             </NativeSelect>
-            <NativeSelect
-              size="sm"
-              aria-label={t("Type")}
-              value={type}
-              onChange={(event) => {
-                setType(event.target.value as "" | RowType);
-                setLimit(PAGE);
-              }}
-              className="font-medium"
-            >
-              <option value="">{t("All types")}</option>
-              {types.map((value) => (
-                <option key={value} value={value}>
-                  {t(TYPE_LABELS[value])}
-                </option>
-              ))}
-            </NativeSelect>
             <span className="ml-auto flex flex-col items-end leading-tight">
               <span className="text-caption text-ink-muted">{t("Total · {entries}", { entries: countLabel(t, fmt, rows.length, "{count} entry", "{count} entries") })}</span>
               <span className={cn("text-[18px] font-bold tabular-nums", total < 0 ? "text-expense" : "text-income")}>{money(total)}</span>
@@ -269,12 +238,14 @@ export function GroupContributionsTab({ data, view, onPeriod, onAdd, onEdit, onR
           </div>
         }
         footer={
-          rows.length > shown.length || limit > PAGE ? (
-            <ListFooter className="flex-row items-center gap-3 bg-strip md:px-5">
-              <Button variant="secondary" size="sm" onClick={() => setLimit(rows.length > shown.length ? limit + PAGE : PAGE)} className="h-8.5 pointer-coarse:h-11">
+          rows.length > 0 ? (
+            <ListFooter className="flex-row items-center gap-3 bg-hover text-[13px] md:px-5">
+              <span className="text-ink-muted">{t("Showing {from} to {to} of {count} · newest first", { from: formatCount(1, fmt), to: formatCount(shown.length, fmt), count: formatCount(rows.length, fmt) })}</span>
+              {(rows.length > shown.length || limit > PAGE) && (
+              <Button variant="secondary" size="sm" onClick={() => setLimit(rows.length > shown.length ? limit + PAGE : PAGE)} className="ml-auto h-8.5 pointer-coarse:h-11">
                 {rows.length > shown.length ? countLabel(t, fmt, Math.min(PAGE, rows.length - shown.length), "Show {count} older entry", "Show {count} older entries") : t("Show fewer")}
               </Button>
-              <span className="ml-auto text-ink-soft">{t("{shown} of {count}", { shown: formatCount(shown.length, fmt), count: formatCount(rows.length, fmt) })}</span>
+              )}
             </ListFooter>
           ) : null
         }

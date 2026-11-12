@@ -1255,12 +1255,13 @@ export type GroupExpenseCategory = string;
 // names), by shares, by meals (pooled into one meal rate), or by exact
 // amounts.
 export type GroupSplit = "EQUAL" | "SHARES" | "MEALS" | "EXACT";
-export type GroupKind = "FAMILY" | "MESS";
+// Trip and Office share everything equally, like a mess without meals.
+export type GroupKind = "FAMILY" | "MESS" | "TRIP" | "OFFICE";
 export type GroupPaidFrom = "FUND" | "MEMBER";
 export type GroupContributionKind = "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY";
 // Member: gives money to an accountant. Accountant: keeps the cash and does
 // the bazar (up to 2 in a group).
-export type GroupMemberRole = "MEMBER" | "ACCOUNTANT";
+export type GroupMemberRole = "MEMBER" | "ACCOUNTANT" | "VIEWER";
 // How costs shared "by cost split" are weighted.
 export type GroupCostSplit = "EQUAL" | "CUSTOM";
 
@@ -1304,6 +1305,8 @@ export interface GroupMember {
   household?: string | null;
   // Their percent when the group's cost split is custom.
   costPercent?: string | null;
+  // The owner's view only: their login and a waiting access link (null for others).
+  access?: { login: { username: string | null; lastLoginAt: string | null; ownAccount: boolean } | null; link: { kind: "JOIN" | "RESET"; createdAt: string; expiresAt: string; canCopy: boolean } | null } | null;
   createdAt: string;
   updatedAt: string;
 }

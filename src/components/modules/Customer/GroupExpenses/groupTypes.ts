@@ -18,6 +18,9 @@ export interface GroupCardData {
   // Last month, when it was never closed though something was recorded in
   // it: the card asks for it to be closed.
   openMonth: MonthRange | null;
+  // Anything ever recorded (an expense, a contribution, a meal): a group
+  // with money entries can only be paused, never deleted.
+  hasEntries: boolean;
 }
 
 // What a group's page is told by its server page: the month being viewed
@@ -65,16 +68,18 @@ export interface GroupPageData {
   periodContributions: GroupContribution[] | null;
   // the period's balances (Dashboard),
   periodSettlement: GroupSettlementResult | null;
-  // the expenses of the period's year (Dashboard's year chart),
-  yearExpenses: GroupExpense[] | null;
   // every expense up to next month (Monthly budget),
   allExpenses: GroupExpense[] | null;
   // the Cash book and the accountant it shows (null for all),
   cashbook: GroupCashbook | null;
+  // Every accountant's book for the month (the Cash book's cards).
+  cashbookAll: GroupCashbook | null;
   cashbookAccountant: string | null;
   // and a page of the Activity log, with its kind filter.
   activity: GroupActivityPage | null;
   activityAction: GroupActivityAction | null;
+  // What was spent in each group month ("2026-11"), for the month picker.
+  monthTotals: Record<string, number>;
 }
 
 // Figures every tab reads, derived once by the page client.

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CircleHelp, Info, Lock, Plus, TriangleAlert } from "lucide-react";
+import { ArrowRight, CircleHelp, Info, Lock, Plus, TriangleAlert, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -10,14 +10,14 @@ import Banner from "@/components/smartly/Banner";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListTotalRow } from "@/components/smartly/list";
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { formatCurrency } from "@/lib/customer/currency";
 import { countLabel, groupMonthOf, groupTabHref, recordDiffers, shiftMonth, shortName } from "@/lib/customer/groupDisplay";
 import { settleUpAction, undoSettleUpAction } from "@/lib/customer/groupExpensesActions";
-import { isAccountant, mainAccountantId, type SettleCard, settlementCards, settleProgress, settleSums } from "@/lib/customer/groupFamily";
+import { mainAccountantId, type SettleCard, settlementCards, settleProgress, settleSums } from "@/lib/customer/groupFamily";
+import { formatDay } from "@/lib/date";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -33,17 +33,15 @@ const BALANCE_COLUMNS = "md:grid-cols-[minmax(0,1fr)_164px_150px_130px_104px]";
 interface FamilySettlementTabProps {
   data: GroupPageData;
   view: GroupView;
-  onMonth: (key: string) => void;
   // A payment between any two members, recorded by hand.
   onRecordPayment: () => void;
-  busy: boolean;
 }
 
 // A family's month settled (the v7 FamilySettlement board): the month in
 // four figures, a card for each member saying what they pay the accountant
 // or get back, marked paid in one tap (and undone), then the month closed
 // with every balance carried forward. Closed months stay below, by year.
-export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy }: FamilySettlementTabProps) {
+export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettlementTabProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const { currency, settlement, range } = data;
@@ -94,6 +92,26 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
         return;
       }
       toast.success(t("Payment recorded"));
+      router.refresh();
+    });
+  }
+
+  // The month's settle-ups, one row per pair (the payer's and the receiver's).
+  const payments = [...new Set(data.contributions.filter((row) => row.kind === "SETTLE" && Number(row.amount) > 0).map((row) => row.settleGroupId).filter((id): id is string => !!id))].map((id) => {
+    const pair = data.contributions.filter((row) => row.settleGroupId === id);
+    const out = pair.find((row) => Number(row.amount) > 0);
+    const back = pair.find((row) => Number(row.amount) < 0);
+    return { id, date: (out ?? back)?.date.slice(0, 10) ?? "", from: out?.groupMember?.name ?? view.memberById[out?.groupMemberId ?? ""]?.name ?? "", to: back?.groupMember?.name ?? view.memberById[back?.groupMemberId ?? ""]?.name ?? "", note: out?.note ?? "", amount: Number(out?.amount ?? 0) };
+  });
+
+  function undoPayment(id: string) {
+    startTransition(async () => {
+      const result = await attempt(() => undoSettleUpAction(data.businessId, id), t(OFFLINE_MESSAGE), t(STALE_MESSAGE));
+      if (!result.success) {
+        toast.error(result.message ?? t("Failed to undo the payment"));
+        return;
+      }
+      toast.success(t("Payment undone"));
       router.refresh();
     });
   }
@@ -163,13 +181,6 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
           <p className="text-small text-ink-muted">{t("Who owes whom for the month, and the payments that even it out.")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <NativeSelect size="md" aria-label={t("Month")} value={range.key} onChange={(event) => onMonth(event.target.value)} className={cn("font-semibold", busy && "opacity-60")}>
-            {data.months.map((key) => (
-              <option key={key} value={key}>
-                {monthName(key, fmt, "long", true)}
-              </option>
-            ))}
-          </NativeSelect>
           <Button variant="secondary" onClick={onRecordPayment} disabled={closed}>
             <Plus aria-hidden="true" />
             {t("Record payment")}
@@ -178,9 +189,10 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
       </div>
 
       {!closed && !ended && (
-        <Banner tone="info" icon={<Info />}>
+        <p className="flex items-center gap-2.5 rounded-[14px] border border-line bg-surface px-4.5 py-3 text-[13.5px] text-ink-2">
+          <Info className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
           {t("{month} is still running. Balances change as entries come in; the month can be closed after it ends.", { month: monthName(range.key, fmt, "long", true) })}
-        </Banner>
+        </p>
       )}
       {drift && data.closedRecord && (
         <Banner tone="warning" icon={<TriangleAlert />}>
@@ -238,7 +250,7 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
                 <MemberAvatar member={member ?? { id: card.memberId, name: card.name, photoUrl: null }} members={data.members} size={34} />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate font-semibold text-ink">{card.name}</span>
-                  <span className="truncate text-caption text-ink-muted">{[member && isAccountant(member) ? t("Accountant") : null, t(units === 1 ? "{count} share" : "{count} shares", { count: formatCount(units, fmt) })].filter(Boolean).join(" · ")}</span>
+                  <span className="truncate text-caption text-ink-muted">{t(units === 1 ? "{count} share" : "{count} shares", { count: formatCount(units, fmt) })}</span>
                 </span>
               </ListCell>
               <ListCell align="end" className="hidden md:block">
@@ -352,6 +364,40 @@ export function FamilySettlementTab({ data, view, onMonth, onRecordPayment, busy
           </section>
         </Card>
       </div>
+
+      <section aria-labelledby="fs-paid" className="flex flex-col overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
+        <div className="flex flex-col gap-0.5 px-5 pt-4 pb-3">
+          <h3 id="fs-paid" className="text-[16px] font-semibold text-ink">
+            {t("Payments recorded for {month}", { month: monthLong })}
+          </h3>
+          <p className="text-caption text-ink-muted">{t("Settlement money between members. It changes balances, not spending.")}</p>
+        </div>
+        <div role="row" className="hidden grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_130px_84px] gap-x-3 border-y border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid">
+          <span>{t("Date")}</span>
+          <span>{t("From → to")}</span>
+          <span>{t("Note")}</span>
+          <span className="text-right">{t("Amount")}</span>
+          <span className="text-right">{t("Actions")}</span>
+        </div>
+        {payments.length === 0 && <p className="px-5 py-6 text-center text-body text-ink-muted">{t("No payments recorded for {month} yet.", { month: monthLong })}</p>}
+        {payments.map((row) => (
+          <div key={row.id} role="row" className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-b border-divider px-5 py-2.5 text-body tabular-nums last:border-b-0 md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_130px_84px]">
+            <span className="text-ink-soft max-md:hidden">{formatDay(row.date, "d MMM", fmt)}</span>
+            <span className="truncate font-medium text-ink">
+              {shortName(row.from)} → {shortName(row.to)}
+            </span>
+            <span className="truncate text-ink-2 max-md:hidden">{row.note || "—"}</span>
+            <span className="text-right font-semibold text-ink">{money(row.amount)}</span>
+            <span className="flex justify-end max-md:col-span-2">
+              {!closed && (
+                <button type="button" onClick={() => undoPayment(row.id)} disabled={isPending} aria-label={t("Undo this payment")} title={t("Undo")} className="flex size-8.5 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted hover:border-expense-line hover:bg-expense-soft hover:text-expense-fill disabled:opacity-50">
+                  <Undo2 className="size-3.75" aria-hidden="true" />
+                </button>
+              )}
+            </span>
+          </div>
+        ))}
+      </section>
 
       <Card padding="none" aria-label={t("Close the month")} className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center" asChild>
         <section>

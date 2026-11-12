@@ -14,6 +14,7 @@ import {
   getGroupMeals,
   getGroupMembers,
   getGroupMonthBudgets,
+  getGroupMonthTotals,
   getGroupSettings,
   getGroupSettlement,
   getGroupSettlementHistory,
@@ -32,10 +33,6 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/gro
 
 // Each page's own period choices (the v7 boards' dropdowns), and its default.
 const PERIODS: Partial<Record<GroupTab, { options: readonly GroupPeriodKind[]; fallback: GroupPeriod }>> = {
-  expenses: { options: ["today", "week", "month", "year", "custom"], fallback: { kind: "month" } },
-  contributions: { options: ["month", "all", "year", "custom"], fallback: { kind: "month" } },
-  cashbook: { options: ["month", "year", "all", "custom"], fallback: { kind: "month" } },
-  categories: { options: ["month", "year", "custom"], fallback: { kind: "month" } },
 };
 
 // All time: from long before any group's first record.
@@ -69,13 +66,12 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
   const choice = PERIODS[tab];
   const period = choice ? groupPeriodFrom(sp, choice.options, choice.fallback) : null;
   const span = period ? periodRange(period, today, startDay, EVER) : null;
-  const yearKey = groupMonthOf(span?.to ?? range.to, startDay).slice(0, 4);
-  const year = { from: monthRangeOf(`${yearKey}-01`, startDay).from, to: monthRangeOf(`${yearKey}-12`, startDay).to };
   const activityAction = typeof sp.action === "string" && (ACTIVITY_ACTIONS as readonly string[]).includes(sp.action) ? (sp.action as GroupActivityAction) : undefined;
   const activityPage = Math.max(1, Math.floor(Number(sp.page)) || 1);
-  const accountantId = typeof sp.accountant === "string" && sp.accountant ? sp.accountant : undefined;
+  // The Cash book shows one accountant's ledger: the one picked, else the cash holder.
+  const accountantId = (typeof sp.accountant === "string" && sp.accountant ? sp.accountant : undefined) ?? (tab === "cashbook" ? (settings.cashHolderMemberId ?? undefined) : undefined);
 
-  const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals, workspaces] = await Promise.all([
+  const [members, contributions, recentExpenses, categories, settlement, history, budgets, meals, workspaces, monthTotals] = await Promise.all([
     getGroupMembers(businessId),
     getGroupContributions(businessId, { from: range.from, to: range.to }),
     getGroupExpenses(businessId, { from: sixFrom, to: range.to }),
@@ -85,16 +81,17 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     getGroupMonthBudgets(businessId),
     getGroupMeals(businessId, range.from, range.to),
     listWorkspaces(),
+    getGroupMonthTotals(businessId),
   ]);
 
   // What the page on show needs beyond the month.
-  const [periodExpenses, periodContributions, periodSettlement, yearExpenses, allExpenses, cashbook, activity] = await Promise.all([
+  const [periodExpenses, periodContributions, periodSettlement, allExpenses, cashbook, cashbookAll, activity] = await Promise.all([
     span && (tab === "dashboard" || tab === "expenses" || tab === "categories" || tab === "contributions") ? getGroupExpenses(businessId, span) : null,
     span && tab === "contributions" ? getGroupContributions(businessId, span) : null,
     span && tab === "dashboard" ? getGroupSettlement(businessId, span.from, span.to) : null,
-    tab === "dashboard" ? getGroupExpenses(businessId, year) : null,
     tab === "budget" ? getGroupExpenses(businessId, { from: EVER, to: monthRangeOf(shiftMonth(groupMonthOf(today, startDay), 1), startDay).to }) : null,
-    span && tab === "cashbook" ? getGroupCashbook(businessId, accountantId, span.from, span.to) : null,
+    tab === "cashbook" ? getGroupCashbook(businessId, accountantId, range.from, range.to) : null,
+    tab === "cashbook" ? getGroupCashbook(businessId, undefined, range.from, range.to) : null,
     tab === "activity" ? getGroupActivity(businessId, activityAction, activityPage) : null,
   ]);
 
@@ -131,12 +128,13 @@ export default async function GroupWorkspacePage({ params, searchParams }: PageP
     periodExpenses,
     periodContributions,
     periodSettlement,
-    yearExpenses,
     allExpenses,
     cashbook,
+    cashbookAll,
     cashbookAccountant: accountantId ?? null,
     activity,
     activityAction: activityAction ?? null,
+    monthTotals: Object.fromEntries(monthTotals.map((row) => [row.month, Number(row.spent)])),
   };
 
   return <GroupPageClient data={data} />;

@@ -39,18 +39,23 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
   const warnAt = data.settings.budgetWarnPercent === undefined ? 90 : data.settings.budgetWarnPercent;
 
   // The month on top (this one), by category, and the last six months.
-  const now = rows.find((row) => row.current);
+  // The month picked in the header (this one unless another is picked).
+  const shownKey = data.range.key;
+  const now = rows.find((row) => row.key === shownKey) ?? rows.find((row) => row.current);
   const nowUsed = now?.budget ? (now.spent / now.budget) * 100 : null;
   const nowOver = !!now?.budget && now.spent > now.budget;
   const nowTone = nowOver ? "bg-expense-fill" : nowUsed !== null && warnAt !== null && nowUsed >= warnAt ? "bg-warning-fill" : "bg-emerald";
-  const cats = categoryRows(data.expenses, data.categories).filter((row) => row.amount > 0);
+  // Every category in use or still offered, biggest spending first.
+  const spentBy = categoryRows(data.expenses, data.categories);
+  const cats = [...spentBy.filter((row) => row.amount > 0), ...data.categories.filter((c) => !c.hidden && !spentBy.some((row) => row.name === c.name && row.amount > 0)).map((c) => ({ name: c.name, amount: 0, share: 0 }))];
+  const catTotal = cats.reduce((sum, row) => sum + row.amount, 0);
   const last6 = [...rows].filter((row) => !row.future).slice(0, 6).reverse();
   const peak = Math.max(1, ...last6.map((row) => Math.max(row.spent, row.budget ?? 0)));
   const avgSpent = last6.length ? last6.reduce((sum, row) => sum + row.spent, 0) / last6.length : 0;
   const withBudget = last6.filter((row) => row.budget !== null);
   const avgBudget = withBudget.length ? withBudget.reduce((sum, row) => sum + (row.budget ?? 0), 0) / withBudget.length : null;
   const overCount = withBudget.filter((row) => row.spent > (row.budget ?? 0)).length;
-  const monthLong = monthName(currentKey, fmt, "long", true);
+  const monthLong = monthName(shownKey, fmt, "long", true);
 
   return (
     <div className="flex flex-col gap-4">
@@ -61,7 +66,7 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
             {t("Current month")}
           </Chip>
         </span>
-        <Button onClick={() => onSet(currentKey)}>
+        <Button onClick={() => onSet(shownKey)}>
           <Pencil aria-hidden="true" />
           {now?.budget ? t("Edit budget") : t("Set budget")}
         </Button>
@@ -102,6 +107,11 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
               <h3 className="text-[17px] font-semibold text-ink">{t("By category")}</h3>
               <p className="text-caption text-ink-muted">{t("What {month} spent in each category so far.", { month: monthLong })}</p>
             </div>
+            <div className="hidden grid-cols-[minmax(0,1fr)_120px_200px] gap-x-4 border-t border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid">
+              <span>{t("Category")}</span>
+              <span className="text-right">{t("Spent so far")}</span>
+              <span>{t("Used")}</span>
+            </div>
             {cats.length === 0 && <p className="border-t border-divider px-5 py-4 text-small text-ink-muted">{t("No spending in {month} yet.", { month: monthLong })}</p>}
             {cats.map((row) => (
               <div key={row.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-divider px-5 py-2.5 text-body tabular-nums md:grid-cols-[minmax(0,1fr)_120px_200px]">
@@ -110,9 +120,16 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
                   <span className="truncate font-medium text-ink">{row.name}</span>
                 </span>
                 <span className="text-right font-semibold text-ink">{money(row.amount)}</span>
-                <span className="hidden text-caption text-ink-muted md:block">{t("{percent}% of {month}’s spending", { percent: formatCount(Math.round(row.share), fmt), month: monthName(currentKey, fmt, "long") })}</span>
+                <span className="hidden text-caption text-ink-muted md:block">{row.amount > 0 ? t("{percent}% of {month}’s spending", { percent: formatCount(Math.round(row.share), fmt), month: monthName(shownKey, fmt, "long") }) : t("Nothing spent")}</span>
               </div>
             ))}
+            {cats.length > 0 && (
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-divider bg-hover px-5 py-3 text-body font-semibold tabular-nums md:grid-cols-[minmax(0,1fr)_120px_200px]">
+                <span className="text-ink">{t("Total")}</span>
+                <span className="text-right text-ink">{money(catTotal)}</span>
+                <span className="max-md:hidden" />
+              </div>
+            )}
           </Card>
         </div>
 
