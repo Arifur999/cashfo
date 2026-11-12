@@ -1255,12 +1255,13 @@ export type GroupExpenseCategory = string;
 // names), by shares, by meals (pooled into one meal rate), or by exact
 // amounts.
 export type GroupSplit = "EQUAL" | "SHARES" | "MEALS" | "EXACT";
-export type GroupKind = "FAMILY" | "MESS";
+// Trip and Office share everything equally, like a mess without meals.
+export type GroupKind = "FAMILY" | "MESS" | "TRIP" | "OFFICE";
 export type GroupPaidFrom = "FUND" | "MEMBER";
 export type GroupContributionKind = "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY";
 // Member: gives money to an accountant. Accountant: keeps the cash and does
 // the bazar (up to 2 in a group).
-export type GroupMemberRole = "MEMBER" | "ACCOUNTANT";
+export type GroupMemberRole = "MEMBER" | "ACCOUNTANT" | "VIEWER";
 // How costs shared "by cost split" are weighted.
 export type GroupCostSplit = "EQUAL" | "CUSTOM";
 

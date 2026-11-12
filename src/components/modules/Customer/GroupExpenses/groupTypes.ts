@@ -18,6 +18,9 @@ export interface GroupCardData {
   // Last month, when it was never closed though something was recorded in
   // it: the card asks for it to be closed.
   openMonth: MonthRange | null;
+  // Anything ever recorded (an expense, a contribution, a meal): a group
+  // with money entries can only be paused, never deleted.
+  hasEntries: boolean;
 }
 
 // What a group's page is told by its server page: the month being viewed

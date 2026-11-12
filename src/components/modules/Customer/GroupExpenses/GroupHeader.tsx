@@ -57,14 +57,14 @@ export function GroupHeader({ businessId, name, settings, tab, memberCount, role
         <Link href="/group-expenses" aria-label={t("Back to Group Expense")} className="-ml-2.5 flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface-sunken md:hidden">
           <ChevronLeft className="size-5.5" aria-hidden="true" />
         </Link>
-        <IconTile tone={kind.tone} size={48} className="size-control-lg rounded-[14px] max-md:hidden [&_svg]:size-6.5">
+        <IconTile tone="neutral" size={48} className={cn(kind.cls, "size-control-lg rounded-[14px] max-md:hidden [&_svg]:size-6.5")}>
           <kind.icon strokeWidth={1.75} />
         </IconTile>
         <span className="flex min-w-0 flex-1 flex-col gap-1.25">
           <span className="flex min-w-0 items-center gap-1.5 md:gap-2.5">
             {/* Normal line height: a tight one clips Bangla vowel signs under the truncation. */}
             <h1 className="truncate text-title text-ink md:text-page-title md:leading-normal">{name}</h1>
-            <Chip tone={kind.tone} className="px-2.25 max-md:h-4.5 max-md:px-1.75 max-md:text-[11px]">
+            <Chip tone="neutral" className={cn(kind.cls, "px-2.25 max-md:h-4.5 max-md:px-1.75 max-md:text-[11px]")}>
               {t(kind.label)}
             </Chip>
             {settings.pausedAt && (
@@ -84,7 +84,7 @@ export function GroupHeader({ businessId, name, settings, tab, memberCount, role
                   {groups.map((group) => (
                     <DropdownMenuItem key={group.id} asChild className={MENU_ITEM}>
                       <Link href={`/group-expenses/${group.id}`} aria-current={group.id === businessId ? "page" : undefined}>
-                        <IconTile tone={group.id === businessId ? kind.tone : "neutral"} size={32} className="size-7.5 rounded-[9px]">
+                        <IconTile tone="neutral" size={32} className={cn("size-7.5 rounded-[9px]", group.id === businessId && kind.cls)}>
                           {group.id === businessId ? <kind.icon strokeWidth={1.75} /> : <Users strokeWidth={1.75} />}
                         </IconTile>
                         <span className="min-w-0 flex-1 truncate">{group.name}</span>

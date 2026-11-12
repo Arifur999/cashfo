@@ -1,160 +1,188 @@
 "use client";
 
-import { ArrowRight, CircleAlert, ExternalLink, MoreHorizontal, Pause, Pencil, Play } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Pause, Pencil, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
-import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
-import Chip from "@/components/smartly/Chip";
-import IconTile from "@/components/smartly/IconTile";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { countLabel, groupMonthOf, groupTabHref } from "@/lib/customer/groupDisplay";
+import { countLabel, groupMonthOf } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
+import type { Fmt } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GROUP_KIND } from "./GroupBits";
 import type { GroupCardData } from "./groupTypes";
 
-interface GroupCardProps {
-  group: GroupCardData;
-  today: string;
+export interface GroupRowActions {
   onRename: () => void;
   onTogglePause: () => void;
+  onDelete: () => void;
 }
 
-// The months between two keys, both in.
-const monthsBetween = (from: string, to: string) => {
-  const [fy, fm] = from.split("-").map(Number);
-  const [ty, tm] = to.split("-").map(Number);
-  return Math.max(1, (ty - fy) * 12 + (tm - fm) + 1);
-};
+type Translate = (key: string, values?: Record<string, string>) => string;
 
-// One group on the list (the v16 GroupList board): its members and first
-// month, my role, the month's spending, budget and my balance, the budget
-// bar, and what my balance means. A paused group is greyed and listed last.
-export function GroupCard({ group, today, onRename, onTogglePause }: GroupCardProps) {
-  const { t, fmt } = useLocale();
-  const { workspace, members, settlement, settings, budget, openMonth } = group;
-  const kind = GROUP_KIND[settings.kind];
-  const paused = !!settings.pausedAt;
+// What a card and a table row both show of one group (the v16 GroupList
+// board): its span, my role, the month's spending against its budget, and
+// my balance. Worked out once, read by either view.
+export function groupRowView(group: GroupCardData, today: string, t: Translate, fmt: Fmt) {
+  const { workspace, members, settlement, settings, budget } = group;
   const money = (value: number) => formatCurrency(Math.abs(value), workspace.currency, fmt);
-  const href = `/group-expenses/${workspace.id}`;
   const active = members.filter((member) => member.status === "ACTIVE");
   const spent = Number(settlement.totalExpense);
-  const limit = budget ? Number(budget.budgetAmount) : null;
-  const used = limit ? Math.round((spent / limit) * 100) : null;
-  const over = limit !== null && spent > limit;
-  const sharing = settlement.members.filter((row) => row.sharing);
-  const paid = sharing.filter((row) => Number(row.grossDeposited) > 0).length;
-  // The group's span: its first month (a member's joining) to this one.
+  const limit = budget ? Number(budget.budgetAmount) : 0;
+  const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
+  const warnAt = settings.budgetWarnPercent ?? 90;
+  // The group's first month: its earliest member's joining.
   const startDay = settings.monthStartDay;
   const current = groupMonthOf(today, startDay);
   const first = [current, ...members.map((member) => groupMonthOf((member.joinedOn ?? member.createdAt).slice(0, 10), startDay))].sort()[0];
-  const months = monthsBetween(first, current);
-  const since = t("since {month}", { month: monthName(first, fmt, "long", true) });
-  // My balance: the signed-in owner's own member row this month.
   const isAdmin = workspace.role === "OWNER";
   const me = isAdmin ? members.find((member) => member.isOwner) : undefined;
-  const mine = me ? Number(settlement.members.find((row) => row.groupMemberId === me.id)?.balance ?? 0) : null;
-  const monthShort = monthName(current, fmt, "long");
+  const mine = me ? Number(settlement.members.find((row) => row.groupMemberId === me.id)?.balance ?? 0) : 0;
+  const even = Math.abs(mine) < 0.5;
+  return {
+    href: `/group-expenses/${workspace.id}`,
+    kind: GROUP_KIND[settings.kind],
+    paused: !!settings.pausedAt,
+    isAdmin,
+    count: active.length,
+    sub: `${countLabel(t, fmt, active.length, "{count} member", "{count} members")} · ${t("since {month}", { month: monthName(first, fmt, "long", true) })}`,
+    month: monthName(current, fmt, "long"),
+    spent: money(spent),
+    budget: limit > 0 ? money(limit) : t("Not set"),
+    hasBudget: limit > 0,
+    percentLabel: limit > 0 ? t("{percent}% of the budget used", { percent: formatCount(percent, fmt) }) : t("No budget for {month}", { month: monthName(current, fmt, "long") }),
+    left: limit <= 0 ? "–" : spent <= limit ? t("{amount} left", { amount: money(limit - spent) }) : t("{amount} over", { amount: money(spent - limit) }),
+    over: limit > 0 && spent > limit,
+    bar: Math.min(percent, 100),
+    barClass: limit <= 0 ? "bg-input" : percent > 100 ? "bg-expense-fill" : percent >= warnAt ? "bg-warning-fill" : "bg-emerald",
+    balance: even ? money(0) : formatSignedCurrency(mine, workspace.currency, fmt),
+    balanceClass: even ? "text-ink-soft" : mine > 0 ? "text-tint-green-ink" : "text-expense",
+    balanceHint: even ? t("All settled") : mine > 0 ? t("The group owes you") : t("You owe the group"),
+  };
+}
+
+// My role in a group, on its chip: the Admin runs it.
+export function RoleChip({ isAdmin, short = false }: { isAdmin: boolean; short?: boolean }) {
+  const { t } = useLocale();
+  const role = isAdmin ? t("Admin") : t("Member");
+  return (
+    <span title={isAdmin ? t("Everything: members, roles, settings, closing months") : undefined} className={cn("inline-flex h-6 shrink-0 items-center rounded-full px-2.25 text-caption font-semibold whitespace-nowrap", isAdmin ? "bg-mint-50 text-emerald" : "bg-quiet-chip text-ink-muted")}>
+      {short ? role : t("You: {role}", { role })}
+    </span>
+  );
+}
+
+// The ⋯ menu of a group: open, rename, pause or resume, and delete while
+// nothing was ever recorded in it (your only group stays).
+export function GroupMenu({ group, only, open, actions, withOpen }: { group: GroupCardData; only: boolean; open: string; actions: GroupRowActions; withOpen: boolean }) {
+  const { t } = useLocale();
+  const paused = !!group.settings.pausedAt;
+  const canDelete = !group.hasEntries && !only;
+  const item = "min-h-10 gap-2.5 rounded-sm px-2.5 text-[13.5px] font-medium text-ink focus:bg-hover [&_svg]:size-3.75 [&_svg]:text-ink-soft";
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger aria-label={t("More for {name}", { name: group.workspace.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted transition-colors hover:border-mint-200 hover:bg-emerald-wash hover:text-emerald data-open:border-mint-200 data-open:bg-emerald-wash data-open:text-emerald pointer-coarse:size-11">
+        <MoreHorizontal className="size-3.75" strokeWidth={2.5} aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-[12px] border border-line bg-surface p-1.5 shadow-overlay ring-0">
+        {withOpen && (
+          <DropdownMenuItem asChild className={item}>
+            <Link href={open}>
+              <ArrowRight strokeWidth={2} aria-hidden="true" />
+              {t("Open")}
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onSelect={actions.onRename} className={item}>
+          <Pencil strokeWidth={2} aria-hidden="true" />
+          {t("Rename")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={actions.onTogglePause} className={item}>
+          {paused ? <Play strokeWidth={2} aria-hidden="true" /> : <Pause strokeWidth={2} aria-hidden="true" />}
+          {paused ? t("Resume group") : t("Pause group")}
+        </DropdownMenuItem>
+        <span className="block pt-0.5 pr-2.5 pb-1.5 pl-8.75 text-[11.5px] leading-[1.4] text-ink-muted">{paused ? t("New entries are allowed again.") : t("Stops new entries. Nothing is deleted.")}</span>
+        <DropdownMenuSeparator className="mx-1 mt-0.5 mb-1 bg-divider" />
+        {canDelete ? (
+          <DropdownMenuItem onSelect={actions.onDelete} className={cn(item, "text-expense focus:bg-expense-soft focus:text-expense [&_svg]:text-expense")}>
+            <Trash2 strokeWidth={2} aria-hidden="true" />
+            {t("Delete group")}
+          </DropdownMenuItem>
+        ) : (
+          <span className="block px-2.5 pt-1.5 pb-2 text-[11.5px] leading-[1.45] text-ink-muted">{group.hasEntries ? t("Has money entries, so it can’t be deleted. Pause it instead.") : t("Your only group can’t be deleted.")}</span>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+interface GroupCardProps {
+  group: GroupCardData;
+  today: string;
+  only: boolean;
+  actions: GroupRowActions;
+}
+
+// One group on the list as a card (the v16 GroupList board). A paused group
+// is greyed and listed last.
+export function GroupCard({ group, today, only, actions }: GroupCardProps) {
+  const { t, fmt } = useLocale();
+  const view = groupRowView(group, today, t, fmt);
+  const { kind } = view;
 
   return (
-    <Card padding="none" className={cn("flex flex-col", paused && "bg-strip opacity-72")}>
-      <div className="flex items-start gap-3.5 px-5 pt-5 pb-4">
-        <IconTile tone={kind.tone} size={48}>
-          <kind.icon strokeWidth={1.75} />
-        </IconTile>
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <span className="flex min-w-0 flex-wrap items-center gap-2">
-            <Link href={href} className="truncate text-[18px] font-semibold tracking-normal text-ink hover:text-emerald">
-              {workspace.name}
+    <article className={cn("flex flex-col rounded-card border border-line-card shadow-card", view.paused ? "bg-hover" : "bg-surface")}>
+      <div className="flex items-start gap-3.5 pt-4.5 pr-4.5 pb-3.5 pl-5">
+        <span className={cn("flex size-11.5 shrink-0 items-center justify-center rounded-[12px] [&_svg]:size-5.75", kind.cls)}>
+          <kind.icon strokeWidth={1.75} aria-hidden="true" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.25">
+          <span className="flex min-w-0 items-center gap-2">
+            <Link href={view.href} title={group.workspace.name} className="min-w-0 truncate text-[18px] font-semibold tracking-normal text-ink hover:underline">
+              {group.workspace.name}
             </Link>
-            <Chip tone={kind.tone} className="px-2.25">
-              {t(kind.label)}
-            </Chip>
-            {paused && (
-              <Chip tone="neutral" className="gap-1 px-2.25">
-                <Pause className="size-3" aria-hidden="true" />
-                {t("Paused")}
-              </Chip>
-            )}
+            <span className={cn("shrink-0 rounded-full px-2.25 py-0.5 text-caption font-semibold", kind.cls)}>{t(kind.label)}</span>
+            {view.paused && <span className="shrink-0 rounded-full bg-surface-sunken px-2.25 py-0.5 text-caption font-semibold text-ink-soft">{t("Paused")}</span>}
           </span>
-          <span className="text-small text-ink-muted" title={countLabel(t, fmt, months, "{count} month", "{count} months")}>
-            {[countLabel(t, fmt, active.length, "{count} member", "{count} members"), since, sharing.length > 0 ? t("{count} of {total} paid in", { count: formatCount(paid, fmt), total: formatCount(sharing.length, fmt) }) : ""].filter(Boolean).join(" · ")}
-          </span>
+          <span className="text-[13px] text-ink-muted">{view.sub}</span>
         </div>
-        <Chip tone="mint" className="mt-1 shrink-0 px-2.25 max-sm:hidden">
-          {t(isAdmin ? "You: Admin" : "You: Member")}
-        </Chip>
-        <DropdownMenu>
-          <DropdownMenuTrigger aria-label={t("More actions for {name}", { name: workspace.name })} className="flex size-8.5 shrink-0 items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
-            <MoreHorizontal className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-55 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
-            <DropdownMenuItem asChild className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
-              <Link href={href}>
-                <ExternalLink className="size-4" aria-hidden="true" />
-                {t("Open group")}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onRename} className="rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
-              <Pencil className="size-4" aria-hidden="true" />
-              {t("Rename")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onTogglePause} className="items-start rounded-md px-3 py-2 text-body text-ink focus:bg-surface-sunken">
-              {paused ? <Play className="mt-0.5 size-4" aria-hidden="true" /> : <Pause className="mt-0.5 size-4" aria-hidden="true" />}
-              <span className="flex flex-col gap-0.5">
-                <span>{paused ? t("Resume group") : t("Pause group")}</span>
-                <span className="text-caption text-ink-muted">{paused ? t("Starts counting budget and expenses again.") : t("Hides it from new entries. Nothing is deleted.")}</span>
-              </span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <RoleChip isAdmin={view.isAdmin} />
+        {view.isAdmin && <GroupMenu group={group} only={only} open={view.href} actions={actions} withOpen />}
       </div>
 
-      <div className="grid grid-cols-3 border-y border-divider">
-        <Stat label={t("Spent in {month}", { month: monthShort })} value={money(spent)} divided />
-        <Stat label={t("Budget")} value={limit === null ? t("Not set") : money(limit)} tone={limit === null ? "text-ink-faint" : undefined} divided />
-        <Stat label={t("My balance")} value={mine === null ? "—" : Math.abs(mine) < 0.005 ? money(0) : formatSignedCurrency(mine, workspace.currency, fmt)} tone={mine === null || Math.abs(mine) < 0.005 ? "text-ink-2" : mine > 0 ? "text-income" : "text-expense"} />
+      <div className="grid grid-cols-3 border-t border-divider">
+        <Stat label={t("Spent in {month}", { month: view.month })} value={view.spent} divided />
+        <Stat label={t("Budget")} value={view.budget} tone={view.hasBudget ? undefined : "text-ink-faint"} divided />
+        <Stat label={t("My balance")} value={view.balance} tone={view.balanceClass} />
       </div>
 
-      <div className="flex flex-col gap-2 px-5 py-3.5">
-        <div className="flex flex-wrap justify-between gap-x-3 text-small">
-          <span className="text-ink-2">{used !== null ? t("{percent}% of the budget used", { percent: formatCount(used, fmt) }) : t("No budget set")}</span>
-          <span className={cn("font-semibold tabular-nums", over ? "text-expense" : "text-ink-2")}>{limit === null ? "—" : over ? t("{amount} over budget", { amount: money(spent - limit) }) : t("{amount} left", { amount: money(limit - spent) })}</span>
+      <div className="flex flex-col gap-1.75 border-t border-divider px-5 pt-3 pb-3.5">
+        <div className="flex justify-between gap-2.5 text-[12.5px]">
+          <span className="text-ink-2">{view.percentLabel}</span>
+          <span className={cn("font-semibold tabular-nums", !view.hasBudget ? "text-ink-faint" : view.over ? "text-expense" : "text-ink-2")}>{view.left}</span>
         </div>
-        <span role="progressbar" aria-label={t("Budget used")} aria-valuenow={Math.min(100, used ?? 0)} aria-valuemin={0} aria-valuemax={100} className="h-2 overflow-hidden rounded-full bg-surface-sunken">
-          <span className={cn("block h-full rounded-full", over ? "bg-expense-fill" : "bg-emerald")} style={{ width: `${Math.min(100, used ?? 0)}%` }} />
+        <span role="progressbar" aria-label={t("Budget used")} aria-valuenow={view.bar} aria-valuemin={0} aria-valuemax={100} className="h-2 overflow-hidden rounded-full bg-surface-sunken">
+          <span className={cn("block h-full rounded-full", view.barClass)} style={{ width: `${view.bar}%` }} />
         </span>
-        {openMonth && !paused && (
-          <Link href={groupTabHref(workspace.id, "settlement", { month: openMonth.key })} className="flex items-start gap-1.5 text-caption font-medium text-warning hover:underline">
-            <CircleAlert className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-            {t("{month} has ended. Close it to lock the numbers", { month: monthName(openMonth.key, fmt) })}
-          </Link>
-        )}
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-2 rounded-b-card border-t border-divider bg-strip px-5 py-3 text-small">
-        <span className={cn("min-w-0 truncate", mine === null || Math.abs(mine) < 0.005 ? "text-ink-soft" : mine > 0 ? "text-income" : "text-expense")}>
-          {paused ? t("Paused · nothing new is counted") : mine === null ? t("You don’t share this group’s costs") : Math.abs(mine) < 0.005 ? t("You are all square") : mine > 0 ? t("The group owes you") : t("You owe the group")}
-        </span>
-        <Button asChild size="sm" className="ml-auto">
-          <Link href={href}>
-            {t("Open")}
-            <ArrowRight aria-hidden="true" />
-          </Link>
-        </Button>
+      <div className="mt-auto flex items-center gap-2.5 rounded-b-card border-t border-divider bg-hover py-2.5 pr-3.5 pl-5">
+        <span className={cn("min-w-0 flex-1 truncate text-[12.5px] font-medium", view.balanceClass)}>{view.balanceHint}</span>
+        <Link href={view.href} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-emerald px-4 text-[13.5px] font-semibold text-on-action hover:bg-emerald-hover">
+          {t("Open")}
+          <ArrowRight className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
+        </Link>
       </div>
-    </Card>
+    </article>
   );
 }
 
 function Stat({ label, value, tone, divided = false }: { label: string; value: string; tone?: string; divided?: boolean }) {
   return (
-    <div className={cn("flex min-w-0 flex-col justify-between gap-1 px-3 py-3.5 md:px-5", divided && "border-r border-divider")}>
-      <span className="text-caption font-normal text-ink-muted">{label}</span>
-      <span className={cn("text-title font-bold wrap-break-word text-ink tabular-nums md:text-h3 md:font-bold", tone)}>{value}</span>
+    <div className={cn("flex min-w-0 flex-col gap-0.75 px-3 py-3 md:px-5", divided && "border-r border-divider")}>
+      <span className="text-caption text-ink-muted">{label}</span>
+      <span className={cn("text-[15px] font-bold wrap-break-word text-ink tabular-nums md:text-[17px]", tone)}>{value}</span>
     </div>
   );
 }

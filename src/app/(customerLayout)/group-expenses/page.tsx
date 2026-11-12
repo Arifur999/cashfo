@@ -25,17 +25,19 @@ export default async function GroupExpensesPage() {
       // Each group's month starts on its own day, so each card names its own.
       const settings = await getGroupSettings(workspace.id);
       const range = monthRangeOf(monthKeyFrom(undefined, today, settings.monthStartDay), settings.monthStartDay);
-      const [members, settlement, history, budgets] = await Promise.all([
+      const [members, settlement, history, budgets, ever] = await Promise.all([
         getGroupMembers(workspace.id),
         getGroupSettlement(workspace.id, range.from, range.to),
         getGroupSettlementHistory(workspace.id),
         getGroupMonthBudgets(workspace.id),
+        // All time, from long before any first record to a year ahead.
+        getGroupSettlement(workspace.id, "2000-01-01", `${Number(today.slice(0, 4)) + 1}-12-31`),
       ]);
       // Last month never closed: worth a reminder only when something was
       // recorded in it.
       const previous = unclosedPreviousMonth(history, members, range);
       const openMonth = previous && hasActivity(await getGroupSettlement(workspace.id, previous.from, previous.to)) ? previous : null;
-      return { workspace, members, range, settlement, settings, budget: budgetFor(budgets, range), closed: closedRecordFor(history, range) !== null, openMonth };
+      return { workspace, members, range, settlement, settings, budget: budgetFor(budgets, range), closed: closedRecordFor(history, range) !== null, openMonth, hasEntries: hasActivity(ever) };
     }),
   );
 
