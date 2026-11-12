@@ -365,11 +365,11 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         save(false);
       }}
       onOpenAutoFocus={focusFirst}
-      headClassName="items-center pt-4 pr-5 pb-3.5 pl-6"
+      headClassName="items-center border-head-rule pt-4 pr-5 pb-3.5 pl-6"
       titleClassName="text-[18px] font-bold"
-      closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line"
+      closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line [&_svg]:size-4.25 [&_svg]:stroke-[2.25]"
       bodyClassName="gap-4 px-6 py-4.5"
-      footerClassName="px-6"
+      footerClassName="border-head-rule px-6"
       title={t(editing ? "Edit loan entry" : "New loan entry")}
       footer={
         <div className="flex w-full flex-col gap-2">
@@ -578,7 +578,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           <label htmlFor="loan-ref" className={LABEL}>
             {t("Note or reference (optional)")}
           </label>
-          <Input id="loan-ref" size="lg" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={120} placeholder={t(profit ? "e.g. Sep profit · slip 4471" : "e.g. Loan no. BL-2231")} frameClassName="h-11.5 rounded-[12px] px-3" />
+          <Input id="loan-ref" size="lg" value={reference} onChange={(event) => setReference(event.target.value)} maxLength={120} placeholder={t("e.g. Loan no. BL-2231")} frameClassName="h-11.5 rounded-[12px] px-3" />
         </div>
       </div>
 
