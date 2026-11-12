@@ -1357,4 +1357,9 @@ export const groupExpensesDictionary: Record<string, string> = {
   "{name} will have given {amount} in {month}.": "{month}-এ {name} মোট {amount} দেবেন।",
   "Showing {from} to {to} of {count} · click a row for details": "{count}টির মধ্যে {from} থেকে {to} · বিস্তারিত দেখতে সারিতে চাপুন",
   "Money spent for the group": "গ্রুপের জন্য খরচ করা টাকা",
+  "Payments recorded for {month}": "{month}-এ রেকর্ড করা পেমেন্ট",
+  "Settlement money between members. It changes balances, not spending.": "মেম্বারদের মধ্যে হিসাব মেটানোর টাকা। এতে ব্যালান্স বদলায়, খরচ নয়।",
+  "From → to": "কে → কাকে",
+  "No payments recorded for {month} yet.": "{month}-এ এখনো কোনো পেমেন্ট রেকর্ড হয়নি।",
+  "Undo this payment": "এই পেমেন্ট ফিরিয়ে নিন",
 };
