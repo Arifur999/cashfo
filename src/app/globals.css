@@ -163,6 +163,37 @@
   --ie-lime: #15803d;
   /* The app's own Bank & transfer fees row. */
   --ie-slate: #64748b;
+  /* Asset categories (the Assets boards' ten swatches, and the grey of a
+     category that is gone). */
+  --asset-green: #1c7567;
+  --asset-blue: #2563eb;
+  --asset-orange: #ea580c;
+  --asset-pink: #db2777;
+  --asset-purple: #9333ea;
+  --asset-teal: #0e7490;
+  --asset-gold: #ca8a04;
+  --asset-indigo: #4f46e5;
+  --asset-red: #be123c;
+  --asset-leaf: #15803d;
+  --asset-grey: #5f6b68;
+  /* The Assets boards' own washes and inks: a loss, the washes behind a
+     rise or a drop, the quiet chip, the chart's paid line, the view toggle,
+     a picked row, a sold card, a card's inner rule, the dashboard table's
+     head, and the Update due chip. */
+  --loss-ink: #b91c1c;
+  --gain-wash: #f0fdf4;
+  --loss-wash: #fef2f2;
+  --quiet-chip: #f0f2f2;
+  --chart-cost: #a8b3b0;
+  --toggle-track: #e9edec;
+  --pick-wash: #f0f7f5;
+  --sold-card: #fbfbfb;
+  --card-rule: #f1f3f3;
+  --head-wash: #f7f9f8;
+  --head-rule: #eef1f0;
+  --due-ink: #92400e;
+  --alert-wash: #fff7ed;
+  --note-ink: #134e4a;
   /* Notes (the NotesHome board): a card's tint, and the five journal moods
      from Great to Hard. */
   --note-yellow: #fefce8;
@@ -381,6 +412,31 @@
   --ie-teal: #5cccdb;
   --ie-lime: #6ee7a0;
   --ie-slate: #94a3b8;
+  --asset-green: #4fb8a6;
+  --asset-blue: #86abf2;
+  --asset-orange: #f0a46a;
+  --asset-pink: #f08fbf;
+  --asset-purple: #d0a2fb;
+  --asset-teal: #5cccdb;
+  --asset-gold: #facc15;
+  --asset-indigo: #a5b0fb;
+  --asset-red: #fb7185;
+  --asset-leaf: #6ee7a0;
+  --asset-grey: #9aa7a4;
+  --loss-ink: #fca5a5;
+  --gain-wash: #0f2618;
+  --loss-wash: #2b1316;
+  --quiet-chip: #17241f;
+  --chart-cost: #4f5f5a;
+  --toggle-track: #17241f;
+  --pick-wash: #12302a;
+  --sold-card: #0d1915;
+  --card-rule: #1a2b24;
+  --head-wash: #0b1712;
+  --head-rule: #20332b;
+  --due-ink: #fcd34d;
+  --alert-wash: #33200e;
+  --note-ink: #9cc7be;
   --note-yellow: #29250f;
   --note-green: #0f2618;
   --note-blue: #111d33;
@@ -703,6 +759,20 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-blue-ink: var(--tint-blue-ink);
   --color-tint-green: var(--tint-green);
   --color-tint-green-ink: var(--tint-green-ink);
+  --color-loss-ink: var(--loss-ink);
+  --color-gain-wash: var(--gain-wash);
+  --color-loss-wash: var(--loss-wash);
+  --color-quiet-chip: var(--quiet-chip);
+  --color-chart-cost: var(--chart-cost);
+  --color-toggle-track: var(--toggle-track);
+  --color-pick-wash: var(--pick-wash);
+  --color-sold-card: var(--sold-card);
+  --color-card-rule: var(--card-rule);
+  --color-head-wash: var(--head-wash);
+  --color-head-rule: var(--head-rule);
+  --color-due-ink: var(--due-ink);
+  --color-alert-wash: var(--alert-wash);
+  --color-note-ink: var(--note-ink);
   --color-tint-indigo: var(--tint-indigo);
   --color-tint-indigo-ink: var(--tint-indigo-ink);
   --color-tint-emerald: var(--tint-emerald);

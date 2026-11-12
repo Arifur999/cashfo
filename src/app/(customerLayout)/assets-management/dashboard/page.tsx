@@ -17,9 +17,8 @@ export default async function AssetsDashboardPage() {
 
   const [assets, categories] = await Promise.all([getAssets(activeBusinessId), getAssetCategories(activeBusinessId)]);
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
-  const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
   // Keyed by workspace: a switch lands on this same page, and its drawers
   // and filters must not carry the other workspace's choices over.
-  return <AssetsDashboardPageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} today={getAppToday()} />;
+  return <AssetsDashboardPageClient key={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} today={getAppToday()} />;
 }

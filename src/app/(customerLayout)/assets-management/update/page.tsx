@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { UpdateValuePageClient } from "@/components/modules/Customer/Assets/UpdateValuePageClient";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
+import { getSavingsWallets, getWallets } from "@/lib/customer/accounts";
 import { getAssetCategories, getAssets } from "@/lib/customer/assets";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
@@ -15,11 +16,11 @@ export default async function UpdateAssetValuePage() {
   const activeBusinessId = await resolveActiveBusinessId(user.businesses);
   if (!activeBusinessId) redirect("/dashboard");
 
-  const [assets, categories] = await Promise.all([getAssets(activeBusinessId), getAssetCategories(activeBusinessId)]);
+  const [assets, categories, wallets, savingsWallets] = await Promise.all([getAssets(activeBusinessId), getAssetCategories(activeBusinessId), getWallets(activeBusinessId), getSavingsWallets(activeBusinessId)]);
   const activeBusiness = user.businesses.find((b) => b.id === activeBusinessId);
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
 
   // Keyed by workspace: a switch lands on this same page, and its drawers
   // and filter must not carry the other workspace's choices over.
-  return <UpdateValuePageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} today={getAppToday()} />;
+  return <UpdateValuePageClient key={activeBusinessId} businessId={activeBusinessId} assets={assets} categories={categories} wallets={[...wallets, ...savingsWallets]} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} today={getAppToday()} />;
 }

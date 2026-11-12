@@ -1,7 +1,6 @@
 "use server";
 
 import axios from "axios";
-import { getAppToday } from "@/lib/date";
 import { API_BASE_URL, getApiErrorMessage, type Asset, type AssetCategoryOption } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import type { ActionResult } from "./authActions";
@@ -24,6 +23,9 @@ const REFUSALS: { status?: number; pattern: RegExp; message: string }[] = [
   // Undo sale: the proceeds were spent from that wallet since the sale.
   { pattern: /only has .* the sale's .* can't be taken back/i, message: "The wallet the sale went into no longer holds that money, so the sale can't be undone." },
   { status: 409, pattern: /^this sale changed meanwhile/i, message: "This sale changed meanwhile. Reload and try again." },
+  { status: 409, pattern: /^this asset changed meanwhile/i, message: "This asset changed meanwhile. Reload and try again." },
+  { pattern: /^a delete can be undone for 10 minutes only$/i, message: "A delete can be undone for 10 minutes only" },
+  { status: 404, pattern: /^this delete can no longer be undone/i, message: "This delete can no longer be undone." },
   { pattern: /^account not found in this workspace$/i, message: "That wallet isn't in this workspace. Pick another wallet." },
   { status: 404, pattern: /^asset category not found$/i, message: "This asset type was already deleted." },
 ];
@@ -56,8 +58,7 @@ export interface PurchaseAssetInput {
   category: string;
   purchaseDate: string;
   purchasePrice: number;
-  // Omitted for something already owned (addOwnedAssetAction): a plain
-  // record, no money moves -- see backend AssetsService.purchase()'s comment.
+  // Omitted for something already owned: no money moves.
   purchaseAccountId?: string;
   notes?: string;
 }
@@ -67,26 +68,6 @@ export async function purchaseAssetAction(businessId: string, input: PurchaseAss
     const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to add the asset");
-}
-
-export interface AddOwnedAsset {
-  asset: Asset;
-  // False when the asset was saved but today's value wasn't.
-  valueSaved: boolean;
-}
-
-// Something already owned: what was paid, on the day it was bought, then
-// what it is worth today as a value check dated today. The backend files
-// the price as the value on the purchase day, so without the check today's
-// value would read as the price paid years ago, and the 6-month reminder
-// would fire at once. valueToday is left out when there is nothing to add
-// (bought today, at that value).
-export async function addOwnedAssetAction(businessId: string, input: Omit<PurchaseAssetInput, "purchaseAccountId">, valueToday?: number): Promise<ActionResult<AddOwnedAsset>> {
-  const added = await purchaseAssetAction(businessId, { ...input, purchaseAccountId: undefined });
-  if (!added.success || !added.data) return { success: false, message: added.message };
-  if (valueToday === undefined) return { success: true, data: { asset: added.data, valueSaved: true } };
-  const checked = await updateAssetValueAction(businessId, added.data.id, { value: valueToday, date: getAppToday() });
-  return { success: true, data: { asset: checked.data ?? added.data, valueSaved: checked.success } };
 }
 
 export interface SellAssetInput {
@@ -132,15 +113,18 @@ export async function deleteAssetValueUpdateAction(businessId: string, id: strin
   }, "Failed to delete the value update");
 }
 
-// A correction to an asset entered wrongly. Only what is sent changes; null
-// clears the note. The backend takes purchaseDate only for an owned asset
-// no wallet paid for (a paid purchase keeps its posting's date), never
-// later than a value recorded since, and says so otherwise.
+// A correction to an asset entered wrongly (Edit asset, Edit purchase). Only
+// what is sent changes; null clears the note, and a null purchaseAccountId
+// makes it an asset already owned. A new price, day or wallet voids the old
+// purchase posting and posts the new one; the day stays on or before every
+// value recorded since and the sale.
 export interface UpdateAssetInput {
   name?: string;
   category?: string;
   notes?: string | null;
   purchaseDate?: string;
+  purchasePrice?: number;
+  purchaseAccountId?: string | null;
 }
 
 export async function updateAssetAction(businessId: string, id: string, input: UpdateAssetInput): Promise<ActionResult<Asset>> {
@@ -150,13 +134,31 @@ export async function updateAssetAction(businessId: string, id: string, input: U
   }, "Failed to save the changes");
 }
 
-// Takes away an asset entered by mistake, with its value history. A
-// purchase paid from a wallet is voided with it, so the money is back in
-// that wallet; a sold asset needs its sale undone first.
+// Takes away an asset entered by mistake, with its value history and its
+// sale; its postings are voided, so the money is as if neither happened.
+// restoreAssetAction() undoes it for a few minutes.
 export async function deleteAssetAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.delete(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}`, { headers: await authHeaders() });
   }, "Failed to delete the asset");
+}
+
+// Undo of a delete, for a few minutes after it: the asset, its history and
+// its postings come back as they were.
+export async function restoreAssetAction(businessId: string, id: string): Promise<ActionResult<Asset>> {
+  return callApi(async () => {
+    const res = await customerApi.post<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/restore`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to undo the delete");
+}
+
+// A sale set right (Edit sale): its day, price, wallet and note. The old
+// income is voided and the new one posted together.
+export async function editAssetSaleAction(businessId: string, id: string, input: SellAssetInput): Promise<ActionResult<Asset>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<Asset>(`${API_BASE_URL}/api/businesses/${businessId}/assets/${id}/sale`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the sale");
 }
 
 // Undoes a sale recorded by mistake: the sale's income leaves the wallet it

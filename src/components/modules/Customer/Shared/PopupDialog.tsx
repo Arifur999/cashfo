@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
-const WIDTHS = { 420: "w-105", 440: "w-110", 460: "w-115", 480: "w-120", 500: "w-125", 520: "w-130", 540: "w-135", 560: "w-140", 580: "w-145", 620: "w-155", 940: "w-235" } as const;
+const WIDTHS = { 420: "w-105", 440: "w-110", 460: "w-115", 480: "w-120", 500: "w-125", 520: "w-130", 540: "w-135", 560: "w-140", 580: "w-145", 600: "w-150", 620: "w-155", 940: "w-235" } as const;
 
 interface PopupDialogProps {
   open: boolean;

@@ -1,12 +1,9 @@
 "use client";
 
-import { ArrowUpDown, Check, ChevronDown, ChevronRight, Package, Plus, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Button from "@/components/smartly/Button";
-import EmptyState from "@/components/smartly/EmptyState";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
-import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListRowButton } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
@@ -15,43 +12,29 @@ import {
   assetGain,
   assetSeries,
   assetsSummary,
-  categoryVisual,
-  gainChip,
   lastUpdateMovers,
   portfolioSeries,
   recentValueChanges,
   sortAssets,
+  updateCount,
   type ValueChange,
   type ValuePoint,
   valueByCategory,
 } from "@/lib/customer/assetDisplay";
-import { categoryColorVar } from "@/lib/customer/categoryTone";
-import { currencySymbol, formatCompactAmount, formatCurrency } from "@/lib/customer/currency";
+import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { plural } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { AssetDrawer } from "./AssetDrawer";
-import { AssetStatementDialog } from "./AssetStatementDialog";
-import { AssetTypeTile } from "./AssetTypeTile";
+import { assetLook, assetShort, AssetTile, assetTone, changePercent } from "./assetLook";
 import { AssetValueChart, type PointNote } from "./AssetValueChart";
-import { ReadOnlyNote } from "./ReadOnlyNote";
-import { UpdateValueDrawer } from "./UpdateValueDrawer";
 
 interface AssetsDashboardPageClientProps {
-  businessId: string;
   assets: Asset[];
   categories: AssetCategoryOption[];
   currency: string;
-  canManage: boolean;
   today: string;
 }
-
-// The board's table: Asset, Bought, Paid, Value today, Change, and the
-// chevron that opens the asset's history. Phones keep the name and type on
-// the left, the value and its change on the right.
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_140px_130px_140px_110px_16px]";
 
 const SORTS: { value: AssetSort; label: string }[] = [
   { value: "gain", label: "Highest gain first" },
@@ -62,9 +45,8 @@ const SORTS: { value: AssetSort; label: string }[] = [
   { value: "oldest", label: "Oldest bought" },
 ];
 
-const TONE_TEXT = { income: "text-income", expense: "text-expense", neutral: "text-ink-soft" } as const;
-const TONE_CHIP = { income: "bg-income-soft text-income", expense: "bg-expense-soft text-expense", neutral: "bg-surface-sunken text-ink-soft" } as const;
 const PANEL = "flex min-w-0 flex-col rounded-[18px] border border-line-card bg-surface shadow-[0_1px_2px_rgba(18,32,29,0.04)]";
+const TH = "px-4 py-3 text-[12px] font-medium whitespace-nowrap text-ink-muted";
 
 // A name's first word, for the notes under the chart's dates.
 const firstWord = (name: string) => {
@@ -72,15 +54,15 @@ const firstWord = (name: string) => {
   return word.length > 12 ? `${word.slice(0, 11)}…` : word;
 };
 
+const newestBought = (a: Asset, b: Asset) => b.purchaseDate.localeCompare(a.purchaseDate);
+
 // Assets overview: what the active assets are worth against what was paid,
-// what the sales made, how the total (or one asset) moved year by year,
-// the split by category, the latest value changes, and every active asset
-// in the order picked; each one opens its value history.
-export function AssetsDashboardPageClient({ businessId, assets, categories, currency, canManage, today }: AssetsDashboardPageClientProps) {
+// what the sales made, how the total (or one asset) moved year by year, the
+// split by category, the latest value changes, and every active asset in the
+// order picked; each one opens its value history on the Update page.
+export function AssetsDashboardPageClient({ assets, categories, currency, today }: AssetsDashboardPageClientProps) {
   const { t, fmt } = useLocale();
-  const [addOpen, setAddOpen] = useState(false);
-  const [reading, setReading] = useState<Asset | null>(null);
-  const [valuing, setValuing] = useState<Asset | null>(null);
+  const router = useRouter();
   const [sort, setSort] = useState<AssetSort>("gain");
   // The chart's asset, or "" for all of them together.
   const [chartFor, setChartFor] = useState("");
@@ -91,15 +73,14 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
   const points = picked ? assetSeries(picked) : portfolioSeries(assets, today);
   const first = points[0];
   const last = points[points.length - 1];
-  const rows = sortAssets(owned, sort);
   const money = (value: number) => formatCurrency(value, currency, fmt);
-  const signed = (value: number) => `${value > 0 ? "+ " : value < 0 ? "− " : ""}${money(Math.abs(value))}`;
-  const short = (value: number) => `${currencySymbol(currency, fmt)} ${formatCompactAmount(value, fmt)}`;
-  const pct = (change: number, base: number) => toLocaleDigits(gainChip(base ? (change / base) * 100 : 0).label, fmt);
-  const tone = (value: number) => (value > 0 ? "income" : value < 0 ? "expense" : "neutral");
+  const signed = (value: number) => formatSignedCurrency(value, currency, fmt);
+  const short = (value: number) => assetShort(value, currency, fmt);
+  const pct = (change: number, base: number) => toLocaleDigits(changePercent(change, base), fmt);
   const assetCount = (count: number) => t(count === 1 ? "{count} asset" : "{count} assets", { count: formatCount(count, fmt) });
   const sortLabel = t(SORTS.find((option) => option.value === sort)?.label ?? "");
   const pointLabel = (point: ValuePoint) => (point.today && !picked ? t("Today") : formatDate(`${point.date}T00:00:00.000Z`, "MMM yyyy", fmt));
+  const openHistory = (asset: Asset) => router.push(`/assets-management/update?history=${asset.id}`);
 
   // Under each date: what was added and sold there (all together), or where
   // one asset started and was sold.
@@ -119,19 +100,18 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
   let chartTitle = t("How your total asset value changed");
   let chartSub = t("Value at the end of each year. Sold assets count until the day they were sold. It steps up when you add an asset and moves with every value update.");
   if (picked && first && last) {
-    const updates = Math.max(0, points.length - 1 - (picked.status === "SOLD" ? 1 : 0));
+    const updates = updateCount(picked);
     chartTitle = picked.name;
     chartSub = [
       t(picked.purchaseAccountId ? "Bought at {amount} on {date}" : "Added at {amount} on {date}", { amount: short(first.value), date: formatDate(picked.purchaseDate, "d MMM yyyy", fmt) }),
       `${t(picked.status === "SOLD" ? "sold for {amount}" : "now {amount}", { amount: short(last.value) })} (${pct(last.value - first.value, first.value)})`,
-      updates === 0 ? t("no updates yet") : plural(t, updates, "{count} update", "{count} updates", undefined, fmt),
+      updates === 0 ? t("no updates yet") : t(updates === 1 ? "{count} update" : "{count} updates", { count: formatCount(updates, fmt) }),
     ].join(" · ");
   }
 
   const gain = summary.gain.amount;
   const realized = summary.soldGain.amount;
   const soldPaid = sold.reduce((sum, asset) => sum + Number(asset.purchasePrice), 0);
-  const soldGot = soldPaid + realized;
   const kpis = [
     {
       label: t("Current asset value"),
@@ -141,311 +121,306 @@ export function AssetsDashboardPageClient({ businessId, assets, categories, curr
       sub: owned.length ? t(owned.length === 1 ? "What your {count} active asset is worth today" : "What your {count} active assets are worth today", { count: formatCount(owned.length, fmt) }) : t("No active assets yet"),
     },
     { label: t("You paid"), value: money(summary.totalPaid), ink: "text-ink", lead: "", sub: t("Total price of your active assets") },
-    { label: t(gain < 0 ? "Unrealized loss" : "Unrealized gain"), value: signed(gain), ink: TONE_TEXT[tone(gain)], lead: pct(gain, summary.totalPaid), sub: t("compared with what you paid, not sold yet") },
+    { label: t(gain < 0 ? "Unrealized loss" : "Unrealized gain"), value: signed(gain), ink: assetTone(gain).ink, lead: pct(gain, summary.totalPaid), sub: ` ${t("compared with what you paid, not sold yet")}` },
     sold.length
       ? {
           label: t(realized < 0 ? "Sold assets · realized loss" : "Sold assets · realized gain"),
           value: signed(realized),
-          ink: TONE_TEXT[tone(realized)],
+          ink: assetTone(realized).ink,
           lead: "",
-          sub: t("{count} sold · got {got} for {paid} paid", { count: formatCount(sold.length, fmt), got: money(soldGot), paid: money(soldPaid) }),
+          sub: t("{count} sold · got {got} for {paid} paid", { count: formatCount(sold.length, fmt), got: money(soldPaid + realized), paid: money(soldPaid) }),
         }
       : { label: t("Sold assets"), value: money(0), ink: "text-ink-soft", lead: "", sub: t("Nothing sold yet") },
   ];
 
-  const byCategory = valueByCategory(owned).map((entry) => {
-    const paid = owned.filter((asset) => asset.category === entry.name).reduce((sum, asset) => sum + Number(asset.purchasePrice), 0);
-    const match = categories.find((category) => category.name === entry.name);
-    return { ...entry, paid, color: categoryColorVar(match?.color) };
-  });
+  const byCategory = valueByCategory(owned).map((entry) => ({
+    ...entry,
+    paid: owned.filter((asset) => asset.category === entry.name).reduce((sum, asset) => sum + Number(asset.purchasePrice), 0),
+    look: assetLook(categories, entry.name),
+  }));
   const changes = recentValueChanges(assets);
-  // The open statement, as the page last read it (an update made from it shows at once).
-  const statement = reading && (assets.find((asset) => asset.id === reading.id) ?? reading);
   const { rise, drop } = lastUpdateMovers(owned);
-  const movers: { change: ValueChange; label: string; box: string; ink: string }[] = [];
-  if (rise) movers.push({ change: rise, label: "Biggest rise at last update", box: "bg-income-soft/60", ink: "text-income" });
-  if (drop) movers.push({ change: drop, label: "Biggest drop at last update", box: "bg-expense-soft/60", ink: "text-expense" });
-  const moverLine = (change: ValueChange) => `${pct(change.to - change.from, change.from)} · ${short(change.from)} → ${short(change.to)}`;
+  const movers: { change: ValueChange; label: string; wash: string; ink: string }[] = [];
+  if (rise) movers.push({ change: rise, label: "Biggest rise at last update", wash: "bg-gain-wash", ink: "text-tint-green-ink" });
+  if (drop) movers.push({ change: drop, label: "Biggest drop at last update", wash: "bg-loss-wash", ink: "text-loss-ink" });
+  const rows = sortAssets(owned, sort);
+  // The chart's picker: active assets newest bought first, then the sold ones.
+  const pickable = [...[...owned].sort(newestBought), ...[...sold].sort(newestBought)];
+  const rowKey = (open: () => void) => (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      open();
+    }
+  };
 
   return (
-    <PageFrame className="gap-5 leading-[normal]">
+    <PageFrame className="gap-5 leading-[normal] md:pt-6 md:pb-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h1 className="text-page-title text-ink">{t("Assets overview")}</h1>
+          <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Assets overview")}</h1>
           <span className="text-[13px] text-ink-muted">
             {owned.length
               ? [t(owned.length === 1 ? "{count} active asset" : "{count} active assets", { count: formatCount(owned.length, fmt) }), sold.length ? t("{count} sold", { count: formatCount(sold.length, fmt) }) : null].filter(Boolean).join(" · ")
               : t("No active assets yet")}
           </span>
         </div>
-        {owned.length > 0 && (
-          <Button asChild variant="secondary" className="h-11 gap-2 rounded-full px-4">
-            <Link href="/assets-management/update">
-              <TrendingUp className="size-4" aria-hidden="true" />
-              {t("Update values")}
-            </Link>
-          </Button>
-        )}
+        <Link href="/assets-management/update" className="flex h-11 items-center gap-2 rounded-full border border-input bg-surface px-4 text-[14px] font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-ink-2">
+            <path d="M16 7h6v6" />
+            <path d="m22 7-8.5 8.5-5-5L2 17" />
+          </svg>
+          {t("Update values")}
+        </Link>
       </div>
-      {!canManage && <ReadOnlyNote>{t("Only the owner or an accountant can add, sell or update assets in this workspace.")}</ReadOnlyNote>}
 
-      {assets.length === 0 ? (
-        <EmptyState
-          icon={<Package />}
-          title={t("No asset yet")}
-          description={t("A plot of land, a car, gold, a laptop… add what you own and watch what it's worth.")}
-          action={
-            canManage && (
-              <Button onClick={() => setAddOpen(true)}>
-                <Plus strokeWidth={2.5} className="size-4" />
-                {t("Add asset")}
-              </Button>
-            )
-          }
-          className="min-h-80"
-        />
-      ) : (
-        <>
-          <section aria-label={t("Totals")} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {kpis.map((kpi) => (
-              <div key={kpi.label} className="flex min-w-0 flex-col gap-1.5 rounded-[16px] border border-line-card bg-surface px-5.5 py-5 shadow-[0_1px_2px_rgba(18,32,29,0.04)]">
-                <span className="text-[13px] font-medium text-ink-soft">{kpi.label}</span>
-                <span className={cn("truncate text-[26px] font-bold tracking-[-0.02em] tabular-nums", kpi.ink)}>{kpi.value}</span>
-                <span className="text-[12.5px] leading-[1.45] text-ink-muted">
-                  {kpi.lead && <span className={cn("font-semibold", kpi.ink)}>{kpi.lead} </span>}
-                  {kpi.sub}
-                </span>
-              </div>
-            ))}
-          </section>
-
-          <section aria-labelledby="asset-chart-title" className={cn(PANEL, "gap-1.5 px-6 pt-5 pb-4")}>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <h2 id="asset-chart-title" className="truncate text-[17px] font-semibold text-ink">
-                  {chartTitle}
-                </h2>
-                <span className="text-[13px] text-ink-muted">{chartSub}</span>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2.5 max-sm:w-full">
-                <span className="mr-2 flex gap-3.5 text-[12px] text-ink-soft">
-                  <span className="flex items-center gap-1.5">
-                    <span aria-hidden="true" className="h-0.75 w-4.5 rounded-full bg-emerald" />
-                    {t("Value")}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span aria-hidden="true" className="h-0 w-4.5 border-t-2 border-dashed border-(--chart-other)" />
-                    {t(picked ? "Price paid" : "What you paid")}
-                  </span>
-                </span>
-                <NativeSelect aria-label={t("Show value history for")} value={chartFor} onChange={(event) => setChartFor(event.target.value)} frameClassName="h-10 w-57.5 max-sm:w-full" className="text-[13px] font-semibold">
-                  <option value="">{t("All assets together")}</option>
-                  {assets.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.status === "SOLD" ? `${asset.name} (${t("Sold")})` : asset.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </div>
-            </div>
-            <AssetValueChart
-              points={points}
-              currency={currency}
-              paidLabel={t(picked ? "Price paid" : "What you paid")}
-              label={pointLabel}
-              note={pointNote}
-              markAll={!!picked}
-              ariaLabel={first && last ? t("Line chart of value from {from} to {to}", { from: pointLabel(first), to: pointLabel(last) }) : t("Value")}
-            />
-          </section>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <section aria-labelledby="asset-cat-title" className={cn(PANEL, "gap-3.5 px-5.5 py-5")}>
-              <div className="flex flex-col gap-0.5">
-                <h2 id="asset-cat-title" className="text-[17px] font-semibold text-ink">
-                  {t("By category")}
-                </h2>
-                <span className="text-[12.5px] text-ink-muted">{t("Share of today’s value, active assets only")}</span>
-              </div>
-              {byCategory.length === 0 ? (
-                <span className="py-6 text-center text-[13px] text-ink-muted">{t("No active assets yet.")}</span>
-              ) : (
-                <>
-                  <div aria-hidden="true" className="flex h-2.5 overflow-hidden rounded-full bg-surface-sunken">
-                    {byCategory.map((entry) => (
-                      <span key={entry.name} className="border-r-2 border-surface" style={{ width: `${entry.share.toFixed(2)}%`, background: entry.color }} />
-                    ))}
-                  </div>
-                  <ul className="flex flex-col">
-                    {byCategory.map((entry) => {
-                      const change = entry.value - entry.paid;
-                      return (
-                        <li key={entry.name} className="flex items-center gap-3 border-t border-divider py-2.25">
-                          <AssetTypeTile visual={categoryVisual(categories, entry.name)} className="size-8.5 rounded-[10px]" />
-                          <span className="flex min-w-0 flex-1 flex-col gap-px">
-                            <span className="truncate text-[14px] font-semibold text-ink">{t(entry.name)}</span>
-                            <span className="text-[12px] text-ink-muted">{assetCount(entry.count)}</span>
-                          </span>
-                          <span className="flex flex-col items-end gap-px tabular-nums">
-                            <span className="text-[14px] font-bold whitespace-nowrap text-ink">{money(entry.value)}</span>
-                            <span className={cn("text-[12px] whitespace-nowrap", TONE_TEXT[tone(change)])}>{t("{change} vs paid", { change: pct(change, entry.paid) })}</span>
-                          </span>
-                          <span className="w-11 text-right text-[13px] font-semibold text-ink-soft tabular-nums">{toLocaleDigits(`${Math.round(entry.share)}%`, fmt)}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </>
-              )}
-            </section>
-
-            <section aria-labelledby="asset-recent-title" className={cn(PANEL, "gap-3 px-5.5 py-5")}>
-              <div className="flex flex-col gap-0.5">
-                <h2 id="asset-recent-title" className="text-[17px] font-semibold text-ink">
-                  {t("Recent value changes")}
-                </h2>
-                <span className="text-[12.5px] text-ink-muted">{t("Latest updates and sales. Open one to see its full history.")}</span>
-              </div>
-              {(rise || drop) && (
-                <div className="grid grid-cols-2 gap-2.5">
-                  {movers.map((mover) => (
-                    <div key={mover.label} className={cn("flex min-w-0 flex-col gap-0.5 rounded-[12px] px-3 py-2.5", mover.box)}>
-                      <span className={cn("text-[11.5px] font-semibold", mover.ink)}>{t(mover.label)}</span>
-                      <span className="truncate text-[13.5px] font-semibold text-ink">{mover.change.asset.name}</span>
-                      <span className="truncate text-[12px] text-ink-soft tabular-nums">{moverLine(mover.change)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {changes.length === 0 ? (
-                <span className="py-6 text-center text-[13px] text-ink-muted">{t("No value updates yet. Update a value to see it here.")}</span>
-              ) : (
-                <ul className="flex flex-col">
-                  {changes.map((change) => {
-                    const moved = change.to - change.from;
-                    return (
-                      <li key={change.key} className="border-t border-divider">
-                        <button
-                          type="button"
-                          onClick={() => setReading(change.asset)}
-                          aria-label={t("Open value history of {name}", { name: change.asset.name })}
-                          className="-mx-1.5 flex w-[calc(100%+12px)] items-center gap-3 rounded-[8px] px-1.5 py-2 text-left hover:bg-surface-sunken/60 focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
-                        >
-                          <span className="flex w-11 shrink-0 flex-col items-center rounded-[10px] bg-surface-sunken py-1 tabular-nums">
-                            <span className="text-[15px] leading-[1.1] font-bold text-ink">{formatDate(`${change.date}T00:00:00.000Z`, "d", fmt)}</span>
-                            <span className="text-[10.5px] whitespace-nowrap text-ink-muted">{formatDate(`${change.date}T00:00:00.000Z`, "MMM yy", fmt)}</span>
-                          </span>
-                          <span className="flex min-w-0 flex-1 flex-col gap-px">
-                            <span className="truncate text-[14px] font-semibold text-ink">{change.asset.name}</span>
-                            <span className="flex min-w-0 gap-1 text-[12px] text-ink-muted">
-                              <span className="shrink-0">{t(change.kind === "sale" ? "Sold" : "Value updated")}</span>
-                              {change.note && <span className="truncate">· {change.note}</span>}
-                            </span>
-                          </span>
-                          <span className={cn("flex flex-col items-end gap-px tabular-nums", TONE_TEXT[tone(moved)])}>
-                            <span className="text-[13.5px] font-bold whitespace-nowrap">{signed(moved)}</span>
-                            <span className="text-[11.5px]">{pct(moved, change.from)}</span>
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
+      <section aria-label={t("Totals")} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {kpis.map((kpi) => (
+          <div key={kpi.label} className="flex min-w-0 flex-col gap-1.5 rounded-[16px] border border-line-card bg-surface px-5.5 py-5 shadow-[0_1px_2px_rgba(18,32,29,0.04)]">
+            <span className="text-[13px] font-medium text-ink-soft">{kpi.label}</span>
+            <span className={cn("truncate text-[26px] font-bold tracking-[-0.02em] tabular-nums", kpi.ink)}>{kpi.value}</span>
+            <span className="text-[12.5px] leading-[1.45] text-ink-muted">
+              {kpi.lead && <span className={cn("font-semibold", kpi.ink)}>{kpi.lead}</span>}
+              {kpi.sub}
+            </span>
           </div>
+        ))}
+      </section>
 
-          <ListCard
-            label={t("Your assets")}
-            title={t("Your assets")}
-            description={t("Sorted by {order} · active assets only · open one to see its history", { order: sortLabel.toLowerCase() })}
-            className="rounded-[18px]"
-            actions={
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" className="h-11 gap-2 rounded-[10px] px-3.5">
-                    <ArrowUpDown className="size-4" aria-hidden="true" />
-                    {t("Sort")}
-                    <ChevronDown className="size-3.5" aria-hidden="true" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60">
-                  {SORTS.map((option) => (
-                    <DropdownMenuItem key={option.value} onSelect={() => setSort(option.value)} className={cn("justify-between", option.value === sort && "font-semibold")}>
-                      {t(option.label)}
-                      {option.value === sort && <Check className="size-4 text-emerald" aria-hidden="true" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            }
-          >
-            {rows.length === 0 ? (
-              <p className="px-5 py-7 text-center text-[13px] text-ink-muted">{t("No active assets yet.")}</p>
-            ) : (
-              <div role="rowgroup">
-                <ListHead columns={COLUMNS}>
-                  <ListHeadCell>{t("Asset")}</ListHeadCell>
-                  <ListHeadCell>{t("Bought")}</ListHeadCell>
-                  <ListHeadCell align="end">{t("Paid@@price")}</ListHeadCell>
-                  <ListHeadCell align="end">{t("Value today")}</ListHeadCell>
-                  <ListHeadCell align="end">{t("Change@@value")}</ListHeadCell>
-                  <ListHeadCell>
-                    <span className="sr-only">{t("Open history")}</span>
-                  </ListHeadCell>
-                </ListHead>
-                {rows.map((asset) => {
-                  const chip = gainChip(assetGain(asset).percent);
-                  const changeChip = <span className={cn("inline-block rounded-[6px] px-2 py-0.75 text-[12.5px] font-semibold tabular-nums", TONE_CHIP[chip.tone])}>{toLocaleDigits(chip.label, fmt)}</span>;
+      <section aria-labelledby="asset-chart-title" className={cn(PANEL, "gap-1.5 px-6 pt-5 pb-4")}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h2 id="asset-chart-title" className="truncate text-[17px] font-semibold text-ink">
+              {chartTitle}
+            </h2>
+            <span className="text-[13px] text-ink-muted">{chartSub}</span>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2.5 max-sm:w-full">
+            <span className="mr-2 flex gap-3.5 text-[12px] text-ink-soft">
+              <span className="flex items-center gap-1.5">
+                <span aria-hidden="true" className="h-0.75 w-4.5 rounded-[2px] bg-emerald" />
+                {t("Value")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span aria-hidden="true" className="h-0 w-4.5 border-t-2 border-dashed border-chart-cost" />
+                {t(picked ? "Price paid" : "What you paid")}
+              </span>
+            </span>
+            <select
+              aria-label={t("Show value history for")}
+              value={chartFor}
+              onChange={(event) => setChartFor(event.target.value)}
+              className="h-10 max-w-57.5 cursor-pointer rounded-[10px] border border-input bg-surface px-2.5 text-[13px] font-semibold text-ink max-sm:w-full max-sm:max-w-none"
+            >
+              <option value="">{t("All assets together")}</option>
+              {pickable.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.status === "SOLD" ? `${asset.name} ${t("(sold)")}` : asset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {points.length > 0 && first && last ? (
+          <AssetValueChart
+            points={points}
+            short={short}
+            label={pointLabel}
+            note={pointNote}
+            markAll={!!picked}
+            ariaLabel={t("Line chart of value from {from} to {to}", { from: pointLabel(first), to: pointLabel(last) })}
+          />
+        ) : (
+          <div className="flex h-55 flex-col items-center justify-center gap-2 text-center">
+            <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-[14px] bg-quiet-chip text-ink-muted">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                <path d="m19 9-5 5-4-4-3 3" />
+              </svg>
+            </span>
+            <span className="text-[15px] font-semibold text-ink">{t("No assets yet")}</span>
+            <span className="max-w-105 text-[13px] text-ink-muted">{t("Add an asset in Purchase & Sell to see how its value changes over time.")}</span>
+            <Link href="/assets-management/purchase-sell" className="mt-1 flex h-10 items-center rounded-full bg-emerald px-4 text-[13px] font-semibold text-white hover:bg-emerald-hover">
+              {t("Go to Purchase & Sell")}
+            </Link>
+          </div>
+        )}
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section aria-labelledby="asset-cat-title" className={cn(PANEL, "gap-3.5 px-5.5 py-5")}>
+          <div className="flex flex-col gap-0.5">
+            <h2 id="asset-cat-title" className="text-[17px] font-semibold text-ink">
+              {t("By category")}
+            </h2>
+            <span className="text-[12.5px] text-ink-muted">{t("Share of today’s value, active assets only")}</span>
+          </div>
+          {byCategory.length === 0 ? (
+            <span className="py-6 text-center text-[13px] text-ink-muted">{t("No active assets yet.")}</span>
+          ) : (
+            <>
+              <div aria-hidden="true" className="flex h-2.5 overflow-hidden rounded-full bg-quiet-chip">
+                {byCategory.map((entry) => (
+                  <span key={entry.name} className="border-r-2 border-surface" style={{ width: `${entry.share.toFixed(2)}%`, background: entry.look.ink }} />
+                ))}
+              </div>
+              <ul className="flex flex-col">
+                {byCategory.map((entry) => {
+                  const change = entry.value - entry.paid;
                   return (
-                    <ListRow key={asset.id} columns={COLUMNS} className="hover:bg-surface-sunken/50">
-                      <ListCell className="flex min-w-0 items-center gap-3">
-                        <AssetTypeTile visual={categoryVisual(categories, asset.category)} className="size-9 rounded-[10px]" />
-                        <span className="flex min-w-0 flex-col gap-px">
-                          <ListRowButton onClick={() => setReading(asset)} aria-label={t("Open value history of {name}", { name: asset.name })} className="truncate text-[14px] font-semibold text-ink">
-                            {asset.name}
-                          </ListRowButton>
-                          <span className="truncate text-[12px] font-normal text-ink-muted">{t(asset.category)}</span>
-                        </span>
-                      </ListCell>
-                      <ListCell className="hidden text-[13.5px] whitespace-nowrap text-ink-2 md:block">{formatDate(asset.purchaseDate, "d MMM yyyy", fmt)}</ListCell>
-                      <ListCell align="end" className="hidden text-[13.5px] whitespace-nowrap text-ink-soft tabular-nums md:block">
-                        {money(Number(asset.purchasePrice))}
-                      </ListCell>
-                      <ListCell align="end" className="flex flex-col items-end gap-px">
-                        <span className="text-[14px] font-bold whitespace-nowrap text-ink tabular-nums">{money(Number(asset.currentValue))}</span>
-                        <span className="md:hidden">{changeChip}</span>
-                      </ListCell>
-                      <ListCell align="end" className="hidden md:flex md:justify-end">
-                        {changeChip}
-                      </ListCell>
-                      <ListCell className="hidden text-ink-faint md:block">
-                        <ChevronRight className="size-4" aria-hidden="true" />
-                      </ListCell>
-                    </ListRow>
+                    <li key={entry.name} className="flex items-center gap-3 border-t border-quiet-chip py-2.25">
+                      <AssetTile look={entry.look} className="size-8.5 rounded-[10px]" glyph={17} />
+                      <span className="flex min-w-0 flex-1 flex-col gap-px">
+                        <span className="truncate text-[14px] font-semibold text-ink">{t(entry.name)}</span>
+                        <span className="text-[12px] text-ink-muted">{assetCount(entry.count)}</span>
+                      </span>
+                      <span className="flex flex-col items-end gap-px tabular-nums">
+                        <span className="text-[14px] font-bold whitespace-nowrap text-ink">{money(entry.value)}</span>
+                        <span className={cn("text-[12px] whitespace-nowrap", assetTone(change).ink)}>{t("{change} vs paid", { change: pct(change, entry.paid) })}</span>
+                      </span>
+                      <span className="w-11 text-right text-[13px] font-semibold text-ink-soft tabular-nums">{toLocaleDigits(`${Math.round(entry.share)}%`, fmt)}</span>
+                    </li>
                   );
                 })}
-              </div>
-            )}
-          </ListCard>
-        </>
-      )}
+              </ul>
+            </>
+          )}
+        </section>
 
-      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} currency={currency} variant="add" />
-      <AssetStatementDialog
-        open={reading !== null}
-        onClose={() => setReading(null)}
-        asset={statement}
-        categories={categories}
-        currency={currency}
-        businessId={businessId}
-        canManage={canManage}
-        onUpdate={() => {
-          setValuing(statement);
-          setReading(null);
-        }}
-      />
-      <UpdateValueDrawer open={valuing !== null} onClose={() => setValuing(null)} businessId={businessId} asset={valuing} categories={categories} currency={currency} />
+        <section aria-labelledby="asset-recent-title" className={cn(PANEL, "gap-3 px-5.5 py-5")}>
+          <div className="flex flex-col gap-0.5">
+            <h2 id="asset-recent-title" className="text-[17px] font-semibold text-ink">
+              {t("Recent value changes")}
+            </h2>
+            <span className="text-[12.5px] text-ink-muted">{t("Latest updates and sales. Open one to see its full history.")}</span>
+          </div>
+          {movers.length > 0 && (
+            <div className="grid grid-cols-2 gap-2.5">
+              {movers.map((mover) => (
+                <div key={mover.label} className={cn("flex min-w-0 flex-col gap-0.5 rounded-[12px] px-3 py-2.5", mover.wash)}>
+                  <span className={cn("text-[11.5px] font-semibold", mover.ink)}>{t(mover.label)}</span>
+                  <span className="truncate text-[13.5px] font-semibold text-ink">{mover.change.asset.name}</span>
+                  <span className="truncate text-[12px] text-ink-soft tabular-nums">{`${pct(mover.change.to - mover.change.from, mover.change.from)} · ${short(mover.change.from)} → ${short(mover.change.to)}`}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-col">
+            {changes.map((change) => {
+              const moved = change.to - change.from;
+              const open = () => openHistory(change.asset);
+              return (
+                <div
+                  key={change.key}
+                  role="button"
+                  tabIndex={0}
+                  onClick={open}
+                  onKeyDown={rowKey(open)}
+                  aria-label={t("Open value history of {name}", { name: change.asset.name })}
+                  className="-mx-1.5 flex cursor-pointer items-center gap-3 rounded-[8px] border-t border-quiet-chip px-1.5 py-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
+                >
+                  <span className="flex w-11 shrink-0 flex-col items-center rounded-[10px] bg-surface-sunken py-1">
+                    <span className="text-[15px] leading-[1.1] font-bold text-ink">{formatDate(`${change.date}T00:00:00.000Z`, "d", fmt)}</span>
+                    <span className="text-[10.5px] whitespace-nowrap text-ink-muted">{formatDate(`${change.date}T00:00:00.000Z`, "MMM yy", fmt)}</span>
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-px">
+                    <span className="truncate text-[14px] font-semibold text-ink">{change.asset.name}</span>
+                    <span className="flex min-w-0 gap-1 text-[12px] text-ink-muted">
+                      <span className="shrink-0">{t(change.kind === "sale" ? "Sold" : "Value updated")}</span>
+                      {change.note && <span className="truncate">· {change.note}</span>}
+                    </span>
+                  </span>
+                  <span className={cn("flex flex-col items-end gap-px tabular-nums", assetTone(moved).ink)}>
+                    <span className="text-[13.5px] font-bold whitespace-nowrap">{signed(moved)}</span>
+                    <span className="text-[11.5px]">{pct(moved, change.from)}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {changes.length === 0 && <span className="py-6 text-center text-[13px] text-ink-muted">{t("No value updates yet. Update a value to see it here.")}</span>}
+        </section>
+      </div>
+
+      <section aria-labelledby="asset-table-title" className={PANEL}>
+        <div className="flex items-center justify-between gap-4 px-5 py-4">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h2 id="asset-table-title" className="text-[17px] font-semibold text-ink">
+              {t("Your assets")}
+            </h2>
+            <span className="text-[12.5px] text-ink-muted">{t("Sorted by {order} · active assets only · open one to see its history", { order: sortLabel.toLowerCase() })}</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-11 shrink-0 items-center gap-2 rounded-[10px] border border-input bg-surface px-3.5 text-[14px] font-semibold text-ink hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-(--focus-ring)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-ink-2">
+                <path d="M3 6h18" />
+                <path d="M7 12h10" />
+                <path d="M10 18h4" />
+              </svg>
+              {t("Sort")}
+              <ChevronDown className="size-3.5 text-ink-muted" strokeWidth={2.25} aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-[12px] border border-line-card p-1.5 shadow-[0_12px_32px_rgba(18,32,29,0.14)]">
+              {SORTS.map((option) => {
+                const on = option.value === sort;
+                return (
+                  <DropdownMenuItem key={option.value} onSelect={() => setSort(option.value)} className={cn("min-h-10 justify-between rounded-[8px] px-2.5 text-[13.5px] text-ink", on ? "bg-pick-wash font-semibold" : "font-medium")}>
+                    {t(option.label)}
+                    {on && <span className="font-bold text-emerald">✓</span>}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-170 table-fixed border-collapse">
+            <thead>
+              <tr className="border-y border-head-rule bg-head-wash">
+                <th className={cn(TH, "pl-5 text-left")}>{t("Asset")}</th>
+                <th className={cn(TH, "w-43 text-left")}>{t("Bought")}</th>
+                <th className={cn(TH, "w-40.5 text-right")}>{t("Paid@@price")}</th>
+                <th className={cn(TH, "w-43 text-right")}>{t("Value today")}</th>
+                <th className={cn(TH, "w-35.5 text-right")}>{t("Change@@value")}</th>
+                <th className="w-9 py-3 pr-5">
+                  <span className="sr-only">{t("Open history")}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((asset) => {
+                const look = assetLook(categories, asset.category);
+                const change = assetGain(asset).amount;
+                const open = () => openHistory(asset);
+                return (
+                  <tr key={asset.id} tabIndex={0} onClick={open} onKeyDown={rowKey(open)} aria-label={t("Open value history of {name}", { name: asset.name })} className="cursor-pointer border-b border-quiet-chip hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--focus-ring)">
+                    <td className="py-3 pr-4 pl-5">
+                      <span className="flex min-w-0 items-center gap-3">
+                        <AssetTile look={look} className="size-9 rounded-[10px]" glyph={18} />
+                        <span className="flex min-w-0 flex-col gap-px">
+                          <span title={asset.name} className="truncate text-[14px] font-semibold text-ink">
+                            {asset.name}
+                          </span>
+                          <span className="truncate text-[12px] text-ink-muted">{t(asset.category)}</span>
+                        </span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[13.5px] whitespace-nowrap text-ink-2">{formatDate(asset.purchaseDate, "d MMM yyyy", fmt)}</td>
+                    <td className="px-4 py-3 text-right text-[13.5px] whitespace-nowrap text-ink-soft tabular-nums">{money(Number(asset.purchasePrice))}</td>
+                    <td className="px-4 py-3 text-right text-[14px] font-bold whitespace-nowrap text-ink tabular-nums">{money(Number(asset.currentValue))}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={cn("inline-block rounded-[6px] px-2 py-0.75 text-[12.5px] font-semibold tabular-nums", change === 0 ? "bg-quiet-chip" : assetTone(change).chip, assetTone(change).ink)}>{pct(change, Number(asset.purchasePrice))}</span>
+                    </td>
+                    <td className="py-3 pr-5 text-right">
+                      <ChevronRight className="inline size-4 align-middle text-ink-faint" aria-hidden="true" />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {rows.length === 0 && <div className="px-5 py-7 text-center text-[13px] text-ink-muted">{t("No active assets yet.")}</div>}
+      </section>
     </PageFrame>
   );
 }

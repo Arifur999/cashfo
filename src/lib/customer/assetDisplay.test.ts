@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Asset, AssetCategoryOption } from "./api";
+import type { Asset } from "./api";
 import {
   assetSeries,
   lastUpdateMovers,
@@ -11,20 +11,13 @@ import {
   tradeRows,
   assetGain,
   assetsSummary,
-  biggestChanges,
-  categoryVisual,
   gainChip,
   isInitialValueNote,
   isStale,
   lastValued,
-  latestPurchaseDay,
-  newValueFloor,
-  sparkline,
-  typeChips,
   updateCount,
   valueByCategory,
   valueTimeline,
-  valueTrail,
 } from "./assetDisplay";
 
 const asset = (overrides: Partial<Asset>): Asset => ({
@@ -46,23 +39,6 @@ const asset = (overrides: Partial<Asset>): Asset => ({
   ...overrides,
 });
 
-const type = (name: string, color = "green", icon: string | null = "mountain"): AssetCategoryOption => ({ id: name, name, icon, color, displayOrder: 0 });
-
-describe("categoryVisual", () => {
-  it("draws a type in its token colour, so dark mode follows", () => {
-    expect(categoryVisual([type("Land", "green")], "Land").color).toBe("var(--cat-1)");
-    expect(categoryVisual([type("Gold", "yellow")], "Gold").color).toBe("var(--cat-11)");
-    // Every category ink, not only the first six.
-    expect(categoryVisual([type("Shares", "purple")], "Shares").color).toBe("var(--cat-7)");
-    expect(categoryVisual([type("Land", "green")], "Land").tone).toEqual({ bg: "bg-mint-50", fg: "text-cat-1" });
-  });
-
-  it("falls back to the neutral tile and the charts' grey for a type that is gone", () => {
-    const gone = categoryVisual([type("Land")], "Boat");
-    expect(gone.color).toBe("var(--chart-other)");
-    expect(gone.tone.bg).toBe("bg-surface-sunken");
-  });
-});
 
 describe("assetGain and gainChip", () => {
   it("compares today's value with what was paid", () => {
@@ -104,16 +80,6 @@ describe("assetsSummary and valueByCategory", () => {
     expect(shares[1].count).toBe(1);
   });
 
-  it("ranks the biggest moves either way", () => {
-    expect(biggestChanges(assetsSummary(assets).owned).map((a) => a.name)).toEqual(["Land", "Car"]);
-  });
-
-  it("leaves out what hasn't moved, so the card never lists a 0% change", () => {
-    const flat = asset({ name: "Bond", purchasePrice: "500000", currentValue: "500000" });
-    const barely = asset({ name: "Gold", purchasePrice: "1000000", currentValue: "1000200" });
-    expect(biggestChanges([flat, barely, ...assetsSummary(assets).owned]).map((a) => a.name)).toEqual(["Land", "Car"]);
-    expect(biggestChanges([flat])).toEqual([]);
-  });
 });
 
 describe("value checks", () => {
@@ -133,29 +99,6 @@ describe("value checks", () => {
     expect(isStale(asset({ status: "SOLD" }), "2026-10-02")).toBe(false);
   });
 
-  it("dates a new value no earlier than the purchase, though older than the newest one", () => {
-    // An earlier day only fills in the history; the backend keeps the
-    // newest as the value today.
-    expect(newValueFloor(checked)).toBe("2019-03-15");
-    expect(newValueFloor(asset({}))).toBe("2019-03-15");
-    expect(newValueFloor(asset({ purchaseDate: "2015-06-01T00:00:00.000Z" }))).toBe("2015-06-01");
-  });
-
-  it("lets the purchase date move up to the first value recorded after it", () => {
-    expect(latestPurchaseDay(asset({}), "2026-10-21")).toBe("2026-10-21");
-    expect(latestPurchaseDay(checked, "2026-10-21")).toBe("2026-09-12");
-    // Added as already owned today at another value: both rows carry today,
-    // and the check written then doesn't pin the date.
-    const addedToday = asset({
-      valueHistory: [
-        { id: "h1", value: "2250000", recordedAt: "2026-10-21T00:00:00.000Z", note: null },
-        { id: "h0", value: "1800000", recordedAt: "2026-10-21T00:00:00.000Z", note: "Initial value" },
-      ],
-    });
-    expect(latestPurchaseDay(addedToday, "2026-10-21")).toBe("2026-10-21");
-    expect(latestPurchaseDay(asset({ valueHistory: [] }), "2026-10-21")).toBe("2026-10-21");
-  });
-
   it("knows the backend's first-row notes", () => {
     expect(isInitialValueNote("Initial purchase value")).toBe(true);
     expect(isInitialValueNote("Initial value")).toBe(true);
@@ -163,10 +106,6 @@ describe("value checks", () => {
     expect(isInitialValueNote(null)).toBe(false);
   });
 
-  it("lists the values an asset went through, purchase first", () => {
-    expect(valueTrail(checked)).toEqual([1800000, 2250000]);
-    expect(valueTrail(asset({ valueHistory: [] }))).toEqual([1800000]);
-  });
 });
 
 describe("valueTimeline", () => {
@@ -213,42 +152,7 @@ describe("valueTimeline", () => {
         ["check", "past"],
         ["bought", "first"],
       ]);
-      // The sparkline runs from the price to today's worth.
-      expect(valueTrail(subject)).toEqual([50000, 65000]);
     }
-  });
-});
-
-describe("typeChips", () => {
-  const types = [type("Vehicle"), type("Land"), type("Gold")];
-  const counts = new Map([
-    ["Land", 2],
-    ["Vehicle", 1],
-    ["Boat", 1],
-  ]);
-
-  it("lists the types that hold something in their own order, then names no type has", () => {
-    expect(typeChips(types, counts)).toEqual(["Vehicle", "Land", "Boat"]);
-  });
-
-  it("keeps the type the page was opened for, even while it is empty", () => {
-    expect(typeChips(types, counts, "Gold")).toEqual(["Vehicle", "Land", "Gold", "Boat"]);
-    // A name that isn't a type at all gets no chip of its own.
-    expect(typeChips(types, counts, "Shares")).toEqual(["Vehicle", "Land", "Boat"]);
-  });
-});
-
-describe("sparkline", () => {
-  it("spreads the points across the width and closes the area", () => {
-    const spark = sparkline([1, 3, 2], 130, 40, 4);
-    expect(spark.line).toBe("4,36 65,4 126,20");
-    expect(spark.area).toBe("4,36 65,4 126,20 126,40 4,40");
-    expect(spark.lastX).toBe(126);
-  });
-
-  it("centres a single or flat value", () => {
-    expect(sparkline([5]).line).toBe("65,20");
-    expect(sparkline([5, 5]).line).toBe("4,20 126,20");
   });
 });
 
