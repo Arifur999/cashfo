@@ -15,6 +15,7 @@ import { mealText, mealValue, unitsOf } from "@/lib/customer/groupMeals";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { redigit } from "@/lib/i18n/formatPrefs";
+import { givesMoney } from "@/lib/customer/groupFamily";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { BalanceCell, CategoryTile, categoryBarClass, MemberAvatar } from "./GroupBits";
@@ -52,7 +53,8 @@ export function MessDashboard({ data, view, onRecordPayment, onStatement, onSetB
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const month = monthName(range.key, fmt);
   const spent = Number(settlement.totalExpense);
-  const deposits = data.contributions.filter((c) => Number(c.amount) > 0);
+  // Money handed in: no settle-ups, no balance carried in.
+  const deposits = data.contributions.filter((c) => givesMoney(c) && Number(c.amount) > 0);
   const contributed = deposits.reduce((sum, c) => sum + Number(c.amount), 0);
   const returned = data.contributions.filter((c) => Number(c.amount) < 0).reduce((sum, c) => sum - Number(c.amount), 0);
   const top = view.byCategory.slice(0, 2);

@@ -56,6 +56,27 @@ export function settlePairs(contributions: GroupContribution[]): SettlePair[] {
 }
 
 // What each member's settle-ups added to their balance.
+// Money handed in: deposits less returns. A balance carried in when last
+// month closed and a settle-up payment are not money given, so neither counts.
+export const givesMoney = (row: Pick<GroupContribution, "kind">) => row.kind === "DEPOSIT" || row.kind === "RETURN";
+
+// What each member handed in (deposits less returns), exact to the paisa.
+export function givenBy(contributions: Pick<GroupContribution, "kind" | "groupMemberId" | "amount">[]): Record<string, number> {
+  const sums: Record<string, number> = {};
+  for (const row of contributions) if (givesMoney(row)) sums[row.groupMemberId] = (paisa(sums[row.groupMemberId] ?? 0) + paisa(row.amount)) / 100;
+  return sums;
+}
+
+// What each member carried in from last month's close.
+export function carriedBy(contributions: Pick<GroupContribution, "kind" | "groupMemberId" | "amount">[]): Record<string, number> {
+  const sums: Record<string, number> = {};
+  for (const row of contributions) if (row.kind === "CARRY") sums[row.groupMemberId] = (paisa(sums[row.groupMemberId] ?? 0) + paisa(row.amount)) / 100;
+  return sums;
+}
+
+// Everything handed in, all members together.
+export const totalGiven = (contributions: Pick<GroupContribution, "kind" | "groupMemberId" | "amount">[]): number => Object.values(givenBy(contributions)).reduce((sum, value) => (paisa(sum) + paisa(value)) / 100, 0);
+
 export function settleSums(contributions: GroupContribution[]): Record<string, number> {
   const sums: Record<string, number> = {};
   for (const row of contributions) if (row.kind === "SETTLE") sums[row.groupMemberId] = (paisa(sums[row.groupMemberId] ?? 0) + paisa(row.amount)) / 100;

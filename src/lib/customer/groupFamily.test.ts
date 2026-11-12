@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GroupContribution, GroupExpenseCategoryOption, GroupMember, GroupMonthlyBudget, GroupSettlementMemberRow } from "./api";
-import { addsUpToHundred, budgetMonths, budgetPageMonths, budgetTotals, categoryRows, costShares, mainAccountantId, monthEndOf, settlementCards, settleProgress, spendByMonthKey } from "./groupFamily";
+import { addsUpToHundred, budgetMonths, carriedBy, givenBy, totalGiven, budgetPageMonths, budgetTotals, categoryRows, costShares, mainAccountantId, monthEndOf, settlementCards, settleProgress, spendByMonthKey } from "./groupFamily";
 
 const member = (id: string, extra: Partial<GroupMember> = {}): GroupMember => ({
   id,
@@ -43,6 +43,21 @@ const settle = (id: string, memberId: string, amount: number, groupId: string): 
   createdAt: "2026-10-28T00:00:00.000Z",
   groupMember: member(memberId),
   settleGroupId: groupId,
+});
+
+describe("money given", () => {
+  const row = (groupMemberId: string, kind: "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY", amount: string) => ({ groupMemberId, kind, amount });
+  const rows = [row("a", "DEPOSIT", "22500"), row("a", "CARRY", "500"), row("b", "DEPOSIT", "10000"), row("b", "DEPOSIT", "9000"), row("c", "SETTLE", "2833.07"), row("a", "SETTLE", "-2833.07"), row("b", "RETURN", "-0.10"), row("c", "DEPOSIT", "5000.20")];
+
+  it("counts deposits less returns, never a carried balance or a settle-up", () => {
+    expect(givenBy(rows)).toEqual({ a: 22500, b: 18999.9, c: 5000.2 });
+    expect(totalGiven(rows)).toBe(46500.1);
+  });
+
+  it("keeps the carried balance on its own", () => {
+    expect(carriedBy(rows)).toEqual({ a: 500 });
+    expect(totalGiven([row("a", "CARRY", "500")])).toBe(0);
+  });
 });
 
 describe("accountants and cost shares", () => {

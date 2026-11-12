@@ -14,6 +14,7 @@ import { countLabel, dayLabel, groupMonthOf, isDayClosed, paidIn, shortName } fr
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
+import { givenBy } from "@/lib/customer/groupFamily";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { groupLine, MemberAvatar } from "./GroupBits";
@@ -93,7 +94,8 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
     .filter((row) => (!memberId || row.member?.id === memberId) && (!type || row.type === type))
     .filter((row) => !words || [row.memberName, row.note ?? "", row.givenTo?.name ?? "", String(Math.abs(row.amount))].some((text) => text.toLowerCase().includes(words))).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const shown = rows.slice(0, limit);
-  const total = rows.reduce((sum, row) => sum + row.amount, 0);
+  // Money handed in among the rows shown: settle-ups and carried balances list, but aren't money given.
+  const total = rows.filter((row) => row.type === "DEPOSIT" || row.type === "RETURN").reduce((sum, row) => (Math.round(sum * 100) + Math.round(row.amount * 100)) / 100, 0);
   const memberOptions = data.members.filter((member) => member.status === "ACTIVE" || all.some((row) => row.member?.id === member.id));
   const memberLabel = memberId ? (view.memberById[memberId]?.name ?? "") : t("All members");
   const typeLabel = type ? t(TYPE_LABELS[type]) : t("All types");
@@ -101,9 +103,8 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
   // The month on show, member by member: what each gave, their share and balance.
   const month = monthName(data.range.key, fmt, "long", true);
   const current = data.range.key === groupMonthOf(data.today, startDay);
-  // What each handed in this month: their contributions, without a balance carried in.
-  const carried = (id: string) => data.contributions.filter((row) => row.kind === "CARRY" && row.groupMemberId === id).reduce((sum, row) => sum + Number(row.amount), 0);
-  const gaveOf = (row: (typeof data.settlement.members)[number]) => Number(row.contributed) - carried(row.groupMemberId);
+  const given = givenBy(data.contributions);
+  const gaveOf = (row: (typeof data.settlement.members)[number]) => given[row.groupMemberId] ?? 0;
   const byMember = data.settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId] })).filter(({ row, member }) => member?.status === "ACTIVE" || paidIn(row) !== 0 || Number(row.share) !== 0);
   const givenInMonth = byMember.reduce((sum, { row }) => sum + gaveOf(row), 0);
 

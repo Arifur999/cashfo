@@ -10,7 +10,7 @@ import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRo
 import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, groupTabHref, paidIn, shortName, type Transfer, unclosedPreviousMonth } from "@/lib/customer/groupDisplay";
-import { categoryRows, mainAccountantId, type SettleCard, settlementCards } from "@/lib/customer/groupFamily";
+import { carriedBy, categoryRows, givesMoney, mainAccountantId, totalGiven, type SettleCard, settlementCards } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -62,8 +62,9 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   const leftTone = budget?.tone === "over" ? "text-expense" : budget?.tone === "warning" ? "text-warning" : "text-income";
 
   // Tile 2: contributions (a settle-up pair is a payment, not a contribution).
-  const deposits = data.contributions.filter((row) => row.kind === "DEPOSIT" && Number(row.amount) > 0);
-  const given = deposits.reduce((sum, row) => sum + Number(row.amount), 0);
+  // Money handed in: deposits less returns; no settle-ups, no carried balance.
+  const deposits = data.contributions.filter((row) => givesMoney(row) && Number(row.amount) > 0);
+  const given = totalGiven(data.contributions);
   const givers = new Set(deposits.map((row) => row.groupMemberId)).size;
   const pocket = settlement.members.reduce((sum, row) => sum + Number(row.pocketPaid), 0);
 
@@ -86,7 +87,8 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
 
   // The members' balances: everyone active, and anyone who left but still has money in the month.
   // A balance carried in when last month was closed is its own column, not money paid in.
-  const carriedOf = (id: string) => data.contributions.filter((row) => row.kind === "CARRY" && row.groupMemberId === id).reduce((sum, row) => sum + Number(row.amount), 0);
+  const carried = carriedBy(data.contributions);
+  const carriedOf = (id: string) => carried[id] ?? 0;
   const rows = settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId], carry: carriedOf(row.groupMemberId) }));
   const totals = rows.reduce((sum, { row, member, carry }) => ({ shares: sum.shares + Number(member?.shareUnits ?? 0), paid: sum.paid + paidIn(row) - carry, share: sum.share + Number(row.share), carry: sum.carry + carry, balance: sum.balance + Number(row.balance) }), { shares: 0, paid: 0, share: 0, carry: 0, balance: 0 });
   const cashSum = holders.length > 0 ? holders.reduce((sum, row) => sum + Number(row.cash), 0) : view.cash;
