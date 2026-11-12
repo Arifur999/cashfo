@@ -3,11 +3,11 @@
 import { ChevronLeft, ChevronRight, HandCoins, Pencil, Plus, Printer, Search, Trash2, TriangleAlert } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { PeriodPicker, periodLabel as periodName } from "@/components/modules/Customer/Shared/PeriodPicker";
 import { PrintPreview } from "@/components/modules/Customer/Balance/PrintPreview";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
-import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
 import Loader from "@/components/shared/Loader";
 import AmountText from "@/components/smartly/AmountText";
 import Banner from "@/components/smartly/Banner";
@@ -27,12 +27,15 @@ import { formatDate } from "@/lib/customer/date";
 import { DIRECTION_META, loanDirection, loanEditOf, loanPaymentRow, loanTotals, wordInitials, type LoanEdit } from "@/lib/customer/loanDisplay";
 import { toEnglishDigits } from "@/lib/customer/money";
 import { periodHref, type PickedPeriod } from "@/lib/customer/period";
-import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { restoreTransactionAction, voidTransactionAction } from "@/lib/customer/transactionActions";
+import { DELETED_REASON, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
 import { cn } from "@/lib/utils";
+import { LoanDeleteDialog } from "./LoanDeleteDialog";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
+import { offerUndo } from "./offerUndo";
 import { LoanTransactionsPrint } from "./LoanTransactionsPrint";
 import { usePrinting } from "./usePrinting";
 
@@ -188,6 +191,52 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const voidingName = voiding ? (voiding.contact?.name ?? (voiding.contactId ? contactsById.get(voiding.contactId)?.name : undefined) ?? "—") : "—";
   const voidingWallet = voidingRow?.wallet ?? t("your wallet");
   const voidingCharge = voiding?.charge ? Number(voiding.charge) : 0;
+  // The board's words: who, what, how much and when, then how their
+  // balance moves (profit never moves it) and what else goes with it.
+  const voidingContact = voiding?.contactId ? contactsById.get(voiding.contactId) : undefined;
+  const balanceWords = (value: number) => (loanDirection(value) === "SETTLED" ? t("Settled") : `${t(DIRECTION_META[loanDirection(value)].name)} ${formatCurrency(Math.abs(value), currency, fmt)}`);
+  const voidingBody =
+    voiding && voidingRow
+      ? [
+          t("{name}: {what}, {amount} on {date}.", { name: voidingName, what: voidingRow.title ? t(voidingRow.title) : t(TRANSACTION_TYPE_LABELS[voiding.transactionType]), amount: formatCurrency(Math.abs(voidingRow.signedAmount), currency, fmt), date: formatDate(voiding.transactionDate, "d MMM yyyy", fmt) }),
+          voidingProfit
+            ? voidingProfit.paid
+              ? t("The money goes back to {wallet} and the expense is removed. The loan balance doesn't change.", { wallet: voidingWallet })
+              : t("The money comes out of {wallet} again and the income is removed. The loan balance doesn't change.", { wallet: voidingWallet })
+            : voidingContact
+              ? t("Their balance changes from {from} to {to}.", { from: balanceWords(Number(voidingContact.currentBalance)), to: balanceWords(Number(voidingContact.currentBalance) + voidingRow.signedAmount) })
+              : null,
+          voidingCharge > 0 ? t("Its charge of {amount} is removed too.", { amount: formatCurrency(voidingCharge, currency, fmt) }) : null,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "";
+  const [deletingEntry, startDeleting] = useTransition();
+
+  // Delete is a void the toast's Undo can take back (for 10 minutes).
+  function deleteEntry(transaction: Transaction) {
+    startDeleting(async () => {
+      try {
+        const result = await voidTransactionAction(businessId, transaction.id, DELETED_REASON);
+        if (!result.success) {
+          toast.error(t(result.message ?? "Couldn't delete the entry"));
+          return;
+        }
+        setVoiding(null);
+        router.refresh();
+        offerUndo({
+          message: t("Entry deleted"),
+          run: () => restoreTransactionAction(businessId, transaction.id),
+          done: t("Entry restored"),
+          failed: t("Couldn't bring the entry back"),
+          undoLabel: t("Undo"),
+          refresh: () => router.refresh(),
+        });
+      } catch {
+        toast.error(t("Couldn't save. Check your connection and try again."));
+      }
+    });
+  }
 
   // "2026", "Nov 2026", "All time": the tiles' and the print line's period.
   const periodLabel = period.kind === "year" ? formatCount(period.year, fmt).replace(/,/g, "") : periodName(period, t, fmt);
@@ -478,38 +527,14 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         editing={editing}
       />
       {voiding && voidingRow && (
-        <VoidTransactionDialog
+        <LoanDeleteDialog
           open
           onClose={() => setVoiding(null)}
-          businessId={businessId}
-          transactionId={voiding.id}
-          title={t("Entry")}
-          heading={t("Delete this entry?")}
-          description={[
-            voidingProfit
-              ? // Profit never moved the loan: only the wallet and the expense or income change back.
-                voidingProfit.paid
-                ? t("The money goes back to {wallet} and the expense is removed. The loan balance doesn't change.", { wallet: voidingWallet })
-                : t("The money comes out of {wallet} again and the income is removed. The loan balance doesn't change.", { wallet: voidingWallet })
-              : t("The balance goes back to what it was before this entry. It stays in your history, marked as voided."),
-            voidingCharge > 0 ? t("Its charge of {amount} is removed too.", { amount: formatCurrency(voidingCharge, currency, fmt) }) : null,
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          confirmLabel="Delete entry"
-          doneLabel="Entry deleted"
-          detail={
-            <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-strip px-4 py-3 text-body">
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate font-medium text-ink">{voidingName}</span>
-                <span className="truncate text-caption font-normal text-ink-muted">{[voidingRow.title ? t(voidingRow.title) : null, voidingProfit?.category ?? null].filter(Boolean).join(" · ")}</span>
-              </span>
-              <span className="flex shrink-0 flex-col items-end gap-px">
-                <span className="font-bold text-ink tabular-nums">{formatCurrency(Math.abs(voidingRow.signedAmount), currency, fmt)}</span>
-                <span className="text-caption font-normal text-ink-muted">{formatDate(voiding.transactionDate, undefined, fmt)}</span>
-              </span>
-            </div>
-          }
+          busy={deletingEntry}
+          title={t("Delete this entry?")}
+          body={voidingBody}
+          confirmLabel={t("Delete entry")}
+          onConfirm={() => deleteEntry(voiding)}
         />
       )}
       </div>

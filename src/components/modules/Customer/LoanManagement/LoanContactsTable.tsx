@@ -100,10 +100,11 @@ export function LoanContactsTable({ contacts, currency, canManage, busy, lastOf,
                   <IconAction
                     tone="danger"
                     onClick={() => onRemove(contact)}
-                    disabled={busy || !removable}
+                    disabled={busy}
                     aria-label={t("Delete {name}", { name: contact.name })}
                     title={removable ? t("Delete") : t("Has transactions, can’t be deleted")}
-                    className="disabled:opacity-40"
+                    // Dimmed while it can't go; pressing it says why.
+                    className={cn("disabled:opacity-40", !removable && "opacity-40")}
                   >
                     <Trash2 aria-hidden="true" />
                   </IconAction>

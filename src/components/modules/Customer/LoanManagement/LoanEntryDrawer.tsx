@@ -20,12 +20,15 @@ import { getBudgetCategoryNamesAction } from "@/lib/customer/budgetActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { balanceAfterEntry, DIRECTION_META, hasProfitCategory, LOAN_ENTRY_KINDS, LOAN_ENTRY_META, loanDirection, loanErrorText, profitCategory, repaymentLimit, walletDeltaOf, type LoanBalanceDetail, type LoanEdit, type LoanEntryKind } from "@/lib/customer/loanDisplay";
 import { correctTransactionAction, createExpenseAction, createIncomeAction, getExpenseAccountsAction, listMoneyAccountsAction } from "@/lib/customer/quickEntryActions";
+import { undoEditAction, voidTransactionAction } from "@/lib/customer/transactionActions";
+import { DELETED_REASON } from "@/lib/customer/transactionDisplay";
 import { correctLoanEntryAction, getContactBalanceDetailAction, payPaymentAction, receivePaymentAction, recordPurchaseAction, recordSaleAction } from "@/lib/customer/receivablesPayablesActions";
 import { getAppToday } from "@/lib/date";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
+import { offerUndo } from "./offerUndo";
 import { radioProps } from "./radio";
 
 interface LoanEntryDrawerProps {
@@ -278,7 +281,22 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
           toast.error(loanErrorText(result.message, fallback, t, money));
           return;
         }
-        toast.success(editing ? t("Entry updated") : t("Entry saved for {name}", { name: contact?.name ?? "" }));
+        // Undo, as every save on the board offers: an edit goes back to the
+        // entry it replaced, a new entry is deleted again.
+        const savedId = result.data?.id;
+        const message = editing ? t("Entry updated") : t("Entry saved for {name}", { name: contact?.name ?? "" });
+        if (savedId) {
+          offerUndo({
+            message,
+            run: () => (editing ? undoEditAction(businessId, savedId) : voidTransactionAction(businessId, savedId, DELETED_REASON)),
+            done: editing ? t("Change undone") : t("Entry removed"),
+            failed: editing ? t("Couldn't undo the change") : t("Couldn't remove the entry"),
+            undoLabel: t("Undo"),
+            refresh: () => router.refresh(),
+          });
+        } else {
+          toast.success(message);
+        }
         router.refresh();
         // The old detail is stale now: until the fresh one is in, the cap
         // reads as being checked and Save waits, rather than allowing

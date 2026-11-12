@@ -12,11 +12,12 @@ import Button from "@/components/smartly/Button";
 import Input from "@/components/smartly/form/Input";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
-import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
+import { createContactAction, deleteContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { bdMobileOk, LOAN_FORM_KINDS, LOAN_KIND_LABELS, loanErrorText } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { offerUndo } from "./offerUndo";
 import { radioProps } from "./radio";
 
 interface LoanContactDrawerProps {
@@ -168,8 +169,38 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
         if (trade) {
           // They live in Books now, not on this page: say where.
           toast.success(t("Saved in Books › Customers & suppliers"), { action: { label: t("Open Books"), onClick: () => router.push("/contacts") } });
-        } else {
-          toast.success(editing ? t("Contact updated") : t("Contact added"));
+        } else if (editing) {
+          // Undo puts every field back as it was, the opening balance too.
+          const before = editing;
+          offerUndo({
+            message: t("Contact updated"),
+            run: () =>
+              updateContactAction(businessId, before.id, {
+                name: before.name,
+                type: before.type,
+                phone: before.phone ?? "",
+                email: before.email ?? "",
+                address: before.address ?? "",
+                notes: before.notes ?? "",
+                photoUrl: before.photoUrl ?? "",
+                ...{ openingBalance: String(before.openingBalance) },
+              }),
+            done: t("Change undone"),
+            failed: t("Couldn't undo the change"),
+            undoLabel: t("Undo"),
+            refresh: () => router.refresh(),
+          });
+        } else if (result.data) {
+          // Nothing is entered with them yet, so Undo deletes them for good.
+          const addedId = result.data.id;
+          offerUndo({
+            message: t("Contact added"),
+            run: () => deleteContactAction(businessId, addedId),
+            done: t("Contact removed"),
+            failed: t("Couldn't remove the contact"),
+            undoLabel: t("Undo"),
+            refresh: () => router.refresh(),
+          });
         }
         onClose();
         router.refresh();
