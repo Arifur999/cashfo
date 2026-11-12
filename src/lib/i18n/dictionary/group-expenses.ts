@@ -1347,4 +1347,6 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Nobody here yet.": "এখানে এখনো কেউ নেই।",
   "{count} member can log in": "{count} জন লগইন করতে পারেন",
   "{count} members can log in": "{count} জন লগইন করতে পারেন",
+  "Balance carries on from earlier months.": "আগের মাসের ব্যালান্স সঙ্গে চলে আসে।",
+  "Showing {from} to {to} of {count} · newest first": "{count}টির মধ্যে {from} থেকে {to} · নতুনগুলো আগে",
 };

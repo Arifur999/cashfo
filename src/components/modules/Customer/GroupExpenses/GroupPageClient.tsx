@@ -275,13 +275,11 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
       <GroupContributionsTab
         data={data}
         view={view}
-        onPeriod={onPeriod}
         onAdd={(memberId) => openContribution(memberId ?? null)}
         onEdit={(row) => guardEdit(row.date, () => setContribution({ open: true, editing: row, memberId: null }))}
         onRemove={removeContribution}
         onEditExpense={(row) => guardEdit(row.date, () => setExpense({ open: true, editing: row }))}
         onRemoveExpense={removeExpense}
-        busy={moving}
         canAdd={canAdd}
       />
     ),
@@ -304,8 +302,8 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     <PageFrame className="gap-5">
       <GroupHeader businessId={data.businessId} name={data.name} settings={data.settings} tab={data.tab} memberCount={view.activeMembers.length} role={data.role} groups={data.groups}
         period={
-          data.tab === "dashboard" && !view.setup ? (
-            <GroupMonthPicker name={data.name} currency={data.currency} value={data.range.key} current={currentKey} months={data.months} startDay={data.startDay} history={data.history} spent={data.monthTotals} onPick={(key) => go("dashboard", { month: key })} busy={moving} />
+          (data.tab === "dashboard" && !view.setup) || data.tab === "contributions" ? (
+            <GroupMonthPicker name={data.name} currency={data.currency} value={data.range.key} current={currentKey} months={data.months} startDay={data.startDay} history={data.history} spent={data.monthTotals} onPick={(key) => go(data.tab, { month: key })} busy={moving} />
           ) : undefined
         }
       />

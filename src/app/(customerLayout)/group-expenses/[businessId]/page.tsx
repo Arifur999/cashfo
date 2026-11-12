@@ -34,7 +34,6 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/gro
 // Each page's own period choices (the v7 boards' dropdowns), and its default.
 const PERIODS: Partial<Record<GroupTab, { options: readonly GroupPeriodKind[]; fallback: GroupPeriod }>> = {
   expenses: { options: ["today", "week", "month", "year", "custom"], fallback: { kind: "month" } },
-  contributions: { options: ["month", "all", "year", "custom"], fallback: { kind: "month" } },
   cashbook: { options: ["month", "year", "all", "custom"], fallback: { kind: "month" } },
   categories: { options: ["month", "year", "custom"], fallback: { kind: "month" } },
 };
