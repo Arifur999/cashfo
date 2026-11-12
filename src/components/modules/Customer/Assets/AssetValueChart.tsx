@@ -1,11 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { ValuePoint } from "@/lib/customer/assetDisplay";
-import { currencySymbol, formatCompactAmount, formatCurrency } from "@/lib/customer/currency";
-import { formatDate } from "@/lib/customer/date";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 // The line under a date: "+ Family" when something was added, "− Motorbike"
 // in red when only a sale happened there.
@@ -16,114 +12,105 @@ export interface PointNote {
 
 interface AssetValueChartProps {
   points: ValuePoint[];
-  currency: string;
-  // "What you paid" for every asset together, "Price paid" for one.
-  paidLabel: string;
+  // A figure in short ("Tk 18 L"), for the axis and the dots.
+  short: (value: number) => string;
   // Year-end points read "Dec 2024"; one asset's, the month of each value.
   label: (point: ValuePoint) => string;
   note: (point: ValuePoint, index: number) => PointNote | null;
-  // One asset's line marks every value; all together, the first, highest and last.
+  // One asset's line labels every few values; all together, the first,
+  // highest and last.
   markAll?: boolean;
   ariaLabel: string;
 }
 
-type Datum = ValuePoint & { name: string; index: number };
+// The board's frame: 1040 x 220, the plot inset 60 left, 30 right, 34 top
+// and 64 under it for the dates and notes. Narrower windows scale it across.
+const W = 1040;
+const H = 220;
+const L = 60;
+const R = 30;
+const TOP = 34;
+const PLOT_H = H - TOP - 64;
+const PLOT_W = W - L - R;
+const pct = (x: number) => `${((x / W) * 100).toFixed(3)}%`;
 
 // The Dashboard's line of value over time against what was paid (dashed):
 // each point's dot is green where the value rose, red where it fell, with
 // the figure over the first, the highest and the last, and what was added
 // or sold under its date.
-export function AssetValueChart({ points, currency, paidLabel, label, note, markAll = false, ariaLabel }: AssetValueChartProps) {
-  const { t, fmt } = useLocale();
-  const fillId = useId().replace(/:/g, "");
-  const data: Datum[] = points.map((point, index) => ({ ...point, name: label(point), index }));
-  // The board's headroom: a fifth of the spread under the lowest figure and
-  // a bit over the highest, so a flat line sits mid-chart and the axis never
-  // repeats one label.
+export function AssetValueChart({ points, short, label, note, markAll = false, ariaLabel }: AssetValueChartProps) {
+  const fillId = `asset-fill-${useId().replace(/:/g, "")}`;
+  const n = points.length;
   const figures = points.flatMap((point) => [point.value, point.paid]);
-  const low = Math.min(...figures);
-  const high = Math.max(...figures);
+  let low = Math.min(...figures);
+  let high = Math.max(...figures);
   const span = high - low || high || 1;
-  const domain: [number, number] = [Math.max(0, low - span * 0.2), high + span * 0.15];
-  const ticks = [0, 1, 2, 3].map((step) => domain[0] + ((domain[1] - domain[0]) * step) / 3);
-  const short = (value: number) => `${currencySymbol(currency, fmt)} ${formatCompactAmount(value, fmt)}`;
-  const top = points.reduce((best, point, index) => (point.value > points[best].value ? index : best), 0);
-  const last = points.length - 1;
-  // Many points (one asset with years of updates): every few dates and
-  // figures, always the last.
-  const stride = Math.max(1, Math.ceil(points.length / 10));
-  const onStride = (index: number) => index % stride === 0 || index === last;
-
-  const dot = ({ cx, cy, index }: { cx?: number; cy?: number; index?: number }) => {
-    if (cx === undefined || cy === undefined || index === undefined) return <g key={`dot-${index}`} />;
-    const point = points[index];
-    const before = index > 0 ? points[index - 1].value : point.value;
-    const fill = index === 0 ? "var(--ink-faint)" : point.value > before ? "var(--income)" : point.value < before ? "var(--expense)" : "var(--emerald)";
-    const marked = index === 0 || index === last || index === top || (markAll && onStride(index));
-    return (
-      <g key={`dot-${index}`}>
-        <circle cx={cx} cy={cy} r={4.5} fill={fill} stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" />
-        {marked && (
-          <text x={cx} y={cy - 14} textAnchor="middle" fontSize={11.5} fontWeight={600} fill={index === last ? "var(--emerald)" : "var(--ink-soft)"} className="tabular-nums">
-            {short(point.value)}
-          </text>
-        )}
-      </g>
-    );
-  };
-
-  const tick = ({ x, y, payload }: { x?: number | string; y?: number | string; payload?: { value: string; index: number } }) => {
-    const index = payload?.index ?? 0;
-    if (!onStride(index)) return <g />;
-    const below = points[index] ? note(points[index], index) : null;
-    return (
-      <g transform={`translate(${x},${y})`}>
-        <text y={12} textAnchor="middle" fontSize={11.5} fill="var(--ink-muted)">
-          {payload?.value}
-        </text>
-        {below && (
-          <text y={30} textAnchor="middle" fontSize={11} fontWeight={600} fill={below.down ? "var(--expense)" : "var(--ink-soft)"}>
-            {below.text}
-          </text>
-        )}
-      </g>
-    );
-  };
+  low = Math.max(0, low - span * 0.2);
+  high = high + span * 0.15;
+  if (high <= low) high = low + 1;
+  const x = (i: number) => (n === 1 ? L + PLOT_W / 2 : L + 20 + (i * (PLOT_W - 40)) / (n - 1));
+  const y = (value: number) => TOP + (1 - (value - low) / (high - low)) * PLOT_H;
+  const path = (key: "value" | "paid") =>
+    n === 1 ? `M ${L} ${y(points[0][key]).toFixed(1)} L ${W - R} ${y(points[0][key]).toFixed(1)}` : points.map((point, i) => `${i ? "L" : "M"} ${x(i).toFixed(1)} ${y(point[key]).toFixed(1)}`).join(" ");
+  const line = path("value");
+  const area = n > 1 ? `${line} L ${x(n - 1).toFixed(1)} ${TOP + PLOT_H} L ${x(0).toFixed(1)} ${TOP + PLOT_H} Z` : "";
+  const grid = [0, 1, 2, 3].map((step) => {
+    const value = low + ((high - low) * step) / 3;
+    return { value, at: Math.round(y(value)), solid: step === 0 };
+  });
+  const top = points.reduce((best, point, i) => (point.value > points[best].value ? i : best), 0);
+  const stride = Math.max(1, Math.ceil(n / 10));
+  const onStride = (i: number) => i % stride === 0 || i === n - 1;
 
   return (
-    <div role="img" aria-label={ariaLabel} className="h-55 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={{ top: 30, right: 30, bottom: 4, left: 0 }}>
-          <defs>
-            <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--emerald)" stopOpacity={0.14} />
-              <stop offset="100%" stopColor="var(--emerald)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid vertical={false} strokeDasharray="4 4" stroke="var(--chart-grid)" />
-          <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0} height={46} tick={tick} padding={{ left: 20, right: 20 }} />
-          <YAxis tickLine={false} axisLine={false} fontSize={10.5} stroke="var(--ink-faint)" width={64} tickFormatter={short} domain={domain} ticks={ticks} />
-          <Tooltip
-            cursor={{ stroke: "var(--line-strong)", strokeDasharray: "3 3" }}
-            content={({ active, payload }) => {
-              const point = active ? (payload?.[0]?.payload as Datum | undefined) : undefined;
-              if (!point) return null;
-              return (
-                <div className="flex flex-col gap-1 rounded-md border border-line bg-surface px-3 py-2 text-small shadow-card">
-                  <span className="font-semibold text-ink">{point.today && !markAll ? t("Today") : formatDate(`${point.date}T00:00:00.000Z`, "d MMM yyyy", fmt)}</span>
-                  <span className="text-ink-2 tabular-nums">{`${t("Value")}: ${formatCurrency(point.value, currency, fmt)}`}</span>
-                  <span className="text-ink-muted tabular-nums">{`${paidLabel}: ${formatCurrency(point.paid, currency, fmt)}`}</span>
-                  {point.added.length > 0 && <span className="text-ink-muted">{t("Added: {names}", { names: point.added.join(", ") })}</span>}
-                  {point.sold.length > 0 && <span className="text-expense">{t("Sold: {names}", { names: point.sold.join(", ") })}</span>}
-                </div>
-              );
-            }}
-          />
-          <Area dataKey="value" type="linear" stroke="none" fill={`url(#${fillId})`} isAnimationActive={false} activeDot={false} />
-          <Line dataKey="paid" type="linear" stroke="var(--chart-other)" strokeWidth={2} strokeDasharray="6 5" dot={false} activeDot={false} isAnimationActive={false} />
-          <Line dataKey="value" type="linear" stroke="var(--emerald)" strokeWidth={2.5} dot={dot} activeDot={{ r: 5 }} isAnimationActive={false} />
-        </ComposedChart>
-      </ResponsiveContainer>
+    <div role="img" aria-label={ariaLabel} className="relative h-55 w-260 max-w-full self-center">
+      {grid.map((row) => (
+        <span key={row.at} aria-hidden="true">
+          <span className={`absolute right-0 left-[5.77%] border-t border-line-card ${row.solid ? "" : "border-dashed"}`} style={{ top: row.at }} />
+          <span className="absolute -left-2.5 w-16 text-right text-[10.5px] whitespace-nowrap text-ink-faint tabular-nums" style={{ top: row.at - 8 }}>
+            {short(row.value)}
+          </span>
+        </span>
+      ))}
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 size-full">
+        <defs>
+          <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--emerald)" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="var(--emerald)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {area && <path d={area} fill={`url(#${fillId})`} stroke="none" />}
+        <path d={path("paid")} fill="none" stroke="var(--chart-cost)" strokeWidth="1.75" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />
+        <path d={line} fill="none" stroke="var(--emerald)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      {points.map((point, i) => {
+        const before = i ? points[i - 1].value : point.value;
+        const dot = i === 0 ? "bg-ink-faint" : point.value > before ? "bg-success" : point.value < before ? "bg-expense-fill" : "bg-emerald";
+        const shown = i === n - 1 || i === 0 || i === top || (markAll && onStride(i));
+        const under = onStride(i) ? note(point, i) : null;
+        const left = pct(x(i));
+        const at = y(point.value);
+        return (
+          <span key={`${point.date}-${i}`} aria-hidden="true">
+            <span title={`${label(point)}: ${short(point.value)}`} className={`absolute -mt-[4.5px] -ml-[4.5px] size-[9px] rounded-full shadow-[0_0_0_3px_var(--surface)] ${dot}`} style={{ left, top: Math.round(at) }} />
+            {shown && (
+              <span className={`absolute -translate-x-1/2 text-[11.5px] font-semibold whitespace-nowrap tabular-nums ${i === n - 1 ? "text-emerald" : "text-ink-soft"}`} style={{ left, top: Math.round(at - 26) }}>
+                {short(point.value)}
+              </span>
+            )}
+            {onStride(i) && (
+              <span className="absolute top-[174px] -translate-x-1/2 text-[11.5px] whitespace-nowrap text-ink-muted" style={{ left }}>
+                {label(point)}
+              </span>
+            )}
+            {under && (
+              <span className={`absolute top-48 -translate-x-1/2 text-[11px] font-semibold whitespace-nowrap ${under.down ? "text-loss-ink" : "text-ink-soft"}`} style={{ left }}>
+                {under.text}
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }

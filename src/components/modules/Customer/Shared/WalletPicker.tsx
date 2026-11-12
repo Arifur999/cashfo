@@ -15,8 +15,11 @@ export interface WalletPickerProps {
   label: string;
   // 56px in the transaction drawer, 52px in the loan one, 64px with a 36px
   // tile in the transfer drawer; "compact" is the phone sheet's half-width
-  // picker (52px, the icon and the name only, under a 13px label).
-  size?: "lg" | "xl" | "2xl" | "compact";
+  // picker (52px, the icon and the name only, under a 13px label); "field"
+  // the transaction popup's Account box (design: TxnDrawer: 48px, the icon
+  // and the name, under the 14px field label); "popup" the loan entry's
+  // (LoanTransactions board: 46px, 12px round, under a 13px semibold label).
+  size?: "lg" | "xl" | "2xl" | "compact" | "field" | "popup";
   // The word before the balance: "Balance", or "Available" on the side the
   // money leaves.
   balanceLabel?: string;
@@ -96,7 +99,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label id={`${id}-label`} className={cn(size === "compact" ? "text-small font-semibold text-ink-2" : "text-body font-medium text-ink", "leading-[normal]")}>
+      <label id={`${id}-label`} className={cn(size === "compact" ? "text-small font-semibold text-ink-2" : size === "popup" ? "text-[13px] font-semibold text-ink-2" : "text-body font-medium text-ink", "leading-[normal]")}>
         {label}
       </label>
       <Popover open={open} onOpenChange={setOpen}>
@@ -107,12 +110,12 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
             aria-haspopup="listbox"
             aria-describedby={describedBy}
             disabled={loading || all.length === 0}
-            className={cn(invalid ? "border-expense" : "border-input", "flex min-w-0 items-center gap-3 rounded-field border bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : "h-13")}
+            className={cn(invalid ? "border-expense" : "border-input", "flex min-w-0 items-center gap-3 rounded-field border bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : size === "field" ? "h-12 px-3" : size === "popup" ? "h-11.5 rounded-[12px] px-3" : "h-13")}
           >
-            {selected && size === "compact" ? (
+            {selected && (size === "compact" || size === "field") ? (
               <>
-                {createElement(isSavings(selected) ? PiggyBank : walletIcon(selected), { className: "size-4.5 shrink-0 text-ink-2", "aria-hidden": true })}
-                <span id={`${id}-value`} className="min-w-0 flex-1 truncate text-body-lg text-ink">{nameOf(selected)}</span>
+                {createElement(isSavings(selected) ? PiggyBank : walletIcon(selected), { className: cn("shrink-0 text-ink-2", size === "field" ? "size-4" : "size-4.5"), "aria-hidden": true })}
+                <span id={`${id}-value`} className={cn("min-w-0 flex-1 truncate text-ink", size === "field" ? "text-body" : "text-body-lg")}>{nameOf(selected)}</span>
               </>
             ) : selected ? (
               <>

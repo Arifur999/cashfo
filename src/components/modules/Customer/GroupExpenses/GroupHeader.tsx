@@ -24,6 +24,8 @@ interface GroupHeaderProps {
   memberCount: number;
   role: MemberRole;
   groups: { id: string; name: string }[];
+  // The month pill on the right, on the pages that show one month.
+  period?: React.ReactNode;
 }
 
 const MENU_ITEM = "flex min-h-11 cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-1.5 text-[13.5px] font-semibold text-ink focus:bg-strip";
@@ -38,7 +40,7 @@ function TabLine({ on }: { on: boolean }) {
 // Every page inside a group starts with the group's name and kind (the v7
 // GroupHeader board). Its pages are the sidebar's; a phone, which has no
 // sidebar on screen, keeps them in a strip under the name.
-export function GroupHeader({ businessId, name, settings, tab, memberCount, role, groups }: GroupHeaderProps) {
+export function GroupHeader({ businessId, name, settings, tab, memberCount, role, groups, period }: GroupHeaderProps) {
   const { t, fmt } = useLocale();
   const kind = GROUP_KIND[settings.kind];
   const { ref: tabsRef, style: tabsStyle } = useScrollFades<HTMLElement>({ axis: "x", fade: 32 });
@@ -53,18 +55,18 @@ export function GroupHeader({ businessId, name, settings, tab, memberCount, role
   return (
     <div className="flex flex-col gap-3">
       <TopbarExtras record={name} />
-      <div className="flex min-w-0 items-center gap-1 md:gap-4">
+      <div className="flex min-w-0 items-center gap-1 md:min-h-15 md:gap-3.5">
         <Link href="/group-expenses" aria-label={t("Back to Group Expense")} className="-ml-2.5 flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface-sunken md:hidden">
           <ChevronLeft className="size-5.5" aria-hidden="true" />
         </Link>
-        <IconTile tone={kind.tone} size={48} className="size-control-lg rounded-[14px] max-md:hidden [&_svg]:size-6.5">
+        <IconTile tone="neutral" size={48} className={cn(kind.cls, "size-12 rounded-[14px] max-md:hidden [&_svg]:size-6")}>
           <kind.icon strokeWidth={1.75} />
         </IconTile>
         <span className="flex min-w-0 flex-1 flex-col gap-1.25">
           <span className="flex min-w-0 items-center gap-1.5 md:gap-2.5">
             {/* Normal line height: a tight one clips Bangla vowel signs under the truncation. */}
-            <h1 className="truncate text-title text-ink md:text-page-title md:leading-normal">{name}</h1>
-            <Chip tone={kind.tone} className="px-2.25 max-md:h-4.5 max-md:px-1.75 max-md:text-[11px]">
+            <h1 className="truncate text-title text-ink md:text-[22px] md:leading-[1.2] md:font-semibold md:tracking-[-0.02em]">{name}</h1>
+            <Chip tone="neutral" className={cn(kind.cls, "px-2.25 max-md:h-4.5 max-md:px-1.75 max-md:text-[11px]")}>
               {t(kind.label)}
             </Chip>
             {settings.pausedAt && (
@@ -84,7 +86,7 @@ export function GroupHeader({ businessId, name, settings, tab, memberCount, role
                   {groups.map((group) => (
                     <DropdownMenuItem key={group.id} asChild className={MENU_ITEM}>
                       <Link href={`/group-expenses/${group.id}`} aria-current={group.id === businessId ? "page" : undefined}>
-                        <IconTile tone={group.id === businessId ? kind.tone : "neutral"} size={32} className="size-7.5 rounded-[9px]">
+                        <IconTile tone="neutral" size={32} className={cn("size-7.5 rounded-[9px]", group.id === businessId && kind.cls)}>
                           {group.id === businessId ? <kind.icon strokeWidth={1.75} /> : <Users strokeWidth={1.75} />}
                         </IconTile>
                         <span className="min-w-0 flex-1 truncate">{group.name}</span>
@@ -109,9 +111,11 @@ export function GroupHeader({ businessId, name, settings, tab, memberCount, role
             </Chip>
           </span>
         </span>
+        {period && <span className="shrink-0 max-md:hidden">{period}</span>}
       </div>
+      {period && <div className="md:hidden">{period}</div>}
       <nav ref={tabsRef} style={tabsStyle} aria-label={t("Group pages")} className="-mx-4 flex overflow-x-auto border-b border-line px-2 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
-        {groupTabsFor(settings.kind, settings.mealsOn).map((value) => (
+        {groupTabsFor(settings.mealsOn).map((value) => (
           <Link
             key={value}
             href={groupTabHref(businessId, value)}

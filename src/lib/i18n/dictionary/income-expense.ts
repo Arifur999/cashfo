@@ -700,4 +700,19 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "{count} transaction moved to {name}.": "{count}টি লেনদেন {name}-এ সরানো হয়েছে।",
   "{count} transactions moved to {name}.": "{count}টি লেনদেন {name}-এ সরানো হয়েছে।",
   "Category restored": "ক্যাটাগরি আগের মতো ফিরেছে",
+  // v16 Transactions board: the popup's checks, the strip and the statement
+  "Totals: this page": "মোট: শুধু এই পেজ",
+  "Transactions list": "লেনদেনের তালিকা",
+  "Income and expense": "আয় ও খরচ",
+  "This date is after today.": "এই তারিখটা আজকের পরের।",
+  "Choose Income or Expense.": "আয় না খরচ, বেছে নিন।",
+  "Choose an account.": "একটা অ্যাকাউন্ট বাছুন।",
+  "Pick a category.": "একটা ক্যাটাগরি বাছুন।",
+  "Choose Income or Expense first": "আগে আয় বা খরচ বাছুন",
+  "Open calendar": "ক্যালেন্ডার খুলুন",
+  // v16 Transactions popup toasts
+  "Transaction updated": "লেনদেন আপডেট হয়েছে",
+  "Change undone": "পরিবর্তন ফিরিয়ে নেওয়া হয়েছে",
+  "Transaction removed": "লেনদেন সরানো হয়েছে",
+  "Couldn't undo the change": "পরিবর্তনটা ফেরানো যায়নি",
 };

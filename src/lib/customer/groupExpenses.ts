@@ -187,3 +187,16 @@ export const getGroupMonthBudgets = cache(async (businessId: string): Promise<Gr
     return emptyUnlessOutage(error, []);
   }
 });
+
+// What was spent in each of the group's months ("2026-11" → "33000.00"),
+// by its own month start: the month picker's "Spent" line.
+export const getGroupMonthTotals = cache(async (businessId: string): Promise<{ month: string; spent: string }[]> => {
+  const headers = await authHeaders();
+  if (!headers) return [];
+  try {
+    const res = await customerApi.get<{ month: string; spent: string }[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/month-totals`, { headers });
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});

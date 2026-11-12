@@ -8,6 +8,7 @@ import {
   bdMobileOk,
   contactMatches,
   foldProfitRuns,
+  hasProfitCategory,
   isCancelledRow,
   lastActivity,
   loanDirection,
@@ -18,6 +19,7 @@ import {
   loanTotals,
   monthItems,
   profitCategory,
+  reminderPhone,
   repaymentLimit,
   statementEquation,
   statementPageEdges,
@@ -416,6 +418,16 @@ describe("monthItems", () => {
 });
 
 describe("bdMobileOk", () => {
+  it("writes a reminder's number in international form, or nothing", () => {
+    expect(["01711-223344", "+8801711223344", "1711223344", "+44 20 7946 0958", "16259", "", null].map(reminderPhone)).toEqual(["8801711223344", "8801711223344", "8801711223344", "442079460958", "", "", ""]);
+  });
+
+  it("asks for a profit category only when none is named for it", () => {
+    expect(hasProfitCategory(["Food", "Loan interest"])).toBe(true);
+    expect(hasProfitCategory(["Food", "Rent"])).toBe(false);
+    expect(profitCategory(["Food", "Loan interest"])).toBe("Loan interest");
+  });
+
   it("takes a Bangladeshi mobile in any usual shape, or nothing", () => {
     expect(["01711-223344", "+8801711223344", "8801911 223344", "", "  "].map(bdMobileOk)).toEqual([true, true, true, true, true]);
     expect(["16259", "01211223344", "0171122334", "02-9876543"].map(bdMobileOk)).toEqual([false, false, false, false]);

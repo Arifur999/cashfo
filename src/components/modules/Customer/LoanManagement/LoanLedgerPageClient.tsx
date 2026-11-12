@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronUp, Pencil, Phone, Plus, Printer, ScrollText, UserPlus } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bell, ChevronDown, ChevronUp, Pencil, Phone, Plus, Printer, UserPlus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Fragment, useOptimistic, useState, useTransition } from "react";
+import { Fragment, useEffect, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { PeriodPicker } from "@/components/modules/Customer/Shared/PeriodPicker";
@@ -12,16 +12,16 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import IconAction from "@/components/smartly/IconAction";
-import IconTile from "@/components/smartly/IconTile";
 import { LIST_INSET, ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListSummaryRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
+import { PrintPreview } from "@/components/modules/Customer/Balance/PrintPreview";
 import { usePageParam } from "@/hooks/usePageParam";
 import type { Contact, LoanActivityKind, LoanDashboardRow, LoanStatement } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { DIRECTION_META, foldProfitRuns, isCancelledRow, LOAN_ENTRY_META, LOAN_KIND_LABELS, loanDirection, loanEditOf, statementPageEdges, statementProfit, statementTotals, wordInitials, type LedgerItem, type LoanEdit, type StatementRow } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, foldProfitRuns, LEDGER_CONTACT_COOKIE, isCancelledRow, LOAN_ENTRY_META, LOAN_KIND_LABELS, loanDirection, loanEditOf, statementPageEdges, statementProfit, statementTotals, wordInitials, type LedgerItem, type LoanEdit, type StatementRow } from "@/lib/customer/loanDisplay";
 import { periodHref, type PickedPeriod } from "@/lib/customer/period";
 import { getLoanTransactionAction } from "@/lib/customer/receivablesPayablesActions";
 import { cancelledLabel } from "@/lib/customer/transactionDisplay";
@@ -32,6 +32,8 @@ import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
 import { LoanContactDrawer } from "./LoanContactDrawer";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
+import { LoanReminderDialog } from "./LoanReminderDialog";
+import { LoanStatementPrint, type PrintRow } from "./LoanStatementPrint";
 import { usePrinting } from "./usePrinting";
 
 interface LoanLedgerPageClientProps {
@@ -96,6 +98,9 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   const [editing, setEditing] = useState<LoanEdit | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
   const [contactForm, setContactForm] = useState<"closed" | "create" | "edit">("closed");
+  const [reminding, setReminding] = useState(false);
+  // The board's print preview, open over the page.
+  const [previewing, setPreviewing] = useState(false);
   // Admin > System > Feature Flags: pdf_export off hides Print / PDF.
   const pdfExportOn = useFeature("pdf_export");
   const thisYear: PickedPeriod = { kind: "year", year: Number(today.slice(0, 4)) };
@@ -120,9 +125,13 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   }
 
   const contact = contacts.find((c) => c.id === selectedContactId);
-  // A statement only for someone on this page's list: an unknown or trade
-  // contact in the address shows the pick screen, and nothing to print.
+  // The server picks someone whenever there is anyone, so a missing
+  // statement means it could not be read: nothing to print then.
   const ready = !!statement && !!contact;
+  // Remembered for the session, so the Ledger link opens them again.
+  useEffect(() => {
+    if (selectedContactId) document.cookie = `${LEDGER_CONTACT_COOKIE}=${encodeURIComponent(selectedContactId)}; path=/; SameSite=Lax`;
+  }, [selectedContactId]);
   const rows: StatementRow[] = statement?.rows ?? [];
   const openingBalance = statement ? Number(statement.balanceBroughtForward) : 0;
   const closing = statement ? Number(statement.closingBalance) : 0;
@@ -133,7 +142,6 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   const receivedCount = standing.filter((row) => Number(row.profitReceived ?? 0) > 0).length;
   const hasProfit = profit.paid > 0 || profit.received > 0;
   const activeContacts = contacts.filter((c) => c.status === "ACTIVE");
-  const quickPicks = [...activeContacts].sort((a, b) => Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance))).slice(0, 8);
   const day = (value: string) => formatDate(value, "d MMM yyyy", fmt);
   // The day the period opens: its own first day, else their first entry.
   const openedOn = periodFrom ?? activity?.firstEntryDate ?? contact?.createdAt ?? null;
@@ -146,11 +154,13 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   const items: LedgerItem[] = printing ? view.rows.map((row) => ({ kind: "row" as const, row })) : foldProfitRuns(view.rows, 1);
 
   // A balance as the board writes it: the amount, its side under it.
-  const balanceStack = (value: number, quiet = false, size = "font-semibold") => {
+  // The board writes a balance in ink (grey after profit, which never moves
+  // it); only the closing one takes its side's colour.
+  const balanceStack = (value: number, quiet = false, size = "font-semibold", coloured = false) => {
     const side = loanDirection(value);
     return (
-      <span className="flex flex-col items-end gap-px">
-        <span className={cn(size, "tabular-nums", quiet ? "text-ink-muted" : side === "SETTLED" ? "text-ink" : DIRECTION_META[side].text)}>{formatCurrency(Math.abs(value), currency, fmt)}</span>
+      <span className="flex flex-col items-end gap-px leading-[normal]">
+        <span className={cn(size, "tabular-nums", quiet ? "text-ink-faint" : coloured && side !== "SETTLED" ? DIRECTION_META[side].text : "text-ink")}>{formatCurrency(Math.abs(value), currency, fmt)}</span>
         <span className={cn("text-[11px] font-semibold", side === "SETTLED" ? "text-ink-muted" : DIRECTION_META[side].text)}>{t(DIRECTION_META[side].name)}</span>
       </span>
     );
@@ -183,16 +193,21 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
       .finally(() => setOpening(null));
   }
 
-  function renderRow(row: StatementRow) {
+  // What an entry was, its note and its charge, for the screen and paper.
+  function describe(row: StatementRow) {
     const isProfit = row.category === "Profit";
-    const cancelled = isCancelledRow(row);
-    const label = cancelledLabel({ status: row.status, reversalOfId: row.reversalOfId ?? null }) ?? (cancelled ? "Voided" : null);
     const kind: LoanActivityKind = row.kind ?? (isProfit ? (Number(row.profitPaid ?? 0) > 0 ? "PROFIT_PAID" : "PROFIT_RECEIVED") : row.debit ? "GAVE" : "TOOK");
-    const out = OUT.includes(kind);
     // A reversal is named for what it undid.
     const what = row.reversalOfId ? reversalTitle(row.description) || t(WHAT[kind]) : t(WHAT[kind]);
     const note = [row.reversalOfId ? null : row.description, row.referenceNo].filter(Boolean).join(" · ");
-    const charge = Number(row.charge ?? 0);
+    return { isProfit, kind, what, note, charge: Number(row.charge ?? 0) };
+  }
+
+  function renderRow(row: StatementRow) {
+    const { isProfit, kind, what, note, charge } = describe(row);
+    const cancelled = isCancelledRow(row);
+    const label = cancelledLabel({ status: row.status, reversalOfId: row.reversalOfId ?? null }) ?? (cancelled ? "Voided" : null);
+    const out = OUT.includes(kind);
     const movement = isProfit ? profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0)) : row.credit ? `+ ${formatCurrency(row.credit, currency, fmt)}` : row.debit ? `− ${formatCurrency(row.debit, currency, fmt)}` : "–";
     return (
       <ListRow key={row.transactionId} id={rowId(row)} columns={GRID} muted={cancelled} className="xl:min-h-13.5 print:break-inside-avoid">
@@ -295,17 +310,68 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   const entries = activity?.entries;
   const since = activity?.firstEntryDate ?? contact?.createdAt ?? null;
 
+  // The page on paper: every entry in the period, none folded.
+  const sideTag = (value: number) => t(DIRECTION_META[loanDirection(value)].name);
+  const printFigure = (value: number) => (value ? formatCurrency(value, currency, fmt) : "–");
+  const printRows: PrintRow[] = rows.map((row) => {
+    const { isProfit, what, note, charge } = describe(row);
+    const after = Number(row.runningPrincipal);
+    return {
+      key: row.transactionId,
+      date: day(row.date),
+      what: row.reversalOfId || isCancelledRow(row) ? `${what} (${t("Voided")})` : what,
+      note: [note, charge > 0 ? t("Charge {amount}", { amount: formatCurrency(charge, currency, fmt) }) : null].filter(Boolean).join(" · ") || "–",
+      in: isProfit ? "–" : printFigure(Number(row.credit ?? 0)),
+      out: isProfit ? "–" : printFigure(Number(row.debit ?? 0)),
+      profit: Number(row.profitPaid ?? 0) ? `− ${formatCurrency(Number(row.profitPaid), currency, fmt)}` : Number(row.profitReceived ?? 0) ? `+ ${formatCurrency(Number(row.profitReceived), currency, fmt)}` : "–",
+      balance: `${formatCurrency(Math.abs(after), currency, fmt)} ${sideTag(after)}`,
+    };
+  });
+  const profitTotal = profit.paid && profit.received ? `− ${formatCurrency(profit.paid, currency, fmt)} / + ${formatCurrency(profit.received, currency, fmt)}` : profit.received ? `+ ${formatCurrency(profit.received, currency, fmt)}` : profit.paid ? `− ${formatCurrency(profit.paid, currency, fmt)}` : formatCurrency(0, currency, fmt);
+  const balanceText = (value: number) => `${formatCurrency(Math.abs(value), currency, fmt)} ${sideTag(value)}`;
+  const preview = previewing && ready && contact && (
+    <PrintPreview look="bar" subtitle={t("For a PDF, choose “Save as PDF” in the print window.")} onClose={() => setPreviewing(false)}>
+      <LoanStatementPrint
+        name={contact.name}
+        meta={[
+          { label: t("Bank / person"), value: contact.name },
+          { label: t("Kind"), value: t(LOAN_KIND_LABELS[contact.type]) },
+          { label: t("Phone"), value: contact.phone || "–" },
+          { label: t("Period"), value: periodFrom ? `${day(periodFrom)} – ${day(periodTo)}` : t("All time") },
+        ]}
+        figures={[
+          { label: t("Opening balance"), value: balanceText(openingBalance) },
+          { label: t("Principal out"), value: formatCurrency(paid, currency, fmt) },
+          { label: t("Principal in"), value: formatCurrency(received, currency, fmt) },
+          { label: t("Profit"), value: profitTotal },
+          { label: t("Closing balance"), value: balanceText(closing), tone: closeSide === "SETTLED" ? undefined : DIRECTION_META[closeSide].text },
+        ]}
+        openingLine={`${t("Opening balance")}${openedOn ? ` · ${day(openedOn)}` : ""}`}
+        opening={balanceText(openingBalance)}
+        closingLine={`${t("Closing balance")} · ${day(periodTo)}`}
+        closing={{ in: formatCurrency(received, currency, fmt), out: formatCurrency(paid, currency, fmt), profit: profitTotal, balance: balanceText(closing) }}
+        rows={printRows}
+        madeOn={t("Made on {date}", { date: day(today) })}
+      />
+    </PrintPreview>
+  );
+
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-4.5">
+      {preview}
+      {/* While the preview is open, only its page prints. */}
+      <div className={cn("contents", previewing && "print:hidden")}>
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
         title={t("Loan statement")}
-        description={t("Every entry with one bank or person, with the balance after each one.")}
+        description={<span className="text-[13.5px] leading-[normal]">{t("Every entry with one bank or person, with the balance after each one.")}</span>}
+        // The board's title block sits 8px higher, the button centred on it.
+        className="md:-mt-2 md:items-center"
         actions={
           pdfExportOn &&
           ready && (
-            <Button variant="secondary" onClick={() => window.print()} className="print:hidden">
+            <Button variant="secondary" onClick={() => setPreviewing(true)} aria-haspopup="dialog" className="print:hidden">
               <Printer className="text-ink-2" />
               {t("Print / PDF")}
             </Button>
@@ -313,75 +379,51 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
         }
       />
 
-      <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-end print:hidden">
-        <div className="flex min-w-0 flex-col gap-2 md:flex-1">
-          <label htmlFor="loan-contact" className="text-small font-medium text-ink-2">
-            {t("Bank / person")}
-          </label>
-          <ContactPicker id="loan-contact" contacts={contacts} value={shownContactId} onChange={pickContact} currency={currency} label={t("Bank / person")} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-small font-medium text-ink-2">{t("Period")}</span>
-          <PeriodPicker period={period} today={today} activeMonths={null} allowAll defaultPeriod={thisYear} onPick={pickPeriod} busy={isPending} />
-        </div>
-        {isPending && <Loader size={18} label={t("Loading...")} className="md:mb-3" />}
-      </Card>
-
-      {!statement || !contact ? (
-        <Card padding="none" className={cn("flex min-h-130 flex-col items-center justify-center gap-3 bg-fresh p-6 text-center transition-opacity md:p-10", isPending && "opacity-60")} aria-busy={isPending || undefined}>
-          <IconTile tone="loans" size={48}>
-            <ScrollText />
-          </IconTile>
-          {contacts.length === 0 ? (
-            <>
-              <h2 className="text-title font-bold text-ink">{t("No banks or people yet")}</h2>
-              <p className="max-w-115 text-body text-ink-muted">{t("Add the bank, NGO or person you lend to or borrow from. Their statement shows up here.")}</p>
-              {canManage && (
-                <Button onClick={() => setContactForm("create")} className="mt-1">
-                  <UserPlus />
-                  {t("Add contact")}
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <h2 className="text-title font-bold text-ink">{t("Pick a bank or person to see their statement")}</h2>
-              <p className="max-w-115 text-body leading-relaxed text-ink-muted">{t("You'll see the opening balance, every loan and repayment, and the running balance, ready to print.")}</p>
-              {quickPicks.length > 0 && (
-                <>
-                  <span className="mt-4 text-caption font-semibold text-ink-muted">{t("People & banks")}</span>
-                  {/* Centred under the heading however many there are, four to a row at xl. */}
-                  <div className="flex w-full flex-wrap justify-center gap-3 xl:max-w-209">
-                    {quickPicks.map((pick) => {
-                      const side = loanDirection(pick.currentBalance);
-                      return (
-                        <button key={pick.id} type="button" onClick={() => pickContact(pick.id)} className="flex h-16 w-full min-w-0 items-center gap-3 rounded-md border border-line bg-surface px-4 text-left shadow-card transition-colors hover:border-line-strong sm:w-[calc(50%-6px)] xl:w-50">
-                          <PersonAvatar name={pick.name} src={pick.photoUrl} kind={pick.type} size={30} initials={wordInitials(pick.name)} />
-                          <span className="flex min-w-0 flex-col gap-px">
-                            <span className="truncate text-body font-semibold text-ink">{pick.name}</span>
-                            <span className={cn("truncate text-caption font-normal tabular-nums", DIRECTION_META[side].text)}>
-                              {formatCurrency(Math.abs(Number(pick.currentBalance)), currency, fmt)} {side !== "SETTLED" && t(DIRECTION_META[side].name)}
-                            </span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </>
+      {contacts.length === 0 ? (
+        // No one yet: the board shows only this, no picker and no print.
+        <Card padding="none" className="flex flex-col items-center gap-2.5 px-6 py-14 text-center leading-[normal]">
+          <span aria-hidden="true" className="flex size-13 items-center justify-center rounded-[16px] bg-emerald-soft text-emerald">
+            <UserPlus className="size-6" strokeWidth={2} />
+          </span>
+          <h2 className="text-[18px] font-bold text-ink">{t("No banks or people yet")}</h2>
+          <p className="max-w-110 text-body leading-[1.55] text-ink-muted">{t("Add the bank, NGO or person you lend to or borrow from. Their statement shows up here.")}</p>
+          {canManage && (
+            <Button onClick={() => setContactForm("create")} className="mt-1.5 h-10.5 px-4.5">
+              <Plus strokeWidth={2.5} className="size-4" />
+              {t("Add a bank or person")}
+            </Button>
           )}
         </Card>
       ) : (
         <>
+        <Card padding="none" className="flex flex-col gap-4 px-5 py-3.5 md:flex-row md:items-end print:hidden">
+          <div className="flex min-w-0 flex-col gap-1.5 md:flex-1">
+            <label htmlFor="loan-contact" className="text-[13px] leading-[normal] font-medium text-ink-soft">
+              {t("Bank / person")}
+            </label>
+            <ContactPicker id="loan-contact" contacts={contacts} value={shownContactId} onChange={pickContact} currency={currency} label={t("Bank / person")} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] leading-[normal] font-medium text-ink-soft">{t("Period")}</span>
+            <PeriodPicker period={period} today={today} activeMonths={null} allowAll defaultPeriod={thisYear} onPick={pickPeriod} busy={isPending} />
+          </div>
+          {isPending && <Loader size={18} label={t("Loading...")} className="md:mb-3" />}
+        </Card>
+
+        {!statement || !contact ? (
+          <Card padding="none" className="p-10 text-center text-body text-ink-muted">
+            {t("The statement could not be loaded. Try again in a moment.")}
+          </Card>
+        ) : (
+        <>
           {/* Who, and where the balance stands now. */}
-          <Card padding="none" className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center print:border-0 print:p-0 print:shadow-none">
+          <Card padding="none" className="flex flex-col gap-4 px-5 py-4 leading-[normal] md:flex-row md:items-center print:border-0 print:p-0 print:shadow-none">
             <div className="flex min-w-0 flex-1 items-center gap-4">
               <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} initials={wordInitials(contact.name)} className="size-12" />
-              <div className="flex min-w-0 flex-col gap-1">
-                <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex min-w-0 flex-col gap-0.75">
+                <div className="flex min-w-0 items-center gap-2">
                   <h2 className="truncate text-[18px] font-bold text-ink">{contact.name}</h2>
-                  <Chip tone="neutral" size="sm" className="shrink-0 font-semibold">
+                  <Chip tone="neutral" size="sm" className="h-auto shrink-0 px-2 py-0.5 text-[11.5px] font-semibold">
                     {t(LOAN_KIND_LABELS[contact.type])}
                   </Chip>
                 </div>
@@ -419,15 +461,24 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               </span>
               <span className={cn("text-[12px]", nowSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[nowSide].text)}>{t(DIRECTION_META[nowSide].label)}</span>
             </div>
-            {canManage && (
-              <div className="flex shrink-0 items-center gap-2 print:hidden">
-                <Button variant="secondary" onClick={() => setContactForm("edit")}>
-                  <Pencil className="text-ink-2" />
-                  {t("Edit contact")}
-                </Button>
-                {contact.status === "ACTIVE" && (
-                  <Button onClick={() => setEntryOpen(true)}>
-                    <Plus strokeWidth={2.5} className="size-4" />
+            {(canManage || balanceNow > 0) && (
+              <div className="flex shrink-0 flex-wrap items-center gap-2 print:hidden">
+                {/* Only while they owe you: a message to send them. */}
+                {balanceNow > 0 && (
+                  <Button variant="secondary" onClick={() => setReminding(true)} aria-haspopup="dialog" className="gap-1.75 px-3.5 text-[13.5px]">
+                    <Bell className="size-3.75 text-ink-soft" />
+                    {t("Remind")}
+                  </Button>
+                )}
+                {canManage && (
+                  <Button variant="secondary" onClick={() => setContactForm("edit")} className="gap-1.75 px-3.5 text-[13.5px]">
+                    <Pencil className="size-3.75 text-ink-soft" />
+                    {t("Edit contact")}
+                  </Button>
+                )}
+                {canManage && contact.status === "ACTIVE" && (
+                  <Button onClick={() => setEntryOpen(true)} className="gap-1.5 px-4 text-[13.5px]">
+                    <Plus strokeWidth={2.5} className="size-3.75" />
                     {t("New entry")}
                   </Button>
                 )}
@@ -435,39 +486,52 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             )}
           </Card>
 
-          <div className={cn("grid gap-4", hasProfit && "xl:grid-cols-[minmax(0,1fr)_280px]")}>
-            <Card padding="none" className="grid grid-cols-2 overflow-hidden md:grid-cols-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+            <Card padding="none" className="grid grid-cols-2 overflow-hidden leading-[normal] md:grid-cols-4">
               <Figure label={t("Opening balance")} sub={openedOn ? t("On {date}", { date: day(openedOn) }) : undefined}>
-                <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="flex flex-wrap items-center gap-x-1.5 whitespace-nowrap">
                   <span className="text-[19px] font-bold text-ink tabular-nums">{formatCurrency(Math.abs(openingBalance), currency, fmt)}</span>
                   <span className={cn("text-[11px] font-bold", openSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[openSide].text)}>{t(DIRECTION_META[openSide].name)}</span>
                 </span>
               </Figure>
               <Figure label={t("Principal out")} sub={t("Gave a loan or paid back")} className="border-l border-divider">
-                <span className={cn("text-[19px] font-bold tabular-nums", paid ? "text-ink" : "text-ink-faint")}>{formatCurrency(paid, currency, fmt)}</span>
+                <span className={cn("text-[19px] font-bold tabular-nums", paid ? "text-expense" : "text-ink-faint")}>{formatCurrency(paid, currency, fmt)}</span>
               </Figure>
               <Figure label={t("Principal in")} sub={t("Took a loan or got money back")} className="border-divider max-md:border-t md:border-l">
-                <span className={cn("text-[19px] font-bold tabular-nums", received ? "text-ink" : "text-ink-faint")}>{formatCurrency(received, currency, fmt)}</span>
+                <span className={cn("text-[19px] font-bold tabular-nums", received ? "text-income" : "text-ink-faint")}>{formatCurrency(received, currency, fmt)}</span>
               </Figure>
               <Figure label={t("Closing balance")} sub={t("On {date}", { date: day(periodTo) })} tone={closeSide} className={cn("max-md:border-t max-md:border-l max-md:border-divider", DIRECTION_META[closeSide].box)}>
-                <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="flex flex-wrap items-center gap-x-1.5 whitespace-nowrap">
                   <span className={cn("text-[21px] font-bold tabular-nums", closeSide === "SETTLED" ? "text-ink" : DIRECTION_META[closeSide].text)}>{formatCurrency(Math.abs(closing), currency, fmt)}</span>
                   <span className={cn("text-[11px] font-bold", closeSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[closeSide].text)}>{t(DIRECTION_META[closeSide].name)}</span>
                 </span>
               </Figure>
             </Card>
-            {hasProfit && (
-              <div className="flex flex-col justify-center gap-1 rounded-[12px] border border-warning-line bg-warning-50 px-5 py-3.5 text-warning-ink">
-                <span className="text-[12px] font-semibold">
-                  {profit.paid > 0
-                    ? t(paidCount === 1 ? "Profit paid · {count} entry" : "Profit paid · {count} entries", { count: formatCount(paidCount, fmt) })
-                    : t(receivedCount === 1 ? "Profit received · {count} entry" : "Profit received · {count} entries", { count: formatCount(receivedCount, fmt) })}
+            {/* The board always shows this card, with "Profit / interest" and a grey zero when there was none. */}
+            <div className="flex flex-col justify-center gap-1 rounded-[12px] border border-warning-line bg-warning-50 px-5 py-3.5 leading-[normal] text-warning-ink">
+              <span className="text-[12px] font-semibold">
+                {profit.paid > 0
+                  ? t(paidCount === 1 ? "Profit paid · {count} entry" : "Profit paid · {count} entries", { count: formatCount(paidCount, fmt) })
+                  : profit.received > 0
+                    ? t(receivedCount === 1 ? "Profit received · {count} entry" : "Profit received · {count} entries", { count: formatCount(receivedCount, fmt) })
+                    : t("Profit / interest")}
+              </span>
+              <span className={cn("text-[21px] font-bold tabular-nums", hasProfit ? "text-warning" : "text-ink-faint")}>{formatCurrency(profit.paid > 0 ? profit.paid : profit.received, currency, fmt)}</span>
+              {profit.paid > 0 && profit.received > 0 && (
+                <span className="text-[12.5px] font-semibold">
+                  {t(receivedCount === 1 ? "Received {amount} · {count} entry" : "Received {amount} · {count} entries", { amount: formatCurrency(profit.received, currency, fmt), count: formatCount(receivedCount, fmt) })}
                 </span>
-                <span className={cn("text-[21px] font-bold tabular-nums", profit.paid > 0 ? "text-warning" : "text-income")}>{formatCurrency(profit.paid > 0 ? profit.paid : profit.received, currency, fmt)}</span>
-                {profit.paid > 0 && profit.received > 0 && <span className="text-[12.5px] font-semibold">{t("+ {amount} received", { amount: formatCurrency(profit.received, currency, fmt) })}</span>}
-                <span className="text-[12px]">{profit.paid > 0 ? t("Counted as expense. Doesn’t change the balance.") : t("Counted as income. Doesn’t change the balance.")}</span>
-              </div>
-            )}
+              )}
+              <span className="text-[12px]">
+                {profit.paid > 0 && profit.received > 0
+                  ? t("Paid is an expense, received is income. Neither changes the balance.")
+                  : profit.paid > 0
+                    ? t("Counted as expense. Doesn’t change the balance.")
+                    : profit.received > 0
+                      ? t("Counted as income. Doesn’t change the balance.")
+                      : t("No profit or interest in this period.")}
+              </span>
+            </div>
           </div>
 
           <ListCard
@@ -526,7 +590,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
                   {profit.received > 0 && profitCell(0, profit.received)}
                   {!hasProfit && <span className="text-ink-muted">{formatCurrency(0, currency, fmt)}</span>}
                 </ListCell>
-                <ListCell align="end">{balanceStack(closing, false, "text-title font-bold")}</ListCell>
+                <ListCell align="end">{balanceStack(closing, false, "text-title font-bold", true)}</ListCell>
               </ListSummaryRow>
             ) : (
               <ListSummaryRow kind="carried-forward" columns={GRID} className="text-body">
@@ -535,6 +599,8 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               </ListSummaryRow>
             )}
           </ListCard>
+        </>
+        )}
         </>
       )}
 
@@ -551,7 +617,23 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
         initialContactId={selectedContactId || undefined}
         editing={editing}
       />
+      {contact && balanceNow > 0 && (
+        <LoanReminderDialog
+          open={reminding}
+          onClose={() => setReminding(false)}
+          name={contact.name}
+          phone={contact.phone}
+          owed={balanceNow}
+          currency={currency}
+          today={today}
+          onAddPhone={() => {
+            setReminding(false);
+            setContactForm("edit");
+          }}
+        />
+      )}
       <LoanContactDrawer open={contactForm !== "closed"} onClose={() => setContactForm("closed")} businessId={businessId} editing={contactForm === "edit" ? (contact ?? null) : null} currency={currency} canTrade={canTrade} />
+      </div>
     </PageFrame>
   );
 }

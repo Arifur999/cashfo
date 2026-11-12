@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Eye, Pencil, Plus, Printer, Search, Trash2, X } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeftRight, Pencil, Plus, Printer, Search, Trash2, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -11,7 +10,7 @@ import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
+import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
@@ -21,14 +20,14 @@ import { periodHref, type PickedPeriod } from "@/lib/customer/period";
 import { accountColor, maskedMoney, walletColorStyle } from "@/lib/customer/balanceDisplay";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { periodText, transactionHref } from "@/lib/customer/ledger";
+import { periodText } from "@/lib/customer/ledger";
 import { createTransferAction } from "@/lib/customer/quickEntryActions";
 import { voidTransactionAction } from "@/lib/customer/transactionActions";
 import { listTransfersForPrintAction } from "@/lib/customer/transferActions";
 import { transferAmount, transferParties } from "@/lib/customer/transfers";
 import { walletIcon } from "@/lib/customer/walletVisuals";
 import { formatCount } from "@/lib/i18n/digits";
-import IconAction, { iconActionClass } from "@/components/smartly/IconAction";
+import IconAction from "@/components/smartly/IconAction";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { PeriodPicker, periodLabel as periodName } from "../Shared/PeriodPicker";
 import { plural } from "@/lib/i18n/message";
@@ -148,10 +147,8 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
   const walletById = new Map(wallets.map((wallet) => [wallet.id, wallet]));
   const symbol = currencySymbol(currency, fmt);
   const money = (value: number | string) => (hidden ? maskedMoney(symbol) : formatCurrency(value, currency, fmt));
-  const here = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
   const periodLabel = periodName(period, t, fmt);
   const accountName = accountId ? (walletById.get(accountId) ? accountDisplayName(walletById.get(accountId)!, lang) : t("Removed account")) : t("All accounts");
-  const filtered = period.kind !== "all" || !!accountId || !!search;
   const paged = meta.totalPages > 1;
 
   const namesOf = (transfer: Transaction) => {
@@ -257,6 +254,18 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
   const statementRange =
     periodFrom || periodTo ? periodText(t, periodFrom, periodTo, fmt) : statementDays.length ? periodText(t, statementDays[0], statementDays[statementDays.length - 1], fmt) : t("No transfers yet");
 
+  // Nothing to list: what was searched, or the account and period.
+  const allTime = period.kind === "all";
+  const emptyText = search
+    ? t('No transfer matches "{query}".', { query: search })
+    : accountId
+      ? allTime
+        ? t("No transfers for {account} in all time.", { account: accountName })
+        : t("No transfers for {account} in {period}.", { account: accountName, period: periodLabel })
+      : allTime
+        ? t("No transfers in all time.")
+        : t("No transfers in {period}.", { period: periodLabel });
+
   const party = (id: string | null, name: string, after: string | null | undefined) => {
     const wallet = id ? walletById.get(id) : undefined;
     return (
@@ -273,7 +282,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
   };
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 leading-[normal]">
       {printing && (
         <PrintPreview subtitle={`A4 · ${accountName} · ${periodLabel}`} onClose={() => setPrinting(null)}>
           <TransferStatement
@@ -292,13 +301,14 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
       )}
       <div className="contents print:hidden">
         <PageHeader
+          className="md:items-center"
           title={t("Transfers")}
           actions={
             <>
               <HideBalancesButton hidden={hidden} onToggle={toggle} className="size-10" />
-              {pdfExportOn && meta.total > 0 && (
-                <Button variant="secondary" onClick={openPrint} disabled={preparing} aria-busy={preparing || undefined}>
-                  {preparing ? <Loader size={16} label={t("Loading...")} /> : <Printer className="text-ink-2" />}
+              {pdfExportOn && (
+                <Button variant="secondary" onClick={openPrint} disabled={preparing} aria-busy={preparing || undefined} className="px-3.5">
+                  {preparing ? <Loader size={16} label={t("Loading...")} /> : <Printer className="text-ink-soft" />}
                   {t("Print")}
                 </Button>
               )}
@@ -324,12 +334,12 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
         <ListCard
           id="transfer-list"
           label={t("Transfer history")}
-          scrollable={transfers.length > 0}
+          scrollable
           tableClassName="overflow-x-auto"
           header={
             <div className="flex flex-wrap items-center gap-3 px-4 py-3.5 md:flex-nowrap md:gap-4 md:px-6">
               <h2 className="text-body-lg font-semibold whitespace-nowrap text-ink">{t("Transfer history")}</h2>
-              <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border border-input bg-surface pr-1.5 pl-3 focus-within:border-focus-ring focus-within:focus-halo md:max-w-85">
+              <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border border-input bg-surface pr-1.5 pl-3 focus-within:border-focus-ring focus-within:focus-halo md:flex-auto md:max-w-85">
                 <Search className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                 <span className="sr-only">{t("Search note, account or amount")}</span>
                 <input
@@ -369,8 +379,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
             </div>
           }
           footer={
-            meta.total > 0 &&
-            (!paged && meta.total <= Math.min(...pageSizes) ? (
+            !paged && meta.total <= Math.min(...pageSizes) ? (
               <ListFooter className="flex-row items-center justify-between gap-3 py-3.5">
                 <span>{plural(t, meta.total, "Showing {count} transfer", "Showing {count} transfers", undefined, fmt)}</span>
                 <span>{t("Newest first")}</span>
@@ -388,32 +397,10 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                   focusTargetId="transfer-list"
                 />
               </ListFooter>
-            ))
+            )
           }
         >
-          {transfers.length === 0 ? (
-            filtered ? (
-              <ListEmpty
-                tone="info"
-                icon={<ArrowLeftRight />}
-                title={search ? t('No transfer matches "{query}".', { query: search }) : t("No transfers in this period.")}
-                action={
-                  <Button variant="secondary" onClick={() => router.push(pathname)}>
-                    {t("Show all transfers")}
-                  </Button>
-                }
-              />
-            ) : (
-              <ListEmpty
-                tone="info"
-                icon={<ArrowLeftRight />}
-                title={t("No transfer yet")}
-                description={t("Move money between your accounts and it shows up here.")}
-                action={canManage && <Button onClick={() => setCreating(true)}>{t("New transfer")}</Button>}
-              />
-            )
-          ) : (
-            <>
+          <>
               <ListHead showOnPhone columns={COLUMNS}>
                 <ListHeadCell>#</ListHeadCell>
                 <ListHeadCell>{t("Date")}</ListHeadCell>
@@ -445,14 +432,10 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                       {charge > 0 ? (hidden ? maskedMoney(symbol) : `− ${formatCurrency(charge, currency, fmt)}`) : "—"}
                     </ListCell>
                     <ListRowActions>
-                      {editable ? (
+                      {editable && (
                         <IconAction onClick={() => startEdit(transfer)} aria-label={t("Edit transfer")} title={t("Edit")}>
                           <Pencil aria-hidden="true" />
                         </IconAction>
-                      ) : (
-                        <Link href={transactionHref(transfer.id, here)} aria-label={t("View details")} title={t("View details")} className={iconActionClass()}>
-                          <Eye aria-hidden="true" />
-                        </Link>
                       )}
                       {canManage && transfer.voidable && parties.fromId && parties.toId && (
                         <IconAction
@@ -482,8 +465,8 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                   </ListRow>
                 );
               })}
-            </>
-          )}
+              {transfers.length === 0 && <p className="border-b border-divider px-6 py-7 text-center text-body text-ink-muted">{emptyText}</p>}
+          </>
         </ListCard>
       </div>
 
@@ -507,7 +490,7 @@ function Figure({ label, value, tone }: { label: string; value: string; tone: st
   return (
     <Card padding="none" className="flex min-w-0 flex-col gap-1 px-4.5 py-3.5 shadow-xs">
       <span className="text-[12.5px] font-medium text-ink-muted">{label}</span>
-      <span className={cn("text-[22px] leading-tight font-bold tracking-[-0.02em] tabular-nums wrap-anywhere", tone)}>{value}</span>
+      <span className={cn("text-[22px] font-bold tracking-[-0.02em] tabular-nums wrap-anywhere", tone)}>{value}</span>
     </Card>
   );
 }

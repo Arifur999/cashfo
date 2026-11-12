@@ -1,7 +1,7 @@
 "use client";
 
 import { Command } from "cmdk";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Check, ChevronDown, Search } from "lucide-react";
 import { createElement, useState } from "react";
 import Chip from "@/components/smartly/Chip";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -35,8 +35,7 @@ const GROUP = "**:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:pt-2 **:
 
 // The Statement's account field: a wallet with its tile and kind, or any
 // other account found by typing. The list is a combobox: type to narrow it,
-// arrow keys to move, Enter to pick. Clearing it goes back to the wallet
-// picks.
+// arrow keys to move, Enter to pick.
 export function AccountPicker({ id, labelId, wallets, others, value, onChange, preferredLanguage, currency }: AccountPickerProps) {
   const { t, fmt } = useLocale();
   const [open, setOpen] = useState(false);
@@ -97,7 +96,7 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
                 <>
                   {tileFor(selected)}
                   <span className="min-w-0 flex-1 truncate text-body font-semibold text-ink">{nameOf(selected)}</span>
-                  <Chip tone="neutral" size="sm" className="font-medium max-sm:hidden">
+                  <Chip tone="neutral" className="h-auto bg-surface-sunken px-2 py-0.5 font-normal text-ink-soft max-sm:hidden">
                     {kindOf(selected)}
                   </Chip>
                 </>
@@ -109,15 +108,10 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
               )}
             </button>
           </PopoverTrigger>
-          {selected && (
-            <button type="button" onClick={() => onChange("")} aria-label={t("Clear account")} className="flex size-7 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
-              <X className="size-3.5" aria-hidden="true" />
-            </button>
-          )}
           <ChevronDown className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
         </div>
       </PopoverAnchor>
-      <PopoverContent align="start" sideOffset={6} className="w-(--radix-popover-trigger-width) gap-0 rounded-lg border border-line bg-surface p-1 shadow-overlay ring-0">
+      <PopoverContent align="start" sideOffset={6} className="w-(--radix-popover-trigger-width) gap-0 rounded-[12px] border border-line bg-surface p-1 shadow-overlay ring-0">
         {/* Our own matching (Bangla names too), so cmdk only drives the keys. */}
         <Command shouldFilter={false} loop label={t("Search accounts")} defaultValue={value || undefined}>
           <div className="mb-1 flex h-9.5 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-ink-muted transition-[border-color,box-shadow] focus-within:border-emerald focus-within:shadow-[0_0_0_0.5px_var(--emerald),0_0_0_4px_var(--mint-50)]">

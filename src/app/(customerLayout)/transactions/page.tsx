@@ -19,9 +19,10 @@ export const generateMetadata = () => customerPageMetadata("/transactions");
 
 const TYPES: TransactionType[] = ["INCOME", "EXPENSE"];
 
-// Rows per page the pager offers, on the URL's "limit".
+// Rows per page: the board's 10, or the reader's own choice from Settings ›
+// App preferences (a link's "limit" too).
 const PAGE_SIZES = [10, 20, 50];
-const DEFAULT_PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 10;
 
 const countsOf = (breakdown: CategoryBreakdown): Record<string, number> =>
   Object.fromEntries(breakdown.categories.filter((row) => row.count !== undefined).map((row) => [row.uncategorised ? "" : row.name, row.count ?? 0]));
@@ -29,7 +30,8 @@ const countsOf = (breakdown: CategoryBreakdown): Record<string, number> =>
 // Income & Expense > Transactions for a period: this month unless the
 // address asks for another (?month=&year=, ?period=year&year=, ?from=&to=,
 // or ?period=all for all time; an older link's ?dateFrom=&dateTo= is the
-// reader's own days), narrowed by type, category, wallet and a search.
+// reader's own days), narrowed by type, category and a search.
+// ?new=1 opens the New transaction popup (the Overview's button).
 export default async function TransactionsPage({ searchParams }: PageProps<"/transactions">) {
   const params = await searchParams;
   const user = await getCurrentUser();
@@ -45,7 +47,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   // The reader's rows per page (Settings › App preferences) unless the address says.
   const defaultPageSize = PAGE_SIZES.includes(user.preferences?.rowsPerPage ?? 0) ? user.preferences!.rowsPerPage! : DEFAULT_PAGE_SIZE;
   const limit = readPageSizeParam(params, PAGE_SIZES, defaultPageSize);
-  const { type: selectedType, dateFrom: oldFrom, dateTo: oldTo, accountId, categoryId, uncategorised, search, deleted } = readTransactionFilters((key) => {
+  const { type: selectedType, dateFrom: oldFrom, dateTo: oldTo, categoryId, uncategorised, search } = readTransactionFilters((key) => {
     const value = params[key];
     return typeof value === "string" ? value : undefined;
   });
@@ -67,16 +69,18 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
     dateTo,
     transactionType: selectedType,
     transactionTypes: selectedType ? undefined : TYPES,
-    accountId,
     categoryId: uncategorised ? undefined : categoryId,
     ...(uncategorised && { uncategorised: true }),
     search,
   };
 
-  const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories, summary, incomeBreakdown, expenseBreakdown, activeMonths] = await Promise.all([
-    // Deleted rows stay out unless asked for; the summary still counts
-    // them, for the strip's "Show N voided".
-    getTransactions(activeBusinessId, { ...filters, ...(!deleted && { standingOnly: true }), page, limit }),
+  // The strip shows both kinds' totals whatever the type filter (the board
+  // dims the one left out), so a type filter asks for them apart.
+  const bothTypes = selectedType ? { ...filters, transactionType: undefined, transactionTypes: TYPES } : null;
+
+  const [{ data: transactions, meta }, accounts, expenseCategories, incomeCategories, summary, incomeBreakdown, expenseBreakdown, activeMonths, bothSummary] = await Promise.all([
+    // A deleted row is gone from the list (Undo brings it back).
+    getTransactions(activeBusinessId, { ...filters, standingOnly: true, page, limit }),
     getMoneyAccounts(activeBusinessId),
     getBudgetCategoryNames(activeBusinessId, "EXPENSE"),
     getBudgetCategoryNames(activeBusinessId, "INCOME"),
@@ -84,6 +88,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
     getCategoryBreakdown(activeBusinessId, "INCOME", dateFrom, dateTo),
     getCategoryBreakdown(activeBusinessId, "EXPENSE", dateFrom, dateTo),
     getActiveMonths(activeBusinessId),
+    bothTypes ? getTransactionsSummary(activeBusinessId, bothTypes) : Promise.resolve(null),
   ]);
 
   // A page past the end (rows were voided away, an old link) opens the
@@ -91,26 +96,20 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const last = pastEnd(page, meta.totalPages, meta.total);
   if (last !== null) redirect(pageHref("/transactions", params, last));
 
-  // The figures strip covers every matching transaction, from the summary.
-  // An older backend has no summary: then only the date and type can be
-  // totalled across pages (the category breakdown knows those), and a
-  // search, wallet or category filter falls back to this page's rows.
+  // The figures strip covers every matching transaction of both kinds, from
+  // the summary. An older backend has no summary: then only the date can be
+  // totalled across pages (the category breakdown knows it), and a search
+  // or category filter falls back to this page's rows.
   let totals: TransactionTotals;
-  if (summary) {
-    totals = { income: Number(summary.totals.INCOME), expense: Number(summary.totals.EXPENSE), count: deleted ? summary.count : (summary.standing ?? meta.total), voided: summary.voided, scope: "all" };
+  const both = bothSummary ?? summary;
+  if (summary && both) {
+    totals = { income: Number(both.totals.INCOME), expense: Number(both.totals.EXPENSE), scope: "all" };
   } else {
-    const wholeRange = !accountId && !categoryId && !uncategorised && !search;
-    const voidedOnPage = transactions.filter(isCancelled).length;
+    const wholeRange = !categoryId && !uncategorised && !search;
     const pageTotal = (type: TransactionType) => transactions.filter((t) => t.transactionType === type && !isCancelled(t)).reduce((sum, t) => sum + Number(t.entries[0]?.amount ?? 0), 0);
     totals = wholeRange
-      ? {
-          income: selectedType === "EXPENSE" ? 0 : Number(incomeBreakdown.total),
-          expense: selectedType === "INCOME" ? 0 : Number(expenseBreakdown.total),
-          count: meta.total,
-          voided: voidedOnPage,
-          scope: "all",
-        }
-      : { income: pageTotal("INCOME"), expense: pageTotal("EXPENSE"), count: meta.total, voided: voidedOnPage, scope: "page" };
+      ? { income: Number(incomeBreakdown.total), expense: Number(expenseBreakdown.total), scope: "all" }
+      : { income: pageTotal("INCOME"), expense: pageTotal("EXPENSE"), scope: "page" };
   }
 
   // A day at either edge of the page may go on past it, so its band's net
@@ -141,14 +140,13 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
       activeMonths={activeMonths}
       meta={meta}
       pageSize={limit}
-      pageSizes={PAGE_SIZES}
-      defaultPageSize={defaultPageSize}
       currency={activeBusiness?.currency ?? "BDT"}
       today={today}
       totals={totals}
       dayTotals={dayTotals}
       splitDays={edges}
       canManage={activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT"}
+      openNew={params.new === "1"}
     />
   );
 }

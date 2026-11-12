@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ImagePlus, Info, Landmark, Minus, Plus, Trash2, Users, WifiOff } from "lucide-react";
+import { Camera, ImagePlus, Info, Landmark, Trash2, Users, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createElement, useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -12,11 +12,12 @@ import Button from "@/components/smartly/Button";
 import Input from "@/components/smartly/form/Input";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { Contact, ContactCategory, ContactType } from "@/lib/customer/api";
-import { createContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
+import { createContactAction, deleteContactAction, updateContactAction, uploadContactPhotoAction } from "@/lib/customer/contactActions";
 import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { bdMobileOk, LOAN_FORM_KINDS, LOAN_KIND_LABELS, loanErrorText } from "@/lib/customer/loanDisplay";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { offerUndo } from "./offerUndo";
 import { radioProps } from "./radio";
 
 interface LoanContactDrawerProps {
@@ -39,10 +40,9 @@ const OWED: { value: Owed; label: string; on: string }[] = [
   { value: "ME", label: "I owe them", on: "text-expense" },
 ];
 const OWED_VALUES = OWED.map((option) => option.value);
-const CATEGORIES: ContactCategory[] = ["LOAN", "BUSINESS"];
 // The photo tile before one is added: a bank or NGO in its own colours.
 const KIND_TILE: Partial<Record<ContactType, string>> = { BANK: "bg-info-soft text-info", NGO: "bg-pillar-insights-soft text-pillar-insights" };
-const LABEL = "text-[13px] font-semibold text-ink-2";
+const LABEL = "text-[13px] font-semibold text-ink-2 leading-[normal]";
 const FIELD = "rounded-field";
 
 // Loose on purpose: the API takes any text, this only catches a slip.
@@ -52,8 +52,7 @@ type Errors = Partial<Record<"name" | "phone" | "amount" | "email", string>>;
 
 // Add or edit a bank or person (LoanContacts board's popup): what they are,
 // the name, a phone, what was owed before Smartly, and a line about the
-// loan -- plus a photo or logo, in a business workspace whether it is a
-// loan or trade, and, folded away, an email and an address.
+// loan -- plus, on Edit, the photo, email or address a contact already has.
 export function LoanContactDrawer({ open, onClose, businessId, editing, currency, canTrade }: LoanContactDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
@@ -73,7 +72,6 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   const [owed, setOwed] = useState<Owed>("NONE");
   const [opening, setOpening] = useState("");
   const openingField = useAmountField(opening, setOpening, currency);
-  const [showMore, setShowMore] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [isPending, startTransition] = useTransition();
 
@@ -94,7 +92,6 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
       setNotes(editing?.notes ?? "");
       setOwed(start > 0 ? "THEY" : start < 0 ? "ME" : "NONE");
       setOpening(start ? String(Math.abs(start)) : "");
-      setShowMore(!!(editing?.email || editing?.address));
       setErrors({});
     }
   }
@@ -172,8 +169,38 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
         if (trade) {
           // They live in Books now, not on this page: say where.
           toast.success(t("Saved in Books › Customers & suppliers"), { action: { label: t("Open Books"), onClick: () => router.push("/contacts") } });
-        } else {
-          toast.success(editing ? t("Contact updated") : t("Contact added"));
+        } else if (editing) {
+          // Undo puts every field back as it was, the opening balance too.
+          const before = editing;
+          offerUndo({
+            message: t("Contact updated"),
+            run: () =>
+              updateContactAction(businessId, before.id, {
+                name: before.name,
+                type: before.type,
+                phone: before.phone ?? "",
+                email: before.email ?? "",
+                address: before.address ?? "",
+                notes: before.notes ?? "",
+                photoUrl: before.photoUrl ?? "",
+                ...{ openingBalance: String(before.openingBalance) },
+              }),
+            done: t("Change undone"),
+            failed: t("Couldn't undo the change"),
+            undoLabel: t("Undo"),
+            refresh: () => router.refresh(),
+          });
+        } else if (result.data) {
+          // Nothing is entered with them yet, so Undo deletes them for good.
+          const addedId = result.data.id;
+          offerUndo({
+            message: t("Contact added"),
+            run: () => deleteContactAction(businessId, addedId),
+            done: t("Contact removed"),
+            failed: t("Couldn't remove the contact"),
+            undoLabel: t("Undo"),
+            refresh: () => router.refresh(),
+          });
         }
         onClose();
         router.refresh();
@@ -184,6 +211,10 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
   }
 
   const photoLabel = photoUrl ? t("Change photo or logo") : t("Upload photo or logo");
+  // The board asks for none of these. A contact that already has a photo,
+  // an email or an address keeps them in sight on Edit, to change or clear.
+  const keepPhoto = !!editing?.photoUrl;
+  const keepMore = !!(editing?.email || editing?.address);
   const errorLine = (id: string, text: string | undefined) =>
     text && (
       <span id={id} role="alert" className="text-[12.5px] text-expense">
@@ -199,11 +230,12 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
       busy={isPending}
       onSubmit={submit}
       headClassName="items-center pt-4 pr-5 pb-3.5 pl-6"
-      titleClassName="text-[18px] font-bold"
+      titleClassName="text-[18px] font-bold leading-[normal]"
+      closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line"
       bodyClassName="gap-4 px-6 py-4.5"
       footerClassName="px-6"
       title={editing ? t("Edit contact") : t("Add contact")}
-      sub={editing ? t("Fix the name, type, phone or details.") : t("Someone you lend to or borrow from.")}
+      sub={<span className="text-[12.5px] leading-[normal]">{editing ? t("Fix the name, type, phone or details.") : t("Someone you lend to or borrow from.")}</span>}
       footer={
         <div className="flex w-full flex-col gap-2">
           {!online && (
@@ -244,35 +276,12 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
         </div>
       </div>
 
-      {canTrade && (
-        <div className="flex flex-col gap-2">
-          <span id={`${groupId}-category`} className={LABEL}>
-            {t("What do you do with them?")}
-          </span>
-          <div role="radiogroup" aria-labelledby={`${groupId}-category`} className="grid grid-cols-2 gap-2">
-            {(
-              [
-                { value: "LOAN", title: "Loan", sub: "Lend or borrow money" },
-                { value: "BUSINESS", title: "Trade", sub: "Sell or buy on credit" },
-              ] as const
-            ).map((option) => {
-              const on = option.value === category;
-              return (
-                <button key={option.value} {...radioProps(option.value, { values: CATEGORIES, value: category, onChange: setCategory })} className={cn("flex flex-col items-start gap-0.5 rounded-[12px] border-[1.5px] px-3 py-2.5 text-left transition-colors", on ? "border-emerald bg-emerald-soft" : "border-line bg-surface hover:border-input")}>
-                  <span className={cn("text-[13.5px] font-semibold", on ? "text-emerald" : "text-ink")}>{t(option.title)}</span>
-                  <span className="text-[12px] text-ink-muted">{t(option.sub)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-col gap-1.5">
         <label htmlFor="ct-name" className={LABEL}>
           {t("Name")}
         </label>
         <div className="flex items-center gap-2.5">
+          {keepPhoto && (
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
@@ -293,7 +302,8 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
               <Camera className="size-2.75" strokeWidth={2.25} />
             </span>
           </button>
-          <input ref={fileInput} type="file" accept="image/*" onChange={choosePhoto} className="hidden" />
+          )}
+          {keepPhoto && <input ref={fileInput} type="file" accept="image/*" onChange={choosePhoto} className="hidden" />}
           <Input
             id="ct-name"
             size="md"
@@ -339,7 +349,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
       <div className="flex flex-col gap-2">
         <span id={`${groupId}-owed`} className="flex flex-col gap-px">
           <span className={LABEL}>{t("Opening balance")}</span>
-          <span className="text-[12px] text-ink-muted">{t("What was owed before you started using Smartly")}</span>
+          <span className="text-[12px] leading-[normal] text-ink-muted">{t("What was owed before you started using Smartly")}</span>
         </span>
         <div role="radiogroup" aria-labelledby={`${groupId}-owed`} className="grid grid-cols-3 gap-1 rounded-[12px] bg-surface-sunken p-1">
           {OWED.map((option) => {
@@ -378,13 +388,8 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
         <Input id="ct-notes" size="md" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={80} placeholder={t("e.g. House loan, shop credit")} frameClassName={FIELD} />
       </div>
 
-      {/* Not on the board: an email and an address, folded away. */}
-      <button type="button" onClick={() => setShowMore(!showMore)} aria-expanded={showMore} aria-controls="ct-more" className="-mt-1 flex h-8 items-center gap-1.5 self-start text-[13px] font-semibold text-emerald hover:text-emerald-hover">
-        {showMore ? <Minus className="size-3.5" strokeWidth={2.5} aria-hidden="true" /> : <Plus className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
-        {showMore ? t("Hide email and address") : t("Add an email or address")}
-      </button>
-      {showMore && (
-        <div id="ct-more" className="-mt-2 grid gap-2.5 sm:grid-cols-2">
+      {keepMore && (
+        <div id="ct-more" className="grid gap-2.5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="ct-email" className={LABEL}>
               {t("Email")}

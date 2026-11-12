@@ -6,7 +6,7 @@ import {
   type SavingsGoal,
   type SavingsGoalDetail,
   type SavingsGoalStatus,
-  type SavingsOverview,
+  type SavingsPlan,
   type SavingsTransferRow,
   type SavingsWalletGoals,
 } from "./api";
@@ -26,32 +26,6 @@ export const getSavingsGoals = cache(async (businessId: string, status?: Savings
     return response.data;
   } catch (error) {
     return emptyUnlessOutage(error, []);
-  }
-});
-
-const EMPTY_OVERVIEW: SavingsOverview = {
-  totalSaved: "0.00",
-  totalGoals: "0.00",
-  remaining: "0.00",
-  progressPercent: 0,
-  monthlyTarget: "0.00",
-  savedThisMonth: "0.00",
-  monthlyProgressPercent: 0,
-  savingsRatePercent: 0,
-  incomeThisMonth: "0.00",
-};
-
-export const getSavingsOverview = cache(async (businessId: string): Promise<SavingsOverview> => {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return EMPTY_OVERVIEW;
-
-  try {
-    const response = await customerApi.get<SavingsOverview>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/overview`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return response.data;
-  } catch (error) {
-    return emptyUnlessOutage(error, EMPTY_OVERVIEW);
   }
 });
 
@@ -106,6 +80,21 @@ export const getSavingsWalletGoals = cache(async (businessId: string): Promise<S
 
   try {
     const response = await customerApi.get<SavingsWalletGoals[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/wallet-goals`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, []);
+  }
+});
+
+// Saving plans: things to save for later.
+export const getSavingsPlans = cache(async (businessId: string): Promise<SavingsPlan[]> => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const response = await customerApi.get<SavingsPlan[]>(`${API_BASE_URL}/api/businesses/${businessId}/savings-plans`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return response.data;

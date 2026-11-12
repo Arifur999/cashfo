@@ -42,7 +42,7 @@ export const CATEGORY_NAME_WORDS: Record<"popup" | "drawer", Record<CategoryName
   popup: {
     empty: "Type a name first.",
     long: "Keep the name to 40 characters or fewer.",
-    reserved: "That name is used by the app for Zakat or transfer fees",
+    reserved: "That name is used by the app for Zakat or transfer fees.",
     taken: "That category already exists.",
   },
   drawer: {

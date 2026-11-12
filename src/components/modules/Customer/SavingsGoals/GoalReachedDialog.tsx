@@ -30,17 +30,17 @@ export function GoalReachedDialog({ open, onClose, goal, currency, today, canWit
   const took = months >= 1 ? t(months === 1 ? "{count} month" : "{count} months", { count: formatCount(months, fmt) }) : t(days === 1 ? "{count} day" : "{count} days", { count: formatCount(days, fmt) });
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent showCloseButton={false} className="flex w-110 max-w-[calc(100vw-32px)] flex-col items-center gap-2.5 rounded-[22px] border-0 bg-surface px-7 pt-7 pb-5.5 text-center text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
-        <span aria-hidden="true" className="flex size-18 items-center justify-center rounded-full bg-income">
-          <span className="flex size-14 items-center justify-center rounded-full bg-surface text-income">
+      <DialogContent showCloseButton={false} className="flex w-110 max-w-[calc(100vw-32px)] flex-col items-center gap-2.5 rounded-[22px] border-0 bg-surface px-7 pt-7 pb-5.5 text-center leading-[normal] text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
+        <span aria-hidden="true" className="flex size-18 items-center justify-center rounded-full bg-success">
+          <span className="flex size-14 items-center justify-center rounded-full bg-surface text-success">
             <Check className="size-7" strokeWidth={2.75} />
           </span>
         </span>
-        <DialogTitle className="mt-1.5 text-[21px] font-bold text-ink">{t("{name} reached!", { name: goal.name })}</DialogTitle>
-        <DialogDescription asChild>
-          <p className="text-body leading-[1.55] text-ink-2">
+        <DialogTitle className="mt-1.5 text-[21px] font-bold! text-ink">{t("{name} reached!", { name: goal.name })}</DialogTitle>
+        <DialogDescription asChild className="text-body leading-[1.55] text-ink-soft">
+          <p>
             {fillNodes(t("You saved {amount} in {time}. It stays in your savings accounts until you withdraw it to your main balance."), {
-              amount: <b className="font-semibold text-ink">{formatCurrency(goal.targetAmount, currency, fmt)}</b>,
+              amount: <b className="font-bold text-ink">{formatCurrency(goal.targetAmount, currency, fmt)}</b>,
               time: took,
             })}
           </p>
@@ -50,7 +50,7 @@ export function GoalReachedDialog({ open, onClose, goal, currency, today, canWit
             {t("Keep it saved for now")}
           </Button>
           {canWithdraw && (
-            <Button size="lg" onClick={onWithdraw} className="flex-1 bg-income hover:bg-income/90">
+            <Button size="lg" onClick={onWithdraw} className="flex-1 bg-success shadow-none hover:bg-success/90">
               {t("Withdraw to balance")}
             </Button>
           )}

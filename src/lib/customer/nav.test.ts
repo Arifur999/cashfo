@@ -34,7 +34,7 @@ const everyLocation: NavLocation[] = [
 ].flatMap(({ section, item }) => [{ section, item, sub: null }, ...(item.subs ?? []).map((sub) => ({ section, item, sub }))]);
 
 const labels = (ctx: NavContext, app: "money" | "habit") =>
-  menuSections(visibleNavSections(ctx), app).map((section) => [section.label, section.items.map((item) => [item.label, ...(item.subs ?? []).map((sub) => sub.label)])]);
+  menuSections(visibleNavSections(ctx), app).map((section) => [section.label, section.items.map((item) => [item.label, ...(item.subs ?? []).filter((sub) => sub.menu !== false).map((sub) => sub.label)])]);
 
 describe("the two menus", () => {
   it("draws the Money Tracker as the AppSidebar board does", () => {
@@ -50,7 +50,7 @@ describe("the two menus", () => {
       [
         "Plan & track",
         [
-          ["Savings Goals", "Goals", "Savings Accounts"],
+          ["Savings Goals", "Goals", "Saving plans", "Savings Accounts"],
           ["Assets Management", "Dashboard", "Purchase & Sell", "Update", "Category", "All Assets"],
           ["Loan Management", "Dashboard", "Transactions", "Ledger", "Contacts"],
           ["Group Expense"],
@@ -121,7 +121,7 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(location)).toEqual({ crumbs: ["Balance"], heading: "Transfers", tone: "money" });
     // The old Overview and Wallet addresses still name Accounts while they redirect.
     expect(locate("/balance/wallet")!.sub?.label).toBe("Accounts@@wallets");
-    expect(breadcrumbFor(locate("/balance/ledger")!).heading).toBe("Account ledger");
+    expect(breadcrumbFor(locate("/balance/ledger")!).heading).toBe("Ledger");
   });
 
   it("names a Habit Tracker page under its section, and the Money Tracker's pages alone", () => {
@@ -230,7 +230,7 @@ describe("titleParts", () => {
     expect(titleParts(locate("/balance/ledger")!)).toEqual(["Ledger", "Balance"]);
     expect(titleParts(locate("/loan-management/ledger")!)).toEqual(["Ledger", "Loan Management"]);
     expect(titleParts(locate("/savings-goals/dashboard")!)).toEqual(["Goals", "Savings Goals"]);
-    expect(titleParts(locate("/savings-goals/transfer")!)).toEqual(["Goals", "Savings Goals"]);
+    expect(titleParts(locate("/savings-goals/transfer")!)).toEqual(["All moves", "Savings Goals"]);
     expect(titleParts(locate("/habit-tracker")!)).toEqual(["Dashboard", HABIT_APP_LABEL]);
     expect(titleParts(locate("/reports/overview")!)).toEqual(["Overview", "Insights"]);
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Info, Package, Pencil, Plus, Search, Trash2, TriangleAlert } from "lucide-react";
+import { ArrowRight, Check, Info, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -8,62 +8,35 @@ import { toast } from "sonner";
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
 import { nextChoiceIndex } from "@/components/smartly/choiceKeys";
 import Input from "@/components/smartly/form/Input";
 import IconAction from "@/components/smartly/IconAction";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
-import { Switch } from "@/components/ui/switch";
 import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
-import { createAssetCategoryAction, deleteAssetCategoryAction, updateAssetCategoryAction } from "@/lib/customer/assetActions";
-import { categoryVisual, isActiveCategory } from "@/lib/customer/assetDisplay";
-import { budgetCategoryIcon } from "@/lib/customer/budgetCategoryVisuals";
-import { categoryColorVar, categoryTone } from "@/lib/customer/categoryTone";
+import { type AssetCategoryInput, createAssetCategoryAction, deleteAssetCategoryAction, updateAssetCategoryAction } from "@/lib/customer/assetActions";
+import { isActiveCategory } from "@/lib/customer/assetDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { AssetTypeTile } from "./AssetTypeTile";
-import { ReadOnlyNote } from "./ReadOnlyNote";
+import { ASSET_ICONS, ASSET_SWATCHES, AssetGlyph, assetIconKey, assetInk, assetLook, AssetTile } from "./assetLook";
+import { BoardSwitch, doneToast } from "./assetUi";
 
 interface AssetCategoriesPageClientProps {
   businessId: string;
   categories: AssetCategoryOption[];
   // Every asset, for each category's count and what was sold.
   assets: Asset[];
-  currency: string;
   canManage: boolean;
 }
 
 // The board's table: #, Category, Assets, In forms, Actions.
 const COLUMNS = "md:grid-cols-[40px_minmax(0,1fr)_200px_260px_84px]";
-
-// The popup's seven icons and ten colours, in the board's order (the keys
-// are the shared category icon and colour names the backend accepts).
-const ICONS = [
-  { key: "mountain", label: "Land" },
-  { key: "car", label: "Vehicle" },
-  { key: "building-2", label: "House or flat" },
-  { key: "gem", label: "Jewellery" },
-  { key: "laptop", label: "Electronics" },
-  { key: "trending-up", label: "Investment" },
-  { key: "package", label: "Other" },
-] as const;
-const COLOURS = [
-  { key: "green", label: "Green" },
-  { key: "blue", label: "Blue" },
-  { key: "orange", label: "Orange" },
-  { key: "pink", label: "Pink" },
-  { key: "purple", label: "Purple" },
-  { key: "teal", label: "Teal" },
-  { key: "yellow", label: "Gold@@colour" },
-  { key: "indigo", label: "Indigo" },
-  { key: "red", label: "Red" },
-  { key: "lime", label: "Leaf green" },
-] as const;
 const NAME_MAX = 30;
+const TOP_BUTTON = "h-11 rounded-full px-4.5 text-[14px] font-semibold";
 
 type Editing = { id: string | null; name: string; original: string; icon: string; color: string };
+type ActionResult = { success: boolean; message?: string };
 
 // Arrow keys, Home and End move a radio group's choice and its focus.
 function radioKeys(event: React.KeyboardEvent<HTMLElement>, keys: readonly string[], current: string, pick: (key: string) => void) {
@@ -77,7 +50,8 @@ function radioKeys(event: React.KeyboardEvent<HTMLElement>, keys: readonly strin
 // Asset categories: each one with how many assets it holds, a switch that
 // hides it from the purchase and Add asset forms, and Edit / Delete. Add and
 // Edit pick a name, an icon and a colour; a category that still files
-// assets can't be deleted, and the popup says how to move them.
+// assets can't be deleted, and the popup says how to move them. Every change
+// can be undone from its toast.
 export function AssetCategoriesPageClient({ businessId, categories, assets, canManage }: AssetCategoriesPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
@@ -101,45 +75,21 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
   const assetsLabel = (count: number) => t(count === 1 ? "{count} asset" : "{count} assets", { count: formatCount(count, fmt) });
   const q = search.trim().toLowerCase();
   const shown = categories.filter((category) => !q || [category.name, t(category.name)].some((text) => text.toLowerCase().includes(q)));
+  const undo = (run: () => void) => ({ label: t("Undo"), run });
 
   function openAdd() {
-    const color = COLOURS[categories.length % COLOURS.length].key;
-    setEditing({ id: null, name: "", original: "", icon: "package", color });
+    setEditing({ id: null, name: "", original: "", icon: "package", color: ASSET_SWATCHES[categories.length % ASSET_SWATCHES.length].stored });
     setNameError("");
   }
 
   function openEdit(category: AssetCategoryOption) {
-    setEditing({ id: category.id, name: t(category.name), original: t(category.name), icon: category.icon || "package", color: category.color });
+    setEditing({ id: category.id, name: t(category.name), original: t(category.name), icon: ASSET_ICONS.find((icon) => icon.key === assetIconKey(category.icon))?.stored ?? "package", color: category.color });
     setNameError("");
   }
 
-  function save(event: React.FormEvent) {
-    event.preventDefault();
-    if (!editing) return;
-    const trimmed = editing.name.trim();
-    const renamed = trimmed !== editing.original.trim();
-    if (!trimmed) return setNameError(t("Enter a category name."));
-    if (renamed && trimmed.length > NAME_MAX) return setNameError(t("Keep it under 30 characters."));
-    if (renamed && categories.some((category) => category.id !== editing.id && [category.name, t(category.name)].some((name) => name.toLowerCase() === trimmed.toLowerCase()))) return setNameError(t("You already have this category."));
-    const current = editing.id ? categories.find((category) => category.id === editing.id) : null;
-    startSave(async () => {
-      const result = current
-        ? // A name left as it reads (the Bangla of a default too) stays as it is stored.
-          await updateAssetCategoryAction(businessId, current.id, { ...(renamed && { name: trimmed }), icon: editing.icon, color: editing.color })
-        : await createAssetCategoryAction(businessId, { name: trimmed, icon: editing.icon, color: editing.color });
-      if (!result.success) {
-        toast.error(t(result.message ?? "Failed to save the asset type"));
-        return;
-      }
-      toast.success(t(current ? "Category saved" : "Category added"));
-      setEditing(null);
-      if (!current) setSearch("");
-      router.refresh();
-    });
-  }
-
-  function run(category: AssetCategoryOption, action: () => Promise<{ success: boolean; message?: string }>, failed: string, done: (() => void) | null) {
-    setBusyId(category.id);
+  // Runs a change; on success the page reloads and `done` says so.
+  function run(id: string, action: () => Promise<ActionResult>, failed: string, done: (() => void) | null) {
+    setBusyId(id);
     startRow(async () => {
       try {
         const result = await action();
@@ -157,13 +107,56 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
     });
   }
 
-  function toggle(category: AssetCategoryOption, on: boolean, undo = true) {
+  // A category made again as it was (Undo of a delete): switched off again
+  // when it was off.
+  async function recreate(category: AssetCategoryOption): Promise<ActionResult> {
+    const made = await createAssetCategoryAction(businessId, { name: category.name, icon: category.icon, color: category.color });
+    if (!made.success || !made.data || isActiveCategory(category)) return made;
+    return updateAssetCategoryAction(businessId, made.data.id, { isActive: false });
+  }
+
+  function save(event: React.FormEvent) {
+    event.preventDefault();
+    if (!editing) return;
+    const trimmed = editing.name.trim();
+    const renamed = trimmed !== editing.original.trim();
+    if (!trimmed) return setNameError(t("Enter a category name."));
+    if (renamed && trimmed.length > NAME_MAX) return setNameError(t("Keep it under 30 characters."));
+    if (renamed && categories.some((category) => category.id !== editing.id && [category.name, t(category.name)].some((name) => name.toLowerCase() === trimmed.toLowerCase()))) return setNameError(t("You already have this category."));
+    const current = editing.id ? categories.find((category) => category.id === editing.id) : null;
+    startSave(async () => {
+      try {
+        const result = current
+          ? // A name left as it reads (the Bangla of a default too) stays as it is stored.
+            await updateAssetCategoryAction(businessId, current.id, { ...(renamed && { name: trimmed }), icon: editing.icon, color: editing.color })
+          : await createAssetCategoryAction(businessId, { name: trimmed, icon: editing.icon, color: editing.color });
+        if (!result.success || !result.data) {
+          toast.error(t(result.message ?? "Failed to save the asset type"));
+          return;
+        }
+        const saved = result.data;
+        setEditing(null);
+        if (current) {
+          const before: Partial<AssetCategoryInput> = { ...(renamed && { name: current.name }), icon: current.icon, color: current.color };
+          doneToast(t("Category saved"), undo(() => run(current.id, () => updateAssetCategoryAction(businessId, current.id, before), "Failed to save the asset type", null)));
+        } else {
+          setSearch("");
+          doneToast(t("Category added"), undo(() => run(saved.id, () => deleteAssetCategoryAction(businessId, saved.id), "Failed to delete the asset type", null)));
+        }
+        router.refresh();
+      } catch {
+        toast.error(t("Couldn't reach Smartly. Check your connection and try again."));
+      }
+    });
+  }
+
+  function toggle(category: AssetCategoryOption, on: boolean, withUndo = true) {
     if (!on && onCount <= 1) {
       toast.warning(t("Keep at least one category on for the forms."));
       return;
     }
-    run(category, () => updateAssetCategoryAction(businessId, category.id, { isActive: on }), "Failed to save the asset type", () =>
-      toast.success(t(on ? "Category shows in the forms again" : "Category hidden from the forms"), undo ? { action: { label: t("Undo"), onClick: () => toggle(category, !on, false) } } : undefined),
+    run(category.id, () => updateAssetCategoryAction(businessId, category.id, { isActive: on }), "Failed to save the asset type", () =>
+      doneToast(t(on ? "Category shows in the forms again" : "Category hidden from the forms"), withUndo ? undo(() => toggle(category, !on, false)) : undefined),
     );
   }
 
@@ -177,10 +170,12 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
     const category = deleting;
     if (!category) return;
     setDeleting(null);
-    run(category, () => deleteAssetCategoryAction(businessId, category.id), "Failed to delete the asset type", () => toast.success(t("Category deleted")));
+    run(category.id, () => deleteAssetCategoryAction(businessId, category.id), "Failed to delete the asset type", () =>
+      doneToast(t("Category deleted"), undo(() => run(category.id, () => recreate(category), "Failed to save the asset type", null))),
+    );
   }
 
-  const preview = editing && { icon: budgetCategoryIcon(editing.icon), tone: categoryTone(editing.color), color: categoryColorVar(editing.color) };
+  const previewInk = editing ? assetInk(editing.color) : "";
   const blockedCount = blocked ? countsOf(blocked).all : 0;
 
   return (
@@ -201,7 +196,7 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
               frameClassName="h-11 w-70 rounded-full max-md:w-full"
             />
             {canManage && (
-              <Button onClick={openAdd} className="h-11 rounded-full px-4.5">
+              <Button onClick={openAdd} className={TOP_BUTTON}>
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("Add category")}
               </Button>
@@ -209,10 +204,9 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
           </>
         }
       />
-      {!canManage && <ReadOnlyNote>{t("Only the owner or an accountant can add or change asset types in this workspace.")}</ReadOnlyNote>}
 
-      <Card padding="none" className="overflow-hidden rounded-[18px]" role="region" aria-label={t("Category list")}>
-        <div className={cn("hidden items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-caption font-semibold text-ink-muted md:grid", COLUMNS)}>
+      <section aria-label={t("Category list")} className="overflow-hidden rounded-[18px] border border-line-card bg-surface shadow-card">
+        <div className={cn("hidden items-center gap-x-4 border-b border-line bg-table-head px-6 py-3 text-[12px] font-semibold text-ink-muted md:grid", COLUMNS)}>
           <span>#</span>
           <span>{t("Category")}</span>
           <span>{t("Assets")}</span>
@@ -221,21 +215,19 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
         </div>
         {shown.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-            <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-[14px] bg-surface-sunken text-ink-muted">
-              <Package className="size-5.5" />
+            <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-[14px] bg-quiet-chip text-ink-muted">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 8 12 3 3 8v8l9 5 9-5Z" />
+                <path d="M3 8l9 5 9-5" />
+                <path d="M12 13v8" />
+              </svg>
             </span>
             <span className="text-[15px] font-semibold wrap-anywhere text-ink">{categories.length === 0 ? t("No categories yet") : t("No categories match “{q}”", { q: search.trim() })}</span>
             <span className="text-[13.5px] text-ink-muted">{categories.length === 0 ? t("Add one to start grouping your assets.") : t("Check the spelling or clear the search.")}</span>
-            {categories.length > 0 ? (
-              <Button variant="secondary" onClick={() => setSearch("")} className="mt-1.5 h-10 rounded-full px-4 text-[13.5px]">
-                {t("Clear search")}
-              </Button>
-            ) : (
-              canManage && (
-                <Button variant="secondary" onClick={openAdd} className="mt-1.5 h-10 rounded-full px-4 text-[13.5px]">
-                  {t("Add category")}
-                </Button>
-              )
+            {(categories.length > 0 || canManage) && (
+              <button type="button" onClick={categories.length > 0 ? () => setSearch("") : openAdd} className="mt-1.5 h-10 rounded-full border border-input bg-surface px-4 text-[13.5px] font-semibold text-ink hover:bg-surface-sunken">
+                {categories.length > 0 ? t("Clear search") : t("Add category")}
+              </button>
             )}
           </div>
         ) : (
@@ -246,21 +238,20 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
               const counts = countsOf(category);
               const busy = busyId === category.id;
               const count = counts.all === 0 ? t("No assets yet") : [assetsLabel(counts.owned), counts.sold > 0 ? t("{count} sold", { count: formatCount(counts.sold, fmt) }) : null].filter(Boolean).join(" · ");
-              const statusId = `asset-cat-status-${category.id}`;
               return (
                 <li
                   key={category.id}
                   aria-busy={busy || undefined}
-                  className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-divider px-6 py-3 md:h-17 md:py-0", COLUMNS, !on && "bg-strip")}
+                  className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-quiet-chip px-6 py-3 hover:bg-hover md:h-17 md:py-0", COLUMNS, on ? "bg-surface" : "bg-sold-card")}
                 >
                   <span className="text-[14px] text-ink-muted tabular-nums max-md:hidden">{formatCount(categories.indexOf(category) + 1, fmt)}</span>
                   <span className={cn("flex min-w-0 items-center gap-3", !on && "opacity-60")}>
-                    <AssetTypeTile visual={categoryVisual(categories, category.name)} size="lg" glossy className="rounded-[12px] [&_svg]:size-5" />
+                    <AssetTile look={assetLook(categories, category.name)} glossy className="size-10 rounded-[12px]" glyph={22} stroke={1.6} fill={0.22} />
                     <span className="flex min-w-0 flex-col">
                       <span title={label} className="truncate text-[15px] font-semibold text-ink">
                         {label}
                       </span>
-                      <span className="text-caption text-ink-muted md:hidden">{count}</span>
+                      <span className="text-[12px] text-ink-muted md:hidden">{count}</span>
                     </span>
                   </span>
                   <span className="min-w-0 max-md:hidden">
@@ -273,15 +264,9 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
                     )}
                   </span>
                   <span className="flex min-w-0 items-center gap-3 max-md:col-start-1 max-md:row-start-2">
-                    <Switch
-                      checked={on}
-                      disabled={!canManage || busy}
-                      onCheckedChange={(next) => toggle(category, next)}
-                      aria-label={t(on ? "Hide {name} from the forms" : "Show {name} in the forms", { name: label })}
-                      aria-describedby={statusId}
-                    />
-                    <span id={statusId} className="flex min-w-0 flex-col gap-px">
-                      <span className={cn("text-[13px] font-semibold", on ? "text-income" : "text-ink-muted")}>{t(on ? "On" : "Off")}</span>
+                    <BoardSwitch on={on} disabled={!canManage || busy} onClick={() => toggle(category, !on)} label={t(on ? "Hide {name} from the forms" : "Show {name} in the forms", { name: label })} />
+                    <span className="flex min-w-0 flex-col gap-px">
+                      <span className={cn("text-[13px] font-semibold", on ? "text-tint-green-ink" : "text-ink-muted")}>{t(on ? "On" : "Off")}</span>
                       <span className="truncate text-[11.5px] text-ink-muted">{t(on ? "Shows in purchase and add forms" : "Hidden from forms, assets stay")}</span>
                     </span>
                   </span>
@@ -307,37 +292,40 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
           <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           {t("Switched on categories show in the Category list of the purchase form and Add asset. Switching one off only hides it there; assets already in it stay as they are.")}
         </p>
-      </Card>
+      </section>
 
       <PopupDialog
         open={editing !== null}
         onClose={() => setEditing(null)}
         width={500}
+        className="leading-[normal]"
         title={t(editing?.id ? "Edit category" : "Add category")}
         busy={isSaving}
         onSubmit={save}
+        headClassName="items-center py-3.5 pr-4 pl-6"
+        closeClassName="my-0 size-11"
         bodyClassName="gap-4.5 px-6 py-5"
         footerClassName="bg-surface"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setEditing(null)} disabled={isSaving} className="h-11 rounded-full px-4.5">
+            <Button variant="secondary" onClick={() => setEditing(null)} disabled={isSaving} className={TOP_BUTTON}>
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={isSaving} className="h-11 rounded-full px-5">
+            <Button type="submit" disabled={isSaving} className="h-11 rounded-full px-5 text-[14px] font-semibold">
               {isSaving && <Loader size={16} onDark label={t("Saving...")} />}
               {t(editing?.id ? "Save changes" : "Add category")}
             </Button>
           </>
         }
       >
-        {editing && preview && (
+        {editing && (
           <>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="asset-cat-name" className="text-[14px] font-medium text-ink">
                 {t("Category name")}
               </label>
               <div className="flex items-center gap-2.5">
-                <AssetTypeTile visual={preview} size="xl" glossy className="rounded-[14px] [&_svg]:size-6" />
+                <AssetTile look={{ ink: previewInk, icon: assetIconKey(editing.icon) }} glossy className="size-12 rounded-[14px]" glyph={26} stroke={1.6} fill={0.22} />
                 <Input
                   id="asset-cat-name"
                   size="md"
@@ -347,15 +335,15 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
                     setEditing({ ...editing, name: event.target.value });
                     setNameError("");
                   }}
-                  maxLength={60}
+                  maxLength={40}
                   autoComplete="off"
                   autoFocus
                   placeholder={t("e.g. Shares, Business, Livestock")}
-                  frameClassName="h-12 flex-1"
+                  frameClassName="h-12 flex-1 rounded-[10px]"
                 />
               </div>
               {nameError ? (
-                <span id="asset-cat-name-error" role="alert" className="text-[12.5px] text-expense">
+                <span role="alert" className="text-[12.5px] text-loss-ink">
                   {nameError}
                 </span>
               ) : (
@@ -366,28 +354,23 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
               <span id="asset-cat-icon" className="text-[14px] font-medium text-ink">
                 {t("Icon")}
               </span>
-              <div
-                role="radiogroup"
-                aria-labelledby="asset-cat-icon"
-                onKeyDown={(event) => radioKeys(event, ICONS.map((icon) => icon.key), editing.icon, (icon) => setEditing({ ...editing, icon }))}
-                className="grid grid-cols-7 gap-2"
-              >
-                {ICONS.map((icon) => {
-                  const picked = icon.key === editing.icon;
-                  const Icon = budgetCategoryIcon(icon.key);
+              <div role="radiogroup" aria-labelledby="asset-cat-icon" onKeyDown={(event) => radioKeys(event, ASSET_ICONS.map((icon) => icon.stored), editing.icon, (icon) => setEditing({ ...editing, icon }))} className="grid grid-cols-7 gap-2">
+                {ASSET_ICONS.map((icon) => {
+                  const picked = icon.stored === editing.icon;
                   return (
                     <button
                       key={icon.key}
                       type="button"
                       role="radio"
                       aria-checked={picked}
-                      tabIndex={picked || (!ICONS.some((item) => item.key === editing.icon) && icon.key === "package") ? 0 : -1}
+                      tabIndex={picked ? 0 : -1}
                       aria-label={t(icon.label)}
                       title={t(icon.label)}
-                      onClick={() => setEditing({ ...editing, icon: icon.key })}
-                      className={cn("flex h-12 items-center justify-center rounded-[12px] border bg-surface text-ink-muted outline-none focus-visible:ring-2 focus-visible:ring-emerald", picked ? cn("border-2 border-current", preview.tone.fg, preview.tone.bg) : "border-line hover:bg-surface-sunken")}
+                      onClick={() => setEditing({ ...editing, icon: icon.stored })}
+                      style={picked ? { borderColor: previewInk, background: `color-mix(in srgb, ${previewInk} 10%, var(--surface))` } : undefined}
+                      className={cn("flex h-12 items-center justify-center rounded-[12px] bg-surface outline-none hover:border-mint-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)", picked ? "border-2" : "border border-line")}
                     >
-                      <Icon className="size-5.5" strokeWidth={1.6} fill={picked ? "currentColor" : "none"} fillOpacity={picked ? 0.18 : 0} aria-hidden="true" />
+                      <AssetGlyph icon={icon.key} ink={picked ? previewInk : "var(--ink-muted)"} size={22} stroke={1.6} fill={picked ? 0.22 : 0} />
                     </button>
                   );
                 })}
@@ -397,28 +380,25 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
               <span id="asset-cat-colour" className="text-[14px] font-medium text-ink">
                 {t("Colour")}
               </span>
-              <div
-                role="radiogroup"
-                aria-labelledby="asset-cat-colour"
-                onKeyDown={(event) => radioKeys(event, COLOURS.map((colour) => colour.key), editing.color, (color) => setEditing({ ...editing, color }))}
-                className="flex flex-wrap gap-2.5"
-              >
-                {COLOURS.map((colour) => {
-                  const picked = colour.key === editing.color;
+              <div role="radiogroup" aria-labelledby="asset-cat-colour" onKeyDown={(event) => radioKeys(event, ASSET_SWATCHES.map((swatch) => swatch.stored), editing.color, (color) => setEditing({ ...editing, color }))} className="flex flex-wrap gap-2.5">
+                {ASSET_SWATCHES.map((swatch) => {
+                  const picked = swatch.stored === editing.color;
+                  const ink = assetInk(swatch.stored);
+                  const label = swatch.stored === "yellow" ? "Gold@@colour" : swatch.label;
                   return (
                     <button
-                      key={colour.key}
+                      key={swatch.stored}
                       type="button"
                       role="radio"
                       aria-checked={picked}
-                      tabIndex={picked || (!COLOURS.some((item) => item.key === editing.color) && colour.key === "green") ? 0 : -1}
-                      aria-label={t(colour.label)}
-                      title={t(colour.label)}
-                      onClick={() => setEditing({ ...editing, color: colour.key })}
-                      style={{ background: categoryColorVar(colour.key), boxShadow: picked ? `0 0 0 2px var(--surface), 0 0 0 4px ${categoryColorVar(colour.key)}` : undefined }}
+                      tabIndex={picked || (!ASSET_SWATCHES.some((item) => item.stored === editing.color) && swatch.stored === "green") ? 0 : -1}
+                      aria-label={t(label)}
+                      title={t(label)}
+                      onClick={() => setEditing({ ...editing, color: swatch.stored })}
+                      style={{ background: ink, boxShadow: picked ? `0 0 0 2px var(--surface), 0 0 0 4px ${ink}` : undefined }}
                       className="flex size-8 items-center justify-center rounded-full text-white outline-none focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-4 focus-visible:ring-offset-surface"
                     >
-                      {picked && <Check className="size-4" strokeWidth={3} aria-hidden="true" />}
+                      {picked && <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />}
                     </button>
                   );
                 })}
@@ -433,21 +413,24 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
         onClose={() => setDeleting(null)}
         width={440}
         plain
+        className="leading-[normal]"
+        bodyClassName="p-6"
+        titleClassName="text-[18px] font-semibold"
         title={
           deleting && (
-            <span className="flex min-w-0 items-center gap-3 text-[18px] font-semibold">
-              <AssetTypeTile visual={categoryVisual(categories, deleting.name)} size="lg" glossy className="rounded-[12px] [&_svg]:size-5" />
+            <span className="flex min-w-0 items-center gap-3">
+              <AssetTile look={assetLook(categories, deleting.name)} glossy className="size-10 rounded-[12px]" glyph={22} stroke={1.6} fill={0.22} />
               <span className="min-w-0 wrap-anywhere">{t("Delete {name}?", { name: t(deleting.name) })}</span>
             </span>
           )
         }
-        sub={t("No assets use this category, so nothing else changes. It is removed from the Category list of the forms.")}
+        sub={<span className="text-[14px] leading-normal">{t("No assets use this category, so nothing else changes. It is removed from the Category list of the forms.")}</span>}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setDeleting(null)} className="h-11 rounded-full px-4.5">
+            <Button variant="secondary" onClick={() => setDeleting(null)} className={TOP_BUTTON}>
               {t("Cancel")}
             </Button>
-            <Button variant="danger" onClick={confirmDelete} className="h-11 rounded-full px-5">
+            <Button variant="danger" onClick={confirmDelete} className="h-11 rounded-full px-5 text-[14px] font-semibold">
               {t("Delete")}
             </Button>
           </>
@@ -459,30 +442,40 @@ export function AssetCategoriesPageClient({ businessId, categories, assets, canM
         onClose={() => setBlocked(null)}
         width={460}
         plain
+        className="leading-[normal]"
+        bodyClassName="p-6"
+        titleClassName="text-[18px] font-semibold"
         title={
           blocked && (
-            <span className="flex min-w-0 items-center gap-3 text-[18px] font-semibold">
-              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-warning-50 text-warning">
-                <TriangleAlert className="size-5" />
+            <span className="flex min-w-0 items-center gap-3">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-alert-wash text-tint-orange-ink">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4" />
+                  <path d="M12 16h.01" />
+                </svg>
               </span>
               <span className="min-w-0 wrap-anywhere">{t("Can’t delete {name} yet", { name: t(blocked.name) })}</span>
             </span>
           )
         }
         sub={
-          blocked &&
-          t("{name} has {count}. Sold assets count too, because their history keeps the category. Move them to another category first (edit the purchase in Purchase & Sell).", { name: t(blocked.name), count: assetsLabel(blockedCount) })
+          blocked && (
+            <span className="text-[14px] leading-normal">
+              {t("{name} has {count}. Sold assets count too, because their history keeps the category. Move them to another category first (edit the purchase in Purchase & Sell).", { name: t(blocked.name), count: assetsLabel(blockedCount) })}
+            </span>
+          )
         }
         footer={
           blocked && (
             <>
-              <Button variant="secondary" onClick={() => setBlocked(null)} className="h-11 rounded-full px-4.5">
+              <Button variant="secondary" onClick={() => setBlocked(null)} className={TOP_BUTTON}>
                 {t("Close")}
               </Button>
-              <Button asChild className="h-11 rounded-full px-5">
+              <Button asChild className="h-11 rounded-full px-5 text-[14px] font-semibold">
                 <Link href={`/assets-management/current?category=${encodeURIComponent(blocked.name)}`} onClick={() => setBlocked(null)}>
                   {t("See these assets")}
-                  <ArrowRight className="size-3.75" aria-hidden="true" />
+                  <ArrowRight className="size-3.75" strokeWidth={2.5} aria-hidden="true" />
                 </Link>
               </Button>
             </>

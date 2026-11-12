@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { LoanLedgerPageClient } from "@/components/modules/Customer/LoanManagement/LoanLedgerPageClient";
+import { LEDGER_CONTACT_COOKIE } from "@/lib/customer/loanDisplay";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import type { LoanDashboardRow, LoanStatement } from "@/lib/customer/api";
 import { getCurrentUser } from "@/lib/customer/auth";
@@ -32,19 +34,27 @@ export default async function LoanLedgerPage({ searchParams }: PageProps<"/loan-
   const today = getAppToday();
   const current = { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) };
   const period: PickedPeriod = params.period === "all" ? { kind: "all" } : readPickedPeriod(params, current, { kind: "year", year: current.year });
-  const selectedContactId = typeof params.contactId === "string" ? params.contactId : "";
+  const asked = typeof params.contactId === "string" ? params.contactId : "";
 
-  // Every bank/person contact, however many pages the API needs.
-  const contacts = await getAllContacts(activeBusinessId, "LOAN");
+  // Every bank/person contact, however many pages the API needs, and who
+  // has entries.
+  const [contacts, dashboard] = await Promise.all([getAllContacts(activeBusinessId, "LOAN"), getLoanDashboard(activeBusinessId)]);
+  const known = (id: string | undefined) => (id && contacts.some((contact) => contact.id === id) ? id : "");
+  // The board never shows an empty statement: the one asked for, else the
+  // last one shown this session, else the first with entries, else the first.
+  const selectedContactId =
+    known(asked) ||
+    known((await cookies()).get(LEDGER_CONTACT_COOKIE)?.value) ||
+    known(dashboard.rows.find((row) => (row.entries ?? 0) > 0)?.contactId) ||
+    (contacts.find((contact) => contact.status === "ACTIVE") ?? contacts[0])?.id ||
+    "";
 
-  // A running balance only means something for one account at a time, so
-  // nothing loads until a bank or person is picked.
+  // A running balance only means something for one account at a time.
   const { dateFrom, dateTo } = periodRange(period);
   let statement: LoanStatement | null = null;
   let activity: LoanDashboardRow | null = null;
   if (selectedContactId) {
-    const [loaded, dashboard] = await Promise.all([getLoanStatement(activeBusinessId, selectedContactId, { dateFrom, dateTo }), getLoanDashboard(activeBusinessId)]);
-    statement = loaded;
+    statement = await getLoanStatement(activeBusinessId, selectedContactId, { dateFrom, dateTo });
     activity = dashboard.rows.find((row) => row.contactId === selectedContactId) ?? null;
   }
 

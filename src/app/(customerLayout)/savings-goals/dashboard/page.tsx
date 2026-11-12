@@ -4,7 +4,7 @@ import { getMoneyAccounts, getSavingsWallets } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
-import { getSavingsAccountOverview, getSavingsGoals, getSavingsOverview } from "@/lib/customer/savingsGoals";
+import { getSavingsAccountOverview, getSavingsGoals, getSavingsPlans } from "@/lib/customer/savingsGoals";
 import { getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/savings-goals/dashboard");
@@ -22,12 +22,12 @@ export default async function SavingsGoalsDashboardPage() {
   // The active savings wallets take money in; the account overview lists
   // every one, so with none active the archived ones are offered back
   // instead of a first-run setup, and a new one can't repeat a name.
-  const [goals, overview, active, moneyAccounts, accounts] = await Promise.all([
+  const [goals, active, moneyAccounts, accounts, plans] = await Promise.all([
     getSavingsGoals(activeBusinessId),
-    getSavingsOverview(activeBusinessId),
     getSavingsWallets(activeBusinessId),
     getMoneyAccounts(activeBusinessId),
     getSavingsAccountOverview(activeBusinessId),
+    getSavingsPlans(activeBusinessId),
   ]);
   const archived = active.length === 0 ? accounts.accounts.filter((row) => row.status === "ARCHIVED").map((row) => ({ id: row.id, name: row.name })) : [];
 
@@ -35,7 +35,6 @@ export default async function SavingsGoalsDashboardPage() {
     <GoalsPageClient
       businessId={activeBusinessId}
       goals={goals}
-      overview={overview}
       currency={activeBusiness?.currency ?? "BDT"}
       canManage={canManage}
       savingsWallets={active}
@@ -44,6 +43,7 @@ export default async function SavingsGoalsDashboardPage() {
       walletNames={accounts.accounts.map((row) => ({ id: row.id, name: row.name }))}
       person={{ name: user.name, email: user.email }}
       today={getAppToday()}
+      plans={plans}
     />
   );
 }

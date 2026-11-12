@@ -4,7 +4,7 @@ import { formatCurrency } from "./currency";
 import type { FillValues } from "@/lib/i18n/fill";
 import { type FormatLocale, numericDates } from "@/lib/i18n/formatPrefs";
 import type { Translate } from "@/lib/i18n/message";
-import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupKind, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
+import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, GroupMember, GroupSplit, GroupMonthlyBudget, GroupSettlementMemberRow, GroupSettlementRecord, GroupSettlementResult } from "./api";
 
 // The figures a group page derives from what the API already returns:
 // the month's range and whether it is closed, cash in hand, who pays
@@ -17,9 +17,10 @@ import type { GroupContribution, GroupExpense, GroupExpenseCategoryOption, Group
 export const GROUP_TABS = ["dashboard", "expenses", "settlement", "cashbook", "contributions", "budget", "meals", "members", "categories", "activity", "settings"] as const;
 export type GroupTab = (typeof GROUP_TABS)[number];
 
-// The pages a group shows: Meals only for a mess, or a family counting meals.
-export function groupTabsFor(kind: GroupKind, mealsOn: boolean): GroupTab[] {
-  return GROUP_TABS.filter((tab) => tab !== "meals" || kind === "MESS" || mealsOn);
+// The pages a group shows: Meals only for a group that counts meals (the
+// v16 boards share everything else in every kind of group).
+export function groupTabsFor(mealsOn: boolean): GroupTab[] {
+  return GROUP_TABS.filter((tab) => tab !== "meals" || mealsOn);
 }
 
 export const GROUP_TAB_LABELS: Record<GroupTab, string> = {

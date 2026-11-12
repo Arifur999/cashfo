@@ -24,21 +24,23 @@ interface IEStatementProps {
   lines: StatementLine[];
   periodLabel: string;
   range: string | null;
-  // What else narrows it: "Expense · Food & Dining · search "bazar"".
-  narrowed: string | null;
+  // The filters on (null when off): the type, the category, a search.
+  type: "INCOME" | "EXPENSE" | null;
+  category: string | null;
+  search: string | null;
   // The period has more transactions than one printout takes.
   capped: boolean;
   today: string;
   currency: string;
 }
 
-const CELL = "border-b border-line px-2 py-1.75 align-top";
-const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] font-semibold tracking-[0.04em] text-ink-2 uppercase";
+const CELL = "border-b border-line-card px-2 py-1.75 align-top";
+const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] font-semibold tracking-[0.04em] text-ink-soft uppercase";
 
 // Income and expense on paper (the Transactions board's print preview):
-// whose and which period, what came in and went out, the net and how many,
-// then every transaction.
-export function IEStatement({ lines, periodLabel, range, narrowed, capped, today, currency }: IEStatementProps) {
+// whose and which period, the type, category and how many it shows, what
+// came in and went out and the net, then every transaction.
+export function IEStatement({ lines, periodLabel, range, type, category, search, capped, today, currency }: IEStatementProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
 
@@ -47,46 +49,45 @@ export function IEStatement({ lines, periodLabel, range, narrowed, capped, today
   const money = (value: number) => formatCurrency(value, currency, fmt);
   const income = lines.filter((line) => line.kind === "INCOME").reduce((sum, line) => sum + line.amount, 0);
   const expense = lines.filter((line) => line.kind === "EXPENSE").reduce((sum, line) => sum + line.amount, 0);
+  const net = income - expense;
+  const meta: { label: string; value: string; sub?: string | null }[] = [
+    { label: t("Period"), value: periodLabel, sub: range },
+    { label: t("Type"), value: type ? t(type === "INCOME" ? "Income" : "Expense") : t("Income and expense") },
+    { label: t("Category"), value: category ?? t("All categories") },
+    { label: t("Transactions"), value: plural(t, lines.length, "{count} transaction", "{count} transactions", undefined, fmt), sub: search && t("search \"{text}\"", { text: search }) },
+  ];
   const cells = [
-    { label: t("Income"), value: `+ ${money(income)}`, tone: "text-income" },
+    { label: t("Income"), value: `+ ${money(income)}`, tone: "text-tint-green-ink" },
     { label: t("Expense"), value: `− ${money(expense)}`, tone: "text-expense" },
-    { label: t("Net"), value: formatSignedCurrency(income - expense, currency, fmt), tone: income - expense < 0 ? "text-expense" : "text-ink" },
-    { label: t("Transactions"), value: formatCount(lines.length, fmt), tone: "text-ink" },
+    { label: t("Net"), value: formatSignedCurrency(net, currency, fmt), tone: net < 0 ? "text-expense" : "text-ink" },
   ];
 
   return (
-    <section className="flex flex-col gap-5 text-small text-ink [print-color-adjust:exact]">
-      <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-4">
+    <section className="flex flex-col gap-4.5 text-small text-ink [print-color-adjust:exact]">
+      <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-3.5">
         <div className="flex flex-col gap-1">
           <Logo height={28} />
           <span className="text-[11px] text-ink-muted">{t("Statement for {name}", { name: user.name })}</span>
         </div>
         <div className="flex flex-col items-end gap-0.75 text-right">
-          <span className="text-[17px] font-bold tracking-[0.06em] uppercase">{t("Income & expense statement")}</span>
+          <span className="text-[16px] font-bold tracking-[0.05em] uppercase">{t("Income & expense statement")}</span>
           <span className="text-[11px] text-ink-muted">{t("Generated {date}", { date: formatDate(today, undefined, fmt) })}</span>
         </div>
       </header>
 
-      <div className="grid grid-cols-3 gap-3 text-[11.5px]">
-        <div className="flex flex-col gap-0.75">
-          <span className="text-ink-muted">{t("Period")}</span>
-          <span className="text-[13px] font-semibold">{periodLabel}</span>
-          {range && <span className="text-ink-muted">{range}</span>}
-        </div>
-        <div className="flex flex-col gap-0.75">
-          <span className="text-ink-muted">{t("Showing")}</span>
-          <span className="text-[13px] font-semibold">{narrowed ?? t("Every income and expense")}</span>
-        </div>
-        <div className="flex flex-col gap-0.75">
-          <span className="text-ink-muted">{t("Transactions")}</span>
-          <span className="text-[13px] font-semibold">{plural(t, lines.length, "{count} transaction", "{count} transactions", undefined, fmt)}</span>
-          <span className="text-ink-muted">{t("Currency: {currency}", { currency })}</span>
-        </div>
+      <div className="grid grid-cols-4 gap-3 text-[11.5px]">
+        {meta.map((item) => (
+          <div key={item.label} className="flex min-w-0 flex-col gap-0.75">
+            <span className="text-ink-muted">{item.label}</span>
+            <span className="text-[13px] font-semibold wrap-break-word">{item.value}</span>
+            {item.sub && <span className="text-ink-muted wrap-break-word">{item.sub}</span>}
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-4 overflow-hidden rounded-md border border-line-strong">
+      <div className="grid grid-cols-3 overflow-hidden rounded-[6px] border border-input">
         {cells.map((cell, index) => (
-          <div key={cell.label} className={cn("flex flex-col gap-0.75 px-3 py-2.5", index < cells.length - 1 && "border-r border-line")}>
+          <div key={cell.label} className={cn("flex flex-col gap-0.75 px-3 py-2.5", index < cells.length - 1 && "border-r border-line-card")}>
             <span className="text-[10.5px] text-ink-muted">{cell.label}</span>
             <span className={cn("text-[14px] font-bold tabular-nums", cell.tone)}>{cell.value}</span>
           </div>
@@ -125,14 +126,17 @@ export function IEStatement({ lines, periodLabel, range, narrowed, capped, today
               <td className={cn(CELL, "wrap-break-word")}>{line.category}</td>
               <td className={cn(CELL, "wrap-break-word")}>{line.description || "—"}</td>
               <td className={cn(CELL, "wrap-break-word")}>{line.account || "—"}</td>
-              <td className={cn(CELL, "text-right whitespace-nowrap", line.kind === "INCOME" ? "text-income" : "text-expense")}>{`${line.kind === "INCOME" ? "+" : "−"} ${money(line.amount)}`}</td>
+              <td className={cn(CELL, "text-right font-semibold whitespace-nowrap", line.kind === "INCOME" ? "text-tint-green-ink" : "text-expense")}>{`${line.kind === "INCOME" ? "+" : "−"} ${money(line.amount)}`}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      {lines.length === 0 && <span className="text-caption text-ink-muted">{t("No transactions")}</span>}
+      {lines.length === 0 && <span className="text-caption text-ink-muted">{t("No transactions found")}</span>}
 
-      <footer className="mt-auto border-t border-line-strong pt-2.5 text-[10.5px] text-ink-muted">{t("Amounts in {currency}. Transfers between your own accounts are not included.", { currency })}</footer>
+      <footer className="mt-auto flex justify-between gap-4 border-t border-input pt-2.5 text-[10.5px] text-ink-muted">
+        <span>{t("Amounts in {currency}. Transfers between your own accounts are not included.", { currency })}</span>
+        <span>Smartly</span>
+      </footer>
     </section>
   );
 }

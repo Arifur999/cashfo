@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
-const WIDTHS = { 420: "w-105", 440: "w-110", 460: "w-115", 480: "w-120", 500: "w-125", 520: "w-130", 540: "w-135", 560: "w-140", 580: "w-145", 620: "w-155", 940: "w-235" } as const;
+const WIDTHS = { 420: "w-105", 440: "w-110", 460: "w-115", 480: "w-120", 500: "w-125", 520: "w-130", 540: "w-135", 560: "w-140", 580: "w-145", 600: "w-150", 620: "w-155", 640: "w-160", 940: "w-235" } as const;
 
 interface PopupDialogProps {
   open: boolean;
@@ -30,6 +30,10 @@ interface PopupDialogProps {
   // Where focus starts (the dialog's first field by default).
   onOpenAutoFocus?: (event: Event) => void;
   titleClassName?: string;
+  // The line under the title (a board that sets its own line height).
+  subClassName?: string;
+  // The X, for a board that draws it filled (Balance).
+  closeClassName?: string;
   // A save is on its way: the popup can't be closed.
   busy?: boolean;
   onSubmit?: (event: React.FormEvent) => void;
@@ -41,18 +45,19 @@ interface PopupDialogProps {
 // The boards' centred popup (Savings first, then Zakat and Balance): a head
 // with the title and X over a line, the body, and a grey strip with the
 // buttons. On a phone it fills the width less a margin and scrolls.
-export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, onOpenAutoFocus, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
+export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, subClassName, closeClassName, onOpenAutoFocus, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
   const { t } = useLocale();
   const close = (
-    <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11">
+    <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className={cn("-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11", closeClassName)}>
       <X className="size-4.5" aria-hidden="true" />
     </button>
   );
   const inner = plain ? (
     <div className={cn("flex flex-col gap-3 px-6 py-5.5", bodyClassName)}>
       <DialogTitle className={cn("text-h3 font-bold text-ink", titleClassName)}>{title}</DialogTitle>
-      <DialogDescription asChild>
-        <div className="text-body leading-[1.55] text-ink-soft">{sub}</div>
+      {/* The classes go on the Description itself, so tailwind-merge drops its own text-sm and muted colour. */}
+      <DialogDescription asChild className="text-body leading-[1.55] text-ink-soft">
+        <div>{sub}</div>
       </DialogDescription>
       {children}
       {footer && <div className={cn("mt-1.5 flex flex-wrap justify-end gap-2.5", footerClassName)}>{footer}</div>}
@@ -67,8 +72,8 @@ export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, w
             {aside}
           </div>
           {sub ? (
-            <DialogDescription asChild>
-              <div className="text-small leading-normal text-ink-muted">{sub}</div>
+            <DialogDescription asChild className={cn("text-small leading-normal text-ink-muted", subClassName)}>
+              <div>{sub}</div>
             </DialogDescription>
           ) : (
             <DialogDescription className="sr-only">{typeof title === "string" ? title : ""}</DialogDescription>

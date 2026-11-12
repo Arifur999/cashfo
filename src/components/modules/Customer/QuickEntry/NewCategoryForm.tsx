@@ -8,6 +8,7 @@ import Input from "@/components/smartly/form/Input";
 import { createBudgetCategoryAction, type BudgetCategoryName } from "@/lib/customer/budgetActions";
 import { CATEGORY_NAME_MAX, CATEGORY_NAME_WORDS, categoryNameProblem, categoryServerProblem } from "@/lib/customer/categoryName";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 
 interface NewCategoryFormProps {
   businessId: string;
@@ -18,12 +19,15 @@ interface NewCategoryFormProps {
   // Shown as an X when the form can be put away.
   onCancel?: () => void;
   autoFocus?: boolean;
+  // The desktop popup's list (design: TxnCategoryOpen): a 40px name box,
+  // a 40px Add pill and a round grey X.
+  compact?: boolean;
 }
 
 // A category added from the transaction popup itself, so the entry being
 // typed isn't lost on a trip to Category Set: a name and Add. The colour is
 // the API's pick (one the kind doesn't use yet); Category Set changes it.
-export function NewCategoryForm({ businessId, kind, taken, onAdded, onCancel, autoFocus = false }: NewCategoryFormProps) {
+export function NewCategoryForm({ businessId, kind, taken, onAdded, onCancel, autoFocus = false, compact = false }: NewCategoryFormProps) {
   const { t } = useLocale();
   const id = useId();
   const [name, setName] = useState("");
@@ -58,7 +62,7 @@ export function NewCategoryForm({ businessId, kind, taken, onAdded, onCancel, au
         <Input
           id={id}
           size="md"
-          frameClassName="flex-1"
+          frameClassName={cn("flex-1", compact && "h-10 rounded-sm px-2.5")}
           value={name}
           onChange={(event) => {
             setName(event.target.value);
@@ -71,23 +75,23 @@ export function NewCategoryForm({ businessId, kind, taken, onAdded, onCancel, au
             add();
           }}
           maxLength={CATEGORY_NAME_MAX}
-          placeholder={t(kind === "INCOME" ? "New income category" : "New expense category")}
-          aria-label={t(kind === "INCOME" ? "New income category" : "New expense category")}
+          placeholder={t(compact ? (kind === "INCOME" ? "e.g. Rental income" : "e.g. Mobile & Internet") : kind === "INCOME" ? "New income category" : "New expense category")}
+          aria-label={t(compact ? "New category name" : kind === "INCOME" ? "New income category" : "New expense category")}
           invalid={error !== null}
           disabled={isPending}
           autoFocus={autoFocus}
         />
-        <Button type="button" variant="action" size="lg" onClick={add} disabled={isPending}>
+        <Button type="button" variant="action" size="lg" onClick={add} disabled={isPending} className={cn(compact && "h-10 px-3.5 text-[13.5px] shadow-none")}>
           {t("Add")}
         </Button>
         {onCancel && (
-          <Button type="button" variant="ghost" size="icon-lg" onClick={onCancel} disabled={isPending} aria-label={t("Cancel")}>
-            <X aria-hidden="true" />
+          <Button type="button" variant="ghost" size="icon-lg" onClick={onCancel} disabled={isPending} aria-label={t("Cancel")} className={cn(compact && "size-10 bg-surface-sunken text-ink-muted [&_svg]:size-3.75")}>
+            <X strokeWidth={2.25} aria-hidden="true" />
           </Button>
         )}
       </div>
       {error && (
-        <p id={`${id}-error`} role="alert" className="text-caption text-expense">
+        <p id={`${id}-error`} role="alert" className={cn("text-expense", compact ? "text-[12.5px]" : "text-caption")}>
           {t(error)}
         </p>
       )}

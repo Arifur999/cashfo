@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 
 const SIZES = {
   // Outer ring → inner disc, as the design draws each one.
+  26: { outer: "size-6.5", inner: "size-4.5" },
   34: { outer: "size-8.5", inner: "size-6" },
   52: { outer: "size-13", inner: "size-10" },
   92: { outer: "size-23", inner: "size-18" },

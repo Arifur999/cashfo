@@ -1,13 +1,13 @@
 "use client";
 
-import { Archive, ArchiveRestore, Ellipsis, Pencil, Plus, ScrollText, Search, Trash2, Users } from "lucide-react";
+import { ArchiveRestore, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
+import IconAction from "@/components/smartly/IconAction";
 import Chip from "@/components/smartly/Chip";
 import EmptyState from "@/components/smartly/EmptyState";
 import Input from "@/components/smartly/form/Input";
@@ -16,9 +16,8 @@ import LoadMore from "@/components/smartly/LoadMore";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Contact, ContactType, LoanBalanceDirection, LoanDashboardRow } from "@/lib/customer/api";
-import { archiveContactAction, deleteContactAction, unarchiveContactAction } from "@/lib/customer/contactActions";
+import { createContactAction, deleteContactAction, unarchiveContactAction } from "@/lib/customer/contactActions";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { contactMatches, DIRECTION_META, lastActivity, LOAN_KIND_LABELS, LOAN_KINDS, loanDirection, loanErrorText, wordInitials } from "@/lib/customer/loanDisplay";
@@ -31,7 +30,8 @@ import { useStoredChoice } from "@/components/modules/Customer/Balance/useStored
 import { ViewToggle, type ListView } from "@/components/modules/Customer/Shared/ViewToggle";
 import { LoanContactDrawer } from "./LoanContactDrawer";
 import { LoanContactsTable } from "./LoanContactsTable";
-import { LoanEntryDrawer } from "./LoanEntryDrawer";
+import { LoanDeleteDialog } from "./LoanDeleteDialog";
+import { offerUndo } from "./offerUndo";
 
 interface LoanContactsPageClientProps {
   businessId: string;
@@ -47,7 +47,6 @@ interface LoanContactsPageClientProps {
 
 type Tab = "ALL" | LoanBalanceDirection | "ARCHIVED";
 const DIRECTIONS: LoanBalanceDirection[] = ["PAWNA", "DENA", "SETTLED"];
-const MENU_ITEM = "flex h-9 cursor-pointer items-center gap-3 rounded-sm px-3 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75";
 // Cards come 24 at a time; the totals above them count everyone.
 const STEP = 24;
 const GRID_ID = "loan-people";
@@ -55,17 +54,16 @@ const GRID_ID = "loan-people";
 const VIEWS: readonly ListView[] = ["table", "cards"];
 
 // People & banks: everyone you have dena-pawna with, one card each with
-// where the balance stands and the two things you do next. Archived
+// where the balance stands, Edit and Delete. Archived
 // contacts wait in their own tab, out of the counts.
 export function LoanContactsPageClient({ businessId, contacts, currency, canManage, canTrade, activity }: LoanContactsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [tab, setTab] = useState<Tab>("ALL");
   const [kind, setKind] = useState<ContactType | "">("");
   const [search, setSearch] = useState("");
   const [drawer, setDrawer] = useState<"closed" | "create" | Contact>("closed");
-  const [entryFor, setEntryFor] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Contact | null>(null);
   const [isPending, startTransition] = useTransition();
   const [view, setView] = useStoredChoice<ListView>("smartly-loan-contacts-view", VIEWS, "table");
   const activityOf = new Map(activity.map((row) => [row.contactId, row]));
@@ -99,23 +97,6 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
     setSearch("");
   }
 
-  async function archive(contact: Contact) {
-    if (!(await confirm({ title: t("Archive {name}?", { name: contact.name }), message: t("They move to the Archived tab and leave the entry form. Their entries and statement stay."), confirmLabel: "Archive contact" }))) return;
-    startTransition(async () => {
-      try {
-        const result = await archiveContactAction(businessId, contact.id);
-        if (result.success) {
-          toast.success(t("Contact archived"));
-          router.refresh();
-        } else {
-          toast.error(loanErrorText(result.message, "Failed to archive contact", t, (amount) => formatCurrency(amount, currency, fmt)));
-        }
-      } catch {
-        toast.error(t("Couldn't save. Check your connection and try again."));
-      }
-    });
-  }
-
   // Back on the active list, the entry form and the counts.
   function restore(contact: Contact) {
     startTransition(async () => {
@@ -133,28 +114,46 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
     });
   }
 
-  // Added by mistake and never used: gone for good. With any history the
-  // API archives instead, and says so. A balance they were added with goes
-  // with them, so the confirm names it.
-  async function remove(contact: Contact) {
-    const direction = loanDirection(contact.currentBalance);
-    const values = { name: contact.name, amount: formatCurrency(Math.abs(Number(contact.currentBalance)), currency, fmt) };
-    const message =
-      direction === "PAWNA"
-        ? t("{name} still owes you {amount}. Removing them deletes that balance too, for good.", values)
-        : direction === "DENA"
-          ? t("You still owe {name} {amount}. Removing them deletes that balance too, for good.", values)
-          : t("If this contact has no transaction history, it will be permanently deleted; otherwise it will be archived instead.");
-    if (!(await confirm({ title: t("Remove {name}?", { name: contact.name }), message, confirmLabel: "Remove" }))) return;
+  // Added by mistake and never used: gone for good, with the balance they
+  // were added with (the popup names it), and Undo adds them back. With
+  // entries the popup says why not and points to Transactions.
+  function remove(contact: Contact) {
+    setDeleting(contact);
+  }
+
+  function confirmRemove(contact: Contact) {
     startTransition(async () => {
       try {
         const result = await deleteContactAction(businessId, contact.id);
-        if (result.success) {
-          toast.success(result.data?.action === "archived" ? t("This contact has transaction history, so it was archived instead") : t("Contact deleted"));
-          router.refresh();
-        } else {
+        if (!result.success) {
           toast.error(loanErrorText(result.message, "Failed to remove contact", t, (amount) => formatCurrency(amount, currency, fmt)));
+          return;
         }
+        setDeleting(null);
+        router.refresh();
+        if (result.data?.action === "archived") {
+          toast.success(t("This contact has transaction history, so it was archived instead"));
+          return;
+        }
+        offerUndo({
+          message: t("{name} deleted", { name: contact.name }),
+          run: () =>
+            createContactAction(businessId, {
+              name: contact.name,
+              type: contact.type,
+              category: contact.category,
+              phone: contact.phone || undefined,
+              email: contact.email || undefined,
+              address: contact.address || undefined,
+              notes: contact.notes || undefined,
+              photoUrl: contact.photoUrl || undefined,
+              openingBalance: Number(contact.openingBalance) ? String(contact.openingBalance) : undefined,
+            }),
+          done: t("Contact restored"),
+          failed: t("Couldn't add the contact back"),
+          undoLabel: t("Undo"),
+          refresh: () => router.refresh(),
+        });
       } catch {
         toast.error(t("Couldn't save. Check your connection and try again."));
       }
@@ -196,6 +195,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
         eyebrow={t("Loans")}
         tone="loans"
         title={t("Contacts")}
+        className="md:items-center"
         actions={
           canManage && (
             <Button onClick={() => setDrawer("create")}>
@@ -274,7 +274,9 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                       <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} initials={wordInitials(contact.name)} />
                       <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                         <span className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-title text-ink">{contact.name}</span>
+                          <Link href={`/loan-management/ledger?contactId=${contact.id}`} title={t("Open statement for {name}", { name: contact.name })} className="truncate text-[15px] font-semibold text-ink hover:text-emerald hover:underline">
+                            {contact.name}
+                          </Link>
                           <Chip tone="neutral" size="sm" className="font-semibold">
                             {isArchived ? t("Archived") : t(LOAN_KIND_LABELS[contact.type])}
                           </Chip>
@@ -283,62 +285,20 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                         <span className="truncate text-caption font-normal text-ink-muted">{(institution(contact) && contact.notes) || contact.phone || contact.email || contact.address || contact.notes || t("No contact info")}</span>
                       </span>
                       {canManage && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            disabled={isPending}
-                            aria-label={t("Actions for {name}", { name: contact.name })}
-                            className="flex size-9 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunken disabled:opacity-50 data-open:bg-surface-sunken pointer-coarse:size-11"
-                          >
-                            <Ellipsis className="size-4.5" aria-hidden="true" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" sideOffset={6} className="w-56 rounded-md border border-line bg-surface p-2 shadow-overlay ring-0">
-                            <DropdownMenuItem onSelect={() => setDrawer(contact)} className={MENU_ITEM}>
+                        <span className="flex shrink-0 gap-1.5">
+                          {isArchived ? (
+                            <IconAction onClick={() => restore(contact)} disabled={isPending} aria-label={t("Restore {name}", { name: contact.name })} title={t("Restore")}>
+                              <ArchiveRestore aria-hidden="true" />
+                            </IconAction>
+                          ) : (
+                            <IconAction onClick={() => setDrawer(contact)} disabled={isPending} aria-label={t("Edit {name}", { name: contact.name })} title={t("Edit")}>
                               <Pencil aria-hidden="true" />
-                              {t("Edit")}
-                            </DropdownMenuItem>
-                            {!isArchived && (
-                              <DropdownMenuItem onSelect={() => setEntryFor(contact.id)} className={MENU_ITEM}>
-                                <Plus aria-hidden="true" />
-                                {t("New entry")}
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem asChild className={MENU_ITEM}>
-                              <Link href={`/loan-management/ledger?contactId=${contact.id}`}>
-                                <ScrollText aria-hidden="true" />
-                                {t("Statement")}
-                              </Link>
-                            </DropdownMenuItem>
-                            {isArchived && (
-                              <DropdownMenuItem onSelect={() => restore(contact)} className={MENU_ITEM}>
-                                <ArchiveRestore aria-hidden="true" />
-                                {t("Restore")}
-                              </DropdownMenuItem>
-                            )}
-                            {!isArchived && (
-                              <>
-                                <DropdownMenuSeparator className="my-1 bg-line" />
-                                {/* Only a settled balance can be archived; otherwise the item says why. */}
-                                <DropdownMenuItem
-                                  disabled={!settled}
-                                  onSelect={() => archive(contact)}
-                                  className={cn(MENU_ITEM, "text-expense focus:bg-expense-soft focus:text-expense data-disabled:h-auto data-disabled:cursor-not-allowed data-disabled:py-1.5 data-disabled:text-ink-muted data-disabled:opacity-100")}
-                                >
-                                  <Archive aria-hidden="true" />
-                                  <span className="flex flex-col">
-                                    {t("Archive")}
-                                    {!settled && <span className="text-caption font-normal">{t("Settle the balance first")}</span>}
-                                  </span>
-                                </DropdownMenuItem>
-                                {contact.lastActivityAt === null && (
-                                  <DropdownMenuItem onSelect={() => remove(contact)} className={cn(MENU_ITEM, "text-expense focus:bg-expense-soft focus:text-expense")}>
-                                    <Trash2 aria-hidden="true" />
-                                    {t("Remove")}
-                                  </DropdownMenuItem>
-                                )}
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            </IconAction>
+                          )}
+                          <IconAction tone="danger" onClick={() => remove(contact)} disabled={isPending} aria-label={t("Delete {name}", { name: contact.name })} title={contact.lastActivityAt === null ? t("Delete") : t("Has transactions, can’t be deleted")} className={cn(contact.lastActivityAt !== null && "opacity-40")}>
+                            <Trash2 aria-hidden="true" />
+                          </IconAction>
+                        </span>
                       )}
                     </div>
                     <div className={cn("flex items-end justify-between gap-3 rounded-field px-3.5 py-3", meta.box)}>
@@ -351,20 +311,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                         {t(meta.name)}
                       </Chip>
                     </div>
-                    <div className="flex items-center justify-between gap-2 text-caption font-normal text-ink-muted">
-                      <span className="min-w-0 truncate">{lastOf(contact)}</span>
-                      {/* The board's text links, 44px tall under a finger. */}
-                      <span className="flex shrink-0 gap-3">
-                        {canManage && !isArchived && (
-                          <Button variant="link" size="sm" onClick={() => setEntryFor(contact.id)} className="h-auto px-0 font-semibold pointer-coarse:h-11 pointer-coarse:px-2">
-                            {t("New entry")}
-                          </Button>
-                        )}
-                        <Button variant="link" size="sm" asChild className="h-auto px-0 font-semibold text-ink-2 hover:text-ink pointer-coarse:h-11 pointer-coarse:px-2">
-                          <Link href={`/loan-management/ledger?contactId=${contact.id}`}>{t("Statement")}</Link>
-                        </Button>
-                      </span>
-                    </div>
+                    <div className="truncate text-caption font-normal text-ink-muted">{lastOf(contact)}</div>
                   </Card>
                 );
               })}
@@ -383,8 +330,38 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
       )}
 
       <LoanContactDrawer open={drawer !== "closed"} onClose={() => setDrawer("closed")} businessId={businessId} editing={typeof drawer === "object" ? drawer : null} currency={currency} canTrade={canTrade} />
-      <LoanEntryDrawer open={entryFor !== null} onClose={() => setEntryFor(null)} businessId={businessId} contacts={active} currency={currency} initialContactId={entryFor ?? undefined} />
-      {confirmDialog}
+      {deleting && (
+        <LoanDeleteDialog
+          open
+          onClose={() => setDeleting(null)}
+          busy={isPending}
+          {...(deleting.lastActivityAt === null
+            ? {
+                title: t("Delete {name}?", { name: deleting.name }),
+                body: [
+                  t("There are no entries for this contact, so nothing else changes."),
+                  Number(deleting.currentBalance) > 0
+                    ? t("{name} still owes you {amount}. Removing them deletes that balance too, for good.", { name: deleting.name, amount: formatCurrency(Math.abs(Number(deleting.currentBalance)), currency, fmt) })
+                    : Number(deleting.currentBalance) < 0
+                      ? t("You still owe {name} {amount}. Removing them deletes that balance too, for good.", { name: deleting.name, amount: formatCurrency(Math.abs(Number(deleting.currentBalance)), currency, fmt) })
+                      : null,
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+                confirmLabel: t("Delete contact"),
+                onConfirm: () => confirmRemove(deleting),
+              }
+            : {
+                title: t("{name} can’t be deleted", { name: deleting.name }),
+                body: t(Number(deleting.currentBalance) ? "{name} has {count} entries and {amount} outstanding. Deleting would break your loan history. Delete the entries in Transactions first if this contact was added by mistake." : "{name} has {count} entries. Deleting would break your loan history. Delete the entries in Transactions first if this contact was added by mistake.", {
+                  name: deleting.name,
+                  count: formatCount(activityOf.get(deleting.id)?.entries ?? 0, fmt),
+                  amount: formatCurrency(Math.abs(Number(deleting.currentBalance)), currency, fmt),
+                }),
+                instead: { href: `/loan-management/transactions?contactId=${deleting.id}&period=all`, label: t("See transactions") },
+              })}
+        />
+      )}
     </PageFrame>
   );
 }

@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import Logo from "@/components/smartly/Logo";
 import { ACCOUNT_TYPE_LABELS, accountDisplayName, balanceText } from "@/lib/customer/accountDisplay";
 import type { Account, LanguagePreference, LedgerRow } from "@/lib/customer/api";
 import { directionOf, kindOf, LEDGER_KIND_META, partyOf } from "@/lib/customer/balanceDisplay";
-import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate, formatDateTime } from "@/lib/customer/date";
 import { isDebitPositive, readsAsMoney } from "@/lib/customer/ledger";
 import { cancelledLabel } from "@/lib/customer/transactionDisplay";
@@ -67,7 +66,7 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
     <section className="flex flex-col gap-5.5 text-small text-ink [print-color-adjust:exact]">
       <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-4.5">
         <div className="flex flex-col gap-1">
-          <Logo height={28} />
+          <span className="text-[20px] font-bold">Smartly</span>
           <span className="text-[11px] text-ink-muted">{t("Statement for {name}", { name: user.name })}</span>
         </div>
         <div className="flex flex-col items-end gap-0.75 text-right">
@@ -91,7 +90,7 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
         <div className="flex flex-col gap-0.75">
           <span className="text-ink-muted">{t("Entries")}</span>
           <span className="text-[13px] font-semibold">{plural(t, rows.length, "{count} transaction", "{count} transactions", undefined, fmt)}</span>
-          <span className="text-ink-muted">{t("Currency: {currency}", { currency })}</span>
+          <span className="text-ink-muted">{t("Currency: {currency}", { currency: `${currency} (${currencySymbol(currency, fmt)})` })}</span>
         </div>
       </div>
 

@@ -25,12 +25,14 @@ interface AmountInputProps {
   // forms), the currency named in its label instead.
   size?: "xl" | "lg" | "md" | "sm" | "field";
   placeholder?: string;
+  // The box's own corners, for a board that rounds it differently.
+  frameClassName?: string;
 }
 
 // A drawer's amount box (design-v4): 56px with 8px corners, the currency
 // sign in a 52px strip cell on the left and the figure large and bold beside
 // it, grouped as it is typed ("16,50,000").
-const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid = false, describedBy, size = "xl", placeholder = "0" }: AmountInputProps) => {
+const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid = false, describedBy, size = "xl", placeholder = "0", frameClassName }: AmountInputProps) => {
   const { fmt } = useLocale();
   const field = useAmountField(value, onChange, currency);
   const describe = describedBy && { "aria-describedby": invalid ? `${id}-error ${describedBy}` : describedBy };
@@ -55,7 +57,7 @@ const AmountInput = ({ id, value, onChange, currency, autoFocus = false, invalid
       invalid={invalid}
       {...describe}
       leading={<span className={cn("flex items-center justify-center border-r border-line bg-strip font-semibold text-ink-soft", box.strip)}>{currencySymbol(currency, fmt)}</span>}
-      frameClassName={cn("gap-0 overflow-hidden pl-0", box.frame)}
+      frameClassName={cn("gap-0 overflow-hidden pl-0", box.frame, frameClassName)}
       className={cn("font-bold tabular-nums", box.figure)}
     />
   );

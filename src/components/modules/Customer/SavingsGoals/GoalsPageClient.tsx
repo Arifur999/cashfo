@@ -1,20 +1,20 @@
 "use client";
 
-import { ArrowLeftRight, PiggyBank, Plus } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, List, PiggyBank, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import Button from "@/components/smartly/Button";
 import EmptyState from "@/components/smartly/EmptyState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import TabBar from "@/components/smartly/TabBar";
-import type { Account, SavingsGoal, SavingsGoalStatus, SavingsOverview } from "@/lib/customer/api";
+import type { Account, SavingsGoal, SavingsGoalStatus, SavingsPlan } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { deleteSavingsGoalAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
+import { deleteSavingsGoalAction, moveGoalToPlansAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
 import { goalColor, savingsError } from "@/lib/customer/savingsDisplay";
 import { behindFirst, goalsHero, isBehind, monthlyFromNow } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
@@ -39,7 +39,6 @@ import { WithdrawDialog } from "./WithdrawDialog";
 interface GoalsPageClientProps {
   businessId: string;
   goals: SavingsGoal[];
-  overview: SavingsOverview;
   currency: string;
   canManage: boolean;
   // Active savings wallets (where money goes in) and the main balance
@@ -52,19 +51,23 @@ interface GoalsPageClientProps {
   walletNames: { id: string; name: string }[];
   person: { name: string; email: string };
   today: string;
+  // The saving plans waiting: the banner counts them, and Start goal on one
+  // opens New goal filled in from it (?plan=<id>).
+  plans: SavingsPlan[];
 }
 
 type Tab = "ALL" | "ACTIVE" | "PAUSED" | "COMPLETED" | "WITHDRAWN";
 type Modal =
-  | { kind: "goal"; id?: string }
-  | { kind: "add"; id: string; amount?: number }
+  | { kind: "goal"; id?: string; planId?: string }
+  | { kind: "add"; id: string; amount?: number; profit?: boolean }
   | { kind: "details"; id: string }
   | { kind: "withdraw"; id: string }
   | { kind: "catch"; id: string }
   | { kind: "move"; setup: MoveSetup }
   | { kind: "done"; id: string }
   | { kind: "statement"; id: string }
-  | { kind: "wallet" };
+  | { kind: "wallet" }
+  | { kind: "delete"; id: string };
 
 const TABS: { value: Tab; label: string; status?: SavingsGoalStatus }[] = [
   { value: "ALL", label: "All" },
@@ -78,13 +81,12 @@ const EMPTY_TAB: Record<Tab, string> = { ALL: "", ACTIVE: "No active goals right
 // Savings goals (design: SavingsDashboard): how all goals are doing
 // together and this month, which are behind their plan, then a card per
 // goal; every action opens as a popup over the page.
-export function GoalsPageClient({ businessId, goals, overview, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today }: GoalsPageClientProps) {
+export function GoalsPageClient({ businessId, goals, currency, canManage, savingsWallets, moneyAccounts, archivedWallets, walletNames, person, today, plans }: GoalsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [tab, setTab] = useState<Tab>("ALL");
   const [behindOnly, setBehindOnly] = useState(false);
   // Cards or a table, as this browser last had it.
@@ -93,25 +95,32 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
   const [isPending, startTransition] = useTransition();
 
   // ?new=1 opens New goal (Home's "Add a goal"); ?goal=<id> opens a goal's
-  // details (the bell's reminder). Then the URL forgets them.
-  const asked = searchParams.get("new") === "1" && canManage ? "new" : searchParams.get("goal");
+  // details (the bell's reminder); ?plan=<id> opens New goal filled in from
+  // a saving plan (its Start goal). Then the URL forgets them.
+  const planAsked = canManage ? searchParams.get("plan") : null;
+  const asked = searchParams.get("new") === "1" && canManage ? "new" : planAsked ? `plan:${planAsked}` : searchParams.get("goal");
   const [prevAsked, setPrevAsked] = useState<string | null>(null);
   if (asked !== prevAsked) {
     setPrevAsked(asked);
     if (asked === "new") setModal({ kind: "goal" });
+    else if (asked?.startsWith("plan:")) {
+      const planId = asked.slice(5);
+      if (plans.some((plan) => plan.id === planId)) setModal({ kind: "goal", planId });
+    }
     else if (asked && goals.some((goal) => goal.id === asked)) setModal({ kind: "details", id: asked });
   }
   useEffect(() => {
-    if (!searchParams.has("new") && !searchParams.has("goal")) return;
+    if (!searchParams.has("new") && !searchParams.has("goal") && !searchParams.has("plan")) return;
     const params = new URLSearchParams(searchParams.toString());
     params.delete("new");
     params.delete("goal");
+    params.delete("plan");
     const query = params.toString();
     window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
   }, [pathname, searchParams]);
 
   const byId = (id: string | undefined) => (id ? (goals.find((goal) => goal.id === id) ?? null) : null);
-  const colorOf = (goal: SavingsGoal | null) => (goal ? goalColor(Math.max(0, goals.findIndex((item) => item.id === goal.id)), goal.status) : "var(--emerald)");
+  const colorOf = (goal: SavingsGoal | null) => (goal ? goalColor(goal, Math.max(0, goals.findIndex((item) => item.id === goal.id))) : "var(--emerald)");
   const noWallet = savingsWallets.length === 0;
   const open = goals.filter((goal) => goal.status !== "WITHDRAWN");
   // Somewhere a goal's money can go: another open goal that isn't full.
@@ -124,7 +133,6 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
     return status ? goals.filter((goal) => goal.status === status) : goals;
   };
   const shown = behindFirst(showBehind ? goals.filter(isBehind) : tabGoals(tab));
-  const hasRate = Number(overview.savedThisMonth) > 0 && overview.savingsRatePercent > 0;
 
   const setStatus = (goal: SavingsGoal, status: "ACTIVE" | "PAUSED") => {
     if (isPending) return;
@@ -143,13 +151,8 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
     });
   };
 
-  async function remove(goal: SavingsGoal) {
-    const ok = await confirm({
-      title: t("Delete {name}?", { name: goal.name }),
-      message: Number(goal.currentAmount) > 0 ? t("The goal and its history are removed. The {amount} stays in your savings accounts, it just stops counting toward a goal.", { amount: money(goal.currentAmount) }) : t("The goal and its history are removed. This can't be undone."),
-      confirmLabel: "Delete goal",
-    });
-    if (!ok) return;
+  function remove(goal: SavingsGoal) {
+    if (isPending) return;
     startTransition(async () => {
       const result = await deleteSavingsGoalAction(businessId, goal.id);
       if (!result.success) {
@@ -162,8 +165,27 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
     });
   }
 
+  // Move back to plans: nothing was recorded against it yet.
+  function toPlans(goal: SavingsGoal) {
+    if (isPending) return;
+    startTransition(async () => {
+      const result = await moveGoalToPlansAction(businessId, goal.id);
+      if (!result.success) {
+        toast.error(savingsError(result.message, "Failed to move the goal", t, currency, fmt));
+        return;
+      }
+      toast.success(t("{name} moved back to your saving plans.", { name: goal.name }));
+      setModal(null);
+      router.refresh();
+    });
+  }
+
   function act(goal: SavingsGoal, action: GoalAction | "statement") {
     switch (action) {
+      case "profit":
+        return setModal({ kind: "add", id: goal.id, profit: true });
+      case "toPlan":
+        return toPlans(goal);
       case "details":
         return setModal({ kind: "details", id: goal.id });
       case "catch":
@@ -179,7 +201,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
       case "withdraw":
         return setModal({ kind: "withdraw", id: goal.id });
       case "delete":
-        return void remove(goal);
+        return setModal({ kind: "delete", id: goal.id });
       case "add":
         return setModal({ kind: "add", id: goal.id });
       case "wallet":
@@ -233,7 +255,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         text={canManage ? t("A savings account is where your saved money actually sits, for example a DPS or FDR account. Add one, then you can start adding money to your goals.") : t("A savings account is where your saved money actually sits, for example a DPS or FDR account. Ask the workspace owner to add one.")}
         action={
           canManage && (
-            <Button variant="action" size="lg" onClick={() => setModal({ kind: "wallet" })}>
+            <Button variant="action" onClick={() => setModal({ kind: "wallet" })} className="h-10.5 px-4.5 shadow-none">
               {t("Add savings account")}
             </Button>
           )
@@ -243,7 +265,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
   };
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 leading-[normal]">
       <PageHeader
         title={t("Savings goals")}
         description={t("Put money aside for what matters, and watch each goal fill up.")}
@@ -251,12 +273,12 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
           canManage && (
             <>
               {goals.length > 0 && (
-                <Button variant="secondary" onClick={moveAny}>
+                <Button variant="secondary" onClick={moveAny} className="px-3.5">
                   <ArrowLeftRight className="text-ink-2" />
                   {t("Move between goals")}
                 </Button>
               )}
-              <Button onClick={() => setModal({ kind: "goal" })}>
+              <Button onClick={() => setModal({ kind: "goal" })} className="gap-1.5">
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("New goal")}
               </Button>
@@ -266,6 +288,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
       />
 
       {noWallet && setupBanner()}
+
 
       {goals.length === 0 ? (
         <EmptyState
@@ -281,10 +304,11 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
             hero={hero}
             active={goals.filter((goal) => goal.status === "ACTIVE")}
             month={month}
-            ratePercent={hasRate ? overview.savingsRatePercent : null}
             money={money}
             onShowBehind={() => setBehindOnly(true)}
           />
+
+          {plans.length > 0 && <PlansBanner count={plans.length} />}
 
           <div className="flex items-end gap-4 border-b border-line">
             <TabBar
@@ -305,7 +329,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
               <span className="min-w-0 flex-1">
                 <b>{hero.behind === 1 ? t("Showing the 1 goal behind plan.") : t("Showing {count} goals behind plan.", { count: formatCount(hero.behind, fmt) })}</b> {t("Catch up on a card to see your options.")}
               </span>
-              <button type="button" onClick={() => setBehindOnly(false)} className="h-8.5 rounded-full border border-warning bg-surface px-3.5 text-[13px] font-semibold text-warning-ink pointer-coarse:h-11">
+              <button type="button" onClick={() => setBehindOnly(false)} className="h-8.5 rounded-full border border-warning-fill bg-surface px-3.5 text-[13px] font-semibold text-warning-ink pointer-coarse:h-11">
                 {t("Show all goals")}
               </button>
             </div>
@@ -333,9 +357,9 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
                 <button
                   type="button"
                   onClick={() => setModal({ kind: "goal" })}
-                  className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
+                  className="flex min-h-37.5 flex-col items-center justify-center gap-2 rounded-[18px] border-[1.5px] border-dashed border-input bg-surface transition-colors hover:border-emerald max-lg:hidden"
                 >
-                  <span className="flex size-10 items-center justify-center rounded-field bg-mint-50 text-emerald">
+                  <span className="flex size-10 items-center justify-center rounded-field bg-emerald-soft text-emerald">
                     <Plus className="size-4.5" strokeWidth={2.5} aria-hidden="true" />
                   </span>
                   <span className="text-body font-semibold text-ink">{t("New goal")}</span>
@@ -353,6 +377,8 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         onClose={close}
         businessId={businessId}
         editing={modal?.kind === "goal" ? byId(modal.id) : null}
+        fromPlan={modal?.kind === "goal" && modal.planId ? (plans.find((plan) => plan.id === modal.planId) ?? null) : null}
+        usedColors={goals.map((goal, index) => goalColor(goal, index))}
         currency={currency}
         today={today}
         email={person.email}
@@ -370,6 +396,7 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         moneyAccounts={moneyAccounts}
         savingsWallets={savingsWallets}
         startAmount={modal?.kind === "add" ? modal.amount : undefined}
+        kind={modal?.kind === "add" && modal.profit ? "profit" : "deposit"}
         onReached={(id) => setModal({ kind: "done", id })}
       />
       <GoalDetailsDialog
@@ -419,15 +446,56 @@ export function GoalsPageClient({ businessId, goals, overview, currency, canMana
         person={person}
       />
       <SavingsAccountDialog open={modal?.kind === "wallet"} onClose={close} businessId={businessId} editing={null} names={walletNames} addedNote="goals" />
-      {confirmDialog}
+      <PopupDialog
+        open={modal?.kind === "delete"}
+        onClose={close}
+        plain
+        width={440}
+        busy={isPending}
+        className="leading-[normal]"
+        titleClassName="font-bold!"
+        title={modal?.kind === "delete" && current ? t("Delete {name}?", { name: current.name }) : ""}
+        sub={modal?.kind === "delete" && current ? (Number(current.currentAmount) > 0 ? t("The goal and its history are removed. The {amount} stays in your savings accounts, it just stops counting toward a goal.", { amount: money(current.currentAmount) }) : t("The goal and its history are removed. This can't be undone.")) : ""}
+        footer={
+          <>
+            <Button variant="secondary" size="lg" onClick={close} disabled={isPending} className="px-4.5">
+              {t("Cancel")}
+            </Button>
+            <Button variant="danger" size="lg" onClick={() => current && remove(current)} disabled={isPending} className="shadow-none">
+              {t("Delete goal")}
+            </Button>
+          </>
+        }
+      />
     </PageFrame>
+  );
+}
+
+// The saving plans waiting (board: a dashed strip above the tabs), linking
+// to them.
+function PlansBanner({ count }: { count: number }) {
+  const { t, fmt } = useLocale();
+  return (
+    <Link href="/savings-goals/plans" className="flex items-center gap-3 rounded-[14px] border border-dashed border-input bg-surface px-4 py-3 text-ink transition-colors hover:border-emerald">
+      <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-emerald-soft text-emerald">
+        <List className="size-4" strokeWidth={2} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-px">
+        <span className="text-[14px] font-bold">{count === 1 ? t("1 saving plan is waiting") : t("{count} saving plans are waiting", { count: formatCount(count, fmt) })}</span>
+        <span className="truncate text-[12.5px] text-ink-muted">{t("Things you want to save for later. Start one as a goal when you are ready.")}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-brand-ink">
+        {t("See saving plans")}
+        <ArrowRight className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
+      </span>
+    </Link>
   );
 }
 
 // The note above the goals while money can't go in yet.
 function Banner({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {
   return (
-    <section className={cn("flex flex-col gap-4 rounded-[14px] border border-emerald-line bg-mint-50 p-5 md:flex-row md:items-center md:gap-5 md:px-6")}>
+    <section className={cn("flex flex-col gap-4 rounded-[14px] border border-emerald-line bg-emerald-soft p-5 md:flex-row md:items-center md:gap-5 md:px-6")}>
       <span className="flex size-14 shrink-0 items-center justify-center rounded-[14px] bg-surface text-emerald shadow-[0_4px_12px_rgba(14,26,22,0.08)]">
         <PiggyBank className="size-6.5" aria-hidden="true" />
       </span>

@@ -103,6 +103,8 @@
      yearly saving's gold on the forest card. */
   --sky: #0369a1;
   --sky-soft: #e0f2fe;
+  /* The fifth savings account's colour (SavingsWallets board). */
+  --rose-deep: #be123c;
   --gold-on-forest: #f5c26b;
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
@@ -147,6 +149,53 @@
   --cat-10: #4e8f5e;
   /* The boards' category yellow, apart from the warning amber. */
   --cat-11: #ca8a04;
+  /* Income & Expense's twelve category colours: the CategorySet board's
+     swatches, in its order, by the colour name a category keeps. */
+  --ie-green: #0f766e;
+  --ie-cyan: #0891b2;
+  --ie-blue: #2563eb;
+  --ie-indigo: #4f46e5;
+  --ie-purple: #7c3aed;
+  --ie-violet: #c026d3;
+  --ie-pink: #db2777;
+  --ie-red: #e11d48;
+  --ie-orange: #ea580c;
+  --ie-yellow: #ca8a04;
+  --ie-teal: #0d9488;
+  --ie-lime: #15803d;
+  /* The app's own Bank & transfer fees row. */
+  --ie-slate: #64748b;
+  /* Asset categories (the Assets boards' ten swatches, and the grey of a
+     category that is gone). */
+  --asset-green: #1c7567;
+  --asset-blue: #2563eb;
+  --asset-orange: #ea580c;
+  --asset-pink: #db2777;
+  --asset-purple: #9333ea;
+  --asset-teal: #0e7490;
+  --asset-gold: #ca8a04;
+  --asset-indigo: #4f46e5;
+  --asset-red: #be123c;
+  --asset-leaf: #15803d;
+  --asset-grey: #5f6b68;
+  /* The Assets boards' own washes and inks: a loss, the washes behind a
+     rise or a drop, the quiet chip, the chart's paid line, the view toggle,
+     a picked row, a sold card, a card's inner rule, the dashboard table's
+     head, and the Update due chip. */
+  --loss-ink: #b91c1c;
+  --gain-wash: #f0fdf4;
+  --loss-wash: #fef2f2;
+  --quiet-chip: #f0f2f2;
+  --chart-cost: #a8b3b0;
+  --toggle-track: #e9edec;
+  --pick-wash: #f0f7f5;
+  --sold-card: #fbfbfb;
+  --card-rule: #f1f3f3;
+  --head-wash: #f7f9f8;
+  --head-rule: #eef1f0;
+  --due-ink: #92400e;
+  --alert-wash: #fff7ed;
+  --note-ink: #134e4a;
   /* Notes (the NotesHome board): a card's tint, and the five journal moods
      from Great to Hard. */
   --note-yellow: #fefce8;
@@ -173,6 +222,9 @@
   --tint-pink-ink: #be185d;
   --tint-yellow: #fef9c3;
   --tint-yellow-ink: #a16207;
+  /* The profit note in Add money (Savings): its edge and words. */
+  --tint-yellow-line: #fef08a;
+  --tint-yellow-deep: #713f12;
   --tint-teal: #ccfbf1;
   --tint-teal-ink: #0f766e;
   --tint-violet: #ede9fe;
@@ -217,6 +269,10 @@
   --elevation-control: 0 1px 2px rgba(18, 32, 29, 0.05), 0 2px 8px rgba(18, 32, 29, 0.04);
   /* The wash behind dialogs and drawers. */
   --scrim: rgba(18, 32, 29, 0.45);
+  /* The same in both themes: WhatsApp's own green (a loan reminder's Open
+     WhatsApp), and the print preview's dark bar (LoanLedger board). */
+  --whatsapp: #128c4a;
+  --print-bar: #12201d;
 
   /* shadcn's tokens, mapped onto the palette above so its primitives and
      the design's own components agree. */
@@ -320,6 +376,7 @@
   --info-ink: #a9c4f5;
   --sky: #7cc4f0;
   --sky-soft: #0b2a3d;
+  --rose-deep: #f0718f;
   --gold-on-forest: #f5c26b;
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
@@ -352,6 +409,44 @@
   --cat-9: #5fcfe6;
   --cat-10: #8fcb9c;
   --cat-11: #facc15;
+  --ie-green: #4fb8a6;
+  --ie-cyan: #5fcfe6;
+  --ie-blue: #86abf2;
+  --ie-indigo: #a5b0fb;
+  --ie-purple: #b6a2ff;
+  --ie-violet: #e9a0f5;
+  --ie-pink: #f08fbf;
+  --ie-red: #fb7185;
+  --ie-orange: #f0a46a;
+  --ie-yellow: #facc15;
+  --ie-teal: #5cccdb;
+  --ie-lime: #6ee7a0;
+  --ie-slate: #94a3b8;
+  --asset-green: #4fb8a6;
+  --asset-blue: #86abf2;
+  --asset-orange: #f0a46a;
+  --asset-pink: #f08fbf;
+  --asset-purple: #d0a2fb;
+  --asset-teal: #5cccdb;
+  --asset-gold: #facc15;
+  --asset-indigo: #a5b0fb;
+  --asset-red: #fb7185;
+  --asset-leaf: #6ee7a0;
+  --asset-grey: #9aa7a4;
+  --loss-ink: #fca5a5;
+  --gain-wash: #0f2618;
+  --loss-wash: #2b1316;
+  --quiet-chip: #17241f;
+  --chart-cost: #4f5f5a;
+  --toggle-track: #17241f;
+  --pick-wash: #12302a;
+  --sold-card: #0d1915;
+  --card-rule: #1a2b24;
+  --head-wash: #0b1712;
+  --head-rule: #20332b;
+  --due-ink: #fcd34d;
+  --alert-wash: #33200e;
+  --note-ink: #9cc7be;
   --note-yellow: #29250f;
   --note-green: #0f2618;
   --note-blue: #111d33;
@@ -368,6 +463,8 @@
   --tint-pink-ink: #f08fbf;
   --tint-yellow: #29250f;
   --tint-yellow-ink: #facc15;
+  --tint-yellow-line: #4a3f12;
+  --tint-yellow-deep: #fde68a;
   --tint-teal: #0b2e33;
   --tint-teal-ink: #5cccdb;
   --tint-violet: #1f1838;
@@ -610,6 +707,8 @@ html:not(.dark) [data-app="habit"] {
   --color-surface-raised: var(--surface-raised);
   --color-surface-sunken: var(--surface-sunken);
   --color-scrim: var(--scrim);
+  --color-whatsapp: var(--whatsapp);
+  --color-print-bar: var(--print-bar);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-line-card: var(--line-card);
@@ -641,6 +740,7 @@ html:not(.dark) [data-app="habit"] {
   --color-info-ink: var(--info-ink);
   --color-sky: var(--sky);
   --color-sky-soft: var(--sky-soft);
+  --color-rose-deep: var(--rose-deep);
   --color-meter-records: var(--meter-records);
   --color-brand-facebook: var(--brand-facebook);
   --color-brand-youtube: var(--brand-youtube);
@@ -664,6 +764,8 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-pink-ink: var(--tint-pink-ink);
   --color-tint-yellow: var(--tint-yellow);
   --color-tint-yellow-ink: var(--tint-yellow-ink);
+  --color-tint-yellow-line: var(--tint-yellow-line);
+  --color-tint-yellow-deep: var(--tint-yellow-deep);
   --color-tint-teal: var(--tint-teal);
   --color-tint-teal-ink: var(--tint-teal-ink);
   --color-tint-violet: var(--tint-violet);
@@ -674,6 +776,20 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-blue-ink: var(--tint-blue-ink);
   --color-tint-green: var(--tint-green);
   --color-tint-green-ink: var(--tint-green-ink);
+  --color-loss-ink: var(--loss-ink);
+  --color-gain-wash: var(--gain-wash);
+  --color-loss-wash: var(--loss-wash);
+  --color-quiet-chip: var(--quiet-chip);
+  --color-chart-cost: var(--chart-cost);
+  --color-toggle-track: var(--toggle-track);
+  --color-pick-wash: var(--pick-wash);
+  --color-sold-card: var(--sold-card);
+  --color-card-rule: var(--card-rule);
+  --color-head-wash: var(--head-wash);
+  --color-head-rule: var(--head-rule);
+  --color-due-ink: var(--due-ink);
+  --color-alert-wash: var(--alert-wash);
+  --color-note-ink: var(--note-ink);
   --color-tint-indigo: var(--tint-indigo);
   --color-tint-indigo-ink: var(--tint-indigo-ink);
   --color-tint-emerald: var(--tint-emerald);
@@ -705,6 +821,19 @@ html:not(.dark) [data-app="habit"] {
   --color-cat-9: var(--cat-9);
   --color-cat-10: var(--cat-10);
   --color-cat-11: var(--cat-11);
+  --color-ie-green: var(--ie-green);
+  --color-ie-cyan: var(--ie-cyan);
+  --color-ie-blue: var(--ie-blue);
+  --color-ie-indigo: var(--ie-indigo);
+  --color-ie-violet: var(--ie-violet);
+  --color-ie-purple: var(--ie-purple);
+  --color-ie-pink: var(--ie-pink);
+  --color-ie-red: var(--ie-red);
+  --color-ie-orange: var(--ie-orange);
+  --color-ie-yellow: var(--ie-yellow);
+  --color-ie-teal: var(--ie-teal);
+  --color-ie-lime: var(--ie-lime);
+  --color-ie-slate: var(--ie-slate);
   --color-note-yellow: var(--note-yellow);
   --color-note-green: var(--note-green);
   --color-note-blue: var(--note-blue);
@@ -860,6 +989,17 @@ html:not(.dark) [data-app="habit"] {
 @utility bg-wallet-card {
   background-image: linear-gradient(135deg, var(--wallet) 0%, color-mix(in srgb, var(--wallet) 55%, black) 100%);
 }
+/* An Income & Expense category's letter tile (the CategorySet board): a 14%
+   wash of its colour (--cat, set on the element) and the colour 20% deeper;
+   lighter on dark. */
+@utility cat-tile {
+  background-color: color-mix(in srgb, var(--cat) 14%, var(--surface));
+  color: color-mix(in srgb, var(--cat) 80%, black);
+  @variant dark {
+    background-color: color-mix(in srgb, var(--cat) 24%, var(--surface));
+    color: var(--cat);
+  }
+}
 @utility wallet-tile {
   background-color: color-mix(in srgb, var(--wallet) 14%, var(--surface));
   color: var(--wallet);
@@ -887,9 +1027,21 @@ html:not(.dark) [data-app="habit"] {
 @utility bg-wallet-mint {
   background-image: linear-gradient(135deg, #14b57a 0%, #1f7a5a 100%);
 }
-/* The first savings wallet card. */
+/* The savings account cards, in the SavingsWallets board's order. */
 @utility bg-savings-violet {
-  background-image: linear-gradient(135deg, #6244c4 0%, #3e2a86 100%);
+  background-image: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+}
+@utility bg-savings-teal {
+  background-image: linear-gradient(135deg, #1c7567 0%, #134e4a 100%);
+}
+@utility bg-savings-blue {
+  background-image: linear-gradient(135deg, #0369a1 0%, #0c4a6e 100%);
+}
+@utility bg-savings-amber {
+  background-image: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+}
+@utility bg-savings-rose {
+  background-image: linear-gradient(135deg, #be123c 0%, #881337 100%);
 }
 
 @layer base {

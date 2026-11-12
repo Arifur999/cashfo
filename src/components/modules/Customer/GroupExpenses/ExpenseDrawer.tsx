@@ -10,7 +10,6 @@ import DayInput from "@/components/smartly/form/DayInput";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
-import Textarea from "@/components/smartly/form/Textarea";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { useAmountField } from "@/hooks/useAmountField";
 import type { GroupCostSplit, GroupExpense, GroupExpenseCategoryOption, GroupMember, GroupPaidFrom, GroupSplit } from "@/lib/customer/api";
@@ -61,7 +60,7 @@ const paisa = (value: number | string) => Math.round(Number(value) * 100);
 // split" weighs each member by the group's cost split (Members).
 const SPLIT_CHOICES: { value: GroupSplit; label: string }[] = [
   { value: "EQUAL", label: "Equally" },
-  { value: "SHARES", label: "By cost split" },
+  { value: "SHARES", label: "By shares" },
   { value: "EXACT", label: "Exact amounts" },
   { value: "MEALS", label: "By meals" },
 ];
@@ -249,33 +248,34 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
       open={open}
       onClose={onClose}
       busy={isPending}
-      width={520}
+      width={620}
       title={editing ? t("Edit expense") : t("Add expense")}
+      sub={t("Money spent for the group")}
       onSubmit={(event) => {
         event.preventDefault();
         void save(false);
       }}
       footer={
         <>
-          {!editing && (
-            <Button type="button" variant="secondary" onClick={() => void save(true)} disabled={isPending} className="mr-auto max-sm:w-full">
-              {t("Save & add another")}
-            </Button>
-          )}
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="ghost" size="lg" onClick={onClose} disabled={isPending} className="px-4 text-ink-2">
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={isPending} className="px-4.5">
+          <Button type="submit" size="lg" disabled={isPending} className="px-5.5">
             {isPending && <Loader />}
             {editing ? t("Save changes") : t("Save expense")}
           </Button>
         </>
       }
     >
-      <div className="grid grid-cols-2 gap-3">
-        <Field htmlFor="exp-date" label={label(t("Date"))}>
-          <DayInput id="exp-date" size="md" value={date} onChange={setDate} max={today} />
+      <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-3">
+        <Field htmlFor="exp-desc" label={label(t("What for"), true)}>
+          <Input id="exp-desc" size="md" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={140} placeholder={t("e.g. Fish & vegetables")} frameClassName="h-11.5 rounded-[12px]" />
         </Field>
+        <Field htmlFor="exp-amount" label={label(t("Amount"))}>
+          <Input id="exp-amount" size="md" inputMode="decimal" {...amountField} autoFocus placeholder="0" invalid={tried && !(value > 0)} className="font-semibold tabular-nums" leading={<span className="text-[15px] font-semibold text-ink-faint">{currencySymbol(currency, fmt)}</span>} frameClassName="h-11.5 rounded-[12px]" />
+        </Field>
+      </div>
+      <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-3">
         <Field htmlFor="exp-category" label={label(t("Category"))} hint={offered.length === 0 ? t("Add categories under Categories.") : undefined}>
           <span className="relative flex items-center">
             {chosen && <span className={cn("pointer-events-none absolute left-2.5 z-1 flex size-6.5 items-center justify-center rounded-[7px] [&_svg]:size-3.5", tone.bg, tone.fg)}>{chosen.icon ? createElement(budgetCategoryIcon(chosen.icon), { "aria-hidden": true }) : null}</span>}
@@ -289,22 +289,10 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
             </NativeSelect>
           </span>
         </Field>
+        <Field htmlFor="exp-date" label={label(t("Date"))}>
+          <DayInput id="exp-date" size="md" value={date} onChange={setDate} max={today} />
+        </Field>
       </div>
-
-      <Field htmlFor="exp-amount" label={label(t("Amount"))}>
-        <Input
-          id="exp-amount"
-          size="lg"
-          inputMode="decimal"
-          {...amountField}
-          autoFocus
-          placeholder="0"
-          invalid={tried && !(value > 0)}
-          className="text-h3 font-bold tabular-nums"
-          leading={<span className="flex h-12 w-10 items-center justify-center border-r border-line bg-strip text-[17px] font-semibold text-ink-soft">{currencySymbol(currency, fmt)}</span>}
-          frameClassName="overflow-hidden pl-0"
-        />
-      </Field>
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1.5 text-body leading-[normal] font-medium text-ink">{t("Paid from")}</legend>
@@ -363,12 +351,8 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
         )}
       </fieldset>
 
-      <Field htmlFor="exp-desc" label={label(t("Description"), true)}>
-        <Textarea id="exp-desc" rows={3} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={140} placeholder={t("e.g. Fish & vegetables")} />
-      </Field>
-
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1.5 text-body leading-[normal] font-medium text-ink">{t("How is it shared?")}</legend>
+        <legend className="mb-1.5 text-body leading-[normal] font-medium text-ink">{t("How it is shared")}</legend>
         <SegmentedControl<GroupSplit>
           options={splitChoices}
           value={split}

@@ -67,6 +67,9 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
         return { what: t("Already saved when goal was made"), from: t("Already saved"), to: row.to ?? "–" };
       case "ADDED":
         return { what: `${t("Money added")}${note}`, from: row.from ?? "–", to: row.to ?? "–" };
+      case "PROFIT":
+        // From: the income category it counts under.
+        return { what: `${t("Profit from the bank")}${note}`, from: t("{name} (income)", { name: row.from ? t(row.from) : t("Bank profit") }), to: row.to ?? "–" };
       case "MOVED_IN":
         return { what: `${t("Moved in from another goal")}${note}`, from: t("{name} (goal)", { name: row.from ?? "" }), to: goal.name };
       case "MOVED_OUT":
@@ -83,7 +86,7 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
     const firstDay = [statement.goal.startDate, ...statement.rows.map((row) => row.date.slice(0, 10))].sort()[0];
     const rows = statement.rows.map((row, index) => ({ n: formatCount(index + 1, fmt), date: day(row.date), ...rowText(row), moneyIn: row.moneyIn ? money(row.moneyIn) : "", moneyOut: row.moneyOut ? money(row.moneyOut) : "", balance: money(row.balance) }));
     const sources = statement.sources.map((source) => ({
-      label: source.kind === "ALREADY_SAVED" ? t("Already saved") : source.kind === "GOAL" ? t("Moved in from {name}", { name: source.name ?? "" }) : (source.name ?? "–"),
+      label: source.kind === "ALREADY_SAVED" ? t("Already saved") : source.kind === "PROFIT" ? t("Profit · {name}", { name: source.name ? t(source.name) : t("Bank profit") }) : source.kind === "GOAL" ? t("Moved in from {name}", { name: source.name ?? "" }) : (source.name ?? "–"),
       value: money(source.amount),
     }));
     const now = statement.now.map((item) => ({ label: item.name ?? t("Savings account"), value: money(item.amount) }));
@@ -95,7 +98,7 @@ export function GoalStatementDialog({ open, onClose, onBack, businessId, goal, c
     ];
     const sums = [
       { label: t("Opening balance"), value: money(statement.totals.opening), tone: "bg-surface-sunken text-ink" },
-      { label: t("Money in"), value: money(statement.totals.moneyIn), tone: "bg-income-soft text-income" },
+      { label: t("Money in"), value: money(statement.totals.moneyIn), tone: "bg-success-soft text-tint-green-ink" },
       { label: t("Money out"), value: money(statement.totals.moneyOut), tone: "bg-expense-soft text-expense" },
       { label: t("Current balance"), value: money(statement.totals.balance), tone: "bg-mint-50 text-brand-ink" },
     ];
@@ -141,7 +144,7 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
   const cell = "border-b border-divider px-1.5 py-2 align-top";
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent showCloseButton={false} className="flex max-h-[calc(100dvh-32px)] w-235 max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
+      <DialogContent showCloseButton={false} className="flex max-h-[calc(100dvh-32px)] w-235 max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 leading-[normal] text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
         <div className="flex shrink-0 flex-wrap items-center gap-2.5 border-b border-line px-5 py-3.5">
           <Button variant="secondary" onClick={onBack} className="text-[13.5px]">
             <ArrowLeft className="size-3.75" strokeWidth={2.25} />
@@ -190,7 +193,7 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
                   <div className="flex flex-col gap-1">
                     <span className="text-small font-bold tracking-[0.06em] text-emerald uppercase">Smartly</span>
                     <span className="text-[22px] font-bold">{t("Savings goal statement")}</span>
-                    <span className="text-small text-ink-2">{[person.name, person.email].filter(Boolean).join(" · ")}</span>
+                    <span className="text-small text-ink-soft">{[person.name, person.email].filter(Boolean).join(" · ")}</span>
                   </div>
                   <dl className="grid grid-cols-[auto_auto] gap-x-3.5 gap-y-1 text-right text-[12.5px]">
                     <dt className="text-ink-muted">{t("Statement date")}</dt>
@@ -212,7 +215,7 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
                 <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
                   {view.sums.map((item) => (
                     <div key={item.label} className={cn("flex flex-col gap-1 rounded-[10px] px-3.5 py-3", item.tone)}>
-                      <span className="text-[11.5px] text-ink-2">{item.label}</span>
+                      <span className="text-[11.5px] text-ink-soft">{item.label}</span>
                       <span className="text-[18px] font-bold tabular-nums">{item.value}</span>
                     </div>
                   ))}
@@ -221,7 +224,7 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
                   <h3 className="text-body font-bold">{t("Transactions")}</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-170 border-collapse text-[12.5px] tabular-nums">
-                      <thead className="border-b-[1.5px] border-ink text-ink-2">
+                      <thead className="border-b-[1.5px] border-ink text-ink-soft">
                         <tr>
                           <th className={cn(head, "w-7")}>#</th>
                           <th className={cn(head, "w-24")}>{t("Date")}</th>
@@ -234,7 +237,7 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="text-ink-2">
+                        <tr className="text-ink-soft">
                           <td className={cell} />
                           <td className={cell}>{day(view.firstDay)}</td>
                           <td className={cell}>{t("Goal started")}</td>
@@ -251,7 +254,7 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
                             <td className={cn(cell, "font-medium")}>{row.what}</td>
                             <td className={cell}>{row.from}</td>
                             <td className={cell}>{row.to}</td>
-                            <td className={cn(cell, "text-right font-semibold text-income")}>{row.moneyIn}</td>
+                            <td className={cn(cell, "text-right font-semibold text-tint-green-ink")}>{row.moneyIn}</td>
                             <td className={cn(cell, "text-right font-semibold text-expense")}>{row.moneyOut}</td>
                             <td className={cn(cell, "text-right font-semibold")}>{row.balance}</td>
                           </tr>
@@ -262,7 +265,7 @@ ${view.rows.map((row) => `<tr>${cells([row.n, row.date, row.what, row.from, row.
                           <td colSpan={5} className="px-1.5 py-2.5">
                             {t("Total")}
                           </td>
-                          <td className="px-1.5 py-2.5 text-right text-income">{money(statement.totals.moneyIn)}</td>
+                          <td className="px-1.5 py-2.5 text-right text-tint-green-ink">{money(statement.totals.moneyIn)}</td>
                           <td className="px-1.5 py-2.5 text-right text-expense">{money(statement.totals.moneyOut)}</td>
                           <td className="px-1.5 py-2.5 text-right">{money(statement.totals.balance)}</td>
                         </tr>

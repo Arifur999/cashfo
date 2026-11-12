@@ -65,9 +65,9 @@ export function CatchUpDialog({ open, onClose, businessId, goal, currency, today
     ways.push({
       key: "add",
       title: t("Add {amount} now", { amount: money(plan.addNow) }),
-      sub: t("Fills the gap in one go. You choose the account on the next step."),
+      sub: t("Fills the gap in one go. You pick where it comes from on the next step."),
       tag: t("Fastest"),
-      tagClass: "bg-income-soft text-income",
+      tagClass: "bg-success-soft text-success-ink",
       button: t("Add {amount}", { amount: money(plan.addNow) }),
     });
   ways.push({
@@ -75,7 +75,7 @@ export function CatchUpDialog({ open, onClose, businessId, goal, currency, today
     title: t("Save {amount} a month from now", { amount: money(plan.perMonth) }),
     sub: `${average ? `${t("Up from the {amount} a month you have averaged.", { amount: money(average) })} ` : ""}${t("Same end date, {date}. A reminder email goes out on the 1st of each month.", { date: day(goal.targetDate) })}`,
     tag: t("Same date"),
-    tagClass: "bg-info-soft text-info",
+    tagClass: "bg-tint-blue text-tint-blue-ink",
     button: t("Use this plan"),
   });
   ways.push({
@@ -116,19 +116,22 @@ export function CatchUpDialog({ open, onClose, businessId, goal, currency, today
 
   return (
     <PopupDialog
+      className="leading-[normal]"
       open={open}
       onClose={onClose}
       width={560}
       busy={isPending}
+      subClassName="leading-[1.5]"
+      bodyClassName="gap-2.5"
       title={t("Get {name} back on track", { name: goal.name })}
       sub={fillNodes(t("By today you planned to have {expected}. You have {saved}, so you are {gap}. Pick one way to fix it."), {
-        expected: <b className="font-semibold text-ink">{money(plan.expected)}</b>,
-        saved: <b className="font-semibold text-ink">{money(goal.currentAmount)}</b>,
-        gap: <b className="font-semibold text-warning">{t("{amount} behind", { amount: money(plan.gap) })}</b>,
+        expected: <b className="font-bold text-ink">{money(plan.expected)}</b>,
+        saved: <b className="font-bold text-ink">{money(goal.currentAmount)}</b>,
+        gap: <b className="font-bold text-warning">{t("{amount} behind", { amount: money(plan.gap) })}</b>,
       })}
       footer={
         <>
-          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending}>
+          <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={isPending} className="px-4.5">
             {t("Not now")}
           </Button>
           <Button type="button" size="lg" onClick={apply} disabled={isPending}>
@@ -148,12 +151,12 @@ export function CatchUpDialog({ open, onClose, businessId, goal, currency, today
               role="radio"
               aria-checked={on}
               onClick={() => setWay(item.key)}
-              className={cn("flex items-start gap-3 rounded-[14px] p-3.5 text-left", on ? "border-[1.5px] border-emerald bg-mint-50" : "border border-line bg-surface hover:border-line-strong")}
+              className={cn("flex items-start gap-3 rounded-[14px] p-3.5 text-left", on ? "border-[1.5px] border-emerald bg-emerald-soft" : "border border-line bg-surface hover:border-line-strong")}
             >
               <span aria-hidden="true" className={cn("mt-0.5 size-4.5 shrink-0 rounded-full bg-surface", on ? "border-[5px] border-emerald" : "border-[1.5px] border-line-strong")} />
               <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                 <span className="text-[14.5px] font-semibold text-ink">{item.title}</span>
-                <span className="text-[12.5px] leading-normal text-ink-2">{item.sub}</span>
+                <span className="text-[12.5px] leading-normal text-ink-soft">{item.sub}</span>
               </span>
               <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold", item.tagClass)}>{item.tag}</span>
             </button>

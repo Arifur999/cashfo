@@ -8,6 +8,10 @@ import { toEnglishDigits } from "./money";
 import { cancelledLabel } from "./transactionDisplay";
 import { WALLET_TYPES } from "./walletVisuals";
 
+// The bank or person the statement showed last this session (a cookie
+// with no expiry), so the Ledger link opens them again.
+export const LEDGER_CONTACT_COOKIE = "loanLedgerContact";
+
 // What a loan contact is called. They are created as BOTH (they can lend
 // and borrow), which reads as a plain person; the others say themselves.
 export const LOAN_KIND_LABELS: Record<ContactType, string> = {
@@ -224,10 +228,28 @@ export function foldProfitRuns(rows: StatementRow[], keep = 2): LedgerItem[] {
   return items;
 }
 
+// A category named for profit, interest or a loan.
+const PROFIT_NAME = /profit|interest|loan|সুদ|মুনাফা/i;
+
 // The category a loan's profit is first filed under: one named for profit,
 // interest or a loan, else the first there is.
 export function profitCategory(names: string[]): string {
-  return names.find((name) => /profit|interest|loan|সুদ|মুনাফা/i.test(name)) ?? names[0] ?? "";
+  return names.find((name) => PROFIT_NAME.test(name)) ?? names[0] ?? "";
+}
+
+// Whether profitCategory found one named for it, rather than guessing.
+export function hasProfitCategory(names: string[]): boolean {
+  return names.some((name) => PROFIT_NAME.test(name));
+}
+
+// A number WhatsApp and SMS can reach, in international form without the
+// plus (8801711223344), or "" when there is none to use.
+export function reminderPhone(phone: string | null | undefined): string {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (/^8801\d{9}$/.test(digits)) return digits;
+  if (/^01\d{9}$/.test(digits)) return `88${digits}`;
+  if (/^1\d{9}$/.test(digits)) return `880${digits}`;
+  return digits.length >= 8 ? digits : "";
 }
 
 // The contact's balance once an entry of this kind is saved (pawna is

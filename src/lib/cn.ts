@@ -35,7 +35,7 @@ export const cn = createCn({
     classGroups: {
       "font-size": [{ text: TEXT_STYLES }],
       shadow: [{ shadow: ["card", "float", "overlay", "drawer", "button", "control"] }],
-      "bg-image": [{ bg: ["aurora", "aurora-panel","night", "forest-depth", "fresh", "mint-glow", "wallet-forest", "wallet-green", "wallet-teal", "wallet-charcoal", "wallet-mint", "savings-violet"] }],
+      "bg-image": [{ bg: ["aurora", "aurora-panel","night", "forest-depth", "fresh", "mint-glow", "wallet-forest", "wallet-green", "wallet-teal", "wallet-charcoal", "wallet-mint", "savings-violet", "savings-teal", "savings-blue", "savings-amber", "savings-rose"] }],
     },
   },
 });
