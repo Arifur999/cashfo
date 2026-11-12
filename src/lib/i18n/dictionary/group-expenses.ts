@@ -1403,4 +1403,11 @@ export const groupExpensesDictionary: Record<string, string> = {
   "No category has a limit yet. The total budget still works on its own.": "এখনো কোনো ক্যাটাগরির সীমা নেই। মোট বাজেট নিজের মতো কাজ করে।",
   "{count} category has a limit, {amount} in all.": "{count}টি ক্যাটাগরির সীমা আছে, মোট {amount}।",
   "{count} categories have a limit, {amount} in all.": "{count}টি ক্যাটাগরির সীমা আছে, মোট {amount}।",
+  "How": "কীভাবে",
+  "Settlement statement": "হিসাব মেটানোর স্টেটমেন্ট",
+  "Balance = carried from last month + paid − share of spending. Above 0, the group owes that member; below 0, they owe the group.": "ব্যালান্স = গত মাসের জের + দেওয়া টাকা − খরচের ভাগ। ০-এর বেশি হলে গ্রুপ তাকে দেবে; কম হলে তিনি গ্রুপকে দেবেন।",
+  "Money one member gives another to even out balances. It is not spending.": "ব্যালান্স মেটাতে একজন মেম্বার আরেকজনকে যে টাকা দেন। এটা খরচ নয়।",
+  "Settles the month": "যে মাসের হিসাব মেটায়",
+  "After this, for {month}": "এরপর, {month}-এর জন্য",
+  "Cash in hand stays {amount}.": "হাতে নগদ {amount}-ই থাকবে।",
 };

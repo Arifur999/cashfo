@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CircleHelp, Info, Lock, Plus, TriangleAlert, Undo2 } from "lucide-react";
+import { ArrowRight, CircleHelp, Info, Lock, Plus, Printer, TriangleAlert, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -24,11 +24,14 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
 import { FamilyCloseDialog } from "./FamilyCloseDialog";
-import { Figure, MemberAvatar, SETTLE_UP_ID } from "./GroupBits";
+import { Figure, groupLine, MemberAvatar, SETTLE_UP_ID } from "./GroupBits";
+import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 // Member, paid this month, share of spending, balance, status.
-const BALANCE_COLUMNS = "md:grid-cols-[minmax(0,1fr)_164px_150px_130px_104px]";
+// Member, from last month, paid, share, balance, status.
+const BALANCE_COLUMNS = "md:grid-cols-[minmax(0,1fr)_130px_164px_150px_130px_104px]";
+const PAY_WORDS = { CASH: "Cash", BKASH: "bKash", NAGAD: "Nagad", BANK: "Bank" } as const;
 
 interface FamilySettlementTabProps {
   data: GroupPageData;
@@ -101,7 +104,30 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
     const pair = data.contributions.filter((row) => row.settleGroupId === id);
     const out = pair.find((row) => Number(row.amount) > 0);
     const back = pair.find((row) => Number(row.amount) < 0);
-    return { id, date: (out ?? back)?.date.slice(0, 10) ?? "", from: out?.groupMember?.name ?? view.memberById[out?.groupMemberId ?? ""]?.name ?? "", to: back?.groupMember?.name ?? view.memberById[back?.groupMemberId ?? ""]?.name ?? "", note: out?.note ?? "", amount: Number(out?.amount ?? 0) };
+    return { id, date: (out ?? back)?.date.slice(0, 10) ?? "", from: out?.groupMember?.name ?? view.memberById[out?.groupMemberId ?? ""]?.name ?? "", to: back?.groupMember?.name ?? view.memberById[back?.groupMemberId ?? ""]?.name ?? "", note: out?.note ?? "", how: out?.payMethod ?? back?.payMethod ?? null, amount: Number(out?.amount ?? 0) };
+  });
+
+  // The month's settlement on paper: each member's balance, then the payments.
+  const [printing, setPrinting] = useState(false);
+  const statement = (): StatementSpec => ({
+    title: t("Settlement statement"),
+    sub: monthLong,
+    group: groupLine(t, data.name, data.settings.kind),
+    generated: t("Generated {date}", { date: formatDay(data.today, "d MMM yyyy", fmt) }),
+    meta: [
+      { label: t("Month"), value: monthLong },
+      { label: t("Spent"), value: money(spent) },
+      { label: t("Settled so far"), value: money(settledSoFar) },
+      { label: t("Still to settle"), value: money(stillToSettle) },
+    ],
+    blocks: payments.length
+      ? [{ title: t("Payments recorded for {month}", { month: monthLong }), items: payments.map((row) => ({ label: `${formatDay(row.date, "d MMM", fmt)} · ${shortName(row.from)} → ${shortName(row.to)}`, detail: row.how ? t(PAY_WORDS[row.how]) : undefined, value: money(row.amount) })) }]
+      : undefined,
+    columns: [{ label: t("Member") }, { label: t("From last month"), end: true }, { label: t("Paid this month"), end: true }, { label: t("Share of spending"), end: true }, { label: t("Balance"), end: true }],
+    rows: cards.map((card) => [card.name, signed(carriedOf(card.memberId)), money(card.gave - carriedOf(card.memberId)), money(card.share), signed(card.after)]),
+    tail: cards.length ? [t("Total"), signed(totals.carry), money(totals.gave), money(totals.share), signed(totals.balance)] : undefined,
+    empty: t("Add members to see their balances."),
+    footer: t("Balance = carried from last month + paid − share of spending. Above 0, the group owes that member; below 0, they owe the group."),
   });
 
   function undoPayment(id: string) {
@@ -169,7 +195,9 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
   const settledSoFar = settledRows.reduce((sum, row) => sum + Number(row.amount), 0);
   const openCards = cards.filter((card) => card.state.kind === "pays" || card.state.kind === "gets");
   const stillToSettle = openCards.reduce((sum, card) => sum + Math.abs(card.after), 0);
-  const totals = cards.reduce((sum, card) => ({ gave: sum.gave + card.gave, share: sum.share + card.share, balance: sum.balance + card.after }), { gave: 0, share: 0, balance: 0 });
+  // A balance carried in when last month closed: its own column, not money paid.
+  const carriedOf = (id: string) => data.contributions.filter((row) => row.kind === "CARRY" && row.groupMemberId === id).reduce((sum, row) => sum + Number(row.amount), 0);
+  const totals = cards.reduce((sum, card) => ({ carry: sum.carry + carriedOf(card.memberId), gave: sum.gave + card.gave - carriedOf(card.memberId), share: sum.share + card.share, balance: sum.balance + card.after }), { carry: 0, gave: 0, share: 0, balance: 0 });
   const signed = (value: number) => (Math.abs(value) < 0.005 ? formatCurrency(0, currency, fmt) : `${value < 0 ? "− " : "+ "}${money(value)}`);
   const expenseCount = data.expenses.length;
 
@@ -181,6 +209,10 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
           <p className="text-small text-ink-muted">{t("Who owes whom for the month, and the payments that even it out.")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+          <Button variant="secondary" onClick={() => setPrinting(true)}>
+            <Printer aria-hidden="true" />
+            {t("Print statement")}
+          </Button>
           <Button variant="secondary" onClick={onRecordPayment} disabled={closed}>
             <Plus aria-hidden="true" />
             {t("Record payment")}
@@ -234,6 +266,7 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
       >
         <ListHead columns={BALANCE_COLUMNS} className="h-8.5 gap-x-3.5 border-t md:px-5">
           <ListHeadCell>{t("Member")}</ListHeadCell>
+          <ListHeadCell align="end">{t("From last month")}</ListHeadCell>
           <ListHeadCell align="end">{t("Paid this month")}</ListHeadCell>
           <ListHeadCell align="end">{t("Share of spending")}</ListHeadCell>
           <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
@@ -253,10 +286,13 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
                   <span className="truncate text-caption text-ink-muted">{t(units === 1 ? "{count} share" : "{count} shares", { count: formatCount(units, fmt) })}</span>
                 </span>
               </ListCell>
+              <ListCell align="end" className={cn("hidden md:block", carriedOf(card.memberId) < -0.004 ? "text-expense" : carriedOf(card.memberId) > 0.004 ? "text-tint-green-ink" : "text-ink-faint")}>
+                {signed(carriedOf(card.memberId))}
+              </ListCell>
               <ListCell align="end" className="hidden md:block">
                 <span className="flex flex-col items-end gap-px">
-                  <span className="font-semibold text-ink">{money(card.gave)}</span>
-                  <span className="text-[11.5px] text-ink-muted">{card.gave > 0 ? t("gave {amount}", { amount: money(card.gave) }) : t("nothing yet")}</span>
+                  <span className="font-semibold text-ink">{money(card.gave - carriedOf(card.memberId))}</span>
+                  <span className="text-[11.5px] text-ink-muted">{card.gave - carriedOf(card.memberId) > 0 ? t("gave {amount}", { amount: money(card.gave - carriedOf(card.memberId)) }) : t("nothing yet")}</span>
                 </span>
               </ListCell>
               <ListCell align="end" className="hidden md:block">
@@ -279,6 +315,9 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
         {cards.length > 0 && (
           <ListTotalRow columns={BALANCE_COLUMNS} className="min-h-11 gap-x-3.5 tabular-nums md:px-5">
             <span role="cell">{t("Total")}</span>
+            <span role="cell" className="hidden text-right md:block">
+              {signed(totals.carry)}
+            </span>
             <span role="cell" className="hidden text-right md:block">
               {money(totals.gave)}
             </span>
@@ -372,20 +411,22 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
           </h3>
           <p className="text-caption text-ink-muted">{t("Settlement money between members. It changes balances, not spending.")}</p>
         </div>
-        <div role="row" className="hidden grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_130px_84px] gap-x-3 border-y border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid">
+        <div role="row" className="hidden grid-cols-[96px_minmax(0,1fr)_110px_minmax(0,1fr)_130px_84px] gap-x-3 border-y border-line bg-table-head px-5 py-2.25 text-caption font-semibold text-ink-muted md:grid">
           <span>{t("Date")}</span>
           <span>{t("From → to")}</span>
+          <span>{t("How")}</span>
           <span>{t("Note")}</span>
           <span className="text-right">{t("Amount")}</span>
           <span className="text-right">{t("Actions")}</span>
         </div>
         {payments.length === 0 && <p className="px-5 py-6 text-center text-body text-ink-muted">{t("No payments recorded for {month} yet.", { month: monthLong })}</p>}
         {payments.map((row) => (
-          <div key={row.id} role="row" className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-b border-divider px-5 py-2.5 text-body tabular-nums last:border-b-0 md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_130px_84px]">
+          <div key={row.id} role="row" className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-b border-divider px-5 py-2.5 text-body tabular-nums last:border-b-0 md:grid-cols-[96px_minmax(0,1fr)_110px_minmax(0,1fr)_130px_84px]">
             <span className="text-ink-soft max-md:hidden">{formatDay(row.date, "d MMM", fmt)}</span>
             <span className="truncate font-medium text-ink">
               {shortName(row.from)} → {shortName(row.to)}
             </span>
+            <span className={cn("truncate max-md:hidden", row.how ? "text-ink-2" : "text-ink-faint")}>{row.how ? t(PAY_WORDS[row.how]) : "–"}</span>
             <span className="truncate text-ink-2 max-md:hidden">{row.note || "—"}</span>
             <span className="text-right font-semibold text-ink">{money(row.amount)}</span>
             <span className="flex justify-end max-md:col-span-2">
@@ -459,6 +500,7 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
         })}
       </section>
 
+      <GroupStatement open={printing} onClose={() => setPrinting(false)} spec={printing ? statement() : null} />
       <FamilyCloseDialog open={closeOpen} onClose={() => setCloseOpen(false)} businessId={data.businessId} currency={currency} range={range} members={data.members} settlement={settlement} cards={cards} holderId={holderId} budgets={data.budgets} />
     </div>
   );

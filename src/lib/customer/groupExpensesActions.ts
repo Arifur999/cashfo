@@ -15,6 +15,7 @@ import {
   type GroupMember,
   type GroupMemberStatus,
   type GroupMonthlyBudget,
+  type GroupPayMethod,
   type GroupPaidFrom,
   type GroupSettings,
   type GroupSettlementRecord,
@@ -143,7 +144,7 @@ export async function deleteGroupContributionAction(businessId: string, id: stri
 // the reader's words. Answers both rows, the payer's first.
 export async function settleUpAction(
   businessId: string,
-  input: { fromMemberId: string; toMemberId: string; amount: string; date: string; payerNote?: string; receiverNote?: string },
+  input: { fromMemberId: string; toMemberId: string; amount: string; date: string; method?: GroupPayMethod; payerNote?: string; receiverNote?: string },
 ): Promise<ActionResult<GroupContribution[]>> {
   return callApi(async () => {
     const res = await customerApi.post<GroupContribution[]>(`${API_BASE_URL}/api/businesses/${businessId}/group/settle-up`, input, {
