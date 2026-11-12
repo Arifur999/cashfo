@@ -29,11 +29,11 @@ export function ThemeToggle({ className }: { className?: string }) {
   // until `mounted` flips -- the label too, since it's derived from the
   // real (client-only) theme.
   const isDark = mounted && theme === "dark";
-  const label = isDark ? t("Switch to light theme") : t("Switch to dark theme");
+  const label = isDark ? t("Switch to light mode") : t("Switch to dark mode");
   const icon = mounted ? isDark ? <Sun className="size-4.5" strokeWidth={2} /> : <Moon className="size-4.5" strokeWidth={2} /> : <span className="block size-4.5" />;
 
   return (
-    <button type="button" onClick={toggleTheme} aria-label={label} title={label} className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink", className)}>
+    <button type="button" onClick={toggleTheme} aria-pressed={isDark} aria-label={label} title={label} className={cn("flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink", className)}>
       {icon}
     </button>
   );
