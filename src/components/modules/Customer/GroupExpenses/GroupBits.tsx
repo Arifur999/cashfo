@@ -87,6 +87,12 @@ export function CategoryTile({ name, categories, size = 26 }: { name: string; ca
   );
 }
 
+// A category's own icon, bare (inside a chip).
+export function CategoryIcon({ name, categories }: { name: string; categories: GroupExpenseCategoryOption[] }) {
+  const option = categories.find((c) => c.name === name);
+  return option?.icon ? createElement(budgetCategoryIcon(option.icon), { "aria-hidden": true, strokeWidth: 2 }) : null;
+}
+
 // A category's name chip, in its colours (the v16 expense rows).
 export function categoryChipClass(name: string, categories: GroupExpenseCategoryOption[]): string {
   const tone = categoryTone(categories.find((c) => c.name === name)?.color);

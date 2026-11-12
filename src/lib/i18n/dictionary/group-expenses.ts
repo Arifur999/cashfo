@@ -1355,4 +1355,6 @@ export const groupExpensesDictionary: Record<string, string> = {
   "The Admin or an Editor who now keeps this cash.": "অ্যাডমিন বা এডিটর, যার কাছে এখন এই টাকা আছে।",
   "{name} will have given {amount} in {month}, and {holder} keeps the cash.": "{month}-এ {name} মোট {amount} দেবেন, আর টাকা থাকবে {holder}-এর কাছে।",
   "{name} will have given {amount} in {month}.": "{month}-এ {name} মোট {amount} দেবেন।",
+  "Showing {from} to {to} of {count} · click a row for details": "{count}টির মধ্যে {from} থেকে {to} · বিস্তারিত দেখতে সারিতে চাপুন",
+  "Money spent for the group": "গ্রুপের জন্য খরচ করা টাকা",
 };

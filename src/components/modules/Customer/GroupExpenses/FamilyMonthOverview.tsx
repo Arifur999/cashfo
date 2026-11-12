@@ -371,7 +371,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                 return (
                   <Link
                     key={row.name}
-                    href={groupTabHref(data.businessId, "expenses", { category: row.name, ...(current ? {} : { period: "custom", from: data.range.key }) })}
+                    href={groupTabHref(data.businessId, "expenses", { category: row.name, month: data.range.key })}
                     aria-label={t("{name}: {amount}, {percent}% of {month}", { name: row.name, amount: money(row.amount), percent: formatCount(Math.round(percent), fmt), month })}
                     className="-mx-1.5 grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-x-3 rounded-xl px-1.5 py-2 hover:bg-surface-sunken/60"
                   >
@@ -401,7 +401,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                   </p>
                 </div>
                 <Button asChild variant="soft" size="sm" className="text-[13px]">
-                  <Link href={groupTabHref(data.businessId, "expenses", current ? {} : { period: "custom", from: data.range.key })}>
+                  <Link href={groupTabHref(data.businessId, "expenses", { month: data.range.key })}>
                     {t("See all")}
                     <ChevronRight aria-hidden="true" />
                   </Link>

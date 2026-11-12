@@ -284,7 +284,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
         canAdd={canAdd}
       />
     ),
-    expenses: <GroupExpensesTab data={data} view={view} onPeriod={onPeriod} onAdd={openExpense} onEdit={(row) => guardEdit(row.date, () => setExpense({ open: true, editing: row }))} onRemove={removeExpense} busy={moving} canAdd={canAdd} />,
+    expenses: <GroupExpensesTab data={data} view={view} onAdd={openExpense} onEdit={(row) => guardEdit(row.date, () => setExpense({ open: true, editing: row }))} onRemove={removeExpense} canAdd={canAdd} />,
     cashbook: <GroupCashbookTab data={data} view={view} onPeriod={onPeriod} onAccountant={(id) => go("cashbook", { ...currentPeriod(), ...(id && { accountant: id }) })} busy={moving} canAdd={canAdd} />,
     settlement: messLayout ? (
       <MessSettlementTab data={data} view={view} onRecordPayment={openPayment} onCloseMonth={() => setCloseOpen(true)} />
@@ -303,7 +303,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     <PageFrame className="gap-5">
       <GroupHeader businessId={data.businessId} name={data.name} settings={data.settings} tab={data.tab} memberCount={view.activeMembers.length} role={data.role} groups={data.groups}
         period={
-          (data.tab === "dashboard" && !view.setup) || data.tab === "contributions" ? (
+          (data.tab === "dashboard" && !view.setup) || data.tab === "contributions" || data.tab === "expenses" ? (
             <GroupMonthPicker name={data.name} currency={data.currency} value={data.range.key} current={currentKey} months={data.months} startDay={data.startDay} history={data.history} spent={data.monthTotals} onPick={(key) => go(data.tab, { month: key })} busy={moving} />
           ) : undefined
         }

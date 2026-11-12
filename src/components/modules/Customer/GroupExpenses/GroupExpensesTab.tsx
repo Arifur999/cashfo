@@ -12,46 +12,42 @@ import type { GroupExpense } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { countLabel, dayLabel, isDayClosed, shortName, splitText } from "@/lib/customer/groupDisplay";
 import { accountantsOf } from "@/lib/customer/groupFamily";
-import { type GroupPeriod, periodLabel } from "@/lib/customer/groupPeriod";
+import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { CategoryTile, categoryChipClass, Figure, groupLine } from "./GroupBits";
-import { GroupPeriodPicker } from "./GroupPeriodPicker";
+import { CategoryIcon, CategoryTile, categoryChipClass, Figure, groupLine } from "./GroupBits";
 import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 interface GroupExpensesTabProps {
   data: GroupPageData;
   view: GroupView;
-  onPeriod: (period: GroupPeriod) => void;
   onAdd: () => void;
   onEdit: (row: GroupExpense) => void;
   onRemove: (row: GroupExpense) => void;
-  busy: boolean;
   // A paused group takes no new entries.
   canAdd: boolean;
 }
 
-const PERIODS = ["today", "week", "month", "year", "custom"] as const;
 // Date, what for, category, paid by, how shared, amount, edit and delete.
 const COLUMNS = "md:grid-cols-[60px_minmax(0,1fr)_132px_minmax(0,190px)_minmax(0,130px)_104px_76px]";
 
 type Sort = "new" | "old" | "high" | "low";
 const PAGE = 25;
 
-const SPLIT_WORDS = { EQUAL: "Equally", SHARES: "By cost split", MEALS: "By meals", EXACT: "Exact amounts" } as const;
+const SPLIT_WORDS = { EQUAL: "Equally", SHARES: "By shares", MEALS: "By meals", EXACT: "Exact amounts" } as const;
 
 // Money out (the v7 FamilyExpenses board): every cost in the period with
 // who paid it -- an accountant from the cash they hold, or someone from
 // their own pocket -- found by a search or a category, with a printable
 // statement.
-export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove, busy, canAdd }: GroupExpensesTabProps) {
+export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }: GroupExpensesTabProps) {
   const { t, fmt } = useLocale();
-  const { currency, startDay } = data;
-  const period = data.period ?? { kind: "month" };
-  const expenses = data.periodExpenses ?? data.expenses;
+  const { currency } = data;
+  // The month picked in the header.
+  const expenses = data.expenses;
   const [query, setQuery] = useState("");
   // A category the dashboard opened this page with (?category=).
   const searchParams = useSearchParams();
@@ -60,7 +56,7 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
   const [sort, setSort] = useState<Sort>("new");
   const [limit, setLimit] = useState(PAGE);
   const [printing, setPrinting] = useState(false);
-  const label = periodLabel(period, data.today, startDay, t, fmt);
+  const label = monthName(data.range.key, fmt, "long", true);
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const words = query.trim().toLowerCase();
   const rows = [...expenses]
@@ -75,7 +71,7 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
   const spent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const fromPocket = expenses.filter((e) => e.paidFrom === "MEMBER").reduce((sum, e) => sum + Number(e.amount), 0);
   const fromCash = spent - fromPocket;
-  const budget = period.kind === "month" ? view.budget : null;
+  const budget = view.budget;
   // The chosen one too, so the select still names it in a period without it.
   const categoryNames = [...new Set([...data.categories.filter((c) => !c.hidden).map((c) => c.name), ...expenses.map((e) => e.category), ...(category ? [category] : [])])];
   const accountants = accountantsOf(data.members);
@@ -133,7 +129,6 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <h2 className="text-[19px] font-semibold text-ink">{t("Expenses · {period}", { period: label })}</h2>
         <div className="flex flex-wrap items-center gap-2.5">
-          <GroupPeriodPicker value={period} options={PERIODS} today={data.today} startDay={startDay} onChange={onPeriod} busy={busy} />
           <Button variant="secondary" onClick={() => setPrinting(true)}>
             <Printer aria-hidden="true" />
             {t("Print")}
@@ -155,7 +150,7 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
           label={t("Budget left")}
           value={budget ? (budget.left >= 0 ? money(budget.left) : `− ${money(-budget.left)}`) : "—"}
           tone={budget ? (budget.left < 0 ? "text-expense" : "text-income") : "text-ink-muted"}
-          sub={budget ? t("{percent}% of {amount} used", { percent: formatCount(budget.percent, fmt), amount: money(budget.budget) }) : period.kind === "month" ? t("No budget set for this month") : t("Budgets are by month")}
+          sub={budget ? t("{percent}% of {amount} used", { percent: formatCount(budget.percent, fmt), amount: money(budget.budget) }) : t("No budget set for this month")}
           divided={false}
         />
       </Card>
@@ -203,12 +198,14 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
           </div>
         }
         footer={
-          rows.length > shown.length || limit > PAGE ? (
-            <ListFooter className="flex-row items-center gap-3 bg-strip md:px-5">
-              <Button variant="secondary" size="sm" onClick={() => setLimit(rows.length > shown.length ? limit + PAGE : PAGE)} className="h-8.5 pointer-coarse:h-11">
+          rows.length > 0 ? (
+            <ListFooter className="flex-row items-center gap-3 bg-hover text-[13px] md:px-5">
+              <span className="text-ink-muted">{t("Showing {from} to {to} of {count} · click a row for details", { from: formatCount(1, fmt), to: formatCount(shown.length, fmt), count: formatCount(rows.length, fmt) })}</span>
+              {(rows.length > shown.length || limit > PAGE) && (
+              <Button variant="secondary" size="sm" onClick={() => setLimit(rows.length > shown.length ? limit + PAGE : PAGE)} className="ml-auto h-8.5 pointer-coarse:h-11">
                 {rows.length > shown.length ? countLabel(t, fmt, Math.min(PAGE, rows.length - shown.length), "Show {count} older entry", "Show {count} older entries") : t("Show fewer")}
               </Button>
-              <span className="ml-auto text-ink-soft">{t("{shown} of {count}", { shown: formatCount(shown.length, fmt), count: formatCount(rows.length, fmt) })}</span>
+              )}
             </ListFooter>
           ) : null
         }
@@ -256,7 +253,10 @@ export function GroupExpensesTab({ data, view, onPeriod, onAdd, onEdit, onRemove
                 </span>
               </ListCell>
               <ListCell className="hidden md:block">
-                <span className={cn("inline-flex h-6 max-w-full items-center gap-1 truncate rounded-full px-2 text-caption font-semibold", categoryChipClass(row.category, data.categories))}>{row.category}</span>
+                <span className={cn("inline-flex h-6 max-w-full items-center gap-1 truncate rounded-full px-2 text-caption font-semibold [&_svg]:size-3 [&_svg]:shrink-0", categoryChipClass(row.category, data.categories))}>
+                  <CategoryIcon name={row.category} categories={data.categories} />
+                  {row.category}
+                </span>
               </ListCell>
               <ListCell className="hidden min-w-0 items-center gap-1.5 text-small md:flex">
                 <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", pocket ? "bg-warning-fill" : "bg-emerald")} />
