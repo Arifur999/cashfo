@@ -18,8 +18,9 @@ export default async function CategorySetPage({ searchParams }: PageProps<"/cate
   if (!activeBusinessId) redirect("/dashboard");
 
   const categories = await getCategorySet(activeBusinessId);
-  const role = user.businesses.find((b) => b.id === activeBusinessId)?.role;
+  const active = user.businesses.find((b) => b.id === activeBusinessId);
+  const role = active?.role;
   const openNew = params.new === "INCOME" || params.new === "EXPENSE" ? params.new : null;
 
-  return <CategorySetPageClient businessId={activeBusinessId} categories={categories} canManage={role === "OWNER" || role === "ACCOUNTANT"} openNew={openNew} />;
+  return <CategorySetPageClient businessId={activeBusinessId} categories={categories} canManage={role === "OWNER" || role === "ACCOUNTANT"} currency={active?.currency ?? "BDT"} openNew={openNew} />;
 }
