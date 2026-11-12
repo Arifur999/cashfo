@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronUp, Pencil, Phone, Plus, Printer, UserPlus } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bell, ChevronDown, ChevronUp, Pencil, Phone, Plus, Printer, UserPlus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { LIST_INSET, ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHe
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import Pagination from "@/components/smartly/Pagination";
+import { PrintPreview } from "@/components/modules/Customer/Balance/PrintPreview";
 import { usePageParam } from "@/hooks/usePageParam";
 import type { Contact, LoanActivityKind, LoanDashboardRow, LoanStatement } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
@@ -31,6 +32,8 @@ import { cn } from "@/lib/utils";
 import { ContactPicker } from "./ContactPicker";
 import { LoanContactDrawer } from "./LoanContactDrawer";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
+import { LoanReminderDialog } from "./LoanReminderDialog";
+import { LoanStatementPrint, type PrintRow } from "./LoanStatementPrint";
 import { usePrinting } from "./usePrinting";
 
 interface LoanLedgerPageClientProps {
@@ -95,6 +98,9 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   const [editing, setEditing] = useState<LoanEdit | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
   const [contactForm, setContactForm] = useState<"closed" | "create" | "edit">("closed");
+  const [reminding, setReminding] = useState(false);
+  // The board's print preview, open over the page.
+  const [previewing, setPreviewing] = useState(false);
   // Admin > System > Feature Flags: pdf_export off hides Print / PDF.
   const pdfExportOn = useFeature("pdf_export");
   const thisYear: PickedPeriod = { kind: "year", year: Number(today.slice(0, 4)) };
@@ -187,16 +193,21 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
       .finally(() => setOpening(null));
   }
 
-  function renderRow(row: StatementRow) {
+  // What an entry was, its note and its charge, for the screen and paper.
+  function describe(row: StatementRow) {
     const isProfit = row.category === "Profit";
-    const cancelled = isCancelledRow(row);
-    const label = cancelledLabel({ status: row.status, reversalOfId: row.reversalOfId ?? null }) ?? (cancelled ? "Voided" : null);
     const kind: LoanActivityKind = row.kind ?? (isProfit ? (Number(row.profitPaid ?? 0) > 0 ? "PROFIT_PAID" : "PROFIT_RECEIVED") : row.debit ? "GAVE" : "TOOK");
-    const out = OUT.includes(kind);
     // A reversal is named for what it undid.
     const what = row.reversalOfId ? reversalTitle(row.description) || t(WHAT[kind]) : t(WHAT[kind]);
     const note = [row.reversalOfId ? null : row.description, row.referenceNo].filter(Boolean).join(" · ");
-    const charge = Number(row.charge ?? 0);
+    return { isProfit, kind, what, note, charge: Number(row.charge ?? 0) };
+  }
+
+  function renderRow(row: StatementRow) {
+    const { isProfit, kind, what, note, charge } = describe(row);
+    const cancelled = isCancelledRow(row);
+    const label = cancelledLabel({ status: row.status, reversalOfId: row.reversalOfId ?? null }) ?? (cancelled ? "Voided" : null);
+    const out = OUT.includes(kind);
     const movement = isProfit ? profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0)) : row.credit ? `+ ${formatCurrency(row.credit, currency, fmt)}` : row.debit ? `− ${formatCurrency(row.debit, currency, fmt)}` : "–";
     return (
       <ListRow key={row.transactionId} id={rowId(row)} columns={GRID} muted={cancelled} className="xl:min-h-13.5 print:break-inside-avoid">
@@ -299,8 +310,57 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   const entries = activity?.entries;
   const since = activity?.firstEntryDate ?? contact?.createdAt ?? null;
 
+  // The page on paper: every entry in the period, none folded.
+  const sideTag = (value: number) => t(DIRECTION_META[loanDirection(value)].name);
+  const printFigure = (value: number) => (value ? formatCurrency(value, currency, fmt) : "–");
+  const printRows: PrintRow[] = rows.map((row) => {
+    const { isProfit, what, note, charge } = describe(row);
+    const after = Number(row.runningPrincipal);
+    return {
+      key: row.transactionId,
+      date: day(row.date),
+      what: row.reversalOfId || isCancelledRow(row) ? `${what} (${t("Voided")})` : what,
+      note: [note, charge > 0 ? t("Charge {amount}", { amount: formatCurrency(charge, currency, fmt) }) : null].filter(Boolean).join(" · ") || "–",
+      in: isProfit ? "–" : printFigure(Number(row.credit ?? 0)),
+      out: isProfit ? "–" : printFigure(Number(row.debit ?? 0)),
+      profit: Number(row.profitPaid ?? 0) ? `− ${formatCurrency(Number(row.profitPaid), currency, fmt)}` : Number(row.profitReceived ?? 0) ? `+ ${formatCurrency(Number(row.profitReceived), currency, fmt)}` : "–",
+      balance: `${formatCurrency(Math.abs(after), currency, fmt)} ${sideTag(after)}`,
+    };
+  });
+  const profitTotal = profit.paid && profit.received ? `− ${formatCurrency(profit.paid, currency, fmt)} / + ${formatCurrency(profit.received, currency, fmt)}` : profit.received ? `+ ${formatCurrency(profit.received, currency, fmt)}` : profit.paid ? `− ${formatCurrency(profit.paid, currency, fmt)}` : formatCurrency(0, currency, fmt);
+  const balanceText = (value: number) => `${formatCurrency(Math.abs(value), currency, fmt)} ${sideTag(value)}`;
+  const preview = previewing && ready && contact && (
+    <PrintPreview look="bar" subtitle={t("For a PDF, choose “Save as PDF” in the print window.")} onClose={() => setPreviewing(false)}>
+      <LoanStatementPrint
+        name={contact.name}
+        meta={[
+          { label: t("Bank / person"), value: contact.name },
+          { label: t("Kind"), value: t(LOAN_KIND_LABELS[contact.type]) },
+          { label: t("Phone"), value: contact.phone || "–" },
+          { label: t("Period"), value: periodFrom ? `${day(periodFrom)} – ${day(periodTo)}` : t("All time") },
+        ]}
+        figures={[
+          { label: t("Opening balance"), value: balanceText(openingBalance) },
+          { label: t("Principal out"), value: formatCurrency(paid, currency, fmt) },
+          { label: t("Principal in"), value: formatCurrency(received, currency, fmt) },
+          { label: t("Profit"), value: profitTotal },
+          { label: t("Closing balance"), value: balanceText(closing), tone: closeSide === "SETTLED" ? undefined : DIRECTION_META[closeSide].text },
+        ]}
+        openingLine={`${t("Opening balance")}${openedOn ? ` · ${day(openedOn)}` : ""}`}
+        opening={balanceText(openingBalance)}
+        closingLine={`${t("Closing balance")} · ${day(periodTo)}`}
+        closing={{ in: formatCurrency(received, currency, fmt), out: formatCurrency(paid, currency, fmt), profit: profitTotal, balance: balanceText(closing) }}
+        rows={printRows}
+        madeOn={t("Made on {date}", { date: day(today) })}
+      />
+    </PrintPreview>
+  );
+
   return (
     <PageFrame className="gap-4.5">
+      {preview}
+      {/* While the preview is open, only its page prints. */}
+      <div className={cn("contents", previewing && "print:hidden")}>
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
@@ -311,7 +371,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
         actions={
           pdfExportOn &&
           ready && (
-            <Button variant="secondary" onClick={() => window.print()} className="print:hidden">
+            <Button variant="secondary" onClick={() => setPreviewing(true)} aria-haspopup="dialog" className="print:hidden">
               <Printer className="text-ink-2" />
               {t("Print / PDF")}
             </Button>
@@ -401,15 +461,24 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               </span>
               <span className={cn("text-[12px]", nowSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[nowSide].text)}>{t(DIRECTION_META[nowSide].label)}</span>
             </div>
-            {canManage && (
-              <div className="flex shrink-0 items-center gap-2 print:hidden">
-                <Button variant="secondary" onClick={() => setContactForm("edit")}>
-                  <Pencil className="text-ink-2" />
-                  {t("Edit contact")}
-                </Button>
-                {contact.status === "ACTIVE" && (
-                  <Button onClick={() => setEntryOpen(true)}>
-                    <Plus strokeWidth={2.5} className="size-4" />
+            {(canManage || balanceNow > 0) && (
+              <div className="flex shrink-0 flex-wrap items-center gap-2 print:hidden">
+                {/* Only while they owe you: a message to send them. */}
+                {balanceNow > 0 && (
+                  <Button variant="secondary" onClick={() => setReminding(true)} aria-haspopup="dialog" className="gap-1.75 px-3.5 text-[13.5px]">
+                    <Bell className="size-3.75 text-ink-soft" />
+                    {t("Remind")}
+                  </Button>
+                )}
+                {canManage && (
+                  <Button variant="secondary" onClick={() => setContactForm("edit")} className="gap-1.75 px-3.5 text-[13.5px]">
+                    <Pencil className="size-3.75 text-ink-soft" />
+                    {t("Edit contact")}
+                  </Button>
+                )}
+                {canManage && contact.status === "ACTIVE" && (
+                  <Button onClick={() => setEntryOpen(true)} className="gap-1.5 px-4 text-[13.5px]">
+                    <Plus strokeWidth={2.5} className="size-3.75" />
                     {t("New entry")}
                   </Button>
                 )}
@@ -535,7 +604,23 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
         initialContactId={selectedContactId || undefined}
         editing={editing}
       />
+      {contact && balanceNow > 0 && (
+        <LoanReminderDialog
+          open={reminding}
+          onClose={() => setReminding(false)}
+          name={contact.name}
+          phone={contact.phone}
+          owed={balanceNow}
+          currency={currency}
+          today={today}
+          onAddPhone={() => {
+            setReminding(false);
+            setContactForm("edit");
+          }}
+        />
+      )}
       <LoanContactDrawer open={contactForm !== "closed"} onClose={() => setContactForm("closed")} businessId={businessId} editing={contactForm === "edit" ? (contact ?? null) : null} currency={currency} canTrade={canTrade} />
+      </div>
     </PageFrame>
   );
 }

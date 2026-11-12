@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
 import { PeriodPicker, periodLabel as periodName } from "@/components/modules/Customer/Shared/PeriodPicker";
+import { PrintPreview } from "@/components/modules/Customer/Balance/PrintPreview";
 import { PersonAvatar } from "@/components/modules/Customer/Shared/PersonAvatar";
 import { VoidTransactionDialog } from "@/components/modules/Customer/Transactions/VoidTransactionDialog";
 import Loader from "@/components/shared/Loader";
@@ -32,6 +33,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
 import { cn } from "@/lib/utils";
 import { LoanEntryDrawer } from "./LoanEntryDrawer";
+import { LoanTransactionsPrint } from "./LoanTransactionsPrint";
 import { usePrinting } from "./usePrinting";
 
 interface LoanTransactionsPageClientProps {
@@ -87,6 +89,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   // Admin > System > Feature Flags: pdf_export off hides Print.
   const pdfExportOn = useFeature("pdf_export");
   const printing = usePrinting();
+  // The board's print preview, open over the page.
+  const [previewing, setPreviewing] = useState(false);
   const { page, setPage } = usePageParam();
   const [isPending, startTransition] = useTransition();
   // The filters as just picked, while the page loads them.
@@ -210,8 +214,37 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     );
   };
 
+  // The list on paper, every page of it, as the board's print preview shows it.
+  const preview = previewing && (
+    <PrintPreview look="bar" printLabel="Print or save PDF" subtitle={t("Pick “Save as PDF” in the print window to get a PDF.")} onClose={() => setPreviewing(false)}>
+      <LoanTransactionsPrint
+        sub={[periodLabel, selectedContactId ? contactsById.get(selectedContactId)?.name : null, show === "all" ? null : t(SHOW_LABELS[show]), t(filteredRows.length === 1 ? "{count} entry" : "{count} entries", { count: formatCount(filteredRows.length, fmt) })].filter(Boolean).join(" · ")}
+        madeOn={t("Made on {date}", { date: formatDate(today, "d MMM yyyy", fmt) })}
+        moneyIn={`+ ${formatCurrency(moneyIn, currency, fmt)}`}
+        moneyOut={`− ${formatCurrency(moneyOut, currency, fmt)}`}
+        rows={filteredRows.map(({ transaction, title, signedAmount, cancelled, name, note }) => {
+          const balance = transaction.loanBalanceAfter;
+          const after = balance === null || balance === undefined ? null : Number(balance);
+          return {
+            key: transaction.id,
+            date: formatDate(transaction.transactionDate, "d MMM yyyy", fmt),
+            name,
+            what: `${title ? t(title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}${cancelled ? ` (${t(cancelled)})` : ""}`,
+            note: note ?? "",
+            amount: `${signedAmount > 0 ? "+" : "−"} ${formatCurrency(Math.abs(signedAmount), currency, fmt)}`,
+            received: signedAmount > 0,
+            balance: after === null ? "–" : `${formatCurrency(Math.abs(after), currency, fmt)} ${t(DIRECTION_META[loanDirection(after)].name)}`,
+          };
+        })}
+      />
+    </PrintPreview>
+  );
+
   return (
     <PageFrame className="gap-5">
+      {preview}
+      {/* While the preview is open, only its page prints. */}
+      <div className={cn("contents", previewing && "print:hidden")}>
       {/* The board's title line, New loan entry at its end. */}
       <div className="flex items-center justify-between gap-3 md:-mt-4">
         <h1 className="text-[22px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Loan transaction")}</h1>
@@ -287,8 +320,8 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
               />
               <PeriodPicker period={period} today={today} activeMonths={null} allowAll defaultPeriod={thisYear} onPick={pickPeriod} busy={isPending} />
               {pdfExportOn && transactions.length > 0 && (
-                <Button variant="secondary" size="sm" onClick={() => window.print()} title={t("Print this list")} className="max-md:hidden">
-                  <Printer className="text-ink-2" />
+                <Button variant="secondary" size="sm" onClick={() => setPreviewing(true)} aria-haspopup="dialog" title={t("Print this list")} className="h-9.5 gap-2 rounded-[10px] px-3.5 text-[13px] max-md:hidden">
+                  <Printer className="size-3.75 text-ink-soft" />
                   {t("Print")}
                 </Button>
               )}
@@ -479,6 +512,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           }
         />
       )}
+      </div>
     </PageFrame>
   );
 }

@@ -242,6 +242,16 @@ export function hasProfitCategory(names: string[]): boolean {
   return names.some((name) => PROFIT_NAME.test(name));
 }
 
+// A number WhatsApp and SMS can reach, in international form without the
+// plus (8801711223344), or "" when there is none to use.
+export function reminderPhone(phone: string | null | undefined): string {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (/^8801\d{9}$/.test(digits)) return digits;
+  if (/^01\d{9}$/.test(digits)) return `88${digits}`;
+  if (/^1\d{9}$/.test(digits)) return `880${digits}`;
+  return digits.length >= 8 ? digits : "";
+}
+
 // The contact's balance once an entry of this kind is saved (pawna is
 // positive): giving or being paid back raises it, taking or paying lowers it.
 export function balanceAfterEntry(balance: number | string, kind: LoanEntryKind, amount: number): number {
