@@ -8,6 +8,10 @@ import { toEnglishDigits } from "./money";
 import { cancelledLabel } from "./transactionDisplay";
 import { WALLET_TYPES } from "./walletVisuals";
 
+// The bank or person the statement showed last this session (a cookie
+// with no expiry), so the Ledger link opens them again.
+export const LEDGER_CONTACT_COOKIE = "loanLedgerContact";
+
 // What a loan contact is called. They are created as BOTH (they can lend
 // and borrow), which reads as a plain person; the others say themselves.
 export const LOAN_KIND_LABELS: Record<ContactType, string> = {
