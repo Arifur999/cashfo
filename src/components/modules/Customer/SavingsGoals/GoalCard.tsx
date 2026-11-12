@@ -172,15 +172,15 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
           )}
         >
           {stats.map((stat, index) => (
-            <div key={index} className={cn("flex min-w-0 flex-col gap-1 px-3.5 py-3", index > 0 && (view.behind ? "border-l border-warning-line" : "border-l border-head-rule"))}>
-              <span className="truncate text-[11px] font-bold tracking-[0.06em] text-ink-faint uppercase">{stat.key}</span>
+            <div key={index} className={cn("flex min-w-0 flex-col gap-1 px-3.5 py-3 max-sm:px-2.5", index > 0 && (view.behind ? "border-l border-warning-line" : "border-l border-head-rule"))}>
+              <span className="truncate text-[11px] font-bold tracking-[0.06em] text-ink-faint uppercase max-sm:whitespace-normal max-sm:text-[10.5px]">{stat.key}</span>
               <span className="flex min-w-0 items-center gap-1.5">
                 {stat.icon && (
                   <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full", stat.iconTone, stat.tone)}>
                     <stat.icon className="size-2.75" strokeWidth={3} />
                   </span>
                 )}
-                <span className={cn("truncate text-[14px] font-bold tabular-nums", stat.tone)}>{stat.value}</span>
+                <span className={cn("truncate text-[14px] font-bold tabular-nums max-sm:text-[13px] max-sm:whitespace-normal", stat.tone)}>{stat.value}</span>
               </span>
               {stat.bar && (
                 <span title={stat.bar.title} className="mt-0.5 block h-1 overflow-hidden rounded-full bg-line-card">
@@ -191,7 +191,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
           ))}
         </div>
 
-        <div className="mt-auto flex items-center gap-2">
+        <div className="mt-auto flex flex-wrap items-center gap-2">
           {canManage && view.behind && (
             <button
               type="button"
