@@ -107,10 +107,12 @@ interface SegmentedControlProps<T extends string> {
   // pass a value no option has while it is the one in force.
   trailing?: React.ReactNode;
   className?: string;
+  // Every segment's own extra classes (the Loans pages' 6px gap and 12px sides).
+  itemClassName?: string;
 }
 
 // A row of exclusive choices; one is always on.
-const SegmentedControl = <T extends string>({ options, value, onChange, label, variant = "tabs", size = "md", stretch = false, disabled = false, trailing, className }: SegmentedControlProps<T>) => {
+const SegmentedControl = <T extends string>({ options, value, onChange, label, variant = "tabs", size = "md", stretch = false, disabled = false, trailing, className, itemClassName }: SegmentedControlProps<T>) => {
   const { translate } = useLocale();
   const styles = VARIANTS[variant];
   return (
@@ -125,7 +127,7 @@ const SegmentedControl = <T extends string>({ options, value, onChange, label, v
             lang={option.lang}
             disabled={disabled}
             onClick={() => onChange(option.value)}
-            className={cn(segmentClassName({ variant, size, on, stretch }), disabled && "pointer-events-none")}
+            className={cn(segmentClassName({ variant, size, on, stretch }), itemClassName, disabled && "pointer-events-none")}
           >
             {option.dot && <span aria-hidden="true" className="size-2 rounded-full" style={{ background: option.dot }} />}
             {option.icon}
