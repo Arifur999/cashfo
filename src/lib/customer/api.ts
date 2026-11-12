@@ -1360,6 +1360,8 @@ export interface GroupExpense {
   // The members it names; none: everyone in the group that day.
   splits: GroupExpenseSplit[];
   createdAt: string;
+  // The member who recorded it; null on older rows.
+  recordedByName?: string | null;
 }
 
 // A group's settings (the defaults until first saved).

@@ -1410,4 +1410,5 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Settles the month": "যে মাসের হিসাব মেটায়",
   "After this, for {month}": "এরপর, {month}-এর জন্য",
   "Cash in hand stays {amount}.": "হাতে নগদ {amount}-ই থাকবে।",
+  "Recorded by": "কে লিখেছেন",
 };

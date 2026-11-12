@@ -32,7 +32,8 @@ interface GroupExpensesTabProps {
 }
 
 // Date, what for, category, paid by, how shared, amount, edit and delete.
-const COLUMNS = "md:grid-cols-[60px_minmax(0,1fr)_132px_minmax(0,190px)_minmax(0,130px)_104px_76px]";
+// Date, what for, category, paid by, how shared, amount, recorded by, actions.
+const COLUMNS = "md:grid-cols-[60px_minmax(0,1fr)_132px_minmax(0,190px)_minmax(0,130px)_104px_96px_76px]";
 
 type Sort = "new" | "old" | "high" | "low";
 const PAGE = 25;
@@ -217,6 +218,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }
           <ListHeadCell>{t("Paid by")}</ListHeadCell>
           <ListHeadCell>{t("How shared")}</ListHeadCell>
           <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
+          <ListHeadCell>{t("Recorded by")}</ListHeadCell>
           <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {shown.length === 0 &&
@@ -272,6 +274,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }
               <ListCell align="end" className="font-semibold text-ink">
                 {money(row.amount)}
               </ListCell>
+              <ListCell className={cn("hidden truncate md:block", row.recordedByName ? "text-ink-2" : "text-ink-faint")}>{row.recordedByName ? shortName(row.recordedByName) : "–"}</ListCell>
               <ListRowActions className="flex justify-end gap-1.5">
                 <button type="button" onClick={() => onEdit(row)} aria-label={closed ? t("Edit expense (closed month)") : t("Edit expense")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                   {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}

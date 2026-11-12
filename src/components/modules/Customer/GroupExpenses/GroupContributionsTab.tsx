@@ -10,7 +10,7 @@ import NativeSelect from "@/components/smartly/form/NativeSelect";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/customer/api";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
-import { countLabel, dayLabel, groupMonthOf, isDayClosed, paidIn } from "@/lib/customer/groupDisplay";
+import { countLabel, dayLabel, groupMonthOf, isDayClosed, paidIn, shortName } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { formatDay } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -34,7 +34,8 @@ interface GroupContributionsTabProps {
 }
 
 // #, date, member, received by, note (with its type), amount, actions.
-const COLUMNS = "md:grid-cols-[36px_64px_minmax(0,1.2fr)_minmax(0,160px)_minmax(0,1fr)_120px_76px]";
+// #, date, member, received by, note, amount, recorded by, actions.
+const COLUMNS = "md:grid-cols-[36px_64px_minmax(0,1.2fr)_minmax(0,160px)_minmax(0,1fr)_120px_96px_76px]";
 const PAGE = 25;
 
 type RowType = "DEPOSIT" | "POCKET" | "RETURN" | "SETTLE" | "CARRY";
@@ -257,6 +258,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
           <ListHeadCell>{t("Received by")}</ListHeadCell>
           <ListHeadCell>{t("Note")}</ListHeadCell>
           <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
+          <ListHeadCell>{t("Recorded by")}</ListHeadCell>
           <ListHeadCell align="end">{t("Actions")}</ListHeadCell>
         </ListHead>
         {shown.length === 0 &&
@@ -303,6 +305,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
               <ListCell align="end" className={cn("font-semibold", row.amount < 0 ? "text-expense" : "text-income")}>
                 {formatSignedCurrency(row.amount, currency, fmt)}
               </ListCell>
+              <ListCell className={cn("hidden truncate md:block", row.contribution?.recordedByName ? "text-ink-2" : "text-ink-faint")}>{row.contribution?.recordedByName ? shortName(row.contribution.recordedByName) : "–"}</ListCell>
               <ListRowActions className="flex justify-end gap-1.5">
                 <button type="button" onClick={edit} aria-label={row.expense ? t("Edit expense") : t("Edit contribution")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                   {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}
