@@ -21,5 +21,5 @@ export default async function AssetCategoriesPage() {
 
   // Keyed by workspace: a switch lands on this same page, and its drawer
   // must not carry the other workspace's type over.
-  return <AssetCategoriesPageClient key={activeBusinessId} businessId={activeBusinessId} categories={categories} assets={assets} currency={activeBusiness?.currency ?? "BDT"} canManage={canManage} />;
+  return <AssetCategoriesPageClient key={activeBusinessId} businessId={activeBusinessId} categories={categories} assets={assets} canManage={canManage} />;
 }
