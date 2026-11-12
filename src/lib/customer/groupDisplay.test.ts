@@ -67,10 +67,9 @@ describe("months", () => {
     expect(startDayOf(monthRangeOf("2026-09"))).toBe(1);
   });
 
-  it("shows Meals for a mess, or a family counting meals", () => {
-    expect(groupTabsFor("MESS", false)).toContain("meals");
-    expect(groupTabsFor("FAMILY", false)).not.toContain("meals");
-    expect(groupTabsFor("FAMILY", true)).toContain("meals");
+  it("shows Meals only to a group that counts meals", () => {
+    expect(groupTabsFor(false)).not.toContain("meals");
+    expect(groupTabsFor(true)).toContain("meals");
   });
 
   it("offers the months back to the earliest entry, newest first", () => {

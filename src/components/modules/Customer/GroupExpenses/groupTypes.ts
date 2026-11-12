@@ -68,8 +68,6 @@ export interface GroupPageData {
   periodContributions: GroupContribution[] | null;
   // the period's balances (Dashboard),
   periodSettlement: GroupSettlementResult | null;
-  // the expenses of the period's year (Dashboard's year chart),
-  yearExpenses: GroupExpense[] | null;
   // every expense up to next month (Monthly budget),
   allExpenses: GroupExpense[] | null;
   // the Cash book and the accountant it shows (null for all),
@@ -78,6 +76,8 @@ export interface GroupPageData {
   // and a page of the Activity log, with its kind filter.
   activity: GroupActivityPage | null;
   activityAction: GroupActivityAction | null;
+  // What was spent in each group month ("2026-11"), for the month picker.
+  monthTotals: Record<string, number>;
 }
 
 // Figures every tab reads, derived once by the page client.

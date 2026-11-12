@@ -8,6 +8,7 @@ import { countLabel, groupMonthOf } from "@/lib/customer/groupDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { formatCount } from "@/lib/i18n/digits";
 import type { Fmt } from "@/lib/i18n/formatPrefs";
+import type { Translate as MessageTranslate } from "@/lib/i18n/message";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { GROUP_KIND } from "./GroupBits";
@@ -19,7 +20,7 @@ export interface GroupRowActions {
   onDelete: () => void;
 }
 
-type Translate = (key: string, values?: Record<string, string>) => string;
+type Translate = MessageTranslate;
 
 // What a card and a table row both show of one group (the v16 GroupList
 // board): its span, my role, the month's spending against its budget, and

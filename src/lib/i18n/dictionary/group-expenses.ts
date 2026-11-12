@@ -1314,4 +1314,11 @@ export const groupExpensesDictionary: Record<string, string> = {
   "SHARES IN THIS GROUP": "এই গ্রুপের শেয়ার",
   "Costs shared \"by shares\" are split by these numbers ({count} in all). Costs shared \"equally\" are split the same for everyone.": "\"শেয়ার অনুযায়ী\" খরচ এই সংখ্যা ধরে ভাগ হয় (মোট {count})। \"সমান ভাগে\" খরচ সবার মধ্যে সমান ভাগ হয়।",
   "Admin": "অ্যাডমিন",
+  "Month: {month}. Change": "মাস: {month}। বদলান",
+  "Every page of {name} will show the month you pick.": "আপনি যে মাস বাছবেন, {name}-এর সব পাতায় সেটাই দেখাবে।",
+  "Closed months are locked. The admin can reopen one from Settlement.": "বন্ধ মাস লক থাকে। অ্যাডমিন Settlement থেকে আবার খুলতে পারেন।",
+  "Back to this month": "এই মাসে ফিরুন",
+  "Spent {amount}": "খরচ {amount}",
+  "Balance = carried from last month + paid − share of spending. Tap a member to see what they gave.": "ব্যালান্স = গত মাসের জের + দেওয়া টাকা − খরচের ভাগ। কে কী দিয়েছেন দেখতে মেম্বারে চাপুন।",
+  "From last month": "গত মাসের জের",
 };

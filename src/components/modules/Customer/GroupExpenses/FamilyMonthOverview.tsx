@@ -17,6 +17,7 @@ import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { BalanceCell, CategoryTile, categoryBarClass, MemberAvatar } from "./GroupBits";
+import { ROLE_CHIP, roleKey } from "./GroupSetup";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
 // The top of a family's dashboard (the v16 FamilyDashboard board): the
@@ -26,7 +27,7 @@ import type { GroupPageData, GroupView } from "./groupTypes";
 // entries. Everything is the month on show (data.range).
 
 const TILE = "flex min-w-0 flex-col gap-1.5 rounded-[18px] px-4.5 py-4";
-const COLUMNS = "md:grid-cols-[minmax(0,1fr)_60px_164px_124px_176px]";
+const COLUMNS = "md:grid-cols-[minmax(0,1fr)_60px_164px_124px_120px_176px]";
 
 interface FamilyMonthOverviewProps {
   data: GroupPageData;
@@ -61,7 +62,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   const leftTone = budget?.tone === "over" ? "text-expense" : budget?.tone === "warning" ? "text-warning" : "text-income";
 
   // Tile 2: contributions (a settle-up pair is a payment, not a contribution).
-  const deposits = data.contributions.filter((row) => !row.settleGroupId && Number(row.amount) > 0);
+  const deposits = data.contributions.filter((row) => row.kind === "DEPOSIT" && Number(row.amount) > 0);
   const given = deposits.reduce((sum, row) => sum + Number(row.amount), 0);
   const givers = new Set(deposits.map((row) => row.groupMemberId)).size;
   const pocket = settlement.members.reduce((sum, row) => sum + Number(row.pocketPaid), 0);
@@ -84,8 +85,10 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   const firstName = (id: string | undefined) => shortName(id ? view.memberById[id]?.name : undefined);
 
   // The members' balances: everyone active, and anyone who left but still has money in the month.
-  const rows = settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId] }));
-  const totals = rows.reduce((sum, { row, member }) => ({ shares: sum.shares + Number(member?.shareUnits ?? 0), paid: sum.paid + paidIn(row), share: sum.share + Number(row.share), balance: sum.balance + Number(row.balance) }), { shares: 0, paid: 0, share: 0, balance: 0 });
+  // A balance carried in when last month was closed is its own column, not money paid in.
+  const carriedOf = (id: string) => data.contributions.filter((row) => row.kind === "CARRY" && row.groupMemberId === id).reduce((sum, row) => sum + Number(row.amount), 0);
+  const rows = settlement.members.map((row) => ({ row, member: view.memberById[row.groupMemberId], carry: carriedOf(row.groupMemberId) }));
+  const totals = rows.reduce((sum, { row, member, carry }) => ({ shares: sum.shares + Number(member?.shareUnits ?? 0), paid: sum.paid + paidIn(row) - carry, share: sum.share + Number(row.share), carry: sum.carry + carry, balance: sum.balance + Number(row.balance) }), { shares: 0, paid: 0, share: 0, carry: 0, balance: 0 });
   const cashSum = holders.length > 0 ? holders.reduce((sum, row) => sum + Number(row.cash), 0) : view.cash;
   const booksMatch = Math.abs(totals.balance - cashSum) < 0.005;
 
@@ -95,16 +98,11 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   // The newest entries: expenses, contributions and payments (a settle-up pair as one row).
   const entries = recentEntries(data.expenses, data.contributions);
 
-  const roleChip = (member: GroupMember | undefined) =>
-    member?.isOwner ? (
-      <Chip tone="mint" size="sm">
-        {t("Admin")}
-      </Chip>
-    ) : member?.role === "ACCOUNTANT" ? (
-      <Chip tone="warning" size="sm">
-        {t("Accountant")}
-      </Chip>
-    ) : null;
+  const roleChip = (member: GroupMember | undefined) => {
+    if (!member) return null;
+    const key = roleKey(member);
+    return key === "MEMBER" ? null : <span className={cn("shrink-0 rounded-full px-2 py-px text-[11px] font-semibold", ROLE_CHIP[key].cls)}>{t(ROLE_CHIP[key].label)}</span>;
+  };
 
   return (
     <div className="flex flex-col gap-4.5">
@@ -269,7 +267,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
             header={
               <div className="flex flex-col gap-0.5 px-4 pt-4 pb-3 md:px-5">
                 <h2 className="text-[16px] font-semibold text-ink">{t("Members this month")}</h2>
-                <p className="text-caption text-ink-muted">{t("Balance = paid − share of spending. Tap a member to see what they gave.")}</p>
+                <p className="text-caption text-ink-muted">{t("Balance = carried from last month + paid − share of spending. Tap a member to see what they gave.")}</p>
               </div>
             }
             footer={
@@ -290,9 +288,10 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
               <ListHeadCell align="end">{t("Shares")}</ListHeadCell>
               <ListHeadCell align="end">{t("Paid this month")}</ListHeadCell>
               <ListHeadCell align="end">{t("Share of spending")}</ListHeadCell>
+              <ListHeadCell align="end">{t("From last month")}</ListHeadCell>
               <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
             </ListHead>
-            {rows.map(({ row, member }) => {
+            {rows.map(({ row, member, carry }) => {
               const own = Number(row.pocketPaid);
               return (
                 <ListRow key={row.groupMemberId} columns={COLUMNS} density="relaxed" className="gap-x-3.5 text-body tabular-nums md:min-h-15.5 md:px-5 md:py-2">
@@ -319,12 +318,15 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                   </ListCell>
                   <ListCell align="end" className="hidden md:block">
                     <span className="flex flex-col items-end gap-px">
-                      <span className="font-semibold">{money(paidIn(row))}</span>
+                      <span className="font-semibold">{money(paidIn(row) - carry)}</span>
                       {own > 0 && <span className="text-[11.5px] leading-[1.35] text-ink-muted">{t("incl. {amount} own pocket", { amount: money(own) })}</span>}
                     </span>
                   </ListCell>
                   <ListCell align="end" className="hidden md:block">
                     {money(row.share)}
+                  </ListCell>
+                  <ListCell align="end" className={cn("hidden md:block", carry < -0.5 ? "text-expense" : "text-ink-soft")}>
+                    {signed(carry)}
                   </ListCell>
                   <ListCell>
                     <BalanceCell value={Number(row.balance)} currency={currency} className="max-md:flex-col max-md:items-end max-md:gap-1" />
@@ -344,7 +346,10 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                 <span role="cell" className="hidden text-right md:block">
                   {money(totals.share)}
                 </span>
-                <span role="cell" className={cn("text-right", totals.balance < -0.004 ? "text-expense" : "text-income")}>
+                <span role="cell" className="hidden text-right text-ink-soft md:block">
+                  {signed(totals.carry)}
+                </span>
+                <span role="cell" className={cn("text-right", totals.balance < -0.004 ? "text-expense" : "text-ink")}>
                   {signed(totals.balance)}
                 </span>
               </ListTotalRow>

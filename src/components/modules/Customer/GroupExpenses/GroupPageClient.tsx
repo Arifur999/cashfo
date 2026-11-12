@@ -41,6 +41,7 @@ import { GroupExpensesTab } from "./GroupExpensesTab";
 import { GroupHeader } from "./GroupHeader";
 import { GroupMealsTab } from "./GroupMealsTab";
 import { GroupMembersTab } from "./GroupMembersTab";
+import { GroupMonthPicker } from "./GroupMonthPicker";
 import { useTellGroupNav } from "./groupNav";
 import { GroupSettingsTab } from "./GroupSettingsTab";
 import { GroupSetup } from "./GroupSetup";
@@ -287,7 +288,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
     ) : messLayout ? (
       <MessDashboard data={data} view={view} onRecordPayment={openPayment} onStatement={setStatement} onSetBudget={() => setBudgetKey(data.range.key)} />
     ) : (
-      <FamilyDashboard data={data} view={view} canAdd={canAdd} onMonth={(key) => go("dashboard", { month: key })} onAddExpense={openExpense} onAddContribution={() => openContribution()} onRecordPayment={openPayment} onStatement={setStatement} busy={moving} />
+      <FamilyDashboard data={data} view={view} canAdd={canAdd} onAddExpense={openExpense} onAddContribution={() => openContribution()} onRecordPayment={openPayment} onStatement={setStatement} />
     ),
     contributions: (
       <GroupContributionsTab
@@ -320,7 +321,13 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
 
   return (
     <PageFrame className="gap-5">
-      <GroupHeader businessId={data.businessId} name={data.name} settings={data.settings} tab={data.tab} memberCount={view.activeMembers.length} role={data.role} groups={data.groups} />
+      <GroupHeader businessId={data.businessId} name={data.name} settings={data.settings} tab={data.tab} memberCount={view.activeMembers.length} role={data.role} groups={data.groups}
+        period={
+          data.tab === "dashboard" && !view.setup ? (
+            <GroupMonthPicker name={data.name} currency={data.currency} value={data.range.key} current={currentKey} months={data.months} startDay={data.startDay} history={data.history} spent={data.monthTotals} onPick={(key) => go("dashboard", { month: key })} busy={moving} />
+          ) : undefined
+        }
+      />
       <div aria-busy={moving || undefined} className={cn("flex flex-col transition-opacity motion-reduce:transition-none", moving && "pointer-events-none opacity-60")}>
         {pages[data.tab]}
       </div>
