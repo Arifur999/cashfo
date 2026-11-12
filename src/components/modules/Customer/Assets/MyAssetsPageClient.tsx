@@ -1,359 +1,360 @@
 "use client";
 
-import { FileText, LayoutGrid, Package, Pencil, Plus, Search, Table2, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useStoredChoice } from "@/components/modules/Customer/Balance/useStoredChoice";
-import { useConfirmDialog } from "@/components/modules/Customer/Shared/useConfirmDialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import Loader from "@/components/shared/Loader";
-import Button from "@/components/smartly/Button";
-import Card from "@/components/smartly/Card";
-import EmptyState from "@/components/smartly/EmptyState";
-import Input from "@/components/smartly/form/Input";
-import NativeSelect from "@/components/smartly/form/NativeSelect";
 import IconAction from "@/components/smartly/IconAction";
 import PageFrame from "@/components/smartly/PageFrame";
-import type { Asset, AssetCategoryOption } from "@/lib/customer/api";
-import { deleteAssetAction } from "@/lib/customer/assetActions";
-import { assetGain, assetWorth, categoryVisual, gainChip, updateCount } from "@/lib/customer/assetDisplay";
+import type { Account, Asset, AssetCategoryOption } from "@/lib/customer/api";
+import { deleteAssetAction, restoreAssetAction } from "@/lib/customer/assetActions";
+import { assetGain, assetWorth, isActiveCategory, updateCount } from "@/lib/customer/assetDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { AssetDrawer } from "./AssetDrawer";
-import { AssetTypeTile } from "./AssetTypeTile";
-import { ReadOnlyNote } from "./ReadOnlyNote";
-import { SoldAssetDrawer } from "./SoldAssetDrawer";
-import { UpdateValueDrawer } from "./UpdateValueDrawer";
+import { AddAssetDialog } from "./AddAssetDialog";
+import { assetLook, AssetTile, assetTone, changePercent } from "./assetLook";
+import { doneToast } from "./assetUi";
+import { EditAssetDialog } from "./EditAssetDialog";
+import { walletName } from "./walletOptions";
 
 interface MyAssetsPageClientProps {
   businessId: string;
   // Every asset, owned and sold.
   assets: Asset[];
   categories: AssetCategoryOption[];
+  wallets: Account[];
   currency: string;
   canManage: boolean;
 }
 
-type Status = "all" | "ACTIVE" | "SOLD";
+type Status = "All" | "Active" | "Sold";
 type View = "cards" | "table";
 const VIEWS = ["cards", "table"] as const;
 
-// The card's button covers the card (its ::after), so the card draws the
-// focus ring the button can't show on its own.
-const CARD_FOCUS = [
-  "has-[[data-slot=card-action]:focus-visible]:outline-2",
-  "has-[[data-slot=card-action]:focus-visible]:outline-offset-2",
-  "has-[[data-slot=card-action]:focus-visible]:outline-(--focus-ring)",
-].join(" ");
-
 // The board's table: Asset, You paid, Value today, Gain or loss, Value
 // updates, Status, Actions.
-const COLUMNS = "md:grid-cols-[minmax(0,1.6fr)_130px_150px_minmax(150px,1fr)_110px_90px_80px]";
-const TONE_TEXT = { income: "text-income", expense: "text-expense", neutral: "text-ink-muted" } as const;
-const TONE_CHIP = { income: "bg-income-soft text-income", expense: "bg-expense-soft text-expense", neutral: "bg-surface-sunken text-ink-soft" } as const;
+const COLUMNS = "grid-cols-[minmax(0,1.6fr)_130px_150px_minmax(150px,1fr)_110px_90px_80px]";
+const SELECT = "h-11 shrink-0 cursor-pointer rounded-[10px] border border-input bg-surface px-3 text-[14px] font-semibold text-ink max-md:w-full";
+const VIEW_ICONS: Record<View, string> = { cards: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z", table: "M3 3h18v18H3z M3 9h18 M3 15h18 M9 3v18" };
 
 // All assets: everything owned or sold as cards or a table, newest purchase
-// first, with a search (name, category or note) and the category and
-// status filters. An owned card opens Update value and a sold one the sale;
-// Edit opens an asset's details, Delete removes one added by mistake.
-export function MyAssetsPageClient({ businessId, assets, categories, currency, canManage }: MyAssetsPageClientProps) {
+// first, with a search (name, category or note) and the category and status
+// filters. Edit sets an asset right; Delete removes one added by mistake,
+// with Undo for a few minutes.
+export function MyAssetsPageClient({ businessId, assets, categories, wallets, currency, canManage }: MyAssetsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { confirm, dialog: confirmDialog } = useConfirmDialog();
-  const [category, setCategory] = useState(searchParams.get("category") ?? "");
-  const [status, setStatus] = useState<Status>("all");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "All");
+  const [status, setStatus] = useState<Status>("All");
   const [search, setSearch] = useState("");
   const [view, setView] = useStoredChoice<View>("smartly-asset-view", VIEWS, "cards");
   const [addOpen, setAddOpen] = useState(false);
-  const [opened, setOpened] = useState<{ asset: Asset; details: boolean } | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [, startDelete] = useTransition();
+  const [editing, setEditing] = useState<Asset | null>(null);
+  const [deleting, setDeleting] = useState<Asset | null>(null);
+  // The asset just added, picked out until the next change.
+  const [highlight, setHighlight] = useState<string | null>(null);
+  const [isDeleting, startDelete] = useTransition();
 
   const counts = new Map<string, number>();
   for (const asset of assets) counts.set(asset.category, (counts.get(asset.category) ?? 0) + 1);
-  // The categories in use first as the category list orders them, then any
-  // an asset still carries after its category was deleted.
-  const names = [...categories.map((option) => option.name).filter((name) => counts.has(name)), ...[...counts.keys()].filter((name) => !categories.some((option) => option.name === name))];
-  // A category the link names that no asset has shows everything.
-  const active = names.includes(category) ? category : "";
+  // A category is offered while it is on or still has assets.
+  const filterCategories = categories.filter((option) => counts.has(option.name) || isActiveCategory(option));
+  const active = category !== "All" && filterCategories.some((option) => option.name === category) ? category : "All";
   const q = search.trim().toLowerCase();
+  const sold = (asset: Asset) => asset.status === "SOLD";
   const shown = assets
-    .filter((asset) => (!active || asset.category === active) && (status === "all" || asset.status === status))
-    .filter((asset) => !q || [asset.name, asset.category, t(asset.category), asset.notes ?? ""].some((text) => text.toLowerCase().includes(q)))
+    .filter((asset) => (active === "All" || asset.category === active) && (status === "All" || (status === "Sold") === sold(asset)))
+    .filter((asset) => !q || [asset.name, asset.category, t(asset.category), asset.notes ?? "", asset.soldNote ?? ""].some((text) => text.toLowerCase().includes(q)))
     .sort((a, b) => b.purchaseDate.localeCompare(a.purchaseDate));
+  const totals = shown.filter((asset) => (status === "Sold" ? sold(asset) : !sold(asset)));
+  const totalCost = totals.reduce((sum, asset) => sum + Number(asset.purchasePrice), 0);
+  const totalValue = totals.reduce((sum, asset) => sum + assetWorth(asset), 0);
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
+  const signed = (value: number) => (value ? formatSignedCurrency(value, currency, fmt) : money(0));
   const updatesLabel = (count: number) => (count === 0 ? t("None yet") : t(count === 1 ? "{count} update" : "{count} updates", { count: formatCount(count, fmt) }));
-  const showAll = () => {
-    setCategory("");
-    setStatus("all");
-    setSearch("");
-  };
+  const month = (date: string) => formatDate(date, "MMM yyyy", fmt);
+  const refresh = () => router.refresh();
 
-  async function remove(asset: Asset) {
-    if (busyId) return;
-    const updates = updateCount(asset);
-    const lines = [
-      t("Use this for an asset added by mistake. It is removed from every Assets page."),
-      updates > 0 ? t(updates === 1 ? "Its {count} value update will be deleted too." : "Its {count} value updates will be deleted too.", { count: formatCount(updates, fmt) }) : null,
-      asset.purchaseAccountId ? t("The {amount} payment leaves the Balance ledger, so that balance goes back up.", { amount: money(asset.purchasePrice) }) : null,
-    ];
-    if (!(await confirm({ title: t("Delete {name}?", { name: asset.name }), message: lines.filter(Boolean).join(" "), confirmLabel: "Delete", danger: true }))) return;
-    setBusyId(asset.id);
+  function remove() {
+    const asset = deleting;
+    if (!asset) return;
     startDelete(async () => {
       try {
         const result = await deleteAssetAction(businessId, asset.id);
-        if (result.success) {
-          toast.success(t("{name} deleted", { name: asset.name }));
-          router.refresh();
-        } else {
+        if (!result.success) {
           toast.error(t(result.message ?? "Failed to delete the asset"));
+          return;
         }
+        setDeleting(null);
+        refresh();
+        doneToast(t("{name} deleted", { name: asset.name }), {
+          label: t("Undo"),
+          run: async () => {
+            const back = await restoreAssetAction(businessId, asset.id);
+            if (back.success) refresh();
+            else toast.error(t(back.message ?? "Failed to undo the delete"));
+          },
+        });
       } catch {
         toast.error(t("Couldn't reach Smartly. Check your connection and try again."));
-      } finally {
-        setBusyId(null);
       }
     });
   }
 
-  // Edit and Delete, for those who may; a sold asset's sale is undone first.
-  const actions = (asset: Asset) => {
-    if (!canManage) return null;
-    const sold = asset.status === "SOLD";
-    const busy = busyId === asset.id;
-    return (
-      <span className="relative z-10 flex shrink-0 gap-1.5">
-        <IconAction onClick={() => setOpened({ asset, details: true })} disabled={busy} aria-label={t("Edit {name}", { name: asset.name })} title={t("Edit")}>
-          <Pencil aria-hidden="true" />
-        </IconAction>
-        <IconAction tone="danger" onClick={() => remove(asset)} disabled={busy || sold} aria-label={t("Delete {name}", { name: asset.name })} title={sold ? t("Undo the sale first, then delete the asset.") : t("Delete")}>
-          {busy ? <Loader size={14} label={t("Loading...")} /> : <Trash2 aria-hidden="true" />}
-        </IconAction>
-      </span>
-    );
+  // What each asset shows, card or row.
+  const facts = (asset: Asset) => {
+    const isSold = sold(asset);
+    const worth = assetWorth(asset);
+    const diff = assetGain(asset).amount;
+    const tone = assetTone(diff);
+    const gainInk = diff > 0 ? "text-emerald" : diff < 0 ? "text-loss-ink" : "text-ink-muted";
+    const gain = diff ? `${signed(diff)}${t(isSold ? " vs what you paid" : " since you bought it")}` : t(isSold ? "Sold for what you paid" : "Same as you paid");
+    const into = walletName(wallets, asset.soldAccountId);
+    const note = isSold && asset.soldAt ? [t("Sold on {date}", { date: formatDate(asset.soldAt, "d MMM yyyy", fmt) }), into ? t("money into {wallet}", { wallet: into }) : ""].filter(Boolean).join(" · ") : (asset.notes ?? "");
+    return { isSold, worth, diff, tone, gainInk, gain, note, look: assetLook(categories, asset.category), sub: `${t(asset.category)} · ${t("since")} ${month(asset.purchaseDate)}` };
   };
 
-  const totals = shown.filter((asset) => status === "SOLD" || asset.status === "ACTIVE");
-  const totalPaid = totals.reduce((sum, asset) => sum + Number(asset.purchasePrice), 0);
-  const totalWorth = totals.reduce((sum, asset) => sum + assetWorth(asset), 0);
-  const totalDiff = totalWorth - totalPaid;
+  const statusChip = (isSold: boolean) => <span className={cn("shrink-0 rounded-full px-2.5 py-0.75 text-[12px] font-bold", isSold ? "bg-surface-sunken text-ink-soft" : "bg-tint-green text-tint-green-ink")}>{t(isSold ? "Sold" : "Active")}</span>;
+
+  const actions = (asset: Asset) =>
+    canManage && (
+      <>
+        <IconAction onClick={() => setEditing(asset)} aria-label={t("Edit {name}", { name: asset.name })} title={t("Edit")}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 20h9" />
+            <path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z" />
+            <path d="m15 5 3 3" />
+          </svg>
+        </IconAction>
+        <IconAction tone="danger" onClick={() => setDeleting(asset)} aria-label={t("Delete {name}", { name: asset.name })} title={t("Delete")}>
+          <Trash2 aria-hidden="true" />
+        </IconAction>
+      </>
+    );
+
+  const deleteLines = (asset: Asset) => {
+    const updates = updateCount(asset);
+    const isSold = sold(asset);
+    const lines = [t("Use this for an asset added by mistake. It is removed from every Assets page.")];
+    if (updates && isSold) lines.push(t(updates === 1 ? "Its {count} value update and sale record will be deleted too." : "Its {count} value updates and sale record will be deleted too.", { count: formatCount(updates, fmt) }));
+    else if (updates) lines.push(t(updates === 1 ? "Its {count} value update will be deleted too." : "Its {count} value updates will be deleted too.", { count: formatCount(updates, fmt) }));
+    else if (isSold) lines.push(t("Its sale record will be deleted too."));
+    const from = walletName(wallets, asset.purchaseAccountId);
+    if (asset.purchaseAccountId) lines.push(t("The {amount} payment from {wallet} leaves the Balance ledger, so that balance goes back up.", { amount: money(asset.purchasePrice), wallet: from || t("its wallet") }));
+    return lines;
+  };
 
   return (
-    <PageFrame className="gap-5 leading-[normal]">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-page-title text-ink">{t("All assets")}</h1>
+    <PageFrame className="leading-[normal] md:h-full md:gap-5">
+      <div className="flex shrink-0 items-center justify-between gap-4">
+        <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("All assets")}</h1>
         {canManage && (
-          <Button onClick={() => setAddOpen(true)} className="h-10 shrink-0 rounded-full px-4">
-            <Plus strokeWidth={2.5} className="size-4" />
+          <button type="button" onClick={() => setAddOpen(true)} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-emerald px-4 text-[14px] font-semibold whitespace-nowrap text-white shadow-[0_1px_2px_rgba(18,32,29,0.10)] hover:bg-emerald-hover">
+            <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
             {t("Add asset")}
-          </Button>
+          </button>
         )}
       </div>
-      {!canManage && <ReadOnlyNote>{t("Only the owner or an accountant can add, sell or update assets in this workspace.")}</ReadOnlyNote>}
 
-      {assets.length === 0 ? (
-        <EmptyState icon={<Package />} title={t("Nothing owned yet")} description={t("Add what you already own, or buy something new, and it shows up here.")} action={canManage && <Button onClick={() => setAddOpen(true)}>{t("Add asset")}</Button>} className="min-h-80" />
+      <div className="flex shrink-0 flex-wrap items-center gap-2.5 md:flex-nowrap">
+        <div className="relative min-w-0 flex-1 max-md:basis-full">
+          <Search className="absolute top-3.5 left-3 size-4 text-ink-muted" aria-hidden="true" />
+          <input
+            type="search"
+            aria-label={t("Search assets")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            onKeyDown={(event) => event.key === "Escape" && setSearch("")}
+            placeholder={t("Search assets by name, category or note…")}
+            className="h-11 w-full rounded-[10px] border border-input bg-surface pr-3 pl-9 text-[14px] text-ink outline-none focus:border-emerald focus:shadow-[0_0_0_3px_rgba(28,117,103,0.15)]"
+          />
+        </div>
+        <select aria-label={t("Category")} value={active} onChange={(event) => setCategory(event.target.value)} className={cn(SELECT, "md:w-50")}>
+          <option value="All">{`${t("All categories")} (${formatCount(assets.length, fmt)})`}</option>
+          {filterCategories.map((option) => (
+            <option key={option.id} value={option.name}>{`${t(option.name)} (${formatCount(counts.get(option.name) ?? 0, fmt)})`}</option>
+          ))}
+        </select>
+        <select aria-label={t("Status")} value={status} onChange={(event) => setStatus(event.target.value as Status)} className={cn(SELECT, "md:w-45")}>
+          <option value="All">{t("All status")}</option>
+          <option value="Active">{t("Active")}</option>
+          <option value="Sold">{t("Sold")}</option>
+        </select>
+        <div role="group" aria-label={t("View")} className="flex shrink-0 gap-0.5 rounded-full bg-toggle-track p-0.75">
+          {VIEWS.map((option) => {
+            const on = view === option;
+            const label = t(option === "cards" ? "Card view" : "Table view");
+            return (
+              <button key={option} type="button" aria-pressed={on} aria-label={label} title={label} onClick={() => setView(option)} className={cn("flex h-9 w-9.5 items-center justify-center rounded-full", on ? "bg-surface text-ink shadow-[0_1px_2px_rgba(18,32,29,0.12)]" : "text-ink-faint hover:text-ink")}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d={VIEW_ICONS[option]} />
+                </svg>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {shown.length === 0 ? (
+        <div className="shrink-0 rounded-[18px] border border-line-card bg-surface p-10 text-center text-[14px] text-ink-muted">{t(assets.length ? "No assets match your search or filters." : "No assets yet. Add the first one.")}</div>
+      ) : view === "cards" ? (
+        <div className="grid content-start gap-4 sm:grid-cols-2 md:min-h-0 md:flex-1 md:overflow-y-auto xl:grid-cols-3">
+          {shown.map((asset) => {
+            const fact = facts(asset);
+            const picked = highlight === asset.id;
+            return (
+              <div
+                key={asset.id}
+                className={cn(
+                  "flex flex-col gap-4 rounded-[18px] border p-4.5 text-ink shadow-card transition-shadow hover:shadow-[0_2px_4px_rgba(18,32,29,0.06),0_14px_32px_rgba(18,32,29,0.10)]",
+                  picked ? "border-emerald bg-pick-wash" : cn("border-line-card", fact.isSold ? "bg-sold-card" : "bg-surface"),
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <AssetTile look={fact.look} glossy className="size-12 rounded-[16px]" glyph={28} stroke={1.5} fill={0.26} />
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.75 pt-0.5">
+                    <span className="truncate text-[15px] font-semibold">{asset.name}</span>
+                    <span className="text-[12.5px] text-ink-muted">{fact.sub}</span>
+                  </span>
+                  {statusChip(fact.isSold)}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[12px] text-ink-muted">{t(fact.isSold ? "Sold for" : "Value today")}</span>
+                  <span className={cn("text-[26px] font-bold tracking-[-0.02em] tabular-nums", fact.isSold ? "text-ink-muted" : "text-ink")}>{money(fact.worth)}</span>
+                  <span className={cn("text-[12.5px] font-semibold tabular-nums", fact.gainInk)}>{fact.gain}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[14px] bg-line-card">
+                  <span className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
+                    <span className="text-[11.5px] text-ink-muted">{t("You paid")}</span>
+                    <span className="text-[13.5px] font-semibold text-ink-2 tabular-nums">{money(asset.purchasePrice)}</span>
+                  </span>
+                  <span className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
+                    <span className="text-[11.5px] text-ink-muted">{t("Value updates")}</span>
+                    <span className="text-[13.5px] font-semibold text-ink-2">{updatesLabel(updateCount(asset))}</span>
+                  </span>
+                </div>
+                <div className="mt-auto flex items-center gap-2.5 border-t border-card-rule pt-3">
+                  <span className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-[12.5px] whitespace-nowrap text-ink-soft">
+                    {fact.note && (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-ink-faint">
+                          <path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z" />
+                          <path d="M15 3v6h6" />
+                        </svg>
+                        <span className="truncate">{fact.note}</span>
+                      </>
+                    )}
+                  </span>
+                  {actions(asset)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Input
-              size="sm"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onKeyDown={(event) => event.key === "Escape" && setSearch("")}
-              leading={<Search />}
-              placeholder={t("Search assets by name, category or note…")}
-              aria-label={t("Search assets")}
-              frameClassName="h-11 min-w-0 flex-1 basis-60 rounded-[10px]"
-            />
-            <NativeSelect aria-label={t("Category")} value={active} onChange={(event) => setCategory(event.target.value)} frameClassName="h-11 w-50 rounded-[10px] max-sm:flex-1" className="text-[14px] font-semibold">
-              <option value="">{`${t("All categories")} (${formatCount(assets.length, fmt)})`}</option>
-              {names.map((name) => (
-                <option key={name} value={name}>
-                  {`${t(name)} (${formatCount(counts.get(name) ?? 0, fmt)})`}
-                </option>
-              ))}
-            </NativeSelect>
-            <NativeSelect aria-label={t("Status")} value={status} onChange={(event) => setStatus(event.target.value as Status)} frameClassName="h-11 w-45 rounded-[10px] max-sm:flex-1" className="text-[14px] font-semibold">
-              <option value="all">{t("All status")}</option>
-              <option value="ACTIVE">{t("Active")}</option>
-              <option value="SOLD">{t("Sold")}</option>
-            </NativeSelect>
-            <div role="group" aria-label={t("View")} className="flex shrink-0 gap-0.5 rounded-full bg-surface-sunken p-0.75">
-              {(
-                [
-                  { value: "cards", label: "Card view", icon: LayoutGrid },
-                  { value: "table", label: "Table view", icon: Table2 },
-                ] as const
-              ).map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  aria-pressed={view === option.value}
-                  aria-label={t(option.label)}
-                  title={t(option.label)}
-                  onClick={() => setView(option.value)}
-                  className={cn("flex h-9 w-9.5 items-center justify-center rounded-full", view === option.value ? "bg-surface text-ink shadow-[0_1px_2px_rgba(18,32,29,0.12)] dark:bg-surface-raised" : "text-ink-faint hover:text-ink")}
-                >
-                  <option.icon className="size-4" aria-hidden="true" />
-                </button>
-              ))}
+        <section aria-label={t("Assets table")} className="flex flex-col overflow-hidden rounded-[18px] border border-line-card bg-surface shadow-card md:min-h-0 md:flex-1">
+          <div className="overflow-x-auto md:flex md:min-h-0 md:flex-1 md:flex-col">
+            <div className={cn("grid min-w-235 shrink-0 items-center gap-x-4 border-b border-line bg-strip px-5 py-3 text-[12px] font-medium text-ink-muted", COLUMNS)}>
+              <span>{t("Asset")}</span>
+              <span className="text-right">{t("You paid")}</span>
+              <span className="text-right">{t("Value today")}</span>
+              <span className="text-right">{t("Gain or loss")}</span>
+              <span className="text-right">{t("Value updates")}</span>
+              <span>{t("Status")}</span>
+              <span className="text-right">{t("Actions")}</span>
             </div>
-          </div>
-
-          {shown.length === 0 ? (
-            <EmptyState
-              icon={<Package />}
-              title={t("No assets match your search or filters.")}
-              action={
-                <>
-                  <Button variant="secondary" onClick={showAll}>
-                    {t("Show all")}
-                  </Button>
-                  {canManage && <Button onClick={() => setAddOpen(true)}>{t("Add asset")}</Button>}
-                </>
-              }
-            />
-          ) : view === "cards" ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="min-w-235 md:min-h-0 md:flex-1 md:overflow-y-auto">
               {shown.map((asset) => {
-                const sold = asset.status === "SOLD";
-                const visual = categoryVisual(categories, asset.category);
-                const gain = assetGain(asset);
-                const since = formatDate(asset.purchaseDate, "MMM yyyy", fmt);
-                // An owned card updates its value (for those who may); a sold one
-                // opens the sale for anyone.
-                const clickable = sold || canManage;
+                const fact = facts(asset);
                 return (
-                  <Card key={asset.id} padding="none" interactive={clickable} className={cn("group relative flex flex-col gap-4 rounded-[18px] p-4.5", clickable && CARD_FOCUS, sold && "bg-strip")}>
-                    <div className="flex items-start gap-3">
-                      <AssetTypeTile visual={visual} size="xl" glossy className="rounded-[16px]" />
-                      <span className="flex min-w-0 flex-1 flex-col gap-0.75 pt-0.5">
-                        {clickable ? (
-                          // The whole card is this one button: a div card, so
-                          // the figures inside stay plain text.
-                          <button
-                            type="button"
-                            data-slot="card-action"
-                            onClick={() => setOpened({ asset, details: false })}
-                            aria-label={t(sold ? "See the sale of {name}" : "Update value of {name}", { name: asset.name })}
-                            className="truncate text-left text-[15px] font-semibold text-ink after:absolute after:inset-0 after:rounded-[18px] focus-visible:outline-none"
-                          >
-                            {asset.name}
-                          </button>
-                        ) : (
-                          <span className="truncate text-[15px] font-semibold text-ink">{asset.name}</span>
-                        )}
-                        <span className="truncate text-[12.5px] text-ink-muted">{t("{type} · since {month}", { type: t(asset.category), month: since })}</span>
+                  <div key={asset.id} className={cn("grid min-h-16.5 items-center gap-x-4 border-b border-card-rule px-5 py-2.5 text-ink tabular-nums hover:bg-hover", COLUMNS, highlight === asset.id ? "bg-pick-wash" : fact.isSold ? "bg-sold-card" : "bg-surface")}>
+                    <span className="flex min-w-0 items-center gap-3">
+                      <AssetTile look={fact.look} glossy className="size-9.5 rounded-[12px]" glyph={21} stroke={1.6} fill={0.26} />
+                      <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="truncate text-[14.5px] font-semibold">{asset.name}</span>
+                        <span className="truncate text-[12px] text-ink-muted">{fact.sub}</span>
                       </span>
-                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.75 text-[12px] font-bold", sold ? "bg-surface-sunken text-ink-soft" : "bg-income-soft text-income")}>{t(sold ? "Sold" : "Active")}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[12px] text-ink-muted">{t(sold ? "Sold for" : "Value today")}</span>
-                      <span className={cn("text-[26px] font-bold tracking-[-0.02em] tabular-nums", sold ? "text-ink-muted" : "text-ink")}>{money(assetWorth(asset))}</span>
-                      <span className={cn("text-[12.5px] font-semibold tabular-nums", gain.amount > 0 ? "text-income" : gain.amount < 0 ? "text-expense" : "text-ink-muted")}>
-                        {gain.amount === 0 ? t("Same as you paid") : t(sold ? "{amount} vs what you paid" : "{amount} since you bought it", { amount: formatSignedCurrency(gain.amount, currency, fmt) })}
-                      </span>
-                    </div>
-                    {/* Two cells on a hairline grid: what was paid, and how often the value was checked since. */}
-                    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[14px] bg-line-card">
-                      <div className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
-                        <dt className="text-[11.5px] text-ink-muted">{t("You paid")}</dt>
-                        <dd className="text-[13.5px] font-semibold text-ink-2 tabular-nums">{money(asset.purchasePrice)}</dd>
-                      </div>
-                      <div className="flex flex-col gap-0.5 bg-strip px-3 py-2.5">
-                        <dt className="text-[11.5px] text-ink-muted">{t("Value updates")}</dt>
-                        <dd className="text-[13.5px] font-semibold text-ink-2">{updatesLabel(updateCount(asset))}</dd>
-                      </div>
-                    </dl>
-                    <div className="mt-auto flex items-center gap-2.5 border-t border-divider pt-3">
-                      <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[12.5px] text-ink-soft">
-                        {asset.notes && (
-                          <>
-                            <FileText className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />
-                            <span className="truncate">{asset.notes}</span>
-                          </>
-                        )}
-                      </span>
-                      {actions(asset)}
-                    </div>
-                  </Card>
+                    </span>
+                    <span className="text-right text-[14px] text-ink-soft">{money(asset.purchasePrice)}</span>
+                    <span className="flex flex-col items-end gap-px">
+                      <span className={cn("text-[15px] font-bold", fact.isSold ? "text-ink-muted" : "text-ink")}>{money(fact.worth)}</span>
+                      {fact.isSold && <span className="text-[11.5px] text-ink-muted">{t("Sold for")}</span>}
+                    </span>
+                    <span className="flex min-w-0 items-center justify-end gap-2">
+                      <span className={cn("text-[13.5px] font-semibold whitespace-nowrap", fact.gainInk)}>{signed(fact.diff)}</span>
+                      <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-bold", fact.tone.chip, fact.tone.ink)}>{toLocaleDigits(changePercent(fact.diff, Number(asset.purchasePrice)), fmt)}</span>
+                    </span>
+                    <span className="text-right text-[13px] text-ink-soft">{updatesLabel(updateCount(asset))}</span>
+                    <span>{statusChip(fact.isSold)}</span>
+                    <span className="flex justify-end gap-1.5">{actions(asset)}</span>
+                  </div>
                 );
               })}
             </div>
-          ) : (
-            <Card padding="none" className="overflow-hidden rounded-[18px]" role="region" aria-label={t("Assets table")}>
-              <div className={cn("hidden items-center gap-x-4 border-b border-line bg-table-head px-5 py-3 text-caption font-medium text-ink-muted md:grid", COLUMNS)}>
-                <span>{t("Asset")}</span>
-                <span className="text-right">{t("You paid")}</span>
-                <span className="text-right">{t("Value today")}</span>
-                <span className="text-right">{t("Gain or loss")}</span>
-                <span className="text-right">{t("Value updates")}</span>
-                <span>{t("Status")}</span>
-                <span className="text-right">{t("Actions")}</span>
-              </div>
-              <ul>
-                {shown.map((asset) => {
-                  const sold = asset.status === "SOLD";
-                  const gain = assetGain(asset);
-                  const chip = gainChip(gain.percent);
-                  return (
-                    <li key={asset.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 border-b border-divider px-5 py-2.5 tabular-nums md:min-h-16.5", COLUMNS, sold && "bg-strip")}>
-                      <span className="flex min-w-0 items-center gap-3">
-                        <AssetTypeTile visual={categoryVisual(categories, asset.category)} glossy className="size-9.5 rounded-[12px] [&_svg]:size-5" />
-                        <span className="flex min-w-0 flex-col gap-0.5">
-                          <button type="button" onClick={() => (sold || canManage) && setOpened({ asset, details: false })} disabled={!sold && !canManage} className="truncate text-left text-[14.5px] font-semibold text-ink enabled:hover:underline disabled:cursor-default">
-                            {asset.name}
-                          </button>
-                          <span className="truncate text-[12px] text-ink-muted">{t("{type} · since {month}", { type: t(asset.category), month: formatDate(asset.purchaseDate, "MMM yyyy", fmt) })}</span>
-                        </span>
-                      </span>
-                      <span className="text-right text-[14px] text-ink-soft max-md:hidden">{money(asset.purchasePrice)}</span>
-                      <span className="flex flex-col items-end gap-px">
-                        <span className={cn("text-[15px] font-bold whitespace-nowrap", sold ? "text-ink-muted" : "text-ink")}>{money(assetWorth(asset))}</span>
-                        {sold && <span className="text-[11.5px] text-ink-muted">{t("Sold for")}</span>}
-                      </span>
-                      <span className="flex min-w-0 items-center justify-end gap-2 max-md:hidden">
-                        <span className={cn("text-[13.5px] font-semibold whitespace-nowrap", TONE_TEXT[chip.tone])}>{gain.amount === 0 ? money(0) : formatSignedCurrency(gain.amount, currency, fmt)}</span>
-                        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-bold", TONE_CHIP[chip.tone])}>{toLocaleDigits(chip.label, fmt)}</span>
-                      </span>
-                      <span className="text-right text-[13px] text-ink-soft max-md:hidden">{updatesLabel(updateCount(asset))}</span>
-                      <span className="max-md:hidden">
-                        <span className={cn("rounded-full px-2.5 py-0.75 text-[12px] font-bold", sold ? "bg-surface-sunken text-ink-soft" : "bg-income-soft text-income")}>{t(sold ? "Sold" : "Active")}</span>
-                      </span>
-                      <span className="flex justify-end max-md:col-span-2">{actions(asset)}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-              <div className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-t border-line bg-table-head px-5 py-3 text-[13px] font-bold text-ink tabular-nums", COLUMNS)}>
-                <span>{`${t(status === "SOLD" ? "Sold total" : "Active total")} · ${t(totals.length === 1 ? "{count} asset" : "{count} assets", { count: formatCount(totals.length, fmt) })}`}</span>
-                <span className="text-right max-md:hidden">{money(totalPaid)}</span>
-                <span className="text-right">{money(totalWorth)}</span>
-                <span className={cn("text-right max-md:hidden", totalDiff > 0 ? "text-emerald" : totalDiff < 0 ? "text-expense" : "text-ink-muted")}>{totalDiff === 0 ? money(0) : formatSignedCurrency(totalDiff, currency, fmt)}</span>
-              </div>
-            </Card>
-          )}
-        </>
+            <div className={cn("grid min-w-235 shrink-0 items-center gap-x-4 border-t border-line bg-strip px-5 py-3 text-[13px] font-bold text-ink tabular-nums", COLUMNS)}>
+              <span>{`${t(status === "Sold" ? "Sold total" : "Active total")} · ${t(totals.length === 1 ? "{count} asset" : "{count} assets", { count: formatCount(totals.length, fmt) })}`}</span>
+              <span className="text-right">{money(totalCost)}</span>
+              <span className="text-right">{money(totalValue)}</span>
+              <span className={cn("text-right", totalValue - totalCost > 0 ? "text-emerald" : totalValue - totalCost < 0 ? "text-loss-ink" : "text-ink-muted")}>{signed(totalValue - totalCost)}</span>
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        </section>
       )}
 
-      <AssetDrawer open={addOpen} onClose={() => setAddOpen(false)} businessId={businessId} categories={categories} currency={currency} variant="add" initialCategory={active || undefined} />
-      <UpdateValueDrawer
-        open={opened !== null && opened.asset.status !== "SOLD"}
-        onClose={() => setOpened(null)}
+      <AddAssetDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdded={(id) => {
+          setHighlight(id);
+          refresh();
+        }}
         businessId={businessId}
-        asset={opened && opened.asset.status !== "SOLD" ? opened.asset : null}
+        assets={assets}
         categories={categories}
+        wallets={wallets}
         currency={currency}
-        initialMode={opened?.details ? "details" : "value"}
       />
-      <SoldAssetDrawer open={opened?.asset.status === "SOLD"} onClose={() => setOpened(null)} businessId={businessId} asset={opened?.asset.status === "SOLD" ? opened.asset : null} categories={categories} currency={currency} canManage={canManage} />
-      {confirmDialog}
+      <EditAssetDialog asset={editing} onClose={() => setEditing(null)} onSaved={refresh} businessId={businessId} assets={assets} categories={categories} wallets={wallets} currency={currency} />
+      <Dialog open={deleting !== null} onOpenChange={(next) => !next && !isDeleting && setDeleting(null)}>
+        <DialogContent showCloseButton={false} className="flex w-110 max-w-[calc(100vw-32px)] flex-col gap-3.5 rounded-[20px] border-0 bg-surface p-6 leading-[normal] text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
+          <span aria-hidden="true" className="flex size-11.5 items-center justify-center rounded-[14px] bg-expense-soft text-expense-fill">
+            <Trash2 className="size-5.5" />
+          </span>
+          {deleting && (
+            <>
+              <DialogTitle className="text-[18px] font-bold text-ink">{t("Delete {name}?", { name: deleting.name })}</DialogTitle>
+              <DialogDescription asChild>
+                <div className="flex flex-col gap-3.5">
+                  {deleteLines(deleting).map((line) => (
+                    <p key={line} className="text-[13.5px] leading-[1.55] text-ink-soft">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </DialogDescription>
+            </>
+          )}
+          <div className="mt-1 flex justify-end gap-2.5">
+            <button type="button" disabled={isDeleting} onClick={() => setDeleting(null)} className="h-11 rounded-full border border-input bg-surface px-4.5 text-[14px] font-semibold text-ink hover:bg-surface-sunken">
+              {t("Cancel")}
+            </button>
+            <button type="button" disabled={isDeleting} onClick={remove} className="flex h-11 items-center gap-2 rounded-full bg-expense-fill px-5 text-[14px] font-semibold text-white hover:opacity-90">
+              {isDeleting && <Loader size={16} onDark label={t("Deleting...")} />}
+              {t("Delete asset")}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageFrame>
   );
 }
