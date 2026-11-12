@@ -519,4 +519,8 @@ export const loanManagementDictionary: Record<string, string> = {
   "Profit paid · {count} entries": "মুনাফা দিলাম · {count}টি এন্ট্রি",
   "Profit received · {count} entry": "মুনাফা পেলাম · {count}টি এন্ট্রি",
   "Profit received · {count} entries": "মুনাফা পেলাম · {count}টি এন্ট্রি",
+  "Received {amount} · {count} entry": "পেলাম {amount} · {count}টি এন্ট্রি",
+  "Received {amount} · {count} entries": "পেলাম {amount} · {count}টি এন্ট্রি",
+  "Paid is an expense, received is income. Neither changes the balance.": "দেওয়াটা খরচ, পাওয়াটা আয়। কোনোটাই ব্যালেন্স বদলায় না।",
+  "No profit or interest in this period.": "এই সময়ে কোনো মুনাফা বা সুদ নেই।",
 };

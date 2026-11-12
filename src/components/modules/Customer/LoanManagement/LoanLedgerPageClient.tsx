@@ -486,7 +486,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             )}
           </Card>
 
-          <div className={cn("grid gap-4", hasProfit && "xl:grid-cols-[minmax(0,1fr)_280px]")}>
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
             <Card padding="none" className="grid grid-cols-2 overflow-hidden leading-[normal] md:grid-cols-4">
               <Figure label={t("Opening balance")} sub={openedOn ? t("On {date}", { date: day(openedOn) }) : undefined}>
                 <span className="flex flex-wrap items-center gap-x-1.5 whitespace-nowrap">
@@ -507,18 +507,31 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
                 </span>
               </Figure>
             </Card>
-            {hasProfit && (
-              <div className="flex flex-col justify-center gap-1 rounded-[12px] border border-warning-line bg-warning-50 px-5 py-3.5 leading-[normal] text-warning-ink">
-                <span className="text-[12px] font-semibold">
-                  {profit.paid > 0
-                    ? t(paidCount === 1 ? "Profit paid · {count} entry" : "Profit paid · {count} entries", { count: formatCount(paidCount, fmt) })
-                    : t(receivedCount === 1 ? "Profit received · {count} entry" : "Profit received · {count} entries", { count: formatCount(receivedCount, fmt) })}
+            {/* The board always shows this card, with "Profit / interest" and a grey zero when there was none. */}
+            <div className="flex flex-col justify-center gap-1 rounded-[12px] border border-warning-line bg-warning-50 px-5 py-3.5 leading-[normal] text-warning-ink">
+              <span className="text-[12px] font-semibold">
+                {profit.paid > 0
+                  ? t(paidCount === 1 ? "Profit paid · {count} entry" : "Profit paid · {count} entries", { count: formatCount(paidCount, fmt) })
+                  : profit.received > 0
+                    ? t(receivedCount === 1 ? "Profit received · {count} entry" : "Profit received · {count} entries", { count: formatCount(receivedCount, fmt) })
+                    : t("Profit / interest")}
+              </span>
+              <span className={cn("text-[21px] font-bold tabular-nums", hasProfit ? "text-warning" : "text-ink-faint")}>{formatCurrency(profit.paid > 0 ? profit.paid : profit.received, currency, fmt)}</span>
+              {profit.paid > 0 && profit.received > 0 && (
+                <span className="text-[12.5px] font-semibold">
+                  {t(receivedCount === 1 ? "Received {amount} · {count} entry" : "Received {amount} · {count} entries", { amount: formatCurrency(profit.received, currency, fmt), count: formatCount(receivedCount, fmt) })}
                 </span>
-                <span className={cn("text-[21px] font-bold tabular-nums", profit.paid > 0 ? "text-warning" : "text-income")}>{formatCurrency(profit.paid > 0 ? profit.paid : profit.received, currency, fmt)}</span>
-                {profit.paid > 0 && profit.received > 0 && <span className="text-[12.5px] font-semibold">{t("+ {amount} received", { amount: formatCurrency(profit.received, currency, fmt) })}</span>}
-                <span className="text-[12px]">{profit.paid > 0 ? t("Counted as expense. Doesn’t change the balance.") : t("Counted as income. Doesn’t change the balance.")}</span>
-              </div>
-            )}
+              )}
+              <span className="text-[12px]">
+                {profit.paid > 0 && profit.received > 0
+                  ? t("Paid is an expense, received is income. Neither changes the balance.")
+                  : profit.paid > 0
+                    ? t("Counted as expense. Doesn’t change the balance.")
+                    : profit.received > 0
+                      ? t("Counted as income. Doesn’t change the balance.")
+                      : t("No profit or interest in this period.")}
+              </span>
+            </div>
           </div>
 
           <ListCard
