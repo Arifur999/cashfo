@@ -4,7 +4,9 @@ import { ArrowRight, LogOut, PanelLeftClose, PanelLeftOpen, Settings, Sprout, St
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useShownGroupId } from "@/components/modules/Customer/GroupExpenses/groupNav";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
+import { ACCESS_LABELS, accessLevelOf } from "@/lib/customer/groupAccess";
 import { usePlanChip, type PlanChip } from "@/components/modules/Customer/Providers/PlanProvider";
 import Avatar from "@/components/smartly/Avatar";
 import Logo from "@/components/smartly/Logo";
@@ -178,8 +180,15 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
   // The plan's chip, and its card while on the free plan or a trial (the
   // phone drawer has no room for the card: an Upgrade button instead).
   const plan = usePlanChip();
-  const { free, label: planLabel } = plan;
-  const promo = !compact && plan.status !== "paid" ? planPromo(plan, t, fmt) : null;
+  // A group member's portal login: no plan, no Settings; its chip says its
+  // role in the group on screen ("Editor · Mirpur Family"), as the board.
+  const portal = Boolean(user.portalOnly);
+  const shownGroup = useShownGroupId();
+  const groups = user.businesses.filter((business) => business.type === "GROUP");
+  const memberGroup = groups.find((business) => business.id === shownGroup) ?? groups[0];
+  const free = plan.free && !portal;
+  const planLabel = portal ? (memberGroup ? `${t(ACCESS_LABELS[accessLevelOf(memberGroup.role)])} · ${memberGroup.name}` : "") : plan.label;
+  const promo = !compact && !portal && plan.status !== "paid" ? planPromo(plan, t, fmt) : null;
   const toggleLabel = t(collapsed ? "Expand sidebar" : "Collapse sidebar");
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
@@ -206,7 +215,7 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
   if (collapsed) {
     return (
       <div className="flex shrink-0 flex-col items-center gap-2 border-t border-line pt-3">
-        {settingsLink}
+        {!portal && settingsLink}
         {toggleButton}
       </div>
     );
@@ -238,7 +247,7 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
         <Avatar name={user.name} src={user.avatarUrl} size={36} tone="soft" alt="" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-[13.5px] leading-[normal] font-semibold text-ink">{user.name}</span>
-          <span className={cn("self-start rounded-full px-1.75 py-px text-[11px] leading-[normal] font-semibold whitespace-nowrap", free ? "bg-surface-sunken text-ink-soft" : "bg-mint-50 text-brand-ink")}>{planLabel}</span>
+          {planLabel && <span className={cn("max-w-full truncate self-start rounded-full px-1.75 py-px text-[11px] leading-[normal] font-semibold whitespace-nowrap", free ? "bg-surface-sunken text-ink-soft" : "bg-mint-50 text-brand-ink")}>{planLabel}</span>}
         </span>
         {free && compact ? (
           <Link href={PLANS_ROUTE} className="flex h-7.5 shrink-0 items-center rounded-full bg-forest px-3 text-[12.5px] font-semibold whitespace-nowrap text-white hover:bg-forest-hover">
@@ -252,7 +261,7 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
       </div>
       <div className="flex items-center gap-2">
         <LanguageSwitch className="flex-1" />
-        {settingsLink}
+        {!portal && settingsLink}
         {extra}
         {toggleButton}
       </div>

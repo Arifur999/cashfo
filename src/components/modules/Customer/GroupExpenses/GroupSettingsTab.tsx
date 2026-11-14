@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import Loader from "@/components/shared/Loader";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
@@ -65,8 +66,12 @@ function SaveStatus({ state }: { state: "saving" | "saved" | null }) {
 export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSettingsTabProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
+  // The General card's fields are a draft until Save changes (the board's
+  // footer): the name, the kind, the first month, the warning and how new
+  // categories are shared.
   const [name, setName] = useState(data.name);
   const [nameKept, setNameKept] = useState(false);
+  const [draft, setDraft] = useState<SettingsInput>({});
   const [isPending, startTransition] = useTransition();
   const [saving, setSaving] = useState<Section | null>(null);
   const [saved, setSaved] = useState<Section | null>(null);
@@ -154,34 +159,45 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
 
   const save = (section: Section, input: SettingsInput) => run(section, () => updateGroupSettingsAction(data.businessId, input), t("Failed to save the settings"));
 
-  // The name on its way to the server: Enter saves, and the blur that
-  // follows (the field is disabled while saving) must not send it twice.
-  const sentName = useRef<string | null>(null);
+  // What the General card would save: a field counts once it differs.
+  const nextName = name.trim();
+  const draftKind = draft.kind ?? settings.kind;
+  const draftFirst = draft.firstMonth ?? firstMonth;
+  const draftWarn = draft.budgetWarnPercent !== undefined ? draft.budgetWarnPercent : warn;
+  const draftSplit = draft.newCategorySplit ?? settings.newCategorySplit ?? "EQUAL";
+  const settingsChange: SettingsInput = {
+    ...(draftKind !== settings.kind && { kind: draftKind }),
+    ...(draftFirst !== firstMonth && { firstMonth: draftFirst }),
+    ...(draftWarn !== warn && { budgetWarnPercent: draftWarn }),
+    ...(draftSplit !== (settings.newCategorySplit ?? "EQUAL") && { newCategorySplit: draftSplit }),
+  };
+  const nameChanged = nextName !== data.name;
+  const generalDirty = nameChanged || Object.keys(settingsChange).length > 0;
 
-  function saveName() {
-    const next = name.trim();
+  function saveGeneral() {
     // An empty name isn't saved: the old one comes back, and the field says why.
-    if (!next) {
+    if (!nextName) {
       setName(data.name);
       setNameKept(true);
       return;
     }
-    if (next === data.name || next === sentName.current) return;
-    sentName.current = next;
+    if (!generalDirty) return;
     run(
       "general",
       async () => {
-        try {
-          const result = await updateBusinessAction(data.businessId, { name: next });
-          if (result.success) toast.success(t("Group renamed"));
-          else sentName.current = null;
-          return result;
-        } catch (error) {
-          sentName.current = null;
-          throw error;
+        if (nameChanged) {
+          const renamed = await updateBusinessAction(data.businessId, { name: nextName });
+          if (!renamed.success) return renamed;
         }
+        if (Object.keys(settingsChange).length > 0) {
+          const result = await updateGroupSettingsAction(data.businessId, settingsChange);
+          if (!result.success) return result;
+        }
+        setDraft({});
+        toast.success(t("Settings saved"));
+        return { success: true };
       },
-      t("Failed to rename the group"),
+      t("Failed to save the settings"),
     );
   }
 
@@ -194,15 +210,14 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-[19px] font-semibold text-ink">{t("Group settings")}</h2>
-        <p className="text-small text-ink-muted">{t("Name, first day of the month, budget warning, and each member’s shares.")}</p>
+        <p className="text-small text-ink-muted">{t("Name, first month, budget warning, how new categories are shared, and each member’s shares.")}</p>
       </div>
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-5">
           <Card padding="none" className="p-5">
             <fieldset disabled={isPending} className="flex min-w-0 flex-col gap-4">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-title font-semibold text-ink">{t("General")}</h2>
-                <SaveStatus state={status("general")} />
               </div>
               <Field htmlFor="gs-name" label={<span className="text-body font-medium text-ink">{t("Group name")}</span>} error={nameKept ? t("A group needs a name, so the old one was kept.") : undefined}>
                 <Input
@@ -214,8 +229,7 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                     setName(event.target.value);
                     setNameKept(false);
                   }}
-                  onBlur={saveName}
-                  onKeyDown={(event) => event.key === "Enter" && saveName()}
+                  onKeyDown={(event) => event.key === "Enter" && saveGeneral()}
                   maxLength={80}
                 />
               </Field>
@@ -228,8 +242,8 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                     { value: "TRIP", label: "Trip" },
                     { value: "OFFICE", label: "Office" },
                   ]}
-                  value={settings.kind}
-                  onChange={(kind) => kind !== settings.kind && save("general", { kind })}
+                  value={draftKind}
+                  onChange={(kind) => setDraft({ ...draft, kind })}
                   label="Kind of group"
                   stretch
                   className="[&>button]:h-8.5 [&>button]:disabled:opacity-60"
@@ -237,7 +251,7 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
               </fieldset>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field htmlFor="gs-first" label={<span className="text-body font-medium text-ink">{t("First month")}</span>}>
-                  <NativeSelect id="gs-first" size="md" value={firstMonth} onChange={(event) => event.target.value !== firstMonth && save("general", { firstMonth: event.target.value })} frameClassName="w-full" className="font-normal" aria-describedby="gs-first-note">
+                  <NativeSelect id="gs-first" size="md" value={draftFirst} onChange={(event) => setDraft({ ...draft, firstMonth: event.target.value })} frameClassName="w-full" className="font-normal" aria-describedby="gs-first-note">
                     {firstChoices.map((key) => (
                       <option key={key} value={key}>
                         {monthName(key, fmt, "long", true)}
@@ -246,7 +260,7 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                   </NativeSelect>
                 </Field>
                 <Field htmlFor="gs-warn" label={<span className="text-body font-medium text-ink">{t("Warn when the budget is used")}</span>}>
-                  <NativeSelect id="gs-warn" size="md" value={warn === null ? "" : String(warn)} onChange={(event) => save("general", { budgetWarnPercent: event.target.value ? Number(event.target.value) : null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-warn-note">
+                  <NativeSelect id="gs-warn" size="md" value={draftWarn === null ? "" : String(draftWarn)} onChange={(event) => setDraft({ ...draft, budgetWarnPercent: event.target.value ? Number(event.target.value) : null })} frameClassName="w-full" className="font-normal" aria-describedby="gs-warn-note">
                     {[...WARN_CHOICES, ...(warn !== null && !WARN_CHOICES.includes(String(warn) as (typeof WARN_CHOICES)[number]) ? [String(warn)] : [])].map((choice) => (
                       <option key={choice || "never"} value={choice}>
                         {choice ? `${toLocaleDigits(choice, fmt)}%` : t("Never")}
@@ -270,9 +284,9 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                       ["SHARES", "By shares", "Bigger families pay a bigger part"],
                     ] as const
                   ).map(([value, title, sub]) => {
-                    const on = (settings.newCategorySplit ?? "EQUAL") === value;
+                    const on = draftSplit === value;
                     return (
-                      <button key={value} type="button" role="radio" aria-checked={on} onClick={() => !on && save("general", { newCategorySplit: value })} className={cn("flex flex-col items-start gap-0.5 rounded-[12px] px-3 py-2.5 text-left", on ? "border-[1.5px] border-emerald bg-emerald-wash" : "border border-line bg-surface hover:border-mint-200")}>
+                      <button key={value} type="button" role="radio" aria-checked={on} onClick={() => setDraft({ ...draft, newCategorySplit: value })} className={cn("flex flex-col items-start gap-0.5 rounded-[12px] px-3 py-2.5 text-left", on ? "border-[1.5px] border-emerald bg-emerald-wash" : "border border-line bg-surface hover:border-mint-200")}>
                         <span className="text-body font-semibold text-ink">{t(title)}</span>
                         <span className="text-caption text-ink-muted">{t(sub)}</span>
                       </button>
@@ -286,6 +300,20 @@ export function GroupSettingsTab({ data, onCostSplit, onDeleteGroup }: GroupSett
                   </Link>
                 </span>
               </fieldset>
+            </fieldset>
+            <div className="-mx-5 mt-5 -mb-5 flex items-center justify-between gap-3 rounded-b-card border-t border-divider bg-hover px-5 py-3.5">
+              <span className="text-small text-ink-muted">{generalDirty ? t("You have unsaved changes") : t("Everything is saved")}</span>
+              <Button type="button" onClick={saveGeneral} disabled={!generalDirty || isPending}>
+                {isPending && saving === "general" && <Loader />}
+                {t("Save changes")}
+              </Button>
+            </div>
+          </Card>
+
+          {/* Not on the board: when the month starts and who keeps the cash
+              move every balance, so they stay (saved as they change). */}
+          <Card padding="none" className="p-5">
+            <fieldset disabled={isPending} className="flex min-w-0 flex-col gap-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field htmlFor="gs-start" label={<span className="text-body font-medium text-ink">{t("Month starts on")}</span>}>
                   <NativeSelect id="gs-start" size="md" value={settings.monthStartDay} onChange={(event) => Number(event.target.value) !== settings.monthStartDay && setNewStart(Number(event.target.value))} frameClassName="w-full" className="font-normal" aria-describedby="gs-start-note">

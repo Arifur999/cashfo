@@ -24,7 +24,8 @@ interface MemberStatementDrawerProps {
   data: GroupPageData;
   view: GroupView;
   member: GroupMember | null;
-  onRecordPayment: () => void;
+  // Absent when the one looking may not record this payment.
+  onRecordPayment?: () => void;
 }
 
 interface Entry {
@@ -215,7 +216,7 @@ export function MemberStatementDrawer({ open, onClose, data, view, member, onRec
           </Button>
           <span className="flex-1" />
           {/* A closed month takes no new payment here, as on Settlement. */}
-          {!even && !view.closed && (
+          {!even && !view.closed && onRecordPayment && (
             <Button type="button" variant="action" onClick={onRecordPayment} className="px-4.5">
               {t("Record a payment")}
             </Button>

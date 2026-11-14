@@ -166,9 +166,13 @@ export function hasActivity(settlement: GroupSettlementResult): boolean {
 // reminds the reader to close it. A record that only overlaps it (the start
 // day moved after 1-30 Sep was closed, so last month is now 10 Sep - 9 Oct)
 // counts too: the server refuses to close a period that overlaps a record.
-export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: (Pick<GroupMember, "createdAt"> & { joinedOn?: string | null })[], range: MonthRange): MonthRange | null {
+// `moneyBefore`: entries dated before `range` sit in no closed month (the
+// balances don't add up to the cash), so last month is open even when every
+// member was added later.
+export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: (Pick<GroupMember, "createdAt"> & { joinedOn?: string | null })[], range: MonthRange, moneyBefore = false): MonthRange | null {
   const previous = monthRangeOf(shiftMonth(range.key, -1), startDayOf(range));
   if (history.some((record) => record.periodStart.slice(0, 10) <= previous.to && record.periodEnd.slice(0, 10) >= previous.from)) return null;
+  if (moneyBefore) return previous;
   // A member added late but dated back (joined on the 1st) counts from then.
   return members.some((member) => member.createdAt.slice(0, 10) <= previous.to || (!!member.joinedOn && member.joinedOn.slice(0, 10) <= previous.to)) ? previous : null;
 }
@@ -262,9 +266,12 @@ export const poolsMeals = (mealsOn: boolean, settlement: Pick<GroupSettlementRes
 // members it names (by units or exact amounts), else everyone in the group
 // that day. A by-meals expense is pooled into the meal rate instead (0
 // here) while meals are pooled, and shared equally otherwise.
-export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsPooled: boolean): number {
+export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits" | "parts">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsPooled: boolean): number {
   const amount = Number(expense.amount);
   if (expense.split === "MEALS" && mealsPooled) return 0;
+  // The API's own parts when it sent them: they follow the weights of the
+  // expense's date and add up to the paisa.
+  if (expense.parts && expense.parts.length > 0) return Number(expense.parts.find((part) => part.groupMemberId === memberId)?.amount ?? 0);
   const sharing = members.filter((member) => inRange(member, range));
   const thatDay = sharing.filter((member) => inGroupOn(member, expense.date.slice(0, 10)));
   const everyone = thatDay.length > 0 ? thatDay : sharing;
@@ -358,7 +365,8 @@ export function budgetFor(budgets: GroupMonthlyBudget[], range: MonthRange): Gro
 
 // Amber from 90% used, red once over.
 export function budgetStatus(budget: number, spent: number): BudgetStatus {
-  const percent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+  // One decimal, as the boards write it (50.8% of Tk 65,000).
+  const percent = budget > 0 ? Math.round((spent / budget) * 1000) / 10 : 0;
   return { budget, spent, percent, left: budget - spent, tone: spent > budget ? "over" : percent >= 90 ? "warning" : "ok" };
 }
 

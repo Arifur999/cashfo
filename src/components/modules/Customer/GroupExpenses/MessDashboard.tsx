@@ -26,7 +26,9 @@ interface MessDashboardProps {
   view: GroupView;
   onRecordPayment: (transfer: Transfer) => void;
   onStatement: (member: GroupMember) => void;
-  onSetBudget: () => void;
+  // The Admin's alone; absent for anyone else.
+  onSetBudget?: () => void;
+  canPay: (fromId: string) => boolean;
 }
 
 // A way of sharing as the dashboard's rows write it, in lower case.
@@ -47,7 +49,7 @@ const dayBefore = (day: string) => new Date(Date.parse(`${day}T00:00:00.000Z`) -
 // member's balance. A mess adds where the money went with its budget and
 // the latest entries; a family who pays whom, where the money went and the
 // last six months against the budget.
-export function MessDashboard({ data, view, onRecordPayment, onStatement, onSetBudget }: MessDashboardProps) {
+export function MessDashboard({ data, view, onRecordPayment, onStatement, onSetBudget, canPay }: MessDashboardProps) {
   const { t, fmt } = useLocale();
   const { currency, range, settlement } = data;
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
@@ -268,9 +270,11 @@ export function MessDashboard({ data, view, onRecordPayment, onStatement, onSetB
           ) : (
             <div className="flex items-center justify-between gap-3 text-small">
               <span className="text-ink-muted">{t("No budget set for this month")}</span>
-              <button type="button" onClick={onSetBudget} className="relative font-semibold text-emerald after:absolute after:-inset-2 hover:underline">
-                {t("Set one")}
-              </button>
+              {onSetBudget && (
+                <button type="button" onClick={onSetBudget} className="relative font-semibold text-emerald after:absolute after:-inset-2 hover:underline">
+                  {t("Set one")}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -362,7 +366,7 @@ export function MessDashboard({ data, view, onRecordPayment, onStatement, onSetB
                       <span className="text-h3 font-bold text-ink tabular-nums">{money(transfer.amount)}</span>
                     </div>
                     {/* A closed month takes no new payment, as on Settlement. */}
-                    {!view.closed && (
+                    {!view.closed && canPay(transfer.fromId) && (
                       <Button variant="secondary" size="sm" onClick={() => onRecordPayment(transfer)} className="h-8.5 self-end pointer-coarse:h-11">
                         {t("Record payment")}
                       </Button>

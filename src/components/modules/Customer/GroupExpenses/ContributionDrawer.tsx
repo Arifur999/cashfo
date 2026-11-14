@@ -40,6 +40,8 @@ interface ContributionDrawerProps {
   // Open with a member already chosen (from their row or statement).
   presetMemberId?: string | null;
   closedGuard: ClosedGuard;
+  // An Editor works only in their own name: this member, fixed.
+  selfOnly?: string | null;
 }
 
 type Kind = "DEPOSIT" | "RETURN";
@@ -54,10 +56,10 @@ export function dayInMonth(range: MonthRange, today: string): string {
 // the v7 popup: when, how much (with a chip that fills their dues), who,
 // which accountant it was given to, and a note, with the balances after
 // saving.
-export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, holderId, given, range, today, editing, presetMemberId = null, closedGuard }: ContributionDrawerProps) {
+export function ContributionDrawer({ open, onClose, businessId, currency, members, balances, holderId, given, range, today, editing, presetMemberId = null, closedGuard, selfOnly = null }: ContributionDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
-  const active = members.filter((member) => member.status === "ACTIVE" || member.id === editing?.groupMemberId);
+  const active = members.filter((member) => (member.status === "ACTIVE" || member.id === editing?.groupMemberId) && (!selfOnly || member.id === selfOnly));
   const accountants = accountantsOf(members);
   const [memberId, setMemberId] = useState("");
   const [kind, setKind] = useState<Kind>("DEPOSIT");
@@ -80,7 +82,7 @@ export function ContributionDrawer({ open, onClose, businessId, currency, member
     setPrevKey(key);
     if (open) {
       const signed = Number(editing?.amount ?? 0);
-      setMemberId(editing?.groupMemberId ?? presetMemberId ?? "");
+      setMemberId(editing?.groupMemberId ?? selfOnly ?? presetMemberId ?? "");
       setKind(signed < 0 ? "RETURN" : "DEPOSIT");
       setAmount(editing ? String(Math.abs(signed)) : "");
       setDate(editing ? editing.date.slice(0, 10) : dayInMonth(range, today));

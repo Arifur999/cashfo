@@ -27,12 +27,15 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  ACCESS_CHANGED_REASON,
   ADMIN_HOME_ROUTE,
   canAccessRoute,
   CUSTOMER_HOME_ROUTE,
   homeRouteFor,
   isGuestOnlyRoute,
   LOGIN_ROUTE,
+  MEMBER_JOIN_ROUTE,
+  MEMBER_LOGIN_ROUTE,
   openRoutes,
   PROFILE_CARD_ROUTE,
   routeAudience,
@@ -67,8 +70,9 @@ export async function proxy(request: NextRequest) {
 
   // A reset link works for whoever opens it, and the Google landing route
   // replaces whatever session was there -- neither depends on the current one.
-  // A shared profile card is for anyone, signed in or not.
-  if (openRoutes.includes(pathname) || pathname.startsWith(`${PROFILE_CARD_ROUTE}/`)) {
+  // A shared profile card is for anyone, signed in or not, and so is a group
+  // access link (signed in, it adds the group to that account).
+  if (openRoutes.includes(pathname) || pathname.startsWith(`${PROFILE_CARD_ROUTE}/`) || pathname.startsWith(`${MEMBER_JOIN_ROUTE}/`)) {
     return NextResponse.next();
   }
 
@@ -76,6 +80,11 @@ export async function proxy(request: NextRequest) {
   // SESSION_EXPIRED_REASON): drop the stale cookies and show the sign-in
   // page, rather than redirecting straight back home in a loop.
   if (pathname === LOGIN_ROUTE && searchParams.get("reason") === SESSION_EXPIRED_REASON) {
+    return withoutAuthCookies(NextResponse.next());
+  }
+  // Likewise a member-portal login whose group access was taken away: signed
+  // out here, and the member sign-in page says why.
+  if (pathname === MEMBER_LOGIN_ROUTE && (searchParams.get("reason") === ACCESS_CHANGED_REASON || searchParams.get("reason") === SESSION_EXPIRED_REASON)) {
     return withoutAuthCookies(NextResponse.next());
   }
 

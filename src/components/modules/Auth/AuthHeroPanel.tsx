@@ -9,7 +9,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { bnHeading } from "./bnType";
 
-export type AuthVariant = "login" | "register" | "admin";
+export type AuthVariant = "login" | "register" | "admin" | "member";
 
 // The boards' gradients, from the palette's own tokens: the app's (Main,
 // Register) runs from the primary down to it darkened 18% and 38%; the
@@ -41,6 +41,9 @@ const ADMIN_POINTS = [
   { icon: FileText, text: "Every change is written to the audit log with your name and IP address." },
   { icon: ShieldCheck, text: "Two-step sign-in keeps the panel safe even if a password leaks." },
 ];
+
+// What a group member's login opens (the GroupLogin board's three ticks).
+const MEMBER_POINTS = ["Expenses, contributions and the cash book", "Who owes whom, worked out for you", "Only the groups you were added to"];
 
 // The brand on the dark panel: the Smartly icon where the boards draw the
 // wallet mark, and the name beside it.
@@ -182,6 +185,30 @@ const AuthHeroPanel = ({ variant }: { variant: AuthVariant }) => {
         </div>
         <span className="relative text-[12.5px] text-white/50">{t("{brand} admin · for the team only", { brand: BRAND_NAME })}</span>
       </section>
+    );
+  }
+
+  // Group Expense's member portal (the GroupLogin board): a rounded panel
+  // inset from the edge, the portal's badge, what it is for and three ticks.
+  if (variant === "member") {
+    return (
+      <aside className="relative m-4 hidden flex-col overflow-hidden rounded-[28px] p-10 text-white lg:flex" style={{ background: APP_GRADIENT }}>
+        <PanelBrand admin={false} />
+        <span className="flex-1" />
+        <div className="relative flex flex-col gap-3.5">
+          <span className="inline-flex items-center gap-2 self-start rounded-full bg-white/14 px-3 py-1.5 text-[13px] font-semibold">{t("Group member portal")}</span>
+          <p className={cn("text-[34px] leading-[1.25] font-bold tracking-[-0.02em]", bnHeading(locale))}>{t("See your group’s money in one place.")}</p>
+          <p className="text-[15px] leading-[1.6] text-white/82">{t("Your group admin sends you an access link. Open it once to set your username and password, then log in here any time.")}</p>
+        </div>
+        <ul className="relative mt-7 flex flex-col gap-2.5 rounded-2xl bg-white/10 px-4.5 py-4 text-[13.5px] leading-[1.45] text-white/92">
+          {MEMBER_POINTS.map((point) => (
+            <li key={point} className="flex gap-2">
+              <span aria-hidden="true">✓</span>
+              {t(point)}
+            </li>
+          ))}
+        </ul>
+      </aside>
     );
   }
 

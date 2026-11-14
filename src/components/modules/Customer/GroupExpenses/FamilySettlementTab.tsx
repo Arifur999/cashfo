@@ -14,6 +14,7 @@ import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListTot
 import ProgressBar from "@/components/smartly/ProgressBar";
 import { attempt, OFFLINE_MESSAGE, STALE_MESSAGE } from "@/lib/customer/attempt";
 import { formatCurrency } from "@/lib/customer/currency";
+import { canManage, canRecord, canTouchEntry, mayEnterFor } from "@/lib/customer/groupAccess";
 import { countLabel, groupMonthOf, groupTabHref, recordDiffers, shiftMonth, shortName } from "@/lib/customer/groupDisplay";
 import { settleUpAction, undoSettleUpAction } from "@/lib/customer/groupExpensesActions";
 import { carriedBy, mainAccountantId, totalGiven, type SettleCard, settlementCards, settleProgress } from "@/lib/customer/groupFamily";
@@ -24,6 +25,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { dayInMonth } from "./ContributionDrawer";
 import { FamilyCloseDialog } from "./FamilyCloseDialog";
+import { ReopenMonthButton } from "./ReopenMonthButton";
 import { Figure, groupLine, MemberAvatar, SETTLE_UP_ID } from "./GroupBits";
 import { GroupStatement, type StatementSpec } from "./GroupStatement";
 import type { GroupPageData, GroupView } from "./groupTypes";
@@ -56,6 +58,12 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
   const monthLong = monthName(range.key, fmt, "long");
   const nextShort = monthName(shiftMonth(range.key, 1), fmt, "long");
   const closed = view.closed;
+  // Closing and reopening are the Admin's; a payment may be recorded (or
+  // undone) by the Admin, or by an Editor who made it.
+  const manage = canManage(data.access);
+  const paused = Boolean(data.settings.pausedAt);
+  const canPay = (fromId: string) => canRecord(data.access, paused) && mayEnterFor(data.access, fromId);
+  const canUndo = (rows: { createdByUserId?: string | null }[]) => rows.length > 0 && rows.every((row) => canTouchEntry(data.access, row, paused, closed));
   const holderId = mainAccountantId(data.settings, data.members);
   const holder = holderId ? view.memberById[holderId] : undefined;
   const holderName = holder ? shortName(holder.name) : "";
@@ -104,7 +112,7 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
     const pair = data.contributions.filter((row) => row.settleGroupId === id);
     const out = pair.find((row) => Number(row.amount) > 0);
     const back = pair.find((row) => Number(row.amount) < 0);
-    return { id, date: (out ?? back)?.date.slice(0, 10) ?? "", from: out?.groupMember?.name ?? view.memberById[out?.groupMemberId ?? ""]?.name ?? "", to: back?.groupMember?.name ?? view.memberById[back?.groupMemberId ?? ""]?.name ?? "", note: out?.note ?? "", how: out?.payMethod ?? back?.payMethod ?? null, amount: Number(out?.amount ?? 0) };
+    return { id, rows: pair, date: (out ?? back)?.date.slice(0, 10) ?? "", from: out?.groupMember?.name ?? view.memberById[out?.groupMemberId ?? ""]?.name ?? "", to: back?.groupMember?.name ?? view.memberById[back?.groupMemberId ?? ""]?.name ?? "", note: out?.note ?? "", how: out?.payMethod ?? back?.payMethod ?? null, amount: Number(out?.amount ?? 0) };
   });
 
   // The month's settlement on paper: each member's balance, then the payments.
@@ -140,6 +148,13 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
       toast.success(t("Payment undone"));
       router.refresh();
     });
+  }
+
+  // The two rows of the settle-up a card shows as paid.
+  function pairRows(card: SettleCard) {
+    if (card.state.kind !== "paid" && card.state.kind !== "received") return [];
+    const id = card.state.pair.settleGroupId;
+    return data.contributions.filter((row) => row.settleGroupId === id);
   }
 
   function undo(card: SettleCard) {
@@ -214,12 +229,27 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
             <Printer aria-hidden="true" />
             {t("Print statement")}
           </Button>
-          <Button variant="secondary" onClick={onRecordPayment} disabled={closed}>
-            <Plus aria-hidden="true" />
-            {t("Record payment")}
-          </Button>
+          {canRecord(data.access, paused) && (
+            <Button variant="secondary" onClick={onRecordPayment} disabled={closed}>
+              <Plus aria-hidden="true" />
+              {t("Record payment")}
+            </Button>
+          )}
         </div>
       </div>
+
+      {closed && data.closedRecord && (
+        <section aria-label={t("Closed")} className="flex items-center gap-3.5 rounded-2xl border border-line bg-surface-sunken px-4.5 py-3.5">
+          <span className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-surface text-ink-2">
+            <Lock className="size-4.5" aria-hidden="true" />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-[14px] font-semibold text-ink">{t("Closed on {date}", { date: formatDay(data.closedRecord.closedAt.slice(0, 10), "d MMM yyyy", fmt) })}</span>
+            <span className="text-[12.5px] text-ink-2">{t("Everything in {month} is locked. Balances carry on into {next}.", { month: monthLong, next: nextShort })}</span>
+          </span>
+          {manage && <ReopenMonthButton data={data} />}
+        </section>
+      )}
 
       {!closed && !ended && (
         <p className="flex items-center gap-2.5 rounded-[14px] border border-line bg-surface px-4.5 py-3 text-[13.5px] text-ink-2">
@@ -368,12 +398,13 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
                       </span>
                       {!closed &&
                         (done ? (
+                          canUndo(pairRows(card)) && 
                           <Button variant="ghost" size="sm" onClick={() => undo(card)} disabled={isPending}>
                             {busyCard && <Loader />}
                             {t("Undo")}
                           </Button>
                         ) : (
-                          <Button size="sm" onClick={() => pay(card)} disabled={isPending}>
+                          canPay(pays ? card.memberId : (holderId ?? "")) && <Button size="sm" onClick={() => pay(card)} disabled={isPending}>
                             {busyCard && <Loader />}
                             {t("Record payment")}
                           </Button>
@@ -431,7 +462,7 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
             <span className="truncate text-ink-2 max-md:hidden">{row.note || "—"}</span>
             <span className="text-right font-semibold text-ink">{money(row.amount)}</span>
             <span className="flex justify-end max-md:col-span-2">
-              {!closed && (
+              {!closed && canUndo(row.rows) && (
                 <button type="button" onClick={() => undoPayment(row.id)} disabled={isPending} aria-label={t("Undo this payment")} title={t("Undo")} className="flex size-8.5 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted hover:border-expense-line hover:bg-expense-soft hover:text-expense-fill disabled:opacity-50">
                   <Undo2 className="size-3.75" aria-hidden="true" />
                 </button>
@@ -454,9 +485,11 @@ export function FamilySettlementTab({ data, view, onRecordPayment }: FamilySettl
               {t("{month} is closed", { month: monthLong })}
             </span>
           ) : (
-            <Button onClick={() => setCloseOpen(true)} disabled={cards.length === 0} variant={ended ? "primary" : "secondary"}>
-              {t("Close {month}", { month: monthLong })}
-            </Button>
+            manage && (
+              <Button onClick={() => setCloseOpen(true)} disabled={cards.length === 0} variant={ended ? "primary" : "secondary"}>
+                {t("Close {month}", { month: monthLong })}
+              </Button>
+            )
           )}
         </section>
       </Card>

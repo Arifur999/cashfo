@@ -43,8 +43,7 @@ export const roleKey = (member: { isOwner?: boolean; role?: string }) => (member
 
 // A brand-new group (the v16 GroupSetup board): short steps, each done as
 // soon as the group has it, and how a balance is worked out with the
-// members' shares. The board's "Send access links" step waits for the
-// member portal, so it is left out. Skip opens the dashboard.
+// members' shares. Skip opens the dashboard.
 export function GroupSetup({ data, view, onAddMember, onAddContribution, onSkip }: GroupSetupProps) {
   const { t, fmt } = useLocale();
   const [checked, setChecked] = useStoredChoice<"no" | "yes">(`smartly-group-cats-checked:${data.businessId}`, ["no", "yes"], "no");
@@ -52,6 +51,14 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onSkip 
   const members = view.activeMembers;
   const firstNames = (list: typeof members) => namesList(t, list.map((member) => shortName(member.name)));
   const editors = members.filter((member) => !member.isOwner && member.role === "ACCOUNTANT");
+  // Access links: done when every member given access who has a mobile
+  // number can log in or has a link waiting (the board's rule).
+  const others = members.filter((member) => !member.isOwner);
+  const withPhone = others.filter((member) => !!member.phone && (member.role ?? "MEMBER") !== "MEMBER");
+  const logins = others.filter((member) => !!member.access?.login);
+  const waiting = others.filter((member) => !member.access?.login && !!member.access?.link);
+  const covered = withPhone.filter((member) => !!member.access?.login || !!member.access?.link);
+  const linksDone = withPhone.length > 0 && covered.length === withPhone.length;
   const budget = budgetFor(data.budgets, data.range);
   const deposits = data.contributions.filter((row) => row.kind === "DEPOSIT" && Number(row.amount) > 0);
   const categories = data.categories.filter((category) => !category.hidden);
@@ -70,6 +77,21 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onSkip 
       title: t("Choose an Editor"),
       body: editors.length > 0 ? t(editors.length === 1 ? "{names} adds money entries in their own name and keeps group cash." : "{names} add money entries in their own names and keep group cash.", { names: firstNames(editors) }) : t("Pick who records spending and keeps the group cash. You can change it any time."),
       actions: [{ label: t("Choose in Members"), href: tab("members") }],
+    },
+    {
+      done: linksDone,
+      title: t("Send access links"),
+      body:
+        withPhone.length === 0
+          ? t("Add a mobile number for a member, then send them an access link. They open it and set their own username and password.")
+          : [
+              logins.length > 0 ? t(logins.length === 1 ? "{count} member can log in: {names}." : "{count} members can log in: {names}.", { count: formatCount(logins.length, fmt), names: firstNames(logins) }) : "",
+              waiting.length > 0 ? t("Link sent, waiting: {names}.", { names: firstNames(waiting) }) : "",
+              linksDone ? "" : t("{count} still without a link.", { count: formatCount(withPhone.length - covered.length, fmt) }),
+            ]
+              .filter(Boolean)
+              .join(" "),
+      actions: [{ label: linksDone ? t("Manage access") : t("Send access links"), href: tab("members") }],
     },
     {
       done: budget !== null,
@@ -110,7 +132,7 @@ export function GroupSetup({ data, view, onAddMember, onAddContribution, onSkip 
               <h2 id="gs-title" className="truncate text-[18px] font-semibold text-ink">
                 {t("Set up {name}", { name: data.name })}
               </h2>
-              <span className="text-[13px] leading-normal text-ink-muted">{t("Five short steps. The dashboard fills in as soon as money is recorded.")}</span>
+              <span className="text-[13px] leading-normal text-ink-muted">{t("Six short steps. The dashboard fills in as soon as money is recorded.")}</span>
             </div>
             <button type="button" onClick={onSkip} className="h-9.5 shrink-0 rounded-full border border-input bg-surface px-3.5 text-[13px] font-semibold whitespace-nowrap text-ink hover:bg-hover max-sm:hidden">
               {t("Skip, go to dashboard")}
