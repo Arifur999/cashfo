@@ -604,7 +604,8 @@
 [data-app="habit"] {
   --emerald: var(--habit);
   --emerald-hover: #115e59;
-  --brand-ink: #115e59;
+  /* The boards' teal words fall back to the primary itself in light. */
+  --brand-ink: var(--habit);
   --mint-50: var(--habit-soft);
   --emerald-soft: var(--habit-soft);
   --emerald-line: var(--habit-line);
