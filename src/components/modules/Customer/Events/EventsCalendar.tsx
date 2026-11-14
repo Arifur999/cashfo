@@ -109,7 +109,7 @@ export function EventsCalendar({ events, people, ledger, today, words, readOnly,
               <ChevronRight className="size-4" aria-hidden="true" />
             </button>
           </div>
-          <div className="grid grid-cols-7 border-t border-line-card bg-table-head">
+          <div className="grid grid-cols-7 border-t border-head-rule bg-head-wash">
             {weekdays.map((weekday) => (
               <span key={weekday.label} className={cn("truncate px-2.5 py-2 text-caption font-semibold", weekday.weekend ? "text-warning" : "text-ink-muted")}>
                 {weekday.label}
@@ -128,7 +128,7 @@ export function EventsCalendar({ events, people, ledger, today, words, readOnly,
                   role="gridcell"
                   aria-selected={picked}
                   className={cn(
-                    "relative flex min-h-[86px] flex-col gap-1 border-t border-line-card px-1.5 pt-1.5 pb-2 max-md:min-h-16",
+                    "relative flex min-h-[86px] flex-col gap-1 border-t border-head-rule px-1.5 pt-1.5 pb-2 max-md:min-h-16",
                     index % 7 && "border-l",
                     inMonth ? "bg-surface" : "bg-table-head",
                     picked && "ring-2 ring-primary ring-inset",
@@ -143,7 +143,7 @@ export function EventsCalendar({ events, people, ledger, today, words, readOnly,
                   <span
                     className={cn(
                       "pointer-events-none relative flex h-6.5 min-w-6.5 items-center justify-center self-start rounded-full px-1.5 text-small",
-                      isToday ? "bg-primary font-bold text-primary-foreground" : inMonth ? "font-medium text-ink" : "font-medium text-ink-faint opacity-70",
+                      isToday ? "bg-primary font-bold text-primary-foreground" : inMonth ? "font-medium text-ink" : "font-medium text-day-out",
                     )}
                   >
                     {toLocaleDigits(String(Number(day.slice(8))), fmt)}
@@ -187,7 +187,7 @@ export function EventsCalendar({ events, people, ledger, today, words, readOnly,
             <UpcomingRow key={event.id} event={event} events={events} people={people} ledger={ledger} today={today} words={words} onOpen={() => onOpenEvent(event.id)} />
           ))}
           {dayEvents && dayEvents.length === 0 && (
-            <div className="flex flex-col items-center gap-2.5 border-t border-divider px-2 pt-6.5 pb-4.5 text-center">
+            <div className="flex flex-col items-center gap-2.5 border-t border-page px-2 pt-6.5 pb-4.5 text-center">
               <span className="text-body text-ink-muted">{t("Nothing on this day.")}</span>
               {!readOnly && (
                 <button type="button" onClick={() => onAddOn(selectedDay)} className="flex h-9 items-center gap-1.5 rounded-full bg-emerald-soft px-3.5 text-small font-semibold text-emerald hover:bg-mint-50">
@@ -197,7 +197,7 @@ export function EventsCalendar({ events, people, ledger, today, words, readOnly,
               )}
             </div>
           )}
-          {!dayEvents && side.length === 0 && <p className="border-t border-divider px-1.5 py-6 text-center text-body text-ink-muted">{t("Nothing coming up. Add the next invitation when it comes.")}</p>}
+          {!dayEvents && side.length === 0 && <p className="border-t border-page px-1.5 py-6 text-center text-body text-ink-muted">{t("Nothing coming up. Add the next invitation when it comes.")}</p>}
         </section>
       </div>
     </>
@@ -226,7 +226,7 @@ function UpcomingRow({ event, events, people, ledger, today, words, onOpen }: { 
             : t("Gift not decided");
   const soon = days >= 0 && days <= 7;
   return (
-    <button type="button" onClick={onOpen} className="flex items-start gap-3 border-t border-divider px-1.5 py-3 text-left text-ink hover:bg-row-hover">
+    <button type="button" onClick={onOpen} className="flex items-start gap-3 border-t border-page px-1.5 py-3 text-left text-ink hover:bg-row-hover">
       <span className={cn("flex w-11.5 shrink-0 flex-col items-center rounded-[12px] py-1.5", look.bg, look.fg)}>
         <span className="text-[18px] leading-[1.1] font-bold">{toLocaleDigits(String(Number(event.date.slice(8))), fmt)}</span>
         <span className="text-[11px] font-semibold">{formatDay(event.date, "MMM", fmt)}</span>
@@ -235,7 +235,7 @@ function UpcomingRow({ event, events, people, ledger, today, words, onOpen }: { 
         <span className="truncate text-body font-semibold">{event.title}</span>
         <span className="truncate text-[12.5px] text-ink-muted">{[words.weekday(event.date), event.time && words.clock(event.time), event.place].filter(Boolean).join(" · ")}</span>
         <span className="flex flex-wrap items-center gap-1.5">
-          <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-semibold", soon ? "bg-warning-soft text-warning" : "bg-surface-sunken text-ink-soft")}>{words.when(days)}</span>
+          <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-semibold", soon ? "bg-warning-soft text-warning" : "bg-page text-ink-2")}>{words.when(days)}</span>
           <span className={cn("text-caption", gave.length ? "text-brand-ink" : "text-ink-muted")}>{gift}</span>
         </span>
       </span>

@@ -56,7 +56,7 @@ export function SearchBox({ value, onChange, label, className }: { value: string
         placeholder={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9.5 w-full rounded-[10px] border border-input bg-surface pr-3 pl-9 text-[14px] text-ink outline-none placeholder:text-ink-faint focus:border-emerald focus:shadow-[0_0_0_3px_var(--mint-50)]"
+        className="h-9.5 w-full rounded-[10px] border border-input bg-surface pr-3 pl-9 text-[14px] text-ink outline-none placeholder:text-ink-faint focus:border-primary-ink focus:shadow-[0_0_0_3px_var(--mint-50)]"
       />
     </div>
   );

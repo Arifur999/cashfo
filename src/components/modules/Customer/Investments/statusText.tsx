@@ -36,13 +36,13 @@ export function StatusChip({ figures }: { figures: InvestmentFigures }) {
 }
 
 // "15 November 2026 · Tk 15,000", "Last profit 20 Sep 2026", "Closed on …".
-export function NextPayout({ figures: f }: { figures: InvestmentFigures }) {
+export function NextPayout({ figures: f, pattern }: { figures: InvestmentFigures; pattern?: string }) {
   const { t } = useLocale();
   const { money, day } = useInvestments();
-  if (f.closed) return <>{t("Closed on {date}", { date: day(dayOf(f.investment.closedAt)) })}</>;
-  if (!f.step) return <>{f.last ? t("Last profit {date}", { date: day(dayOf(f.last.date)) }) : t("No profit yet")}</>;
+  if (f.closed) return <>{t("Closed on {date}", { date: day(dayOf(f.investment.closedAt), pattern) })}</>;
+  if (!f.step) return <>{f.last ? t("Last profit {date}", { date: day(dayOf(f.last.date), pattern) }) : t("No profit yet")}</>;
   if (!f.next) return <>{t("No more payouts")}</>;
-  return <>{day(f.next) + (f.per ? ` · ${money(f.per)}` : "")}</>;
+  return <>{day(f.next, pattern) + (f.per ? ` · ${money(f.per)}` : "")}</>;
 }
 
 // "Tk 15,000 a month", or how profit comes when the amount isn't fixed.

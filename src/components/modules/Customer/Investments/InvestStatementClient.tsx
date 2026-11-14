@@ -70,7 +70,7 @@ export function InvestStatementClient({ selectedId }: { selectedId: string | nul
             value={inv.id}
             onChange={(event) => router.replace(statementHref(event.target.value), { scroll: false })}
             aria-label={t("Statement for")}
-            className="select-chevron h-10.5 w-full max-w-105 cursor-pointer rounded-[12px] border border-input bg-surface pl-3 text-[14px] font-semibold text-ink outline-none focus:border-emerald"
+            className="select-chevron h-10.5 w-full max-w-105 cursor-pointer rounded-[12px] border border-input bg-surface pl-3 text-[14px] font-semibold text-ink outline-none focus:border-primary-ink"
           >
             {sorted.map((f) => (
               <option key={f.investment.id} value={f.investment.id}>
@@ -177,8 +177,8 @@ export function InvestStatementClient({ selectedId }: { selectedId: string | nul
                 const lk = ENTRY_LOOK[e.type];
                 const sign = ENTRY_SIGN[e.type];
                 return (
-                  <div key={e.id} className={cn(LEDGER_COLS, "min-h-13 border-b border-card-rule px-5 py-1.5 text-[13.5px] tabular-nums")}>
-                    <span className="text-[13px] whitespace-nowrap text-ink-2">{day(dayOf(e.date))}</span>
+                  <div key={e.id} className={cn(LEDGER_COLS, "min-h-13 border-b border-sunken px-5 py-1.5 text-[13.5px] tabular-nums")}>
+                    <span className="text-[13px] whitespace-nowrap text-ink-2">{day(dayOf(e.date), "d MMM yy")}</span>
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span>
                         <Chip className={lk.chip}>{t(lk.label)}</Chip>
@@ -219,14 +219,14 @@ export function InvestStatementClient({ selectedId }: { selectedId: string | nul
           <div className="flex flex-col px-3 pb-3">
             {rows.map((s) => {
               const tone = s.state === "got" ? STATUS_CHIP.ok : s.state === "late" ? STATUS_CHIP.late : STATUS_CHIP.open;
-              const sub = s.received ? t("Received {date}", { date: day(dayOf(s.received.date)) }) : s.state === "up" ? (s.soon ? t("Coming soon@@payout") : t("Upcoming")) : t("Not received yet");
+              const sub = s.received ? t("Received {date}", { date: day(dayOf(s.received.date), "d MMMM yyyy") }) : s.state === "up" ? (s.soon ? t("Coming soon@@payout") : t("Upcoming")) : t("Not received yet");
               return (
-                <div key={s.day} className="flex items-center gap-3 border-b border-card-rule px-2 py-2.25 tabular-nums">
+                <div key={s.day} className="flex items-center gap-3 border-b border-sunken px-2 py-2.25 tabular-nums">
                   <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full", tone)}>
                     <Glyph d={s.state === "got" ? IC.check : s.state === "late" ? IC.alert : IC.clock} size={14} stroke={2.5} />
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-px">
-                    <span className="text-[13.5px] font-semibold">{day(s.day)}</span>
+                    <span className="text-[13.5px] font-semibold">{day(s.day, "d MMM yy")}</span>
                     <span className="text-[12px] text-ink-muted">{sub}</span>
                   </span>
                   <span className={cn("text-[13.5px] font-semibold whitespace-nowrap", s.state === "got" ? "text-tint-green-ink" : s.state === "late" ? "text-loss-ink" : "text-ink-2")}>{s.amount ? money(s.amount) : "–"}</span>

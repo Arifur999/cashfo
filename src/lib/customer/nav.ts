@@ -263,7 +263,7 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: "Profile & payouts", href: "/referrals/profile" },
         ],
       },
-      { label: "Password Management", href: "/password-manager", icon: "vault", tone: "vault" },
+      { label: "Password Management", heading: "Password Manager", href: "/password-manager", icon: "vault", tone: "vault" },
       // Zakat calculator: the year's zakat from the workspace's own records.
       { label: "Zakat", heading: "Zakat calculator", href: "/zakat", icon: "zakat" },
     ],

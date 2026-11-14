@@ -110,7 +110,7 @@ export function WalletPicker({ label, size = "xl", balanceLabel = "Balance", ton
             aria-haspopup="listbox"
             aria-describedby={describedBy}
             disabled={loading || all.length === 0}
-            className={cn(invalid ? "border-expense" : "border-input", "flex min-w-0 items-center gap-3 rounded-field border bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : size === "field" ? "h-12 px-3" : size === "popup" ? "h-11.5 rounded-[12px] px-3" : "h-13")}
+            className={cn(invalid ? "border-expense" : "border-input", "flex min-w-0 items-center gap-3 rounded-field border bg-surface px-3.5 text-left transition-[border-color,box-shadow] disabled:opacity-60 data-open:border-focus-ring data-open:focus-halo", size === "2xl" ? "h-16" : size === "xl" ? "h-14" : size === "field" ? "h-12 pr-3 pl-4" : size === "popup" ? "h-11.5 rounded-[12px] px-3" : "h-13")}
           >
             {selected && (size === "compact" || size === "field") ? (
               <>

@@ -43,7 +43,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
   const view = useGoalView({ goal, color, currency, today, canManage, canMoveTo, noWallet });
   const { money } = view;
   const tone = view.closed ? WITHDRAWN_COLOR : color;
-  const day = (value: string) => formatDate(value, "d MMMM yyyy", fmt);
+  const day = (value: string) => formatDate(value, "d MMM yyyy", fmt);
   const month = formatDate(today, "MMMM", fmt);
   const progress = monthProgress(goal, today);
   const pc = goal.pace;
@@ -88,7 +88,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
     return [first, second, third];
   })();
 
-  const button = "flex h-10 shrink-0 items-center gap-1.75 rounded-[12px] px-3 text-[13px] font-semibold whitespace-nowrap text-white transition-opacity disabled:opacity-50 pointer-coarse:h-11 [&_svg]:size-3.75";
+  const button = "flex h-10 shrink-0 items-center gap-1.75 rounded-[12px] px-3 text-[13px] font-semibold whitespace-nowrap text-white transition-opacity disabled:opacity-50 pointer-coarse:h-11 [&_svg]:size-3.5";
   const savedLabel = view.closed ? t("Taken out") : view.completed ? t("Saved in full") : t("Saved so far");
 
   return (
@@ -181,7 +181,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
                     <stat.icon className="size-2.75" strokeWidth={3} />
                   </span>
                 )}
-                <span className={cn("text-[13.5px] leading-[1.25] font-bold [overflow-wrap:anywhere] tabular-nums", stat.tone)}>{stat.value}</span>
+                <span className={cn("text-[13.5px] leading-[1.25] font-bold [overflow-wrap:anywhere] tabular-nums", stat.tone)}>{stat.value.replace(/\u00a0/g, " ")}</span>
               </span>
               {stat.bar && (
                 <span title={stat.bar.title} className="mt-0.5 block h-1 overflow-hidden rounded-full bg-line-card">
@@ -210,7 +210,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
               type="button"
               onClick={() => onAction("add")}
               disabled={busy}
-              className={cn(button, "px-4", view.behind && "border-[1.5px] bg-surface")}
+              className={cn(button, view.behind && "border-[1.5px] bg-surface")}
               style={view.behind ? { borderColor: shade(tone, 0.55), color: shade(tone, -0.2) } : colorButton(tone)}
             >
               <Plus strokeWidth={2.5} aria-hidden="true" />
@@ -224,7 +224,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
             </button>
           )}
           {canManage && view.paused && (
-            <button type="button" onClick={() => onAction("resume")} disabled={busy} className={button} style={colorButton(tone)}>
+            <button type="button" onClick={() => onAction("resume")} disabled={busy} className={cn(button, "px-4.5 [&_svg]:size-3.25")} style={colorButton(tone)}>
               <Play className="fill-current" strokeWidth={0} aria-hidden="true" />
               {t("Resume goal")}
             </button>
@@ -234,7 +234,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
               type="button"
               onClick={() => onAction("withdraw")}
               disabled={busy}
-              className={button}
+              className={cn(button, "px-4.5")}
               style={{ background: "linear-gradient(135deg, var(--success) 0%, var(--success-ink) 100%)", boxShadow: "0 6px 14px -6px color-mix(in srgb, var(--success-ink) 60%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.18)" }}
             >
               <ArrowDown strokeWidth={2.5} aria-hidden="true" />
@@ -245,11 +245,11 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
           <button
             type="button"
             onClick={() => onAction("details")}
-            className="flex h-10 items-center gap-2 rounded-[12px] pr-1.5 pl-3 text-[13px] font-semibold pointer-coarse:h-11"
-            style={{ color: view.closed ? "var(--brand-ink)" : shade(tone, -0.18) }}
+            className="flex h-10 items-center gap-2 rounded-[12px] pr-1.5 pl-3 text-[13px] font-semibold text-(--link) pointer-coarse:h-11 dark:text-(--link-dark)"
+            style={{ "--link": view.closed ? "var(--emerald)" : shade(tone, -0.18), "--link-dark": view.closed ? "var(--emerald-ink)" : `color-mix(in srgb, ${tone} 68%, white)` } as React.CSSProperties}
           >
             {t("Details")}
-            <span aria-hidden="true" className="flex size-7 items-center justify-center rounded-full" style={{ background: shade(tone, 0.88) }}>
+            <span aria-hidden="true" className="flex size-7 items-center justify-center rounded-full bg-(--chip) dark:bg-(--chip-dark)" style={{ "--chip": shade(tone, 0.88), "--chip-dark": `color-mix(in srgb, ${tone} 12%, var(--surface))` } as React.CSSProperties}>
               <ArrowRight className="size-3.5" strokeWidth={2.5} />
             </span>
           </button>

@@ -9,13 +9,14 @@ export type ZakatDateMode = "RAMADAN" | "MUHARRAM" | "CUSTOM";
 export type ZakatDebtMode = "YEAR" | "FULL";
 
 export interface ZakatLine {
-  // "account:<id>", "asset:<id>", "contact:<id>" or "extra:<id>".
+  // "account:<id>", "asset:<id>", "investment:<id>", "contact:<id>" or "extra:<id>".
   key: string;
-  source: "ACCOUNT" | "ASSET" | "CONTACT" | "EXTRA";
+  source: "ACCOUNT" | "ASSET" | "INVESTMENT" | "CONTACT" | "EXTRA";
   id: string;
   name: string;
-  // An account's subtype or "•••• 7890"; an asset's category; a contact's
-  // category (BUSINESS or LOAN); null for a line added by hand.
+  // An account's subtype or "•••• 7890"; an asset's category; an
+  // investment's kind; a contact's category (BUSINESS or LOAN); null for a
+  // line added by hand.
   detail: string | null;
   amount: string;
   counted: boolean;
@@ -32,6 +33,10 @@ export interface ZakatLine {
   // An asset not counted (land, a flat, a car): true once it was bought to
   // sell and so moved under Investments.
   forSale?: boolean;
+  // An investment's maturity day, null when it has none.
+  maturesOn?: string | null;
+  // A wallet's number as "•••• 7890" (its subtype is the detail).
+  number?: string | null;
 }
 
 export interface ZakatStep {

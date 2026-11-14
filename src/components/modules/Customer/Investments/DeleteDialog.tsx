@@ -29,12 +29,12 @@ export function DeleteDialog({ target, onClose, onConfirm, busy }: { target: Del
   }
   return (
     <AlertDialog open={!!target} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="flex w-110 max-w-[calc(100vw-32px)] flex-col gap-3.5 rounded-[20px] border-0 bg-surface p-6 leading-[normal] text-ink shadow-[0_24px_60px_rgba(18,32,29,0.28)] ring-0 sm:max-w-[calc(100vw-32px)]">
+      <AlertDialogContent data-scrim="board" className="flex w-110 max-w-[calc(100vw-32px)] flex-col gap-3.5 rounded-[20px] border-0 bg-surface p-6 leading-[normal] text-ink shadow-[0_24px_60px_rgba(18,32,29,0.28)] ring-0 sm:max-w-[calc(100vw-32px)]">
         <span className="flex size-11.5 items-center justify-center rounded-[14px] bg-expense-soft text-expense-fill">
           <Glyph d={IC.trash} size={22} />
         </span>
-        <AlertDialogTitle className="m-0 text-[18px] font-bold text-ink">{title}</AlertDialogTitle>
-        <AlertDialogDescription data-i18n-skip="" className="m-0 text-[13.5px] leading-[1.55] text-ink-soft">
+        <AlertDialogTitle className="m-0 text-[18px] font-bold! text-ink">{title}</AlertDialogTitle>
+        <AlertDialogDescription data-i18n-skip="" className="m-0 text-[13.5px] leading-[1.55] text-ink-2">
           {body}
         </AlertDialogDescription>
         <div className="mt-1 flex justify-end gap-2.5">

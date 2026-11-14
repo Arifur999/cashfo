@@ -289,7 +289,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
   return (
     <PageFrame className="gap-5 leading-[normal]">
       {printing && ready && (
-        <PrintPreview subtitle={`A4 · ${accountName} · ${periodLabel}`} onClose={() => setPrinting(null)}>
+        <PrintPreview subtitle={`A4 · ${accountName} · ${periodLabel}`} onClose={() => setPrinting(null)} overlayClassName="bg-print-bar/88" articleClassName="sm:min-h-215">
           <LedgerStatement
             account={account}
             rows={printing.rows}
@@ -405,7 +405,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
             <Card role="group" aria-label={t("Opening balance plus money in, minus money out, plus transfers, equals closing balance")} className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 md:py-4.5 xl:flex xl:items-stretch xl:gap-2.5">
               <Term label={t("Opening balance")} value={shown(ledger.balanceBroughtForward)} />
               <Operator>+</Operator>
-              <Term label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalIn, currency, fmt)} className={money ? "text-emerald" : undefined} />
+              <Term label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalIn, currency, fmt)} className={money ? "text-emerald dark:text-emerald-ink" : undefined} />
               <Operator>−</Operator>
               <Term label={money ? t("Money out@@wallet") : t("Decrease@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalOut, currency, fmt)} className={money ? "text-expense" : undefined} />
               {showTransfers && (
@@ -451,14 +451,14 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                           onClick={() => narrow({ dir: option.value ?? undefined })}
                           className={cn("flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold whitespace-nowrap", on ? "bg-surface text-ink shadow-[0_1px_2px_rgba(18,32,29,0.12)] dark:bg-surface-raised" : "text-ink-2 hover:text-ink")}
                         >
-                          {option.icon && createElement(option.icon, { className: cn("size-3.25", option.value === "in" ? "text-income" : "text-expense"), strokeWidth: 2.5, "aria-hidden": true })}
+                          {option.icon && createElement(option.icon, { className: cn("size-3.25", option.value === "in" ? "text-tint-green-ink" : "text-expense"), strokeWidth: 2.5, "aria-hidden": true })}
                           {t(option.label)}
                           <span className="text-[11.5px] font-medium text-ink-faint">{formatCount(option.count, fmt)}</span>
                         </button>
                       );
                     })}
                   </div>
-                  <NativeSelect size="sm" aria-label={t("Type")} value={filters.kind ?? ""} onChange={(event) => narrow({ kind: event.target.value || undefined })} frameClassName="h-9.5 min-w-37.5 rounded-full" className="rounded-full pl-3.5 text-[13px]">
+                  <NativeSelect size="sm" aria-label={t("Type")} value={filters.kind ?? ""} onChange={(event) => narrow({ kind: event.target.value || undefined })} frameClassName="h-9.5 min-w-37.5 rounded-full" className="rounded-full pr-8 pl-3.5 text-[13px]">
                     <option value="">{t("All types")}</option>
                     {(filters.kind && !kinds.includes(filters.kind) ? [...kinds, filters.kind] : kinds).map((kind) => (
                       <option key={kind} value={kind}>
@@ -477,7 +477,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                       onKeyDown={(event) => event.key === "Escape" && setQuery("")}
                       maxLength={80}
                       placeholder={t("Search entries")}
-                      className="h-9 min-w-0 flex-1 bg-transparent text-[13.5px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+                      className="h-9 min-w-0 flex-1 bg-transparent px-0.5 text-[13.5px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
                     />
                     {query && (
                       <button type="button" onClick={() => setQuery("")} aria-label={t("Clear search")} title={t("Clear search")} className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-2">
@@ -501,7 +501,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                 )
               }
             >
-              <ListHead showOnPhone columns={COLUMNS}>
+              <ListHead showOnPhone columns={COLUMNS} className="h-9">
                 <ListHeadCell>#</ListHeadCell>
                 <ListHeadCell>{t("Date")}</ListHeadCell>
                 <ListHeadCell>{t("Received / Sent")}</ListHeadCell>
@@ -533,8 +533,8 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                     <ListCell className="text-small text-ink-faint">{formatCount(lines.firstRow + index, fmt)}</ListCell>
                     <ListCell className="whitespace-nowrap text-ink-2">{formatDate(row.date, undefined, fmt)}</ListCell>
                     <ListCell>
-                      <ListRowButton onClick={() => setOpened({ row, kind, direction })} aria-label={t("Open details")} className={cn("inline-flex items-center gap-1.5 text-[13px] font-semibold whitespace-nowrap", isIn ? "text-income" : "text-expense")}>
-                        <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", isIn ? "bg-income-soft" : "bg-expense-soft")}>
+                      <ListRowButton onClick={() => setOpened({ row, kind, direction })} aria-label={t("Open details")} className={cn("inline-flex items-center gap-1.5 text-[13px] font-semibold whitespace-nowrap", isIn ? "text-tint-green-ink" : "text-expense")}>
+                        <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", isIn ? "bg-tint-green" : "bg-expense-soft")}>
                           {isIn ? <ArrowDownLeft className="size-3.25" strokeWidth={2.5} aria-hidden="true" /> : <ArrowUpRight className="size-3.25" strokeWidth={2.5} aria-hidden="true" />}
                         </span>
                         {t(isIn ? "Received" : "Sent")}
@@ -558,7 +558,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                       <span className="truncate text-ink-2">{row.chargeFor ? t("Transfer fee · {name}", { name: row.chargeFor }) : row.description ? t(row.description) : "—"}</span>
                       {row.referenceNo && <span className="truncate text-[11.5px] text-ink-faint">{row.referenceNo}</span>}
                     </ListCell>
-                    <ListCell align="end" className={cn("font-semibold whitespace-nowrap", isIn ? "text-income" : "text-expense")}>
+                    <ListCell align="end" className={cn("font-semibold whitespace-nowrap", isIn ? "text-tint-green-ink" : "text-expense")}>
                       {hidden ? maskedMoney(symbol) : `${isIn ? "+" : "−"} ${formatCurrency(row.amount, currency, fmt)}`}
                     </ListCell>
                     <ListCell align="end" className="font-semibold whitespace-nowrap">
@@ -581,7 +581,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
 // A balance line on the table-head band, under the Balance column.
 function BalanceLine({ label, kind, value, strong = false }: { label: string; kind: StatementLine["kind"]; value: string; strong?: boolean }) {
   return (
-    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("h-11.5 py-0 text-body", strong && "h-auto min-h-13.5 py-1.5")}>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("h-11.75 py-0 text-body", strong && "h-auto min-h-13.5 py-1.5")}>
       <ListCell aria-hidden="true" />
       <ListCell aria-colspan={6} className="col-span-6">
         <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-2")}>{label}</span>

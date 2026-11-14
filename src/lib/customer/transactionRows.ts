@@ -340,13 +340,15 @@ export function categoryTransactionsHref(type: "INCOME" | "EXPENSE", category: s
 
 // The feature that keeps its own record of a posting, so the posting can
 // only change there: an asset bought or sold, a savings goal's deposit or
-// withdrawal, a referral payout. Read from what the backend writes on them.
-export type OwningFeature = "asset" | "savings" | "referral";
+// withdrawal, a referral payout, an investment's money. Read from what the
+// backend writes on them.
+export type OwningFeature = "asset" | "savings" | "referral" | "investment";
 
 export function owningFeature(transaction: Pick<Transaction, "description" | "entries">): OwningFeature | null {
   const description = transaction.description ?? "";
   if (/^Asset (purchase|sale):/.test(description) || transaction.entries.some((e) => e.categoryId === "Asset Sale")) return "asset";
   if (/^Savings (contribution|withdrawal):/.test(description) || transaction.entries.some((e) => e.account?.accountSubtype === "savings")) return "savings";
   if (description === "Referral Program withdrawal" || transaction.entries.some((e) => e.categoryId === "Referral Bonus")) return "referral";
+  if (/^Investment( profit| return)?:/.test(description) || transaction.entries.some((e) => e.categoryId === "Investment profit")) return "investment";
   return null;
 }

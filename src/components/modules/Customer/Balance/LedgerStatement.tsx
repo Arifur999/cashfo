@@ -35,7 +35,7 @@ interface LedgerStatementProps {
   preferredLanguage: LanguagePreference;
 }
 
-const CELL = "border-b border-line px-2 py-1.75 align-top";
+const CELL = "border-b border-line px-2 py-1.75 align-middle";
 const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] font-semibold tracking-[0.04em] text-ink-2 uppercase";
 
 // The ledger on paper (board: Ledger — Print preview): who it is for and
@@ -56,7 +56,7 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
   const digits = (account.accountNumber ?? "").replace(/\D/g, "");
   const cells = [
     { label: t("Opening balance"), value: balanceText(figures.opening, currency, fmt), tone: "text-ink" },
-    { label: t("Money in@@wallet"), value: formatCurrency(figures.moneyIn, currency, fmt), tone: "text-income" },
+    { label: t("Money in@@wallet"), value: formatCurrency(figures.moneyIn, currency, fmt), tone: "text-tint-green-ink" },
     { label: t("Money out@@wallet"), value: formatCurrency(figures.moneyOut, currency, fmt), tone: "text-expense" },
     { label: t("Transfers"), value: formatSignedCurrency(Number(figures.transfers), currency, fmt), tone: "text-info" },
     { label: t("Closing balance"), value: balanceText(figures.closing, currency, fmt), tone: "text-ink" },
@@ -94,31 +94,21 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
         </div>
       </div>
 
-      <div className="grid grid-cols-5 overflow-hidden rounded-md border border-line-strong">
+      <div className="grid grid-cols-5 overflow-hidden rounded-[6px] border border-line-strong">
         {cells.map((cell, index) => (
           <div key={cell.label} className={cn("flex flex-col gap-0.75 px-3 py-2.5", index < 4 && "border-r border-line", index === 4 && "bg-strip")}>
             <span className="text-[10.5px] text-ink-muted">{cell.label}</span>
-            <span className={cn("text-[13.5px] font-bold tabular-nums wrap-anywhere", cell.tone)}>{cell.value}</span>
+            <span className={cn("text-[14px] font-bold tabular-nums wrap-anywhere", cell.tone)}>{cell.value}</span>
           </div>
         ))}
       </div>
 
       {capped && <p className="-mt-2 text-caption text-ink-2">{t("This copy holds the period's first {count} entries.", { count: formatCount(rows.length, fmt) })}</p>}
 
-      <table className="w-full table-fixed border-collapse text-[11.5px] tabular-nums">
-        <colgroup>
-          <col className="w-[5%]" />
-          <col className="w-[12%]" />
-          <col className="w-[13%]" />
-          <col className="w-[10%]" />
-          <col />
-          <col className="w-[12%]" />
-          <col className="w-[12%]" />
-          <col className="w-[13%]" />
-        </colgroup>
+      <table className="w-full border-collapse text-[11.5px] tabular-nums">
         <thead>
           <tr>
-            <th className={HEAD}>#</th>
+            <th className={cn(HEAD, "w-5.5")}>#</th>
             <th className={HEAD}>{t("Date")}</th>
             <th className={HEAD}>{t("Type")}</th>
             <th className={HEAD}>{t("Ref.")}</th>
@@ -149,11 +139,11 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
                 <td className={cn(CELL, "text-ink-muted")}>{formatCount(index + 1, fmt)}</td>
                 <td className={cn(CELL, "whitespace-nowrap")}>{formatDate(row.date, undefined, fmt)}</td>
                 <td className={CELL}>{t(meta.label)}</td>
-                <td className={cn(CELL, "break-all text-ink-muted")}>{row.referenceNo ?? ""}</td>
+                <td className={cn(CELL, "break-all text-ink-muted")}>{row.referenceNo || "—"}</td>
                 <td className={cn(CELL, "wrap-break-word")}>{description || "—"}</td>
-                <td className={cn(CELL, "text-right")}>{direction === "in" ? formatCurrency(row.amount, currency, fmt) : "—"}</td>
-                <td className={cn(CELL, "text-right")}>{direction === "out" ? formatCurrency(row.amount, currency, fmt) : "—"}</td>
-                <td className={cn(CELL, "text-right font-semibold")}>{balanceText(row.runningBalance, currency, fmt)}</td>
+                <td className={cn(CELL, "text-right whitespace-nowrap")}>{direction === "in" ? formatCurrency(row.amount, currency, fmt) : "—"}</td>
+                <td className={cn(CELL, "text-right whitespace-nowrap")}>{direction === "out" ? formatCurrency(row.amount, currency, fmt) : "—"}</td>
+                <td className={cn(CELL, "text-right font-semibold whitespace-nowrap")}>{balanceText(row.runningBalance, currency, fmt)}</td>
               </tr>
             );
           })}
@@ -169,9 +159,9 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
             <td className={cn(CELL, "border-b-[1.5px] border-ink")} colSpan={4}>
               {t("Closing balance")}
             </td>
-            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right")}>{formatCurrency(totals.in, currency, fmt)}</td>
-            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right")}>{formatCurrency(totals.out, currency, fmt)}</td>
-            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right")}>{balanceText(figures.closing, currency, fmt)}</td>
+            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right whitespace-nowrap")}>{formatCurrency(totals.in, currency, fmt)}</td>
+            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right whitespace-nowrap")}>{formatCurrency(totals.out, currency, fmt)}</td>
+            <td className={cn(CELL, "border-b-[1.5px] border-ink text-right whitespace-nowrap")}>{balanceText(figures.closing, currency, fmt)}</td>
           </tr>
         </tbody>
       </table>

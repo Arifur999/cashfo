@@ -28,14 +28,14 @@ interface NewGroupDialogProps {
 // The 9 categories every new group starts with (the board's list). A family
 // splits the bazar by shares; every other kind shares everything equally.
 const STARTER_CATEGORIES: { name: string; icon: string; color: string; family: GroupSplit }[] = [
-  { name: "Bazar & grocery", icon: "shopping-cart", color: "teal", family: "SHARES" },
-  { name: "Rent", icon: "house", color: "blue", family: "EQUAL" },
-  { name: "Utility bills", icon: "zap", color: "orange", family: "EQUAL" },
-  { name: "Medicine", icon: "pill", color: "pink", family: "EQUAL" },
-  { name: "Maid", icon: "sparkles", color: "violet", family: "EQUAL" },
-  { name: "Internet", icon: "wifi", color: "blue", family: "EQUAL" },
-  { name: "Education", icon: "book-open", color: "amber", family: "EQUAL" },
-  { name: "Transport", icon: "car", color: "teal", family: "EQUAL" },
+  { name: "Bazar & grocery", icon: "shopping-cart", color: "green", family: "SHARES" },
+  { name: "Rent", icon: "house", color: "orange", family: "EQUAL" },
+  { name: "Utility bills", icon: "zap", color: "blue", family: "EQUAL" },
+  { name: "Medicine", icon: "pill", color: "cyan", family: "EQUAL" },
+  { name: "Maid", icon: "sparkles", color: "pink", family: "EQUAL" },
+  { name: "Internet", icon: "wifi", color: "violet", family: "EQUAL" },
+  { name: "Education", icon: "book-open", color: "yellow", family: "EQUAL" },
+  { name: "Transport", icon: "car", color: "lime", family: "EQUAL" },
   { name: "Other", icon: "package", color: "gray", family: "EQUAL" },
 ];
 const KINDS: GroupKind[] = ["FAMILY", "MESS", "TRIP", "OFFICE"];

@@ -45,7 +45,7 @@ export function PasswordGenerator({ settings, onChange }: PasswordGeneratorProps
   }
 
   return (
-    <section aria-label={t("Password options")} className="flex flex-col gap-2.5 rounded-xl border border-divider bg-strip px-3.5 py-3">
+    <section aria-label={t("Password options")} className="mt-1 flex flex-col gap-2.5 rounded-[12px] border border-line-card bg-table-head px-3.5 py-3 leading-[normal]">
       <div className="flex items-center gap-3">
         {/* The slider's thumb carries its name; this is the length on show. */}
         <span aria-hidden="true" className="w-21.5 text-[13.5px] font-medium whitespace-nowrap text-ink tabular-nums">

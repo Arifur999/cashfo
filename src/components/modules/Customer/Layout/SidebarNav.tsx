@@ -93,10 +93,13 @@ export const NAV_ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
 // working out which page is open: a staff member who opens Journal entry by
 // its address is on Journal entry, not on the nearest row the menu shows.
 export function useNavSections({ allRoles = false }: { allRoles?: boolean } = {}) {
-  const { activeBusiness } = useAuth();
+  const { user, activeBusiness } = useAuth();
   const loansOn = useFeature("loan_management");
   const canManage = activeBusiness?.role === "OWNER" || activeBusiness?.role === "ACCOUNTANT";
-  return visibleNavSections({ workspaceType: activeBusiness?.type, isFeatureOn: (key) => (key === "loan_management" ? loansOn : true), canManage: allRoles || canManage });
+  const sections = visibleNavSections({ workspaceType: activeBusiness?.type, isFeatureOn: (key) => (key === "loan_management" ? loansOn : true), canManage: allRoles || canManage });
+  // A group member's portal login sees Group Expense alone (AppSidebar board).
+  if (!user.portalOnly) return sections;
+  return sections.map((section) => ({ ...section, items: section.items.filter((item) => item.href === GROUP_NAV_HREF) })).filter((section) => section.items.length > 0);
 }
 
 // The page on screen, as the menus name it, and which app it is in. A page
@@ -279,7 +282,10 @@ const SCROLLER = "relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none]
 // time.
 export function MoneyMenu({ collapsed = false, touch = false, className, style, navRef }: MenuProps) {
   const { t } = useLocale();
+  const { user } = useAuth();
   const sections = menuSections(useNavSections(), "money");
+  // A portal login has no account pages: Settings and the rest stay off.
+  const foot = user.portalOnly ? [] : NAV_FOOT;
   const { location } = useNavLocation();
   const { isExpanded, toggle } = useExpandedGroups(location);
   const groupPages = useGroupPages();
@@ -329,7 +335,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
               "flex min-w-0 flex-1 items-center gap-2.5 rounded-md pl-3 text-body whitespace-nowrap transition-colors",
               touch ? "h-11" : "h-9.5",
               subs ? "pr-9" : "pr-2.5",
-              self ? "bg-emerald-soft font-semibold text-emerald" : inGroup ? "font-semibold text-ink hover:bg-surface-sunken" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
+              self ? "bg-nav-on font-semibold text-emerald" : inGroup ? "font-semibold text-ink hover:bg-surface-sunken" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
             )}
           >
             <Icon className={cn("size-4.5 shrink-0", self || inGroup ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
@@ -358,7 +364,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
                 className={cn(
                   "relative flex items-center rounded-[10px] px-2.5 text-[13.5px] whitespace-nowrap transition-colors",
                   touch ? "h-10" : "h-8",
-                  sub.on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-soft hover:bg-surface-sunken hover:text-ink",
+                  sub.on ? "bg-nav-on font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
                 )}
               >
                 <span className="min-w-0 truncate">{t(sub.label)}</span>
@@ -387,7 +393,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
               // The board names no section here: the space between says it.
               section.label && <span className="sr-only">{t(section.label)}</span>
             )}
-            {(index === sections.length - 1 ? [...section.items, ...NAV_FOOT] : section.items).map(renderItem)}
+            {(index === sections.length - 1 ? [...section.items, ...foot] : section.items).map(renderItem)}
           </div>
         ))}
       </div>

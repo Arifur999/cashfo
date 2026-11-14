@@ -171,7 +171,7 @@ export function entrySource(row: Pick<LedgerRow, "transactionId" | "contactId" |
       return { href: "/balance/transfer", label: "Open in Transfers" };
     case "SAVINGS":
     case "SAVINGS_WITHDRAW":
-      return { href: "/savings-goals/dashboard", label: "Open in Savings Goals" };
+      return { href: "/savings-goals/dashboard", label: "Open in Savings" };
     case "LOAN_OUT":
     case "LOAN_IN": {
       // Loan Management › Transactions for that person, in the entry's year (the page opens on this year).

@@ -17,7 +17,7 @@ export function VaultGate({ children, className }: VaultGateProps) {
 export function GateCard({ children, className, ...props }: React.ComponentProps<"section">) {
   return (
     <Card asChild padding="none">
-      <section className={cn("flex w-full max-w-115 flex-col gap-4 px-5 py-6 sm:px-7 sm:py-6.5", className)} {...props}>
+      <section className={cn("flex w-full max-w-[458px] flex-col gap-3.5 rounded-[20px] px-5 py-6 sm:px-7 sm:py-6.5", className)} {...props}>
         {children}
       </section>
     </Card>
@@ -27,8 +27,8 @@ export function GateCard({ children, className, ...props }: React.ComponentProps
 // The side note beside a form: 340px, 22px in.
 export function GateAside({ children, className, ...props }: React.ComponentProps<"aside">) {
   return (
-    <Card asChild padding="none">
-      <aside className={cn("flex w-full max-w-115 flex-col gap-3.5 p-5.5 lg:w-85", className)} {...props}>
+    <Card asChild padding="none" elevated={false}>
+      <aside className={cn("flex w-full max-w-[458px] flex-col gap-3.5 rounded-[20px] p-5.5 lg:w-[338px]", className)} {...props}>
         {children}
       </aside>
     </Card>

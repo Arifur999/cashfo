@@ -63,7 +63,7 @@
 
   /* The primary's own tint and edge (design-v4 shell): the open menu row,
      the top bar's app switch. */
-  --emerald-soft: #e8f1f0;
+  --emerald-soft: #eef6f4;
   --emerald-line: #c6ddd9;
   /* The palest of it: a chosen option's ground (Checkout's plan and way
      to pay, design-v4 #f4faf8). */
@@ -100,6 +100,8 @@
   --orange: #c2410c;
   --orange-fill: #f97316;
   --orange-soft: #ffedd5;
+  /* The edge of an orange chip (the vault's Weak filter). */
+  --orange-line: #fdba74;
   --info-50: #eff6ff;
   --info-line: #bfdbfe;
   --info-ink: #1e40af;
@@ -206,12 +208,25 @@
   --chart-cost: #a8b3b0;
   --toggle-track: #e9edec;
   --pick-wash: #f0f7f5;
+  /* The boards' --sm-primary-soft, --sm-sunken (as a rule and a track),
+     --sm-x991B1B (who may not receive zakat, a debt's note) and
+     --sm-x78350F (below nisab), with their own dark values. */
+  --primary-soft: #eef6f4;
+  --sunken-rule: #f0f2f2;
+  --deny-ink: #991b1b;
+  --below-ink: #78350f;
   --sold-card: #fbfbfb;
   --card-rule: #f1f3f3;
   --head-wash: #f7f9f8;
   --head-rule: #eef1f0;
+  /* A calendar day outside the month on show (Calendar & Events). */
+  --day-out: #b4bdbb;
   --due-ink: #92400e;
   --alert-wash: #fff7ed;
+  /* A month left open (the board's warning-2 pill: Close October). */
+  --warn2-wash: #fff7ed;
+  --warn2-ink: #9a3412;
+  --warn2-line: #f5c9a3;
   --note-ink: #134e4a;
   /* Notes (the NotesHome board): a card's tint, and the five journal moods
      from Great to Hard. */
@@ -269,6 +284,21 @@
   /* Investments' closed chip (the boards' --sm-slate-soft / --sm-slate-ink). */
   --slate-soft: #f1f5f9;
   --slate-ink: #334155;
+  /* The InvestApp board's own --sm-* values no other token carries: its
+     sunken fill and row rule, the primary's soft wash, deep and link inks,
+     and the violet and pink kinds (whose inks stay the same in dark). */
+  --sunken: #f0f2f2;
+  --primary-soft: #eef6f4;
+  --primary-deep: #144f46;
+  --primary-ink: #1c7567;
+  --violet-deep: #5b21b6;
+  --pink-deep: #be185d;
+  --pink-wash: #fce7f3;
+  /* Its toast box and popup scrim, which stay the same in the dark theme. */
+  --toast: #12201d;
+  /* The AppSidebar board's lit item: the primary 90% toward the card. */
+  --nav-on: #e8f1f0;
+  --scrim-board: rgba(18, 32, 29, 0.45);
   /* The Dashboard's net worth card is dark in both themes: its pale green
      and red for up and down, and its note. */
   --worth-up: #86efac;
@@ -393,6 +423,7 @@
   --orange: #fb923c;
   --orange-fill: #f97316;
   --orange-soft: #3a1d0a;
+  --orange-line: #7c3a12;
   --info-50: #0f1a33;
   --info-line: #1e3a6b;
   --info-ink: #a9c4f5;
@@ -465,14 +496,22 @@
   --chart-cost: #4f5f5a;
   --toggle-track: #17241f;
   --pick-wash: #2b3331;
+  --primary-soft: #15302a;
+  --sunken-rule: #1c2724;
+  --deny-ink: #d19898;
+  --below-ink: #c2a493;
   --chart-band: #2b3331;
   --forest-ink: #a7e6d8;
   --sold-card: #0d1915;
   --card-rule: #1c2724;
   --head-wash: #2c3331;
   --head-rule: #1c2724;
+  --day-out: #b4bdbb;
   --due-ink: #fcd34d;
   --alert-wash: #33200e;
+  --warn2-wash: #2b1e12;
+  --warn2-ink: #fdba74;
+  --warn2-line: #454a40;
   --note-ink: #9cc7be;
   --note-yellow: #29250f;
   --note-green: #10261a;
@@ -513,6 +552,12 @@
   --tint-purple-ink: #d8b4fe;
   --slate-soft: #1c2530;
   --slate-ink: #cbd5e1;
+  --sunken: #1c2724;
+  --primary-soft: #15302a;
+  --primary-deep: #8eddcb;
+  --primary-ink: #5cc8b2;
+  --pink-wash: #34172a;
+  --nav-on: #162623;
   --emerald-tint: #1c4536;
 
   --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -809,6 +854,7 @@ html:not(.dark) [data-app="habit"] {
   --color-orange: var(--orange);
   --color-orange-fill: var(--orange-fill);
   --color-orange-soft: var(--orange-soft);
+  --color-orange-line: var(--orange-line);
   --color-info-50: var(--info-50);
   --color-info-line: var(--info-line);
   --color-info-ink: var(--info-ink);
@@ -857,12 +903,20 @@ html:not(.dark) [data-app="habit"] {
   --color-chart-cost: var(--chart-cost);
   --color-toggle-track: var(--toggle-track);
   --color-pick-wash: var(--pick-wash);
+  --color-primary-soft: var(--primary-soft);
+  --color-sunken-rule: var(--sunken-rule);
+  --color-deny-ink: var(--deny-ink);
+  --color-below-ink: var(--below-ink);
   --color-sold-card: var(--sold-card);
   --color-card-rule: var(--card-rule);
   --color-head-wash: var(--head-wash);
   --color-head-rule: var(--head-rule);
+  --color-day-out: var(--day-out);
   --color-due-ink: var(--due-ink);
   --color-alert-wash: var(--alert-wash);
+  --color-warn2-wash: var(--warn2-wash);
+  --color-warn2-ink: var(--warn2-ink);
+  --color-warn2-line: var(--warn2-line);
   --color-note-ink: var(--note-ink);
   --color-tint-indigo: var(--tint-indigo);
   --color-tint-indigo-ink: var(--tint-indigo-ink);
@@ -872,6 +926,15 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-purple-ink: var(--tint-purple-ink);
   --color-slate-soft: var(--slate-soft);
   --color-slate-ink: var(--slate-ink);
+  --color-sunken: var(--sunken);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-ink: var(--primary-ink);
+  --color-violet-deep: var(--violet-deep);
+  --color-pink-deep: var(--pink-deep);
+  --color-pink-wash: var(--pink-wash);
+  --color-toast: var(--toast);
+  --color-nav-on: var(--nav-on);
   --color-worth-up: var(--worth-up);
   --color-worth-down: var(--worth-down);
   --color-worth-note: var(--worth-note);
@@ -1203,6 +1266,13 @@ html:not(.dark) [data-app="habit"] {
 [data-slot="alert-dialog-overlay"] {
   background-color: var(--scrim);
   backdrop-filter: none;
+}
+
+/* A popup that asks for its board's own scrim (the InvestApp board keeps it
+   in the dark theme too) marks its content data-scrim="board". */
+[data-slot="dialog-overlay"]:has(+ [data-scrim="board"]),
+[data-slot="alert-dialog-overlay"]:has(+ [data-scrim="board"]) {
+  background-color: var(--scrim-board);
 }
 
 /* An alert dialog is as wide as its w-* class says (every one sets it), up

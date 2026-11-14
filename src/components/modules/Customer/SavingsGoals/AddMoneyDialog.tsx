@@ -176,7 +176,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
         : chip.kind === "covered"
           ? t("{month} is covered · next month {amount}", { month, amount: money(chip.amount) })
           : chip.kind === "rest"
-            ? t("All that's left · {amount}", { amount: money(chip.amount) })
+            ? t("All that’s left · {amount}", { amount: money(chip.amount) })
             : money(chip.amount),
   }));
   const fieldLabel = "text-[13px] font-semibold text-ink-2";
@@ -204,7 +204,8 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       busy={isPending}
       onSubmit={submit}
       headClassName="items-center gap-3.5 px-6 py-4"
-      titleClassName="text-[17px]"
+      titleClassName="text-[17px] leading-[normal]!"
+      subClassName="-mt-0.5"
       bodyClassName="gap-4 px-6 pt-4.5 pb-5 [&>*]:shrink-0"
       footerClassName="px-6"
       lead={
@@ -303,7 +304,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
                 onClick={() => setAmount(String(chip.amount))}
                 className={cn(
                   "inline-flex h-7.5 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold whitespace-nowrap tabular-nums pointer-coarse:h-11",
-                  strong ? "border-emerald-line bg-emerald-soft text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong",
+                  strong ? "border-emerald-line bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-2 hover:border-line-strong",
                 )}
               >
                 {chip.kind === "suggested" && <Sparkles className="size-3.25" aria-hidden="true" />}
@@ -315,7 +316,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
       )}
       {profit && (
         <p className="-mt-1.5 flex items-start gap-2 rounded-[10px] border border-tint-yellow-line bg-note-yellow px-3 py-2.25 text-[12.5px] leading-[1.45] text-tint-yellow-deep">
-          <Info className="mt-0.5 size-3.5 shrink-0" strokeWidth={2.25} aria-hidden="true" />
+          <Info className="mt-px size-3.75 shrink-0" strokeWidth={2.25} aria-hidden="true" />
           {t("Write it exactly as the bank’s message or statement shows. No money is taken from your other accounts.")}
         </p>
       )}
@@ -412,7 +413,7 @@ export function AddMoneyDialog({ open, onClose, businessId, goal, color, currenc
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-[12px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("After this")}</span>
           <span>
-            <span className="text-ink-muted">{formatCount(percentNow, fmt)}% →</span> <b className="text-brand-ink">{formatCount(percentAfter, fmt)}%</b>
+            <span className="text-ink-muted">{formatCount(percentNow, fmt)}% →</span> <b className="text-emerald">{formatCount(percentAfter, fmt)}%</b>
           </span>
         </div>
         <div role="img" aria-label={t("{name} goes from {from}% to {to}%", { name: goal.name, from: formatCount(percentNow, fmt), to: formatCount(percentAfter, fmt) })} className="flex h-2.5 overflow-hidden rounded-full bg-line">
@@ -520,7 +521,7 @@ function PickList({
                 {(current.current ?? current.sub) && <span className="truncate text-[12px] text-ink-muted tabular-nums">{current.current ?? current.sub}</span>}
               </>
             ) : (
-              <span className="truncate text-[14px] text-ink-muted">{placeholder}</span>
+              <span className="truncate text-[14px] text-ink-faint">{placeholder}</span>
             )}
           </span>
           <ChevronDown className={cn("size-4.5 shrink-0 text-ink-muted transition-transform duration-150", open && "rotate-180")} strokeWidth={2} aria-hidden="true" />
@@ -568,7 +569,7 @@ function PickList({
           })}
         </div>
         {footer && (
-          <Link href={footer.href} className="mt-1 flex items-center gap-2 border-t border-card-rule p-2.5 text-[13px] font-semibold text-brand-ink">
+          <Link href={footer.href} className="mt-1 flex items-center gap-2 border-t border-card-rule p-2.5 text-[13px] font-semibold text-emerald">
             <Plus className="size-3.75" strokeWidth={2.4} aria-hidden="true" />
             {footer.label}
           </Link>

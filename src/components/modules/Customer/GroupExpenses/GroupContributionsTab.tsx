@@ -32,6 +32,10 @@ interface GroupContributionsTabProps {
   onEditExpense: (row: GroupExpense) => void;
   onRemoveExpense: (row: GroupExpense) => void;
   canAdd: boolean;
+  // In whose name a new entry may be (an Editor only their own), and
+  // whether the one looking may change or delete an entry.
+  mayAddFor: (memberId: string) => boolean;
+  canTouch: (row: { createdByUserId?: string | null }, date: string) => boolean;
 }
 
 // #, date, member, received by, note (with its type), amount, actions.
@@ -63,7 +67,7 @@ interface Row {
 // (an expense, credited to them), by member, type and period, with a
 // printable statement. Returns, settle-ups and carried balances still list,
 // as they count in the balances.
-export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onEditExpense, onRemoveExpense, canAdd }: GroupContributionsTabProps) {
+export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onEditExpense, onRemoveExpense, canAdd, mayAddFor, canTouch }: GroupContributionsTabProps) {
   const { t, fmt } = useLocale();
   const { currency, startDay } = data;
   const [query, setQuery] = useState("");
@@ -171,7 +175,7 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
                         {t("Not paid yet")}
                       </Chip>
                     )}
-                    {canAdd && member?.status === "ACTIVE" && (
+                    {canAdd && member?.status === "ACTIVE" && mayAddFor(member.id) && (
                       <button type="button" onClick={() => onAdd(member.id)} aria-label={t("Add a contribution from {name}", { name: row.name })} className="flex size-7.5 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                         <Plus className="size-4" aria-hidden="true" />
                       </button>
@@ -308,12 +312,16 @@ export function GroupContributionsTab({ data, view, onAdd, onEdit, onRemove, onE
               </ListCell>
               <ListCell className={cn("hidden truncate md:block", row.contribution?.recordedByName ? "text-ink-2" : "text-ink-faint")}>{row.contribution?.recordedByName ? shortName(row.contribution.recordedByName) : "–"}</ListCell>
               <ListRowActions className="flex justify-end gap-1.5">
+                {(row.expense ?? row.contribution) && canTouch((row.expense ?? row.contribution)!, row.date) && (
+                <>
                 <button type="button" onClick={edit} aria-label={row.expense ? t("Edit expense") : t("Edit contribution")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                   {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}
                 </button>
                 <button type="button" onClick={remove} aria-label={row.expense ? t("Delete expense") : t("Delete contribution")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
                   <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
+                </>
+                )}
               </ListRowActions>
             </ListRow>
           );

@@ -39,8 +39,18 @@ export const homeRouteFor = (audience: TokenAudience) => (audience === "admin" ?
 export const SESSION_EXPIRED_REASON = "session-expired";
 export const SESSION_EXPIRED_LOGIN_ROUTE = `${LOGIN_ROUTE}?reason=${SESSION_EXPIRED_REASON}`;
 
+// Group Expense's member portal: its sign-in page (username or mobile
+// number), and the access links a group's owner sends (/join/<token>),
+// which work signed in or not -- signed in, they add the group to that
+// account. A portal login whose access was taken away comes back to the
+// sign-in page with ?reason=access-changed.
+export const MEMBER_LOGIN_ROUTE = "/group-login";
+export const MEMBER_JOIN_ROUTE = "/join";
+export const ACCESS_CHANGED_REASON = "access-changed";
+export const memberJoinPath = (token: string) => `${MEMBER_JOIN_ROUTE}/${encodeURIComponent(token)}`;
+
 // Signed-in visitors are sent home from these.
-export const guestOnlyRoutes = [LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROUTE];
+export const guestOnlyRoutes = [LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROUTE, MEMBER_LOGIN_ROUTE];
 // Open to everyone, signed in or not: a reset, invite or verification link
 // works for whoever opens it, and the Google landing route replaces
 // whatever session was there.
@@ -51,7 +61,8 @@ export const isGuestOnlyRoute = (pathname: string) => guestOnlyRoutes.includes(p
 export const PROFILE_CARD_ROUTE = "/card";
 export const profileCardPath = (code: string) => `${PROFILE_CARD_ROUTE}/${encodeURIComponent(code)}`;
 
-export const isPublicRoute = (pathname: string) => isGuestOnlyRoute(pathname) || openRoutes.includes(pathname) || pathname.startsWith(`${PROFILE_CARD_ROUTE}/`);
+export const isPublicRoute = (pathname: string) =>
+  isGuestOnlyRoute(pathname) || openRoutes.includes(pathname) || pathname.startsWith(`${PROFILE_CARD_ROUTE}/`) || pathname.startsWith(`${MEMBER_JOIN_ROUTE}/`);
 
 const isUnder = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 

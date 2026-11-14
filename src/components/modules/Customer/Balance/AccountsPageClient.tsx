@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, ArrowDown, ArrowLeftRight, ArrowUp, ArrowUpDown, Check, ChevronDown, ChevronRight, CircleCheckBig, Ellipsis, Info, Pencil, Plus, ScrollText, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowDown, ArrowDownUp, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronRight, CircleCheckBig, Ellipsis, Info, Pencil, Plus, ScrollText, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createElement, useEffect, useState, useTransition } from "react";
@@ -50,7 +50,7 @@ const VIEWS: readonly ListView[] = ["table", "cards"];
 const COLUMNS = "grid-cols-[minmax(0,1fr)_repeat(5,112px)_130px_40px] gap-x-3.5 min-w-240";
 const MENU_ITEM = "flex h-9.5 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-small font-medium text-ink focus:bg-surface-sunken [&_svg]:size-3.75 [&_svg]:text-ink";
 // Money by type: the board's three colours.
-const TYPE_BAR = { cash: "bg-emerald", bank: "bg-info", mfs: "bg-rose" } as const;
+const TYPE_BAR = { cash: "bg-emerald", bank: "bg-info", mfs: "bg-tint-pink-ink" } as const;
 const TYPE_SHORT = { cash: "Cash", bank: "Bank", mfs: "Mobile" } as const;
 
 // Accounts (board: Balance — Accounts): what the active accounts hold by
@@ -252,7 +252,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => event.key === "Escape" && setQuery("")}
             placeholder={t("Search accounts")}
-            className="h-9 min-w-0 flex-1 bg-transparent text-body text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+            className="h-9 min-w-0 flex-1 bg-transparent px-0.5 text-body text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
           />
           {searching && (
             <button type="button" onClick={() => setQuery("")} aria-label={t("Clear search")} title={t("Clear search")} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-2">
@@ -265,7 +265,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
             aria-label={`${t("Sort")}: ${t(SORT_LABEL[sort])}`}
             className="flex h-9.5 items-center gap-2 rounded-full border border-input bg-surface pr-3 pl-3.5 text-[13.5px] whitespace-nowrap text-ink hover:bg-surface-sunken data-open:border-[1.5px] data-open:border-emerald"
           >
-            <ArrowUpDown className="size-4 text-ink-2" aria-hidden="true" />
+            <ArrowDownUp className="size-4 text-ink-2" aria-hidden="true" />
             <b className="font-semibold">{t(SORT_LABEL[sort])}</b>
             <ChevronDown className="size-3.75 text-ink-muted" aria-hidden="true" />
           </DropdownMenuTrigger>
@@ -310,7 +310,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
           <>
             <HideBalancesButton hidden={hidden} onToggle={toggle} />
             {canManage && (
-              <Button onClick={() => setDialog("add")} className="h-10.5 rounded-full px-4.5">
+              <Button onClick={() => setDialog("add")} className="h-10.5 gap-1.5 rounded-full px-4.5">
                 <Plus strokeWidth={2.5} className="size-4" />
                 {t("Add account")}
               </Button>
@@ -320,7 +320,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
       />
 
       <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-        <Card padding="none" className="col-span-2 flex min-w-0 flex-col gap-2 px-4.5 py-3.5 shadow-xs md:col-span-1">
+        <Card padding="none" className="col-span-2 flex min-w-0 flex-col gap-2 rounded-[14px] px-4.5 py-3.5 shadow-xs md:col-span-1">
           <span className="flex items-baseline justify-between gap-2">
             <span className="text-[12.5px] font-medium text-ink-muted">{t("Money by type")}</span>
             <span className="text-caption font-semibold whitespace-nowrap text-ink-2">{plural(t, active.length, "{count} account", "{count} accounts", undefined, fmt)}</span>
@@ -347,7 +347,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
         <ListCard label={t("Accounts@@wallets")} header={head} scrollable={shown.length > 0} tableClassName="overflow-x-auto">
           {nothing ?? (
             <>
-              <ListHead showOnPhone columns={COLUMNS}>
+              <ListHead showOnPhone columns={COLUMNS} className="h-9.25 border-t">
                 <ListHeadCell>{t("Account")}</ListHeadCell>
                 <ListHeadCell align="end">{t("Opening")}</ListHeadCell>
                 <ListHeadCell align="end">{t("Money in@@wallet")}</ListHeadCell>
@@ -470,7 +470,7 @@ export function AccountsPageClient({ businessId, overview, canManage, currency, 
 // One of the board's figure cards: the label and the 22px figure.
 function Figure({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <Card padding="none" className="flex min-w-0 flex-col gap-1 px-4.5 py-3.5 shadow-xs">
+    <Card padding="none" className="flex min-w-0 flex-col gap-1 rounded-[14px] px-4.5 py-3.5 shadow-xs">
       <span className="text-[12.5px] font-medium text-ink-muted">{label}</span>
       <span className={cn("text-[22px] font-bold tracking-[-0.02em] tabular-nums wrap-anywhere", tone)}>{value}</span>
     </Card>

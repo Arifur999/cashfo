@@ -6,7 +6,7 @@ import type { EventGift, EventPerson, SocialEvent } from "@/lib/customer/eventsT
 import { cn } from "@/lib/utils";
 import { PopupDialog } from "../Shared/PopupDialog";
 import { Switch } from "./EventControls";
-import { typeLook } from "./eventVisuals";
+import { POPUP, typeLook } from "./eventVisuals";
 import type { EventWords } from "./useEventWords";
 
 interface EventDialogProps {
@@ -48,7 +48,8 @@ export function EventDialog({ event, events, people, ledger, today, words, readO
       open
       onClose={onClose}
       busy={busy}
-      className="leading-[normal]"
+      className={POPUP.className}
+      closeClassName={POPUP.closeClassName}
       width={560}
       headClassName="items-start gap-3.5 px-6 py-5"
       lead={
@@ -68,7 +69,7 @@ export function EventDialog({ event, events, people, ledger, today, words, readO
       footer={
         <>
           {!readOnly && (
-            <button type="button" onClick={() => onDelete(event)} disabled={busy} className="mr-auto text-[13.5px] font-semibold text-expense hover:underline disabled:opacity-50">
+            <button type="button" onClick={() => onDelete(event)} disabled={busy} className="mr-auto text-[13.5px] font-semibold text-loss-ink hover:underline disabled:opacity-50">
               {t("Delete event")}
             </button>
           )}
@@ -86,8 +87,8 @@ export function EventDialog({ event, events, people, ledger, today, words, readO
     >
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {facts.map(({ Icon, label, value }) => (
-          <div key={label} className="flex items-center gap-2.5 rounded-[12px] bg-table-head px-3 py-2.5">
-            <Icon className="size-4 shrink-0 text-ink-soft" aria-hidden="true" />
+          <div key={label} className="flex items-center gap-2.5 rounded-[12px] bg-head-wash px-3 py-2.5">
+            <Icon className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
             <span className="flex min-w-0 flex-col">
               <span className="text-[11.5px] text-ink-faint">{label}</span>
               <span className="truncate text-[13.5px] font-semibold text-ink">{value}</span>
@@ -97,8 +98,8 @@ export function EventDialog({ event, events, people, ledger, today, words, readO
       </div>
 
       {showTip && tip && (
-        <div className="flex gap-2.5 rounded-[12px] border border-warning-line bg-warning-50 px-3.5 py-3 text-warning-ink">
-          <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <div className="flex gap-2.5 rounded-[12px] border border-warning-line bg-warning-50 px-3.5 py-3 text-due-ink">
+          <Lightbulb className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
           <span className="flex flex-col gap-0.5">
             <span className="text-[13.5px] font-semibold">{tipHead(tip, words)}</span>
             <span className="text-small leading-normal">{tipText(tip, words)}</span>
@@ -109,7 +110,7 @@ export function EventDialog({ event, events, people, ledger, today, words, readO
       <div className="flex flex-col gap-2">
         <span className="text-[11.5px] font-semibold tracking-[0.06em] text-ink-muted uppercase">{t("Gifts")}</span>
         {event.gifts.map((gift) => (
-          <div key={gift.id} className="flex items-center gap-2.5 rounded-[12px] border border-line-card px-3 py-2.5">
+          <div key={gift.id} className="flex items-center gap-2.5 rounded-[12px] border border-head-rule px-3 py-2.5">
             <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-semibold whitespace-nowrap", gift.direction === "GAVE" ? "bg-tint-pink text-tint-pink-ink" : "bg-mint-50 text-brand-ink")}>
               {t(gift.direction === "GAVE" ? "You gave" : "You got")}
             </span>

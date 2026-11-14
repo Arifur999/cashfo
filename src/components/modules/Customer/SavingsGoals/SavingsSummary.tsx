@@ -55,7 +55,7 @@ export function SavingsSummary({ hero, active, month, money, onShowBehind }: Sav
 
       <div className={CARD}>
         <div className="flex items-center justify-between gap-2.5">
-          <span className="flex items-center gap-2 text-[13px] font-semibold text-ink-soft">
+          <span className="flex items-center gap-2 text-[13px] font-semibold text-ink-2">
             <span className="flex size-7 items-center justify-center rounded-[9px] bg-emerald-soft text-emerald">
               <Calendar className="size-3.75" strokeWidth={2} aria-hidden="true" />
             </span>
@@ -75,7 +75,7 @@ export function SavingsSummary({ hero, active, month, money, onShowBehind }: Sav
       </div>
 
       <div className={CARD}>
-        <span className="text-[13px] font-semibold text-ink-soft">{t("On pace")}</span>
+        <span className="text-[13px] font-semibold text-ink-2">{t("On pace")}</span>
         <span className="flex items-baseline gap-1.5">
           <span className="text-[30px] leading-[normal] font-bold tracking-[-0.02em] text-ink">{hero.active ? formatCount(hero.active - hero.behind, fmt) : "–"}</span>
           {hero.active > 0 && <span className="text-[13px] text-ink-muted">{t("of {count} active", { count: formatCount(hero.active, fmt) })}</span>}

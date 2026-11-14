@@ -42,8 +42,10 @@ export function ZakatHero({ summary, money, onHow }: ZakatHeroProps) {
     : t("{vori} vori gold = {amount} today", { vori: toLocaleDigits(String(NISAB_GOLD_VORI), fmt), amount: money(summary.nisab) });
 
   return (
-    <section aria-labelledby="zk-hero" className="relative grid overflow-hidden rounded-[20px] bg-zakat-hero text-white shadow-float lg:grid-cols-[minmax(0,1fr)_330px]">
-      <span aria-hidden="true" className="absolute -top-25 -right-17.5 size-65 rounded-full border-40 border-hero-sage opacity-10" />
+    <section aria-labelledby="zk-hero" className="relative grid overflow-hidden rounded-[20px] bg-zakat-hero text-white shadow-[0_10px_30px_rgba(15,63,56,0.25)] lg:grid-cols-[minmax(0,1fr)_330px]">
+      <svg width="260" height="260" viewBox="0 0 260 260" aria-hidden="true" className="absolute -top-25 -right-17.5 text-hero-sage opacity-10">
+        <circle cx="130" cy="130" r="96" fill="none" stroke="currentColor" strokeWidth="40" />
+      </svg>
       <div className="relative flex min-w-0 flex-col gap-2.5 px-5 py-5 md:px-6.5 md:py-5.5">
         <h2 id="zk-hero" className="text-[13px] font-semibold text-hero-sage">
           {t(above ? "Your zakat this year" : "No zakat due this year")}
@@ -91,7 +93,7 @@ export function ZakatHero({ summary, money, onHow }: ZakatHeroProps) {
         <div className="flex flex-col gap-1 border-b border-white/12 px-5.5 pt-4.5 pb-3.5">
           <span className="text-[12.5px] font-semibold text-hero-sage">{t("Give it by")}</span>
           <span className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-[20px] font-bold">{formatDay(summary.dueDate, "d MMM yyyy", fmt)}</span>
+            <span className="text-[20px] font-bold">{formatDay(summary.dueDate, "d MMMM yyyy", fmt)}</span>
             <span className="text-[12.5px] text-hero-mist">{plural(t, summary.daysLeft, "{count} day left", "{count} days left", undefined, fmt)}</span>
           </span>
           <span className="text-[12.5px] leading-[1.45] text-hero-mist">{partsLine(summary, money, t, fmt)}</span>
@@ -99,7 +101,7 @@ export function ZakatHero({ summary, money, onHow }: ZakatHeroProps) {
         <div className="flex flex-col gap-1.5 px-5.5 pt-3.5 pb-4.5">
           <span className="flex items-center gap-2">
             <span className="text-[12.5px] font-semibold text-hero-sage">{t("Nisab")}</span>
-            <span className={cn("inline-flex h-5.5 items-center rounded-full px-2.25 text-[11.5px] font-bold", above ? "bg-hero-mint text-hero-ink" : "bg-night-amber text-night-ink")}>
+            <span className={cn("inline-flex h-5.5 items-center rounded-full px-2.25 text-[11.5px] font-bold", above ? "bg-hero-mint text-hero-ink" : "bg-warning-line text-below-ink")}>
               {t(above ? "You are above it" : "You are below it")}
             </span>
           </span>

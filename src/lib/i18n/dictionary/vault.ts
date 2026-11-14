@@ -436,4 +436,17 @@ export const vaultDictionary: Record<string, string> = {
   "Nothing to fix right now": "এখন ঠিক করার কিছু নেই",
   "We'll point out new problems here when they come up.": "নতুন কোনো সমস্যা দেখা দিলে আমরা এখানে জানাব।",
   "Back to your logins": "আপনার লগইনগুলোতে ফিরে যান",
+  // Vault redesign (canvas v6): set-up and reset
+  "Your saved logins stay as they are. Only the password that opens the vault changes.": "আপনার সংরক্ষিত লগইনগুলো যেমন আছে তেমনই থাকবে। শুধু ভল্ট খোলার পাসওয়ার্ডটি বদলাবে।",
+  "Enter the password you use to log in to Smartly.": "Smartly-তে লগ ইন করতে যে পাসওয়ার্ড ব্যবহার করেন সেটি দিন।",
+  "The two passwords don't match.": "দুটো পাসওয়ার্ড মেলেনি।",
+  "The one you log in with": "যেটি দিয়ে আপনি লগ ইন করেন",
+  "Three or four words you'll remember": "মনে থাকবে এমন তিন-চারটি শব্দ",
+  "These don't match yet": "এগুলো এখনো মেলেনি",
+  // Vault redesign (canvas v6): checkup and details
+  "Same password as {titles}. If one site leaks it, both accounts are open.": "{titles}-এর সঙ্গে একই পাসওয়ার্ড। একটি সাইট থেকে ফাঁস হলে দুটো অ্যাকাউন্টই খোলা হয়ে যাবে।",
+  "All {total} logins look fine": "{total}টি লগইনই ঠিক আছে",
+  "{length}, numbers only": "{length}, শুধু সংখ্যা",
+  "Checked just now. No reused, weak or old passwords.": "এইমাত্র যাচাই হলো। কোনো পুনঃব্যবহৃত, দুর্বল বা পুরনো পাসওয়ার্ড নেই।",
+  "If one of these sites leaks it, the others are open too.": "এর একটি সাইট থেকে ফাঁস হলে বাকিগুলোও খোলা হয়ে যাবে।",
 };

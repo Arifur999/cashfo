@@ -298,12 +298,13 @@ export interface EntryRow {
   investment: Investment;
 }
 
-// Every entry, newest first, of one investment or all of them.
+// Every entry, newest day first, of one investment or all of them; on one
+// day they stay in the order they were written, as the board lists them.
 export function entryRows(all: Investment[], investmentId: string): EntryRow[] {
   return all
     .filter((inv) => !investmentId || inv.id === investmentId)
     .flatMap((investment) => investment.entries.map((entry) => ({ entry, investment })))
-    .sort((a, b) => dayOf(b.entry.date).localeCompare(dayOf(a.entry.date)) || b.entry.createdAt.localeCompare(a.entry.createdAt));
+    .sort((a, b) => dayOf(b.entry.date).localeCompare(dayOf(a.entry.date)) || a.entry.createdAt.localeCompare(b.entry.createdAt));
 }
 
 export function sumOf(rows: EntryRow[], types: InvestmentEntryType[]): number {

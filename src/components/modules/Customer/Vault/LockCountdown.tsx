@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, LockKeyholeOpen } from "lucide-react";
+import { Lock, LockOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { countdownText } from "@/lib/customer/vaultDisplay";
 import { toLocaleDigits } from "@/lib/i18n/digits";
@@ -46,7 +46,7 @@ export function LockPill({ expiresAt, onLock }: { expiresAt: number; onLock: () 
   return (
     <div role="group" aria-label={t("Vault lock")} className={cn("flex h-10 items-center overflow-hidden rounded-full border", late ? "border-warning-line bg-warning-soft" : "border-emerald-line bg-emerald-soft")}>
       <span role="timer" aria-label={t("Vault locks in {time}", { time })} className={cn("flex items-center gap-2 pr-3 pl-3.5 text-[13px] font-semibold whitespace-nowrap tabular-nums", late ? "text-warning" : "text-brand-ink")}>
-        <LockKeyholeOpen className="size-3.75" strokeWidth={2.25} aria-hidden="true" />
+        <LockOpen className="size-3.75" strokeWidth={2.25} aria-hidden="true" />
         {t("Unlocked · locks in {time}", { time })}
       </span>
       <span aria-hidden="true" className={cn("h-5 w-px", late ? "bg-warning-line" : "bg-emerald-line")} />

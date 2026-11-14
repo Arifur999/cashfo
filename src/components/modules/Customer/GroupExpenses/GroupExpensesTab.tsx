@@ -28,8 +28,11 @@ interface GroupExpensesTabProps {
   onAdd: () => void;
   onEdit: (row: GroupExpense) => void;
   onRemove: (row: GroupExpense) => void;
-  // A paused group takes no new entries.
+  // A paused group takes no new entries; a Viewer adds none.
   canAdd: boolean;
+  // Whether the one looking may change or delete this entry (the Admin
+  // any; an Editor only what they added, outside closed months).
+  canTouch: (row: GroupExpense, date: string) => boolean;
 }
 
 // Date, what for, category, paid by, how shared, amount, edit and delete.
@@ -45,7 +48,7 @@ const SPLIT_WORDS = { EQUAL: "Equally", SHARES: "By shares", MEALS: "By meals", 
 // who paid it -- an accountant from the cash they hold, or someone from
 // their own pocket -- found by a search or a category, with a printable
 // statement.
-export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }: GroupExpensesTabProps) {
+export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd, canTouch }: GroupExpensesTabProps) {
   const { t, fmt } = useLocale();
   const { currency } = data;
   // The month picked in the header.
@@ -279,12 +282,16 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }
               </ListCell>
               <ListCell className={cn("hidden truncate md:block", row.recordedByName ? "text-ink-2" : "text-ink-faint")}>{row.recordedByName ? shortName(row.recordedByName) : "–"}</ListCell>
               <ListRowActions className="flex justify-end gap-1.5">
+                {canTouch(row, row.date) && (
+                <>
                 <button type="button" onClick={() => onEdit(row)} aria-label={closed ? t("Edit expense (closed month)") : t("Edit expense")} title={closed ? t("In a closed month") : undefined} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11">
                   {closed ? <Lock className="size-3.75" aria-hidden="true" /> : <Pencil className="size-3.75" aria-hidden="true" />}
                 </button>
                 <button type="button" onClick={() => onRemove(row)} aria-label={t("Delete expense")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
                   <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
+                </>
+                )}
               </ListRowActions>
             </ListRow>
           );
@@ -296,7 +303,7 @@ export function GroupExpensesTab({ data, view, onAdd, onEdit, onRemove, canAdd }
         view={view}
         expense={viewing}
         onClose={() => setViewing(null)}
-        canEdit={canAdd}
+        canEdit={viewing ? canTouch(viewing, viewing.date) : false}
         onEdit={(row) => {
           setViewing(null);
           onEdit(row);

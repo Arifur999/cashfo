@@ -319,7 +319,7 @@ export function GoalFormDialog({ open, onClose, businessId, editing, currency, t
             <button
               type="button"
               onClick={() => setTargetAmount(String(Number(fromPlan.amount)))}
-              className="inline-flex h-7 items-center gap-1.5 self-start rounded-full border border-dashed border-mint-200 bg-emerald-soft px-2.5 text-[12px] font-semibold text-brand-ink tabular-nums"
+              className="inline-flex h-7 items-center gap-1.5 self-start rounded-full border border-dashed border-mint-200 bg-emerald-soft px-2.5 text-[12px] font-semibold text-emerald tabular-nums"
             >
               <Plus className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
               {t("In your plan: {amount} · Use it", { amount: money(fromPlan.amount) })}

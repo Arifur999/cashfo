@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { PopupDialog } from "../Shared/PopupDialog";
 import { FIELD, LABEL } from "./AddEventDialog";
 import { Segmented } from "./EventControls";
+import { POPUP } from "./eventVisuals";
 import type { EventWords } from "./useEventWords";
 
 export interface GiftStart {
@@ -108,7 +109,10 @@ function GiftForm({ start, businessId, people, words, busy, onClose, onSave }: G
       open
       onClose={onClose}
       busy={busy}
-      className="leading-[normal]"
+      className={POPUP.className}
+      closeClassName={POPUP.closeClassName}
+      headClassName="items-center py-4.5"
+      subClassName="-mt-0.5 text-[12.5px]"
       width={520}
       title={t("Write down a gift")}
       sub={<span className="block truncate">{start.event.title}</span>}
@@ -214,7 +218,7 @@ function GiftForm({ start, businessId, people, words, busy, onClose, onSave }: G
         )}
       </div>
       {showWallet && (
-        <div className="flex flex-col gap-2.5 rounded-[12px] border border-line-card bg-table-head px-3.5 py-3">
+        <div className="flex flex-col gap-2.5 rounded-[12px] border border-head-rule bg-head-wash px-3.5 py-3">
           <button type="button" role="checkbox" aria-checked={toTransactions} onClick={() => setToTransactions((on) => !on)} className="flex items-center gap-2.25 text-left text-[13.5px] text-ink">
             <span className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-[5px]", toTransactions ? "bg-primary text-primary-foreground" : "border-[1.5px] border-input bg-surface")}>
               {toTransactions && <Check className="size-3" strokeWidth={3} aria-hidden="true" />}
@@ -232,7 +236,7 @@ function GiftForm({ start, businessId, people, words, busy, onClose, onSave }: G
                 <select value={walletId} onChange={(event) => change(() => setWalletId(event.target.value))} className="h-10 min-w-0 flex-1 rounded-[10px] border border-input bg-surface px-2.5 text-body text-ink outline-none focus-visible:border-emerald">
                   {wallets.list.map((wallet) => (
                     <option key={wallet.id} value={wallet.id}>
-                      {accountDisplayName(wallet, lang)} · {money(Math.round(Number(wallet.currentBalance) * 100))}
+                      {accountDisplayName(wallet, lang)}
                     </option>
                   ))}
                 </select>
@@ -242,7 +246,7 @@ function GiftForm({ start, businessId, people, words, busy, onClose, onSave }: G
         </div>
       )}
       {error && (
-        <div role="alert" className="rounded-[10px] bg-expense-soft px-3.5 py-2.5 text-small font-medium text-expense">
+        <div role="alert" className="rounded-[10px] bg-loss-wash px-3.5 py-2.5 text-small font-medium text-loss-ink">
           {error}
         </div>
       )}

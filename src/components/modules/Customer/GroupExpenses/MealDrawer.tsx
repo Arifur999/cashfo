@@ -15,6 +15,7 @@ import { changedMeals, type MealEntry, mealsOnDay, mealText, mealValue, type Mea
 import { setGroupMealsAction } from "@/lib/customer/groupExpensesActions";
 import { shiftDay } from "@/lib/customer/habitDisplay";
 import { monthName } from "@/lib/customer/insights";
+import { getAppToday } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -148,7 +149,8 @@ function useMealDay(openDay: string | null, { businessId, members, meals, units,
     sameAs,
     copyPrevious: () => setEntries({ ...entries, ...savedOn(sameAs) }),
     atStart: day <= range.from,
-    atEnd: day >= range.to,
+    // Meals are counted once eaten: today is the last day, inside the month.
+    atEnd: day >= (range.to < getAppToday() ? range.to : getAppToday()),
   };
 }
 
@@ -200,7 +202,7 @@ function DayNav({ meal, range, round = true, today }: { meal: ReturnType<typeof 
           type="date"
           value={meal.day}
           min={range.from}
-          max={range.to}
+          max={range.to < getAppToday() ? range.to : getAppToday()}
           aria-label={t("Day")}
           onChange={(event) => event.target.value && meal.go(event.target.value)}
           onClick={() => {

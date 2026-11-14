@@ -59,14 +59,14 @@ export function ZakatSide({ summary, money, walletName, onRecord, onDelete, pend
           )}
           <div className={row}>
             <span className="flex-1">{t("You owe")}</span>
-            <span className="font-semibold whitespace-nowrap text-expense tabular-nums">− {money(summary.totals.owe)}</span>
+            <span className="font-semibold whitespace-nowrap text-loss-ink tabular-nums">− {money(summary.totals.owe)}</span>
           </div>
           <div className="my-0.5 h-px bg-line" />
           <div className="flex items-baseline gap-2.5 text-body font-semibold text-ink">
             <span className="flex-1">{t("Zakat is due on")}</span>
             <span className="tabular-nums">{money(summary.totals.net)}</span>
           </div>
-          <div className="mt-1 flex items-center gap-2.5 rounded-[14px] bg-mint-50 px-3.5 py-3">
+          <div className="mt-1 flex items-center gap-2.5 rounded-[14px] bg-primary-soft px-3.5 py-3">
             <span className="flex-1 text-[13.5px] font-semibold text-brand-ink">{t("Your zakat")}</span>
             <span className="text-[20px] font-bold text-brand-ink tabular-nums">{money(summary.totals.zakat)}</span>
           </div>
@@ -82,11 +82,11 @@ export function ZakatSide({ summary, money, walletName, onRecord, onDelete, pend
             {paid > 0 && <span className="text-small font-semibold text-brand-ink tabular-nums">{money(paid)}</span>}
           </div>
           {summary.payments.length === 0 ? (
-            <p className="rounded-xl bg-strip p-3.5 text-small leading-normal text-ink-muted">{t("Nothing recorded yet. Record each time you give, and we keep track of what is left.")}</p>
+            <p className="rounded-[12px] bg-strip p-3.5 text-small leading-normal text-ink-muted">{t("Nothing recorded yet. Record each time you give, and we keep track of what is left.")}</p>
           ) : (
             <ul className="flex flex-col">
               {summary.payments.map((payment) => (
-                <li key={payment.id} className={cn("flex items-center gap-2.5 border-b border-divider py-2 last:border-b-0", pending === `payment:${payment.id}` && "opacity-60")}>
+                <li key={payment.id} className={cn("flex items-center gap-2.5 border-b border-page py-2", pending === `payment:${payment.id}` && "opacity-60")}>
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-mint-50 text-emerald">
                     <Check className="size-3.75" strokeWidth={2.5} aria-hidden="true" />
                   </span>
@@ -125,12 +125,12 @@ export function ZakatSide({ summary, money, walletName, onRecord, onDelete, pend
           </h2>
           <ul className="flex flex-wrap gap-1.5">
             {WHO_CAN_RECEIVE.map((who) => (
-              <li key={who} className="rounded-full bg-mint-50 px-2.5 py-1.25 text-[12.5px] font-medium text-brand-ink">
+              <li key={who} className="rounded-full bg-pick-wash px-2.5 py-1.25 text-[12.5px] font-medium text-brand-ink">
                 {t(who)}
               </li>
             ))}
           </ul>
-          <p className="rounded-xl bg-expense-soft px-3 py-2.5 text-[12.5px] leading-normal text-expense">
+          <p className="rounded-[12px] bg-loss-wash px-3 py-2.5 text-[12.5px] leading-normal text-deny-ink">
             {t("Not to your parents, grandparents, children, grandchildren or husband or wife. Brothers, sisters and other relatives in need can receive it.")}
           </p>
         </section>

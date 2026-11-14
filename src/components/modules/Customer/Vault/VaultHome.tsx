@@ -16,7 +16,7 @@ import PageHeader from "@/components/smartly/PageHeader";
 import SkeletonRows from "@/components/smartly/SkeletonRows";
 import { SOFT_TONE } from "@/components/smartly/tones";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { VaultEntrySummary } from "@/lib/customer/api";
+import type { VaultEntryCategory, VaultEntrySummary } from "@/lib/customer/api";
 import { deleteVaultEntryAction, dismissVaultCheckupAction, getVaultCheckupAction, revealVaultEntryAction, updateVaultEntryAction } from "@/lib/customer/passwordVaultActions";
 import {
   attentionIds,
@@ -34,6 +34,7 @@ import {
   normalizeUrl,
   safetyOf,
   settle,
+  sharesWith,
   sortEntries,
   toggledView,
   vaultHealth,
@@ -52,7 +53,7 @@ import { clearClipboardLater, copySecret, copyText } from "./clipboard";
 import { EntryDetails } from "./EntryDetails";
 import { EntryDialog } from "./EntryDialog";
 import { EntryRow } from "./EntryRow";
-import { EntryCard, EntryTableRow, TABLE_GRID } from "./EntryTableRow";
+import { EntryCard, EntryTableRow, TABLE_MIDDLE, TABLE_ROW } from "./EntryTableRow";
 import { LockCountdown, LockPill } from "./LockCountdown";
 import { VAULT_CATEGORIES, VAULT_CATEGORY_ICONS, VAULT_CATEGORY_LABELS, VAULT_CATEGORY_TONE } from "./vaultCategoryDisplay";
 import { VaultCheckup } from "./VaultCheckup";
@@ -430,7 +431,9 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
     });
   }
 
-  const openAdd = (preset: QuickLogin | null = null) => onDrawer({ open: true, draft: draftFor(null, preset, t) });
+  // A blank login starts as Social (VaultEntryDrawer); the empty vault's
+  // Something else starts as Other.
+  const openAdd = (preset: QuickLogin | null = null, category: VaultEntryCategory = "SOCIAL") => onDrawer({ open: true, draft: { ...draftFor(null, preset, t), ...(!preset && { category }) } });
   const openEdit = (entry: VaultEntrySummary, change = false) => onDrawer({ open: true, draft: { ...draftFor(entry, null, t), change } });
 
   // Change from the checkup: the website to set a new password there, and
@@ -580,7 +583,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
   );
 
   const sideMenu = (
-    <nav id="vault-menu" aria-label={t("Vault sections")} className="hidden flex-col gap-0.5 lg:flex">
+    <nav id="vault-menu" aria-label={t("Vault sections")} className="hidden flex-col gap-0.5 leading-[normal] lg:flex">
       {VIEWS.map((item) => {
         const on = view === item.value;
         return (
@@ -593,7 +596,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
           </button>
         );
       })}
-      <span className="mx-2.5 mt-3.5 mb-1.5 text-[11px] leading-normal font-semibold tracking-[0.06em] text-ink-muted uppercase">{t("Categories")}</span>
+      <span className="mx-2.5 mt-3.5 mb-1.5 text-[11px] leading-[normal] font-semibold tracking-[0.06em] text-ink-muted uppercase">{t("Categories")}</span>
       {VAULT_CATEGORIES.filter((value) => counts[value] > 0 || view === value).map((value) => {
         const Icon = VAULT_CATEGORY_ICONS[value];
         const on = view === value;
@@ -636,25 +639,27 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
     ) : (
       <Card padding="none" role="table" aria-label={listLabel} className="overflow-x-auto">
         <div className="min-w-180">
-          <div role="row" className={cn("grid h-10.5 items-center gap-x-3 border-b border-line bg-table-head pr-3.5", TABLE_GRID)}>
-            <span role="columnheader" className="text-center text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase">
+          <div role="row" className={cn(TABLE_ROW, "h-10.5 border-b border-line-card bg-table-head leading-[normal]")}>
+            <span role="columnheader" className="w-12 shrink-0 text-center text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase">
               #
             </span>
-            {HEAD_SORTS.map((head) => {
-              const on = sort === head.sort;
-              return (
-                <span key={head.sort} role="columnheader" aria-sort={on ? (head.sort === "az" ? "ascending" : "descending") : "none"}>
-                  <button type="button" onClick={() => setSort(head.sort)} title={t(head.tip)} className={cn("-ml-1.5 flex h-7 items-center gap-1.25 rounded-md px-1.5 text-caption font-semibold tracking-[0.03em] uppercase hover:bg-surface-sunken", on ? "text-emerald" : "text-ink-muted")}>
-                    {t(head.label)}
-                    <ArrowDown className={cn("size-3", !on && "opacity-0")} strokeWidth={2.5} aria-hidden="true" />
-                  </button>
-                </span>
-              );
-            })}
-            <span role="columnheader" className="w-28 text-center text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase">
+            <div className={TABLE_MIDDLE}>
+              {HEAD_SORTS.map((head) => {
+                const on = sort === head.sort;
+                return (
+                  <span key={head.sort} role="columnheader" aria-sort={on ? (head.sort === "az" ? "ascending" : "descending") : "none"}>
+                    <button type="button" onClick={() => setSort(head.sort)} title={t(head.tip)} className={cn("-ml-1.5 flex h-7 items-center gap-1.25 rounded-md px-1.5 text-caption font-semibold tracking-[0.03em] uppercase hover:bg-surface-sunken", on ? "text-brand-ink" : "text-ink-muted")}>
+                      {t(head.label)}
+                      <ArrowDown className={cn("size-3", !on && "opacity-0")} strokeWidth={2.5} aria-hidden="true" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+            <span role="columnheader" className="w-28 shrink-0 text-center text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase">
               {t("Change")}
             </span>
-            <span role="columnheader" className="w-25 text-center text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase">
+            <span role="columnheader" className="w-25 shrink-0 text-center text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase">
               {t("View")}
             </span>
           </div>
@@ -674,19 +679,19 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
 
   return (
     // Focus lands here after the unlock: a named region a screen reader announces.
-    <PageFrame ref={frame} tabIndex={-1} role="region" aria-label={t("Password Manager")} className={cn(empty ? "gap-6" : "gap-4.5", "outline-none")}>
+    <PageFrame ref={frame} tabIndex={-1} role="region" aria-label={t("Password Manager")} className="gap-4.5 outline-none md:pt-7">
       <TopbarExtras record={showCheckup ? t("Security checkup") : undefined} subtitle={subtitle} action={lockButton} />
       {/* Phones name the page in the top bar, so the heading is for screen readers there. */}
       {/* The checkup (design VaultHealth) has no header: the top bar names it, a back link leads home. */}
       <h1 className={cn("sr-only", !showCheckup && "md:hidden")}>{t(showCheckup ? "Security checkup" : "Password Manager")}</h1>
       <PageHeader
-        className={cn("max-md:hidden", showCheckup && "hidden")}
+        className={cn("max-md:hidden md:items-center", showCheckup && "hidden")}
         title={t("Password Manager")}
         actions={
           <>
             <LockPill expiresAt={expiresAt} onLock={onLock} />
-            {/* An empty vault adds from its own tiles; a list on its way, not yet. */}
-            {canAdd && (
+            {/* A list on its way can't be added to yet. */}
+            {load === "ready" && (
               <Button onClick={() => openAdd()} className="h-10">
                 <Plus strokeWidth={2.5} />
                 {t("Add login")}
@@ -699,28 +704,14 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
       {failed ? (
         <ErrorState title={t("Couldn't load your logins")} onRetry={onRetry} />
       ) : empty ? (
-        <VaultEmpty onPick={openAdd} />
+        <VaultEmpty onPick={(preset) => openAdd(preset, "OTHER")} />
       ) : showCheckup ? (
         <VaultCheckup entries={entries} checkup={checkup} failed={checkupLoad === "failed"} onRetry={retryCheckup} busy={isSaving} onBack={closeCheckup} onChange={changeOnSite} onFine={markFine} />
       ) : (
         <>
-          {/* Phones (VaultMobile): one white band under the bar with the search, the sort and the chips. */}
+          {/* Phones (VaultMobile): one white band under the bar with the search and the chips. */}
           <div className="-mx-4 -mt-5 flex flex-col gap-2.5 border-b border-line bg-surface px-4 pt-3 pb-2 md:hidden">
-            <div className="flex gap-2">
-              {searchBox("h-11.5 flex-1 rounded-[12px] bg-strip text-body-lg", "md")}
-              {/* The select is laid over the icon, so a tap opens the phone's own picker. */}
-              <label className="relative flex size-11.5 shrink-0 items-center justify-center rounded-[12px] border border-line-strong bg-surface text-ink-2 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring">
-                <ArrowUpDown className="size-5" aria-hidden="true" />
-                {sort !== "az" && <span aria-hidden="true" className="absolute top-2 right-2 size-2 rounded-full bg-emerald" />}
-                <select value={sort} onChange={(event) => setSort(event.target.value as VaultSort)} aria-label={t("Sort")} className="absolute inset-0 cursor-pointer appearance-none text-body-lg opacity-0">
-                  {VAULT_SORTS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {t(option.label)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            {searchBox("h-11.5 rounded-[12px] bg-strip text-body-lg", "md")}
             {chips}
           </div>
 
@@ -749,14 +740,14 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
                   aria-expanded={!navHidden}
                   aria-label={t(navHidden ? "Show menu" : "Hide menu")}
                   title={t(navHidden ? "Show menu" : "Hide menu")}
-                  className={cn("hidden size-11 shrink-0 items-center justify-center rounded-[12px] border lg:flex", navHidden ? "border-emerald-line bg-emerald-soft text-emerald" : "border-line-strong bg-surface text-ink-muted hover:bg-surface-sunken")}
+                  className={cn("hidden size-11 shrink-0 items-center justify-center rounded-[12px] border lg:flex", navHidden ? "border-emerald-line bg-emerald-soft text-brand-ink" : "border-input bg-surface text-ink-muted hover:bg-surface-sunken")}
                 >
                   {navHidden ? <PanelLeftOpen className="size-4.5" aria-hidden="true" /> : <PanelLeftClose className="size-4.5" aria-hidden="true" />}
                 </button>
                 {searchBox("h-11 flex-1 rounded-[12px] text-[14.5px]", "md")}
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
-                    <button type="button" className="flex h-11 shrink-0 items-center gap-2 rounded-[12px] border border-line-strong bg-surface px-3.5 text-[13.5px] font-medium whitespace-nowrap text-ink hover:bg-surface-sunken">
+                    <button type="button" className="flex h-11 shrink-0 items-center gap-2 rounded-[12px] border border-input bg-surface px-3.5 text-[13.5px] font-medium whitespace-nowrap text-ink hover:bg-surface-sunken">
                       <ArrowUpDown className="size-3.75 text-ink-muted" aria-hidden="true" />
                       <span className="sr-only">{t("Sort")}: </span>
                       {sortLabel}
@@ -774,24 +765,24 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
                     </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <div role="radiogroup" aria-label={t("Layout")} className="flex h-11 shrink-0 gap-0.5 rounded-[12px] border border-line-strong bg-surface p-0.75">
+                <div role="radiogroup" aria-label={t("Layout")} className="flex h-11 shrink-0 gap-0.5 rounded-[12px] border border-input bg-surface p-0.75">
                   {(["list", "cards"] as const).map((value) => {
                     const on = layout === value;
                     const Icon = value === "list" ? List : LayoutGrid;
                     const label = t(value === "list" ? "List" : "Cards");
                     return (
-                      <button key={value} type="button" role="radio" aria-checked={on} aria-label={label} title={label} onClick={() => pickLayout(value)} className={cn("flex w-9.5 items-center justify-center rounded-[9px]", on ? "bg-emerald-soft text-emerald" : "text-ink-muted hover:bg-surface-sunken")}>
+                      <button key={value} type="button" role="radio" aria-checked={on} aria-label={label} title={label} onClick={() => pickLayout(value)} className={cn("flex w-9.5 items-center justify-center rounded-[9px]", on ? "bg-emerald-soft text-brand-ink" : "text-ink-muted hover:bg-surface-sunken")}>
                         <Icon className="size-4" aria-hidden="true" />
                       </button>
                     );
                   })}
                 </div>
               </div>
-              <div className="max-md:hidden">{chips}</div>
+              <div className="max-md:hidden lg:hidden">{chips}</div>
 
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 max-md:hidden">
                 <span className="flex items-center gap-2.5">
-                  <span className="text-[15px] font-semibold text-ink">
+                  <span className="text-[15px] leading-[normal] font-semibold text-ink">
                     {listLabel}
                     {countKnown(view) && <span className="font-medium text-ink-faint"> · {n(visible.length)}</span>}
                   </span>
@@ -802,7 +793,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
                     </button>
                   )}
                 </span>
-                {layout === "list" && <span className="text-[12.5px] text-ink-muted">{t("Press View to see everything about a login")}</span>}
+                {layout === "list" && <span className="text-[12.5px] leading-[normal] text-ink-muted">{t("Press View to see everything about a login")}</span>}
               </div>
 
               {loading ? (
@@ -845,6 +836,7 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
         onClose={closeDetails}
         issues={selected ? issuesOf(checkup, selected.id) : []}
         safety={selected ? safetyOf(checkup, selected.id) : null}
+        sharedWith={selected ? sharesWith(entries, checkup, selected.id) : []}
         revealed={selected && revealed?.id === selected.id ? revealed.password : null}
         busy={selected !== null && revealing === selected.id}
         copied={selected && copied?.id === selected.id ? copied.what : null}

@@ -74,7 +74,10 @@ function Topbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t, fmt } = useLocale();
-  const { activeBusinessId } = useAuth();
+  const { activeBusinessId, user } = useAuth();
+  // A group member's portal login has only its groups: no search, tasks,
+  // bell, other app, account menu or Add menu (the sidebar signs it out).
+  const portal = Boolean(user.portalOnly);
   const darkModeOn = useFeature("dark_mode");
   const { openCount } = useTodayTasks();
   const { tasksOpen, setTasksOpen, attachTasksPanel } = useAddActions();
@@ -152,7 +155,8 @@ function Topbar() {
         </Link>
       )}
 
-      <nav aria-label={t("Breadcrumb")} className="hidden min-w-0 flex-1 items-center md:flex">
+      {/* The board sets the trail 20px in from the page edge (its header spaces two empty slots before it). */}
+      <nav aria-label={t("Breadcrumb")} className="hidden min-w-0 flex-1 items-center md:flex md:pl-5">
         <ol className="flex min-w-0 items-center gap-2 text-body text-ink-muted">
           {trail.map((part, index) => (
             // Tablets and small laptops keep only the step just above the
@@ -177,10 +181,13 @@ function Topbar() {
       </nav>
 
       {/* The boards took the search box off the bar; Ctrl K still opens it. */}
+      {!portal && (
       <div className="flex shrink-0 max-md:order-3">
         <CustomerSearch showTriggers={false} iconClassName={iconButton} />
       </div>
+      )}
 
+      {!portal && (
       <TodayTasksPanel open={tasksOpen} onOpenChange={setTasksOpen}>
         <button type="button" aria-label={tasksLabel} title={t("Today’s tasks")} className={cn(
             "relative flex shrink-0 items-center justify-center text-ink-soft transition-colors hover:text-ink max-md:order-1",
@@ -199,14 +206,18 @@ function Topbar() {
           )}
         </button>
       </TodayTasksPanel>
+      )}
 
       {/* The board's order: tasks, dark mode, then the bell. */}
       {darkModeOn && <ThemeToggle className={cn("max-md:hidden", iconButton)} />}
 
-      <div className="flex shrink-0 max-md:order-4">
-        <NotificationsBell className={iconButton} badgeClassName={COUNT_BADGE} />
-      </div>
+      {!portal && (
+        <div className="flex shrink-0 max-md:order-4">
+          <NotificationsBell className={iconButton} badgeClassName={COUNT_BADGE} />
+        </div>
+      )}
 
+      {!portal && (
       <Link
         href={habit ? MONEY_HOME : HABIT_HOME}
         aria-label={switchLabel}
@@ -222,17 +233,20 @@ function Topbar() {
           {t(habit ? "Money Tracker" : HABIT_APP_LABEL)}
         </span>
       </Link>
+      )}
 
       {extras?.action && <div className="max-md:order-5 md:hidden">{extras.action}</div>}
-      <div className={cn("flex shrink-0 max-md:order-5 max-md:mx-0.5 md:ml-1", (NO_AVATAR_ON_PHONE.has(pathname) || extras?.action) && "max-md:hidden")}>
+      <div className={cn("flex shrink-0 max-md:order-5 max-md:mx-0.5 md:ml-1", (NO_AVATAR_ON_PHONE.has(pathname) || extras?.action) && "max-md:hidden", portal && "hidden")}>
         <AccountMenu />
       </div>
 
       {/* N's Add menu hangs here, under the account button; not on phones,
           which have the +. */}
-      <div className="hidden md:contents">
-        <AddMenu />
-      </div>
+      {!portal && (
+        <div className="hidden md:contents">
+          <AddMenu />
+        </div>
+      )}
     </header>
   );
 }

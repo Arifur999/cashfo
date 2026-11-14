@@ -47,6 +47,8 @@ interface ExpenseDrawerProps {
   // equally.
   mealsOn: boolean;
   closedGuard: ClosedGuard;
+  // An Editor works only in their own name: this member, fixed.
+  selfOnly?: string | null;
 }
 
 const paisa = (value: number | string) => Math.round(Number(value) * 100);
@@ -65,7 +67,7 @@ const SPLIT_CHOICES: { value: GroupSplit; label: string }[] = [
 // member from their own pocket (credited to them) -- what it was, and how
 // it is shared: equally among everyone or the members picked, by the cost
 // split, by exact amounts or by meals, with what it does to the balances.
-export function ExpenseDrawer({ open, onClose, businessId, currency, members, categories, accountantCash, cashInHand, holderId, costSplit, range, today, editing, meals, mealsOn, closedGuard }: ExpenseDrawerProps) {
+export function ExpenseDrawer({ open, onClose, businessId, currency, members, categories, accountantCash, cashInHand, holderId, costSplit, range, today, editing, meals, mealsOn, closedGuard, selfOnly = null }: ExpenseDrawerProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE");
@@ -103,7 +105,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
       setDescription(editing?.description ?? "");
       setPaidFrom(editing?.paidFrom ?? "FUND");
       // A new expense is paid by the accountant who holds the cash.
-      setPaidById(editing ? (editing.paidByMemberId ?? "") : (holderId ?? accountants[0]?.id ?? ""));
+      setPaidById(editing ? (editing.paidByMemberId ?? "") : (selfOnly ?? holderId ?? accountants[0]?.id ?? ""));
       setSplit(editing?.split ?? "EQUAL");
       setSplitTouched(!!editing);
       const named = editing?.splits ?? [];
@@ -127,8 +129,8 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
   function pickSource(next: GroupPaidFrom) {
     setPaidFrom(next);
     // The person who paid switches lists: an accountant's cash, or anyone's pocket.
-    if (next === "FUND" && !accountants.some((member) => member.id === paidById)) setPaidById(holderId ?? accountants[0]?.id ?? "");
-    if (next === "MEMBER" && !active.some((member) => member.id === paidById)) setPaidById("");
+    if (next === "FUND" && !accountants.some((member) => member.id === paidById)) setPaidById(selfOnly ?? holderId ?? accountants[0]?.id ?? "");
+    if (next === "MEMBER" && !active.some((member) => member.id === paidById)) setPaidById(selfOnly ?? "");
   }
 
   const value = Number(amount) || 0;
@@ -231,7 +233,7 @@ export function ExpenseDrawer({ open, onClose, businessId, currency, members, ca
       : chosen.defaultSplit === split && split !== "EQUAL"
         ? t("{category} is shared {how} by default. You can change it for this one expense.", { category: chosen.name, how: t(splitWord).toLowerCase() })
         : null;
-  const payers = fromFund ? accountants : active;
+  const payers = (fromFund ? accountants : active).filter((member) => !selfOnly || member.id === selfOnly);
   // The board's four ways: the category's own rule, equally, by shares, or
   // amounts typed for each (and by meals, where meals are counted).
   type Mode = "RULE" | GroupSplit;

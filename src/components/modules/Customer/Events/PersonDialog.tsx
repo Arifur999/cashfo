@@ -8,7 +8,7 @@ import { wordInitials } from "@/lib/customer/loanDisplay";
 import { cn } from "@/lib/utils";
 import { PopupDialog } from "../Shared/PopupDialog";
 import { FIELD, LABEL } from "./AddEventDialog";
-import { TINT, typeLook } from "./eventVisuals";
+import { POPUP, TINT, typeLook } from "./eventVisuals";
 import { standingLong } from "./standingText";
 import type { EventWords } from "./useEventWords";
 
@@ -60,7 +60,9 @@ function PersonView({ person, events, ledger, today, words, readOnly, busy, onCl
       open
       onClose={onClose}
       busy={busy}
-      className="leading-[normal]"
+      className={POPUP.className}
+      closeClassName={POPUP.closeClassName}
+      subClassName="-mt-0.5 text-small"
       width={560}
       headClassName="items-center gap-3.5 px-6 py-5"
       lead={
@@ -107,7 +109,7 @@ function PersonView({ person, events, ledger, today, words, readOnly, busy, onCl
             <input type="text" value={relation} onChange={(event) => setRelation(event.target.value)} placeholder={t("Cousin, neighbour, colleague")} maxLength={40} className={FIELD} />
           </label>
           {error && (
-            <div role="alert" className="rounded-[10px] bg-expense-soft px-3.5 py-2.5 text-small font-medium text-expense">
+            <div role="alert" className="rounded-[10px] bg-loss-wash px-3.5 py-2.5 text-small font-medium text-loss-ink">
               {error}
             </div>
           )}
@@ -119,7 +121,7 @@ function PersonView({ person, events, ledger, today, words, readOnly, busy, onCl
               { label: t("You gave {name}", { name: first }), value: row.gave },
               { label: t("{name} gave you", { name: first }), value: row.got },
             ].map((tile) => (
-              <div key={tile.label} className="flex flex-col gap-[3px] rounded-[14px] border border-line-card bg-table-head px-3.5 py-3">
+              <div key={tile.label} className="flex flex-col gap-[3px] rounded-[14px] border border-head-rule bg-head-wash px-3.5 py-3">
                 <span className="truncate text-[12.5px] text-ink-muted">{tile.label}</span>
                 <span className="text-[20px] font-bold text-ink tabular-nums">{money(tile.value)}</span>
               </div>
@@ -128,7 +130,7 @@ function PersonView({ person, events, ledger, today, words, readOnly, busy, onCl
           <div className={cn("rounded-[12px] px-3.5 py-3 text-[13.5px] font-medium", tint.bg, tint.fg)}>{standingLong(standing, person.name, words)}</div>
           {next && (
             <button type="button" onClick={() => onOpenEvent(next.id)} className="flex items-center gap-2.5 rounded-[12px] border border-line-card bg-surface px-3.5 py-3 text-left hover:bg-row-hover">
-              <CalendarDays className="size-4 shrink-0 text-ink-soft" aria-hidden="true" />
+              <CalendarDays className="size-4.25 shrink-0 text-emerald" aria-hidden="true" />
               <span className="min-w-0 flex-1 text-[13.5px] text-ink">
                 {t("Next: {title}", { title: next.title })} · {words.day(next.date, false)} · {words.when(daysFrom(today, next.date))}
               </span>
@@ -140,7 +142,7 @@ function PersonView({ person, events, ledger, today, words, readOnly, busy, onCl
             {history.map(({ gift, event }) => {
               const look = typeLook(event.type);
               return (
-                <div key={gift.id} className="flex items-center gap-3 border-t border-divider py-2.5">
+                <div key={gift.id} className="flex items-center gap-3 border-t border-page py-2.5">
                   <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-[10px]", look.bg, look.fg)}>
                     <look.Icon className="size-4" aria-hidden="true" />
                   </span>

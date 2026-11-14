@@ -283,7 +283,20 @@ export function checkupFor(entries: VaultEntrySummary[], checkup: VaultCheckup |
   if (!checkup) return null;
   const ids = new Set(entries.map((entry) => entry.id));
   const keep = (list: string[]) => list.filter((id) => ids.has(id));
-  return { weak: keep(checkup.weak), reused: keep(checkup.reused), old: keep(checkup.old) };
+  return {
+    weak: keep(checkup.weak),
+    reused: keep(checkup.reused),
+    old: keep(checkup.old),
+    reusedGroups: checkup.reusedGroups?.map(keep).filter((group) => group.length > 1),
+    weakDetails: checkup.weakDetails,
+  };
+}
+
+// The other logins that share this one's password, by title ("Same password
+// as Instagram"); empty when the checkup didn't say.
+export function sharesWith(entries: VaultEntrySummary[], checkup: VaultCheckup | null, id: string): string[] {
+  const group = checkup?.reusedGroups?.find((ids) => ids.includes(id)) ?? [];
+  return group.filter((other) => other !== id).flatMap((other) => entries.find((entry) => entry.id === other)?.title ?? []);
 }
 
 // The security checkup's latest answer: the logins and the try it was asked
@@ -388,33 +401,21 @@ export interface QuickLogin {
   title: string;
   category: VaultEntryCategory;
   website: string;
-  // The tile's letter, the kind of account under its name (a dictionary
-  // key) and its tint, as the empty vault board draws each one.
-  letter: string;
+  // The kind of account under its name on the tile (a dictionary key).
   kind: string;
-  tint: string;
   // A plain name ("Home Wi-Fi") rather than a brand's: it goes through t().
   translate?: boolean;
 }
 
-const TINT = {
-  blue: "bg-info-soft text-info",
-  red: "bg-expense-soft text-expense",
-  rose: "bg-rose-soft text-rose",
-  mint: "bg-mint-50 text-emerald",
-  amber: "bg-pillar-loans-soft text-pillar-loans",
-  teal: "bg-pillar-insights-soft text-pillar-insights",
-};
-
 // The accounts people open most, offered on an empty vault.
 export const QUICK_LOGINS: QuickLogin[] = [
-  { title: "Facebook", category: "SOCIAL", website: "facebook.com", letter: "F", kind: "Social", tint: TINT.blue },
-  { title: "Gmail", category: "EMAIL", website: "mail.google.com", letter: "G", kind: "Email", tint: TINT.red },
-  { title: "bKash", category: "MOBILE_BANKING", website: "bkash.com", letter: "b", kind: "Mobile banking", tint: TINT.rose },
-  { title: "Dutch-Bangla Bank", category: "BANK", website: "dutchbanglabank.com", letter: "D", kind: "Bank", tint: TINT.mint },
-  { title: "Daraz", category: "SHOPPING", website: "daraz.com.bd", letter: "D", kind: "Shopping", tint: TINT.amber },
-  { title: "Home Wi-Fi", category: "WIFI", website: "", letter: "W", kind: "Wi-Fi", tint: TINT.teal, translate: true },
-  { title: "Office email", category: "WORK", website: "", letter: "O", kind: "Work", tint: TINT.blue, translate: true },
+  { title: "Facebook", category: "SOCIAL", website: "facebook.com", kind: "Social" },
+  { title: "Gmail", category: "EMAIL", website: "mail.google.com", kind: "Email" },
+  { title: "bKash", category: "MOBILE_BANKING", website: "bkash.com", kind: "Mobile banking" },
+  { title: "Dutch-Bangla Bank", category: "BANK", website: "dutchbanglabank.com", kind: "Bank" },
+  { title: "Daraz", category: "SHOPPING", website: "daraz.com.bd", kind: "Shopping" },
+  { title: "Home Wi-Fi", category: "WIFI", website: "", kind: "Wi-Fi", translate: true },
+  { title: "Office email", category: "WORK", website: "", kind: "Work", translate: true },
 ];
 
 // A quick login's name in the reader's language; brand names stay as they are.
