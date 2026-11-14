@@ -111,6 +111,8 @@
   --sky-soft: #e0f2fe;
   /* The fifth savings account's colour (SavingsWallets board). */
   --rose-deep: #be123c;
+  /* A low week's bar on the habit and Namaz reports (#fda4af in both themes). */
+  --rose-bar: #fda4af;
   --gold-on-forest: #f5c26b;
   /* The payment gateways' own colours, for their tags on the Payments page. */
   --gateway-bkash: #e2136e;
@@ -890,6 +892,7 @@ html:not(.dark) [data-app="habit"] {
   --color-sky: var(--sky);
   --color-sky-soft: var(--sky-soft);
   --color-rose-deep: var(--rose-deep);
+  --color-rose-bar: var(--rose-bar);
   --color-meter-records: var(--meter-records);
   --color-brand-facebook: var(--brand-facebook);
   --color-brand-youtube: var(--brand-youtube);

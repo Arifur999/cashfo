@@ -76,9 +76,9 @@ export function ReportStats({ stats }: { stats: ReportStat[] }) {
     <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
       {stats.map((stat) => (
         <Card key={stat.label} padding="none" className="flex min-w-0 flex-col gap-0.5 rounded-[12px] px-4 py-2.75">
-          <span className="text-[12.5px] font-medium text-ink-muted">{stat.label}</span>
-          <span className={cn("text-[22px] font-bold tracking-[-0.02em] tabular-nums", stat.tone === "bad" ? "text-expense" : stat.tone === "good" ? "text-income" : "text-ink")}>{stat.value}</span>
-          <span className="text-caption text-ink-muted">{stat.sub}</span>
+          <span className="text-[12.5px] leading-[normal] font-medium text-ink-muted">{stat.label}</span>
+          <span className={cn("text-[22px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums", stat.tone === "bad" ? "text-expense" : stat.tone === "good" ? "text-income" : "text-ink")}>{stat.value}</span>
+          <span className="text-caption leading-[normal] text-ink-muted">{stat.sub}</span>
         </Card>
       ))}
     </div>
@@ -117,7 +117,7 @@ export function ReportSheet({ title, label, legend, hint, columns, rows, totalsL
         <h2 id="report-sheet-title" className="text-[15px] font-semibold text-ink">
           {title}
         </h2>
-        <div className="flex flex-wrap items-center gap-3 text-caption text-ink-2">
+        <div className="flex flex-wrap items-center gap-3 text-caption text-ink-soft">
           {legend.map((item) => (
             <span key={item.label} className="flex items-center gap-1.25">
               {item.swatch}
@@ -226,7 +226,7 @@ export function WeekBars({ title, label, weeks }: { title: string; label: string
           <span key={week.key} title={week.title} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
             <span className="text-[11.5px] font-bold text-ink-2 tabular-nums">{week.pct === null ? "—" : `${formatCount(week.pct, fmt)}%`}</span>
             <span
-              className={cn("w-full max-w-8.5 rounded-t-[6px]", week.pct === null ? "bg-line" : week.pct >= 85 ? "bg-emerald" : week.pct >= 70 ? "bg-emerald/45" : "bg-expense-line")}
+              className={cn("w-full max-w-8.5 rounded-t-[6px]", week.pct === null ? "bg-line" : week.pct >= 85 ? "bg-emerald" : week.pct >= 70 ? "bg-emerald/45" : "bg-rose-bar")}
               style={{ height: week.pct === null ? 3 : `${Math.max(4, Math.round(week.pct * 0.9))}%` }}
             />
           </span>

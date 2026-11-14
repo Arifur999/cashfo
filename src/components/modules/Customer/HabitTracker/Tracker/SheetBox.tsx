@@ -46,12 +46,14 @@ interface SheetBoxProps {
   tabIndex?: number;
   onFocus?: () => void;
   ref?: React.Ref<HTMLButtonElement>;
+  // 25px tall, as the Namaz dashboard's sheet draws it.
+  short?: boolean;
 }
 
 // One 27px box of a month sheet: ticked (or how a prayer was prayed),
 // missed, still open today, or not reached yet. Shared by the Namaz and
 // Ramadan sheets.
-export function SheetBox({ state, label, disabled = false, onToggle, tabIndex, onFocus, ref }: SheetBoxProps) {
+export function SheetBox({ state, label, disabled = false, onToggle, tabIndex, onFocus, ref, short = false }: SheetBoxProps) {
   return (
     <button
       ref={ref}
@@ -63,7 +65,7 @@ export function SheetBox({ state, label, disabled = false, onToggle, tabIndex, o
       tabIndex={tabIndex}
       onFocus={onFocus}
       onClick={onToggle}
-      className={cn("flex size-6.75 shrink-0 items-center justify-center rounded-[6px] transition-colors", LOOK[state], !disabled && HOVER[state], state === "locked" && "cursor-not-allowed")}
+      className={cn("flex w-6.75 shrink-0 items-center justify-center rounded-[6px] transition-colors", short ? "h-6.25" : "h-6.75", LOOK[state], !disabled && HOVER[state], state === "locked" && "cursor-not-allowed")}
     >
       <BoxIcon state={state} />
     </button>
@@ -87,13 +89,15 @@ interface DayTotalProps {
   title: string;
   // The count as the reader writes it.
   label?: string;
+  // 20px tall in 11px figures (the Namaz dashboard).
+  short?: boolean;
 }
 
 // The count along the bottom of a sheet: green when the day was full,
 // quiet when one short, red when more was missed.
-export function DayTotal({ count, of, open = false, title, label }: DayTotalProps) {
+export function DayTotal({ count, of, open = false, title, label, short = false }: DayTotalProps) {
   return (
-    <span title={count === null ? "" : title} className={cn("flex h-5.5 w-6.75 shrink-0 items-center justify-center rounded-[5px] text-[11.5px] font-bold tabular-nums", count === null ? "text-transparent" : open ? "bg-surface-sunken text-ink-2" : count === of ? "bg-mint-50 text-brand-ink" : count >= of - 1 ? "bg-surface-sunken text-ink-2" : "bg-expense-soft text-expense")}>
+    <span title={count === null ? "" : title} className={cn("flex w-6.75 shrink-0 items-center justify-center rounded-[5px] font-bold tabular-nums", short ? "h-5 text-[11px]" : "h-5.5 text-[11.5px]", count === null ? "text-transparent" : open ? "bg-surface-sunken text-ink-2" : count === of ? "bg-mint-50 text-brand-ink" : count >= of - 1 ? "bg-surface-sunken text-ink-2" : "bg-expense-soft text-expense")}>
       {count === null ? "" : (label ?? count)}
     </span>
   );
