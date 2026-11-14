@@ -8,6 +8,7 @@ import Chip from "@/components/smartly/Chip";
 import IconTile from "@/components/smartly/IconTile";
 import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowButton, ListTotalRow } from "@/components/smartly/list";
 import type { GroupContribution, GroupExpense, GroupMember } from "@/lib/customer/api";
+import { canManage } from "@/lib/customer/groupAccess";
 import { formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf, groupTabHref, paidIn, shortName, type Transfer, unclosedPreviousMonth } from "@/lib/customer/groupDisplay";
 import { carriedBy, categoryRows, givesMoney, mainAccountantId, totalGiven, type SettleCard, settlementCards } from "@/lib/customer/groupFamily";
@@ -38,10 +39,13 @@ interface FamilyMonthOverviewProps {
   onAddExpense: () => void;
   onAddContribution: () => void;
   onRecordPayment: (preset: Transfer | null) => void;
+  // Whether the one looking may record a payment made by this member (the
+  // Admin any; an Editor only one they made).
+  canPay: (fromId: string) => boolean;
   onStatement: (member: GroupMember) => void;
 }
 
-export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAddContribution, onRecordPayment, onStatement }: FamilyMonthOverviewProps) {
+export function FamilyMonthOverview({ data, view, me, canAdd, canPay, onAddExpense, onAddContribution, onRecordPayment, onStatement }: FamilyMonthOverviewProps) {
   const { t, fmt } = useLocale();
   const { currency, settlement } = data;
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
@@ -49,7 +53,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
   const month = monthName(data.range.key, fmt, "long", true);
   const current = data.range.key === groupMonthOf(data.today, data.startDay);
   const closed = view.closed;
-  const isAdmin = data.role === "OWNER";
+  const isAdmin = canManage(data.access);
   const actions = canAdd && !closed;
   // The month before this one, finished but never closed (it is asked for first).
   const previous = current && isAdmin && !data.settings.pausedAt ? unclosedPreviousMonth(data.history, data.members, data.range) : null;
@@ -149,10 +153,12 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                 </Link>
               </Button>
             )}
-            <Button variant="secondary" className="text-[13.5px]" onClick={() => onRecordPayment(firstOpen)}>
-              <ArrowLeftRight className="text-ink-2" aria-hidden="true" />
-              {t("Record payment")}
-            </Button>
+            {(isAdmin || (firstOpen && canPay(firstOpen.fromId))) && (
+              <Button variant="secondary" className="text-[13.5px]" onClick={() => onRecordPayment(firstOpen)}>
+                <ArrowLeftRight className="text-ink-2" aria-hidden="true" />
+                {t("Record payment")}
+              </Button>
+            )}
             <Button variant="secondary" className="text-[13.5px]" onClick={onAddContribution}>
               <Plus className="text-income" strokeWidth={2.25} aria-hidden="true" />
               {t("Add contribution")}
@@ -236,7 +242,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, onAddExpense, onAd
                           ? t("Settled for this month through the cash holder.")
                           : t("You don’t owe anything and nobody owes you.")}
               </span>
-              {actions && myTransfer && (
+              {actions && myTransfer && canPay(myTransfer.fromId) && (
                 <Button size="sm" variant={myTransfer.fromId === me.id ? "danger" : "primary"} className="mt-0.5 self-start text-[13px]" onClick={() => onRecordPayment(myTransfer)}>
                   {myTransfer.fromId === me.id ? t("Pay now") : t("Record payment")}
                 </Button>

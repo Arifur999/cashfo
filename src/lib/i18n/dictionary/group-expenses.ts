@@ -1641,4 +1641,14 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Sign in first.": "আগে সাইন ইন করুন।",
   // v16 Group: member sign-in
   "Log in": "লগইন",
+  // Group Expense: a closed month on Settlement, and reopening it
+  "Closed": "বন্ধ",
+  "Everything in {month} is locked. Balances carry on into {next}.": "{month}-এর সব কিছু লক করা। ব্যালেন্স {next}-এ চলে গেছে।",
+  "Failed to reopen the month": "মাস আবার খোলা যায়নি",
+  "{month} is open again": "{month} আবার খোলা হয়েছে",
+  "Reopen month": "মাস আবার খুলুন",
+  "Reopen {month} first": "আগে {month} খুলুন",
+  "{later} is closed too and starts from {month}’s balances. Reopen the newest month first, then this one.": "{later}-ও বন্ধ, আর সেটা {month}-এর ব্যালেন্স থেকে শুরু হয়। আগে সবচেয়ে নতুন মাসটা খুলুন, তারপর এটা।",
+  "Reopen {month}?": "{month} আবার খুলবেন?",
+  "Its entries can be added, changed and deleted again. If anything changes, the balances carried into {next} change too. This is written to the Activity log.": "এর এন্ট্রি আবার যোগ, বদল ও মোছা যাবে। কিছু বদলালে {next}-এ যাওয়া ব্যালেন্সও বদলাবে। এটা অ্যাক্টিভিটি লগে লেখা থাকবে।",
 };

@@ -379,3 +379,10 @@ export async function closeGroupSettlementAction(
     return res.data;
   }, "Failed to close settlement");
 }
+
+// Reopens the newest closed month: its record and the balances it carried go.
+export async function reopenGroupMonthAction(businessId: string, settlementId: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/group/settlement/${settlementId}/reopen`, {}, { headers: await authHeaders() });
+  }, "Failed to reopen the month");
+}

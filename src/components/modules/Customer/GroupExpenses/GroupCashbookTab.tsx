@@ -33,6 +33,10 @@ interface GroupCashbookTabProps {
   busy: boolean;
   // A paused group takes no new handovers.
   canAdd: boolean;
+  // Whether the one looking may change or delete a handover, and an
+  // Editor's own member record (they hand over only their own cash).
+  canTouch: (row: { createdByUserId?: string | null }, date: string) => boolean;
+  selfOnly: string | null;
 }
 
 // Each accountant's cash (the FamilyCashbook boards): money in from the
@@ -40,7 +44,7 @@ interface GroupCashbookTabProps {
 // they returned, and cash handed from one holder to another (v16), with
 // the cash in hand after each. Deposits and expenses are added on their own
 // pages; handovers are added, edited and deleted here.
-export function GroupCashbookTab({ data, view, onAccountant, busy, canAdd }: GroupCashbookTabProps) {
+export function GroupCashbookTab({ data, view, onAccountant, busy, canAdd, canTouch, selfOnly }: GroupCashbookTabProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const [handover, setHandover] = useState<{ open: boolean; editing: HandoverDraft | null }>({ open: false, editing: null });
@@ -298,7 +302,7 @@ export function GroupCashbookTab({ data, view, onAccountant, busy, canAdd }: Gro
               <span className={cn("text-right font-semibold", balance < -0.004 ? "text-expense" : "text-ink")}>{signedMoney(balance)}</span>
               <span className="flex justify-end gap-1 max-md:col-span-2">
                 {draft ? (
-                  canAdd && (
+                  canTouch(row, row.date) && (
                     <>
                       <button type="button" onClick={() => setHandover({ open: true, editing: draft })} aria-label={t("Edit handover")} className={ACTION}>
                         <Pencil className="size-3.75" aria-hidden="true" />
@@ -328,7 +332,7 @@ export function GroupCashbookTab({ data, view, onAccountant, busy, canAdd }: Gro
         </div>
       </section>
 
-      <HandoverDialog open={handover.open} onClose={() => setHandover({ open: false, editing: null })} businessId={data.businessId} currency={currency} holders={holders} cash={holderCash} today={data.today} editing={handover.editing} />
+      <HandoverDialog open={handover.open} onClose={() => setHandover({ open: false, editing: null })} businessId={data.businessId} currency={currency} holders={holders} cash={holderCash} today={data.today} editing={handover.editing} selfOnly={selfOnly} />
       <ConfirmDialog
         open={removing !== null}
         onClose={() => !isPending && setRemoving(null)}

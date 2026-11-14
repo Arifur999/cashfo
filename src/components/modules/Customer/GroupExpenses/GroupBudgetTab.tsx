@@ -13,6 +13,7 @@ import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useState } from "react";
 import type { GroupExpenseCategoryOption } from "@/lib/customer/api";
+import { canManage } from "@/lib/customer/groupAccess";
 import { BudgetWarnDialog } from "./BudgetWarnDialog";
 import { CategoryLimitDialog } from "./CategoryLimitDialog";
 import { cn } from "@/lib/utils";
@@ -58,7 +59,7 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
   const limited = cats.filter((row) => limitOf(row.name) > 0).length;
   const [limiting, setLimiting] = useState<GroupExpenseCategoryOption | null>(null);
   const [warnOpen, setWarnOpen] = useState(false);
-  const isAdmin = data.role === "OWNER";
+  const isAdmin = canManage(data.access);
   const LIMIT_COLUMNS = "md:grid-cols-[minmax(0,1fr)_110px_120px_minmax(0,1.3fr)_40px]";
   const last6 = [...rows].filter((row) => !row.future).slice(0, 6).reverse();
   const peak = Math.max(1, ...last6.map((row) => Math.max(row.spent, row.budget ?? 0)));
@@ -77,10 +78,12 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
             {t("Current month")}
           </Chip>
         </span>
-        <Button onClick={() => onSet(shownKey)}>
-          <Pencil aria-hidden="true" />
-          {now?.budget ? t("Edit budget") : t("Set budget")}
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => onSet(shownKey)}>
+            <Pencil aria-hidden="true" />
+            {now?.budget ? t("Edit budget") : t("Set budget")}
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -199,7 +202,7 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
               const used = row.budget ? (row.spent / row.budget) * 100 : null;
               const tone = row.budget !== null && row.spent > row.budget ? "bg-expense-fill" : used !== null && warnAt !== null && used >= warnAt ? "bg-warning-fill" : "bg-emerald";
               return (
-                <button key={row.key} type="button" role="listitem" onClick={() => onSet(row.key)} aria-label={t("{month}: {spent} spent of {budget}", { month: monthName(row.key, fmt, "long", true), spent: money(row.spent), budget: row.budget === null ? t("Not set") : money(row.budget) })} className={cn("flex flex-col items-center gap-1 rounded-lg border px-0.5 pt-1.5 pb-1 hover:bg-surface-sunken", row.current ? "border-emerald" : "border-transparent")}>
+                <button key={row.key} type="button" role="listitem" disabled={!isAdmin} onClick={() => onSet(row.key)} aria-label={t("{month}: {spent} spent of {budget}", { month: monthName(row.key, fmt, "long", true), spent: money(row.spent), budget: row.budget === null ? t("Not set") : money(row.budget) })} className={cn("flex flex-col items-center gap-1 rounded-lg border px-0.5 pt-1.5 pb-1 hover:bg-surface-sunken", row.current ? "border-emerald" : "border-transparent")}>
                   <span className="text-[10.5px] font-semibold text-ink-2 tabular-nums">{toLocaleDigits(row.spent >= 1000 ? `${Math.round(row.spent / 100) / 10}k` : String(Math.round(row.spent)), fmt)}</span>
                   <span className="flex h-32 items-end gap-0.5">
                     <span className="w-2.5 rounded-t-sm bg-surface-sunken" style={{ height: `${((row.budget ?? 0) / peak) * 100}%` }} />
@@ -282,9 +285,11 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
                 )}
               </ListCell>
               <ListRowActions className="flex justify-end">
-                <Button variant={row.budget === null ? "soft" : "ghost"} size="xs" onClick={() => onSet(row.key)}>
-                  {row.budget === null ? t("Set budget") : t("Edit")}
-                </Button>
+                {isAdmin && (
+                  <Button variant={row.budget === null ? "soft" : "ghost"} size="xs" onClick={() => onSet(row.key)}>
+                    {row.budget === null ? t("Set budget") : t("Edit")}
+                  </Button>
+                )}
               </ListRowActions>
             </ListRow>
           );

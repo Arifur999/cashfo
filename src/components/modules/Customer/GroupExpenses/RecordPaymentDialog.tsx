@@ -40,12 +40,14 @@ interface RecordPaymentDialogProps {
   today: string;
   // Who pays whom, when opened from a settle-up row.
   preset: Transfer | null;
+  // An Editor works only in their own name: this member, fixed.
+  selfOnly?: string | null;
 }
 
 // A member paying another to settle the month: saved in one commit as two
 // entries dated inside the month, a deposit by the payer and a return to
 // the receiver, so the fund's cash stays the same and both balances move.
-export function RecordPaymentDialog({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, preset }: RecordPaymentDialogProps) {
+export function RecordPaymentDialog({ open, onClose, businessId, currency, members, balances, cashInHand, range, today, preset, selfOnly = null }: RecordPaymentDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const active = members.filter((member) => member.status === "ACTIVE");
@@ -64,7 +66,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
   if (key !== prevKey) {
     setPrevKey(key);
     if (open) {
-      setFromId(preset?.fromId ?? "");
+      setFromId(selfOnly ?? preset?.fromId ?? "");
       setToId(preset?.toId ?? "");
       setAmount(preset ? String(preset.amount) : "");
       setNote("");
@@ -127,7 +129,7 @@ export function RecordPaymentDialog({ open, onClose, businessId, currency, membe
             {/* Side by side from sm up; stacked on a phone, the arrow pointing down. */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] sm:items-end">
               <Field htmlFor="pay-from" label={label(t("Who paid"))}>
-                <MemberPicker id="pay-from" label={t("Who paid")} members={active} value={fromId} onChange={setFromId} currency={currency} balances={balances} exclude={toId} />
+                <MemberPicker id="pay-from" label={t("Who paid")} members={selfOnly ? active.filter((member) => member.id === selfOnly) : active} value={fromId} onChange={setFromId} currency={currency} balances={balances} exclude={toId} />
               </Field>
               <span className="flex h-6 items-center justify-center text-ink-muted sm:h-13.5">
                 <ArrowRight className="size-4.5 max-sm:rotate-90" aria-hidden="true" />

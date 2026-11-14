@@ -3,6 +3,7 @@
 import { Eye, Pencil, Search, UserCheck, UserMinus, UserPlus, Users, UserX } from "lucide-react";
 import { useState } from "react";
 import type { GroupMember } from "@/lib/customer/api";
+import { canManage } from "@/lib/customer/groupAccess";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { countLabel } from "@/lib/customer/groupDisplay";
 import { formatDay } from "@/lib/date";
@@ -41,7 +42,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: G
   const { t, fmt } = useLocale();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const isAdmin = data.role === "OWNER";
+  const isAdmin = canManage(data.access);
   const money = (value: number) => formatCurrency(value, data.currency, fmt);
   const active = view.activeMembers;
   const gone = data.members.filter((member) => member.status !== "ACTIVE");

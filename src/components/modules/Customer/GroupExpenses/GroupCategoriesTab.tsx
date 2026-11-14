@@ -11,6 +11,7 @@ import Input from "@/components/smartly/form/Input";
 import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import type { GroupExpenseCategoryOption } from "@/lib/customer/api";
+import { canManage } from "@/lib/customer/groupAccess";
 import { formatCurrency } from "@/lib/customer/currency";
 import { categoryRows } from "@/lib/customer/groupFamily";
 import { formatCount } from "@/lib/i18n/digits";
@@ -47,7 +48,7 @@ export function GroupCategoriesTab({ data, onAdd, onEdit, onHide, onDelete }: Gr
   // The order being dragged into shape: ids, saved on drop.
   const [order, setOrder] = useState<string[] | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
-  const isAdmin = data.role === "OWNER";
+  const isAdmin = canManage(data.access);
   const label = monthName(data.range.key, fmt, "long", true);
   const money = (value: number) => formatCurrency(value, data.currency, fmt);
   const spending = new Map(categoryRows(data.expenses, data.categories).map((row) => [row.name, row]));
@@ -98,10 +99,12 @@ export function GroupCategoriesTab({ data, onAdd, onEdit, onHide, onDelete }: Gr
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <h2 className="text-[19px] font-semibold text-ink">{t("Categories")}</h2>
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button onClick={onAdd}>
-            <Plus aria-hidden="true" />
-            {t("Add category")}
-          </Button>
+          {isAdmin && (
+            <Button onClick={onAdd}>
+              <Plus aria-hidden="true" />
+              {t("Add category")}
+            </Button>
+          )}
         </div>
       </div>
       <ListCard
@@ -170,7 +173,7 @@ export function GroupCategoriesTab({ data, onAdd, onEdit, onHide, onDelete }: Gr
               </ListCell>
               <ListCell className="hidden md:block">
                 <span className={cn("inline-flex h-8 items-center gap-2 rounded-full border py-1 pr-3 pl-1.5", option.hidden ? "border-line bg-surface-sunken" : "border-success-line bg-income-soft/50")}>
-                  <SmallSwitch on={!option.hidden} label={option.hidden ? t("Make active: {name}", { name: option.name }) : t("Make inactive: {name}", { name: option.name })} title={option.hidden ? t("Inactive: not offered for new expenses. Click to make it active.") : t("Active: offered for new expenses. Click to make it inactive.")} onClick={() => onHide(option, !option.hidden)} />
+                  <SmallSwitch on={!option.hidden} label={option.hidden ? t("Make active: {name}", { name: option.name }) : t("Make inactive: {name}", { name: option.name })} title={option.hidden ? t("Inactive: not offered for new expenses. Click to make it active.") : t("Active: offered for new expenses. Click to make it inactive.")} disabled={!isAdmin} onClick={() => onHide(option, !option.hidden)} />
                   <span className={cn("text-small font-semibold", option.hidden ? "text-ink-muted" : "text-income")}>{option.hidden ? t("Inactive") : t("Active")}</span>
                 </span>
               </ListCell>
@@ -205,6 +208,8 @@ export function GroupCategoriesTab({ data, onAdd, onEdit, onHide, onDelete }: Gr
                 )}
               </ListCell>
               <ListRowActions className="flex items-center justify-end gap-1.5">
+                {isAdmin && (
+                <>
                 {/* A phone has no Status column: the switch sits with the actions. */}
                 <span className="flex md:hidden">
                   <SmallSwitch on={!option.hidden} label={option.hidden ? t("Make active: {name}", { name: option.name }) : t("Make inactive: {name}", { name: option.name })} onClick={() => onHide(option, !option.hidden)} />
@@ -215,6 +220,8 @@ export function GroupCategoriesTab({ data, onAdd, onEdit, onHide, onDelete }: Gr
                 <button type="button" onClick={() => onDelete(option)} aria-label={t("Delete {name}", { name: option.name })} title={uses > 0 ? t("Hide instead of delete") : t("Delete")} className="flex size-8 items-center justify-center rounded-lg border border-line bg-surface text-ink-2 hover:bg-expense-soft hover:text-expense pointer-coarse:size-11">
                   <Trash2 className="size-3.75" aria-hidden="true" />
                 </button>
+                </>
+                )}
               </ListRowActions>
             </ListRow>
           );
