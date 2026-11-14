@@ -67,8 +67,8 @@ export function UpdateValuePageClient({ businessId, assets, categories, wallets,
       </div>
 
       <section aria-label={t("Your assets")} className="overflow-hidden rounded-[18px] border border-line-card bg-surface shadow-card">
-        <div className="flex flex-wrap items-center gap-3 px-6 py-3">
-          <div className="relative min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-3 px-6 py-3 max-md:px-4">
+          <div className="relative min-w-0 flex-1 max-md:basis-full">
             <Search className="absolute top-3.5 left-3 size-4 text-ink-muted" aria-hidden="true" />
             <input
               type="search"

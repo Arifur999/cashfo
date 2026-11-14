@@ -208,7 +208,7 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
 
   return (
     <PageFrame className="leading-[normal] md:h-full md:pt-7">
-      <div className="flex shrink-0 items-center justify-between gap-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 max-md:gap-3">
         <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Asset purchases & sales")}</h1>
         {canManage && (
           <button type="button" onClick={() => setDialog({ kind: "purchase", editing: null })} className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-emerald px-4.5 text-[14px] font-semibold whitespace-nowrap text-white shadow-[0_1px_2px_rgba(18,32,29,0.10)] hover:bg-emerald-hover">
@@ -236,8 +236,8 @@ export function BuySellPageClient({ businessId, assets, categories, wallets, cur
       </div>
 
       <section aria-label={t("Asset purchases and sales")} className="flex min-h-65 flex-col overflow-hidden rounded-[18px] border border-line-card bg-surface shadow-card md:flex-1">
-        <div className="flex flex-wrap items-center gap-2.5 px-6 py-3">
-          <div className="relative min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2.5 px-6 py-3 max-md:px-4">
+          <div className="relative min-w-0 flex-1 max-md:basis-full">
             <Search className="absolute top-3.5 left-3 size-4 text-ink-muted" aria-hidden="true" />
             <input
               type="search"
