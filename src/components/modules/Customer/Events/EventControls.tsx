@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 // event", "I gave" / "I received"): the picked half is a white raised tab.
 export function Segmented<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { value: T; label: string }[]; onChange: (value: T) => void }) {
   return (
-    <div role="radiogroup" aria-label={label} className="grid grid-cols-2 gap-1 rounded-[14px] bg-surface-sunken p-1">
+    <div role="radiogroup" aria-label={label} className="grid grid-cols-2 gap-1 rounded-[14px] bg-page p-1">
       {options.map((option) => {
         const on = option.value === value;
         return (

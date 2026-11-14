@@ -163,7 +163,7 @@ export function EventsPageClient({ view, businessId, overview, today, day, curre
   }
 
   return (
-    <PageFrame className="gap-5 leading-[normal]">
+    <PageFrame className="gap-5 leading-[normal] md:pt-7 md:pb-8">
       <PageHeader
         title={t(head.title)}
         description={t(head.sub)}
@@ -210,7 +210,6 @@ export function EventsPageClient({ view, businessId, overview, today, day, curre
           onAdd={() => startAdd(true)}
           onAddGift={(event) => setGift({ event, direction: mineSummary(event).received ? "GOT" : "GAVE", personId: "", amount: 0 })}
           onDownload={setPrinting}
-          onDetails={setEventId}
         />
       )}
 

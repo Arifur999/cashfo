@@ -81,7 +81,7 @@ export function standingOf(row: Ledger | undefined): Standing {
 }
 
 export const STANDING_TINT: Record<Standing["kind"], { bg: string; fg: string }> = {
-  none: { bg: "bg-surface-sunken", fg: "text-ink-soft" },
+  none: { bg: "bg-page", fg: "text-ink-2" },
   even: { bg: "bg-mint-50", fg: "text-brand-ink" },
   they: { bg: "bg-warning-soft", fg: "text-warning" },
   you: { bg: "bg-tint-blue", fg: "text-tint-blue-ink" },
