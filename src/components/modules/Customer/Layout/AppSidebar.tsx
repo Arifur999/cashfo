@@ -23,7 +23,7 @@ import { LanguageSwitch } from "./LanguageSwitch";
 import { HabitMenu, MoneyMenu, RailTip } from "./SidebarNav";
 
 // The desktop sidebar, one of two by the page on screen (lib/customer/nav):
-// the Money Tracker's floating white panel (AppSidebar board: 248px, 12px
+// the Money Tracker's floating white panel (AppSidebar board: 248px, 14px 10px inside, 12px
 // off the edges, 22px corners) or the Habit Tracker's full-height white
 // column with a right border (HabitSidebar board: 260px). From `lg` up;
 // below that NavDrawer opens the same menu from the top bar. Either folds
@@ -57,8 +57,8 @@ export function AppSidebar({ initialCollapsed = false }: { initialCollapsed?: bo
     <aside data-collapsed={collapsed || undefined} className="sticky top-0 hidden h-screen shrink-0 py-3 pl-3 lg:flex print:hidden">
       <div
         className={cn(
-          "flex flex-col overflow-hidden rounded-panel bg-surface py-3.5 shadow-card transition-[width] duration-200 ease-out motion-reduce:transition-none dark:border dark:border-line",
-          collapsed ? "w-18 px-2.5" : "w-62 px-3",
+          "flex flex-col overflow-hidden rounded-panel bg-surface py-3.5 shadow-card transition-[width] duration-200 ease-out motion-reduce:transition-none",
+          collapsed ? "w-18 px-2.5" : "w-62 px-2.5",
         )}
       >
         <SidebarPanel app="money" collapsed={collapsed} onToggle={toggle} />
@@ -216,14 +216,14 @@ function MoneyFoot({ collapsed, onToggle, extra, compact = false }: FootProps) {
     <div className="flex shrink-0 flex-col gap-2 border-t border-line pt-3">
       {promo && (
         <section aria-labelledby="sidebar-upgrade" className="relative flex flex-col gap-1.5 overflow-hidden rounded-lg bg-mint-50 p-3.5">
-          <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true" className="absolute -top-7.5 -right-7 text-mint-200 dark:text-emerald-line">
+          <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true" className="absolute -top-7.5 -right-7 text-hero-sage">
             <circle cx="48" cy="48" r="34" fill="none" stroke="currentColor" strokeWidth="16" />
           </svg>
           <span className="relative flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-full bg-forest text-mint-200">
-              <Star className="size-3.75 fill-mint-200/35" strokeWidth={2} aria-hidden="true" />
+            <span className="flex size-7 items-center justify-center rounded-full bg-forest text-hero-sage">
+              <Star className="size-3.75 fill-hero-sage/35" strokeWidth={2} aria-hidden="true" />
             </span>
-            <h2 id="sidebar-upgrade" className="text-body font-semibold text-forest dark:text-ink">
+            <h2 id="sidebar-upgrade" className="text-body font-semibold text-forest-ink">
               {promo.title}
             </h2>
           </span>
