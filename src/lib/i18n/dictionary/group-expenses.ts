@@ -1641,6 +1641,9 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Sign in first.": "আগে সাইন ইন করুন।",
   // v16 Group: member sign-in
   "Log in": "লগইন",
+  // Group Expense: the dashboard's recent entries
+  "{date} · by {name}": "{date} · {name} লিখেছেন",
+  "{name}’s own pocket": "{name}-এর নিজের পকেট",
   // Group Expense: first steps, the access-link step
   "Send access links": "অ্যাক্সেস লিংক পাঠান",
   "Manage access": "অ্যাক্সেস দেখুন",

@@ -172,7 +172,7 @@ describe("money", () => {
   });
 
   it("colours the budget from 90% and once over", () => {
-    expect(budgetStatus(65000, 66000)).toEqual({ budget: 65000, spent: 66000, percent: 102, left: -1000, tone: "over" });
+    expect(budgetStatus(65000, 66000)).toEqual({ budget: 65000, spent: 66000, percent: 101.5, left: -1000, tone: "over" });
     expect(budgetStatus(42000, 40870).tone).toBe("warning");
     expect(budgetStatus(42000, 20000).tone).toBe("ok");
   });

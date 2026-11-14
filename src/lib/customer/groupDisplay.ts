@@ -358,7 +358,8 @@ export function budgetFor(budgets: GroupMonthlyBudget[], range: MonthRange): Gro
 
 // Amber from 90% used, red once over.
 export function budgetStatus(budget: number, spent: number): BudgetStatus {
-  const percent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+  // One decimal, as the boards write it (50.8% of Tk 65,000).
+  const percent = budget > 0 ? Math.round((spent / budget) * 1000) / 10 : 0;
   return { budget, spent, percent, left: budget - spent, tone: spent > budget ? "over" : percent >= 90 ? "warning" : "ok" };
 }
 

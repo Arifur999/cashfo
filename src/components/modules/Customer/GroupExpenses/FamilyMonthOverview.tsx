@@ -438,9 +438,9 @@ export function FamilyMonthOverview({ data, view, me, canAdd, canPay, onAddExpen
                               ? `${t("Contribution")} · ${firstName(entry.memberId)}`
                               : `${t("Payment")} · ${firstName(entry.memberId)} → ${firstName(entry.toId)}`}
                         </span>
-                        {entry.note && <span className="text-ink-2"> {entry.note}</span>}
+                        {(entry.note || entry.pocket) && <span className="text-ink-2"> {[entry.note, entry.pocket ? t("{name}’s own pocket", { name: firstName(entry.memberId) }) : null].filter(Boolean).join(" · ")}</span>}
                       </span>
-                      <span className="text-caption text-ink-muted">{formatDay(entry.date, "d MMM", fmt)}</span>
+                      <span className="truncate text-caption text-ink-muted">{entry.by ? t("{date} · by {name}", { date: formatDay(entry.date, "d MMM", fmt), name: shortName(entry.by) }) : formatDay(entry.date, "d MMM", fmt)}</span>
                     </span>
                     <span className={cn("text-[13.5px] font-semibold whitespace-nowrap tabular-nums", entry.kind === "expense" ? "text-ink" : entry.kind === "deposit" ? "text-income" : "text-info")}>
                       {entry.kind === "expense" ? `− ${money(entry.amount)}` : entry.kind === "deposit" ? `+ ${money(entry.amount)}` : money(entry.amount)}
@@ -466,24 +466,27 @@ interface RecentEntry {
   note: string | null;
   memberId: string | undefined;
   toId?: string;
+  // Who recorded it (null on older entries), and an expense paid from a pocket.
+  by: string | null;
+  pocket?: boolean;
 }
 
 // The month's entries, newest first. A settle-up is two contribution rows
 // sharing a settleGroupId (the payer's in, the receiver's out): one payment.
 // A plain return (a negative contribution) is money handed back.
 export function recentEntries(expenses: GroupExpense[], contributions: GroupContribution[]): RecentEntry[] {
-  const out: RecentEntry[] = expenses.map((row) => ({ id: `e-${row.id}`, kind: "expense", date: row.date.slice(0, 10), createdAt: row.createdAt, amount: Number(row.amount), category: row.category, note: row.description, memberId: row.paidByMemberId ?? undefined }));
+  const out: RecentEntry[] = expenses.map((row) => ({ id: `e-${row.id}`, kind: "expense", date: row.date.slice(0, 10), createdAt: row.createdAt, amount: Number(row.amount), category: row.category, note: row.description, memberId: row.paidByMemberId ?? undefined, by: row.recordedByName ?? null, pocket: row.paidFrom === "MEMBER" }));
   const pairs = new Map<string, GroupContribution[]>();
   for (const row of contributions) {
     if (row.settleGroupId) pairs.set(row.settleGroupId, [...(pairs.get(row.settleGroupId) ?? []), row]);
-    else if (Number(row.amount) > 0) out.push({ id: `c-${row.id}`, kind: "deposit", date: row.date.slice(0, 10), createdAt: row.createdAt, amount: Number(row.amount), category: "", note: row.note, memberId: row.groupMemberId });
+    else if (Number(row.amount) > 0) out.push({ id: `c-${row.id}`, kind: "deposit", date: row.date.slice(0, 10), createdAt: row.createdAt, amount: Number(row.amount), category: "", note: row.note, memberId: row.groupMemberId, by: row.recordedByName ?? null });
   }
   for (const [key, pair] of pairs) {
     const from = pair.find((row) => Number(row.amount) > 0);
     const to = pair.find((row) => Number(row.amount) < 0);
     const first = from ?? to;
     if (!first) continue;
-    out.push({ id: `p-${key}`, kind: "payment", date: first.date.slice(0, 10), createdAt: first.createdAt, amount: Math.abs(Number(first.amount)), category: "", note: first.note, memberId: from?.groupMemberId, toId: to?.groupMemberId });
+    out.push({ id: `p-${key}`, kind: "payment", date: first.date.slice(0, 10), createdAt: first.createdAt, amount: Math.abs(Number(first.amount)), category: "", note: first.note, memberId: from?.groupMemberId, toId: to?.groupMemberId, by: first.recordedByName ?? null });
   }
   return out.sort((a, b) => (a.date === b.date ? b.createdAt.localeCompare(a.createdAt) : b.date.localeCompare(a.date)));
 }
