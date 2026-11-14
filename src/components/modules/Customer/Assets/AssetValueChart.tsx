@@ -63,54 +63,57 @@ export function AssetValueChart({ points, short, label, note, markAll = false, a
   const onStride = (i: number) => i % stride === 0 || i === n - 1;
 
   return (
-    <div role="img" aria-label={ariaLabel} className="relative h-55 w-260 max-w-full self-center">
-      {grid.map((row) => (
-        <span key={row.at} aria-hidden="true">
-          <span className={`absolute right-0 left-[5.77%] border-t border-line-card ${row.solid ? "" : "border-dashed"}`} style={{ top: row.at }} />
-          <span className="absolute -left-2.5 w-16 text-right text-[10.5px] whitespace-nowrap text-ink-faint tabular-nums" style={{ top: row.at - 8 }}>
-            {short(row.value)}
+    // A phone scrolls it sideways at a width where the dates and notes don't run into each other.
+    <div className="max-w-full self-center overflow-x-auto max-md:-mx-1 max-md:self-stretch">
+      <div role="img" aria-label={ariaLabel} className="relative h-55 w-260 max-w-full max-md:w-190 max-md:max-w-none">
+        {grid.map((row) => (
+          <span key={row.at} aria-hidden="true">
+            <span className={`absolute right-0 left-[5.77%] border-t border-line-card ${row.solid ? "" : "border-dashed"}`} style={{ top: row.at }} />
+            <span className="absolute -left-2.5 w-16 text-right text-[10.5px] whitespace-nowrap text-ink-faint tabular-nums" style={{ top: row.at - 8 }}>
+              {short(row.value)}
+            </span>
           </span>
-        </span>
-      ))}
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 size-full">
-        <defs>
-          <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--emerald)" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="var(--emerald)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {area && <path d={area} fill={`url(#${fillId})`} stroke="none" />}
-        <path d={path("paid")} fill="none" stroke="var(--chart-cost)" strokeWidth="1.75" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />
-        <path d={line} fill="none" stroke="var(--emerald)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      </svg>
-      {points.map((point, i) => {
-        const before = i ? points[i - 1].value : point.value;
-        const dot = i === 0 ? "bg-ink-faint" : point.value > before ? "bg-success" : point.value < before ? "bg-expense-fill" : "bg-emerald";
-        const shown = i === n - 1 || i === 0 || i === top || (markAll && onStride(i));
-        const under = onStride(i) ? note(point, i) : null;
-        const left = pct(x(i));
-        const at = y(point.value);
-        return (
-          <span key={`${point.date}-${i}`} aria-hidden="true">
-            <span title={`${label(point)}: ${short(point.value)}`} className={`absolute -mt-[4.5px] -ml-[4.5px] size-[9px] rounded-full shadow-[0_0_0_3px_var(--surface)] ${dot}`} style={{ left, top: Math.round(at) }} />
-            {shown && (
-              <span className={`absolute -translate-x-1/2 text-[11.5px] font-semibold whitespace-nowrap tabular-nums ${i === n - 1 ? "text-emerald" : "text-ink-soft"}`} style={{ left, top: Math.round(at - 26) }}>
-                {short(point.value)}
-              </span>
-            )}
-            {onStride(i) && (
-              <span className="absolute top-[174px] -translate-x-1/2 text-[11.5px] whitespace-nowrap text-ink-muted" style={{ left }}>
-                {label(point)}
-              </span>
-            )}
-            {under && (
-              <span className={`absolute top-48 -translate-x-1/2 text-[11px] font-semibold whitespace-nowrap ${under.down ? "text-loss-ink" : "text-ink-soft"}`} style={{ left }}>
-                {under.text}
-              </span>
-            )}
-          </span>
-        );
-      })}
+        ))}
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 size-full">
+          <defs>
+            <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--emerald)" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="var(--emerald)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {area && <path d={area} fill={`url(#${fillId})`} stroke="none" />}
+          <path d={path("paid")} fill="none" stroke="var(--chart-cost)" strokeWidth="1.75" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />
+          <path d={line} fill="none" stroke="var(--emerald)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+        {points.map((point, i) => {
+          const before = i ? points[i - 1].value : point.value;
+          const dot = i === 0 ? "bg-ink-faint" : point.value > before ? "bg-success" : point.value < before ? "bg-expense-fill" : "bg-emerald";
+          const shown = i === n - 1 || i === 0 || i === top || (markAll && onStride(i));
+          const under = onStride(i) ? note(point, i) : null;
+          const left = pct(x(i));
+          const at = y(point.value);
+          return (
+            <span key={`${point.date}-${i}`} aria-hidden="true">
+              <span title={`${label(point)}: ${short(point.value)}`} className={`absolute -mt-[4.5px] -ml-[4.5px] size-[9px] rounded-full shadow-[0_0_0_3px_var(--surface)] ${dot}`} style={{ left, top: Math.round(at) }} />
+              {shown && (
+                <span className={`absolute -translate-x-1/2 text-[11.5px] font-semibold whitespace-nowrap tabular-nums ${i === n - 1 ? "text-emerald" : "text-ink-soft"}`} style={{ left, top: Math.round(at - 26) }}>
+                  {short(point.value)}
+                </span>
+              )}
+              {onStride(i) && (
+                <span className="absolute top-[174px] -translate-x-1/2 text-[11.5px] whitespace-nowrap text-ink-muted" style={{ left }}>
+                  {label(point)}
+                </span>
+              )}
+              {under && (
+                <span className={`absolute top-48 -translate-x-1/2 text-[11px] font-semibold whitespace-nowrap ${under.down ? "text-loss-ink" : "text-ink-soft"}`} style={{ left }}>
+                  {under.text}
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 }
