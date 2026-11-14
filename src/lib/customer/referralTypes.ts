@@ -173,6 +173,9 @@ export interface ReferralProfile {
   phoneVerified: boolean;
   emailEarned: boolean;
   emailPayouts: boolean;
+  // The email on the 1st with last month's earnings; an older API leaves
+  // it out.
+  monthlyStatement?: boolean;
 }
 
 export interface PayoutMethod {

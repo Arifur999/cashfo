@@ -269,6 +269,11 @@ export const referralsDictionary: Record<string, string> = {
 
   // Payout method drawer
   "Where should we send money?": "টাকা কোথায় পাঠাব?",
+  "Edit where we send money": "টাকা কোথায় পাঠাব, বদলান",
+  "bKash, Nagad, Rocket or a bank account": "বিকাশ, নগদ, রকেট বা ব্যাংক অ্যাকাউন্ট",
+  "Name on the {service} account": "{service} অ্যাকাউন্টের নাম",
+  "{service} number (personal)": "{service} নম্বর (পার্সোনাল)",
+  "The name matches your Smartly profile, {name}.": "নামটি আপনার Smartly প্রোফাইলের সাথে মিলেছে, {name}।",
   "Type@@payout": "ধরন",
   "{service} number": "{service} নম্বর",
   "11 digits, starting with 01.": "০১ দিয়ে শুরু, ১১ সংখ্যা।",
@@ -423,6 +428,11 @@ export const referralsDictionary: Record<string, string> = {
   "Email for statements": "স্টেটমেন্টের ইমেইল",
   "Email with the amount and your share": "টাকার পরিমাণ আর আপনার অংশসহ ইমেইল",
   "Email with the transaction ID": "ট্রানজেকশন আইডিসহ ইমেইল",
+  "Email with the amount and your {pct}": "টাকার পরিমাণ আর আপনার {pct}সহ ইমেইল",
+  "SMS with the transaction ID": "ট্রানজেকশন আইডিসহ এসএমএস",
+  "Monthly statement": "মাসিক স্টেটমেন্ট",
+  "Email on the 1st with last month's earnings": "প্রতি মাসের ১ তারিখে আগের মাসের আয়সহ ইমেইল",
+  "affiliate since {date}": "{date} থেকে অ্যাফিলিয়েট",
   "Every link earns the same. Separate links show which place works.": "প্রতিটি লিংকে আয় একই। আলাদা লিংক দেখায় কোন জায়গা কাজ করছে।",
   "Every payment and your share": "প্রতিটি পেমেন্ট আর আপনার অংশ",
   "Every payment refunded": "সব পেমেন্ট ফেরত দেওয়া হয়েছে",
