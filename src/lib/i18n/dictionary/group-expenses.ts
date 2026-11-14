@@ -1641,8 +1641,10 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Sign in first.": "আগে সাইন ইন করুন।",
   // v16 Group: member sign-in
   "Log in": "লগইন",
+  // Group Expense: Members & access, the member portal button
+  "Open the member portal": "মেম্বার পোর্টাল খুলুন",
+  "See what members see after they log in": "লগইনের পর সদস্যরা কী দেখেন দেখুন",
   // Group Expense: a closed month on Settlement, and reopening it
-  "Closed": "বন্ধ",
   "Everything in {month} is locked. Balances carry on into {next}.": "{month}-এর সব কিছু লক করা। ব্যালেন্স {next}-এ চলে গেছে।",
   "Failed to reopen the month": "মাস আবার খোলা যায়নি",
   "{month} is open again": "{month} আবার খোলা হয়েছে",

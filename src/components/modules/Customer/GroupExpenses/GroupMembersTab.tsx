@@ -1,16 +1,19 @@
 "use client";
 
-import { Eye, Pencil, Search, UserCheck, UserMinus, UserPlus, Users, UserX } from "lucide-react";
+import { ExternalLink, Eye, KeyRound, Pencil, Search, UserCheck, UserMinus, UserPlus, Users, UserX } from "lucide-react";
 import { useState } from "react";
 import type { GroupMember } from "@/lib/customer/api";
-import { canManage } from "@/lib/customer/groupAccess";
+import { MEMBER_LOGIN_ROUTE } from "@/lib/authUtils";
+import { ACCESS_LABELS, canManage, memberAccessRole } from "@/lib/customer/groupAccess";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { countLabel } from "@/lib/customer/groupDisplay";
 import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { type AccessLinkShown, AccessLinkDialog } from "./AccessLinkDialog";
 import { MemberAvatar } from "./GroupBits";
+import { MemberAccessDialog } from "./MemberAccessDialog";
 import { ROLE_CHIP, roleKey } from "./GroupSetup";
 import type { GroupPageData, GroupView } from "./groupTypes";
 
@@ -42,6 +45,9 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: G
   const { t, fmt } = useLocale();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  // The access popup for one member, and a link just made to send.
+  const [accessFor, setAccessFor] = useState<GroupMember | null>(null);
+  const [shownLink, setShownLink] = useState<AccessLinkShown | null>(null);
   const isAdmin = canManage(data.access);
   const money = (value: number) => formatCurrency(value, data.currency, fmt);
   const active = view.activeMembers;
@@ -81,10 +87,17 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: G
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-[20px] leading-[1.3] font-semibold tracking-[-0.01em] text-ink">{t("Members & access")}</h2>
         {isAdmin && (
+          <span className="flex flex-wrap items-center gap-2.5">
+          {/* What a member sees after they log in: the member sign-in page, in a new tab. */}
+          <a href={MEMBER_LOGIN_ROUTE} target="_blank" rel="noopener noreferrer" title={t("See what members see after they log in")} className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-line-strong bg-surface px-4 text-body font-semibold whitespace-nowrap text-ink hover:border-mint-200 hover:bg-strip max-md:hidden">
+            <ExternalLink className="size-4 text-ink-2" strokeWidth={2} aria-hidden="true" />
+            {t("Open the member portal")}
+          </a>
           <button type="button" onClick={onAdd} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-emerald px-4 text-body font-semibold whitespace-nowrap text-on-action shadow-button hover:bg-emerald-hover">
             <UserPlus className="size-4" strokeWidth={2} aria-hidden="true" />
             {t("Add member")}
           </button>
+          </span>
         )}
       </div>
 
@@ -142,7 +155,7 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: G
           const held = cash[member.id] ?? 0;
           const balance = view.balances[member.id] ?? 0;
           const state = access(member);
-          const isMe = member.isOwner && isAdmin;
+          const isMe = member.id === data.access.selfMemberId;
           return (
             <div key={member.id} role="row" className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-divider px-5 py-2 text-body tabular-nums md:min-h-16", COLUMNS, isMe && "shadow-[inset_3px_0_0_var(--color-emerald)]")}>
               <span className="hidden text-center text-[13px] font-bold text-ink-faint md:block">{formatCount(index + 1, fmt)}</span>
@@ -183,6 +196,11 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: G
                       <Pencil strokeWidth={2} aria-hidden="true" />
                     </button>
                   )}
+                  {!left && !member.isOwner && (
+                    <button type="button" onClick={() => setAccessFor(member)} aria-label={t("Access for {name}", { name: member.name })} title={t("Access")} className={ACT}>
+                      <KeyRound strokeWidth={2} aria-hidden="true" />
+                    </button>
+                  )}
                   {left && (
                     <button type="button" onClick={() => onToggleStatus(member)} aria-label={left ? t("Bring {name} back", { name: member.name }) : t("Mark {name} as left the group", { name: member.name })} title={left ? t("Bring back") : t("Left the group")} className={ACT}>
                       {left ? <UserCheck strokeWidth={2} aria-hidden="true" /> : <UserMinus strokeWidth={2} aria-hidden="true" />}
@@ -200,6 +218,21 @@ export function GroupMembersTab({ data, view, onAdd, onEdit, onToggleStatus }: G
           </span>
         </div>
       </section>
+
+      <MemberAccessDialog
+        member={accessFor}
+        onClose={() => setAccessFor(null)}
+        businessId={data.businessId}
+        onLink={(member, link) => {
+          setAccessFor(null);
+          setShownLink({ link, name: member.name, phone: member.phone ?? null, roleLabel: t(ACCESS_LABELS[memberAccessRole(member) === "EDITOR" ? "EDITOR" : "VIEWER"]), groupName: data.name });
+        }}
+        onEditMember={(member) => {
+          setAccessFor(null);
+          onEdit(member);
+        }}
+      />
+      <AccessLinkDialog shown={shownLink} onClose={() => setShownLink(null)} />
     </div>
   );
 }
