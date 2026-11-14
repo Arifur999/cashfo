@@ -142,7 +142,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           <AmountText value={totalPawna} currency={currency} tone="income" signed className={KPI_FIGURE} />
         </KpiCard>
         <KpiCard on={tab === "DENA"} side="DENA" onPick={() => setTab("DENA")} title={t("Show only Dena")} label={t("Dena")} count={counts.DENA} sub={t("You owe them")}>
-          <AmountText value={-totalDena} currency={currency} tone="expense" signed className={KPI_FIGURE} />
+          <AmountText value={-totalDena} currency={currency} tone="expense" signed className={cn(KPI_FIGURE, "text-expense-fill")} />
         </KpiCard>
         <KpiCard
           on={tab === "ALL"}
@@ -153,7 +153,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
           count={counts.ALL}
           sub={t(net > 0 ? "You are owed more than you owe" : net < 0 ? "You owe more than you are owed" : "Pawna and Dena are even")}
         >
-          <AmountText value={net} currency={currency} tone="auto" signed className={KPI_FIGURE} />
+          <AmountText value={net} currency={currency} tone="auto" signed className={cn(KPI_FIGURE, net < 0 && "text-expense-fill")} />
         </KpiCard>
       </section>
 
@@ -252,7 +252,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
                   {sums.got > 0 && <span className="text-[11.5px] font-medium text-income">{t("+ {amount} received", { amount: formatCurrency(sums.got, currency, fmt) })}</span>}
                 </ListCell>
                 <ListCell align="end">
-                  <AmountText value={sums.net} currency={currency} tone="auto" signed size="sm" className="text-body font-bold" />
+                  <AmountText value={sums.net} currency={currency} tone="auto" signed size="sm" className={cn("text-body font-bold", sums.net < 0 && "text-expense-fill")} />
                 </ListCell>
               </ListTotalRow>
             )}
@@ -280,7 +280,7 @@ const KPI_FIGURE = "text-[26px] font-bold tracking-[-0.02em] whitespace-nowrap l
 // what it means; pressing it shows only that side (Net: everyone).
 const KPI_TONE = {
   PAWNA: { label: "text-income", dot: "bg-income", on: "border-income ring-3 ring-income-soft" },
-  DENA: { label: "text-expense", dot: "bg-expense-fill", on: "border-expense-fill ring-3 ring-expense-soft" },
+  DENA: { label: "text-expense-fill", dot: "bg-expense-fill", on: "border-expense-fill ring-3 ring-expense-soft" },
   ALL: { label: "text-ink-muted", dot: "", on: "border-emerald ring-3 ring-emerald-soft" },
 } as const;
 
