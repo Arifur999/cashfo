@@ -1641,6 +1641,12 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Sign in first.": "আগে সাইন ইন করুন।",
   // v16 Group: member sign-in
   "Log in": "লগইন",
+  // Group Expense: first steps, the access-link step
+  "Send access links": "অ্যাক্সেস লিংক পাঠান",
+  "Manage access": "অ্যাক্সেস দেখুন",
+  "Add a mobile number for a member, then send them an access link. They open it and set their own username and password.": "কোনো মেম্বারের মোবাইল নম্বর যোগ করে তাকে অ্যাক্সেস লিংক পাঠান। লিংক খুলে তিনি নিজের ইউজারনেম আর পাসওয়ার্ড সেট করবেন।",
+  "Link sent, waiting: {names}.": "লিংক পাঠানো, অপেক্ষায়: {names}।",
+  "{count} still without a link.": "আরও {count} জনের লিংক বাকি।",
   // Group Expense: Members & access, the member portal button
   "Open the member portal": "মেম্বার পোর্টাল খুলুন",
   "See what members see after they log in": "লগইনের পর সদস্যরা কী দেখেন দেখুন",
