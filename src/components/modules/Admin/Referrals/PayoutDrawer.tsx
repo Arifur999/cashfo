@@ -20,13 +20,14 @@ import { useActionMutation } from "@/hooks/useActionMutation";
 import { formatCurrency } from "@/lib/currency";
 import { METHOD_BRANDS } from "@/lib/customer/referralDisplay";
 import { formatDate, toDateTimeInputValue } from "@/lib/date";
+import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { payoutDetailQuery } from "@/queries/referral.queries";
 import type { IPayoutDetail } from "@/types/referral.types";
 import { buildMarkPayoutPaidFormZodSchema, type IMarkPayoutPaidFormValues } from "@/zod/referral.validation";
-import { ChecksCard, LinesCard } from "./PayoutLines";
+import { CheckPills, LinesCard, ReviewFacts, ReviewTable } from "./PayoutLines";
 import { firstName, methodName, PAYOUT_STATUS_CHIP, payoutAccountLine, payoutDestination, payoutNumber } from "./payoutsDisplay";
 import RejectPayoutDialog from "./RejectPayoutDialog";
 
@@ -169,12 +170,48 @@ const MarkPaidForm = ({ payout, canManage, onDone, onReject }: { payout: IPayout
     },
   });
   const method = methodName(payout.method);
+  // The payments themselves (and a held one's Release or Cancel, and Reject)
+  // stay one press away, as the board's "See the payments".
+  const [showLines, setShowLines] = useState(false);
+  const money = (value: string | number | null) => formatCurrency(value ?? 0, undefined, Number(value ?? 0) % 1 ? 2 : 0, locale);
+  const paid = payout.lines.filter((line) => line.status !== "UNDER_CHECK");
+  const held = payout.lines.filter((line) => line.status === "UNDER_CHECK");
+  const bySms = Boolean(payout.user.phone && payout.user.phoneVerifiedAt);
 
   return (
-    <AppForm onSubmit={form.handleSubmit} className="flex flex-1 flex-col gap-4 space-y-0">
+    <AppForm onSubmit={form.handleSubmit} className="flex flex-1 flex-col gap-4 space-y-0 leading-[normal]">
       <SendBox payout={payout} heading="Send this money" step={1} />
-      <LinesCard payout={payout} canManage={canManage} />
-      <ChecksCard payout={payout} />
+      <dl className="flex flex-col gap-1.5 rounded-md border border-line px-4 py-3 text-[13px] tabular-nums">
+        <div className="flex items-center justify-between gap-3">
+          <dt className="flex items-center gap-1.5 text-ink-2">
+            <Check className="size-3.25 shrink-0 text-emerald" strokeWidth={2.75} aria-hidden="true" />
+            {translate(paid.length === 1 ? "{count} friend payment checked with the gateway" : "{count} friend payments checked with the gateway", { count: formatCount(paid.length, locale) })}
+          </dt>
+          <dd className="font-semibold text-ink">{money(payout.amount)}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="flex items-center gap-1.5 text-ink-2">
+            <Check className="size-3.25 shrink-0 text-emerald" strokeWidth={2.75} aria-hidden="true" />
+            {held.length === 0 ? translate("Nothing held back") : translate(held.length === 1 ? "{count} payment held back" : "{count} payments held back", { count: formatCount(held.length, locale) })}
+          </dt>
+          <dd className="font-semibold text-ink">{held.length === 0 ? "—" : money(held.reduce((sum, line) => sum + Number(line.amount ?? 0), 0))}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="flex items-center gap-1.5 text-ink-2">
+            <Check className="size-3.25 shrink-0 text-emerald" strokeWidth={2.75} aria-hidden="true" />
+            {translate("Name on the account")}
+          </dt>
+          <dd className="truncate font-semibold text-ink">{payout.method.accountName}</dd>
+        </div>
+      </dl>
+      {showLines && (
+        <>
+          <LinesCard payout={payout} canManage={canManage} />
+          <Button type="button" variant="secondary" size="md" onClick={onReject} className="self-start border-expense-line text-expense hover:bg-expense-soft">
+            {translate("Reject…")}
+          </Button>
+        </>
+      )}
       <section aria-labelledby="payout-record" className="flex flex-col gap-3">
         <StepHeading step={2} id="payout-record" tone="ink">
           {translate("Then record it")}
@@ -212,7 +249,9 @@ const MarkPaidForm = ({ payout, canManage, onDone, onReject }: { payout: IPayout
                 onCheckedChange={(checked) => field.handleChange(checked === true)}
                 className="size-4.5 rounded-[5px] border-line-strong data-checked:border-emerald data-checked:bg-emerald"
               />
-              {translate("Tell {name} by email and in the app, with the transaction ID", { name: firstName(payout.user.name) })}
+              {bySms
+                ? translate("Tell {name} by SMS and in the app, with the transaction ID", { name: firstName(payout.user.name) })
+                : translate("Tell {name} by email and in the app, with the transaction ID", { name: firstName(payout.user.name) })}
             </label>
           )}
         </form.Field>
@@ -232,8 +271,8 @@ const MarkPaidForm = ({ payout, canManage, onDone, onReject }: { payout: IPayout
         submitLabel="Mark as paid"
         pendingLabel="Saving..."
         extra={
-          <Button type="button" variant="secondary" size="md" onClick={onReject} className="border-expense-line text-expense hover:bg-expense-soft">
-            {translate("Reject…")}
+          <Button type="button" variant="ghost" size="md" aria-expanded={showLines} onClick={() => setShowLines((open) => !open)} className="px-3 text-ink-2">
+            {translate(showLines ? "Hide the payments" : "See the payments")}
           </Button>
         }
       />
@@ -241,9 +280,11 @@ const MarkPaidForm = ({ payout, canManage, onDone, onReject }: { payout: IPayout
   );
 };
 
-// A waiting request: what was asked for, the checks, and Approve.
+// A waiting request (AdminPayoutReview): the member's facts, the checks as
+// pills, each friend payment with its tick, and Approve for what is ticked.
 const ReviewBody = ({ payout, canManage, onDone, onReject }: { payout: IPayoutDetail; canManage: boolean; onDone: () => void; onReject: () => void }) => {
   const { translate, locale } = useLocale();
+  const money = (value: string | number | null) => formatCurrency(value ?? 0, undefined, Number(value ?? 0) % 1 ? 2 : 0, locale);
   // Lines unticked: held back for a second look, not paid.
   const [excluded, setExcluded] = useState<Set<string>>(() => new Set(payout.lines.filter((line) => line.reached === "REFUNDED").map((line) => line.id)));
   const { run, isPending } = useActionMutation({
@@ -252,32 +293,55 @@ const ReviewBody = ({ payout, canManage, onDone, onReject }: { payout: IPayoutDe
     invalidateKeys: [queryKeys.referrals.all],
   });
   const allHeld = payout.lines.length > 0 && excluded.size === payout.lines.length;
-  const keptTotal = payout.lines.filter((line) => !excluded.has(line.id)).reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
+  const kept = payout.lines.filter((line) => !excluded.has(line.id));
+  const keptTotal = payout.lines.length > 0 ? kept.reduce((sum, line) => sum + Number(line.amount ?? 0), 0) : Number(payout.requestedAmount);
+  const matched = payout.lines.filter((line) => line.reached === "RECEIVED").length;
+  const approveLabel = translate("Approve {amount}", { amount: money(keptTotal) });
   return (
-    <AppForm onSubmit={async () => !allHeld && (await run(undefined)) && onDone()} className="flex flex-1 flex-col gap-4 space-y-0">
-      <SendBox payout={payout} heading="What they asked for" />
-      <LinesCard
-        payout={payout}
-        canManage={canManage}
-        excluded={canManage ? excluded : undefined}
-        onToggle={(id, keep) =>
-          setExcluded((current) => {
-            const next = new Set(current);
-            if (keep) next.delete(id);
-            else next.add(id);
-            return next;
-          })
-        }
-      />
-      <ChecksCard payout={payout} />
-      <p className="text-small text-ink-muted">
-        {allHeld ? translate("Every payment is unticked. Reject the request instead.") : translate("Match each payment ID with the gateway. Untick anything that did not reach us, then approve; you send the money and record it next.")}
-      </p>
+    <AppForm onSubmit={async () => !allHeld && (await run(undefined)) && onDone()} className="flex flex-1 flex-col gap-3.5 space-y-0 leading-[normal]">
+      <ReviewFacts payout={payout} />
+      <CheckPills payout={payout} />
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-body font-semibold text-ink">{translate("Friend payments in this request")}</h3>
+        <span className="text-[12.5px] text-ink-muted">{translate("{matched} of {total} matched with the payment gateway", { matched: formatCount(matched, locale), total: formatCount(payout.lines.length, locale) })}</span>
+      </div>
+      {payout.lines.length === 0 ? (
+        <p className="rounded-md border border-line px-4 py-3 text-small text-ink-muted">{translate("This request has no lines (it was made before lines). Pay the amount asked.")}</p>
+      ) : (
+        <div className="overflow-hidden rounded-md border border-line">
+          <ReviewTable
+            payout={payout}
+            excluded={canManage ? excluded : new Set()}
+            money={money}
+            onToggle={(id, keep) =>
+              canManage &&
+              setExcluded((current) => {
+                const next = new Set(current);
+                if (keep) next.delete(id);
+                else next.add(id);
+                return next;
+              })
+            }
+          />
+          <div className="flex items-center justify-between gap-3 bg-strip px-3 py-2.5 text-[13px] tabular-nums">
+            <span className="text-ink-soft">{translate("{kept} of {total} payments ticked", { kept: formatCount(kept.length, locale), total: formatCount(payout.lines.length, locale) })}</span>
+            <b className="font-bold text-ink">{allHeld ? translate("Nothing to approve") : approveLabel}</b>
+          </div>
+        </div>
+      )}
+      {excluded.size > 0 && (
+        <p className="rounded-field border border-warning-line bg-warning-50 px-3 py-2.5 text-[12.5px] leading-normal text-due-ink">
+          {allHeld
+            ? translate("Every payment is unticked. Reject the request instead.")
+            : translate("The unticked payments go back to {name} as Under check and are not paid. Release or cancel them once you know.", { name: firstName(payout.user.name) })}
+        </p>
+      )}
       {canManage ? (
         <FormDialogFooter
           pinned
           isPending={isPending}
-          submitLabel={excluded.size > 0 && !allHeld ? translate("Approve {amount}", { amount: formatCurrency(keptTotal, undefined, keptTotal % 1 ? 2 : 0, locale) }) : "Approve"}
+          disabled={allHeld}
+          submitLabel={approveLabel}
           pendingLabel="Approving..."
           extra={
             <Button type="button" variant="secondary" size="md" onClick={onReject} className="border-expense-line text-expense hover:bg-expense-soft">
@@ -355,19 +419,19 @@ interface PayoutDrawerProps {
 const titleKey = (payout: IPayoutDetail | undefined, canManage: boolean) => {
   if (!payout) return "Request";
   if (payout.status === "APPROVED" && canManage) return "Pay {id}";
-  if (payout.status === "REQUESTED" && canManage) return "Review {id}";
+  if (payout.status === "REQUESTED") return "Check {id} · {name}";
   return "Request {id}";
 };
 
 const subtitleKey: Record<IPayoutDetail["status"], string> = {
-  REQUESTED: "{name} · asked on {date}",
+  REQUESTED: "Asked on {date} · to {destination} ({name})",
   APPROVED: "{name} · approved on {date}",
   PAID: "{name} · paid on {date}",
   REJECTED: "{name} · rejected on {date}",
   CANCELLED: "{name} · cancelled on {date}",
 };
 
-// One payout request in the design's right-hand drawer: Pay (an approved
+// One payout request in the board's popup: Pay (an approved
 // request, the Mark paid board), Review (a waiting one), or what happened
 // (a closed one). Opened from a row, or by ?payout=<id>.
 const PayoutDrawer = ({ payoutId, onClose, canManage }: PayoutDrawerProps) => {
@@ -382,7 +446,9 @@ const PayoutDrawer = ({ payoutId, onClose, canManage }: PayoutDrawerProps) => {
 
   const chip = payout ? PAYOUT_STATUS_CHIP[payout.status] : null;
   const subtitle = payout
-    ? translate(subtitleKey[payout.status], { name: payout.user.name, date: formatDate(payout.statusAt, "d MMM", "—", locale) })
+    ? payout.status === "REQUESTED"
+      ? translate(subtitleKey.REQUESTED, { date: formatDate(payout.createdAt, "d MMM, h:mm aaa", "—", locale), destination: payoutDestination(payout.method), name: payout.method.accountName })
+      : translate(subtitleKey[payout.status], { name: payout.user.name, date: formatDate(payout.statusAt, "d MMM", "—", locale) })
     : undefined;
 
   return (
@@ -390,13 +456,14 @@ const PayoutDrawer = ({ payoutId, onClose, canManage }: PayoutDrawerProps) => {
       <FormDrawer
         open={Boolean(payoutId) && !rejecting}
         onOpenChange={(open) => !open && onClose()}
-        title={translate(titleKey(payout, canManage), { id: payout?.displayId ?? "" })}
+        title={translate(titleKey(payout, canManage), { id: payout?.displayId ?? "", name: payout?.user.name ?? "" })}
         description={subtitle}
         // The board's status chip, on the right of the head.
-        aside={payout && chip ? <StatusBadgeCell status={payout.status} label={chip.label} tone={chip.tone} dot /> : undefined}
+        aside={payout && chip && !(payout.status === "APPROVED" && canManage) ? <StatusBadgeCell status={payout.status} label={chip.label} tone={chip.tone} dot /> : undefined}
         closeOnOutsideClick={!payout || !canManage || (payout.status !== "APPROVED" && payout.status !== "REQUESTED")}
         // The board's widths: 560 to pay, 820 to go through the lines.
         width={payout?.status === "APPROVED" && canManage ? "xl" : "2xl"}
+        centered
       >
         {!payout ? (
           query.isError ? (

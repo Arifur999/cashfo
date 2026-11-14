@@ -90,7 +90,8 @@ export interface IPayoutLine {
 }
 
 export interface IPayoutDetail extends IPayoutRow {
-  user: { id: string; name: string; email: string; phone: string | null };
+  // phoneVerifiedAt: an older API leaves it out.
+  user: { id: string; name: string; email: string; phone: string | null; phoneVerifiedAt?: string | null };
   approvedByName: string | null;
   processedByName: string | null;
   income: { businessId: string | null; businessName: string | null; accountId: string; accountName: string | null; transactionId: string | null } | null;

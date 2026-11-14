@@ -9,5 +9,5 @@ export const generateMetadata = () => customerPageMetadata("/referrals/profile")
 export default async function ReferralProfilePage() {
   const { user, today } = await referralPageContext();
   const [info, profile, methods] = await Promise.all([referralInfoForPage(), getReferralProfile(), getPayoutMethods()]);
-  return <ReferralProfileClient profile={profile} methods={methods} allowed={info?.program.methods ?? []} avatarUrl={user.avatarUrl ?? null} canEarn={info?.canEarn ?? false} today={today} />;
+  return <ReferralProfileClient profile={profile} methods={methods} allowed={info?.program.methods ?? []} avatarUrl={user.avatarUrl ?? null} canEarn={info?.canEarn ?? false} commissionPct={info ? info.program.commissionPct : null} today={today} />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownToLine, ChevronDown, CircleCheck, Clock, Copy, Undo2, X } from "lucide-react";
+import { ArrowDownToLine, CircleCheck, Clock, Undo2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -32,6 +32,8 @@ interface WithdrawalsClientProps {
   currency: string;
   today: string;
   pageSize: number;
+  // The money-sent notice goes by SMS (a verified phone), else by email.
+  bySms: boolean;
 }
 
 // Request | Date | Amount | To | Status
@@ -50,7 +52,7 @@ const NOTE_LOOK: Record<PayoutRequest["status"], { className: string; icon: type
 // happened to it and the friend payments it is made of (open ones show
 // them; the others on a tap), Cancel while it waits, the TrxID to copy once
 // paid; and how a withdrawal works beside it.
-export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize }: WithdrawalsClientProps) {
+export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize, bySms }: WithdrawalsClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const copy = useCopy();
@@ -64,6 +66,7 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
   const day = (at: string | null) => friendDay(dayOf(at), today, fmt);
   const program = info ? programOf(info) : null;
   const available = info ? balancesOf(info).available : 0;
+  const canWithdraw = !!program && available > 0 && available >= program.minWithdrawal;
 
   // The server's newer read wins (after a refresh).
   const [seen, setSeen] = useState(withdrawals);
@@ -137,26 +140,33 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
         { title: t("You ask"), body: t("Pick the payments you want to withdraw, from {min}.", { min: money(program.minWithdrawal) }) },
         { title: t("We check"), body: t("Our team matches each friend's payment with what reached us.") },
         { title: t("We send"), body: t("To your bKash, Nagad, Rocket or bank, usually within {days} working days.", { days: formatCount(program.payWithinDays, fmt) }) },
-        { title: t("You get proof"), body: t("The transaction ID shows here and comes by email.") },
+        { title: t("You get proof"), body: bySms ? t("The transaction ID shows here and comes by SMS.") : t("The transaction ID shows here and comes by email.") },
       ]
     : [];
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Withdrawals")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Withdrawals")} />
       <PageHeader
         title={t("Withdrawals")}
         description={t("Your requests, the payments each one covers, and where the money went.")}
         hideDescriptionOnPhone
         className="max-md:[&_h1]:sr-only"
         actions={
-          <Link href={WITHDRAW_ROUTE} className="flex h-10 items-center gap-2 rounded-full bg-emerald px-4 text-body font-semibold text-on-action shadow-button hover:bg-emerald-hover">
-            <ArrowDownToLine className="size-4" strokeWidth={2.25} aria-hidden="true" />
-            {t("Withdraw {amount}", { amount: money(available) })}
-          </Link>
+          canWithdraw ? (
+            <Link href={WITHDRAW_ROUTE} className="flex h-10 items-center gap-2 rounded-full bg-emerald px-4 text-body font-semibold text-on-action hover:bg-emerald-hover">
+              <ArrowDownToLine className="size-4" strokeWidth={2.25} aria-hidden="true" />
+              {t("Withdraw {amount}", { amount: money(available) })}
+            </Link>
+          ) : (
+            <button type="button" disabled title={program ? t("You can withdraw from {min}.", { min: money(program.minWithdrawal) }) : undefined} className="flex h-10 items-center gap-2 rounded-full bg-emerald px-4 text-body font-semibold text-on-action opacity-55">
+              <ArrowDownToLine className="size-4" strokeWidth={2.25} aria-hidden="true" />
+              {t("Withdraw {amount}", { amount: money(available) })}
+            </button>
+          )
         }
       />
-      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-[18px] xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card padding="none" className="overflow-clip" role="region" aria-labelledby="wh-title">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-4 py-3.5 md:px-5">
             <h2 id="wh-title" className="flex-1 text-title text-ink">
@@ -179,15 +189,6 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
             <EmptyState bordered={false} icon={<ArrowDownToLine />} title={t("No withdrawals yet")} description={t("When you withdraw, each request shows here with what happened to it.")} />
           ) : (
             <div role="table" aria-label={t("Withdrawals")} aria-busy={loading || undefined}>
-              <div role="row" className={cn("hidden items-center gap-x-3.5 border-y border-line bg-table-head px-5 py-2.25 text-caption leading-normal font-medium text-ink-muted md:grid", COLUMNS)}>
-                <span role="columnheader">{t("Request")}</span>
-                <span role="columnheader">{t("Date")}</span>
-                <span role="columnheader" className="text-right">
-                  {t("Amount")}
-                </span>
-                <span role="columnheader">{t("To@@payout")}</span>
-                <span role="columnheader">{t("Status")}</span>
-              </div>
               {rows.map((request) => {
                 const status = PAYOUT_STATUS[request.status];
                 const look = NOTE_LOOK[request.status];
@@ -196,13 +197,13 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
                 const struck = request.status === "REJECTED" || request.status === "CANCELLED";
                 const linesId = `wd-lines-${request.id}`;
                 return (
-                  <div key={request.id} role="row" className={cn("flex flex-col gap-2.5 border-t border-divider px-4 py-3.5 first:border-t-0 md:border-t-0 md:border-b md:px-5 md:last:border-b-0", request.status === "REQUESTED" && "bg-warning-50/40")}>
+                  <div key={request.id} role="row" className={cn("flex flex-col gap-2.5 border-t border-divider px-4 py-3.5 md:px-5", request.status === "REQUESTED" && "bg-warning-50/50")}>
                     <div className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-1 text-body tabular-nums", COLUMNS)}>
-                      <span role="cell" className="font-mono text-[13px] text-ink-2 max-md:order-1">
+                      <span role="cell" className="font-mono text-[13px] font-semibold text-ink-2 max-md:order-1">
                         {request.displayId}
                       </span>
                       <span role="cell" className="text-ink-soft max-md:order-3 max-md:text-caption">
-                        {formatDate(request.createdAt, "d MMM yyyy", "", fmt)}
+                        {formatDate(request.createdAt, "d MMM yy", "", fmt)}
                       </span>
                       <span role="cell" className={cn("text-right font-bold max-md:order-2", struck ? "text-ink-muted line-through" : "text-ink")}>
                         {money(request.amount)}
@@ -218,13 +219,12 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
                         </StatusChip>
                       </span>
                     </div>
-                    <div role="cell" className={cn("flex flex-wrap items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] leading-[1.45] md:flex-nowrap", look.className)}>
+                    <div role="cell" className={cn("flex flex-wrap items-center gap-2.5 rounded-field px-3 py-2.5 text-[13px] leading-[1.45] md:flex-nowrap", look.className)}>
                       <Icon className="size-3.75 shrink-0" aria-hidden="true" />
-                      <span className="min-w-0 flex-1 break-words">{noteOf(request)}</span>
+                      <span className="min-w-0 flex-1 break-words max-md:basis-[calc(100%-26px)]">{noteOf(request)}</span>
                       {request.lines.length > 0 && (
-                        <button type="button" aria-expanded={expanded} aria-controls={linesId} onClick={() => toggle(request.id)} className="flex h-7.5 shrink-0 items-center gap-1 rounded-full border border-line-strong bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
+                        <button type="button" aria-expanded={expanded} aria-controls={linesId} onClick={() => toggle(request.id)} className="flex h-7.5 shrink-0 items-center rounded-full border border-input bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
                           {expanded ? t("Hide payments") : t(request.lines.length === 1 ? "{count} payment" : "{count} payments", { count: formatCount(request.lines.length, fmt) })}
-                          <ChevronDown className={cn("size-3.5 transition-transform", expanded && "rotate-180")} aria-hidden="true" />
                         </button>
                       )}
                       {request.canCancel && (
@@ -236,15 +236,14 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
                         <button
                           type="button"
                           onClick={() => copy(request.trxId as string, t("Transaction ID copied"))}
-                          className="flex h-7.5 shrink-0 items-center gap-1.5 rounded-full border border-emerald-line bg-surface px-2.5 text-[12.5px] font-semibold whitespace-nowrap text-emerald hover:bg-emerald-soft"
+                          className="flex h-7.5 shrink-0 items-center rounded-full border border-emerald-line bg-surface px-2.5 text-[12.5px] font-semibold whitespace-nowrap text-emerald hover:bg-emerald-soft"
                         >
-                          <Copy className="size-3.25" aria-hidden="true" />
                           {t("Copy TrxID")}
                         </button>
                       )}
                     </div>
                     {expanded && request.lines.length > 0 && (
-                      <div id={linesId} className="overflow-hidden rounded-xl border border-divider bg-surface">
+                      <div id={linesId} className="overflow-hidden rounded-md border border-divider bg-surface">
                         <ul>
                           {request.lines.map((line) => (
                             <li key={line.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 border-b border-divider px-3 py-2 text-[13px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_150px_90px_90px] sm:gap-x-3">
@@ -258,9 +257,9 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
                             </li>
                           ))}
                         </ul>
-                        <div className="flex items-center justify-between gap-3 border-t border-line bg-strip px-3.5 py-2 text-caption text-ink-muted">
+                        <div className="flex items-center justify-between gap-3 border-t border-divider bg-strip px-3 py-2 text-[12.5px] text-ink-soft">
                           <span>{t("We check that each of these payments reached us before we pay you.")}</span>
-                          <b className="text-[13px] font-bold text-ink tabular-nums">{money(request.requestedAmount)}</b>
+                          <b className="font-bold text-ink tabular-nums">{money(request.requestedAmount)}</b>
                         </div>
                       </div>
                     )}
@@ -276,24 +275,24 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
           )}
         </Card>
 
-        <Card padding="none" className="flex flex-col gap-4 p-4.5 md:p-5" role="region" aria-labelledby="hw-title">
+        <Card padding="none" className="flex flex-col gap-3.5 p-4.5 md:px-5" role="region" aria-labelledby="hw-title">
           <h2 id="hw-title" className="text-title text-ink">
             {t("How a withdrawal works")}
           </h2>
-          <ol className="flex flex-col gap-3.5">
+          <ol className="flex flex-col gap-3">
             {steps.map((step, index) => (
               <li key={step.title} className="flex gap-3">
-                <span aria-hidden="true" className="flex size-6.5 shrink-0 items-center justify-center rounded-full border border-line bg-strip text-caption font-semibold text-ink-soft">
+                <span aria-hidden="true" className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-emerald-soft text-caption font-bold text-brand-ink">
                   {formatCount(index + 1, fmt)}
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="text-body font-semibold text-ink">{step.title}</span>
-                  <span className="text-[12.5px] leading-[1.45] text-ink-muted">{step.body}</span>
+                  <span className="text-[12.5px] leading-normal text-ink-muted">{step.body}</span>
                 </span>
               </li>
             ))}
           </ol>
-          <Link href={PROFILE_ROUTE} className="flex h-10.5 items-center justify-center rounded-full border border-line-strong bg-surface text-[13.5px] font-semibold text-ink hover:bg-surface-sunken">
+          <Link href={PROFILE_ROUTE} className="flex h-10 items-center justify-center rounded-full border border-input bg-surface text-[13.5px] font-semibold text-ink hover:bg-surface-sunken">
             {t("Manage payout accounts")}
           </Link>
         </Card>
@@ -304,9 +303,15 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
         onClose={() => setCancelling(null)}
         onConfirm={cancel}
         isPending={isCancelling}
-        icon={<X />}
-        title={t("Cancel this request?")}
-        description={cancelling ? t("{id} for {amount}. The payments go back to your balance and you can ask again.", { id: cancelling.displayId, amount: money(cancelling.amount) }) : ""}
+        title={cancelling ? t("Cancel {id}?", { id: cancelling.displayId }) : ""}
+        description={
+          cancelling
+            ? t(cancelling.lines.length === 1 ? "{amount} will not be sent. This payment goes back to your available balance, and you can withdraw it again later." : "{amount} will not be sent. These {count} payments go back to your available balance, and you can withdraw them again later.", {
+                amount: money(cancelling.amount),
+                count: formatCount(cancelling.lines.length, fmt),
+              })
+            : ""
+        }
         confirmLabel={t("Cancel request")}
         cancelLabel={t("Keep it")}
       />

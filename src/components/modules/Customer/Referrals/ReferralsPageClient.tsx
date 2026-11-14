@@ -9,18 +9,23 @@ import ErrorState from "@/components/smartly/ErrorState";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import { PLANS_ROUTE } from "@/lib/customer/nav";
-import { balancesOf, dayOf, friendDay, programOf, showsLockedPage } from "@/lib/customer/referralDisplay";
-import type { ReferralProgramInfo } from "@/lib/customer/referralTypes";
+import { dayOf, friendDay, programOf, showsLockedPage } from "@/lib/customer/referralDisplay";
+import type { FriendList, ReferralProgramInfo } from "@/lib/customer/referralTypes";
+import { formatCurrency } from "@/lib/customer/currency";
+import { METHOD_BRANDS } from "@/lib/customer/referralDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { EarningsByMonthCard, LatestCommissionsCard, PeopleCard, TopFriendsCard } from "./DashboardCards";
 import { EarningsHero, WITHDRAWALS_ROUTE } from "./EarningsHero";
 import { FriendDialog, type FriendStub } from "./FriendDialog";
+import { PhoneFriendsCard } from "./PhoneFriendsCard";
 import { InviteLinkCard } from "./InviteLinkCard";
 import { ReferralLocked } from "./ReferralLocked";
 
 interface ReferralsPageClientProps {
   info: ReferralProgramInfo | null;
+  // The newest friends, for the phone's Friends card; null when unread.
+  friends: FriendList | null;
   currency: string;
   // Where the app is served from, for the invite link.
   origin: string;
@@ -32,7 +37,7 @@ interface ReferralsPageClientProps {
 // invite link, earnings by month, the people brought, who earns the most
 // and the latest commissions. A member who can't earn yet and has nothing
 // from the program sees the Free-plan page instead (ReferralLocked).
-export function ReferralsPageClient({ info, currency, origin, today }: ReferralsPageClientProps) {
+export function ReferralsPageClient({ info, friends, currency, origin, today }: ReferralsPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   // The friend a "Who earns you the most" row opened.
@@ -40,7 +45,7 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
 
   if (!info) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
+      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
         <TopbarExtras title={t("Referral Program")} />
         <ErrorState title={t("Couldn't load your invite details")} onRetry={() => router.refresh()} />
       </PageFrame>
@@ -52,7 +57,7 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
 
   if (showsLockedPage(info)) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
+      <PageFrame className="max-md:pt-4 md:gap-5 leading-[normal] md:pt-7 md:pb-8">
         <TopbarExtras title={t("Referral Program")} />
         <PageHeader
           title={t("Referral Program")}
@@ -64,7 +69,7 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
     );
   }
 
-  const lastPaidAt = balancesOf(info).lastPaidAt;
+  const last = info.lastPayout;
 
   // Whether this member earns now, beside the title.
   const badge = info.canEarn ? (
@@ -85,24 +90,26 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
   );
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Referral dashboard")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Dashboard")} />
       <PageHeader
         title={t("Referral dashboard")}
         description={t("Share Smartly. You earn {pct} of every payment from people who join with your link.", { pct: pct(program.commissionPct) })}
         hideDescriptionOnPhone
-        className="max-md:[&_h1]:sr-only"
+        className="max-md:sr-only"
         actions={badge}
+        hideActionsOnPhone
       />
-      <div className="grid gap-3.5 md:gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+      <div className="grid gap-3.5 md:gap-[18px] xl:grid-cols-[minmax(0,1fr)_440px]">
         <EarningsHero info={info} currency={currency} today={today} />
         <InviteLinkCard code={info.referralCode} origin={origin} commissionPct={program.commissionPct} friendDiscountPct={program.friendDiscountPct} paused={!program.live} linkCount={info.linkCount} />
       </div>
-      <div className="grid items-start gap-3.5 md:gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+      <PhoneFriendsCard friends={friends} currency={currency} today={today} />
+      <div className="grid gap-3.5 max-md:hidden md:gap-[18px] xl:grid-cols-[minmax(0,1fr)_440px]">
         <EarningsByMonthCard info={info} currency={currency} today={today} />
-        <PeopleCard info={info} currency={currency} />
+        <PeopleCard info={info} currency={currency} today={today} />
       </div>
-      <div className="grid items-start gap-3.5 md:gap-5 lg:grid-cols-2">
+      <div className="grid gap-3.5 max-md:hidden md:gap-[18px] lg:grid-cols-2">
         <TopFriendsCard info={info} currency={currency} onOpen={setFriend} />
         <LatestCommissionsCard info={info} currency={currency} today={today} />
       </div>
@@ -114,7 +121,11 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body-strong text-ink">{t("Withdrawals")}</span>
-          <span className="truncate text-caption text-ink-muted">{lastPaidAt ? t("Last on {date}", { date: friendDay(dayOf(lastPaidAt), today, fmt) }) : t("See withdrawals")}</span>
+          <span className="truncate text-caption text-ink-muted">
+            {last?.paidAt && last.amount
+              ? t("Last: {amount} paid to {service} on {date}", { amount: formatCurrency(last.amount, currency, fmt), service: METHOD_BRANDS[last.methodType].name, date: friendDay(dayOf(last.paidAt), today, fmt) })
+              : t("See withdrawals")}
+          </span>
         </span>
         <ChevronRight className="size-4.5 shrink-0 text-ink-faint" aria-hidden="true" />
       </Link>

@@ -3,7 +3,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import DataTable from "@/components/shared/table/DataTable";
 import type { DataTableSimplePager } from "@/components/shared/table/dataTable.types";
 import ShowingRange from "@/components/shared/table/ShowingRange";
@@ -14,13 +14,11 @@ import { buildTableQueryString } from "@/lib/queryString";
 import { toTableQueryProps } from "@/lib/table/queryProps";
 import { payoutsListQuery } from "@/queries/referral.queries";
 import type { PaginationMeta } from "@/types/api.types";
-import { PAYOUT_METHOD_TYPES, type IPayoutRow, type PayoutStatus, type PayoutStatusCounts } from "@/types/referral.types";
+import type { IPayoutRow, PayoutStatus, PayoutStatusCounts } from "@/types/referral.types";
 import PayoutDrawer from "./PayoutDrawer";
 import { buildPayoutColumns } from "./payoutsColumns";
-import { METHOD_BRANDS } from "@/lib/customer/referralDisplay";
 import { PAYOUT_PARAM, REFERRALS_HREF } from "./payoutsDisplay";
 import { PAYOUTS_TABLE_BASE_CONFIG } from "./payoutsTable.config";
-import RejectPayoutDialog from "./RejectPayoutDialog";
 
 
 // The board's tabs; Cancelled only once a member has cancelled one, so the
@@ -43,14 +41,6 @@ const buildConfig = (counts: PayoutStatusCounts | undefined): ServerDataTableCon
       label: "Status",
       options: STATUS_TABS.filter((tab) => tab.value !== "CANCELLED" || (counts?.CANCELLED ?? 0) > 0).map((tab) => ({ ...tab, count: counts?.[tab.value] })),
     },
-    {
-      id: "method",
-      type: "single-select",
-      label: "Method",
-      allLabel: "All methods",
-      options: PAYOUT_METHOD_TYPES.map((type) => ({ value: type, label: METHOD_BRANDS[type].name, raw: true })),
-      align: "end",
-    },
   ],
 });
 
@@ -64,7 +54,7 @@ const PAGER: DataTableSimplePager = {
   ),
 };
 
-const LAYOUT = { rowHeight: 66, flexMinWidth: 150 } as const;
+const LAYOUT = { rowHeight: 66, flexMinWidth: 100 } as const;
 
 // The board's Export: every request the tabs and the method pick, as the
 // API's own spreadsheet (with the account details the rows shorten).
@@ -126,13 +116,10 @@ const PayoutsTable = ({ canManage }: PayoutsTableProps) => {
     [pathname, router, searchParams],
   );
 
-  const [rejecting, setRejecting] = useState<{ row: IPayoutRow; open: boolean } | null>(null);
-
   const columns = useMemo(
     () =>
       buildPayoutColumns({
         canManage,
-        onReject: (row) => setRejecting({ row, open: true }),
         onOpen: (row) => setOpen(row.id),
       }),
     [canManage, setOpen],
@@ -151,13 +138,12 @@ const PayoutsTable = ({ canManage }: PayoutsTableProps) => {
         getRowId={(row) => row.id}
         pager={PAGER}
         toolbarAction={<ExportLink />}
-        // A waiting request whose checks found something gets the amber wash.
-        rowClassName={(row) => (row.status === "REQUESTED" && row.checks.some((check) => !check.ok) ? "bg-warning-50 hover:bg-warning-50" : undefined)}
+        // A waiting request that is new or whose checks found something gets the amber wash.
+        rowClassName={(row) => (row.status === "REQUESTED" && (row.isFirst || row.checks.some((check) => !check.ok)) ? "bg-warning-50 hover:bg-warning-50" : undefined)}
         emptyMessage={searchParams.get("status") || searchParams.get("method") || searchParams.get("search") ? "No requests here." : "No payout requests yet."}
         footer={<ReviewNote />}
       />
       <PayoutDrawer payoutId={openId} onClose={() => setOpen(null)} canManage={canManage} />
-      <RejectPayoutDialog payout={rejecting?.row ?? null} open={Boolean(rejecting?.open)} onOpenChange={(open) => !open && setRejecting((current) => current && { ...current, open: false })} />
     </>
   );
 };

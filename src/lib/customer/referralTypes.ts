@@ -98,6 +98,9 @@ export interface ReferralProgramInfo {
   // What paying friends' renewals in the next 30 days should earn.
   expectedNext30Days: string;
   expectedRenewals: number;
+  // What renewals due next calendar month should earn; an older API leaves
+  // it out.
+  expectedNextMonth?: { month: string; amount: string; renewals: number };
   firstEarnedAt: string | null;
   // planName: the plan they are on now; payments: how many of theirs earned
   // a share (an older API leaves both out).
@@ -128,6 +131,10 @@ export interface FriendRow {
   paid: string;
   earned: string;
   canRemind: boolean;
+  // How often a paying friend pays, and when a friend stopped or was last
+  // refunded; an older API leaves them out.
+  billingCycle?: "MONTHLY" | "YEARLY" | null;
+  endedAt?: string | null;
 }
 
 export interface FriendList {
@@ -166,6 +173,9 @@ export interface ReferralProfile {
   phoneVerified: boolean;
   emailEarned: boolean;
   emailPayouts: boolean;
+  // The email on the 1st with last month's earnings; an older API leaves
+  // it out.
+  monthlyStatement?: boolean;
 }
 
 export interface PayoutMethod {
