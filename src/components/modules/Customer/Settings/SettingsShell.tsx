@@ -23,7 +23,9 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   const isIndex = pathname === "/settings";
   const section = sectionOf(sectionFor(pathname));
 
-  if (pathname === PLANS_ROUTE || pathname.startsWith(`${PLANS_ROUTE}/`)) return <PageFrame className="gap-5 leading-[normal] md:pt-7 md:pb-10">{children}</PageFrame>;
+  // The payment page (Checkout board) sits 22px under the top bar, 18px between its parts.
+  if (pathname.startsWith(`${PLANS_ROUTE}/`)) return <PageFrame className="gap-4.5 leading-[normal] md:pt-5.5 md:pb-10">{children}</PageFrame>;
+  if (pathname === PLANS_ROUTE) return <PageFrame className="gap-5 leading-[normal] md:pt-7 md:pb-10">{children}</PageFrame>;
   // The v16 boards draw these at full width with their own title; so does
   // the index on a wide screen, where it is the profile.
   if (FULL_WIDTH.includes(pathname) || isIndex) return <>{children}</>;

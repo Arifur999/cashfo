@@ -52,7 +52,7 @@ export function CheckoutChrome({ view, children }: { view: CheckoutView; childre
                   >
                     {past ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : formatCount(index + 1, fmt)}
                   </span>
-                  <span className={cn("text-[13.5px]", now ? "font-semibold text-ink" : past ? "font-medium text-emerald" : "font-medium text-ink-muted")}>{label}</span>
+                  <span className={cn("text-[13.5px]", now ? "font-semibold text-ink" : past ? "font-medium text-brand-ink" : "font-medium text-ink-faint")}>{label}</span>
                 </li>
                 {index < steps.length - 1 && <li aria-hidden="true" className={cn("h-0.5 w-7 rounded-full", past ? "bg-emerald" : "bg-line")} />}
               </Fragment>

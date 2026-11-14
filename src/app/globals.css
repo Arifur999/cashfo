@@ -295,6 +295,9 @@
   /* A support conversation waiting on the customer (HelpConversation board). */
   --wait-soft: #ffedd5;
   --wait-ink: #9a3412;
+  /* The Checkout board's picked option wash and its steps' words. */
+  --sel-wash: #f4faf8;
+  --step-ink: #1e2d2a;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -580,6 +583,8 @@
   --soft-check: #2b3331;
   --wait-soft: #2c322e;
   --wait-ink: #fdba74;
+  --sel-wash: #2b3331;
+  --step-ink: #9aa09f;
 }
 
 /* The Habit Tracker (every page under /habit-tracker): the same tokens in
@@ -919,6 +924,8 @@ html:not(.dark) [data-app="habit"] {
   --color-soft-check: var(--soft-check);
   --color-wait-soft: var(--wait-soft);
   --color-wait-ink: var(--wait-ink);
+  --color-sel-wash: var(--sel-wash);
+  --color-step-ink: var(--step-ink);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);
