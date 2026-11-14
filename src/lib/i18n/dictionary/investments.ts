@@ -255,4 +255,7 @@ export const investmentsDictionary: Record<string, string> = {
   "Put in {put} · profit {profit} · back {back}": "দেওয়া {put} · লাভ {profit} · ফেরত {back}",
   "Investments (put in, profit, back)": "বিনিয়োগ (দেওয়া, লাভ, ফেরত)",
   "Numbers come from Balance, Income & Expense, Savings, Loans, Assets and Calendar & Events. Group Expense is not counted here.": "সংখ্যাগুলো এসেছে ব্যালেন্স, আয় ও খরচ, সঞ্চয়, ঋণ, সম্পদ আর ক্যালেন্ডার থেকে। গ্রুপ এক্সপেন্স এখানে ধরা হয়নি।",
+  "Personal finance · Loan": "ব্যক্তিগত হিসাব · ঋণ",
+  "From Loan (pawna)": "ঋণ (পাওনা) থেকে নেওয়া",
+  "From Loan (dena)": "ঋণ (দেনা) থেকে নেওয়া",
 };
