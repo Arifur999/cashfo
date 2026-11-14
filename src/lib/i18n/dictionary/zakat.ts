@@ -275,4 +275,9 @@ export const zakatDictionary: Record<string, string> = {
   // An open investment in the Investments step
   "Matures {date}": "মেয়াদ শেষ {date}",
   Investment: "বিনিয়োগ",
+  // Record zakat given: the board's own account list
+  "Your accounts@@zakat": "আপনার অ্যাকাউন্ট",
+  "Not enough for {amount}": "{amount}-এর জন্য যথেষ্ট নয়",
+  "{wallet} after this: {amount}": "এরপর {wallet}-এ থাকবে {amount}",
+  "{wallet} has only {amount}. Pick another account or give less.": "{wallet}-এ আছে মাত্র {amount}। অন্য অ্যাকাউন্ট বেছে নিন বা কম দিন।",
 };
