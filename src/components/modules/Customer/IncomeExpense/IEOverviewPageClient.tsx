@@ -101,7 +101,7 @@ export function IEOverviewPageClient({ period, current, today, activeMonths, inc
   const rateText = rate === null ? "–" : `${rate < 0 ? "− " : ""}${toLocaleDigits(oneDecimal(Math.abs(rate)), fmt)}%`;
 
   return (
-    <PageFrame className="gap-4 leading-[normal]">
+    <PageFrame className="gap-4 leading-[normal] md:pb-8">
       <PageHeader
         title={t("Income & Expense Overview")}
         className="md:items-center"
