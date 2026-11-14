@@ -31,7 +31,7 @@ describe("topbarTrail", () => {
   it("links a group to its first page", () => {
     expect(topbarTrail(locate("/balance/ledger"), false)).toEqual([{ label: "Balance", href: "/balance/accounts" }]);
     expect(topbarTrail(locate("/transactions"), false)).toEqual([{ label: "Income & Expense", href: "/income-expense" }]);
-    expect(topbarTrail(locate("/loan-management/ledger"), false)).toEqual([{ label: "Loan Management", href: "/loan-management/dashboard" }]);
+    expect(topbarTrail(locate("/loan-management/ledger"), false)).toEqual([{ label: "Loan", href: "/loan-management/dashboard" }]);
   });
 
   it("links Settings from its sections", () => {

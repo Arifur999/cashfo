@@ -461,6 +461,8 @@ export interface LedgerRow {
   party?: string | null;
   contactId?: string | null;
   assetId?: string | null;
+  // The investment this money went into or came back from (its profit too).
+  investmentId?: string | null;
   chargeForId?: string | null;
   // A transfer's charge: the account the transfer went to.
   chargeFor?: string | null;
@@ -479,6 +481,8 @@ export type LedgerKind =
   | "PAYMENT_OUT"
   | "ASSET_PURCHASE"
   | "ASSET_SALE"
+  | "INVESTMENT"
+  | "INVESTMENT_RETURN"
   | "ADJUSTMENT"
   | "OTHER";
 

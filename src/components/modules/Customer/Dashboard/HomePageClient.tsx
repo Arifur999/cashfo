@@ -1,6 +1,7 @@
 "use client";
 
 import { ChartColumn, Plus } from "lucide-react";
+import { Outfit } from "next/font/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -20,6 +21,9 @@ import { IncomeExpenseChart } from "./IncomeExpenseChart";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { RecentTransactionsCard } from "./RecentTransactionsCard";
 import { SpendingCard } from "./SpendingCard";
+
+// The premium skin's display type (globals.css, data-skin="premium").
+const outfit = Outfit({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--font-outfit" });
 
 // The Money Tracker's Dashboard, as the design-v4 boards draw it: the
 // profile card and this period's figures, Income vs Expense and spending by
@@ -57,7 +61,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
   );
 
   return (
-    <PageFrame className="gap-4 md:gap-6">
+    <PageFrame data-skin="premium" className={cn(outfit.variable, "gap-4 md:gap-6")}>
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex min-w-0 flex-col gap-0.5 md:gap-1">
           <h1 className={cn("leading-[1.3] font-semibold text-ink", setup ? "text-[20px] tracking-[-0.01em] md:text-page-title" : "text-[20px] tracking-[-0.01em] md:text-[30px] md:leading-[1.2] md:tracking-[-0.03em]")}>{title}</h1>

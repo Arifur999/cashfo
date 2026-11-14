@@ -63,6 +63,7 @@ export const NAV_ICONS: Record<NavIcon, React.ComponentType<LucideProps>> = {
   // The boards' goal mark (a flag in a target), v4.
   savings: Goal,
   assets: Box,
+  investments: TrendingUp,
   group: Users,
   today: CircleCheckBig,
   daily: CircleCheckBig,
@@ -298,7 +299,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
     if (collapsed) {
       const lit = self || inGroup;
       return (
-        <RailTip key={item.href} label={t(item.label)} show>
+        <RailTip key={item.href} label={t(item.short ?? item.label)} show>
           <Link
             href={leafHref(item)}
             aria-current={self ? "page" : undefined}
@@ -332,7 +333,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
             )}
           >
             <Icon className={cn("size-4.5 shrink-0", self || inGroup ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
-            <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
+            <span className="min-w-0 flex-1 truncate">{t(item.short ?? item.label)}</span>
           </Link>
           {subs && (
             <button

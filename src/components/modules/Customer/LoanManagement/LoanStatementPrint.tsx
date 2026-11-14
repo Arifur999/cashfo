@@ -40,7 +40,7 @@ export function LoanStatementPrint({ name, meta, figures, openingLine, opening, 
       <header className="flex items-start justify-between gap-4 border-b-2 border-ink pb-3.5">
         <div className="flex flex-col gap-1">
           <span className="text-[20px] font-bold">Smartly</span>
-          <span className="text-[11px] text-ink-muted">{t("Personal finance · Loan Management")}</span>
+          <span className="text-[11px] text-ink-muted">{t("Personal finance · Loan")}</span>
         </div>
         <div className="flex flex-col items-end gap-0.75">
           <span className="text-[16px] font-bold tracking-[0.05em] uppercase">{t("Loan statement")}</span>

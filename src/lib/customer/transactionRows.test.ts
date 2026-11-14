@@ -103,6 +103,15 @@ describe("describeTransaction without a category", () => {
     expect(row.uncategorised).toBe(true);
   });
 
+  it("signs a posting made by a feature by its wallet: credited is money out, debited money in", () => {
+    const pool = { id: "p", name: "Investments (Internal)", accountType: "ASSET" as const, accountSubtype: "investments" };
+    const bank = { id: "w", name: "Bank", accountType: "ASSET" as const, accountSubtype: "bank" };
+    const putIn = transaction({ transactionType: "JOURNAL", entries: [entry({ entryType: "DEBIT", amount: "50000", account: pool }), entry({ entryType: "CREDIT", amount: "50000", account: bank })] });
+    const back = transaction({ transactionType: "JOURNAL", entries: [entry({ entryType: "DEBIT", amount: "5000", account: bank }), entry({ entryType: "CREDIT", amount: "5000", account: pool })] });
+    expect(describeTransaction(putIn, {}).signedAmount).toBe(-50000);
+    expect(describeTransaction(back, {}).signedAmount).toBe(5000);
+  });
+
   it("takes the note a quick entry keeps as the title, before the category", () => {
     const quick = transaction({
       entries: [

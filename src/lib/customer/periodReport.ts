@@ -10,8 +10,8 @@ import { emptyUnlessOutage } from "./readFallback";
 
 export interface WorthOn {
   day: string;
-  parts: { cash: number; savings: number; assets: number; pawna: number; dena: number };
-  counts: { accounts: number; goals: number; assets: number; pawna: number; dena: number };
+  parts: { cash: number; savings: number; assets: number; investments: number; pawna: number; dena: number };
+  counts: { accounts: number; goals: number; assets: number; investments: number; pawna: number; dena: number };
 }
 
 // GET /api/businesses/:id/period-report: the net worth on the day before the
@@ -57,7 +57,10 @@ export interface PeriodReport {
 export const getPeriodReport = cache(async (businessId: string, dateFrom: string, dateTo: string): Promise<PeriodReport | null> => {
   try {
     const response = await customerApi.get<PeriodReport>(`/api/businesses/${encodeURIComponent(businessId)}/period-report`, { params: { dateFrom, dateTo } });
-    return response.data;
+    // A backend before Investments sends no investments part: none held.
+    const withInvestments = (row: WorthOn): WorthOn => ({ ...row, parts: { ...row.parts, investments: row.parts.investments ?? 0 }, counts: { ...row.counts, investments: row.counts.investments ?? 0 } });
+    const report = response.data;
+    return { ...report, worth: { start: withInvestments(report.worth.start), end: withInvestments(report.worth.end) } };
   } catch (error) {
     return emptyUnlessOutage(error, null);
   }

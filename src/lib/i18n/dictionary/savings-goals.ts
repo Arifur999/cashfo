@@ -742,4 +742,11 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "Delete plan@@savings": "পরিকল্পনা মুছুন",
   "All plans@@savings": "সব পরিকল্পনা",
   "Plan@@savings": "পরিকল্পনা",
+  "{name} moved from your plans to goals.": "{name} পরিকল্পনা থেকে লক্ষ্যে গেছে।",
+  "{name} is a goal again.": "{name} আবার লক্ষ্য হয়েছে।",
+  "Money has moved for this goal since it started, so it stays a goal.": "শুরুর পর এই লক্ষ্যে টাকা লেনদেন হয়েছে, তাই এটি লক্ষ্যই থাকবে।",
+  "This goal was not started from a saving plan.": "এই লক্ষ্য কোনো সঞ্চয় পরিকল্পনা থেকে শুরু হয়নি।",
+  "This plan was not moved back from a goal.": "এই পরিকল্পনা কোনো লক্ষ্য থেকে ফিরে আসেনি।",
+  "A4 · Portrait · {count} page · Margins 12 mm, colours kept": "A4 · লম্বালম্বি · {count} পৃষ্ঠা · মার্জিন ১২ মিমি, রং থাকবে",
+  "A4 · Portrait · {count} pages · Margins 12 mm, colours kept": "A4 · লম্বালম্বি · {count} পৃষ্ঠা · মার্জিন ১২ মিমি, রং থাকবে",
 };

@@ -240,6 +240,23 @@ export async function moveGoalToPlansAction(businessId: string, goalId: string):
   }, "Failed to move the goal");
 }
 
+// Undo of Start goal: the goal goes and its plan comes back as it was;
+// what was already saved is reversed. Refused once money has moved for it.
+export async function undoStartGoalAction(businessId: string, goalId: string): Promise<ActionResult<{ planId: string }>> {
+  return callApi(async () => {
+    const res = await customerApi.post<{ planId: string }>(`${API_BASE_URL}/api/businesses/${businessId}/savings-goals/${goalId}/undo-start`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Couldn't undo that. Try again.");
+}
+
+// Undo of Move back to plans: the plan goes and the goal comes back as it was.
+export async function backToGoalAction(businessId: string, planId: string): Promise<ActionResult<{ goalId: string }>> {
+  return callApi(async () => {
+    const res = await customerApi.post<{ goalId: string }>(`${API_BASE_URL}/api/businesses/${businessId}/savings-plans/${planId}/back-to-goal`, {}, { headers: await authHeaders() });
+    return res.data;
+  }, "Couldn't undo that. Try again.");
+}
+
 export interface SavingsPlanInput {
   name: string;
   category: string;

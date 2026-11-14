@@ -100,7 +100,10 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
     if (from && to) wallet = `${from} → ${to}`;
   }
   const amount = Number(transaction.entries[0]?.amount ?? 0);
-  const signedAmount = transaction.transactionType === "EXPENSE" ? -amount : amount;
+  // Any other posting (an investment, an asset bought, a journal entry) is
+  // money in or out by its wallet's side: a wallet credited paid out.
+  const walletEntry = ["INCOME", "EXPENSE", "TRANSFER"].includes(transaction.transactionType) ? undefined : transaction.entries.find(isWallet);
+  const signedAmount = transaction.transactionType === "EXPENSE" || walletEntry?.entryType === "CREDIT" ? -amount : amount;
   return {
     transaction,
     // What the reader wrote: the description, else the note a quick entry
@@ -121,7 +124,7 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
 // workspace gets (backend budgets/app-categories.ts) while they keep
 // their names. A category a reader named stays as they wrote it.
 export const STARTER_CATEGORY_NAMES = ["Salary", "Freelance", "Business", "Gift", "Food & Dining", "House Rent", "Transport", "Bills & Utilities", "Health", "Shopping", "Education", "Sales", "Services", "Other income", "Purchases", "Shop rent", "Salaries", "Marketing"];
-export const SYSTEM_CATEGORIES = new Set(["Asset Sale", "Referral Bonus", "Zakat", "Bank charge", "Mobile banking fee", "Service charge", "Uncategorised", ...STARTER_CATEGORY_NAMES]);
+export const SYSTEM_CATEGORIES = new Set(["Asset Sale", "Investment profit", "Referral Bonus", "Zakat", "Bank charge", "Mobile banking fee", "Service charge", "Uncategorised", ...STARTER_CATEGORY_NAMES]);
 // Those, and the note the backend writes on a referral payout (its title).
 export const SYSTEM_TEXTS = new Set([...SYSTEM_CATEGORIES, "Referral Program withdrawal"]);
 
@@ -133,6 +136,10 @@ const SYSTEM_PREFIXES: [RegExp, string][] = [
   [/^Asset purchase: ([^]+)$/, "Asset purchase: {name}"],
   [/^Asset sale: ([^]+)$/, "Asset sale: {name}"],
   [/^Asset deleted: ([^]+)$/, "Asset deleted: {name}"],
+  // And the investments feature around the investment's name.
+  [/^Investment profit: ([^]+)$/, "Investment profit: {name}"],
+  [/^Investment return: ([^]+)$/, "Investment return: {name}"],
+  [/^Investment: ([^]+)$/, "Investment: {name}"],
 ];
 
 // A row's title or note: translated when the backend wrote it, else as typed.

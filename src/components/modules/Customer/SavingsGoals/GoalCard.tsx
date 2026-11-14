@@ -88,7 +88,7 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
     return [first, second, third];
   })();
 
-  const button = "flex h-10 shrink-0 items-center gap-1.75 rounded-[12px] px-4.5 text-[13px] font-semibold whitespace-nowrap text-white transition-opacity disabled:opacity-50 pointer-coarse:h-11 [&_svg]:size-3.75";
+  const button = "flex h-10 shrink-0 items-center gap-1.75 rounded-[12px] px-3 text-[13px] font-semibold whitespace-nowrap text-white transition-opacity disabled:opacity-50 pointer-coarse:h-11 [&_svg]:size-3.75";
   const savedLabel = view.closed ? t("Taken out") : view.completed ? t("Saved in full") : t("Saved so far");
 
   return (
@@ -117,13 +117,14 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
               {!view.active && <span className="shrink-0 rounded-full border border-white/28 bg-white/20 px-2 py-0.5 text-[11px] font-bold">{t(LOOK_META[view.look].label)}</span>}
             </span>
             <span className="truncate text-[12.5px] text-white/78">{view.when}</span>
+            {/* The savings account, on its own line under the name (v5). */}
+            {view.kept && (
+              <span title={view.keptTitle} className="mt-1 inline-flex max-w-full min-w-0 items-center gap-1.25 self-start rounded-full border border-white/20 bg-white/14 px-2.5 py-1 text-[11.5px] font-semibold">
+                <Landmark className="size-3 shrink-0" strokeWidth={2} aria-hidden="true" />
+                <span className="truncate">{view.kept.name}</span>
+              </span>
+            )}
           </span>
-          {view.kept && (
-            <span title={view.keptTitle} className="inline-flex max-w-37.5 min-w-0 items-center gap-1.25 rounded-full border border-white/20 bg-white/14 px-2.5 py-1 text-[11.5px] font-semibold max-sm:hidden">
-              <Landmark className="size-3 shrink-0" strokeWidth={2} aria-hidden="true" />
-              <span className="truncate">{view.kept.name}</span>
-            </span>
-          )}
           <GoalMenu name={goal.name} items={view.menu} busy={busy} onAction={onAction} onColor />
         </div>
 
@@ -167,20 +168,20 @@ export function GoalCard({ goal, color, currency, today, canManage, noWallet, ca
       <div className="flex flex-1 flex-col gap-3.5 px-4.5 py-4">
         <div
           className={cn(
-            "grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)] rounded-[16px] border",
+            "grid grid-cols-3 rounded-[16px] border",
             view.behind ? "border-warning-line bg-warning-50" : view.completed ? "border-success-soft bg-gain-wash" : "border-head-rule bg-hover",
           )}
         >
           {stats.map((stat, index) => (
-            <div key={index} className={cn("flex min-w-0 flex-col gap-1 px-3.5 py-3", index > 0 && (view.behind ? "border-l border-warning-line" : "border-l border-head-rule"))}>
-              <span className="truncate text-[11px] font-bold tracking-[0.06em] text-ink-faint uppercase">{stat.key}</span>
+            <div key={index} className={cn("flex min-w-0 flex-col gap-1 p-2.5", index > 0 && (view.behind ? "border-l border-warning-line" : "border-l border-head-rule"))}>
+              <span className="text-[10.5px] leading-[1.25] font-bold tracking-[0.05em] text-ink-faint uppercase">{stat.key}</span>
               <span className="flex min-w-0 items-center gap-1.5">
                 {stat.icon && (
                   <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full", stat.iconTone, stat.tone)}>
                     <stat.icon className="size-2.75" strokeWidth={3} />
                   </span>
                 )}
-                <span className={cn("truncate text-[14px] font-bold tabular-nums", stat.tone)}>{stat.value}</span>
+                <span className={cn("text-[13.5px] leading-[1.25] font-bold [overflow-wrap:anywhere] tabular-nums", stat.tone)}>{stat.value}</span>
               </span>
               {stat.bar && (
                 <span title={stat.bar.title} className="mt-0.5 block h-1 overflow-hidden rounded-full bg-line-card">

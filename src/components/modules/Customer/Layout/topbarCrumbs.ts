@@ -93,7 +93,7 @@ export function recordListHref(location: NavLocation, visitUrl: string | null, l
 export function topbarTrail(location: NavLocation, record: boolean, listUrl?: string, { linkList = true }: { linkList?: boolean } = {}): TopbarCrumb[] {
   const { crumbs, heading } = breadcrumbFor(location);
   const above = record && !location.sub ? [] : crumbs;
-  const trail: TopbarCrumb[] = above.map((label) => (location.sub && label === location.item.label ? { label, href: leafHref(location.item) } : { label }));
+  const trail: TopbarCrumb[] = above.map((label) => (location.sub && label === (location.item.short ?? location.item.label) ? { label, href: leafHref(location.item) } : { label }));
   if (record) trail.push(linkList ? { label: heading, href: listUrl ?? leafHref(listOf(location)) } : { label: heading });
   return trail;
 }

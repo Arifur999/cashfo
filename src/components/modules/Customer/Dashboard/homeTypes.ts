@@ -12,7 +12,7 @@ export type { CategoryMeta, SpendingSlice };
 
 // The parts of the Dashboard read on their own: one that fails says so in
 // its own card and the rest stays up. Its fields below then hold empties.
-export type HomePart = "savings" | "assets" | "budget" | "loans";
+export type HomePart = "savings" | "assets" | "investments" | "budget" | "loans";
 
 // A month of the Income vs Expense chart, oldest first.
 export interface HomeChartPoint {
@@ -82,7 +82,7 @@ export interface HomeData {
   targets: { income: number | null; budget: number | null };
   // Net worth today: its parts, how far it moved since last month ended,
   // and how many accounts, goals, assets and people make it up.
-  worth: { parts: WorthParts; change: number | null; since: string; counts: { accounts: number; goals: number; assets: number; pawna: number; dena: number } };
+  worth: { parts: WorthParts; change: number | null; since: string; counts: { accounts: number; goals: number; assets: number; investments: number; pawna: number; dena: number } };
   // Where the period's money went; null when it couldn't be read.
   flow: MoneyFlow | null;
   // The next invitations and own events; null when they can't be shown.

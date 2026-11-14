@@ -65,7 +65,13 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
               ? kind === "ASSET_SALE"
                 ? t("Money from selling {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
                 : t("Paid for {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
-              : null;
+              : row.investmentId && party
+                ? kind === "INCOME"
+                  ? t("Profit from {name}, recorded in Investments.", { name: party })
+                  : kind === "INVESTMENT_RETURN"
+                    ? t("Capital back from {name}, recorded in Investments.", { name: party })
+                    : t("Invested in {name}, recorded in Investments.", { name: party })
+                : null;
 
   function removeAdjustment() {
     if (isPending || !online) return;
