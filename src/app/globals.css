@@ -113,6 +113,11 @@
   --sky-deep: #075985;
   /* The fifth savings account's colour (SavingsWallets board). */
   --rose-deep: #be123c;
+  /* A challenge's days (ChallengesHome): done, missed on its strip, and a
+     missed day's box; the boards keep the first two in dark too. */
+  --streak-done: #22c55e;
+  --rose-strip: #fb7185;
+  --rose-tint: #ffe4e6;
   /* A low week's bar on the habit and Namaz reports (#fda4af in both themes). */
   --rose-bar: #fda4af;
   --gold-on-forest: #f5c26b;
@@ -436,6 +441,7 @@
   --sky-soft: #0b2a3d;
   --sky-deep: #7cc4f0;
   --rose-deep: #f0718f;
+  --rose-tint: #2c312f;
   --gold-on-forest: #f5c26b;
   --gateway-bkash: #f04a93;
   --gateway-nagad: #f0763f;
@@ -898,6 +904,9 @@ html:not(.dark) [data-app="habit"] {
   --color-sky-soft: var(--sky-soft);
   --color-sky-deep: var(--sky-deep);
   --color-rose-deep: var(--rose-deep);
+  --color-streak-done: var(--streak-done);
+  --color-rose-strip: var(--rose-strip);
+  --color-rose-tint: var(--rose-tint);
   --color-rose-bar: var(--rose-bar);
   --color-meter-records: var(--meter-records);
   --color-brand-facebook: var(--brand-facebook);
