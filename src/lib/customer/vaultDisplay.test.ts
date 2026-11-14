@@ -28,6 +28,7 @@ import {
   presetTitle,
   QUICK_LOGINS,
   rulesMet,
+  sharesWith,
   safetyOf,
   serviceSuggestions,
   settle,
@@ -205,6 +206,17 @@ describe("checkup", () => {
     const left = [entry({ id: "a", title: "A" }), entry({ id: "d", title: "D" })];
     expect(checkupFor(left, checkup)).toEqual({ weak: [], reused: ["a"], old: ["d"] });
     expect(checkupFor(left, null)).toBeNull();
+  });
+
+  it("names the logins that share a password, and drops a set a delete left with one", () => {
+    const logins = [entry({ id: "a", title: "Facebook" }), entry({ id: "b", title: "Instagram" }), entry({ id: "c", title: "Gmail" })];
+    const found = { weak: [], reused: ["a", "b", "c", "d"], old: [], reusedGroups: [["a", "b", "c"], ["d", "e"]] };
+    const kept = checkupFor(logins, found);
+    expect(kept?.reusedGroups).toEqual([["a", "b", "c"]]);
+    expect(sharesWith(logins, kept, "a")).toEqual(["Instagram", "Gmail"]);
+    expect(sharesWith(logins, kept, "x")).toEqual([]);
+    // An older backend sends no sets: nothing to name.
+    expect(sharesWith(logins, { weak: [], reused: ["a", "b"], old: [] }, "a")).toEqual([]);
   });
 
   it("counts each login once, by its worst issue, so the bar adds up", () => {

@@ -37,8 +37,10 @@ interface EntryDialogProps {
 const STRENGTH_BAR: Record<number, string> = { 1: "bg-expense-fill", 2: "bg-warning-fill", 3: "bg-emerald/70", 4: "bg-emerald" };
 const STRENGTH_TEXT: Record<number, string> = { 1: "text-expense", 2: "text-warning", 3: "text-emerald", 4: "text-emerald" };
 
-const SECTION_TITLE = "text-[11.5px] leading-normal font-semibold tracking-[0.06em] text-ink-muted uppercase";
-const LABEL = "text-[13.5px] leading-normal font-medium text-ink-2";
+const SECTION_TITLE = "text-[11.5px] leading-[normal] font-semibold tracking-[0.06em] text-ink-muted uppercase";
+const LABEL = "text-[13.5px] leading-[normal] font-medium text-ink-2";
+// The popup's 46px boxes with 12px corners.
+const BOX = "h-11.5 rounded-[12px] text-[14.5px] max-md:text-body-lg";
 
 // Add or edit a login (design: the centred Add login popup): Account (a
 // Name box that suggests popular services, and the website), Sign-in
@@ -195,7 +197,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
       bodyClassName="px-4 sm:px-6"
       footer={
         <>
-          <span className="flex min-w-0 flex-1 items-center gap-1.5 text-caption text-ink-muted max-sm:basis-full">
+          <span className="flex min-w-0 flex-1 items-center gap-1.5 text-caption leading-[normal] text-ink-muted max-sm:basis-full">
             <Lock className="size-3.25 shrink-0" aria-hidden="true" />
             {t("The password is encrypted when you save")}
           </span>
@@ -227,7 +229,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
             <Input
               id="ve-name"
               size="md"
-              frameClassName="h-11.5"
+              frameClassName={BOX}
               value={draft.title}
               onChange={(event) => {
                 set({ title: event.target.value });
@@ -290,7 +292,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
             <label htmlFor="ve-site" className={LABEL}>
               {t("Website")} <span className="font-normal text-ink-faint">({t("optional")})</span>
             </label>
-            <Input id="ve-site" size="md" frameClassName="h-11.5" type="text" inputMode="url" value={draft.website} onChange={(event) => set({ website: event.target.value })} maxLength={200} placeholder="facebook.com" autoComplete="off" name="vault-site" />
+            <Input id="ve-site" size="md" frameClassName={BOX} type="text" inputMode="url" value={draft.website} onChange={(event) => set({ website: event.target.value })} maxLength={200} placeholder="facebook.com" autoComplete="off" name="vault-site" />
           </div>
         </div>
       </section>
@@ -303,7 +305,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
           <label htmlFor="ve-user" className={LABEL}>
             {t("Username, email or phone")}
           </label>
-          <Input id="ve-user" size="md" frameClassName="h-11.5" value={draft.username} onChange={(event) => set({ username: event.target.value })} maxLength={200} placeholder={t("What you type to log in")} autoComplete="off" name="vault-user" />
+          <Input id="ve-user" size="md" frameClassName={BOX} value={draft.username} onChange={(event) => set({ username: event.target.value })} maxLength={200} placeholder={t("What you type to log in")} autoComplete="off" name="vault-user" />
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ve-pass" className={LABEL}>
@@ -312,7 +314,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
           <Input
             id="ve-pass"
             size="md"
-            frameClassName={cn("h-12", draft.password && !passwordError && "border-emerald")}
+            frameClassName={cn("h-12 rounded-[12px]", draft.password && !passwordError && "border-[1.5px] border-emerald")}
             className="font-mono text-[15px] tracking-[0.03em]"
             type={shown ? "text" : "password"}
             value={draft.password}
@@ -332,7 +334,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
                   <Copy className="size-4.25" aria-hidden="true" />
                 </button>
                 <span aria-hidden="true" className="mx-1 h-5.5 w-px bg-line" />
-                <button type="button" onClick={() => generate()} title={t("Make a strong password")} className="flex h-9 items-center gap-1.5 rounded-[9px] bg-emerald-soft px-3 text-[13px] font-semibold whitespace-nowrap text-emerald hover:bg-mint-200 dark:hover:bg-emerald/20">
+                <button type="button" onClick={() => generate()} title={t("Make a strong password")} className="flex h-9 items-center gap-1.5 rounded-[9px] bg-emerald-soft px-3 text-[13px] font-semibold whitespace-nowrap text-brand-ink hover:bg-mint-200 dark:hover:bg-emerald/20">
                   <Sparkles className="size-3.5" aria-hidden="true" />
                   {t(made ? "Make another" : "Generate")}
                 </button>
@@ -356,7 +358,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
                 <span key={bar} className={cn("h-1 flex-1 rounded-full", draft.password && strength.score >= bar ? STRENGTH_BAR[Math.max(1, strength.score)] : "bg-line")} />
               ))}
             </span>
-            <span className="min-w-0 flex-1 text-[12.5px] text-ink-muted">
+            <span className="min-w-0 flex-1 text-[12.5px] leading-[normal] text-ink-muted">
               {draft.password && (
                 <>
                   <b className={cn("font-semibold", STRENGTH_TEXT[Math.max(1, strength.score)])}>{t(`${strength.label === "Too short" ? "Weak" : strength.label}@@password strength`)}</b>
@@ -392,7 +394,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
             </span>
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <button type="button" aria-labelledby="ve-cat-l ve-cat-v" className="flex h-11.5 items-center gap-2.5 rounded-[12px] border border-line-strong bg-surface pr-3 pl-2 text-left text-[14.5px] text-ink data-[state=open]:border-emerald">
+                <button type="button" aria-labelledby="ve-cat-l ve-cat-v" className="flex h-11.5 items-center gap-2.5 rounded-[12px] border border-input bg-surface pr-3 pl-2 text-left text-[14.5px] text-ink data-[state=open]:border-emerald">
                   <span aria-hidden="true" className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-[9px] [&_svg]:size-3.5", SOFT_TONE[VAULT_CATEGORY_TONE[draft.category]])}>
                     <Icon />
                   </span>
@@ -425,11 +427,11 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
             role="switch"
             aria-checked={draft.favorite}
             onClick={() => set({ favorite: !draft.favorite })}
-            className={cn("flex h-11.5 items-center gap-2.5 rounded-[12px] border px-3 text-left text-body font-medium text-ink", draft.favorite ? "border-warning-line bg-warning-50" : "border-line-strong bg-surface")}
+            className={cn("flex h-11.5 items-center gap-2.5 rounded-[12px] border px-3 text-left text-body font-medium text-ink", draft.favorite ? "border-pill-amber-line bg-warning-50" : "border-input bg-surface")}
           >
             <Star className={cn("size-4.25", draft.favorite ? "fill-warning-fill text-warning-fill" : "text-ink-faint")} strokeWidth={1.75} aria-hidden="true" />
             <span className="flex-1">{t("Add to Favorites")}</span>
-            <span aria-hidden="true" className={cn("relative h-5 w-9 shrink-0 rounded-full transition-colors", draft.favorite ? "bg-warning-fill" : "bg-line-strong")}>
+            <span aria-hidden="true" className={cn("relative h-5 w-9 shrink-0 rounded-full transition-colors", draft.favorite ? "bg-warning-fill" : "bg-input")}>
               <span className={cn("absolute top-0.5 size-4 rounded-full bg-white shadow-sm transition-[left]", draft.favorite ? "left-4.5" : "left-0.5")} />
             </span>
           </button>
@@ -437,7 +439,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
       </section>
 
       <section className="flex flex-col gap-3 border-t border-divider pt-3.5 pb-4.5">
-        <button type="button" onClick={() => setMoreOpen(!moreOpen)} aria-expanded={moreOpen} className="flex min-h-8 w-fit items-center gap-1.5 rounded-md text-[13.5px] font-semibold text-emerald pointer-coarse:min-h-11">
+        <button type="button" onClick={() => setMoreOpen(!moreOpen)} aria-expanded={moreOpen} className="-my-2 flex min-h-9 w-fit items-center gap-1.5 rounded-md text-[13.5px] font-semibold text-brand-ink pointer-coarse:min-h-11">
           {moreOpen ? <ChevronUp className="size-3.5" aria-hidden="true" /> : <ChevronRight className="size-3.5" aria-hidden="true" />}
           {t("More details: notes and account holder name")}
         </button>
@@ -447,7 +449,7 @@ export function EntryDialog({ open, draft, token, onChange, onClose, onSaved, on
               <label htmlFor="ve-holder" className={LABEL}>
                 {t("Account holder name")}
               </label>
-              <Input id="ve-holder" size="md" frameClassName="h-11.5" value={draft.holder} onChange={(event) => set({ holder: event.target.value, holderOpen: true })} maxLength={120} placeholder={t("Name on the account")} autoComplete="off" name="vault-holder" />
+              <Input id="ve-holder" size="md" frameClassName={BOX} value={draft.holder} onChange={(event) => set({ holder: event.target.value, holderOpen: true })} maxLength={120} placeholder={t("Name on the account")} autoComplete="off" name="vault-holder" />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="ve-notes" className={LABEL}>

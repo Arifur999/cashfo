@@ -42,17 +42,17 @@ export function VaultDialog({ open, onClose, title, sub, lead, actions, width = 
       <div className={cn("flex shrink-0 items-center gap-3 sm:gap-3.5", headLine ? "border-b border-line px-4 py-3.5 sm:px-6 sm:py-4.5" : "px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4")}>
         {lead}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <DialogTitle className="min-w-0 truncate text-[17px] leading-[1.3] font-semibold text-ink sm:text-[19px]">{title}</DialogTitle>
+          <DialogTitle className={cn("min-w-0 truncate text-[17px] leading-[normal] font-semibold text-ink", headLine ? "sm:text-[18px]" : "sm:text-[19px]")}>{title}</DialogTitle>
           {sub ? (
             <DialogDescription asChild>
-              <div className="text-[12.5px] leading-normal text-ink-muted">{sub}</div>
+              <div className="text-[12.5px] leading-[normal] text-ink-muted">{sub}</div>
             </DialogDescription>
           ) : (
             <DialogDescription className="sr-only">{typeof title === "string" ? title : ""}</DialogDescription>
           )}
         </div>
         {actions}
-        <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-soft hover:text-ink disabled:opacity-50 pointer-coarse:size-11">
+        <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-page text-ink-soft hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11 max-sm:bg-transparent max-sm:text-ink-muted">
           <X className="size-4.5" aria-hidden="true" />
         </button>
       </div>
@@ -65,7 +65,7 @@ export function VaultDialog({ open, onClose, title, sub, lead, actions, width = 
       <DialogContent
         showCloseButton={false}
         onOpenAutoFocus={onOpenAutoFocus}
-        className={cn(WIDTHS[width], "flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[22px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]")}
+        className={cn(WIDTHS[width], "flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 sm:rounded-[22px] text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]")}
       >
         {onSubmit ? (
           <form noValidate onSubmit={onSubmit} autoComplete="off" className="flex min-h-0 flex-1 flex-col">

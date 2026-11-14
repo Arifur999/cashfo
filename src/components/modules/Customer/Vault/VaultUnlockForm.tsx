@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, ChevronLeft, CircleAlert, Clock, KeyRound, Lock, LockKeyhole, LockKeyholeOpen, Mail, ShieldCheck, Smartphone, TriangleAlert } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, CircleAlert, Clock, KeyRound, Lock, LockKeyhole, LockOpen, Mail, ShieldCheck, Smartphone, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
@@ -23,7 +23,6 @@ import { PasswordField } from "@/components/modules/Customer/Shared/PasswordFiel
 interface VaultUnlockFormProps {
   onUnlocked: (unlock: VaultUnlock) => void;
   onForgot: () => void;
-  onChange: () => void;
   // The API says there is no vault password yet (the page couldn't tell
   // beforehand): on to setting one up.
   onNoVault: () => void;
@@ -67,7 +66,7 @@ const REASONS: Record<LockReason, { text: string; tone: "plain" | "good"; icon: 
 // The unlock (design VaultLock and VaultCode): one centred column, the card
 // with its two steps -- the vault password, then the six-digit code the API
 // emails -- and under it how the vault stays safe.
-export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, lockMinutes, effectiveMinutes, onLockTime, lockedUntil: lockedAtLoad = 0, reason = null, challenge: firstChallenge = null }: VaultUnlockFormProps) {
+export function VaultUnlockForm({ onUnlocked, onForgot, onNoVault, lockMinutes, effectiveMinutes, onLockTime, lockedUntil: lockedAtLoad = 0, reason = null, challenge: firstChallenge = null }: VaultUnlockFormProps) {
   const { t, fmt } = useLocale();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -255,15 +254,15 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
       <Card asChild padding="none" className="w-full max-w-110">
         <section aria-labelledby={step === 1 ? "vault-unlock-title" : "vault-code-title"} className="flex flex-col gap-4.5 px-5 pt-7 pb-6 sm:px-8 sm:pt-8 sm:pb-6.5">
           <ol aria-label={t("Unlock steps")} className="-mb-1 flex items-center justify-center gap-2">
-            <li aria-current={step === 1 ? "step" : undefined} className={cn("flex items-center gap-1.5 text-caption font-semibold", step === 2 ? "text-emerald" : "text-ink")}>
+            <li aria-current={step === 1 ? "step" : undefined} className={cn("flex items-center gap-1.5 text-caption leading-[normal] font-semibold", step === 2 ? "text-emerald" : "text-ink")}>
               <span aria-hidden="true" className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
                 {step === 2 ? <Check className="size-3" strokeWidth={3.5} /> : n(1)}
               </span>
               {t("Vault password")}
             </li>
             <li aria-hidden="true" className={cn("h-0.5 w-7 rounded-full", step === 2 ? "bg-primary" : "bg-line")} />
-            <li aria-current={step === 2 ? "step" : undefined} className={cn("flex items-center gap-1.5 text-caption font-semibold", step === 2 ? "text-ink" : "text-ink-muted")}>
-              <span aria-hidden="true" className={cn("flex size-5 items-center justify-center rounded-full text-[11px] font-bold", step === 2 ? "bg-primary text-primary-foreground" : "bg-surface-sunken text-ink-soft")}>
+            <li aria-current={step === 2 ? "step" : undefined} className={cn("flex items-center gap-1.5 text-caption font-semibold", step === 2 ? "text-ink" : "text-ink-faint")}>
+              <span aria-hidden="true" className={cn("flex size-5 items-center justify-center rounded-full text-[11px] font-bold", step === 2 ? "bg-primary text-primary-foreground" : "bg-line text-ink-muted")}>
                 {n(2)}
               </span>
               {t(bySms ? "Phone code" : "Email code")}
@@ -273,22 +272,22 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
           {step === 1 ? (
             <form onSubmit={submit} noValidate className="flex flex-col gap-4.5">
               <div className="flex flex-col items-center gap-2.5 text-center">
-                <span className="flex size-15 items-center justify-center rounded-full bg-emerald-soft text-emerald">
+                <span className="flex size-15 items-center justify-center rounded-full bg-emerald-soft text-brand-ink">
                   <Lock className="size-6.5" aria-hidden="true" />
                 </span>
-                <h2 id="vault-unlock-title" className="text-[21px] leading-[1.3] font-semibold tracking-[-0.01em] text-ink">
+                <h2 id="vault-unlock-title" className="text-[21px] leading-[normal] font-semibold tracking-[-0.01em] text-ink">
                   {t("Unlock your vault")}
                 </h2>
                 <p className="text-body leading-normal text-ink-muted">{t("Use your vault password, not your login password.")}</p>
                 {pill && (
-                  <span role="status" className={cn("mt-0.5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12.5px] font-medium", pill.tone === "good" ? "border-emerald-line bg-emerald-soft text-brand-ink" : "border-line bg-strip text-ink-soft")}>
+                  <span role="status" className={cn("mt-0.5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12.5px] font-medium", pill.tone === "good" ? "border-emerald-line bg-emerald-soft text-brand-ink" : "border-line bg-page text-ink-soft")}>
                     <pill.icon className="size-3" strokeWidth={2.5} aria-hidden="true" />
                     {t(pill.text, { count: minutes })}
                   </span>
                 )}
               </div>
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="vault-unlock" className="text-[13.5px] leading-normal font-medium text-ink-2">
+                <label htmlFor="vault-unlock" className="text-[13.5px] leading-[normal] font-medium text-ink-2">
                   {t("Vault password")}
                 </label>
                 <PasswordField
@@ -302,7 +301,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                   aria-describedby={message ? "vault-unlock-error" : undefined}
                   autoComplete="off"
                   autoFocus={!challenge}
-                  size="xl"
+                  size="lg"
                   className="text-[15px]"
                 />
                 {message && (
@@ -313,17 +312,12 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                 )}
               </div>
               <Button type="submit" size="xl" variant="action" disabled={isPending || lockedOut} className="w-full text-[15px] [&_svg:not([class*='size-'])]:size-4.25">
-                {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <LockKeyholeOpen />}
+                {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <LockOpen />}
                 {lockedOut ? t("Wait {time}", { time: wait }) : t("Unlock")}
               </Button>
-              <div className="-my-1.5 flex flex-col items-center">
-                <button type="button" onClick={onForgot} className="flex min-h-9 items-center rounded-md px-2 text-[13.5px] font-semibold text-emerald hover:underline pointer-coarse:min-h-11">
-                  {t("Forgot vault password?")}
-                </button>
-                <button type="button" onClick={onChange} className="flex min-h-8 items-center rounded-md px-2 text-small font-medium text-ink-muted hover:text-ink pointer-coarse:min-h-11">
-                  {t("Change vault password")}
-                </button>
-              </div>
+              <button type="button" onClick={onForgot} className="-my-2 flex min-h-9 items-center self-center rounded-md px-2 text-[13.5px] font-semibold text-brand-ink hover:underline pointer-coarse:min-h-11">
+                {t("Forgot vault password?")}
+              </button>
             </form>
           ) : (
             <form
@@ -335,10 +329,10 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
               className="flex flex-col gap-4.5"
             >
               <div className="flex flex-col items-center gap-2.5 text-center">
-                <span className="flex size-15 items-center justify-center rounded-full bg-emerald-soft text-emerald">
+                <span className="flex size-15 items-center justify-center rounded-full bg-emerald-soft text-brand-ink">
                   {bySms ? <Smartphone className="size-6.5" aria-hidden="true" /> : <Mail className="size-6.5" aria-hidden="true" />}
                 </span>
-                <h2 id="vault-code-title" className="text-[21px] leading-[1.3] font-semibold tracking-[-0.01em] text-ink">
+                <h2 id="vault-code-title" className="text-[21px] leading-[normal] font-semibold tracking-[-0.01em] text-ink">
                   {t(bySms ? "Check your phone" : "Check your email")}
                 </h2>
                 <p className="text-body leading-normal text-ink-muted">
@@ -346,7 +340,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                 </p>
               </div>
               <div className="flex flex-col gap-2">
-                <span id="vault-code-label" className="text-[13.5px] leading-normal font-medium text-ink-2">
+                <span id="vault-code-label" className="text-[13.5px] leading-[normal] font-medium text-ink-2">
                   {t("Verification code")}
                 </span>
                 <div className="relative grid grid-cols-6 gap-2">
@@ -401,7 +395,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                 {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <ShieldCheck />}
                 {t("Verify and unlock")}
               </Button>
-              <div className="-my-1 flex items-center justify-between gap-3 text-[13.5px]">
+              <div className="-my-2.5 flex items-center justify-between gap-3 text-[13.5px]">
                 <button type="button" onClick={back} className="flex min-h-9 items-center gap-1 rounded-md font-medium text-ink-soft hover:text-ink pointer-coarse:min-h-11">
                   <ChevronLeft className="size-3.5" aria-hidden="true" />
                   {t("Back")}
@@ -409,7 +403,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                 {challenge?.sendsLeft === 0 ? (
                   <span className="text-right text-ink-muted">{t("Sent 5 times. Use the last code.")}</span>
                 ) : resendLeft > 0 ? (
-                  <span className="text-ink-muted tabular-nums">{t("Resend code in {time}", { time: toLocaleDigits(countdownText(resendLeft), fmt) })}</span>
+                  <span className="text-ink-faint tabular-nums">{t("Resend code in {time}", { time: toLocaleDigits(countdownText(resendLeft), fmt) })}</span>
                 ) : (
                   <button type="button" onClick={resend} disabled={isResending || codeDead} className="flex min-h-9 items-center rounded-md font-semibold text-emerald hover:underline disabled:text-ink-muted disabled:no-underline pointer-coarse:min-h-11">
                     {t("Resend code")}
@@ -423,7 +417,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
       </Card>
 
       <section aria-labelledby="vault-how" className="flex w-full max-w-110 flex-col gap-3">
-        <h3 id="vault-how" className="text-center text-caption font-semibold tracking-[0.06em] text-ink-muted uppercase">
+        <h3 id="vault-how" className="text-center text-caption leading-[normal] font-semibold tracking-[0.06em] text-ink-muted uppercase">
           {t("How your vault stays safe")}
         </h3>
         <div className="grid gap-2.5 sm:grid-cols-2">
@@ -433,7 +427,7 @@ export function VaultUnlockForm({ onUnlocked, onForgot, onChange, onNoVault, loc
                 <fact.icon className="size-3.5" aria-hidden="true" />
               </span>
               <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-[13px] leading-normal font-semibold text-ink">{t(fact.title)}</span>
+                <span className="text-[13px] leading-[normal] font-semibold text-ink">{t(fact.title)}</span>
                 <span className="text-caption leading-[1.45] text-ink-muted">{t(fact.icon === KeyRound && bySms ? "Vault password, then a code by SMS" : fact.text, { count: minutes })}</span>
                 {/* The lock time: changed here, from the next unlock on. */}
                 {fact.icon === Clock && (

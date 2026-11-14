@@ -330,6 +330,11 @@ export interface VaultCheckup {
   weak: string[];
   reused: string[];
   old: string[];
+  // The reused logins in sets that share one password, and each weak
+  // password's length and whether it is digits only; missing from an older
+  // backend.
+  reusedGroups?: string[][];
+  weakDetails?: Record<string, { length: number; digitsOnly: boolean }>;
 }
 
 export interface BusinessLimits {

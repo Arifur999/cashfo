@@ -61,7 +61,7 @@ describe("topbarTrail", () => {
     // address to drop: the bar passes linkList: false.
     const vault = at("/password-manager");
     expect(listVisitUrl(vault.location, vault.pathname, vault.query)).toBe("/password-manager");
-    expect(topbarTrail(vault.location!, true, undefined, { linkList: false })).toEqual([{ label: "Password Management" }]);
+    expect(topbarTrail(vault.location!, true, undefined, { linkList: false })).toEqual([{ label: "Password Manager" }]);
   });
 });
 
@@ -82,7 +82,7 @@ describe("recordListHref", () => {
     const visitUrl = listVisitUrl(checkup.location, checkup.pathname, checkup.query);
     expect(visitUrl).toBe("/password-manager?checkup=1");
     expect(recordListHref(checkup.location!, visitUrl, "/password-manager?checkup=1")).toBe("/password-manager");
-    expect(topbarTrail(checkup.location!, true, "/password-manager")).toEqual([{ label: "Password Management", href: "/password-manager" }]);
+    expect(topbarTrail(checkup.location!, true, "/password-manager")).toEqual([{ label: "Password Manager", href: "/password-manager" }]);
   });
 
   it("has nowhere to go at the plain list's own address", () => {

@@ -1,4 +1,4 @@
-import { Briefcase, Check, Clock, FileText, KeyRound, Landmark, Mail, ShoppingCart, Smartphone, TriangleAlert, Users, Wifi, type LucideIcon } from "lucide-react";
+import { Briefcase, Check, Clock, FileText, Landmark, Mail, Package, ShoppingCart, Smartphone, TriangleAlert, Users, Wifi, type LucideIcon } from "lucide-react";
 import type { Tone } from "@/components/smartly/tones";
 import type { VaultEntryCategory } from "@/lib/customer/api";
 import type { Safety } from "@/lib/customer/vaultDisplay";
@@ -28,7 +28,7 @@ export const VAULT_CATEGORY_ICONS: Record<VaultEntryCategory, LucideIcon> = {
   WORK: Briefcase,
   WIFI: Wifi,
   GOVERNMENT: FileText,
-  OTHER: KeyRound,
+  OTHER: Package,
 };
 
 // The soft wash and ink each category's avatar takes.
