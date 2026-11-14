@@ -99,7 +99,7 @@ export function DeleteCategoryDialog({ businessId, row, others, onClose, onDelet
           <label htmlFor="cat-move" className="text-body font-medium text-ink">
             {t("Move them to")}
           </label>
-          <NativeSelect id="cat-move" value={moveTo} onChange={(event) => setMoveTo(event.target.value)} className="h-11.5 font-normal">
+          <NativeSelect id="cat-move" value={moveTo} onChange={(event) => setMoveTo(event.target.value)} className="h-11.5 pl-4 font-normal">
             {others.map((other) => (
               <option key={other.id} value={other.id}>
                 {categoryLabel(other.name, t)}

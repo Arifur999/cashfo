@@ -63,6 +63,14 @@ const COLOR_WORDS: Record<(typeof BUDGET_CATEGORY_COLORS)[number], string> = {
 // The swatches in the CategoryDrawer board's order, each its own colour.
 const SWATCH_ORDER = IE_CATEGORY_COLORS satisfies readonly (typeof BUDGET_CATEGORY_COLORS)[number][];
 
+// The names a new category can start from (the CategoryDrawer board's
+// Quick picks), each in the reader's language; one the type already has
+// isn't offered.
+const QUICK_PICKS: Record<BudgetCategoryType, string[]> = {
+  INCOME: ["Rental income", "Bonus", "Profit@@category", "Commission", "Refund@@category"],
+  EXPENSE: ["Mobile & Internet", "Groceries", "Medicine", "Charity", "Travel", "Family support"],
+};
+
 // The colour a new category starts on (the board's): the first swatch no
 // category of either type has yet.
 export const freeColor = (taken: readonly string[]): string => SWATCH_ORDER.find((color) => !taken.includes(color)) ?? SWATCH_ORDER[taken.length % SWATCH_ORDER.length];
@@ -93,7 +101,14 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
 
   const isNew = editing?.id === null;
   const locked = !!editing && editing.used > 0;
-  const letter = [...name.trim()][0]?.toUpperCase() ?? "";
+  // The board's tile reads "?" until there is a name.
+  const letter = [...name.trim()][0]?.toUpperCase() ?? "?";
+  const typed = name.trim().toLowerCase();
+  const picks = isNew
+    ? QUICK_PICKS[type]
+        .map((key) => ({ key, label: t(key) }))
+        .filter(({ key, label }) => !existing[type].names.some((have) => [label.toLowerCase(), key.split("@@")[0].toLowerCase()].includes(have.trim().toLowerCase())))
+    : [];
 
   function pickType(next: BudgetCategoryType) {
     setType(next);
@@ -162,6 +177,30 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
           />
         </span>
       </Field>
+      {picks.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-medium text-ink-2">{t("Quick picks")}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {picks.map(({ key, label }) => {
+              const on = typed === label.toLowerCase();
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    setName(label);
+                    setError(null);
+                  }}
+                  className={cn("h-8 rounded-full border px-3 text-[13px] text-ink hover:bg-hover pointer-coarse:h-11", on ? "border-emerald bg-emerald-soft hover:bg-emerald-soft" : "border-input bg-surface")}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <fieldset className="m-0 min-w-0 border-0 p-0">
         <legend className="mb-2 text-body font-medium text-ink">{t("Colour")}</legend>
         <div role="radiogroup" aria-label={t("Colour")} className="flex flex-wrap gap-2">
@@ -187,6 +226,18 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
           })}
         </div>
       </fieldset>
+      <div className="flex flex-col gap-2">
+        <span className="text-body font-medium text-ink">{t("Preview@@category")}</span>
+        <div className="flex items-center gap-2.5 rounded-[12px] border border-dashed border-input bg-table-head p-3">
+          <span aria-hidden="true" style={{ "--cat": ieCategoryColor(color) } as React.CSSProperties} className="cat-tile flex size-8 shrink-0 items-center justify-center rounded-[9px] text-[14px] font-bold">
+            {letter}
+          </span>
+          <span className="truncate text-body font-semibold text-ink">{name.trim() || t("Category name")}</span>
+          <span className={cn("shrink-0 rounded-full px-2 py-px text-[11.5px] font-semibold", type === "INCOME" ? "bg-success-soft text-tint-green-ink" : "bg-expense-soft text-expense")}>{t(type === "INCOME" ? "Income" : "Expense")}</span>
+          <span className="flex-1" />
+          <span className="text-caption whitespace-nowrap text-ink-muted">{t("In the transaction form")}</span>
+        </div>
+      </div>
     </IEDialog>
   );
 }
