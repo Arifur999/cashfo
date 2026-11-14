@@ -36,7 +36,7 @@ interface PlanFormDialogProps {
 
 const LABEL = "text-[13px] font-semibold text-ink-2";
 const FRAME = "rounded-[12px] border-[1.5px] border-line";
-const choice = (on: boolean) => (on ? "border-emerald bg-emerald-soft text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-input");
+const choice = (on: boolean) => (on ? "border-emerald bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-2 hover:border-input");
 
 // New or edited saving plan (SavingsPlans board's form): what it is for,
 // its kind and card colour, about how much, how important, when it is
@@ -250,7 +250,7 @@ export function PlanFormDialog({ open, onClose, businessId, editing, usedColors,
           <label htmlFor="plan-note" className={LABEL}>
             {t("Note")} <span className="font-normal text-ink-muted">({t("optional")})</span>
           </label>
-          <Textarea id="plan-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} placeholder={t("e.g. The model, the shop, who it is for")} className={cn(FRAME, "min-h-12 resize-y px-3.5 py-3 text-[14px] leading-[1.45]")} />
+          <Textarea id="plan-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} placeholder={t("e.g. The model, the shop, who it is for")} className={cn(FRAME, "h-13 min-h-12 resize-y px-3.5 py-3 text-[14px] leading-[1.45]")} />
         </div>
         <div className="flex min-w-0 flex-col gap-2">
           <label htmlFor="plan-link" className={LABEL}>

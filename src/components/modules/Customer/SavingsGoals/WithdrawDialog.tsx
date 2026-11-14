@@ -104,6 +104,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
       open={open}
       onClose={onClose}
       width={540}
+      headClassName="py-4.5"
       busy={isPending}
       onSubmit={submit}
       title={t("Withdraw from {name}", { name: goal.name })}
@@ -124,7 +125,7 @@ export function WithdrawDialog({ open, onClose, businessId, goal, currency, toda
         <label htmlFor="wd-amount" className="text-body font-medium text-ink">
           {t("Amount")}
         </label>
-        <AmountInput id="wd-amount" value={amount} onChange={setAmount} currency={currency} size="md" autoFocus />
+        <AmountInput id="wd-amount" value={amount} onChange={setAmount} currency={currency} size="md" frameClassName="h-13.5" autoFocus />
         <div className="flex gap-1.5">
           <button type="button" onClick={() => setAmount(String(saved))} className="h-8 rounded-full border border-line bg-surface px-3 text-caption font-semibold text-ink-2 tabular-nums hover:border-line-strong pointer-coarse:h-11">
             {t("All · {amount}", { amount: money(saved) })}
