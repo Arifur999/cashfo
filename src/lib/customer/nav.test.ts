@@ -52,6 +52,7 @@ describe("the two menus", () => {
         [
           ["Savings Goals", "Goals", "Saving plans", "Savings Accounts"],
           ["Assets Management", "Dashboard", "Purchase & Sell", "Update", "Category", "All Assets"],
+          ["Investments", "Dashboard", "Transactions", "My investments", "Statement"],
           ["Loan Management", "Dashboard", "Transactions", "Ledger", "Contacts"],
           ["Group Expense"],
           ["Calendar & Events", "Calendar", "People@@events", "My events"],
@@ -165,7 +166,7 @@ describe("findNavLocation", () => {
   });
 
   it("colours Loan Management with its own pillar", () => {
-    expect(breadcrumbFor(locate("/loan-management/ledger")!)).toEqual({ crumbs: ["Loan Management"], heading: "Ledger", tone: "loans" });
+    expect(breadcrumbFor(locate("/loan-management/ledger")!)).toEqual({ crumbs: ["Loan"], heading: "Ledger", tone: "loans" });
   });
 
   it("returns null for a page outside the menu", () => {

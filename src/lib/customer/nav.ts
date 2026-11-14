@@ -27,6 +27,7 @@ export type NavIcon =
   | "loans"
   | "savings"
   | "assets"
+  | "investments"
   | "group"
   | "today"
   | "daily"
@@ -84,6 +85,10 @@ export interface NavItem extends NavLeaf {
   badge?: "todayTasks" | "habitsToday";
   // A small tag after the label.
   tag?: string;
+  // The shorter name the menu row and the breadcrumb use (AppSidebar v5:
+  // "Savings" for Savings Goals); the label still names the group's pages
+  // in tab titles and search.
+  short?: string;
   // false: no floating + on this page, though its section has one.
   quickAdd?: false;
 }
@@ -168,6 +173,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         label: "Savings Goals",
+        short: "Savings",
         href: "/savings-goals/dashboard",
         icon: "savings",
         match: ["/savings-goals"],
@@ -183,6 +189,7 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         label: "Assets Management",
+        short: "Assets",
         href: "/assets-management/dashboard",
         icon: "assets",
         match: ["/assets-management"],
@@ -195,7 +202,20 @@ export const NAV_SECTIONS: NavSection[] = [
         ],
       },
       {
+        label: "Investments",
+        href: "/investments/dashboard",
+        icon: "investments",
+        match: ["/investments"],
+        subs: [
+          { label: "Dashboard", href: "/investments/dashboard" },
+          { label: "Transactions", href: "/investments/transactions" },
+          { label: "My investments", href: "/investments/list" },
+          { label: "Statement", href: "/investments/statement" },
+        ],
+      },
+      {
         label: "Loan Management",
+        short: "Loan",
         href: "/loan-management/dashboard",
         icon: "loans",
         tone: "loans",
@@ -492,7 +512,7 @@ export interface Breadcrumb {
 export function breadcrumbFor(location: NavLocation): Breadcrumb {
   const { section, item, sub } = location;
   const namesSection = !!section?.label && !section.quiet && (sectionApp(section) === "habit" || !!section.hidden);
-  const crumbs = sub ? [item.label] : namesSection && section?.label ? [section.label] : [];
+  const crumbs = sub ? [item.short ?? item.label] : namesSection && section?.label ? [section.label] : [];
   return {
     crumbs,
     heading: sub?.heading ?? sub?.label ?? item.heading ?? item.label,

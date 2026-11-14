@@ -16,6 +16,7 @@ import { adminSubscriptionsDictionary } from "./dictionary/admin-subscriptions";
 import { adminSupportDictionary } from "./dictionary/admin-support";
 import { adminSystemDictionary } from "./dictionary/admin-system";
 import { assetsDictionary } from "./dictionary/assets";
+import { investmentsDictionary } from "./dictionary/investments";
 import { balanceDictionary } from "./dictionary/balance";
 import { booksDictionary } from "./dictionary/books";
 import { businessBooksDictionary } from "./dictionary/business-books";
@@ -110,6 +111,7 @@ export const bnDictionary: Record<string, string> = {
   ...dashboardDictionary,
   ...balanceDictionary,
   ...assetsDictionary,
+  ...investmentsDictionary,
   ...savingsGoalsDictionary,
   ...loanManagementDictionary,
   ...incomeExpenseDictionary,
