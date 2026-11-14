@@ -131,6 +131,10 @@ export interface FriendRow {
   paid: string;
   earned: string;
   canRemind: boolean;
+  // How often a paying friend pays, and when a friend stopped or was last
+  // refunded; an older API leaves them out.
+  billingCycle?: "MONTHLY" | "YEARLY" | null;
+  endedAt?: string | null;
 }
 
 export interface FriendList {
