@@ -109,6 +109,8 @@
      yearly saving's gold on the forest card. */
   --sky: #0369a1;
   --sky-soft: #e0f2fe;
+  /* Words on sky-soft and tint-teal: the Ramadan sheet's ashra bands. */
+  --sky-deep: #075985;
   /* The fifth savings account's colour (SavingsWallets board). */
   --rose-deep: #be123c;
   /* A low week's bar on the habit and Namaz reports (#fda4af in both themes). */
@@ -261,6 +263,7 @@
   --tint-yellow-deep: #713f12;
   --tint-teal: #ccfbf1;
   --tint-teal-ink: #0f766e;
+  --tint-teal-deep: #115e59;
   --tint-violet: #ede9fe;
   --tint-violet-ink: #6d28d9;
   --tint-orange: #ffedd5;
@@ -431,6 +434,7 @@
   --info-ink: #a9c4f5;
   --sky: #7cc4f0;
   --sky-soft: #0b2a3d;
+  --sky-deep: #7cc4f0;
   --rose-deep: #f0718f;
   --gold-on-forest: #f5c26b;
   --gateway-bkash: #f04a93;
@@ -535,6 +539,7 @@
   --tint-yellow-deep: #fde68a;
   --tint-teal: #12302c;
   --tint-teal-ink: #5cccdb;
+  --tint-teal-deep: #5cc8b2;
   --tint-violet: #251c3d;
   --tint-violet-ink: #b6a2ff;
   --tint-orange: #33200e;
@@ -891,6 +896,7 @@ html:not(.dark) [data-app="habit"] {
   --color-info-ink: var(--info-ink);
   --color-sky: var(--sky);
   --color-sky-soft: var(--sky-soft);
+  --color-sky-deep: var(--sky-deep);
   --color-rose-deep: var(--rose-deep);
   --color-rose-bar: var(--rose-bar);
   --color-meter-records: var(--meter-records);
@@ -920,6 +926,7 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-yellow-deep: var(--tint-yellow-deep);
   --color-tint-teal: var(--tint-teal);
   --color-tint-teal-ink: var(--tint-teal-ink);
+  --color-tint-teal-deep: var(--tint-teal-deep);
   --color-tint-violet: var(--tint-violet);
   --color-tint-violet-ink: var(--tint-violet-ink);
   --color-tint-orange: var(--tint-orange);

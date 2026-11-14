@@ -116,7 +116,7 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
                   onFocus={() => grid.setActive(cell)}
                   onToggle={() => setActive({ day, item })}
                   label={`${rowLabel(item)}, ${count(day)}: ${t(STATE_WORD[state])}`}
-                  short={compact}
+                  short={compact ? 25 : undefined}
                 />
               );
               if (active?.day !== day || active.item !== item) return box;

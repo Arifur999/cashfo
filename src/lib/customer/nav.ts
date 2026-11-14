@@ -70,6 +70,9 @@ export interface NavLeaf {
   // A group's first page that its board heads as the group itself, under
   // the section ("Habits › Daily habits", not "Daily habits › Today").
   headsGroup?: true;
+  // Its records (a month's sheet) follow the group in the breadcrumb
+  // without this page's own name: "Namaz › October 2026".
+  recordOnly?: true;
 }
 
 export interface NavItem extends NavLeaf {
@@ -309,7 +312,7 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: "namaz",
         subs: [
           { label: "Today", href: "/habit-tracker/habits", query: { category: "Namaz" }, headsGroup: true },
-          { label: "Dashboard", href: "/habit-tracker/habits/namaz" },
+          { label: "Dashboard", href: "/habit-tracker/habits/namaz", recordOnly: true },
         ],
       },
       {
@@ -319,7 +322,7 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: "ramadan",
         subs: [
           { label: "Today", href: "/habit-tracker/habits", query: { category: "Ramadan" } },
-          { label: "Dashboard", href: "/habit-tracker/habits/ramadan" },
+          { label: "Dashboard", href: "/habit-tracker/habits/ramadan", recordOnly: true },
         ],
       },
     ],

@@ -46,14 +46,14 @@ interface SheetBoxProps {
   tabIndex?: number;
   onFocus?: () => void;
   ref?: React.Ref<HTMLButtonElement>;
-  // 25px tall, as the Namaz dashboard's sheet draws it.
-  short?: boolean;
+  // Shorter than 27px: 25 (the Namaz dashboard), 24 (the Ramadan sheet).
+  short?: 24 | 25;
 }
 
 // One 27px box of a month sheet: ticked (or how a prayer was prayed),
 // missed, still open today, or not reached yet. Shared by the Namaz and
 // Ramadan sheets.
-export function SheetBox({ state, label, disabled = false, onToggle, tabIndex, onFocus, ref, short = false }: SheetBoxProps) {
+export function SheetBox({ state, label, disabled = false, onToggle, tabIndex, onFocus, ref, short }: SheetBoxProps) {
   return (
     <button
       ref={ref}
@@ -65,7 +65,7 @@ export function SheetBox({ state, label, disabled = false, onToggle, tabIndex, o
       tabIndex={tabIndex}
       onFocus={onFocus}
       onClick={onToggle}
-      className={cn("flex w-6.75 shrink-0 items-center justify-center rounded-[6px] transition-colors", short ? "h-6.25" : "h-6.75", LOOK[state], !disabled && HOVER[state], state === "locked" && "cursor-not-allowed")}
+      className={cn("flex w-6.75 shrink-0 items-center justify-center rounded-[6px] transition-colors", short === 24 ? "h-6" : short === 25 ? "h-6.25" : "h-6.75", LOOK[state], !disabled && HOVER[state], state === "locked" && "cursor-not-allowed")}
     >
       <BoxIcon state={state} />
     </button>

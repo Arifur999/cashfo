@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, ChevronLeft, ChevronRight, LayoutDashboard, Moon, MoonStar, Plus, Sunset } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, ChevronRight, LayoutDashboard, MoonStar, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
@@ -244,7 +244,7 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
   }
 
   return (
-    <PageFrame className="gap-3.5 md:pt-5">
+    <PageFrame className="gap-3.5 md:pt-5 md:pb-5.5 xl:min-h-full">
       <PageHeader
         title={t("Ramadan")}
         description={`${formatDay(today, "EEEE, d MMMM yyyy", fmt)} · ${hijriDate(today, fmt, hijriAdjust)}`}
@@ -303,14 +303,14 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
         </div>
       </section>
 
-      <div className="grid items-start gap-3.5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-3.5 xl:flex-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] xl:items-stretch">
         <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-[14px] px-5 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 flex-1 basis-80 flex-col gap-0.5">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-[17px] font-semibold text-ink">{dayTitle}</h2>
                 {dayChip && (
-                  <Chip tone="warning" size="sm" className="font-bold text-warning-ink">
+                  <Chip tone="warning" size="sm" className="font-bold text-warning">
                     {dayChip}
                   </Chip>
                 )}
@@ -332,22 +332,22 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
 
           <div className="grid grid-cols-2 gap-2.5">
             <div className="flex min-w-0 items-center gap-3 rounded-md border border-warning-line bg-warning-50 px-3.5 py-3">
-              <Moon className="size-5.5 shrink-0 text-warning max-sm:hidden" aria-hidden="true" />
+              <span className="text-[22px] leading-[normal] max-sm:hidden" aria-hidden="true">🌙</span>
               <span className="flex min-w-0 flex-col">
-                <span className="text-[12.5px] font-semibold text-warning-ink">{t("Sehri ends")}</span>
-                <span className="text-[22px] leading-tight font-bold text-ink tabular-nums">{timeLabel(clockOf(times.Fajr), t, fmt)}</span>
+                <span className="text-[12.5px] leading-[normal] font-semibold text-due-ink">{t("Sehri ends")}</span>
+                <span className="text-[22px] leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(times.Fajr), t, fmt)}</span>
               </span>
             </div>
             <div className="flex min-w-0 items-center gap-3 rounded-md border border-emerald-line bg-mint-50 px-3.5 py-3">
-              <Sunset className="size-5.5 shrink-0 text-emerald max-sm:hidden" aria-hidden="true" />
+              <span className="text-[22px] leading-[normal] max-sm:hidden" aria-hidden="true">🌅</span>
               <span className="flex min-w-0 flex-col">
-                <span className="text-[12.5px] font-semibold text-emerald">{t("Iftar")}</span>
-                <span className="text-[22px] leading-tight font-bold text-ink tabular-nums">{timeLabel(clockOf(times.Maghrib), t, fmt)}</span>
+                <span className="text-[12.5px] leading-[normal] font-semibold text-brand-ink">{t("Iftar")}</span>
+                <span className="text-[22px] leading-[normal] font-bold text-ink tabular-nums">{timeLabel(clockOf(times.Maghrib), t, fmt)}</span>
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:flex-1 xl:auto-rows-fr">
             {rows.map((item) => {
               const done = ticked(item);
               const hint = quranItem([item]) ? t("Para {count} of 30", { count: count(Math.min(30, day)) }) : item === "Tahajjud" && oddNight ? t("Odd night: seek Laylat al-Qadr") : ROW_HINT[item] ? t(ROW_HINT[item]) : null;
@@ -402,7 +402,7 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
           </Card>
 
           {!going && (
-            <Card padding="none" className="flex flex-col gap-1 rounded-[14px] px-4.5 py-3.5">
+            <Card padding="none" className="flex flex-col gap-1 rounded-[14px] px-4.5 py-3.5 xl:flex-1">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-[15px] font-semibold text-ink">{t("Get ready")}</h2>
                 {prep && <span className="text-[12.5px] font-bold text-emerald tabular-nums">{t("{done} of {total}", { done: count(prepDone), total: count(PREP_STEPS.length) })}</span>}
