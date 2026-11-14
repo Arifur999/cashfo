@@ -60,7 +60,7 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
 
   const plan = options.find((option) => option.id === planId) ?? options[0];
   const money = (amount: number | string) => formatCurrency(amount, "BDT", fmt);
-  const day = (date: Date) => formatDate(date.toISOString(), "d MMM yyyy", "", fmt);
+  const day = (date: Date) => formatDate(date.toISOString(), "d MMM yy", "", fmt);
 
   const price = Number(plan.price);
   const friendPercent = overview.referralDiscount?.percent ?? null;
