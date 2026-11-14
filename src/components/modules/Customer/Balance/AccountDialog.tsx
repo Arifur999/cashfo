@@ -253,7 +253,7 @@ export function AccountDialog({ open, onClose, businessId, editing, takenNames, 
           <AmountInput id="account-opening" size="field" value={opening} onChange={setOpening} currency={currency} describedBy="account-opening-hint" />
         </Field>
       </div>
-      <p id="account-opening-hint" aria-live="polite" className={cn("-mt-1.5 text-caption leading-[1.45]", openingChanged ? "text-warning" : "text-ink-muted")}>
+      <p id="account-opening-hint" aria-live="polite" className={cn("-mt-2 text-caption leading-[1.45]", openingChanged ? "text-warning" : "text-ink-muted")}>
         {editing
           ? openingChanged
             ? t("Opening balance {from} → {to}. The current balance moves the same way: {now} → {after}.", {
