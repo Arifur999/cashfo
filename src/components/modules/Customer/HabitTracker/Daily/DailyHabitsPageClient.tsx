@@ -323,7 +323,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
   const dayLabel = isToday ? t("Today, {date}", { date: dayText(day, fmt, "short") }) : dayText(day, fmt, "short");
 
   return (
-    <PageFrame className="gap-3.5 md:pt-7">
+    <PageFrame className="gap-3.5 md:pt-5 md:pb-5.5 xl:min-h-full">
       <PageHeader
         title={t("Daily habits")}
         description={t("Tick them off as you go. Streaks build on their own.")}
@@ -375,7 +375,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
         </div>
         <div className="grid w-full grid-cols-3 gap-2.5 sm:flex sm:w-auto">
           {chips.map((chip) => (
-            <div key={chip.label} className="flex min-w-0 flex-col gap-px rounded-[12px] border border-white/20 bg-white/12 px-3.5 py-2.25 sm:min-w-32">
+            <div key={chip.label} className="flex min-w-0 flex-col gap-px rounded-[12px] border border-white/20 bg-white/12 px-3.5 py-2.25 sm:w-[158px]">
               <span className="truncate text-caption opacity-85">{chip.label}</span>
               <span className="truncate text-[19px] font-bold tabular-nums">{chip.value}</span>
             </div>
@@ -386,7 +386,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
       {habits.length === 0 ? (
         <EmptyState icon={<Check />} tone="habits" title={t("No habit yet")} description={t("Drink water, a morning walk, ten minutes of Quran: add the small things you want to repeat.")} action={<Button onClick={() => setDrawer({ open: true, editing: null })}>{t("Add habit")}</Button>} />
       ) : (
-        <div className="grid items-start gap-3.5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid items-start gap-3.5 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-stretch">
           <section aria-labelledby="daily-habits-title" className="flex flex-col gap-3 rounded-[14px] border border-line-card bg-surface px-4 py-3.5 shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 id="daily-habits-title" className="text-[16px] font-semibold text-ink">
@@ -409,9 +409,9 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
             ) : shown.length === 0 ? (
               <p className="py-8 text-center text-body text-ink-muted">{t(tab === "todo" ? "Nothing left to do today 🎉" : "Nothing done yet. Tick a habit to start.")}</p>
             ) : (
-              <ul className="grid gap-2.5 sm:grid-cols-2">{shown.map(card)}</ul>
+              <ul className="grid content-start gap-2.5 sm:grid-cols-2 xl:flex-1">{shown.map(card)}</ul>
             )}
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 pt-1 text-[12.5px] text-ink-muted">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-[12.5px] text-ink-muted sm:flex-nowrap">
               <span>
                 {t("Tap a card to see its month. Full month report:")}{" "}
                 <Link href={`/habit-tracker/daily/report?month=${day.slice(0, 7)}`} className="font-semibold text-ink-soft underline hover:text-ink">
@@ -426,7 +426,7 @@ export function DailyHabitsPageClient({ data }: { data: DailyHabitsData }) {
             </div>
           </section>
 
-          <div className="max-xl:hidden">{panel(false)}</div>
+          <div className="flex flex-col max-xl:hidden">{panel(false)}</div>
         </div>
       )}
 

@@ -150,7 +150,7 @@ export function NotesPageClient({ notes: initialNotes, categories: initialCatego
   const pick = (next: Partial<NoteFilter>) => setFilter((current) => ({ ...current, ...next }));
 
   return (
-    <PageFrame className="gap-3.5 md:pt-7">
+    <PageFrame className="gap-3.5 md:pt-5 md:pb-5.5 xl:min-h-full">
       <PageHeader
         title={t("Notes")}
         description={t("Quick notes, ideas and thoughts. Write first, sort later.")}
@@ -209,8 +209,8 @@ export function NotesPageClient({ notes: initialNotes, categories: initialCatego
         </Button>
       </form>
 
-      <div className="grid gap-3.5 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <Card padding="sm" className="flex flex-col gap-3.5 self-start rounded-[14px] p-3 lg:sticky lg:top-4" aria-label={t("Filters")} role="group">
+      <div className="grid gap-3.5 lg:grid-cols-[220px_minmax(0,1fr)] xl:flex-1">
+        <Card padding="sm" className="flex min-w-0 flex-col gap-3.5 self-start rounded-[14px] p-3 lg:sticky lg:top-4 xl:static xl:self-stretch" aria-label={t("Filters")} role="group">
           <div className="flex gap-0.5 max-lg:overflow-x-auto lg:flex-col">
             {VIEWS.map((view) => {
               const on = filter.view === view.key && !filter.categoryId && !filter.tag;

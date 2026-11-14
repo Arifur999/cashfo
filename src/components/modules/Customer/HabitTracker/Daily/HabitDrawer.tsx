@@ -11,7 +11,8 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import WeekdayPicker from "@/components/smartly/WeekdayPicker";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { Habit, HabitFrequency } from "@/lib/customer/api";
@@ -41,7 +42,8 @@ const OFTEN: { value: HabitFrequency; title: string; sub: string }[] = [
   { value: "WEEKLY_COUNT", title: "A few times a week", sub: "Any days you like. The week starts on {day}." },
 ];
 
-// A new or edited habit in the design's drawer: its name, icon and colour,
+// A new or edited habit in the board's centred 480px popup (a sheet from the
+// bottom on a phone): its name, icon and colour,
 // how often, and whether an amount is counted each time. Archive keeps it
 // (and its history) to bring back later; Delete asks first.
 export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerProps) {
@@ -157,17 +159,18 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
   const label = (text: string) => <span className="text-body font-medium text-ink">{text}</span>;
   const chip = "h-6.5 rounded-full border px-2.5 text-caption font-semibold transition-colors pointer-coarse:h-11";
 
-  return (
-    <Sheet open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <SheetContent side={wide ? "right" : "bottom"} showCloseButton={false} className={cn("gap-0 border-0 bg-surface p-0 text-ink", wide ? "w-120 shadow-drawer data-[side=right]:sm:max-w-120" : "rounded-t-xl data-[side=bottom]:max-h-[92dvh]")}>
-        <SheetHeader className={cn("flex-row items-start justify-between gap-3 space-y-0", wide ? "border-b border-line px-6 py-4.5" : "px-4 pt-4 pb-2")}>
-          <div className="flex flex-col gap-0.5">
-            <SheetTitle className="text-h3 text-ink">{editing ? t("Edit habit") : t("New habit")}</SheetTitle>
-            <span className="text-small leading-[normal] text-ink-muted">{t("It shows up in your daily list on the days you plan.")}</span>
-          </div>
-          <CloseButton onClick={onClose} label={t("Close")} />
-        </SheetHeader>
-
+  const Title = wide ? DialogTitle : SheetTitle;
+  const Description = wide ? DialogDescription : SheetDescription;
+  const head = (
+    <div className={cn("flex shrink-0 items-start justify-between gap-3", wide ? "border-b border-line px-6 py-4.5" : "px-4 pt-4 pb-2")}>
+      <div className="flex flex-col gap-0.5">
+        <Title className="text-[18px] leading-[normal] font-semibold text-ink">{editing ? t("Edit habit") : t("New habit")}</Title>
+        <Description className="text-small leading-[normal] text-ink-muted">{t("It shows up in your daily list on the days you plan.")}</Description>
+      </div>
+      <CloseButton onClick={onClose} label={t("Close")} />
+    </div>
+  );
+  const body = (
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className={cn("flex min-h-0 flex-1 flex-col gap-4.5 overflow-y-auto", wide ? "px-6 py-5" : "px-4 py-3")}>
             <Field htmlFor="hb-name" label={label(t("Name"))}>
@@ -305,7 +308,26 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
             </Button>
           </PanelFooter>
         </form>
-      </SheetContent>
+  );
+  const onOpenChange = (next: boolean) => !next && !isPending && onClose();
+
+  return (
+    <>
+      {wide ? (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent showCloseButton={false} className="flex max-h-[calc(100dvh-48px)] w-120 max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[18px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-120">
+            {head}
+            {body}
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Sheet open={open} onOpenChange={onOpenChange}>
+          <SheetContent side="bottom" showCloseButton={false} className="gap-0 rounded-t-xl border-0 bg-surface p-0 text-ink data-[side=bottom]:max-h-[92dvh]">
+            <SheetHeader className="space-y-0 p-0">{head}</SheetHeader>
+            {body}
+          </SheetContent>
+        </Sheet>
+      )}
       {editing && (
         <ConfirmDialog
           open={deleting}
@@ -317,6 +339,6 @@ export function HabitDrawer({ open, onClose, editing, reminders }: HabitDrawerPr
           confirmLabel={t("Delete habit")}
         />
       )}
-    </Sheet>
+    </>
   );
 }

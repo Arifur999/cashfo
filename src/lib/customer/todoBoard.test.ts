@@ -117,9 +117,9 @@ describe("days", () => {
   });
 
   it("writes a week's range the short way", () => {
-    expect(rangeText("2026-11-08", "2026-11-14", t, "en")).toBe("8 to 14 Nov 2026");
-    expect(rangeText("2026-11-29", "2026-12-05", t, "en")).toBe("29 Nov to 5 Dec 2026");
-    expect(rangeText("2026-12-29", "2027-01-04", t, "en")).toBe("29 Dec 2026 to 4 Jan 2027");
+    expect(rangeText("2026-11-08", "2026-11-14", t, "en")).toBe("8 to 14 November 2026");
+    expect(rangeText("2026-11-29", "2026-12-05", t, "en")).toBe("29 November to 5 December 2026");
+    expect(rangeText("2026-12-29", "2027-01-04", t, "en")).toBe("29 December 2026 to 4 January 2027");
   });
 
   it("finds a repeat's next day", () => {

@@ -116,11 +116,11 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, logs, mon
   const Heading = inSheet ? "h3" : "h2";
 
   return (
-    <Card padding="none" elevated={!inSheet} className={cn("flex flex-col gap-4 rounded-md px-5 py-4.5", inSheet && "border-0")}>
+    <Card padding="none" elevated={!inSheet} className={cn("flex flex-col gap-3 rounded-[14px] px-4 py-3.5 xl:flex-1", inSheet && "border-0")}>
       <div className="flex items-center gap-3">
-        <span className={cn("flex size-10.5 shrink-0 items-center justify-center rounded-[11px] [&_svg]:size-5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
+        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[11px] [&_svg]:size-5", tone.bg, tone.fg)}>{createElement(budgetCategoryIcon(habit.icon), { "aria-hidden": true })}</span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Heading className="truncate text-title leading-[normal] font-semibold text-ink">{habit.name}</Heading>
+          <Heading className="truncate text-[16px] leading-[normal] font-semibold text-ink">{habit.name}</Heading>
           <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{subtitle}</span>
         </span>
         <IconAction onClick={onEdit} aria-label={t("Edit {name}", { name: habit.name })}>
@@ -128,36 +128,36 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, logs, mon
         </IconAction>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2">
         {facts.map((fact) => (
-          <div key={fact.label} className="flex min-w-0 flex-col gap-0.5 rounded-field bg-strip px-3 py-2.5">
-            <span className="text-caption leading-[normal] font-normal text-ink-muted">{fact.label}</span>
-            <span className="text-[17px] leading-[normal] font-bold text-ink tabular-nums">{fact.value}</span>
+          <div key={fact.label} className="flex min-w-0 flex-col gap-px rounded-[10px] bg-strip px-3 py-2">
+            <span className="text-[11.5px] leading-[normal] font-normal text-ink-muted">{fact.label}</span>
+            <span className="text-[16px] leading-[normal] font-bold text-ink tabular-nums">{fact.value}</span>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <button type="button" onClick={() => onMonthChange(shiftMonth(month, -1))} aria-label={monthName(shiftMonth(month, -1), fmt, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken pointer-coarse:size-11">
+          <button type="button" onClick={() => onMonthChange(shiftMonth(month, -1))} aria-label={monthName(shiftMonth(month, -1), fmt, "long", true)} className="flex size-7 items-center justify-center rounded-[7px] text-ink-soft hover:bg-surface-sunken pointer-coarse:size-11">
             <ChevronLeft className="size-4" aria-hidden="true" />
           </button>
-          <span className="text-body font-semibold text-ink">{monthName(month, fmt, "long", true)}</span>
-          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(shiftMonth(month, 1))} aria-label={monthName(shiftMonth(month, 1), fmt, "long", true)} className="flex size-7.5 items-center justify-center rounded-sm text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
+          <span className="text-[13.5px] font-semibold text-ink">{monthName(month, fmt, "long", true)}</span>
+          <button type="button" disabled={!canGoNext} onClick={() => onMonthChange(shiftMonth(month, 1))} aria-label={monthName(shiftMonth(month, 1), fmt, "long", true)} className="flex size-7 items-center justify-center rounded-[7px] text-ink-soft hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:size-11">
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
         </div>
-        <div aria-hidden="true" className="grid grid-cols-7 gap-1.25 text-center text-[11.5px] leading-[normal] font-semibold text-ink-faint">
+        <div aria-hidden="true" className="grid grid-cols-7 gap-1 text-center text-[10.5px] leading-[normal] text-ink-muted">
           {weekdayOrder(fmt).map((d) => (
-            <span key={d} className={cn(d === 5 && "text-warning")}>
+            <span key={d}>
               {t(WEEKDAY_MIN[d])}
             </span>
           ))}
         </div>
         {/* One picture with a summary; each day's state is in its title. */}
-        <div role="img" aria-label={t("{month}: {done} of {total} planned days done", { month: monthName(month, fmt, "long", true), done: count(doneThisMonth), total: count(plannedThisMonth) })} className="grid grid-cols-7 gap-1.25">
+        <div role="img" aria-label={t("{month}: {done} of {total} planned days done", { month: monthName(month, fmt, "long", true), done: count(doneThisMonth), total: count(plannedThisMonth) })} className="grid grid-cols-7 gap-1">
           {cells.map((cell, i) => {
-            if (!cell) return <span key={i} className="h-9.5" />;
+            if (!cell) return <span key={i} className="h-7.5" />;
             const mark = dayMark(habit, shownLogs, cell, today);
             const log = monthLogs.find((l) => l.date.slice(0, 10) === cell);
             // A zero is no amount: a day brought back to 0 reads as missed,
@@ -171,14 +171,14 @@ export function HabitDetailPanel({ habit, today, day, month, bestLogs, logs, mon
                 key={cell}
                 title={`${dayText(cell, fmt, "dayMonth")}: ${counted && value !== null ? amountLabel(value, habit.unit, t, fmt) : t(mark === "done" ? "done" : mark === "missed" ? "missed" : mark === "rest" ? "not planned" : mark === "open" ? "still open" : "not yet")}`}
                 className={cn(
-                  "flex h-9.5 flex-col items-center justify-center rounded-sm text-[11.5px] leading-[normal] font-semibold tabular-nums",
+                  "flex h-7.5 flex-col items-center justify-center rounded-[7px] text-[11px] leading-[1.1] font-semibold tabular-nums",
                   fill ? cn(tone.fg, fill === "full" ? "bg-current" : fill === "near" ? "bg-current/45" : tone.bg) : mark === "done" ? cn("bg-current", tone.fg) : MARK_CLASS[mark],
                   current && "ring-2 ring-emerald ring-offset-1 ring-offset-surface",
                 )}
               >
                 {/* Ink in the surface colour on a filled day: white, or the night in dark mode. */}
                 <span className={cn(strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(Number(cell.slice(8)))}</span>
-                {counted && value !== null && <span className={cn("text-[10px] leading-none font-medium opacity-85", strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(value)}</span>}
+                {counted && value !== null && <span className={cn("text-[9.5px] leading-[1.1] opacity-90", strong ? "text-surface" : fill === "near" ? "text-ink" : "")}>{count(value)}</span>}
               </span>
             );
           })}

@@ -20,6 +20,8 @@ interface PrayerSheetProps {
   // Names each row ("Fajr" → translated).
   rowLabel?: (item: string) => string;
   disabled?: boolean;
+  // The dashboard's smaller sheet: 104px names, 25px boxes.
+  compact?: boolean;
 }
 
 // The words a box reads aloud for its state.
@@ -36,7 +38,8 @@ const STICKY = "sticky left-0 z-10 shrink-0 border-r border-divider bg-surface p
 // opens the "how was it prayed?" menu. On a phone it opens scrolled to
 // today, with the prayers' names pinned on the left; the whole sheet is one
 // Tab stop, its boxes reached with the arrow keys.
-export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) => item, disabled = false }: PrayerSheetProps) {
+export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) => item, disabled = false, compact = false }: PrayerSheetProps) {
+  const head = compact ? "w-26" : "w-30";
   const { t, fmt } = useLocale();
   const [active, setActive] = useState<{ day: number; item: string } | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -70,8 +73,8 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
 
   return (
     <div ref={scroller} role="grid" aria-label={t("Prayer sheet")} onKeyDown={grid.onKeyDown} className="flex flex-col gap-0.75 overflow-x-auto pb-1">
-      <div role="row" className="mb-0.75 flex items-end gap-0.75">
-        <span className={cn(STICKY, "w-30 self-stretch")} />
+      <div role="row" className={cn("flex items-end gap-0.75", compact ? "mb-0.5" : "mb-0.75")}>
+        <span className={cn(STICKY, head, "self-stretch")} />
         {days.map((day) => {
           const weekday = weekdayOfDay(tracker, day);
           const today = tracker.todayDay === day;
@@ -82,10 +85,10 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
               ref={today ? todayHead : undefined}
               role="columnheader"
               title={`${today ? `${t("Today")}, ` : ""}${t(WEEKDAY_SHORT[weekday])} ${count(day)}${friday ? ` · ${t("Jumu'ah")}` : ""}`}
-              className={cn("flex w-6.75 shrink-0 flex-col items-center gap-px rounded-[6px] py-0.75 text-caption font-semibold tabular-nums", today ? "bg-emerald text-on-action" : friday ? "bg-warning-soft text-warning" : "text-ink-muted")}
+              className={cn("flex w-6.75 shrink-0 flex-col items-center rounded-[6px] font-semibold tabular-nums", compact ? "py-0.5 text-[11.5px]" : "gap-px py-0.75 text-caption", today ? "bg-emerald text-on-action" : friday ? "bg-warning-soft text-warning" : "text-ink-muted")}
             >
               <span>{count(day)}</span>
-              <span className="text-[9.5px] leading-none font-semibold opacity-80">{t(WEEKDAY_MIN[weekday])}</span>
+              <span className={cn("font-semibold opacity-80", compact ? "text-[9px]" : "text-[9.5px] leading-none")}>{t(WEEKDAY_MIN[weekday])}</span>
             </span>
           );
         })}
@@ -94,8 +97,8 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
         const summary = summaries.find((s) => s.item === item);
         return (
           <div key={item} role="row" className="flex items-center gap-0.75">
-            <span role="rowheader" className={cn(STICKY, "flex w-30 items-baseline justify-between")}>
-              <span className="truncate text-[13.5px] font-semibold text-ink">{rowLabel(item)}</span>
+            <span role="rowheader" className={cn(STICKY, head, "flex items-baseline justify-between")}>
+              <span className={cn("truncate font-semibold text-ink", compact ? "text-[13px]" : "text-[13.5px]")}>{rowLabel(item)}</span>
               <span className="text-caption font-normal text-ink-muted tabular-nums">
                 {count(summary?.prayed ?? 0)}/{count(summary?.due ?? 0)}
               </span>
@@ -113,6 +116,7 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
                   onFocus={() => grid.setActive(cell)}
                   onToggle={() => setActive({ day, item })}
                   label={`${rowLabel(item)}, ${count(day)}: ${t(STATE_WORD[state])}`}
+                  short={compact ? 25 : undefined}
                 />
               );
               if (active?.day !== day || active.item !== item) return box;
@@ -138,12 +142,12 @@ export function PrayerSheet({ tracker, onMark, totalsLabel, rowLabel = (item) =>
           </div>
         );
       })}
-      <div role="row" className="mt-1.25 flex items-center gap-0.75 border-t border-dashed border-line pt-2">
-        <span role="rowheader" className={cn(STICKY, "w-30 text-[12.5px] font-semibold text-ink-soft")}>
+      <div role="row" className={cn("flex items-center gap-0.75 border-t border-dashed border-line", compact ? "mt-0.75 pt-1.5" : "mt-1.25 pt-2")}>
+        <span role="rowheader" className={cn(STICKY, head, "font-semibold text-ink-soft", compact ? "text-caption" : "text-[12.5px]")}>
           {totalsLabel}
         </span>
         {totals.map((total) => (
-          <DayTotal key={total.day} count={total.state === "locked" ? null : total.prayed} label={count(total.prayed)} of={full} open={total.state === "open"} title={t(total.state === "open" ? "{done} of {total} prayed so far" : "{done} of {total} prayed", { done: count(total.prayed), total: count(full) })} />
+          <DayTotal key={total.day} short={compact} count={total.state === "locked" ? null : total.prayed} label={count(total.prayed)} of={full} open={total.state === "open"} title={t(total.state === "open" ? "{done} of {total} prayed so far" : "{done} of {total} prayed", { done: count(total.prayed), total: count(full) })} />
         ))}
       </div>
     </div>

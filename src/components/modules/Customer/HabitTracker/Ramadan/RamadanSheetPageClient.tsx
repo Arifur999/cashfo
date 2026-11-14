@@ -19,6 +19,7 @@ import { clockOf, prayerTimesFor } from "@/lib/customer/prayerTimes";
 import { deleteHabitTrackerAction, removeTrackerItemAction, setHabitTrackerCheckAction, setRamadanParasAction } from "@/lib/customer/habitsActions";
 import { ASHRAS, ashraSummary, fastsToMakeUp, isNightRow, quranItem, quranKhatam, ramadanCell, ramadanDays, ramadanSummary, ramadanWindow, type SummaryNote, summaryNote, withParas } from "@/lib/customer/ramadanDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { formatDay } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { AddRowDialog } from "../Tracker/AddRowDialog";
@@ -38,7 +39,7 @@ interface RamadanSheetPageClientProps {
 
 const SUGGESTIONS = ["Taraweeh", "Quran", "Zikr", "Sadaqah", "Tahajjud", "Dua", "Hadis"];
 // Mercy in the brand's teal, forgiveness in sky blue, safety in amber.
-const ASHRA_TONE = { 1: "bg-emerald-tint text-brand-ink", 2: "bg-info-soft text-info", 3: "bg-warning-soft text-warning-ink" } as const;
+const ASHRA_TONE = { 1: "bg-tint-teal text-tint-teal-deep", 2: "bg-sky-soft text-sky-deep", 3: "bg-warning-soft text-due-ink" } as const;
 const STATUS_CHIP = { upcoming: "neutral", going: "mint", completed: "income" } as const;
 const STATUS_LABEL = { upcoming: "Coming up", going: "Going on", completed: "Completed" } as const;
 // The row names stay put while the days scroll under them.
@@ -158,7 +159,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
   }
 
   const totals = days.map((d) => ({ day: d.day, count: d.day <= counted ? sheet.checks.filter((c) => c.day === d.day).length : null, open: d.day === window.todayDay }));
-  const dateRange = window.start && window.end ? t("{from} to {to}", { from: dayText(window.start, fmt, "dayMonth"), to: dayText(window.end, fmt, "dayMonthYear") }) : null;
+  const dateRange = window.start && window.end ? t("{from} to {to}", { from: formatDay(window.start, "d MMMM yyyy", fmt), to: formatDay(window.end, "d MMMM yyyy", fmt) }) : null;
   const sorted = [...all].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
   const yearName = (tracker: HabitMonthTracker) => t("Ramadan {year}", { year: digits(ramadanWindow(tracker, today, hijriAdjust).hijriYear ?? tracker.year) });
 
@@ -228,13 +229,13 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
   const times = prayerTimesFor(settings, window.status === "going" ? today : window.status === "upcoming" && window.start ? window.start : next.startsOn);
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3 md:pt-4.5 md:pb-5 xl:min-h-full">
       <TopbarExtras record={title} />
       <PageHeader
         title={
           <span className="flex flex-wrap items-center gap-2.5">
             {title}
-            <Chip tone={STATUS_CHIP[window.status]} className="h-6 gap-1.25 px-2.25 font-semibold tracking-normal">
+            <Chip tone={STATUS_CHIP[window.status]} className={cn("h-6 gap-1.25 px-2.25 text-[12.5px] font-semibold tracking-normal", window.status === "completed" && "bg-tint-green text-tint-green-ink")}>
               {t(STATUS_LABEL[window.status])}
             </Chip>
           </span>
@@ -298,37 +299,37 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
       />
 
       {/* The Ramadan to come (or today, during one), with its Sehri and Iftar. */}
-      <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-linear-to-br from-emerald to-forest px-5 py-3 text-white dark:text-on-action">
+      <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] bg-linear-to-br from-emerald to-forest px-4 py-2.5 text-white dark:text-on-action">
         <MoonStar className="size-4.5 shrink-0" aria-hidden="true" />
-        <span className="min-w-0 flex-1 basis-80 text-small">
+        <span className="min-w-0 flex-1 basis-80 text-[13.5px]">
           {window.status === "going" ? (
             <b className="font-semibold">{t("Day {day} of {total} · {name}", { day: count(window.todayDay ?? 1), total: count(sheet.totalDays), name: title })}</b>
           ) : (
             <>
               <b className="font-semibold">{next.daysToGo === 0 ? t("{name} is going on now.", { name: nextName }) : t(next.daysToGo === 1 ? "{name} begins around {date} · in {count} day." : "{name} begins around {date} · in {count} days.", { name: nextName, date: dayText(next.startsOn, fmt, "full"), count: count(next.daysToGo) })}</b>{" "}
-              {next.daysToGo > 0 && <span className="opacity-90">{t("The exact day depends on the moon.")}</span>}
+              {next.daysToGo > 0 && <span className="opacity-85">{t("The exact day depends on the moon.")}</span>}
             </>
           )}
         </span>
-        <span className="text-small opacity-90">{window.status === "going" ? t("{city}, today:", { city: t(settings.city) }) : t("{city}, day 1:", { city: t(settings.city) })}</span>
-        <span className="rounded-full bg-white/18 px-3 py-1 text-small font-semibold tabular-nums">{t("Sehri ends {time}", { time: timeLabel(clockOf(times.Fajr), t, fmt) })}</span>
-        <span className="rounded-full bg-white/18 px-3 py-1 text-small font-semibold tabular-nums">{t("Iftar {time}", { time: timeLabel(clockOf(times.Maghrib), t, fmt) })}</span>
+        <span className="text-[13px] opacity-90">{window.status === "going" ? t("{city}, today:", { city: t(settings.city) }) : t("{city}, day 1:", { city: t(settings.city) })}</span>
+        <span className="inline-flex h-7 items-center rounded-full bg-white/16 px-2.5 text-[13px] font-semibold tabular-nums">{t("Sehri ends {time}", { time: timeLabel(clockOf(times.Fajr), t, fmt) })}</span>
+        <span className="inline-flex h-7 items-center rounded-full bg-white/16 px-2.5 text-[13px] font-semibold tabular-nums">{t("Iftar {time}", { time: timeLabel(clockOf(times.Maghrib), t, fmt) })}</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label} padding="none" className="flex min-w-0 flex-col gap-0.5 rounded-md px-4 py-2.75">
-            <span className="text-[12.5px] font-medium text-ink-muted">{stat.label}</span>
-            <span className={cn("text-[22px] font-bold tracking-[-0.02em] tabular-nums", stat.tone)}>{stat.value}</span>
-            <span className="text-caption text-ink-muted">{stat.sub}</span>
+          <Card key={stat.label} padding="none" className="flex min-w-0 flex-col gap-0.5 rounded-[12px] px-4 py-2.5">
+            <span className="text-[12.5px] leading-[normal] font-medium text-ink-muted">{stat.label}</span>
+            <span className={cn("text-[22px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums", stat.tone)}>{stat.value}</span>
+            <span className="text-caption leading-[normal] text-ink-muted">{stat.sub}</span>
           </Card>
         ))}
       </div>
 
-      <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-4.5 pt-3 pb-3.5">
+      <Card padding="none" className="flex min-w-0 flex-col gap-2 rounded-[12px] px-4.5 py-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-[15px] font-semibold text-ink">{t("Ramadan sheet")}</h2>
-          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-caption text-ink-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-caption leading-[normal] text-ink-soft">
             {LEGEND.filter((entry) => !entry.going || window.status === "going").map((entry) => (
               <span key={entry.state} className="flex items-center gap-1.5">
                 <BoxSwatch state={entry.state} />
@@ -339,17 +340,17 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
               <Star className="size-3.5 fill-warning-fill text-warning-fill" strokeWidth={1.5} aria-hidden="true" />
               {t("Odd night of the last ten")}
             </span>
-            {counted > 0 && <span className="border-l border-line pl-3.5 text-ink-muted">{t("Tap a day number to tick the whole day")}</span>}
+            {counted > 0 && <span className="border-l border-line pl-3 text-ink-muted">{t("Tap a day number to tick the whole day")}</span>}
           </div>
         </div>
         <div ref={scroller} role="grid" aria-label={t("{name} sheet", { name: title })} onKeyDown={grid.onKeyDown} className="flex flex-col gap-0.75 overflow-x-auto pb-1">
           <div className="flex gap-0.75">
-            <span className={cn(STICKY, "w-30 self-stretch")} />
+            <span className={cn(STICKY, "w-28.5 self-stretch")} />
             {ASHRAS.map((a) => {
               const span = days.filter((d) => d.ashra === a.n).length;
               const pct = ashras.find((x) => x.n === a.n)?.pct ?? 0;
               return (
-                <span key={a.n} className={cn("flex h-7.5 shrink-0 items-center justify-between gap-2 rounded-[7px] px-2.5 text-caption", ASHRA_TONE[a.n])} style={{ width: `${span * 27 + (span - 1) * 3}px` }}>
+                <span key={a.n} className={cn("flex h-6 shrink-0 items-center justify-between gap-2 rounded-[6px] px-2 text-[11.5px]", ASHRA_TONE[a.n])} style={{ width: `${span * 27 + (span - 1) * 3}px` }}>
                   <span className="truncate">
                     <b className="font-bold">{t(a.name)}</b> · {t(a.meaning)}
                   </span>
@@ -358,19 +359,19 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
               );
             })}
           </div>
-          <div role="row" className="my-0.75 flex items-end gap-0.75">
-            <span className={cn(STICKY, "w-30 self-stretch")} />
+          <div role="row" className="flex items-end gap-0.75">
+            <span className={cn(STICKY, "w-28.5 self-stretch")} />
             {days.map((d) => {
               const isToday = d.day === window.todayDay;
               const label = [t("{day} Ramadan", { day: count(d.day) }), d.date ? dayText(d.date, fmt, "dayMonth") : null, d.oddNight ? t("odd night") : null].filter(Boolean).join(" · ");
               const head = (
                 <>
-                  <Star className={cn("size-2.75", d.oddNight ? "fill-warning-fill text-warning-fill" : "invisible")} strokeWidth={1.5} aria-hidden="true" />
+                  <Star className={cn("size-2.5 shrink-0", d.oddNight ? "fill-warning-fill text-warning-fill" : "invisible")} strokeWidth={1.5} aria-hidden="true" />
                   <span>{count(d.day)}</span>
-                  <span className={cn("text-[9.5px] leading-none", isToday ? "opacity-80" : "text-ink-faint")}>{d.weekday !== null ? t(WEEKDAY_MIN[d.weekday]) : ""}</span>
+                  <span className="text-[9px] opacity-80">{d.weekday !== null ? t(WEEKDAY_MIN[d.weekday]) : ""}</span>
                 </>
               );
-              const headClass = cn("flex w-full flex-col items-center gap-px rounded-[6px] text-caption font-semibold tabular-nums", isToday ? "bg-emerald text-on-action" : d.oddNight ? "text-warning" : "text-ink-muted");
+              const headClass = cn("flex w-full flex-col items-center rounded-[6px] py-px text-[11.5px] leading-[normal] font-semibold tabular-nums", isToday ? "bg-emerald text-on-action" : d.oddNight ? "text-warning" : "text-ink-soft");
               return (
                 <span key={d.day} role="columnheader" data-today={isToday || undefined} className="flex w-6.75 shrink-0">
                   {d.day <= counted ? (
@@ -390,8 +391,8 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
             const line = summary.items.find((i) => i.item === item);
             return (
               <div key={item} role="row" className="flex items-center gap-0.75">
-                <span role="rowheader" className={cn(STICKY, "flex w-30 items-baseline justify-between gap-1")}>
-                  <span className="truncate text-[13.5px] font-semibold text-ink">{t(item)}</span>
+                <span role="rowheader" className={cn(STICKY, "flex w-28.5 items-baseline justify-between gap-1")}>
+                  <span className="truncate text-[13px] font-semibold text-ink">{t(item)}</span>
                   <span className="text-caption font-normal text-ink-muted tabular-nums">
                     {count(line?.done ?? 0)}/{count(line?.of ?? 0)}
                   </span>
@@ -408,6 +409,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
                       tabIndex={grid.tabIndex(cell)}
                       onFocus={() => grid.setActive(cell)}
                       onToggle={() => toggle(d.day, item, state !== "done")}
+                      short={24}
                       label={`${t(item)}, ${t("{day} Ramadan", { day: count(d.day) })}: ${t(state === "done" ? "done" : state === "missed" ? "not done" : state === "open" ? "not marked yet" : "not yet")}`}
                     />
                   );
@@ -415,30 +417,30 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
               </div>
             );
           })}
-          <div role="row" className="mt-1.25 flex items-center gap-0.75 border-t border-dashed border-line pt-2">
-            <span role="rowheader" className={cn(STICKY, "w-30 text-[12.5px] font-semibold text-ink-soft")}>
+          <div role="row" className="mt-0.75 flex items-center gap-0.75 border-t border-dashed border-line pt-1.25">
+            <span role="rowheader" className={cn(STICKY, "w-28.5 text-caption font-semibold text-ink-soft")}>
               {t("Done that day")}
             </span>
             {totals.map((total) => (
-              <DayTotal key={total.day} count={total.count} label={total.count === null ? undefined : count(total.count)} of={sheet.items.length} open={total.open} title={t("{done} of {total} done", { done: count(total.count ?? 0), total: count(sheet.items.length) })} />
+              <DayTotal key={total.day} short count={total.count} label={total.count === null ? undefined : count(total.count)} of={sheet.items.length} open={total.open} title={t("{done} of {total} done", { done: count(total.count ?? 0), total: count(sheet.items.length) })} />
             ))}
           </div>
         </div>
       </Card>
 
-      <div className="grid items-stretch gap-3.5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-4.5 py-3.5">
+      <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] xl:flex-1">
+        <Card padding="none" className="flex min-w-0 flex-col gap-1.75 rounded-[12px] px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-[15px] font-semibold text-ink">{t("Each row")}</h2>
-            <span className="text-small font-bold text-emerald">{t("{pct}% of everything", { pct: count(summary.pct) })}</span>
+            <span className="text-[12.5px] font-bold text-brand-ink">{t("{pct}% of everything", { pct: count(summary.pct) })}</span>
           </div>
           {summary.items.map((row) => (
-            <div key={row.item} className="grid grid-cols-[92px_minmax(0,1fr)_minmax(46px,auto)] items-center gap-2.5 text-small">
-              <span className="truncate font-medium text-ink">{t(row.item)}</span>
+            <div key={row.item} className="grid grid-cols-[84px_minmax(0,1fr)_minmax(46px,auto)] items-center gap-2.5">
+              <span className="truncate text-[13px] leading-[normal] font-semibold text-ink">{t(row.item)}</span>
               <span className="block h-2 overflow-hidden rounded-full bg-surface-sunken" title={noteText(summaryNote(sheet, window, row), t, count) || undefined}>
                 <span className={cn("block h-full rounded-full", row.pct === 100 ? "bg-income" : "bg-emerald")} style={{ width: `${row.pct}%` }} />
               </span>
-              <span className="text-right font-bold text-ink tabular-nums">
+              <span className="text-right text-[12.5px] leading-[normal] font-bold text-ink tabular-nums">
                 {count(row.done)}/{count(row.of)}
               </span>
             </div>
@@ -448,15 +450,15 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
 
         <QuranKhatamCard sheet={sheet} window={window} days={days} onParas={logParas} saving={savingParas} />
 
-        <Card padding="none" className="flex min-w-0 flex-col gap-2.5 rounded-md px-4.5 py-3.5">
+        <Card padding="none" className="flex min-w-0 flex-col gap-2 rounded-[12px] px-4 py-3">
           <h2 className="text-[15px] font-semibold text-ink">{t("What stands out")}</h2>
           {standsOut.length === 0 ? (
             <p className="text-small text-ink-muted">{t("Tick a few days and the sheet starts to speak.")}</p>
           ) : (
-            <ul className="flex flex-col gap-2.5">
+            <ul className="flex flex-col gap-2">
               {standsOut.map((item) => (
-                <li key={item.key} className="flex items-start gap-2.5 text-small leading-[1.45] text-ink-2">
-                  <span aria-hidden="true" className={cn("mt-1.5 size-2 shrink-0 rounded-full", item.tone)} />
+                <li key={item.key} className="flex items-start gap-2.25 text-[12.5px] leading-[1.4] text-ink-2">
+                  <span aria-hidden="true" className={cn("mt-1.25 size-2 shrink-0 rounded-full", item.tone)} />
                   {item.text}
                 </li>
               ))}

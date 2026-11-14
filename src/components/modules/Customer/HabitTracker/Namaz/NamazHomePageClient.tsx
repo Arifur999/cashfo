@@ -96,13 +96,13 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
   const bestPastId = [...past].filter((tracker) => monthSummary(tracker).due > 0).sort((a, b) => monthSummary(b).pct - monthSummary(a).pct)[0]?.id;
   const monthDays = current?.totalDays ?? new Date(Date.UTC(year, month, 0)).getUTCDate();
   const chips = [
-    { label: t("Today"), value: t("{done} of {total} so far", { done: count(prayedToday), total: count(startedToday) }) },
+    { label: t("Today"), value: t("{done} of {total} so far", { done: count(prayedToday), total: count(Math.max(startedToday, prayedToday)) }) },
     { label: t("All-five streak"), value: streak > 0 ? t(streak === 1 ? "{count} day" : "{count} days", { count: count(streak) }) : "—" },
     { label: t("This month"), value: `${count(soFarPct)}%` },
   ];
 
   return (
-    <PageFrame className="gap-4 md:pt-7">
+    <PageFrame className="gap-4 md:pt-5.5">
       <PageHeader
         title={t("Namaz")}
         description={`${formatDay(today, "EEEE, d MMMM yyyy", fmt)} · ${hijriDate(today, fmt, settings.hijriAdjust)}`}

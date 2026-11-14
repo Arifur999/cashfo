@@ -103,8 +103,8 @@ export function TodayPrayersCard({ current, today, onMark, reminders }: TodayPra
             >
               <div className="flex items-start justify-between gap-1.5">
                 <span className="flex min-w-0 flex-col gap-px">
-                  <span className="text-[15px] font-bold text-ink">{t(prayer)}</span>
-                  <span className="text-[11.5px] whitespace-nowrap text-ink-muted tabular-nums">
+                  <span className="text-[15px] leading-[normal] font-bold text-ink">{t(prayer)}</span>
+                  <span className="text-[11.5px] leading-[normal] whitespace-nowrap text-ink-muted tabular-nums">
                     {clock(start)} – {clock(end)}
                   </span>
                 </span>

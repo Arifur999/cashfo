@@ -2,8 +2,10 @@ import { BUDGET_TONE_BAR, budgetTone } from "@/lib/budgetTone";
 import {
   Activity,
   Anchor,
+  Apple,
   Award,
   Baby,
+  Ban,
   Backpack,
   Bandage,
   Banknote,
@@ -46,6 +48,7 @@ import {
   Flag,
   Flame,
   Flower,
+  Footprints,
   Flower2,
   Fuel,
   Gamepad2,
@@ -76,6 +79,7 @@ import {
   Medal,
   MessageCircle,
   Monitor,
+  Moon,
   Mountain,
   Music,
   Package,
@@ -308,7 +312,16 @@ export const BUDGET_CATEGORY_ICONS = [
   "business-income",
   "freelancing",
   "other-income",
+  // The Habit Tracker's own picks (DailyHabitDrawer board), kept out of the
+  // expense picker (HABIT_ONLY_ICONS).
+  "footprints",
+  "moon",
+  "apple",
+  "ban",
 ] as const;
+
+// Icons only a habit offers.
+const HABIT_ONLY_ICONS: readonly string[] = ["footprints", "moon", "apple", "ban"];
 
 // The Add/Edit Income Category picker shows ONLY this curated 10-icon set
 // (not the full BUDGET_CATEGORY_ICONS grid above, which stays the shared
@@ -334,7 +347,7 @@ export const INCOME_CATEGORY_ICONS = [
 // fuel. Every other icon follows in BUDGET_CATEGORY_ICONS's order.
 const PICKER_FIRST = ["shopping-cart", "utensils", "house", "car", "zap", "heart", "smartphone", "wifi", "shopping-bag", "graduation-cap", "plane", "shirt", "coffee", "gift", "film", "fuel"] as const satisfies readonly (typeof BUDGET_CATEGORY_ICONS)[number][];
 
-export const EXPENSE_PICKER_ICONS: readonly (typeof BUDGET_CATEGORY_ICONS)[number][] = [...PICKER_FIRST, ...BUDGET_CATEGORY_ICONS.filter((key) => !(PICKER_FIRST as readonly string[]).includes(key))];
+export const EXPENSE_PICKER_ICONS: readonly (typeof BUDGET_CATEGORY_ICONS)[number][] = [...PICKER_FIRST, ...BUDGET_CATEGORY_ICONS.filter((key) => !(PICKER_FIRST as readonly string[]).includes(key) && !HABIT_ONLY_ICONS.includes(key))];
 
 // Original 8 plus a few more distinct Tailwind hues.
 export const BUDGET_CATEGORY_COLORS = [
@@ -510,6 +523,10 @@ const ICON_COMPONENTS: Record<(typeof BUDGET_CATEGORY_ICONS)[number], LucideIcon
   "business-income": Briefcase,
   freelancing: Laptop,
   "other-income": Coins,
+  footprints: Footprints,
+  moon: Moon,
+  apple: Apple,
+  ban: Ban,
 };
 
 // Friendly label per icon key, for a hover tooltip AND (now that the picker
@@ -674,6 +691,10 @@ const ICON_LABELS: Record<(typeof BUDGET_CATEGORY_ICONS)[number], string> = {
   "business-income": "Business Income",
   freelancing: "Freelancing",
   "other-income": "Other Income",
+  footprints: "Footprints",
+  moon: "Moon",
+  apple: "Apple",
+  ban: "Ban",
 };
 
 export function budgetCategoryIcon(icon: string): LucideIcon {

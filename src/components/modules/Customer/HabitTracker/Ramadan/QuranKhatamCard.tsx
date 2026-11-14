@@ -7,7 +7,7 @@ import Chip from "@/components/smartly/Chip";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import type { HabitMonthTracker } from "@/lib/customer/api";
 import { dayText } from "@/lib/customer/habitDisplay";
-import { parasOn, QURAN_PARAS, quranItem, quranKhatam, type RamadanDay, type RamadanWindow } from "@/lib/customer/ramadanDisplay";
+import { parasOn, QURAN_PARAS, quranKhatam, type RamadanDay, type RamadanWindow } from "@/lib/customer/ramadanDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { redigit } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -37,22 +37,22 @@ export function QuranKhatamCard({ sheet, window, days, onParas, saving }: QuranK
   const step = "flex h-full w-8.5 items-center justify-center text-ink-2 hover:bg-surface-sunken disabled:opacity-40 pointer-coarse:w-11";
 
   return (
-    <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-md px-5 py-4">
+    <Card padding="none" className="flex min-w-0 flex-col gap-2 rounded-[12px] px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-title font-semibold text-ink">{t("Quran khatam")}</h2>
+        <h2 className="text-[15px] leading-[normal] font-semibold text-ink">{t("Quran khatam")}</h2>
         {finishedOn ? (
-          <Chip tone="income" size="sm" className="px-2 text-[11.5px]">
+          <Chip tone="income" size="sm" className="h-5.5 px-2 text-[11.5px] font-bold">
             {t("Finished")}
           </Chip>
         ) : (
-          <Chip tone="neutral" size="sm" className="px-2 text-[11.5px] text-ink-soft">
+          <Chip tone="neutral" size="sm" className="h-5.5 px-2 text-[11.5px] font-bold text-ink-soft">
             {t("{count} paras to go", { count: count(QURAN_PARAS - shown) })}
           </Chip>
         )}
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-[30px] leading-[normal] font-bold tracking-[-0.02em] text-ink tabular-nums">{count(shown)}</span>
-        <span className="text-body text-ink-soft">{redigit(t("of 30 paras"), fmt)}</span>
+      <div className="flex items-baseline gap-1">
+        <span className="text-[20px] leading-[normal] font-bold text-ink tabular-nums">{count(shown)}</span>
+        <span className="text-[13px] text-ink-soft">{redigit(t("of 30 paras"), fmt)}</span>
       </div>
       <div role="img" aria-label={shown === QURAN_PARAS ? t("All 30 paras read") : t("{count} of 30 paras read", { count: count(shown) })} className="grid grid-cols-10 gap-1">
         {Array.from({ length: QURAN_PARAS }, (_, i) => i + 1).map((para) => (
@@ -91,10 +91,7 @@ export function QuranKhatamCard({ sheet, window, days, onParas, saving }: QuranK
         </div>
       )}
 
-      <span className="mt-auto text-[12.5px] leading-normal text-ink-soft">
-        {finishedLine && `${finishedLine} `}
-        {quranItem(sheet.items) ? t("Log paras each day and the sheet ticks the Quran row for you.") : t("Log paras each day to count them towards a khatam.")}
-      </span>
+      {finishedLine && <span className="mt-auto text-[12.5px] leading-normal text-ink-soft">{finishedLine}</span>}
     </Card>
   );
 }
