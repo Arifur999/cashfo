@@ -293,7 +293,7 @@ export function ReportsBoard({ data }: { data: ReportsData }) {
 
       {report && <PeriodParts report={report} label={data.label} money={money} signed={signed} count={count} />}
 
-      <p className="text-center text-caption text-ink-faint">{t("Numbers come from Balance, Income & Expense, Savings Goals, Loans, Assets and Calendar & Events. Group Expense is not counted here.")}</p>
+      <p className="text-center text-caption text-ink-faint">{t("Numbers come from Balance, Income & Expense, Savings, Loans, Assets and Calendar & Events. Group Expense is not counted here.")}</p>
     </PageFrame>
   );
 }
@@ -337,6 +337,7 @@ const WORTH_ROWS: { key: WorthKey; label: string; dot: string }[] = [
   { key: "cash", label: "Money in your accounts", dot: "bg-emerald" },
   { key: "savings", label: "Savings goals", dot: "bg-cat-11" },
   { key: "assets", label: "Assets", dot: "bg-info" },
+  { key: "investments", label: "Investments", dot: "bg-cat-9" },
   { key: "pawna", label: "Money people owe you (pawna)", dot: "bg-cat-3" },
 ];
 
@@ -352,6 +353,7 @@ function WorthStatement({ report, label, money, signed }: { report: PeriodReport
     cash: t("{count} accounts: bank, mobile wallet and cash", { count: formatCount(end.counts.accounts, fmt) }),
     savings: t("{count} goals in savings accounts", { count: formatCount(end.counts.goals, fmt) }),
     assets: t("{count} assets at today's value", { count: formatCount(end.counts.assets, fmt) }),
+    investments: t("{count} investments, capital still in", { count: formatCount(end.counts.investments, fmt) }),
     pawna: t("From {count} people", { count: formatCount(end.counts.pawna, fmt) }),
     dena: t("To {count} lenders", { count: formatCount(end.counts.dena, fmt) }),
   };
@@ -418,6 +420,7 @@ const FLOW_LABEL: Record<FlowKey, string> = {
   savings: "Put into savings goals",
   loans: "Loans (taken, given, paid back)",
   assets: "Assets bought and sold",
+  investments: "Investments (put in, profit, back)",
   gifts: "Gifts at events",
 };
 
@@ -433,6 +436,7 @@ function CashFlow({ report, money, signed }: { report: PeriodReport; money: (v: 
     loans: t("Took {took} · gave {gave} · got back {back} · repaid {paid}", { took: money(flow.loans.took), gave: money(flow.loans.gave), back: money(flow.loans.gotBack), paid: money(flow.loans.paidBack) }),
     assets: t("Bought {bought} · sold {sold}", { bought: money(flow.assets.bought), sold: money(flow.assets.sold) }),
     gifts: t("Gave {gave} · received {got}", { gave: money(flow.gifts.gave), got: money(flow.gifts.got) }),
+    investments: t("Put in {put} · profit {profit} · back {back}", { put: money(flow.investments?.put ?? 0), profit: money(flow.investments?.profit ?? 0), back: money(flow.investments?.back ?? 0) }),
   };
   return (
     <section id="flow" aria-labelledby="flow-title" className={cn(BOARD_CARD, "flex scroll-mt-4 flex-col gap-2.5 px-5.5 py-5")}>

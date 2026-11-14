@@ -253,4 +253,6 @@ export const investmentsDictionary: Record<string, string> = {
   "{count} investments, capital still in": "{count}টি বিনিয়োগ, এখনো যে মূলধন আছে",
   "After savings, loans and investments": "সঞ্চয়, ঋণ আর বিনিয়োগের পরে",
   "Put in {put} · profit {profit} · back {back}": "দেওয়া {put} · লাভ {profit} · ফেরত {back}",
+  "Investments (put in, profit, back)": "বিনিয়োগ (দেওয়া, লাভ, ফেরত)",
+  "Numbers come from Balance, Income & Expense, Savings, Loans, Assets and Calendar & Events. Group Expense is not counted here.": "সংখ্যাগুলো এসেছে ব্যালেন্স, আয় ও খরচ, সঞ্চয়, ঋণ, সম্পদ আর ক্যালেন্ডার থেকে। গ্রুপ এক্সপেন্স এখানে ধরা হয়নি।",
 };
