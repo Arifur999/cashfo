@@ -70,7 +70,7 @@ export function WithdrawSubmitted({ request, left, pending, pendingNextAt, incom
           <span aria-hidden="true" className="flex size-15 items-center justify-center rounded-full bg-mint-50 text-emerald">
             <Check className="size-7.5" strokeWidth={2.5} />
           </span>
-          <h1 id="ws-title" className="text-[22px] leading-normal font-semibold text-ink">
+          <h1 id="ws-title" className="text-[22px] leading-[normal] font-semibold text-ink">
             {t("Withdrawal requested")}
           </h1>
           <p className="text-[15px] leading-[1.55] text-ink-soft">
@@ -96,11 +96,11 @@ export function WithdrawSubmitted({ request, left, pending, pendingNextAt, incom
                 {index < steps.length - 1 && <span aria-hidden="true" className={cn("min-h-6.5 w-0.5 flex-1", step.done ? "bg-emerald-tint" : "bg-line")} />}
               </span>
               <span className="flex flex-col gap-0.5 pb-4.5">
-                <span className={cn("text-[15px] leading-normal font-semibold", step.done ? "text-ink" : "text-ink-soft")}>
+                <span className={cn("text-[15px] leading-[normal] font-semibold", step.done ? "text-ink" : "text-ink-soft")}>
                   {step.title}
                   <span className="sr-only">{step.done ? `, ${t("done")}` : `, ${t("next")}`}</span>
                 </span>
-                <span className="text-[13px] leading-normal text-ink-muted">{step.body}</span>
+                <span className="text-[13px] leading-[normal] text-ink-muted">{step.body}</span>
               </span>
             </li>
           ))}
@@ -118,7 +118,7 @@ export function WithdrawSubmitted({ request, left, pending, pendingNextAt, incom
             </div>
           )}
           {incomeWallet && (
-            <div className="flex gap-2 border-t border-line pt-2.5 text-[13px] leading-normal text-ink-soft">
+            <div className="flex gap-2 border-t border-line pt-2.5 text-[13px] leading-[normal] text-ink-soft">
               <Check className="mt-0.5 size-3.5 shrink-0 text-emerald" strokeWidth={2.5} aria-hidden="true" />
               <span>{t("When it's paid, {amount} is added as Referral income to your {wallet} wallet.", { amount: money(request.amount), wallet: incomeWallet })}</span>
             </div>

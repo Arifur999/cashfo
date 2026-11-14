@@ -255,7 +255,7 @@ export const NAV_SECTIONS: NavSection[] = [
         match: ["/referrals"],
         // Referral program v9: six pages, the withdraw form under Withdrawals.
         subs: [
-          { label: "Dashboard", heading: "Referral dashboard", href: "/referrals" },
+          { label: "Dashboard", heading: "Referral Program", href: "/referrals" },
           { label: "Referred users", heading: "People you brought", href: "/referrals/users" },
           { label: "Earnings", href: "/referrals/earnings" },
           { label: "Withdrawals", href: "/referrals/withdrawals", match: ["/referrals/withdraw"] },

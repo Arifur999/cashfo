@@ -17,7 +17,7 @@ export function CommissionStatusCell({ line, today, align = "start", className }
   return (
     <span className={cn("flex min-w-0 flex-col gap-0.5", align === "end" && "items-end text-right", className)}>
       <StatusChip tone={look.tone}>{t(look.label)}</StatusChip>
-      <span className="truncate text-caption leading-normal text-ink-muted">{t(note.note, { date: note.day ? friendDay(note.day, today, fmt) : "", request: note.request ?? "" })}</span>
+      <span className="truncate text-caption leading-[normal] text-ink-muted">{t(note.note, { date: note.day ? friendDay(note.day, today, fmt) : "", request: note.request ?? "" })}</span>
     </span>
   );
 }

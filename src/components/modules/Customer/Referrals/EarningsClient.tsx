@@ -98,8 +98,8 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
   const dayLabel = (at: string) => formatDate(at, at.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy", "", fmt);
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Earnings")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Earnings")} />
       <PageHeader
         title={t("Earnings")}
         description={t("Every payment your friends made and your {pct} from it.", { pct })}
@@ -137,11 +137,11 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
                     on ? "border-emerald ring-1 ring-emerald" : "border-line-card hover:border-line-strong",
                   )}
                 >
-                  <span className="flex items-center gap-1.5 text-[12.5px] leading-normal text-ink-muted">
+                  <span className="flex items-center gap-1.5 text-[12.5px] leading-[normal] text-ink-muted">
                     <span aria-hidden="true" className={cn("size-2 rounded-full", CARD_DOT[key])} />
                     {t(COMMISSION_STATUS[key].label)}
                   </span>
-                  <span className="text-[20px] leading-normal font-bold text-ink tabular-nums">{money(total.amount)}</span>
+                  <span className="text-[20px] leading-[normal] font-bold text-ink tabular-nums">{money(total.amount)}</span>
                   <span className="text-caption text-ink-muted">{t(CARD_NOTE[key], { days: formatCount(program?.holdDays ?? 7, fmt) })}</span>
                 </button>
               );
@@ -169,7 +169,7 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
             footer={
               list.meta.total > 0 && (
                 <ListFooter className="gap-3">
-                  <div className="flex items-center justify-between gap-3 text-[13.5px] leading-normal tabular-nums">
+                  <div className="flex items-center justify-between gap-3 text-[13.5px] leading-[normal] tabular-nums">
                     <span className="text-ink-2">{t(list.meta.total === 1 ? "{count} payment shown" : "{count} payments shown", { count: formatCount(list.meta.total, fmt) })}</span>
                     <b className="font-bold text-ink">{t("Your share {amount}", { amount: money(shareShown) })}</b>
                   </div>

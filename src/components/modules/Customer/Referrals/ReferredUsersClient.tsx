@@ -76,8 +76,8 @@ export function ReferredUsersClient({ list, tab, search, currency, today, canRem
   const waitingLine = notPayingLine(waiting.map((row) => row.name));
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("People you brought")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Referred users")} />
       <PageHeader title={t("People you brought")} description={t("Everyone who signed up with your links, what they pay, and what you earn from each one.")} hideDescriptionOnPhone className="max-md:[&_h1]:sr-only" />
       {!list ? (
         <ErrorState title={t("Couldn't load the people you brought.")} onRetry={() => router.refresh()} />

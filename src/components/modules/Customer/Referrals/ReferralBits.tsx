@@ -33,7 +33,7 @@ interface StatusChipProps {
 export function StatusChip({ tone, children, dot = true, size = "sm", className }: StatusChipProps) {
   const look = CHIP[tone];
   return (
-    <span className={cn("inline-flex w-fit items-center gap-1.25 rounded-full font-semibold whitespace-nowrap", size === "md" ? "px-2.25 py-0.5 text-caption" : "px-2 py-0.5 text-[11.5px] leading-normal", look.chip, className)}>
+    <span className={cn("inline-flex w-fit items-center gap-1.25 rounded-full font-semibold whitespace-nowrap", size === "md" ? "px-2.25 py-0.5 text-caption" : "px-2 py-0.5 text-[11.5px] leading-[normal]", look.chip, className)}>
       {dot && <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", look.dot)} />}
       {children}
     </span>

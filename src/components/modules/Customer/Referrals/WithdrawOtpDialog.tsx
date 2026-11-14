@@ -163,7 +163,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
           <span aria-hidden="true" className="flex size-13 items-center justify-center rounded-full bg-emerald-soft text-emerald">
             <ShieldCheck className="size-6" strokeWidth={2} />
           </span>
-          <AlertDialogTitle className="text-[20px] leading-normal font-semibold text-ink">{t("Confirm it's you")}</AlertDialogTitle>
+          <AlertDialogTitle className="text-[20px] leading-[normal] font-semibold text-ink">{t("Confirm it's you")}</AlertDialogTitle>
           <AlertDialogDescription className="text-body leading-[1.55] text-ink-soft">
             {fillNodes(channel === "SMS" ? t("We sent a 6-digit code by SMS to {email}. Enter it to send {amount} to {destination}.") : t("We sent a 6-digit code by email to {email}. Enter it to send {amount} to {destination}."), {
               email: <b className="font-semibold break-words text-ink">{sentTo}</b>,
@@ -242,7 +242,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
               </span>
             </div>
 
-            <div className="flex items-start gap-2 rounded-[14px] bg-strip px-3 py-2.5 text-[12.5px] leading-normal text-ink-soft">
+            <div className="flex items-start gap-2 rounded-[14px] bg-strip px-3 py-2.5 text-[12.5px] leading-[normal] text-ink-soft">
               <Lock className="mt-0.5 size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
               <span>{t("Never share this code. Smartly staff will never ask you for it.")}</span>
             </div>

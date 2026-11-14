@@ -60,8 +60,8 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
 
   if (!links || !code) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
-        <TopbarExtras title={t("Invite links")} />
+      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+        <TopbarExtras heading={t("Invite links")} />
         <ErrorState title={t("Couldn't load your invite links.")} onRetry={() => router.refresh()} />
       </PageFrame>
     );
@@ -94,8 +94,8 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
   ];
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Invite links")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Invite links")} />
       <PageHeader
         title={t("Invite links")}
         description={t("One link for each place you share, so you can see what works.")}
@@ -111,8 +111,8 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
       <div className="grid gap-2.5 sm:grid-cols-3 md:gap-3.5">
         {stats.map((stat) => (
           <Card key={stat.label} padding="none" className="flex flex-col gap-1 px-4.5 py-3.5">
-            <span className="text-[12.5px] leading-normal text-ink-muted">{stat.label}</span>
-            <span className="truncate text-[22px] leading-normal font-bold text-ink tabular-nums">{stat.value}</span>
+            <span className="text-[12.5px] leading-[normal] text-ink-muted">{stat.label}</span>
+            <span className="truncate text-[22px] leading-[normal] font-bold text-ink tabular-nums">{stat.value}</span>
             <span className="text-caption text-ink-muted">{stat.sub}</span>
           </Card>
         ))}

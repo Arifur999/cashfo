@@ -98,6 +98,9 @@ export interface ReferralProgramInfo {
   // What paying friends' renewals in the next 30 days should earn.
   expectedNext30Days: string;
   expectedRenewals: number;
+  // What renewals due next calendar month should earn; an older API leaves
+  // it out.
+  expectedNextMonth?: { month: string; amount: string; renewals: number };
   firstEarnedAt: string | null;
   // planName: the plan they are on now; payments: how many of theirs earned
   // a share (an older API leaves both out).

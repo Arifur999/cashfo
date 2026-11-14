@@ -142,8 +142,8 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
     : [];
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Withdrawals")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Withdrawals")} />
       <PageHeader
         title={t("Withdrawals")}
         description={t("Your requests, the payments each one covers, and where the money went.")}
@@ -156,7 +156,7 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
           </Link>
         }
       />
-      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-[18px] xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card padding="none" className="overflow-clip" role="region" aria-labelledby="wh-title">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-4 py-3.5 md:px-5">
             <h2 id="wh-title" className="flex-1 text-title text-ink">
@@ -179,7 +179,7 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
             <EmptyState bordered={false} icon={<ArrowDownToLine />} title={t("No withdrawals yet")} description={t("When you withdraw, each request shows here with what happened to it.")} />
           ) : (
             <div role="table" aria-label={t("Withdrawals")} aria-busy={loading || undefined}>
-              <div role="row" className={cn("hidden items-center gap-x-3.5 border-y border-line bg-table-head px-5 py-2.25 text-caption leading-normal font-medium text-ink-muted md:grid", COLUMNS)}>
+              <div role="row" className={cn("hidden items-center gap-x-3.5 border-y border-line bg-table-head px-5 py-2.25 text-caption leading-[normal] font-medium text-ink-muted md:grid", COLUMNS)}>
                 <span role="columnheader">{t("Request")}</span>
                 <span role="columnheader">{t("Date")}</span>
                 <span role="columnheader" className="text-right">

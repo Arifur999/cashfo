@@ -88,8 +88,8 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
 
   if (!info || !program || !balances || !lines) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
-        <TopbarExtras record={t("Withdraw@@referral")} />
+      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+        <TopbarExtras heading={t("Withdrawals")} />
         <ErrorState title={t("Couldn't load your invite details")} onRetry={() => router.refresh()} />
       </PageFrame>
     );
@@ -183,8 +183,8 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
 
   if (submitted) {
     return (
-      <PageFrame className="max-md:pt-4">
-        <TopbarExtras record={t("Withdraw@@referral")} />
+      <PageFrame className="max-md:pt-4 leading-[normal] md:pt-6 md:pb-8">
+        <TopbarExtras heading={t("Withdrawals")} />
         <WithdrawSubmitted
           request={submitted.request}
           left={submitted.left}
@@ -205,8 +205,8 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
   ];
 
   return (
-    <PageFrame className="max-md:pt-4 md:gap-4.5">
-      <TopbarExtras record={t("Withdraw@@referral")} />
+    <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Withdrawals")} />
       <Link href={WITHDRAWALS_ROUTE} className="flex w-fit items-center gap-1.5 rounded-sm text-[13.5px] font-medium text-ink-soft hover:text-ink">
         <ChevronLeft className="size-4" aria-hidden="true" />
         {t("Withdrawals")}
@@ -216,11 +216,11 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
         <p className="text-body text-ink-muted">{t("Pick what to withdraw and where to send it. We check each friend's payment, then send the money, usually within {days} working days.", { days: formatCount(program.payWithinDays, fmt) })}</p>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-[18px] xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card padding="none" asChild>
           <form onSubmit={submit} noValidate className="flex flex-col">
             {available < minimum && (
-              <div role="note" className="mx-4 mt-4 flex items-start gap-2.5 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3 text-[13px] leading-normal text-warning-ink md:mx-6 md:mt-5">
+              <div role="note" className="mx-4 mt-4 flex items-start gap-2.5 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3 text-[13px] leading-[normal] text-warning-ink md:mx-6 md:mt-5">
                 <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
                 <span>{t("You have {amount} ready. You can withdraw once you have {min}.", { amount: money(available), min: money(minimum) })}</span>
               </div>
@@ -310,12 +310,12 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                       <span aria-hidden="true" className={cn("size-4.5 shrink-0 rounded-full bg-surface", on ? "border-[5px] border-emerald" : "border-[1.5px] border-ink-faint")} />
                       <MethodTile method={m} size="lg" />
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="flex min-w-0 items-center gap-2 text-body leading-normal font-semibold text-ink">
+                        <span className="flex min-w-0 items-center gap-2 text-body leading-[normal] font-semibold text-ink">
                           <span className="truncate">{title}</span>
                           {m.isDefault && <span className="shrink-0 rounded-full bg-surface-sunken px-1.75 py-px text-[11px] font-semibold text-ink-soft">{t("Default")}</span>}
                         </span>
-                        <span className="truncate text-[12.5px] leading-normal text-ink-muted tabular-nums">{words.detail(m, { withName: true, withBranch: true })}</span>
-                        {!m.nameMatches && <span className="text-caption leading-normal text-warning">{t("The name on this account isn't {name}. The payment may be rejected.", { name: userName })}</span>}
+                        <span className="truncate text-[12.5px] leading-[normal] text-ink-muted tabular-nums">{words.detail(m, { withName: true, withBranch: true })}</span>
+                        {!m.nameMatches && <span className="text-caption leading-[normal] text-warning">{t("The name on this account isn't {name}. The payment may be rejected.", { name: userName })}</span>}
                       </span>
                       <span className="shrink-0 text-[12.5px] text-ink-muted max-sm:hidden">
                         {off ? t("Not available right now") : t("{from}–{to} working days", { from: formatCount(speed.from, fmt), to: formatCount(speed.to, fmt) })}
@@ -451,7 +451,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
             </dl>
             <div className="flex flex-col gap-1 rounded-[14px] border border-emerald-line bg-emerald-soft p-3.5">
               <span className="text-[12.5px] text-brand-ink">{t("You receive")}</span>
-              <span className="text-[26px] leading-normal font-bold text-emerald tabular-nums">{money(receive)}</span>
+              <span className="text-[26px] leading-[normal] font-bold text-emerald tabular-nums">{money(receive)}</span>
               {method && (
                 <span className="text-[12.5px] text-brand-ink">
                   {t("on {service} {number} · {name}", { service: destination, number: destinationNumber, name: method.accountName })}
@@ -464,7 +464,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
             </div>
             <ul className="flex flex-col gap-2.25 border-t border-divider pt-3">
               {facts.map((fact) => (
-                <li key={fact.text} className="flex gap-2 text-[12.5px] leading-normal text-ink-soft">
+                <li key={fact.text} className="flex gap-2 text-[12.5px] leading-[normal] text-ink-soft">
                   <fact.icon className="mt-0.5 size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
                   <span>{fact.text}</span>
                 </li>

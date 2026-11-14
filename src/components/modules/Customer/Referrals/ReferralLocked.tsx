@@ -80,16 +80,16 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
         </div>
         {examples.length > 0 && (
           <div className="flex flex-col gap-3 border-t border-line bg-strip p-5 md:p-7 lg:border-t-0 lg:border-l">
-            <h3 className="text-[15px] leading-normal font-semibold text-ink">{t("What one friend can earn you")}</h3>
+            <h3 className="text-[15px] leading-[normal] font-semibold text-ink">{t("What one friend can earn you")}</h3>
             {examples.map((plan) => (
               <div key={plan.planId} className="flex items-center gap-3 rounded-card border border-line-card bg-surface px-3.5 py-3 shadow-card">
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-body leading-normal font-semibold text-ink">{plan.planName}</span>
-                  <span className="text-[12.5px] leading-normal text-ink-muted tabular-nums">
+                  <span className="text-body leading-[normal] font-semibold text-ink">{plan.planName}</span>
+                  <span className="text-[12.5px] leading-[normal] text-ink-muted tabular-nums">
                     {t("{price} − {discount} = {pays} · you get {commission}", { price: money(plan.price), discount: pct(program.friendDiscountPct), pays: money(plan.friendPays), commission: pct(program.commissionPct) })}
                   </span>
                 </div>
-                <span className="text-[18px] leading-normal font-bold text-emerald tabular-nums">{money(plan.youEarn)}</span>
+                <span className="text-[18px] leading-[normal] font-bold text-emerald tabular-nums">{money(plan.youEarn)}</span>
               </div>
             ))}
             {best && (
@@ -113,8 +113,8 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
             <div key={step.title} className="flex gap-3">
               <StepTile icon={step.icon} size={32} />
               <span className="flex flex-col gap-0.75">
-                <span className="text-body leading-normal font-semibold text-ink">{step.title}</span>
-                <span className="text-[13px] leading-normal text-ink-muted">{step.body}</span>
+                <span className="text-body leading-[normal] font-semibold text-ink">{step.title}</span>
+                <span className="text-[13px] leading-[normal] text-ink-muted">{step.body}</span>
               </span>
             </div>
           ))}
@@ -167,8 +167,8 @@ function PlanPicker({ open, onClose, plans, initial, money }: { open: boolean; o
             >
               <span aria-hidden="true" className={cn("size-4.5 shrink-0 rounded-full bg-surface", on ? "border-[5px] border-emerald" : "border-[1.5px] border-ink-faint")} />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-[15px] leading-normal font-semibold text-ink">{plan.planName}</span>
-                {sub && <span className="text-[12.5px] leading-normal text-ink-muted tabular-nums">{sub}</span>}
+                <span className="text-[15px] leading-[normal] font-semibold text-ink">{plan.planName}</span>
+                {sub && <span className="text-[12.5px] leading-[normal] text-ink-muted tabular-nums">{sub}</span>}
               </span>
               <span className="text-title font-bold text-ink tabular-nums">{money(plan.price)}</span>
             </button>

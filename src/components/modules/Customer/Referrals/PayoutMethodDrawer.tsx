@@ -207,7 +207,7 @@ export function PayoutMethodDrawer({ open, method, userName, allowed, isFirst, o
                   className={cn("flex h-16 flex-col items-center justify-center gap-1.5 rounded-field border bg-surface transition-colors disabled:opacity-45", on ? "border-[1.5px] border-emerald bg-emerald-soft" : "border-line hover:border-line-strong")}
                 >
                   <MethodTile method={{ type, bankName: null }} size="type" />
-                  <span className={cn("text-[13px] leading-normal text-ink", on ? "font-bold" : "font-medium")}>{typeName(type)}</span>
+                  <span className={cn("text-[13px] leading-[normal] text-ink", on ? "font-bold" : "font-medium")}>{typeName(type)}</span>
                 </button>
               );
             })}
@@ -251,7 +251,7 @@ export function PayoutMethodDrawer({ open, method, userName, allowed, isFirst, o
                   <Input id="pm-branch" size="md" placeholder={t("e.g. Gulshan")} value={form.branch} onChange={(event) => set("branch", event.target.value)} />
                 </Field>
                 <fieldset className="m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0">
-                  <legend className="mb-1.5 p-0 text-body leading-normal font-medium text-ink">{t("Account type")}</legend>
+                  <legend className="mb-1.5 p-0 text-body leading-[normal] font-medium text-ink">{t("Account type")}</legend>
                   <SegmentedControl
                     label="Account type"
                     variant="pill"
@@ -284,7 +284,7 @@ export function PayoutMethodDrawer({ open, method, userName, allowed, isFirst, o
             </>
           )}
 
-          <div role="note" className="flex items-start gap-2.5 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3 text-[13px] leading-normal text-warning-ink">
+          <div role="note" className="flex items-start gap-2.5 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3 text-[13px] leading-[normal] text-warning-ink">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
             <span>{fillNodes(t("The account name must match your name in Smartly, {name}. If it doesn't, the payment is rejected and the money goes back to your balance."), { name: <b className="font-semibold">{userName}</b> })}</span>
           </div>
@@ -309,7 +309,7 @@ export function PayoutMethodDrawer({ open, method, userName, allowed, isFirst, o
               {t("Use this account by default")}
             </label>
           )}
-          <span className="text-[12.5px] leading-normal text-ink-muted">{t("For bKash, Nagad or Rocket you only enter the number (personal account) and the name on it.")}</span>
+          <span className="text-[12.5px] leading-[normal] text-ink-muted">{t("For bKash, Nagad or Rocket you only enter the number (personal account) and the name on it.")}</span>
         </div>
       </Drawer>
       <ConfirmDialog

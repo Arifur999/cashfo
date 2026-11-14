@@ -92,11 +92,11 @@ describe("the program's numbers", () => {
     expect(showsLockedPage({ ...empty, people: { ...INFO.people, total: 1 }, lockedReason: "PROGRAM_OFF" })).toBe(false);
   });
 
-  it("charts from the first month with money, at most six", () => {
-    const months = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"].map((month, i) => ({ month, amount: i >= 7 ? "100.00" : "0.00" }));
+  it("charts the last three months, this one last, empty ones too", () => {
+    const months = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"].map((month, i) => ({ month, amount: i >= 9 ? "100.00" : "0.00" }));
     expect(chartMonths(months).map((m) => m.month)).toEqual(["2026-08", "2026-09", "2026-10"]);
-    expect(chartMonths(months.map((m) => ({ ...m, amount: "5.00" }))).length).toBe(6);
-    expect(chartMonths(months.map((m) => ({ ...m, amount: "0.00" }))).map((m) => m.month)).toEqual(["2026-10"]);
+    expect(chartMonths(months).map((m) => m.amount)).toEqual([0, 0, 100]);
+    expect(chartMonths(months.slice(0, 2)).map((m) => m.month)).toEqual(["2026-01", "2026-02"]);
   });
 
   it("splits the people bar", () => {

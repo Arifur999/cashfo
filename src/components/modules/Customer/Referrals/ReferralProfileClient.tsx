@@ -48,8 +48,8 @@ export function ReferralProfileClient({ profile, methods, allowed, avatarUrl, ca
 
   if (!profile) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
-        <TopbarExtras title={t("Profile and payouts")} />
+      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+        <TopbarExtras heading={t("Profile & payouts")} />
         <ErrorState title={t("Couldn't load your referral profile.")} onRetry={() => router.refresh()} />
       </PageFrame>
     );
@@ -84,10 +84,10 @@ export function ReferralProfileClient({ profile, methods, allowed, avatarUrl, ca
   ];
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Profile and payouts")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Profile & payouts")} />
       <PageHeader title={t("Profile and payouts")} description={t("How friends see you, and the accounts we pay you to.")} hideDescriptionOnPhone className="max-md:[&_h1]:sr-only" />
-      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:gap-[18px] lg:grid-cols-2">
         <Card padding="none" asChild>
           <form onSubmit={save} noValidate className="flex flex-col">
             <div className="flex items-center gap-3.5 border-b border-divider px-4.5 py-4 md:px-5">

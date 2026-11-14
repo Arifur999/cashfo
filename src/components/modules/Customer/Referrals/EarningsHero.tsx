@@ -4,7 +4,7 @@ import { ArrowDownToLine } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
 import { formatCurrency } from "@/lib/customer/currency";
-import { balancesOf, dayOf, friendDay, programOf } from "@/lib/customer/referralDisplay";
+import { balancesOf, dayOf, programOf } from "@/lib/customer/referralDisplay";
 import type { ReferralProgramInfo } from "@/lib/customer/referralTypes";
 import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -22,13 +22,13 @@ interface EarningsHeroProps {
   today: string;
 }
 
-// The hero's ground is the forest gradient in both themes, so the button
-// takes colours that don't change in dark either (forest on white is about
-// 11.6:1), and a mint focus ring, which shows on the forest where the
-// page's emerald one hardly does. Off, it recedes to a quiet glass on the
-// green; the line under the amount says why.
+// The hero's ground is the forest gradient in both themes; the button is the
+// card colour with the brand ink (white and forest, dark surface and mint),
+// as the board draws it, and a mint focus ring, which shows on the forest where the
+// page's emerald one hardly does. Off, it fades to 55% as the board draws
+// it; the line under the amount says why.
 const ON_FOREST =
-  "bg-white text-emerald hover:bg-mint-50 dark:text-forest dark:hover:bg-mint-200 focus-visible:outline-mint-200 disabled:bg-white/14 disabled:text-white/70 disabled:shadow-none";
+  "bg-white text-emerald hover:bg-mint-50 dark:bg-surface dark:text-brand-ink dark:hover:bg-surface-sunken focus-visible:outline-mint-200 disabled:opacity-55 disabled:hover:bg-white dark:disabled:hover:bg-surface";
 
 const DAY_MS = 86_400_000;
 
@@ -54,7 +54,7 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
     min: money(program.minWithdrawal),
     fee: money(program.fee),
   });
-  const line = canWithdraw ? methodsLine : balances.available > 0 ? t("You can withdraw once you have {min}", { min: money(program.minWithdrawal) }) : t("Nothing to withdraw right now");
+  const line = canWithdraw ? methodsLine : t("You can withdraw from {min}.", { min: money(program.minWithdrawal) });
 
   // Each figure opens what it counts: the lines on hold, this month's,
   // every line, the withdrawals.
@@ -80,7 +80,7 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
     {
       label: t("Paid to you"),
       value: money(balances.paidOut),
-      sub: balances.lastPaidAt ? t("Last on {date}", { date: friendDay(dayOf(balances.lastPaidAt), today, fmt) }) : t("See withdrawals"),
+      sub: t("See withdrawals"),
       href: WITHDRAWALS_ROUTE,
     },
   ];
@@ -115,11 +115,11 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
 
       <div className="relative flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-3 md:gap-1">
-          <h2 id="rf-earn" className="text-[13px] leading-normal font-medium text-white/86 md:text-body">
+          <h2 id="rf-earn" className="text-[13px] leading-[normal] font-medium text-white/86 md:text-body">
             {t("Ready to withdraw")}
           </h2>
-          <span className="text-[32px] leading-normal font-bold tracking-[-0.02em] tabular-nums md:text-[38px]">{money(balances.available)}</span>
-          <span id={reasonId} className="hidden text-[13px] leading-normal text-white/84 md:block">
+          <span className="text-[32px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums md:text-[40px]">{money(balances.available)}</span>
+          <span id={reasonId} className="hidden text-[13px] leading-[normal] text-white/84 md:block">
             {line}
           </span>
         </div>
@@ -127,7 +127,7 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
       </div>
 
       {/* Phones: the figures on one line, then Withdraw across the card. */}
-      <div className="relative flex flex-wrap gap-x-4.5 gap-y-1 text-[12.5px] leading-normal text-white/86 tabular-nums md:hidden">
+      <div className="relative flex flex-wrap gap-x-4.5 gap-y-1 text-[12.5px] leading-[normal] text-white/86 tabular-nums md:hidden">
         <span>
           {t("On hold")} <b className="font-bold text-white">{money(balances.onHold)}</b>
         </span>
@@ -138,15 +138,15 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
           {t("Paid@@short")} <b className="font-bold text-white">{money(balances.paidOut)}</b>
         </span>
       </div>
-      {!canWithdraw && <p className="relative text-[12.5px] leading-normal text-white/84 md:hidden">{line}</p>}
+      {!canWithdraw && <p className="relative text-[12.5px] leading-[normal] text-white/84 md:hidden">{line}</p>}
       <div className="relative md:hidden">{withdraw(true)}</div>
 
       <div className="relative hidden grid-cols-4 gap-3 border-t border-white/18 pt-4 md:grid">
         {stats.map((stat) => (
           <Link key={stat.label} href={stat.href} className="group flex min-w-0 flex-col items-start gap-0.75 rounded-sm focus-visible:outline-mint-200">
-            <span className="text-[12.5px] leading-normal text-white/80">{stat.label}</span>
-            <span className="text-[19px] leading-normal font-bold tabular-nums">{stat.value}</span>
-            <span className="text-caption leading-normal text-white/75 underline decoration-white/35 underline-offset-3 group-hover:decoration-white">{stat.sub}</span>
+            <span className="text-[12.5px] leading-[normal] text-white/80">{stat.label}</span>
+            <span className="text-[19px] leading-[normal] font-bold tabular-nums">{stat.value}</span>
+            <span className="text-caption leading-[normal] text-white/75 underline decoration-white/35 underline-offset-3 group-hover:decoration-white">{stat.sub}</span>
           </Link>
         ))}
       </div>

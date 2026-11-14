@@ -98,14 +98,14 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
 
   // Centred and allowed to wrap, so a two-line Bangla label stays tidy.
   const SQUARE = "flex h-15 flex-col items-center justify-center gap-1.25 rounded-xl border border-line bg-surface px-1 text-center text-[11.5px] leading-tight font-semibold text-ink-2 hover:border-line-strong";
-  // The desktop row: four 40px pills.
-  const PILL = "flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-2 text-[13px] font-semibold whitespace-nowrap text-ink hover:border-line-strong";
+  // The desktop row: four 38px pills.
+  const PILL = "flex h-9.5 min-w-0 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-1.5 text-[13px] font-semibold whitespace-nowrap text-ink hover:border-line-strong";
   const bold = (text: string) => <b className="font-semibold">{text}</b>;
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 p-4 md:gap-3.5 md:p-5">
+    <Card padding="none" className="flex flex-col gap-3 p-4 md:p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[15px] leading-normal font-semibold text-ink md:text-title">
+        <h2 className="text-[15px] leading-[normal] font-semibold text-ink md:text-title">
           <span className="md:hidden">{t("Invite friends")}</span>
           <span className="hidden md:inline">{t("Your invite link")}</span>
         </h2>
@@ -145,7 +145,7 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
 
       {/* Wider screens */}
       <div className="hidden gap-2 md:flex">
-        <Input size="md" readOnly value={linkText(link)} aria-label={t("Invite link")} onFocus={(event) => event.target.select()} className="text-[13.5px] text-ink-2" frameClassName="min-w-0 flex-1 bg-strip px-3" />
+        <Input size="md" readOnly value={linkText(link)} aria-label={t("Invite link")} onFocus={(event) => event.target.select()} className="text-[13px] text-ink-2" frameClassName="min-w-0 flex-1 bg-strip px-3" />
         <Button size="lg" onClick={() => copy(link, t("Link copied"))} className="px-4">
           <Copy className="size-3.75" />
           {t("Copy")}
@@ -168,7 +168,7 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
         </a>
         <button type="button" onClick={() => setQrOpen(true)} className={PILL}>
           <QrCode className="size-4 shrink-0 text-ink" aria-hidden="true" />
-          {t("QR code")}
+          QR
         </button>
       </div>
 

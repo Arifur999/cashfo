@@ -40,7 +40,7 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
 
   if (!info) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
+      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
         <TopbarExtras title={t("Referral Program")} />
         <ErrorState title={t("Couldn't load your invite details")} onRetry={() => router.refresh()} />
       </PageFrame>
@@ -52,7 +52,7 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
 
   if (showsLockedPage(info)) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
+      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
         <TopbarExtras title={t("Referral Program")} />
         <PageHeader
           title={t("Referral Program")}
@@ -85,8 +85,8 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
   );
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Referral dashboard")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Dashboard")} />
       <PageHeader
         title={t("Referral dashboard")}
         description={t("Share Smartly. You earn {pct} of every payment from people who join with your link.", { pct: pct(program.commissionPct) })}
@@ -94,15 +94,15 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
         className="max-md:[&_h1]:sr-only"
         actions={badge}
       />
-      <div className="grid gap-3.5 md:gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+      <div className="grid gap-3.5 md:gap-[18px] xl:grid-cols-[minmax(0,1fr)_440px]">
         <EarningsHero info={info} currency={currency} today={today} />
         <InviteLinkCard code={info.referralCode} origin={origin} commissionPct={program.commissionPct} friendDiscountPct={program.friendDiscountPct} paused={!program.live} linkCount={info.linkCount} />
       </div>
-      <div className="grid items-start gap-3.5 md:gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+      <div className="grid gap-3.5 md:gap-[18px] xl:grid-cols-[minmax(0,1fr)_440px]">
         <EarningsByMonthCard info={info} currency={currency} today={today} />
-        <PeopleCard info={info} currency={currency} />
+        <PeopleCard info={info} currency={currency} today={today} />
       </div>
-      <div className="grid items-start gap-3.5 md:gap-5 lg:grid-cols-2">
+      <div className="grid gap-3.5 md:gap-[18px] lg:grid-cols-2">
         <TopFriendsCard info={info} currency={currency} onOpen={setFriend} />
         <LatestCommissionsCard info={info} currency={currency} today={today} />
       </div>
