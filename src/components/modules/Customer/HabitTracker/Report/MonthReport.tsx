@@ -77,7 +77,7 @@ export function ReportStats({ stats }: { stats: ReportStat[] }) {
       {stats.map((stat) => (
         <Card key={stat.label} padding="none" className="flex min-w-0 flex-col gap-0.5 rounded-[12px] px-4 py-2.75">
           <span className="text-[12.5px] leading-[normal] font-medium text-ink-muted">{stat.label}</span>
-          <span className={cn("text-[22px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums", stat.tone === "bad" ? "text-expense" : stat.tone === "good" ? "text-income" : "text-ink")}>{stat.value}</span>
+          <span className={cn("text-[22px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums", stat.tone === "bad" ? "text-rose-deep" : stat.tone === "good" ? "text-tint-green-ink" : "text-ink")}>{stat.value}</span>
           <span className="text-caption leading-[normal] text-ink-muted">{stat.sub}</span>
         </Card>
       ))}
@@ -165,7 +165,7 @@ export function ReportSheet({ title, label, legend, hint, columns, rows, totalsL
               title={total?.title}
               className={cn(
                 "flex h-5 w-6.5 shrink-0 items-center justify-center rounded-[5px] text-[9.5px] font-bold tabular-nums",
-                !total ? "" : total.tone === "full" ? "bg-emerald-soft text-emerald" : total.tone === "good" ? "bg-surface-sunken text-ink-2" : "bg-expense-soft text-expense",
+                !total ? "" : total.tone === "full" ? "bg-emerald-soft text-emerald" : total.tone === "good" ? "bg-surface-sunken text-ink-2" : "bg-rose-tint text-rose-deep",
               )}
             >
               {total?.text}
@@ -197,7 +197,7 @@ export function EachBars({ title, rows, note }: { title: string; rows: EachRow[]
           <div key={row.key} className="grid grid-cols-[130px_minmax(0,1fr)_54px] items-center gap-2.5">
             <span className="flex min-w-0 flex-col">
               <span className="truncate text-small font-semibold text-ink">{row.name}</span>
-              {row.tag && <span className={cn("text-[10.5px] font-bold", row.tag.tone === "good" ? "text-income" : "text-expense")}>{row.tag.text}</span>}
+              {row.tag && <span className={cn("text-[10.5px] font-bold", row.tag.tone === "good" ? "text-tint-green-ink" : "text-rose-deep")}>{row.tag.text}</span>}
             </span>
             <span title={row.title} className="flex h-2.5 overflow-hidden rounded-full bg-surface-sunken">
               {row.segments.map((segment, index) => (

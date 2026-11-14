@@ -257,7 +257,7 @@ function HabitBox({ state, color, small = false }: { state: CellState; color: st
       className={cn(
         "flex shrink-0 items-center justify-center rounded-[6px]",
         small ? "size-4 rounded-[4px]" : "h-6.25 w-6.5",
-        state === "done" ? "text-surface" : state === "missed" ? "bg-expense-soft text-expense" : state === "open" ? "border-[1.5px] border-dashed bg-surface" : state === "later" ? "border border-divider bg-strip" : "border border-divider bg-surface",
+        state === "done" ? "text-surface" : state === "missed" ? "bg-rose-tint text-ie-red" : state === "open" ? "border-[1.5px] border-dashed bg-surface" : state === "later" ? "border border-divider bg-strip" : "border border-divider bg-surface",
       )}
     >
       {state === "done" && <Check className={small ? "size-2.5" : "size-3.5"} strokeWidth={3} />}

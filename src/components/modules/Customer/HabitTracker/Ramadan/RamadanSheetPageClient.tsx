@@ -235,7 +235,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
         title={
           <span className="flex flex-wrap items-center gap-2.5">
             {title}
-            <Chip tone={STATUS_CHIP[window.status]} className="h-6 gap-1.25 px-2.25 font-semibold tracking-normal">
+            <Chip tone={STATUS_CHIP[window.status]} className={cn("h-6 gap-1.25 px-2.25 text-[12.5px] font-semibold tracking-normal", window.status === "completed" && "bg-tint-green text-tint-green-ink")}>
               {t(STATUS_LABEL[window.status])}
             </Chip>
           </span>

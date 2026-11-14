@@ -632,8 +632,8 @@
 html:not(.dark)[data-app="habit"],
 html:not(.dark) [data-app="habit"] {
   --page: #f9fafa;
-  --table-head: #f8fafc;
-  --strip: #f8fafc;
+  --table-head: #f9fafa;
+  --strip: #f9fafa;
   --hover: #f8fafc;
   --row-hover: #f8fafc;
   --surface-sunken: #f1f5f9;

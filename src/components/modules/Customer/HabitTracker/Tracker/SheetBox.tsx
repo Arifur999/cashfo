@@ -9,14 +9,14 @@ import { cn } from "@/lib/utils";
 export type BoxState = "done" | "jamaat" | "onTime" | "qaza" | "missed" | "notDone" | "open" | "locked";
 
 // Each state's look, shared by the boxes and the legends that explain them,
-// so the two can't drift apart. A miss is the expense red everywhere.
+// so the two can't drift apart. A miss is the boards' rose (#ffe4e6, #e11d48).
 const LOOK: Record<BoxState, string> = {
   done: "bg-emerald text-on-action",
   jamaat: "bg-emerald text-on-action",
   onTime: "bg-emerald-tint text-emerald",
   qaza: "bg-warning-soft text-warning",
-  missed: "bg-expense-soft text-expense",
-  notDone: "bg-expense-soft",
+  missed: "bg-rose-tint text-ie-red",
+  notDone: "bg-rose-tint",
   open: "border-[1.5px] border-dashed border-emerald bg-surface",
   locked: "border border-divider bg-strip",
 };

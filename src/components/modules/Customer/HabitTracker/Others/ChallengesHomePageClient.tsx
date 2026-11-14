@@ -289,7 +289,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
               })}
             </span>
           )}
-          <span className="flex flex-wrap gap-x-3.5 gap-y-0.5 text-[12.5px] text-ink-2">
+          <span className="flex flex-wrap gap-x-3.5 gap-y-0.5 text-[12.5px] text-ink-soft">
             <span>
               <b className="font-bold text-income tabular-nums">{count(summary.done)}</b> {t("done@@days")}
             </span>
@@ -299,7 +299,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
             <span>
               <b className="font-bold text-ink tabular-nums">{count(left)}</b> {t(window.status === "finished" ? "days not reached" : "days left")}
             </span>
-            <span className="ml-auto text-ink-muted">{window.status === "finished" ? t("{done} of {total} days", { done: count(summary.done), total: count(tracker.totalDays) }) : upcoming ? t("Starts {date}", { date: short(window.start) }) : t("Day {day} of {total}", { day: count(window.today), total: count(tracker.totalDays) })}</span>
+            <span className="ml-auto font-semibold text-ink">{window.status === "finished" ? t("{done} of {total} days", { done: count(summary.done), total: count(tracker.totalDays) }) : upcoming ? t("Starts {date}", { date: short(window.start) }) : t("Day {day} of {total}", { day: count(window.today), total: count(tracker.totalDays) })}</span>
           </span>
         </span>
       </div>
@@ -432,10 +432,10 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
         <div className="mt-auto flex gap-2 pt-1">
           {going && (
             <>
-              <Button variant="secondary" onClick={() => setConfirm({ kind: "restart", row })} className="h-9.5 flex-1 rounded-sm pointer-coarse:h-11">
+              <Button variant="secondary" onClick={() => setConfirm({ kind: "restart", row })} className="h-9.5 flex-1 rounded-sm text-[13.5px] pointer-coarse:h-11">
                 {t("Restart")}
               </Button>
-              <Button variant="secondary" onClick={() => setConfirm({ kind: "end", row })} className="h-9.5 flex-1 rounded-sm border-expense-line bg-expense-soft text-expense hover:bg-expense-soft/70 pointer-coarse:h-11">
+              <Button variant="secondary" onClick={() => setConfirm({ kind: "end", row })} className="h-9.5 flex-1 rounded-sm border-expense-line bg-loss-wash text-[13.5px] text-loss-ink hover:bg-expense-soft pointer-coarse:h-11">
                 {t("End challenge")}
               </Button>
             </>
