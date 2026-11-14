@@ -150,7 +150,7 @@ export function NotesPageClient({ notes: initialNotes, categories: initialCatego
   const pick = (next: Partial<NoteFilter>) => setFilter((current) => ({ ...current, ...next }));
 
   return (
-    <PageFrame className="gap-3.5 md:pt-7">
+    <PageFrame className="gap-3.5 md:pt-5">
       <PageHeader
         title={t("Notes")}
         description={t("Quick notes, ideas and thoughts. Write first, sort later.")}

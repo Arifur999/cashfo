@@ -67,6 +67,9 @@ export interface NavLeaf {
   menu?: false;
   // Such a page lights this row of its group instead (Checkout, Plans).
   litAs?: string;
+  // A group's first page that its board heads as the group itself, under
+  // the section ("Habits › Daily habits", not "Daily habits › Today").
+  headsGroup?: true;
 }
 
 export interface NavItem extends NavLeaf {
@@ -305,7 +308,7 @@ export const NAV_SECTIONS: NavSection[] = [
         query: { category: "Namaz" },
         icon: "namaz",
         subs: [
-          { label: "Today", href: "/habit-tracker/habits", query: { category: "Namaz" } },
+          { label: "Today", href: "/habit-tracker/habits", query: { category: "Namaz" }, headsGroup: true },
           { label: "Dashboard", href: "/habit-tracker/habits/namaz" },
         ],
       },
@@ -332,7 +335,7 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: "daily",
         badge: "habitsToday",
         subs: [
-          { label: "Today", href: "/habit-tracker/daily" },
+          { label: "Today", href: "/habit-tracker/daily", headsGroup: true },
           { label: "Monthly report", href: "/habit-tracker/daily/report" },
         ],
       },
@@ -511,6 +514,7 @@ export interface Breadcrumb {
 // "Dashboard"). The pages the menu leaves out keep their section (Books).
 export function breadcrumbFor(location: NavLocation): Breadcrumb {
   const { section, item, sub } = location;
+  if (sub?.headsGroup && section?.label) return { crumbs: [section.label], heading: item.heading ?? item.label, tone: item.tone ?? section.tone ?? "money" };
   const namesSection = !!section?.label && !section.quiet && (sectionApp(section) === "habit" || !!section.hidden);
   const crumbs = sub ? [item.short ?? item.label] : namesSection && section?.label ? [section.label] : [];
   return {

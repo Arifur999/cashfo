@@ -102,7 +102,7 @@ export function NamazHomePageClient({ trackers, qaza, today, reminders: savedRem
   ];
 
   return (
-    <PageFrame className="gap-4 md:pt-7">
+    <PageFrame className="gap-4 md:pt-5.5">
       <PageHeader
         title={t("Namaz")}
         description={`${formatDay(today, "EEEE, d MMMM yyyy", fmt)} · ${hijriDate(today, fmt, settings.hijriAdjust)}`}

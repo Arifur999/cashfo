@@ -103,7 +103,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
 
   if (!sheet) {
     return (
-      <PageFrame className="gap-3.5 md:pt-6">
+      <PageFrame className="gap-3.5 md:pt-4.5">
         {header}
         <Card padding="lg" className="flex flex-col items-center gap-3 rounded-[12px] py-10 text-center">
           <p className="text-body text-ink-muted">{isCurrent ? (opener.failed ? t("Couldn't open this month's sheet") : t("This month's sheet is opening…")) : t("No sheet for {month} yet.", { month: monthName(month, fmt, "long", true) })}</p>
@@ -185,7 +185,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
     insights.push({ key: "goal", icon: Target, tone: "warn", text: pct >= goal ? t("Goal of {goal}% reached.", { goal: count(goal) }) : t("{gap}% to go to reach the goal of {goal}%.", { gap: count(goal - pct), goal: count(goal) }) });
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3.5 md:pt-4.5">
       {header}
 
       <ReportStats stats={stats} />

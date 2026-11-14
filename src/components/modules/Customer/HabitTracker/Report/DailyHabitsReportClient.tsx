@@ -200,7 +200,7 @@ export function DailyHabitsReportClient({ habits, logs, month, today, firstMonth
   }
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3.5 md:pt-4.5">
       <ReportHeader
         title={monthName(month, fmt, "long", true)}
         current={current}

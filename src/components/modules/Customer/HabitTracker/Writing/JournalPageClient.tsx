@@ -146,7 +146,7 @@ export function JournalPageClient({ data: initialData, categories, date: initial
   const lockedDay = selected.entry?.locked === true;
 
   return (
-    <PageFrame className="gap-3.5 md:pt-7">
+    <PageFrame className="gap-3.5 md:pt-5">
       <PageHeader
         title={t("Journal")}
         description={t("A few lines a day. Your diary stays private.")}

@@ -244,7 +244,7 @@ export function RamadanHomePageClient({ trackers, today, reminders: savedReminde
   }
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3.5 md:pt-5">
       <PageHeader
         title={t("Ramadan")}
         description={`${formatDay(today, "EEEE, d MMMM yyyy", fmt)} · ${hijriDate(today, fmt, hijriAdjust)}`}

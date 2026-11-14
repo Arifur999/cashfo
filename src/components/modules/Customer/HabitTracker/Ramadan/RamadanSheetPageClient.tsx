@@ -228,7 +228,7 @@ export function RamadanSheetPageClient({ tracker, all, today }: RamadanSheetPage
   const times = prayerTimesFor(settings, window.status === "going" ? today : window.status === "upcoming" && window.start ? window.start : next.startsOn);
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3.5 md:pt-4.5">
       <TopbarExtras record={title} />
       <PageHeader
         title={

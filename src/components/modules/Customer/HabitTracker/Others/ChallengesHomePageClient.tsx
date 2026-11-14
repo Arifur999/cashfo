@@ -451,7 +451,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
   };
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3.5 md:pt-5">
       <PageHeader
         title={t("Challenges")}
         description={t("Pick a goal for a set number of days and tick it off every day.")}
