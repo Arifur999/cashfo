@@ -89,7 +89,7 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
     const className = cn(
       "flex shrink-0 items-center justify-center gap-2 font-bold whitespace-nowrap shadow-[0_6px_16px_rgba(18,32,29,0.18)] transition-colors",
       ON_FOREST,
-      phone ? "h-12 w-full rounded-xl text-[15px]" : "h-11 rounded-full px-5 text-[15px]",
+      phone ? "h-12 w-full rounded-md text-[15px]" : "h-11 rounded-full px-5 text-[15px]",
     );
     const content = (
       <>
@@ -109,14 +109,15 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
   };
 
   return (
-    <section aria-labelledby="rf-earn" className="relative flex flex-col gap-3 overflow-hidden rounded-2xl bg-referral-hero p-4.5 text-white md:gap-4.5 md:px-6 md:py-5.5">
+    <section aria-labelledby="rf-earn" className="relative flex flex-col gap-3 overflow-hidden rounded-lg bg-referral-hero md:rounded-[18px] p-4.5 text-white md:gap-4.5 md:px-6 md:py-5.5">
       <span aria-hidden="true" className="absolute -top-15 -right-12.5 size-42.5 rounded-full border border-white/14 md:-top-20 md:-right-15 md:size-55" />
       <span aria-hidden="true" className="absolute -top-7.5 right-7.5 hidden size-35 rounded-full border border-white/10 md:block" />
 
       <div className="relative flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-3 md:gap-1">
           <h2 id="rf-earn" className="text-[13px] leading-[normal] font-medium text-white/86 md:text-body">
-            {t("Ready to withdraw")}
+            <span className="md:hidden">{t("Available to withdraw")}</span>
+            <span className="max-md:hidden">{t("Ready to withdraw")}</span>
           </h2>
           <span className="text-[32px] leading-[normal] font-bold tracking-[-0.02em] tabular-nums md:text-[40px]">{money(balances.available)}</span>
           <span id={reasonId} className="hidden text-[13px] leading-[normal] text-white/84 md:block">
@@ -129,7 +130,7 @@ export function EarningsHero({ info, currency, today }: EarningsHeroProps) {
       {/* Phones: the figures on one line, then Withdraw across the card. */}
       <div className="relative flex flex-wrap gap-x-4.5 gap-y-1 text-[12.5px] leading-[normal] text-white/86 tabular-nums md:hidden">
         <span>
-          {t("On hold")} <b className="font-bold text-white">{money(balances.onHold)}</b>
+          {t("Pending")} <b className="font-bold text-white">{money(balances.onHold)}</b>
         </span>
         <span>
           {t("Earned")} <b className="font-bold text-white">{money(balances.lifetime)}</b>

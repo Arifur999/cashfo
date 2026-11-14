@@ -97,7 +97,7 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
   }
 
   // Centred and allowed to wrap, so a two-line Bangla label stays tidy.
-  const SQUARE = "flex h-15 flex-col items-center justify-center gap-1.25 rounded-xl border border-line bg-surface px-1 text-center text-[11.5px] leading-tight font-semibold text-ink-2 hover:border-line-strong";
+  const SQUARE = "flex h-15 flex-col items-center justify-center gap-1.25 rounded-md border border-line bg-surface px-1 text-center text-[11.5px] leading-tight font-semibold text-ink-2 hover:border-line-strong";
   // The desktop row: four 38px pills.
   const PILL = "flex h-9.5 min-w-0 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-1.5 text-[13px] font-semibold whitespace-nowrap text-ink hover:border-line-strong";
   const bold = (text: string) => <b className="font-semibold">{text}</b>;
@@ -119,7 +119,7 @@ export function InviteLinkCard({ code, origin, commissionPct, friendDiscountPct,
 
       {/* Phones */}
       <div className="flex flex-col gap-3 md:hidden">
-        <a href={share.whatsapp} target="_blank" rel="noopener noreferrer" className="flex h-12.5 items-center justify-center gap-2 rounded-xl bg-emerald text-[15px] font-bold text-on-action">
+        <a href={share.whatsapp} target="_blank" rel="noopener noreferrer" className="flex h-12.5 items-center justify-center gap-2 rounded-md bg-emerald text-[15px] font-bold text-on-action">
           <MessageCircle className="size-4.75" aria-hidden="true" />
           {t("Share on WhatsApp")}
         </a>
