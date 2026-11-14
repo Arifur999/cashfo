@@ -245,7 +245,6 @@ export const settingsDictionary: Record<string, string> = {
   "Every question we have answered, kept up to date.": "আমাদের দেওয়া প্রতিটি উত্তর, হালনাগাদ রাখা।",
   "Open the FAQ": "FAQ খুলুন",
   "Keyboard shortcuts": "কিবোর্ড শর্টকাট",
-  "Close a drawer": "ড্রয়ার বন্ধ করুন",
 
   // Resources
   Guides: "গাইড",

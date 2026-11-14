@@ -189,7 +189,7 @@ export function searchFaqs(faqs: Faq[], query: string, t: (key: string) => strin
 export const SHORTCUTS: { what: string; key: string }[] = [
   { what: "Search anything", key: "Ctrl K" },
   { what: "New transaction", key: "N" },
-  { what: "Close a drawer", key: "Esc" },
+  { what: "Close a popup", key: "Esc" },
 ];
 
 export type GuideCategory = "start" | "money" | "groups" | "security";
