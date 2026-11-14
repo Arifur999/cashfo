@@ -26,6 +26,8 @@ export const habitTrackerDictionary: Record<string, string> = {
   "Challenge removed": "চ্যালেঞ্জ সরানো হয়েছে",
   "Failed to remove challenge": "চ্যালেঞ্জ সরাতে ব্যর্থ হয়েছে",
   Water: "পানি",
+  Walking: "হাঁটা",
+  "Quit something": "কিছু ছেড়ে দেওয়া",
   "No Sugar": "চিনি বর্জন",
 
   // Weekday short labels -- HabitFormModal's day picker.
