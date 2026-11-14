@@ -56,7 +56,7 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
   const digits = (account.accountNumber ?? "").replace(/\D/g, "");
   const cells = [
     { label: t("Opening balance"), value: balanceText(figures.opening, currency, fmt), tone: "text-ink" },
-    { label: t("Money in@@wallet"), value: formatCurrency(figures.moneyIn, currency, fmt), tone: "text-income" },
+    { label: t("Money in@@wallet"), value: formatCurrency(figures.moneyIn, currency, fmt), tone: "text-tint-green-ink" },
     { label: t("Money out@@wallet"), value: formatCurrency(figures.moneyOut, currency, fmt), tone: "text-expense" },
     { label: t("Transfers"), value: formatSignedCurrency(Number(figures.transfers), currency, fmt), tone: "text-info" },
     { label: t("Closing balance"), value: balanceText(figures.closing, currency, fmt), tone: "text-ink" },
@@ -94,7 +94,7 @@ export function LedgerStatement({ account, rows, figures, capped, periodLabel, r
         </div>
       </div>
 
-      <div className="grid grid-cols-5 overflow-hidden rounded-md border border-line-strong">
+      <div className="grid grid-cols-5 overflow-hidden rounded-[6px] border border-line-strong">
         {cells.map((cell, index) => (
           <div key={cell.label} className={cn("flex flex-col gap-0.75 px-3 py-2.5", index < 4 && "border-r border-line", index === 4 && "bg-strip")}>
             <span className="text-[10.5px] text-ink-muted">{cell.label}</span>

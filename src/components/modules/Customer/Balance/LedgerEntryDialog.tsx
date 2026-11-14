@@ -136,14 +136,14 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
           <Chip tone={meta.tone} className="h-5.25 px-2.5">
             {t(meta.label)}
           </Chip>
-          <span className={cn("inline-flex items-center gap-1.25 text-small font-semibold", isIn ? "text-income" : "text-expense")}>
-            <span className={cn("flex size-5.5 items-center justify-center rounded-full", isIn ? "bg-income-soft" : "bg-expense-soft")}>
+          <span className={cn("inline-flex items-center gap-1.25 text-small font-semibold", isIn ? "text-tint-green-ink" : "text-expense")}>
+            <span className={cn("flex size-5.5 items-center justify-center rounded-full", isIn ? "bg-tint-green" : "bg-expense-soft")}>
               {isIn ? <ArrowDownLeft className="size-3" strokeWidth={2.5} aria-hidden="true" /> : <ArrowUpRight className="size-3" strokeWidth={2.5} aria-hidden="true" />}
             </span>
             {t(isIn ? "Received" : "Sent")}
           </span>
         </span>
-        <span className={cn("text-[30px] font-bold tracking-[-0.02em] tabular-nums", isIn ? "text-income" : "text-expense")}>{`${isIn ? "+" : "−"} ${formatCurrency(amount, currency, fmt)}`}</span>
+        <span className={cn("text-[30px] font-bold tracking-[-0.02em] tabular-nums", isIn ? "text-tint-green-ink" : "text-expense")}>{`${isIn ? "+" : "−"} ${formatCurrency(amount, currency, fmt)}`}</span>
         <span className="text-small text-ink-muted">{formatDate(row.date, undefined, fmt)}</span>
       </div>
       <dl className="flex flex-col overflow-hidden rounded-[14px] border border-line">

@@ -15,13 +15,17 @@ interface PrintPreviewProps {
   look?: "plain" | "bar";
   // The Print button's words ("Print or save PDF").
   printLabel?: string;
+  // The board's own screen and page where they differ (a darker screen,
+  // other margins), merged over the plain look.
+  overlayClassName?: string;
+  articleClassName?: string;
 }
 
 // The boards' print preview: the page as it will print, on a dark screen
 // over the app, with Close, Download PDF and Print. On paper only the page
 // itself prints; Download PDF opens the same print window, where the
 // browser saves it as a PDF.
-export function PrintPreview({ subtitle, onClose, children, look = "plain", printLabel = "Print" }: PrintPreviewProps) {
+export function PrintPreview({ subtitle, onClose, children, look = "plain", printLabel = "Print", overlayClassName, articleClassName }: PrintPreviewProps) {
   const bar = look === "bar";
   const { t } = useLocale();
   const printRef = useRef<HTMLButtonElement>(null);
@@ -47,7 +51,7 @@ export function PrintPreview({ subtitle, onClose, children, look = "plain", prin
       role="dialog"
       aria-modal="true"
       aria-label={t("Print preview")}
-      className={cn("fixed inset-0 z-80 flex flex-col items-center overflow-y-auto px-4 print:static print:block print:overflow-visible print:bg-transparent print:p-0", bar ? "gap-3 bg-print-bar/78 pt-4 pb-4" : "gap-3.5 bg-scrim pt-5 pb-8")}
+      className={cn("fixed inset-0 z-80 flex flex-col items-center overflow-y-auto px-4 print:static print:block print:overflow-visible print:bg-transparent print:p-0", bar ? "gap-3 bg-print-bar/78 pt-4 pb-4" : "gap-3.5 bg-scrim pt-5 pb-8", overlayClassName)}
     >
       <div role="toolbar" aria-label={t("Print preview")} className={cn("flex w-full flex-wrap items-center justify-between gap-3 print:hidden", bar ? "max-w-198.5 shrink-0 rounded-[16px] bg-print-bar py-2.5 pr-2.5 pl-4.5 leading-[normal] shadow-[0_10px_30px_rgba(0,0,0,0.25)]" : "max-w-190")}>
         <div className="flex min-w-0 flex-col text-white">
@@ -70,7 +74,7 @@ export function PrintPreview({ subtitle, onClose, children, look = "plain", prin
           </button>
         </div>
       </div>
-      <article className={cn("flex w-full shrink-0 flex-col rounded-sm bg-surface px-6 py-8 text-ink sm:min-h-200 print:block print:min-h-0 [&>section]:flex-1 shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:px-11 sm:py-10 print:max-w-none print:rounded-none print:p-0 print:shadow-none", bar ? "max-w-198.5" : "max-w-190")}>
+      <article className={cn("flex w-full shrink-0 flex-col rounded-sm bg-surface px-6 py-8 text-ink sm:min-h-200 print:block print:min-h-0 [&>section]:flex-1 shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:px-11 sm:py-10 print:max-w-none print:rounded-none print:p-0 print:shadow-none", bar ? "max-w-198.5" : "max-w-190", articleClassName)}>
         {children}
       </article>
     </div>

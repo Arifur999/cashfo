@@ -38,7 +38,7 @@ interface TransferStatementProps {
   currency: string;
 }
 
-const CELL = "border-b border-line px-2 py-1.75 align-top";
+const CELL = "border-b border-line px-2 py-1.75 align-middle";
 const HEAD = "border-b-[1.5px] border-ink px-2 py-1.75 text-left text-[10.5px] font-semibold tracking-[0.04em] text-ink-2 uppercase";
 
 // The transfers on paper (board: Transfers — Print preview): which account
@@ -86,7 +86,7 @@ export function TransferStatement({ transfers, account, periodLabel, range, move
         </div>
       </div>
 
-      <div className="grid grid-cols-3 overflow-hidden rounded-md border border-line-strong">
+      <div className="grid grid-cols-3 overflow-hidden rounded-[6px] border border-line-strong">
         {cells.map((cell, index) => (
           <div key={cell.label} className={cn("flex flex-col gap-0.75 px-3 py-2.5", index < 2 && "border-r border-line")}>
             <span className="text-[10.5px] text-ink-muted">{cell.label}</span>
@@ -97,16 +97,7 @@ export function TransferStatement({ transfers, account, periodLabel, range, move
 
       {capped && <p className="-mt-2 text-caption text-ink-2">{t("Only the latest {count} transfers are printed -- pick a shorter period to print them all.", { count: formatCount(transfers.length, fmt) })}</p>}
 
-      <table className="w-full table-fixed border-collapse text-[11.5px] tabular-nums">
-        <colgroup>
-          <col className="w-[5%]" />
-          <col className="w-[13%]" />
-          <col className="w-[17%]" />
-          <col className="w-[17%]" />
-          <col />
-          <col className="w-[13%]" />
-          <col className="w-[11%]" />
-        </colgroup>
+      <table className="w-full border-collapse text-[11.5px] tabular-nums">
         <thead>
           <tr>
             <th className={HEAD}>#</th>
@@ -128,8 +119,8 @@ export function TransferStatement({ transfers, account, periodLabel, range, move
               <td className={cn(CELL, "wrap-break-word")}>
                 {[transfer.note, transfer.charge > 0 && transfer.chargeCategory ? t(transfer.chargeCategory) : null, transfer.cancelled ? t(transfer.cancelled) : null].filter(Boolean).join(" · ") || "—"}
               </td>
-              <td className={cn(CELL, "text-right")}>{money(transfer.amount)}</td>
-              <td className={cn(CELL, "text-right")}>{transfer.charge > 0 ? `− ${money(transfer.charge)}` : "—"}</td>
+              <td className={cn(CELL, "text-right whitespace-nowrap")}>{money(transfer.amount)}</td>
+              <td className={cn(CELL, "text-right whitespace-nowrap")}>{transfer.charge > 0 ? `− ${money(transfer.charge)}` : "—"}</td>
             </tr>
           ))}
         </tbody>
