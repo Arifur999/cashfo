@@ -5,7 +5,7 @@ import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
 import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListRowActions } from "@/components/smartly/list";
-import { formatCurrency } from "@/lib/customer/currency";
+import { currencySymbol, formatCurrency } from "@/lib/customer/currency";
 import { groupMonthOf } from "@/lib/customer/groupDisplay";
 import { budgetMonths, budgetPageMonths, budgetTotals, categoryRows, closedFor, firstMonthOf, spendByMonthKey } from "@/lib/customer/groupFamily";
 import { monthName } from "@/lib/customer/insights";
@@ -203,7 +203,8 @@ export function GroupBudgetTab({ data, onSet }: GroupBudgetTabProps) {
               const tone = row.budget !== null && row.spent > row.budget ? "bg-expense-fill" : used !== null && warnAt !== null && used >= warnAt ? "bg-warning-fill" : "bg-emerald";
               return (
                 <button key={row.key} type="button" role="listitem" disabled={!isAdmin} onClick={() => onSet(row.key)} aria-label={t("{month}: {spent} spent of {budget}", { month: monthName(row.key, fmt, "long", true), spent: money(row.spent), budget: row.budget === null ? t("Not set") : money(row.budget) })} className={cn("flex flex-col items-center gap-1 rounded-lg border px-0.5 pt-1.5 pb-1 hover:bg-surface-sunken", row.current ? "border-emerald" : "border-transparent")}>
-                  <span className="text-[10.5px] font-semibold text-ink-2 tabular-nums">{toLocaleDigits(row.spent >= 1000 ? `${Math.round(row.spent / 100) / 10}k` : String(Math.round(row.spent)), fmt)}</span>
+                  {/* "Tk 58.5k" over each month, in its bar's colour (the board's label). */}
+                  <span className={cn("text-[10.5px] font-semibold whitespace-nowrap tabular-nums", tone === "bg-expense-fill" ? "text-expense" : tone === "bg-warning-fill" ? "text-warning" : "text-ink-2")}>{`${currencySymbol(data.currency, fmt)} ${toLocaleDigits(row.spent >= 1000 ? `${Math.round(row.spent / 100) / 10}k` : String(Math.round(row.spent)), fmt)}`}</span>
                   <span className="flex h-32 items-end gap-0.5">
                     <span className="w-2.5 rounded-t-sm bg-surface-sunken" style={{ height: `${((row.budget ?? 0) / peak) * 100}%` }} />
                     <span className={cn("w-2.5 rounded-t-sm", tone)} style={{ height: `${(row.spent / peak) * 100}%` }} />
