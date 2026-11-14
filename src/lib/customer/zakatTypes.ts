@@ -35,8 +35,10 @@ export interface ZakatLine {
   forSale?: boolean;
   // An investment's maturity day, null when it has none.
   maturesOn?: string | null;
-  // A wallet's number as "•••• 7890" (its subtype is the detail).
+  // A wallet's number as "•••• 7890" (its subtype is the detail), and
+  // its Bangla name when it has one.
   number?: string | null;
+  nameBn?: string | null;
 }
 
 export interface ZakatStep {

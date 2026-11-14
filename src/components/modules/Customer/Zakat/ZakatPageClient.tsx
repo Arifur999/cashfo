@@ -20,7 +20,7 @@ import {
   setZakatLineAction,
   type ZakatResult,
 } from "@/lib/customer/zakatActions";
-import { nextUnchecked } from "@/lib/customer/zakatDisplay";
+import { lineName, nextUnchecked } from "@/lib/customer/zakatDisplay";
 import type { ZakatCheckStep, ZakatDebtMode, ZakatLine, ZakatPayment, ZakatStepId, ZakatSummary } from "@/lib/customer/zakatTypes";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ZakatAddDialog, type AddTarget } from "./ZakatAddDialog";
@@ -50,7 +50,7 @@ const FRAME = "gap-[18px] leading-[normal] md:pt-6 md:pb-10";
 // worked out afresh, which replaces the one on screen. One change runs at
 // a time, so an older answer can never land over a newer one.
 export function ZakatPageClient({ businessId, summary: initial, canSee, currency, readOnly }: ZakatPageClientProps) {
-  const { t, fmt } = useLocale();
+  const { t, fmt, locale } = useLocale();
   const router = useRouter();
   const money = (value: number | string) => formatCurrency(value, currency, fmt);
   const [summary, setSummary] = useState(initial);
@@ -139,7 +139,7 @@ export function ZakatPageClient({ businessId, summary: initial, canSee, currency
       line.metal && line.weightVori
         ? { group: step, name: line.name, metal: line.metal, weightVori: Number(line.weightVori) }
         : { group: step, name: line.name, amount: Number(line.amount) };
-    toast.success(t("Removed"), { action: { label: t("Undo"), onClick: () => void run(`undo:${line.key}`, () => addZakatExtraAction(businessId, again), "Couldn't add it.") } });
+    toast.success(t("Removed"), { action: { label: t("Undo@@zakat"), onClick: () => void run(`undo:${line.key}`, () => addZakatExtraAction(businessId, again), "Couldn't add it.") } });
   };
   const onCheck = async (step: ZakatCheckStep, checked: boolean) => {
     if (!idle()) return;
@@ -155,9 +155,9 @@ export function ZakatPageClient({ businessId, summary: initial, canSee, currency
     if (!next) return;
     // Undo records it again: a new expense from the same wallet.
     const again = { amount: Number(payment.amount), paidOn: payment.paidOn, accountId: payment.accountId, ...(payment.givenTo && { givenTo: payment.givenTo }) };
-    toast.success(t("Entry deleted"), {
+    toast.success(t("Entry deleted@@zakat"), {
       description: t("Its expense was taken back too."),
-      action: { label: t("Undo"), onClick: () => void run(`undo:${payment.id}`, () => recordZakatAction(businessId, again), "Couldn't save the zakat you gave.") },
+      action: { label: t("Undo@@zakat"), onClick: () => void run(`undo:${payment.id}`, () => recordZakatAction(businessId, again), "Couldn't save the zakat you gave.") },
     });
   };
 
@@ -173,8 +173,7 @@ export function ZakatPageClient({ businessId, summary: initial, canSee, currency
   const cashLines = summary.steps.find((step) => step.step === "CASH")?.lines ?? [];
   const walletName = (id: string) => {
     const line = cashLines.find((each) => each.source === "ACCOUNT" && each.id === id);
-    if (!line) return "";
-    return line.detail === "cash" && line.name === "Cash" ? t("Cash") : line.name;
+    return line ? lineName(line, t, locale === "bn") : "";
   };
 
   return (
@@ -186,7 +185,7 @@ export function ZakatPageClient({ businessId, summary: initial, canSee, currency
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="secondary" onClick={() => setModal("how")} className="gap-1.75 px-3.5">
               <CircleHelp className="text-ink-2" />
-              {t("How it works")}
+              {t("How it works@@zakat")}
             </Button>
             {!readOnly && (
               <>

@@ -137,7 +137,7 @@ export function ZakatSettingsDialog({ open, onClose, businessId, summary, curren
           </Button>
           <Button type="submit" disabled={isPending} className="px-4.5">
             {isPending && <Loader size={16} onDark label={t("Saving...")} />}
-            {t("Save")}
+            {t("Save@@zakat")}
           </Button>
         </>
       }

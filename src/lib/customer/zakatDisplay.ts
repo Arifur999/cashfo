@@ -88,7 +88,7 @@ export const STEP_META: Record<ZakatStepId, StepMeta> = {
     suggestions: ["Credit card bill", "Unpaid rent"],
   },
   NOT_COUNTED: {
-    title: "Not counted",
+    title: "Not counted@@zakat-step",
     question: "Your home, car and things you use have no zakat",
     tip: 'If you bought land or a flat to sell it, it counts. Tap "I bought it to sell".',
     kind: "skip",
@@ -231,12 +231,12 @@ const INVESTMENT_KIND_NOTE: Record<string, string> = {
   OTHER: "Investment",
 };
 
-const SUBTYPE_NOTE: Record<string, string> = { cash: "Cash in hand", bank: "Bank account", mfs: "Mobile banking", savings: "Savings account" };
+const SUBTYPE_NOTE: Record<string, string> = { cash: "Cash in hand", bank: "Bank account@@zakat", mfs: "Mobile banking", savings: "Savings account" };
 
 // The muted line under a line's name.
 export function lineNote(line: ZakatLine, step: ZakatStepId, perVori: Record<ZakatMetal, number>, money: (value: number | string) => string, t: Translate, locale: FormatLocale): string {
   if (step === "NOT_COUNTED") return line.detail ? t(line.detail) : "";
-  if (!line.counted && line.source !== "EXTRA") return t("Not counted");
+  if (!line.counted && line.source !== "EXTRA") return t("Not counted@@zakat-line");
   if (line.source === "EXTRA") {
     if (line.metal && line.weightVori) return t("{weight} vori · {metal}", { weight: toLocaleDigits(line.weightVori, locale), metal: t(METAL_LABEL[line.metal]) });
     return t("You added this");
@@ -266,6 +266,14 @@ export function lineNote(line: ZakatLine, step: ZakatStepId, perVori: Record<Zak
     return line.debtMode === "FULL" ? t("Whole loan left: {amount}", { amount: money(line.fullAmount ?? 0) }) : t("Due in the next 12 months, of {amount}", { amount: money(line.fullAmount ?? 0) });
   }
   return line.detail === "BUSINESS" ? t("Customer or supplier") : t("Loan you gave");
+}
+
+// A line's name: a wallet's Bangla name in Bangla, and Cash as the page's
+// own word when it has none.
+export function lineName(line: ZakatLine, t: Translate, bangla: boolean): string {
+  if (line.source !== "ACCOUNT") return line.name;
+  if (bangla && line.nameBn) return line.nameBn;
+  return line.detail === "cash" && line.name === "Cash" ? t("Cash") : line.name;
 }
 
 // "2 Nov 2026 · Cash · Expense" under a zakat given.

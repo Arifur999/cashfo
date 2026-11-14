@@ -3,7 +3,7 @@
 import { Check, Plus, Scale, Trash2 } from "lucide-react";
 import Link from "next/link";
 import IconAction from "@/components/smartly/IconAction";
-import { checkedCount, lineNote, STEP_META } from "@/lib/customer/zakatDisplay";
+import { checkedCount, lineName, lineNote, STEP_META } from "@/lib/customer/zakatDisplay";
 import type { ZakatCheckStep, ZakatDebtMode, ZakatLine, ZakatStep, ZakatStepId, ZakatSummary } from "@/lib/customer/zakatTypes";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -118,7 +118,7 @@ function StepBlock({ step, index, summary, money, open, onOpen, pending, readOnl
             ok ? "bg-success text-white" : open ? "border-[1.5px] border-emerald text-emerald" : "border-[1.5px] border-input text-ink-muted",
           )}
         >
-          {ok ? <Check className="size-3.75" strokeWidth={3} aria-label={t("Checked")} /> : formatCount(index + 1, fmt)}
+          {ok ? <Check className="size-3.75" strokeWidth={3} aria-label={t("Checked@@zakat")} /> : formatCount(index + 1, fmt)}
         </span>
         <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-[10px] max-sm:hidden", look.tile)}>
           <Glyph d={look.icon} size={17} />
@@ -129,7 +129,7 @@ function StepBlock({ step, index, summary, money, open, onOpen, pending, readOnl
         </span>
         <span className="flex shrink-0 flex-col items-end gap-0.5">
           <span className={cn("text-[15px] font-bold whitespace-nowrap tabular-nums", meta.kind === "minus" ? "text-loss-ink" : meta.kind === "skip" ? "text-ink-faint" : "text-ink")}>{total}</span>
-          {checkable && <span className={cn("text-[11.5px] font-semibold", ok ? "text-tint-green-ink" : "text-warning")}>{t(ok ? "Checked" : "To check")}</span>}
+          {checkable && <span className={cn("text-[11.5px] font-semibold", ok ? "text-tint-green-ink" : "text-warning")}>{t(ok ? "Checked@@zakat" : "To check")}</span>}
         </span>
         <Glyph d={open ? "m18 15-6-6-6 6" : "m6 9 6 6 6-6"} size={18} className="shrink-0 text-ink-faint" />
       </button>
@@ -168,7 +168,7 @@ function StepBlock({ step, index, summary, money, open, onOpen, pending, readOnl
                 )}
               >
                 <Check className="size-3.5" strokeWidth={2.75} aria-hidden="true" />
-                {t(ok ? "Checked" : "Yes, this is right")}
+                {t(ok ? "Checked@@zakat" : "Yes, this is right")}
               </button>
             )}
           </div>
@@ -196,7 +196,7 @@ const DEBT_MODES: { value: ZakatDebtMode; label: string }[] = [
 // it comes from, a debt's 12 months or whole, an asset bought to sell, the
 // amount, and Remove for a line added by hand.
 function LineRow({ line, step, summary, money, busy, readOnly, onToggleLine, onDebtMode, onForSale, onWeigh, onRemoveExtra }: LineRowProps) {
-  const { t, fmt } = useLocale();
+  const { t, fmt, locale } = useLocale();
   const extra = line.source === "EXTRA";
   const minus = step === "YOU_OWE";
   const skip = step === "NOT_COUNTED";
@@ -205,7 +205,7 @@ function LineRow({ line, step, summary, money, busy, readOnly, onToggleLine, onD
   const debtChoice = minus && !extra && line.fullAmount !== undefined && line.fullAmount !== line.yearAmount;
   const weighable = step === "GOLD" && line.source === "ASSET";
   const locked = readOnly || busy;
-  const name = line.source === "ACCOUNT" && line.detail === "cash" && line.name === "Cash" ? t("Cash") : line.name;
+  const name = lineName(line, t, locale === "bn");
 
   return (
     <li
