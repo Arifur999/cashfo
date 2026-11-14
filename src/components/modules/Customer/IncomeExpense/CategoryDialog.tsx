@@ -232,10 +232,11 @@ export function CategoryDialog({ businessId, editing, existing, onClose, onSaved
           <span aria-hidden="true" style={{ "--cat": ieCategoryColor(color) } as React.CSSProperties} className="cat-tile flex size-8 shrink-0 items-center justify-center rounded-[9px] text-[14px] font-bold">
             {letter}
           </span>
-          <span className="truncate text-body font-semibold text-ink">{name.trim() || t("Category name")}</span>
+          <span className="min-w-0 truncate text-body font-semibold text-ink">{name.trim() || t("Category name")}</span>
           <span className={cn("shrink-0 rounded-full px-2 py-px text-[11.5px] font-semibold", type === "INCOME" ? "bg-success-soft text-tint-green-ink" : "bg-expense-soft text-expense")}>{t(type === "INCOME" ? "Income" : "Expense")}</span>
           <span className="flex-1" />
-          <span className="text-caption whitespace-nowrap text-ink-muted">{t("In the transaction form")}</span>
+          {/* A phone has no room for it beside the name. */}
+          <span className="text-caption whitespace-nowrap text-ink-muted max-sm:hidden">{t("In the transaction form")}</span>
         </div>
       </div>
     </IEDialog>
