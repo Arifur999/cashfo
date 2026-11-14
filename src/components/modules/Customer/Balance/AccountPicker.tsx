@@ -89,7 +89,7 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
   return (
     <Popover open={open} onOpenChange={openChange}>
       <PopoverAnchor asChild>
-        <div className={cn("flex h-11 items-center gap-2 rounded-sm border bg-surface pr-2 pl-2.5 transition-[border-color,box-shadow]", open ? "border-focus-ring focus-halo" : "border-input")}>
+        <div className={cn("flex h-11 items-center gap-2.5 rounded-sm border bg-surface pr-3 pl-2.5 transition-[border-color,box-shadow]", open ? "border-focus-ring focus-halo" : "border-input")}>
           <PopoverTrigger asChild>
             <button type="button" id={id} aria-labelledby={labelId ? `${labelId} ${id}` : undefined} className="flex h-full min-w-0 flex-1 items-center gap-2.5 text-left">
               {selected ? (
@@ -102,8 +102,8 @@ export function AccountPicker({ id, labelId, wallets, others, value, onChange, p
                 </>
               ) : (
                 <>
-                  <Search className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate text-body text-ink-muted">{t("Search any account: wallets, income, expense…")}</span>
+                  <Search className="ml-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate pl-0.5 text-body text-ink-muted">{t("Search any account: wallets, income, expense…")}</span>
                 </>
               )}
             </button>

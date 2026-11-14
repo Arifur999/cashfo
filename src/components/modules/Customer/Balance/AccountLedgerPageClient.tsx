@@ -458,7 +458,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                       );
                     })}
                   </div>
-                  <NativeSelect size="sm" aria-label={t("Type")} value={filters.kind ?? ""} onChange={(event) => narrow({ kind: event.target.value || undefined })} frameClassName="h-9.5 min-w-37.5 rounded-full" className="rounded-full pl-3.5 text-[13px]">
+                  <NativeSelect size="sm" aria-label={t("Type")} value={filters.kind ?? ""} onChange={(event) => narrow({ kind: event.target.value || undefined })} frameClassName="h-9.5 min-w-37.5 rounded-full" className="rounded-full pr-8 pl-3.5 text-[13px]">
                     <option value="">{t("All types")}</option>
                     {(filters.kind && !kinds.includes(filters.kind) ? [...kinds, filters.kind] : kinds).map((kind) => (
                       <option key={kind} value={kind}>
@@ -477,7 +477,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                       onKeyDown={(event) => event.key === "Escape" && setQuery("")}
                       maxLength={80}
                       placeholder={t("Search entries")}
-                      className="h-9 min-w-0 flex-1 bg-transparent text-[13.5px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+                      className="h-9 min-w-0 flex-1 bg-transparent px-0.5 text-[13.5px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
                     />
                     {query && (
                       <button type="button" onClick={() => setQuery("")} aria-label={t("Clear search")} title={t("Clear search")} className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-2">
@@ -501,7 +501,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
                 )
               }
             >
-              <ListHead showOnPhone columns={COLUMNS}>
+              <ListHead showOnPhone columns={COLUMNS} className="h-9">
                 <ListHeadCell>#</ListHeadCell>
                 <ListHeadCell>{t("Date")}</ListHeadCell>
                 <ListHeadCell>{t("Received / Sent")}</ListHeadCell>
@@ -581,7 +581,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
 // A balance line on the table-head band, under the Balance column.
 function BalanceLine({ label, kind, value, strong = false }: { label: string; kind: StatementLine["kind"]; value: string; strong?: boolean }) {
   return (
-    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("h-11.5 py-0 text-body", strong && "h-auto min-h-13.5 py-1.5")}>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("h-11.75 py-0 text-body", strong && "h-auto min-h-13.5 py-1.5")}>
       <ListCell aria-hidden="true" />
       <ListCell aria-colspan={6} className="col-span-6">
         <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-2")}>{label}</span>
