@@ -342,7 +342,6 @@ export const referralsDictionary: Record<string, string> = {
   "came from {link}": "এসেছেন {link} থেকে",
   "came from your main link": "এসেছেন আপনার মূল লিংক থেকে",
   "Refunded": "রিফান্ড হয়েছে",
-  "Pending": "অপেক্ষমাণ",
   "{plan} · joined {date}": "{plan} · যোগ দিয়েছেন {date}",
   "Joined {date} · Free plan": "যোগ দিয়েছেন {date} · ফ্রি প্ল্যান",
   "See all {count} friend": "{count} জন বন্ধুকেই দেখুন",
