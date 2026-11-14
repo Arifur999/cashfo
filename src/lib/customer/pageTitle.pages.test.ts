@@ -8,7 +8,7 @@ import { findNavLocation, NAV_SECTIONS, queryOf } from "./nav";
 const ROOT = join(process.cwd(), "src", "app", "(customerLayout)");
 
 // Pages that only redirect elsewhere, so the browser never shows them.
-const REDIRECT_STUBS = new Set(["/budget-planning", "/income-planning", "/income-category", "/assets-management", "/savings-goals/overview", "/balance/overview", "/balance/wallet"]);
+const REDIRECT_STUBS = new Set(["/budget-planning", "/income-planning", "/income-category", "/assets-management", "/investments", "/savings-goals/overview", "/balance/overview", "/balance/wallet"]);
 
 const pageFiles = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
