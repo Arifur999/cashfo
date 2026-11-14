@@ -146,8 +146,8 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
                       onBlur={() => setActive(null)}
                       className={cn("flex h-full w-21 cursor-default items-end justify-center gap-1 rounded-t-lg outline-none focus-visible:ring-2 focus-visible:ring-focus-ring", now && "bg-surface-sunken dark:bg-pick-wash")}
                     >
-                      <span className={cn("w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-chart-income" : "bg-bar-income-dim")} style={{ height: height(point.income) }} />
-                      <span className={cn("w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-bar-expense" : "bg-bar-expense-dim")} style={{ height: height(point.expense) }} />
+                      <span className={cn("rp-colbar w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-chart-income" : "bg-bar-income-dim")} style={{ height: height(point.income) }} />
+                      <span className={cn("rp-colbar w-6.5 rounded-[8px_8px_4px_4px]", now ? "bg-bar-expense" : "bg-bar-expense-dim")} style={{ height: height(point.expense) }} />
                     </button>
                   );
                 })}

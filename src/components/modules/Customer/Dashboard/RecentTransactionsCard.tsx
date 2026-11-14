@@ -95,7 +95,7 @@ export function RecentTransactionsCard({ businessId, transactions, categoriesByI
 
       {/* Desktop: the board's table. */}
       <div role="table" aria-label={t("Recent transactions")} className="hidden md:block">
-        <div role="row" className={cn("grid border-y border-line bg-table-head px-5.5 py-2.5 text-caption font-medium text-ink-muted", COLUMNS)}>
+        <div role="row" className={cn("rp-th grid border-y border-line bg-table-head px-5.5 py-2.5 text-caption font-medium text-ink-muted", COLUMNS)}>
           <span role="columnheader">{t("Transaction")}</span>
           <span role="columnheader">{t("Account")}</span>
           <span role="columnheader">{t("Date")}</span>

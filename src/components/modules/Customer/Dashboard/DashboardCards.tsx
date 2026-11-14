@@ -15,9 +15,11 @@ import { cn } from "@/lib/utils";
 import { type FlowKey, flowBar, flowLines, percentOf, summaryFacts, worth, worthBar, worthShare, type WorthKey } from "./dashboardWorth";
 import type { HomeData } from "./homeTypes";
 
-export const BOARD_CARD = "min-w-0 rounded-card border border-line-card bg-surface shadow-card";
-const H2 = "text-[17px] leading-[normal] font-semibold tracking-[-0.01em] text-ink";
-const SUB = "mt-0.5 text-small leading-[normal] text-ink-muted";
+// rp-*, db-*: the Dashboard board's own class names, which its premium skin
+// (globals.css, data-skin="premium") styles in light mode.
+export const BOARD_CARD = "rp-card min-w-0 rounded-card border border-line-card bg-surface shadow-card";
+const H2 = "rp-h2 text-[17px] leading-[normal] font-semibold tracking-[-0.01em] text-ink";
+const SUB = "rp-sub mt-0.5 text-small leading-[normal] text-ink-muted";
 const LINK = "inline-flex items-center gap-1 text-small font-semibold whitespace-nowrap text-emerald hover:underline";
 const BAR = "block h-2 overflow-hidden rounded-full bg-line-card";
 const HIDDEN = "৳ ••••••";
@@ -119,7 +121,7 @@ export function NetWorthHero({ data, hidden, onToggle }: { data: HomeData; hidde
         </button>
       </div>
       <div className="relative flex flex-col gap-2">
-        <span className="text-[38px] leading-[1.1] font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums max-sm:text-[30px]">{mask(money(net))}</span>
+        <span className="rp-num rp-nw text-[38px] leading-[1.1] font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums max-sm:text-[30px]">{mask(money(net))}</span>
         {change !== null && (
           <span className="flex flex-wrap items-center gap-2 text-small text-hero-sage">
             <span className={cn("rounded-full px-2.25 py-[3px] font-semibold tabular-nums", change >= 0 ? "bg-worth-up/18 text-worth-up" : "bg-worth-down/18 text-worth-down")}>
@@ -182,7 +184,7 @@ export function WealthCard({ data, hidden }: { data: HomeData; hidden: boolean }
         {(Object.keys(WEALTH) as WorthKey[]).map((key, index) => {
           const look = WEALTH[key];
           return (
-            <Link key={key} href={look.href} className={cn("-mx-1.5 grid grid-cols-[36px_minmax(0,1fr)_auto_64px] items-center gap-x-3 rounded-[12px] px-1.5 py-2 text-ink transition-colors hover:bg-row-hover", index > 0 && "border-t border-divider")}>
+            <Link key={key} href={look.href} className={cn("db-row -mx-1.5 grid grid-cols-[36px_minmax(0,1fr)_auto_64px] items-center gap-x-3 rounded-[12px] px-1.5 py-2 text-ink transition-colors hover:bg-row-hover", index > 0 && "border-t border-divider")}>
               <span className={cn("flex size-9 items-center justify-center rounded-[10px]", look.tile)}>
                 <look.Icon className="size-4.5" aria-hidden="true" />
               </span>
@@ -276,16 +278,16 @@ export function KpiCards({ data }: { data: HomeData }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <Link key={card.label} href={card.href} className={cn(BOARD_CARD, "flex flex-col gap-2 px-4.5 py-4 text-ink transition-[border-color,box-shadow] hover:border-hero-sage hover:shadow-float")}>
+        <Link key={card.label} href={card.href} className={cn(BOARD_CARD, "db-kpi flex flex-col gap-2 px-4.5 py-4 text-ink transition-[border-color,box-shadow] hover:border-hero-sage hover:shadow-float")}>
           <div className="flex items-center justify-between gap-2">
             <span className="text-small font-medium text-ink-muted">{card.label}</span>
             <span className={cn("flex size-7.5 shrink-0 items-center justify-center rounded-[9px]", card.tile)}>
               <card.Icon className="size-4" aria-hidden="true" />
             </span>
           </div>
-          <span className={cn("text-[24px] font-semibold tracking-[-0.02em] whitespace-nowrap tabular-nums", card.valueTone)}>{card.value}</span>
+          <span className={cn("rp-num rp-kpi text-[24px] font-semibold tracking-[-0.02em] whitespace-nowrap tabular-nums", card.valueTone)}>{card.value}</span>
           {card.bar && (
-            <span className="block h-1.5 overflow-hidden rounded-full bg-line-card">
+            <span className="rp-bar block h-1.5 overflow-hidden rounded-full bg-line-card">
               <span className={cn("block h-full rounded-full", card.bar.tone)} style={{ width: `${card.bar.width}%` }} />
             </span>
           )}
@@ -335,7 +337,7 @@ export function CashFlowCard({ data }: { data: HomeData }) {
         </div>
         <div className="flex flex-col items-end gap-0.5">
           <span className="text-caption text-ink-muted">{t("Net")}</span>
-          <span className={cn("text-[20px] font-semibold tabular-nums", net < 0 ? "text-expense" : "text-tint-green-ink")}>{net === 0 ? money(0) : signed(net)}</span>
+          <span className={cn("rp-num rp-n20 text-[20px] font-semibold tabular-nums", net < 0 ? "text-expense" : "text-tint-green-ink")}>{net === 0 ? money(0) : signed(net)}</span>
         </div>
       </div>
       <div className="flex flex-col">
@@ -381,7 +383,7 @@ export function UpcomingEventsCard({ data }: { data: HomeData }) {
         {events.map((event) => {
           const look = typeLook(event.type);
           return (
-            <Link key={event.id} href={`/events?day=${event.date}`} className="-mx-1.5 grid grid-cols-[46px_minmax(0,1fr)] items-center gap-x-3 rounded-[12px] p-1.5 text-ink transition-colors hover:bg-row-hover">
+            <Link key={event.id} href={`/events?day=${event.date}`} className="db-row -mx-1.5 grid grid-cols-[46px_minmax(0,1fr)] items-center gap-x-3 rounded-[12px] p-1.5 text-ink transition-colors hover:bg-row-hover">
               <span className={cn("flex h-12 w-11.5 flex-col items-center justify-center rounded-[12px] leading-[1.05]", look.bg, look.fg)}>
                 <span className="text-[17px] font-bold">{toLocaleDigits(String(Number(event.date.slice(8))), fmt)}</span>
                 <span className="text-[11px] font-semibold">{formatDay(event.date, "MMM", fmt)}</span>
@@ -441,13 +443,13 @@ export function LoansCard({ data, hidden }: { data: HomeData; hidden: boolean })
     <section className={cn(BOARD_CARD, "flex flex-col gap-3 px-5.5 py-5")}>
       <Head title={t("Loans")} sub={t("Who owes you and whom you owe")} href="/loan-management/dashboard" link={t("View all")} />
       <div className="grid grid-cols-2 gap-2.5">
-        <div className="flex min-w-0 flex-col gap-[3px] rounded-[14px] border border-success-soft bg-note-green px-3.5 py-3">
+        <div className="rp-tile flex min-w-0 flex-col gap-[3px] rounded-[14px] border border-success-soft bg-note-green px-3.5 py-3">
           <span className="truncate text-caption text-tint-green-ink">{t("Pawna")}</span>
-          <span className="text-[17px] font-semibold whitespace-nowrap text-tint-green-ink tabular-nums">{mask(money(data.worth.parts.pawna))}</span>
+          <span className="rp-tv text-[17px] font-semibold whitespace-nowrap text-tint-green-ink tabular-nums">{mask(money(data.worth.parts.pawna))}</span>
         </div>
-        <div className="flex min-w-0 flex-col gap-[3px] rounded-[14px] border border-expense-soft bg-expense-soft/40 px-3.5 py-3">
+        <div className="rp-tile flex min-w-0 flex-col gap-[3px] rounded-[14px] border border-expense-soft bg-expense-soft/40 px-3.5 py-3">
           <span className="truncate text-caption text-expense">{t("Dena")}</span>
-          <span className="text-[17px] font-semibold whitespace-nowrap text-expense tabular-nums">{mask(money(data.worth.parts.dena))}</span>
+          <span className="rp-tv text-[17px] font-semibold whitespace-nowrap text-expense tabular-nums">{mask(money(data.worth.parts.dena))}</span>
         </div>
       </div>
       <div className="flex flex-col">
@@ -482,9 +484,9 @@ export function AssetsCard({ data, hidden }: { data: HomeData; hidden: boolean }
   return (
     <section className={cn(BOARD_CARD, "flex flex-col gap-3 px-5.5 py-5")}>
       <Head title={t("Assets")} sub={t("{count} assets you own", { count: formatCount(data.worth.counts.assets, fmt) })} href="/assets-management/dashboard" link={t("View all")} />
-      <div className="flex min-w-0 flex-col gap-[3px] rounded-[14px] border border-line-card bg-table-head px-3.5 py-3">
+      <div className="rp-tile rp-tile-plain flex min-w-0 flex-col gap-[3px] rounded-[14px] border border-line-card bg-table-head px-3.5 py-3">
         <span className="truncate text-caption text-ink-muted">{t("Total value today")}</span>
-        <span className="text-[17px] font-semibold whitespace-nowrap text-tint-blue-ink tabular-nums">{mask(money(total))}</span>
+        <span className="rp-tv text-[17px] font-semibold whitespace-nowrap text-tint-blue-ink tabular-nums">{mask(money(total))}</span>
         {gain !== null && !hidden && (
           <span className={cn("text-caption font-semibold tabular-nums", gain >= 0 ? "text-tint-green-ink" : "text-expense")}>
             {t(gain >= 0 ? "Up {amount} since you bought them" : "Down {amount} since you bought them", { amount: money(Math.abs(gain)) })}
