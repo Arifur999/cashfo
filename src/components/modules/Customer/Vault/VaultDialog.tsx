@@ -52,7 +52,7 @@ export function VaultDialog({ open, onClose, title, sub, lead, actions, width = 
           )}
         </div>
         {actions}
-        <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-page text-ink-soft hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11">
+        <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-page text-ink-soft hover:bg-surface-sunken hover:text-ink disabled:opacity-50 pointer-coarse:size-11 max-sm:bg-transparent max-sm:text-ink-muted">
           <X className="size-4.5" aria-hidden="true" />
         </button>
       </div>
@@ -65,7 +65,7 @@ export function VaultDialog({ open, onClose, title, sub, lead, actions, width = 
       <DialogContent
         showCloseButton={false}
         onOpenAutoFocus={onOpenAutoFocus}
-        className={cn(WIDTHS[width], "flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[22px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]")}
+        className={cn(WIDTHS[width], "flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 sm:rounded-[22px] text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]")}
       >
         {onSubmit ? (
           <form noValidate onSubmit={onSubmit} autoComplete="off" className="flex min-h-0 flex-1 flex-col">

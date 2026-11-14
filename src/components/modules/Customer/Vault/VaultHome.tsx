@@ -709,23 +709,9 @@ export function VaultHome({ token, entries, load, onRetry, expiresAt, onEntries,
         <VaultCheckup entries={entries} checkup={checkup} failed={checkupLoad === "failed"} onRetry={retryCheckup} busy={isSaving} onBack={closeCheckup} onChange={changeOnSite} onFine={markFine} />
       ) : (
         <>
-          {/* Phones (VaultMobile): one white band under the bar with the search, the sort and the chips. */}
+          {/* Phones (VaultMobile): one white band under the bar with the search and the chips. */}
           <div className="-mx-4 -mt-5 flex flex-col gap-2.5 border-b border-line bg-surface px-4 pt-3 pb-2 md:hidden">
-            <div className="flex gap-2">
-              {searchBox("h-11.5 flex-1 rounded-[12px] bg-strip text-body-lg", "md")}
-              {/* The select is laid over the icon, so a tap opens the phone's own picker. */}
-              <label className="relative flex size-11.5 shrink-0 items-center justify-center rounded-[12px] border border-line-strong bg-surface text-ink-2 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring">
-                <ArrowUpDown className="size-5" aria-hidden="true" />
-                {sort !== "az" && <span aria-hidden="true" className="absolute top-2 right-2 size-2 rounded-full bg-emerald" />}
-                <select value={sort} onChange={(event) => setSort(event.target.value as VaultSort)} aria-label={t("Sort")} className="absolute inset-0 cursor-pointer appearance-none text-body-lg opacity-0">
-                  {VAULT_SORTS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {t(option.label)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            {searchBox("h-11.5 rounded-[12px] bg-strip text-body-lg", "md")}
             {chips}
           </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, Star, UserRound } from "lucide-react";
+import { KeyRound, UserRound } from "lucide-react";
 import { memo } from "react";
 import { ListCell, ListRow, ListRowActions, ListRowButton } from "@/components/smartly/list";
 import { SOFT_TONE } from "@/components/smartly/tones";
@@ -33,19 +33,13 @@ const ICON_BUTTON = "flex size-11 shrink-0 items-center justify-center rounded-f
 export const EntryRow = memo(function EntryRow({ entry, columns, selected, attention, onSelect, onCopyUsername, onCopyPassword }: EntryRowProps) {
   const { t } = useLocale();
   return (
-    <ListRow columns={columns} density="relaxed" selected={selected} className={cn("pr-2 md:h-12.5 md:min-h-12.5 md:gap-x-3 md:py-0 md:pr-3 md:pl-4", selected && "bg-emerald-soft shadow-[inset_3px_0_0_var(--emerald)]")}>
+    <ListRow columns={columns} density="relaxed" selected={selected} className={cn("min-h-[65px] gap-x-1 border-page py-0 pr-2 leading-[normal] md:h-12.5 md:min-h-12.5 md:gap-x-3 md:pr-3 md:pl-4", selected && "bg-emerald-soft shadow-[inset_3px_0_0_var(--emerald)]")}>
       <ListCell>
         <ListRowButton onClick={() => onSelect(entry.id)} aria-current={selected || undefined} className="flex items-center gap-3">
-          <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-[10px] text-body-lg font-bold md:size-8 md:rounded-[9px] md:text-body", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>{avatarLetter(entry.title)}</span>
+          <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-[11px] text-body-lg font-bold md:size-8 md:rounded-[9px] md:text-body", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>{avatarLetter(entry.title)}</span>
           <span className="flex min-w-0 flex-col gap-0.5 md:gap-px">
             <span className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate text-body-lg font-semibold text-ink md:text-body">{entry.title}</span>
-              {entry.isFavorite && (
-                <>
-                  <Star className="size-3.25 shrink-0 fill-warning-fill text-warning-fill" strokeWidth={1.5} aria-hidden="true" />
-                  <span className="sr-only">{t("Favorite")}</span>
-                </>
-              )}
+              <span className="truncate text-[15px] font-semibold text-ink md:text-body">{entry.title}</span>
               {attention && (
                 <>
                   <span className="size-1.75 shrink-0 rounded-full bg-warning-fill" aria-hidden="true" />
@@ -53,7 +47,7 @@ export const EntryRow = memo(function EntryRow({ entry, columns, selected, atten
                 </>
               )}
             </span>
-            {entry.usernameOrEmail && <span className="truncate text-small text-ink-muted md:text-[12.5px] md:leading-normal">{entry.usernameOrEmail}</span>}
+            {entry.usernameOrEmail && <span className="truncate text-small text-ink-muted md:text-[12.5px]">{entry.usernameOrEmail}</span>}
           </span>
         </ListRowButton>
       </ListCell>
