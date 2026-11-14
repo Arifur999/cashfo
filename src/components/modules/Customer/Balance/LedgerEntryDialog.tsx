@@ -59,12 +59,12 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
           ? t("Added with Match real balance on the Accounts page, so this ledger matches your bank or wallet app.")
           : (kind === "LOAN_IN" || kind === "LOAN_OUT") && party
             ? kind === "LOAN_IN"
-              ? t("Money from {name}, recorded in Loan Management › Transactions.", { name: party })
-              : t("Paid to {name}, recorded in Loan Management › Transactions.", { name: party })
+              ? t("Money from {name}, recorded in Loan › Transactions.", { name: party })
+              : t("Paid to {name}, recorded in Loan › Transactions.", { name: party })
             : (kind === "ASSET_PURCHASE" || kind === "ASSET_SALE") && party
               ? kind === "ASSET_SALE"
-                ? t("Money from selling {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
-                : t("Paid for {asset}, recorded in Assets Management › Purchase & Sell.", { asset: party })
+                ? t("Money from selling {asset}, recorded in Assets › Purchase & Sell.", { asset: party })
+                : t("Paid for {asset}, recorded in Assets › Purchase & Sell.", { asset: party })
               : row.investmentId && party
                 ? kind === "INCOME"
                   ? t("Profit from {name}, recorded in Investments.", { name: party })
@@ -136,14 +136,14 @@ export function LedgerEntryDialog({ entry, accountName, accountBalance, business
           <Chip tone={meta.tone} className="h-5.25 px-2.5">
             {t(meta.label)}
           </Chip>
-          <span className={cn("inline-flex items-center gap-1.25 text-small font-semibold", isIn ? "text-income" : "text-expense")}>
-            <span className={cn("flex size-5.5 items-center justify-center rounded-full", isIn ? "bg-income-soft" : "bg-expense-soft")}>
+          <span className={cn("inline-flex items-center gap-1.25 text-small font-semibold", isIn ? "text-tint-green-ink" : "text-expense")}>
+            <span className={cn("flex size-5.5 items-center justify-center rounded-full", isIn ? "bg-tint-green" : "bg-expense-soft")}>
               {isIn ? <ArrowDownLeft className="size-3" strokeWidth={2.5} aria-hidden="true" /> : <ArrowUpRight className="size-3" strokeWidth={2.5} aria-hidden="true" />}
             </span>
             {t(isIn ? "Received" : "Sent")}
           </span>
         </span>
-        <span className={cn("text-[30px] font-bold tracking-[-0.02em] tabular-nums", isIn ? "text-income" : "text-expense")}>{`${isIn ? "+" : "−"} ${formatCurrency(amount, currency, fmt)}`}</span>
+        <span className={cn("text-[30px] font-bold tracking-[-0.02em] tabular-nums", isIn ? "text-tint-green-ink" : "text-expense")}>{`${isIn ? "+" : "−"} ${formatCurrency(amount, currency, fmt)}`}</span>
         <span className="text-small text-ink-muted">{formatDate(row.date, undefined, fmt)}</span>
       </div>
       <dl className="flex flex-col overflow-hidden rounded-[14px] border border-line">

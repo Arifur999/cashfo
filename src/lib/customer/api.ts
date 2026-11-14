@@ -409,6 +409,9 @@ export interface WalletOverviewRow {
   color?: string | null;
   lastActivity?: string | null;
   entryCount?: number;
+  // The entries still standing (a deleted one and its reversal left out):
+  // what the account's ledger lists. An older backend sends none.
+  standingCount?: number;
   status: AccountStatus;
   openingBalance: string;
   totalIn: string;

@@ -284,7 +284,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
   return (
     <PageFrame className="gap-5 leading-[normal]">
       {printing && (
-        <PrintPreview subtitle={`A4 · ${accountName} · ${periodLabel}`} onClose={() => setPrinting(null)}>
+        <PrintPreview subtitle={`A4 · ${accountName} · ${periodLabel}`} onClose={() => setPrinting(null)} overlayClassName="gap-3 bg-print-bar/55 pt-4 pb-4" articleClassName="sm:px-10 sm:py-9">
           <TransferStatement
             transfers={statementRows}
             account={accountName}
@@ -313,7 +313,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                 </Button>
               )}
               {canManage && (
-                <Button onClick={() => setCreating(true)} className="rounded-full px-4">
+                <Button onClick={() => setCreating(true)} className="gap-1.5 rounded-full px-4">
                   <Plus strokeWidth={2.5} className="size-4" />
                   {t("New transfer")}
                 </Button>
@@ -349,7 +349,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
                   onKeyDown={(event) => event.key === "Escape" && setQuery("")}
                   maxLength={80}
                   placeholder={t("Search note, account or amount")}
-                  className="h-9 min-w-0 flex-1 bg-transparent text-[13.5px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+                  className="h-9 min-w-0 flex-1 bg-transparent px-0.5 text-[13.5px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
                 />
                 {query && (
                   <button type="button" onClick={() => setQuery("")} aria-label={t("Clear search")} title={t("Clear search")} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-2">
@@ -359,7 +359,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
               </label>
               <span className="hidden flex-1 md:block" />
               <div className="flex flex-wrap items-center gap-3">
-                <NativeSelect size="sm" aria-label={t("Account")} value={accountId} onChange={(event) => router.push(hrefWith({ account: event.target.value || undefined }))} frameClassName="h-10 min-w-42.5 rounded-full">
+                <NativeSelect size="sm" aria-label={t("Account")} value={accountId} onChange={(event) => router.push(hrefWith({ account: event.target.value || undefined }))} frameClassName="h-10 min-w-42.5 rounded-full [&>svg]:right-3.5" className="h-10 rounded-full pr-8.5 pl-3.5 text-[13.5px]">
                   <option value="">{t("All accounts")}</option>
                   {wallets.map((wallet) => (
                     <option key={wallet.id} value={wallet.id}>
@@ -401,7 +401,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
           }
         >
           <>
-              <ListHead showOnPhone columns={COLUMNS}>
+              <ListHead showOnPhone columns={COLUMNS} className="h-9.25 border-t">
                 <ListHeadCell>#</ListHeadCell>
                 <ListHeadCell>{t("Date")}</ListHeadCell>
                 <ListHeadCell>{t("From")}</ListHeadCell>
@@ -488,7 +488,7 @@ export function TransfersPageClient(props: TransfersPageClientProps) {
 
 function Figure({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <Card padding="none" className="flex min-w-0 flex-col gap-1 px-4.5 py-3.5 shadow-xs">
+    <Card padding="none" className="flex min-w-0 flex-col gap-1 rounded-[14px] px-4.5 py-3.5 shadow-xs">
       <span className="text-[12.5px] font-medium text-ink-muted">{label}</span>
       <span className={cn("text-[22px] font-bold tracking-[-0.02em] tabular-nums wrap-anywhere", tone)}>{value}</span>
     </Card>

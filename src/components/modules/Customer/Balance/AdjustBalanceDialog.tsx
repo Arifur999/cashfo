@@ -156,7 +156,7 @@ export function AdjustBalanceDialog({ account, name, kind, onClose, businessId, 
           />
         </Field>
       </div>
-      <div role="status" className={cn("flex items-start gap-2.5 rounded-[12px] border px-3.5 py-3 text-[13.5px] leading-normal", status.tone)}>
+      <div role="status" className={cn("flex items-start gap-2.5 rounded-[12px] border px-3.5 py-3 text-[13.5px] leading-[1.5]", status.tone)}>
         <status.icon className="mt-px size-4.25 shrink-0" aria-hidden="true" />
         <span>{status.text}</span>
       </div>

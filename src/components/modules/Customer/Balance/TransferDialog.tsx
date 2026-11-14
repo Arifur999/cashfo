@@ -213,7 +213,7 @@ export function TransferDialog({ open, onClose, businessId, currency, editing = 
         {line(t("Current balance"), money(before))}
         {side === "from" ? line(t("Transfer amount"), `− ${money(value)}`, "text-expense") : line(t("Amount received"), `+ ${money(value)}`, "text-success")}
         {side === "from"
-          ? line(t("Charge · {category}", { category: fee > 0 ? (category ? t(category) : t("pick a category")) : t("none") }), fee > 0 ? `− ${money(fee)}` : money(0), fee > 0 ? "text-expense" : "text-ink-faint")
+          ? line(t("Charge · {category}", { category: fee > 0 ? (category ? t(category) : t("pick a category")) : t("none") }), fee > 0 ? `− ${money(fee)}` : money(0), "text-expense")
           : line(t("Charge"), money(0), "text-ink-faint")}
         <span className="flex justify-between gap-2 border-t border-line pt-1.75 text-[13.5px]">
           <span className="font-semibold text-ink">{t("New balance")}</span>
