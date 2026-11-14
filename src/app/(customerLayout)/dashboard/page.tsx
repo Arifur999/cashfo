@@ -5,6 +5,7 @@ import { HomePageClient } from "@/components/modules/Customer/Dashboard/HomePage
 import type { HomeData, HomePart } from "@/components/modules/Customer/Dashboard/homeTypes";
 import { getLedger, getWalletsOverview } from "@/lib/customer/accounts";
 import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
+import { accountColor } from "@/lib/customer/balanceDisplay";
 import { API_BASE_URL, type CategoryBreakdown, type WalletOverviewRow, type WalletsOverview } from "@/lib/customer/api";
 import { customerApi } from "@/lib/customer/apiClient";
 import { getAssets } from "@/lib/customer/assets";
@@ -329,7 +330,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     spending: { total: Number(spending.total), slices: spendingSlices(spending) },
     recentTransactions: recent.data,
     categoriesById: categoryIndex([...incomeCategories, ...expenseCategories]),
-    wallets: activeWallets.map((wallet) => ({ id: wallet.id, name: locale === "bn" && wallet.nameBn ? wallet.nameBn : wallet.name, subtype: wallet.accountSubtype, balance: Number(wallet.currentBalance) })),
+    wallets: activeWallets.map((wallet) => ({ id: wallet.id, name: locale === "bn" && wallet.nameBn ? wallet.nameBn : wallet.name, subtype: wallet.accountSubtype, balance: Number(wallet.currentBalance), color: accountColor(wallet) })),
     budget: budgetOverview
       ? {
           lines:

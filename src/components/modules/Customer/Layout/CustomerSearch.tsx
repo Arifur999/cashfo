@@ -1,15 +1,11 @@
 "use client";
 
-import { FileText, Languages, LogOut, type LucideProps, Moon, Receipt, Repeat2, Search, Sun } from "lucide-react";
+import { FileText, type LucideProps, Receipt, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
 import { useFeature } from "@/components/modules/Customer/Providers/PlatformProvider";
-import { useTheme } from "@/components/modules/Customer/Providers/ThemeProvider";
 import CommandPalette, { CommandMark, useCommandShortcut, type CommandGroup, type CommandItem } from "@/components/smartly/CommandPalette";
-import IconTile from "@/components/smartly/IconTile";
 import Kbd from "@/components/smartly/Kbd";
-import type { Tone } from "@/components/smartly/tones";
-import { saveLanguageAction } from "@/lib/customer/authActions";
 import { CONTACT_TYPE_LABELS, contactInitials } from "@/lib/customer/contactDisplay";
 import { formatCurrency, formatSignedCurrency } from "@/lib/customer/currency";
 import { NAV_FOOT, NAV_FOOT_LABEL, type NavIcon } from "@/lib/customer/nav";
@@ -20,10 +16,9 @@ import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { formatDay, toDateInputValue } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { withoutContext } from "@/lib/i18n/message";
-import { ADD_ACTION_ICONS, useAddActions, WithAddActions } from "./AddActionsProvider";
+import { plural, withoutContext } from "@/lib/i18n/message";
+import { ADD_ACTION_ICONS, WithAddActions } from "./AddActionsProvider";
 import { NAV_ICONS, useNavSections } from "./SidebarNav";
-import { workspaceKind } from "./workspaceKind";
 
 type Icon = React.ComponentType<LucideProps>;
 
@@ -35,7 +30,9 @@ const DEBOUNCE_MS = 250;
 // People and transactions are looked up from this many letters; pages and
 // actions answer from the first.
 const MIN_SEARCH = 2;
-const PAGE_LIMIT = 8;
+// The board's page list: eight to jump to, up to twenty that match.
+const JUMP_LIMIT = 8;
+const PAGE_LIMIT = 20;
 const RECENT_LIMIT = 5;
 // The pages last opened from here, newest first (their keys), for this
 // browser only.
@@ -60,24 +57,13 @@ const rememberPage = (key: string) => {
   }
 };
 
-// The round tile at the start of a row, as the admin palette draws them.
-const Mark = ({ tone, icon: Glyph }: { tone: Tone; icon: Icon }) => (
-  <IconTile tone={tone} size={32} round className="size-8.5">
-    <Glyph />
-  </IconTile>
+// The AppTopbar board's tile at the start of a row: 30px, the page ground,
+// the primary's tint on the highlighted row.
+const Mark = ({ icon: Glyph }: { icon: Icon }) => (
+  <span aria-hidden="true" className="flex size-7.5 shrink-0 items-center justify-center rounded-[9px] bg-page text-ink-2 group-aria-selected:bg-mint-50 group-aria-selected:text-emerald [&_svg]:size-3.75">
+    <Glyph strokeWidth={2} />
+  </span>
 );
-
-interface PaletteAction {
-  key: string;
-  // An English key for t().
-  label: string;
-  sub?: string;
-  // Words that find it besides its name, in both languages.
-  context: string[];
-  mark: React.ReactNode;
-  href?: string;
-  onSelect?: () => void;
-}
 
 // The top bar's search: a field on wide screens and an icon elsewhere, both
 // opening a palette (also on Ctrl K or ⌘K) that finds pages, runs actions
@@ -102,12 +88,9 @@ export function CustomerSearch(props: CustomerSearchProps) {
 }
 
 function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers = true }: CustomerSearchProps) {
-  const { t, locale, fmt, toggleLocale } = useLocale();
-  const { user, activeBusiness, askSignOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const darkModeOn = useFeature("dark_mode");
+  const { t, fmt } = useLocale();
+  const { activeBusiness } = useAuth();
   const loansOn = useFeature("loan_management");
-  const { actions: addActions, run } = useAddActions();
   const sections = useNavSections();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -168,39 +151,14 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers
     key: `${group}:${page.key}`,
     title: t(page.label),
     sub: page.trail.length > 0 ? page.trail.map((part) => t(part)).join(" › ") : undefined,
-    mark: <Mark tone={page.tone} icon={PAGE_ICONS[page.icon] ?? FileText} />,
+    mark: <Mark icon={PAGE_ICONS[page.icon] ?? FileText} />,
     href: page.href,
     onSelect: () => rememberPage(page.key),
   });
+  // Nothing typed: the board's Jump to, the pages last opened first.
   const recentPages = term ? [] : recents.flatMap((key) => pages.filter((page) => page.key === key));
+  const jumpPages = term ? [] : [...recentPages, ...pages.filter((page) => !recents.includes(page.key))].slice(0, JUMP_LIMIT);
   const matchedPages = term ? rankMatches(term, pages, (page) => ({ titles: both(page.label), context: page.trail.flatMap(both) }), PAGE_LIMIT) : [];
-
-  function changeLanguage() {
-    const next = locale === "en" ? "bn" : "en";
-    toggleLocale();
-    void saveLanguageAction(next === "bn" ? "BN" : "EN");
-  }
-
-  const kind = workspaceKind(activeBusiness);
-  const canSwitch = user.businesses.filter((business) => business.type !== "GROUP").length > 1;
-  const themeHint = theme === "dark" ? "Switch to light theme" : "Switch to dark theme";
-  const paletteActions: PaletteAction[] = [
-    ...addActions.map((action) => ({
-      key: `add:${action.key}`,
-      label: action.label,
-      sub: t(action.hint),
-      context: both(action.hint),
-      mark: <Mark tone={action.tone} icon={ADD_ACTION_ICONS[action.icon]} />,
-      onSelect: () => run(action),
-    })),
-    ...(canSwitch
-      ? [{ key: "workspace", label: "Switch workspace", sub: t(`${kind} workspace`), context: both(`${kind} workspace`), mark: <Mark tone="neutral" icon={Repeat2} />, href: "/choose-workspace" }]
-      : []),
-    { key: "language", label: "Change language", sub: locale === "en" ? "বাংলা" : "English", context: ["English", "Bangla", "বাংলা"], mark: <Mark tone="neutral" icon={Languages} />, onSelect: changeLanguage },
-    ...(darkModeOn ? [{ key: "theme", label: "Change theme", sub: t(themeHint), context: both(themeHint), mark: <Mark tone="neutral" icon={theme === "dark" ? Sun : Moon} />, onSelect: toggleTheme }] : []),
-    { key: "sign-out", label: "Sign out", sub: user.email, context: [], mark: <Mark tone="expense" icon={LogOut} />, onSelect: askSignOut },
-  ];
-  const shownActions = term ? rankMatches(term, paletteActions, (action) => ({ titles: both(action.label), context: action.context })) : paletteActions;
 
   // A loan contact opens its statement, a customer or supplier its Books
   // page; one whose pages this workspace doesn't show is left out.
@@ -224,13 +182,13 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers
   // The Add menu's own glyphs for money in, out and between wallets.
   const transactionMark = (type: PaletteTransaction["type"]) =>
     type === "INCOME" ? (
-      <Mark tone="income" icon={ADD_ACTION_ICONS["money-in"]} />
+      <Mark icon={ADD_ACTION_ICONS["money-in"]} />
     ) : type === "EXPENSE" ? (
-      <Mark tone="expense" icon={ADD_ACTION_ICONS["money-out"]} />
+      <Mark icon={ADD_ACTION_ICONS["money-out"]} />
     ) : type === "TRANSFER" ? (
-      <Mark tone="vault" icon={ADD_ACTION_ICONS.between} />
+      <Mark icon={ADD_ACTION_ICONS.between} />
     ) : (
-      <Mark tone="neutral" icon={Receipt} />
+      <Mark icon={Receipt} />
     );
   const transactions = results?.transactions ?? [];
   const transactionItems: CommandItem[] = transactions.map((transaction) => {
@@ -246,15 +204,15 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers
     };
   });
   if (transactions.length > 0) {
-    transactionItems.push({ key: "transaction:all", title: t("See all matching transactions"), mark: <Mark tone="neutral" icon={Search} />, href: `/transactions?search=${encodeURIComponent(term)}` });
+    transactionItems.push({ key: "transaction:all", title: t("See all matching transactions"), mark: <Mark icon={Search} />, href: `/transactions?search=${encodeURIComponent(term)}` });
   }
 
+  // The board's one list: Jump to, or what matched under its count.
+  const matched = [...matchedPages.map((page) => pageItem(page, "page")), ...contactItems, ...transactionItems];
   const groups: CommandGroup[] = [
-    { label: t("Recent"), items: recentPages.map((page) => pageItem(page, "recent")) },
-    { label: t("Pages"), items: matchedPages.map((page) => pageItem(page, "page")) },
-    { label: t("Actions"), items: shownActions.map(({ key, label, sub, mark, href, onSelect }) => ({ key: `action:${key}`, title: t(label), sub, mark, href, onSelect })) },
-    { label: t("Contacts"), items: contactItems },
-    { label: t("Transactions"), items: transactionItems },
+    term
+      ? { label: plural(t, matched.length, "{count} result", "{count} results", undefined, fmt), items: matched }
+      : { label: t("Jump to"), items: jumpPages.map((page) => pageItem(page, "jump")) },
   ].map((group) => ({
     ...group,
     items: group.items.map((item) => ({
@@ -312,7 +270,8 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers
         loading={searching && found?.term !== term}
         minQueryLength={1}
         label={label}
-        placeholder={t("Search pages, people, transactions…")}
+        placeholder={t("Type a page, like transactions or wallets")}
+        variant="board"
         title={t("Search")}
         description={t("Finds pages, actions, people and transactions")}
         empty={t("Nothing found for “{query}”.", { query: term })}
@@ -320,7 +279,7 @@ function SearchPalette({ iconClassName, boxClassName, kbdClassName, showTriggers
           <>
             <span>{t("↑ ↓ to move")}</span>
             <span>{t("Enter to open")}</span>
-            <span>{t("Type 2 letters or more to find people and transactions")}</span>
+            <span>{t("Esc to close")}</span>
           </>
         }
       />

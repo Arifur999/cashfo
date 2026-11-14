@@ -146,3 +146,26 @@ export function quarterAxis(top: number): number[] | null {
   const max = Math.max(4, step * magnitude);
   return [max, (max * 3) / 4, max / 2, max / 4, 0];
 }
+
+// The Dashboard board's axis: four equal steps, each a round 1, 2, 2.5 or 5
+// of a power of ten, the smallest whose four steps reach the tallest bar
+// (1,85,000 -> 50,000 steps, top 2,00,000). null when there is nothing to plot.
+export function fourStepAxis(top: number): number[] | null {
+  if (!(top > 0) || !Number.isFinite(top)) return null;
+  const power = 10 ** Math.floor(Math.log10(top / 4));
+  const step = [1, 2, 2.5, 5, 10].map((unit) => unit * power).find((unit) => unit * 4 >= top) ?? power * 10;
+  return [4, 3, 2, 1, 0].map((i) => step * i);
+}
+
+// The ring's arcs on a circle of circumference 100 (r = 15.9155): each
+// slice's dash and where it starts, the first at the top.
+export function donutArcs(slices: SpendingSlice[]): { name: string; color: string; dash: string; offset: string }[] {
+  const total = slices.reduce((sum, slice) => sum + slice.amount, 0);
+  let start = 0;
+  return slices.map((slice) => {
+    const share = total > 0 ? (slice.amount / total) * 100 : 0;
+    const arc = { name: slice.name, color: slice.color === null ? "var(--chart-other)" : categoryChartColor(slice.color), dash: `${share.toFixed(3)} ${(100 - share).toFixed(3)}`, offset: (-start).toFixed(3) };
+    start += share;
+    return arc;
+  });
+}

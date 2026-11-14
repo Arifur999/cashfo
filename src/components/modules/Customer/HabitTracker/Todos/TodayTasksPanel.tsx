@@ -40,10 +40,8 @@ export function TodayTasksPanel({ open, onOpenChange, children }: TodayTasksPane
     return (
       <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>{children}</PopoverTrigger>
-        <PopoverContent align="end" sideOffset={9} className="relative w-100 max-w-[calc(100vw-32px)] gap-0 rounded-[14px] border border-line bg-surface p-0 shadow-overlay ring-0">
-          {/* The pointer up to the icon: the icon is 38px wide, so its middle
-              is 19px in from the panel's right edge. */}
-          <span aria-hidden="true" className="absolute -top-1.5 right-3.25 z-1 size-3 rotate-45 border-t border-l border-line bg-surface" />
+        {/* The AppTopbar board hangs it 6px under the button, 150px past its right edge. */}
+        <PopoverContent align="end" alignOffset={-150} sideOffset={6} className="relative w-100 max-w-[calc(100vw-32px)] gap-0 rounded-[14px] border border-line bg-surface p-0 shadow-[0_18px_30px_rgba(18,32,29,0.16)] ring-0">
           <div className="relative overflow-hidden rounded-[14px]">
             <PanelBody sheet={false} onClose={() => onOpenChange(false)} />
           </div>

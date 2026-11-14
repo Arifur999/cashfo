@@ -8,7 +8,6 @@ import {
   Bell,
   CalendarClock,
   ChartPie,
-  CheckCheck,
   CreditCard,
   Gift,
   HandCoins,
@@ -17,25 +16,24 @@ import {
   MessageCircle,
   PiggyBank,
   RotateCcw,
-  Settings,
   ShieldAlert,
   ShieldCheck,
   ShieldOff,
+  Trash2,
   Wallet,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
-import SegmentedControl from "@/components/smartly/SegmentedControl";
-import StatePanel from "@/components/smartly/StatePanel";
 import { SOFT_TONE, type Tone } from "@/components/smartly/tones";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { UserNotification } from "@/lib/customer/api";
 import { switchWorkspaceAction } from "@/lib/customer/businessActions";
 import { notificationTime, notificationView, type NotificationKind } from "@/lib/customer/notificationDisplay";
-import { getNotificationsAction, markAllNotificationsReadAction, markNotificationReadAction } from "@/lib/customer/notificationsActions";
+import { deleteNotificationAction, getNotificationsAction, markAllNotificationsReadAction, markNotificationReadAction, restoreNotificationAction } from "@/lib/customer/notificationsActions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { formatCount } from "@/lib/i18n/digits";
@@ -72,7 +70,7 @@ const KIND_ICON: Record<NotificationKind, { icon: typeof Bell; tone: Tone }> = {
 const REFRESH_EVERY_MS = 2 * 60_000;
 const REFRESH_AT_MOST_EVERY_MS = 15_000;
 
-type Filter = "all" | "unread";
+type Filter = "all" | "unread" | "deleted";
 
 // The bell in the top bar and its feed: budget, loan and savings reminders,
 // habit reminders, announcements, and account news (billing, referrals,
@@ -84,6 +82,10 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
   const { t, fmt } = useLocale();
   const { user, activeBusinessId } = useAuth();
   const [items, setItems] = useState<UserNotification[]>([]);
+  // The bell's Deleted tab.
+  const [bin, setBin] = useState<UserNotification[]>([]);
+  // The row just deleted, while its Undo shows.
+  const [undo, setUndo] = useState<UserNotification | null>(null);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
@@ -97,6 +99,7 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
     return getNotificationsAction().then((result) => {
       if (!result.success || !result.data) return;
       setItems(result.data.data);
+      setBin(result.data.deleted ?? []);
       setUnread(result.data.unreadCount);
     });
   };
@@ -124,11 +127,46 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
   }, []);
 
   const workspaces = user.businesses.filter((business) => business.type !== "GROUP");
-  const shown = filter === "unread" ? items.filter((item) => !item.readAt) : items;
+  const inBin = filter === "deleted";
+  const shown = inBin ? bin : filter === "unread" ? items.filter((item) => !item.readAt) : items;
+  const tabs: [Filter, string][] = [
+    ["all", t("All")],
+    ["unread", unread > 0 ? `${t("Unread")} · ${formatCount(unread, fmt)}` : t("Unread")],
+    ["deleted", bin.length > 0 ? `${t("Deleted")} · ${formatCount(bin.length, fmt)}` : t("Deleted")],
+  ];
 
   function changeOpen(next: boolean) {
     setOpen(next);
+    setUndo(null);
     if (next) void load();
+  }
+
+  // Delete: out of the list at once, into Deleted, with an Undo; a refused
+  // call reads the feed again.
+  function remove(item: UserNotification) {
+    const now = new Date().toISOString();
+    setItems((current) => current.filter((row) => row.id !== item.id));
+    setBin((current) => [{ ...item, deletedAt: now }, ...current]);
+    if (!item.readAt) setUnread((count) => Math.max(0, count - 1));
+    setUndo(item);
+    void deleteNotificationAction(item.id).then((result) => {
+      if (result.success) return;
+      toast.error(t(result.message ?? "Couldn't delete the notification"));
+      void load();
+    });
+  }
+
+  // Restore, and Undo: back in the list where its date puts it, read or
+  // unread as it was; the feed is read again for the true count.
+  function restore(item: UserNotification, original?: UserNotification) {
+    const back = original ?? { ...item, deletedAt: null };
+    setBin((current) => current.filter((row) => row.id !== item.id));
+    setItems((current) => [...current.filter((row) => row.id !== item.id), back].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    setUndo(null);
+    void restoreNotificationAction(item.id).then((result) => {
+      if (!result.success) toast.error(t(result.message ?? "Couldn't restore the notification"));
+      void load();
+    });
   }
 
   function markRead(item: UserNotification) {
@@ -189,82 +227,124 @@ export function NotificationsBell({ className, badgeClassName }: { className?: s
           </span>
         )}
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={8} className="w-[min(25rem,calc(100vw-1rem))] gap-0 overflow-hidden rounded-lg border border-line bg-surface p-0 text-ink shadow-overlay ring-0">
-        <div className="flex items-center justify-between gap-3 p-4">
-          <h2 className="text-title font-bold text-ink">{t("Notifications")}</h2>
+      {/* The AppTopbar board's panel: 400px under the bell, 60px past its right edge. */}
+      <PopoverContent
+        align="end"
+        alignOffset={-60}
+        sideOffset={6}
+        className="flex max-h-[min(520px,calc(100vh-5rem))] w-[min(402px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden rounded-lg border border-line bg-surface p-0 text-ink shadow-[0_18px_44px_rgba(18,32,29,0.18)] ring-0"
+      >
+        <div className="flex items-center gap-2.5 border-b border-divider px-4 py-3.5">
+          <h2 className="grow text-[15px] leading-[normal] font-bold text-ink">{t("Notifications")}</h2>
           {unread > 0 && (
-            <button type="button" onClick={markAll} className="text-small font-semibold text-emerald hover:underline">
+            <button type="button" onClick={markAll} className="h-8 rounded-full px-2.5 text-[12.5px] font-semibold text-emerald hover:bg-emerald-wash">
               {t("Mark all as read")}
             </button>
           )}
+          <button type="button" onClick={() => changeOpen(false)} aria-label={t("Close")} className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken">
+            <X className="size-4" aria-hidden="true" />
+          </button>
         </div>
-        {/* Nothing to filter in an empty feed. */}
-        {items.length > 0 && (
-          <div className="px-4 pb-3">
-            <SegmentedControl
-              label={t("Show")}
-              value={filter}
-              onChange={setFilter}
-              className="[&>button]:h-7.5"
-              options={[
-                { value: "all", label: t("All") },
-                { value: "unread", label: unread > 0 ? `${t("Unread")} ${formatCount(unread, fmt)}` : t("Unread") },
-              ]}
-            />
-          </div>
-        )}
-        <ul className="max-h-[min(30rem,calc(100vh-14rem))] overflow-y-auto">
-          {shown.length === 0 && (
-            <li className="border-t border-divider">
-              <StatePanel icon={<CheckCheck />} tone="money" title={t("You're all caught up.")} bordered={false} className="py-8" />
+        <div role="group" aria-label={t("Show")} className="flex gap-1.5 px-4 pt-2.5 pb-1">
+          {tabs.map(([key, text]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={filter === key}
+              onClick={() => {
+                setFilter(key);
+                setUndo(null);
+              }}
+              className={cn(
+                "h-7.5 rounded-full border px-3 text-[12.5px] font-semibold whitespace-nowrap",
+                filter === key ? "border-emerald bg-pick-wash text-emerald" : "border-line bg-surface text-ink-2 hover:bg-surface-sunken",
+              )}
+            >
+              {text}
+            </button>
+          ))}
+        </div>
+        <ul className="min-h-0 overflow-y-auto px-2 pt-1 pb-2">
+          {inBin && bin.length > 0 && (
+            <li className="mx-1.5 mt-1 mb-1.5 rounded-[10px] bg-table-head px-2.5 py-2 text-[11.5px] leading-[1.45] text-ink-muted">
+              {t("Notifications you delete wait here. Restore puts one back in your list. They are removed for good after 30 days.")}
             </li>
           )}
+          {shown.length === 0 && <li className="px-3 py-7 text-center text-small text-ink-muted">{t(inBin ? "Nothing deleted." : "You are all caught up.")}</li>}
           {shown.map((item) => {
             const business = item.businessId ? user.businesses.find((b) => b.id === item.businessId) : undefined;
             const view = notificationView(item, t, fmt, business?.currency);
             // A kind this build has no tile for still gets the plain bell.
             const { icon: Icon, tone } = KIND_ICON[view.kind] ?? KIND_ICON.other;
             const where = business && workspaces.length > 1 ? ` · ${business.isDefault ? t("Personal") : business.name}` : "";
+            const isUnread = !inBin && !item.readAt;
             const body = (
               <>
-                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", SOFT_TONE[tone])}>
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px]", SOFT_TONE[tone])}>
                   <Icon className="size-4.25" aria-hidden="true" />
                 </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <b className="text-body font-semibold text-ink">{view.title}</b>
-                  <span className="text-small leading-4.5 text-ink-2">{view.body}</span>
-                  <span className="text-caption text-ink-muted">
+                <span className="flex min-w-0 grow flex-col gap-[3px]">
+                  <span className={cn("text-[13.5px] leading-[normal] text-ink", isUnread ? "font-bold" : "font-medium")}>{view.title}</span>
+                  <span className="text-[12.5px] leading-[1.45] text-ink-2">{view.body}</span>
+                  <span className="text-[11.5px] leading-[normal] text-ink-faint">
                     {notificationTime(item.createdAt, t, fmt)}
                     {where}
                   </span>
                 </span>
-                {!item.readAt && <span aria-label={t("Unread")} className="mt-2 size-2 shrink-0 rounded-full bg-emerald" />}
+                {isUnread && <span aria-label={t("Unread")} className="mt-1.5 size-2.25 shrink-0 rounded-full bg-expense-fill" />}
               </>
             );
-            const rowClass = cn("flex w-full gap-3 border-t border-divider p-4 text-left", item.readAt ? "bg-surface hover:bg-hover" : "bg-mint-50 hover:bg-mint-200/40");
+            const rowClass = "flex min-w-0 grow items-start gap-3 rounded-[12px] py-3 pr-1 pl-2.5 text-left";
             return (
-              <li key={item.id}>
-                {view.href ? (
-                  <Link href={view.href} onClick={(event) => openRow(event, item, view.href!)} className={rowClass}>
-                    {body}
-                  </Link>
+              <li key={item.id} className={cn("flex items-start rounded-[12px]", isUnread ? "bg-emerald-wash" : "hover:bg-hover")}>
+                <div className={cn("flex min-w-0 grow", inBin && "opacity-60")}>
+                  {inBin ? (
+                    <div className={rowClass}>{body}</div>
+                  ) : view.href ? (
+                    <Link href={view.href} onClick={(event) => openRow(event, item, view.href!)} className={rowClass}>
+                      {body}
+                    </Link>
+                  ) : (
+                    <button type="button" onClick={() => markRead(item)} className={rowClass}>
+                      {body}
+                    </button>
+                  )}
+                </div>
+                {inBin ? (
+                  <button
+                    type="button"
+                    onClick={() => restore(item)}
+                    aria-label={`${t("Restore")}: ${view.title}`}
+                    title={t("Restore")}
+                    className="mt-2.5 mr-1.5 ml-0.5 flex h-7.5 shrink-0 items-center gap-1.25 rounded-full border border-emerald bg-surface px-2.5 text-caption font-semibold whitespace-nowrap text-emerald"
+                  >
+                    <RotateCcw className="size-3.75" aria-hidden="true" />
+                    {t("Restore")}
+                  </button>
                 ) : (
-                  <button type="button" onClick={() => markRead(item)} className={rowClass}>
-                    {body}
+                  <button
+                    type="button"
+                    onClick={() => remove(item)}
+                    aria-label={`${t("Delete")}: ${view.title}`}
+                    title={t("Delete")}
+                    className="mt-2.5 mr-1.5 ml-0.5 flex size-7.5 shrink-0 items-center justify-center rounded-full text-ink-faint hover:bg-expense-soft hover:text-expense-fill"
+                  >
+                    <Trash2 className="size-3.75" aria-hidden="true" />
                   </button>
                 )}
               </li>
             );
           })}
         </ul>
-        <Link
-          href="/settings/app"
-          onClick={() => setOpen(false)}
-          className="flex h-12 items-center justify-center gap-2 border-t border-line bg-strip text-small font-semibold text-ink-2 hover:text-ink"
-        >
-          <Settings className="size-4" aria-hidden="true" />
-          {t("Choose what you're told about")}
-        </Link>
+        {undo && (
+          <div role="status" className="mx-3 mb-2.5 flex items-center gap-2.5 rounded-[12px] bg-night-ink py-2 pr-2 pl-3.5 text-[12.5px] text-white">
+            <span className="grow">{t("Notification deleted")}</span>
+            <button type="button" onClick={() => restore(undo, undo)} className="h-7 rounded-full bg-white/14 px-3 text-[12.5px] font-semibold text-white hover:bg-white/22">
+              {t("Undo")}
+            </button>
+          </div>
+        )}
+        <div className="border-t border-divider bg-table-head px-4 py-2.5 text-[11.5px] leading-[normal] text-ink-muted">{t("Messages from the Smartly team, sent to everyone. Delete any you don't need.")}</div>
       </PopoverContent>
     </Popover>
   );
