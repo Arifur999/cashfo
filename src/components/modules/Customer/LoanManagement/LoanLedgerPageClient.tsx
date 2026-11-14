@@ -21,7 +21,7 @@ import { usePageParam } from "@/hooks/usePageParam";
 import type { Contact, LoanActivityKind, LoanDashboardRow, LoanStatement } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { DIRECTION_META, foldProfitRuns, LEDGER_CONTACT_COOKIE, isCancelledRow, LOAN_ENTRY_META, LOAN_KIND_LABELS, loanDirection, loanEditOf, statementPageEdges, statementProfit, statementTotals, wordInitials, type LedgerItem, type LoanEdit, type StatementRow } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, foldProfitRuns, LEDGER_CONTACT_COOKIE, isCancelledRow, LOAN_ENTRY_META, LOAN_KIND_LABELS, loanDirection, loanEditOf, loanLongDate, loanRowDate, statementPageEdges, statementProfit, statementTotals, wordInitials, type LedgerItem, type LoanEdit, type StatementRow } from "@/lib/customer/loanDisplay";
 import { periodHref, type PickedPeriod } from "@/lib/customer/period";
 import { getLoanTransactionAction } from "@/lib/customer/receivablesPayablesActions";
 import { cancelledLabel } from "@/lib/customer/transactionDisplay";
@@ -52,6 +52,8 @@ interface LoanLedgerPageClientProps {
   activity: LoanDashboardRow | null;
   // The days the statement covers, resolved on the server.
   periodFrom?: string;
+  // The period's own last day (31 Dec for a year), for the printed Period line.
+  periodEnd?: string;
   periodTo: string;
 }
 
@@ -82,7 +84,7 @@ const WHAT: Record<LoanActivityKind, string> = {
 // who they are and where the balance stands now, how it went from opening
 // to closing with the profit beside it, and every entry with the balance
 // after it -- a long run of profit folded -- 50 to a page.
-export function LoanLedgerPageClient({ businessId, contacts, currency, canManage, canTrade, period, today, selectedContactId, statement, activity, periodFrom, periodTo }: LoanLedgerPageClientProps) {
+export function LoanLedgerPageClient({ businessId, contacts, currency, canManage, canTrade, period, today, selectedContactId, statement, activity, periodFrom, periodEnd, periodTo }: LoanLedgerPageClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -160,8 +162,8 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     const side = loanDirection(value);
     return (
       <span className="flex flex-col items-end gap-px leading-[normal]">
-        <span className={cn(size, "tabular-nums", quiet ? "text-ink-faint" : coloured && side !== "SETTLED" ? DIRECTION_META[side].text : "text-ink")}>{formatCurrency(Math.abs(value), currency, fmt)}</span>
-        <span className={cn("text-[11px] font-semibold", side === "SETTLED" ? "text-ink-muted" : DIRECTION_META[side].text)}>{t(DIRECTION_META[side].name)}</span>
+        <span className={cn(size, "tabular-nums", quiet ? "text-ink-faint" : coloured && side !== "SETTLED" ? DIRECTION_META[side].status : "text-ink")}>{formatCurrency(Math.abs(value), currency, fmt)}</span>
+        <span className={cn("text-[11px] font-semibold", side === "SETTLED" ? "text-ink-muted" : DIRECTION_META[side].status)}>{t(DIRECTION_META[side].name)}</span>
       </span>
     );
   };
@@ -211,7 +213,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     const movement = isProfit ? profitCell(Number(row.profitPaid ?? 0), Number(row.profitReceived ?? 0)) : row.credit ? `+ ${formatCurrency(row.credit, currency, fmt)}` : row.debit ? `− ${formatCurrency(row.debit, currency, fmt)}` : "–";
     return (
       <ListRow key={row.transactionId} id={rowId(row)} columns={GRID} muted={cancelled} className="xl:min-h-13.75 print:break-inside-avoid">
-        <ListCell className="hidden text-[13px] whitespace-nowrap text-ink-soft xl:block print:block">{formatDate(row.date, "d MMM yyyy", fmt)}</ListCell>
+        <ListCell className="hidden text-[13px] whitespace-nowrap text-ink-2 xl:block print:block">{loanRowDate(row.date, fmt)}</ListCell>
         <ListCell className="flex min-w-0 flex-col gap-0.5 xl:flex-row xl:items-center xl:gap-1.75">
           <span className="flex min-w-0 items-center gap-1.75">
             {out ? <ArrowUpRight className="size-3.5 shrink-0 text-expense-fill" strokeWidth={2.25} aria-hidden="true" /> : <ArrowDownLeft className="size-3.5 shrink-0 text-emerald" strokeWidth={2.25} aria-hidden="true" />}
@@ -318,7 +320,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
     const after = Number(row.runningPrincipal);
     return {
       key: row.transactionId,
-      date: day(row.date),
+      date: loanRowDate(row.date, fmt),
       what: row.reversalOfId || isCancelledRow(row) ? `${what} (${t("Voided")})` : what,
       note: [note, charge > 0 ? t("Charge {amount}", { amount: formatCurrency(charge, currency, fmt) }) : null].filter(Boolean).join(" · ") || "–",
       in: isProfit ? "–" : printFigure(Number(row.credit ?? 0)),
@@ -337,21 +339,21 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
           { label: t("Bank / person"), value: contact.name },
           { label: t("Kind"), value: t(LOAN_KIND_LABELS[contact.type]) },
           { label: t("Phone"), value: contact.phone || "–" },
-          { label: t("Period"), value: periodFrom ? `${day(periodFrom)} – ${day(periodTo)}` : t("All time") },
+          { label: t("Period"), value: periodFrom ? `${day(periodFrom)} – ${day(periodEnd ?? periodTo)}` : t("All time") },
         ]}
         figures={[
           { label: t("Opening balance"), value: balanceText(openingBalance) },
           { label: t("Principal out"), value: formatCurrency(paid, currency, fmt) },
           { label: t("Principal in"), value: formatCurrency(received, currency, fmt) },
           { label: t("Profit"), value: profitTotal },
-          { label: t("Closing balance"), value: balanceText(closing), tone: closeSide === "SETTLED" ? undefined : DIRECTION_META[closeSide].text },
+          { label: t("Closing balance"), value: balanceText(closing), tone: closeSide === "SETTLED" ? undefined : DIRECTION_META[closeSide].status },
         ]}
-        openingLine={`${t("Opening balance")}${openedOn ? ` · ${day(openedOn)}` : ""}`}
+        openingLine={`${t("Opening balance")}${openedOn ? ` · ${loanRowDate(openedOn, fmt)}` : ""}`}
         opening={balanceText(openingBalance)}
-        closingLine={`${t("Closing balance")} · ${day(periodTo)}`}
+        closingLine={`${t("Closing balance")} · ${loanRowDate(periodTo, fmt)}`}
         closing={{ in: formatCurrency(received, currency, fmt), out: formatCurrency(paid, currency, fmt), profit: profitTotal, balance: balanceText(closing) }}
         rows={printRows}
-        madeOn={t("Made on {date}", { date: day(today) })}
+        madeOn={t("Made on {date}", { date: loanLongDate(today, fmt) })}
       />
     </PrintPreview>
   );
@@ -398,13 +400,13 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
         <>
         <Card padding="none" className="flex flex-col gap-4 px-5 py-3.5 md:flex-row md:items-end print:hidden">
           <div className="flex min-w-0 flex-col gap-1.5 md:flex-1">
-            <label htmlFor="loan-contact" className="text-[13px] leading-[normal] font-medium text-ink-soft">
+            <label htmlFor="loan-contact" className="text-[13px] leading-[normal] font-medium text-ink-2">
               {t("Bank / person")}
             </label>
             <ContactPicker id="loan-contact" contacts={contacts} value={shownContactId} onChange={pickContact} currency={currency} label={t("Bank / person")} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <span className="text-[13px] leading-[normal] font-medium text-ink-soft">{t("Period")}</span>
+            <span className="text-[13px] leading-[normal] font-medium text-ink-2">{t("Period")}</span>
             <PeriodPicker period={period} today={today} activeMonths={null} allowAll defaultPeriod={thisYear} onPick={pickPeriod} busy={isPending} />
           </div>
           {isPending && <Loader size={18} label={t("Loading...")} className="md:mb-3" />}
@@ -441,7 +443,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
                       <span aria-hidden="true">·</span>
                     </>
                   )}
-                  {since && <span>{t("Since {date}", { date: day(since) })}</span>}
+                  {since && <span>{t("Since {date}", { date: loanLongDate(since, fmt) })}</span>}
                   {entries !== undefined && (
                     <>
                       <span aria-hidden="true">·</span>
@@ -454,12 +456,12 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             <div className="flex shrink-0 flex-col items-start gap-0.5 md:items-end md:px-1.5">
               <span className="text-[12px] text-ink-muted">{t("Balance now")}</span>
               <span className="flex items-center gap-2">
-                <span className={cn("text-[20px] font-bold tabular-nums", nowSide === "SETTLED" ? "text-ink" : DIRECTION_META[nowSide].text)}>{formatCurrency(Math.abs(balanceNow), currency, fmt)}</span>
-                <Chip tone={DIRECTION_META[nowSide].chip} size="sm" className="font-bold">
+                <span className={cn("text-[20px] font-bold tabular-nums", nowSide === "SETTLED" ? "text-ink" : DIRECTION_META[nowSide].status)}>{formatCurrency(Math.abs(balanceNow), currency, fmt)}</span>
+                <Chip tone={DIRECTION_META[nowSide].chip} size="sm" className={cn("h-auto py-0.5 font-bold", DIRECTION_META[nowSide].box, DIRECTION_META[nowSide].status)}>
                   {t(DIRECTION_META[nowSide].name)}
                 </Chip>
               </span>
-              <span className={cn("text-[12px]", nowSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[nowSide].text)}>{t(DIRECTION_META[nowSide].label)}</span>
+              <span className={cn("text-[12px]", nowSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[nowSide].status)}>{t(DIRECTION_META[nowSide].label)}</span>
             </div>
             {(canManage || balanceNow > 0) && (
               <div className="flex shrink-0 flex-wrap items-center gap-2 print:hidden">
@@ -488,10 +490,10 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
             <Card padding="none" className="grid grid-cols-2 overflow-hidden leading-[normal] md:grid-cols-4">
-              <Figure label={t("Opening balance")} sub={openedOn ? t("On {date}", { date: day(openedOn) }) : undefined}>
+              <Figure label={t("Opening balance")} sub={openedOn ? t("On {date}", { date: loanLongDate(openedOn, fmt) }) : undefined}>
                 <span className="flex flex-wrap items-center gap-x-1.5 whitespace-nowrap">
                   <span className="text-[19px] font-bold text-ink tabular-nums">{formatCurrency(Math.abs(openingBalance), currency, fmt)}</span>
-                  <span className={cn("text-[11px] font-bold", openSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[openSide].text)}>{t(DIRECTION_META[openSide].name)}</span>
+                  <span className={cn("text-[11px] font-bold", openSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[openSide].status)}>{t(DIRECTION_META[openSide].name)}</span>
                 </span>
               </Figure>
               <Figure label={t("Principal out")} sub={t("Gave a loan or paid back")} className="border-l border-divider">
@@ -500,10 +502,10 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               <Figure label={t("Principal in")} sub={t("Took a loan or got money back")} className="border-divider max-md:border-t md:border-l">
                 <span className={cn("text-[19px] font-bold tabular-nums", received ? "text-income" : "text-ink-faint")}>{formatCurrency(received, currency, fmt)}</span>
               </Figure>
-              <Figure label={t("Closing balance")} sub={t("On {date}", { date: day(periodTo) })} tone={closeSide} className={cn("max-md:border-t max-md:border-l max-md:border-divider", DIRECTION_META[closeSide].box)}>
+              <Figure label={t("Closing balance")} sub={t("On {date}", { date: loanLongDate(periodTo, fmt) })} tone={closeSide} className={cn("max-md:border-t max-md:border-l max-md:border-divider", DIRECTION_META[closeSide].box)}>
                 <span className="flex flex-wrap items-center gap-x-1.5 whitespace-nowrap">
-                  <span className={cn("text-[21px] font-bold tabular-nums", closeSide === "SETTLED" ? "text-ink" : DIRECTION_META[closeSide].text)}>{formatCurrency(Math.abs(closing), currency, fmt)}</span>
-                  <span className={cn("text-[11px] font-bold", closeSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[closeSide].text)}>{t(DIRECTION_META[closeSide].name)}</span>
+                  <span className={cn("text-[21px] font-bold tabular-nums", closeSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[closeSide].status)}>{formatCurrency(Math.abs(closing), currency, fmt)}</span>
+                  <span className={cn("text-[11px] font-bold", closeSide === "SETTLED" ? "text-ink-muted" : DIRECTION_META[closeSide].status)}>{t(DIRECTION_META[closeSide].name)}</span>
                 </span>
               </Figure>
             </Card>
@@ -547,7 +549,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               )
             }
           >
-            <ListHead columns={GRID} className="md:hidden xl:grid xl:h-9 print:grid">
+            <ListHead columns={GRID} className="md:hidden xl:grid xl:h-9 print:grid [&_*]:font-semibold">
               <ListHeadCell>{t("Date")}</ListHeadCell>
               <ListHeadCell>{t("What happened")}</ListHeadCell>
               <ListHeadCell>{t("Note / reference")}</ListHeadCell>
@@ -559,15 +561,15 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             </ListHead>
             {firstPage ? (
               <ListSummaryRow kind="opening" columns={GRID} className="min-h-11.75 py-0 text-body">
-                <ListCell className={cn("font-semibold text-ink-soft", BEFORE_BALANCE)}>
+                <ListCell className={cn("font-semibold text-ink-2", BEFORE_BALANCE)}>
                   {t("Opening balance")}
-                  {openedOn && ` · ${day(openedOn)}`}
+                  {openedOn && ` · ${loanRowDate(openedOn, fmt)}`}
                 </ListCell>
                 <ListCell align="end">{balanceStack(openingBalance)}</ListCell>
               </ListSummaryRow>
             ) : (
               <ListSummaryRow kind="brought-forward" columns={GRID} className="text-body">
-                <ListCell className={cn("font-semibold text-ink-soft", BEFORE_BALANCE)}>{t("Brought forward")}</ListCell>
+                <ListCell className={cn("font-semibold text-ink-2", BEFORE_BALANCE)}>{t("Brought forward")}</ListCell>
                 <ListCell align="end">{balanceStack(broughtForward)}</ListCell>
               </ListSummaryRow>
             )}
@@ -576,7 +578,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
             {lastPage ? (
               <ListSummaryRow kind="closing" columns={GRID} className="min-h-13.75 py-0 text-body font-semibold">
                 <ListCell className="font-bold text-ink xl:col-span-3 print:col-span-3">
-                  {t("Closing balance")} · {day(periodTo)}
+                  {t("Closing balance")} · {loanRowDate(periodTo, fmt)}
                 </ListCell>
                 <ListCell align="end" className={cn("hidden tabular-nums xl:block print:block", received ? "text-income" : "text-ink-muted")}>
                   {formatCurrency(received, currency, fmt)}
@@ -594,7 +596,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
               </ListSummaryRow>
             ) : (
               <ListSummaryRow kind="carried-forward" columns={GRID} className="text-body">
-                <ListCell className={cn("font-semibold text-ink-soft", BEFORE_BALANCE)}>{t("Carried forward")}</ListCell>
+                <ListCell className={cn("font-semibold text-ink-2", BEFORE_BALANCE)}>{t("Carried forward")}</ListCell>
                 <ListCell align="end">{balanceStack(carriedForward)}</ListCell>
               </ListSummaryRow>
             )}
@@ -643,7 +645,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
 function Figure({ label, sub, tone, className, children }: { label: string; sub?: string; tone?: "PAWNA" | "DENA" | "SETTLED"; className?: string; children: React.ReactNode }) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-1 px-4.5 py-3.5", className)}>
-      <span className={cn("text-[12px]", tone ? cn("font-semibold", tone === "SETTLED" ? "text-ink-muted" : DIRECTION_META[tone].text) : "text-ink-muted")}>{label}</span>
+      <span className={cn("text-[12px]", tone ? cn("font-semibold", tone === "SETTLED" ? "text-ink-muted" : DIRECTION_META[tone].status) : "text-ink-muted")}>{label}</span>
       {children}
       {sub && <span className="text-[11.5px] leading-[1.35] text-ink-faint">{sub}</span>}
     </div>

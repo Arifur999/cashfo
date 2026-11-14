@@ -109,12 +109,12 @@ export function ContactPicker({ contacts, value, onChange, currency, size = "md"
                 <span className="truncate text-body font-semibold text-ink">
                   {selected.name} <span className="font-medium text-ink-muted">· {kindOf(selected)}</span>
                   {/* The statement names the loan too ("· house loan"). */}
-                  {size === "md" && (selected.type === "BANK" || selected.type === "NGO") && selected.notes && <span className="font-medium text-ink-muted"> · {selected.notes}</span>}
+                  {size === "md" && selected.notes && <span className="font-medium text-ink-muted"> · {selected.notes}</span>}
                 </span>
                 {size === "xl" && <span className={cn("truncate text-caption font-normal tabular-nums", loanDirection(selected.currentBalance) === "SETTLED" ? "text-ink-muted" : DIRECTION_META[loanDirection(selected.currentBalance)].text)}>{balanceLine(selected)}</span>}
               </span>
               {size === "md" && (
-                <Chip tone={DIRECTION_META[loanDirection(selected.currentBalance)].chip} size="sm">
+                <Chip tone={DIRECTION_META[loanDirection(selected.currentBalance)].chip} size="sm" className={cn("h-auto py-0.5 font-bold", DIRECTION_META[loanDirection(selected.currentBalance)].box, DIRECTION_META[loanDirection(selected.currentBalance)].status)}>
                   {t(DIRECTION_META[loanDirection(selected.currentBalance)].name)}
                 </Chip>
               )}
