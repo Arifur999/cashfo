@@ -107,8 +107,8 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
         className="max-md:[&_h1]:sr-only"
         actions={
           <div className="flex flex-wrap gap-2">
-            <a href={statement} className="flex h-10 items-center gap-2 rounded-full border border-line-strong bg-surface px-4 text-body font-semibold text-ink hover:bg-surface-sunken">
-              <Download className="size-4" aria-hidden="true" />
+            <a href={statement} className="flex h-10 items-center gap-2 rounded-full border border-input bg-surface px-3.5 text-body font-semibold text-ink hover:bg-surface-sunken">
+              <Download className="size-3.75 text-ink-2" aria-hidden="true" />
               {t("Download statement")}
             </a>
             <Link href={WITHDRAW_ROUTE} className="flex h-10 items-center gap-2 rounded-full bg-emerald px-4 text-body font-semibold text-on-action shadow-button hover:bg-emerald-hover">
@@ -122,7 +122,7 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
         <ErrorState title={t("Couldn't load your earnings.")} onRetry={() => router.refresh()} />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2.5 md:gap-3.5 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2.5 md:gap-3 lg:grid-cols-5">
             {EARNING_CARDS.map((key) => {
               const on = status === key;
               const total = list.totals[key];
@@ -133,8 +133,8 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
                   aria-pressed={on}
                   onClick={() => go({ status: on ? null : key, page: 1 })}
                   className={cn(
-                    "flex flex-col gap-1 rounded-card border bg-surface px-4 py-3.5 text-left shadow-card transition-colors",
-                    on ? "border-emerald ring-1 ring-emerald" : "border-line-card hover:border-line-strong",
+                    "flex flex-col gap-1 rounded-lg px-4 py-3.5 text-left shadow-[0_1px_2px_rgba(18,32,29,0.04)] transition-colors",
+                    on ? "border-[1.5px] border-emerald bg-emerald-soft" : "border border-line-card bg-surface hover:border-line-strong",
                   )}
                 >
                   <span className="flex items-center gap-1.5 text-[12.5px] leading-[normal] text-ink-muted">
@@ -168,7 +168,7 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
             }
             footer={
               list.meta.total > 0 && (
-                <ListFooter className="gap-3">
+                <ListFooter className="gap-3 border-t-0 bg-strip py-3 md:px-5">
                   <div className="flex items-center justify-between gap-3 text-[13.5px] leading-[normal] tabular-nums">
                     <span className="text-ink-2">{t(list.meta.total === 1 ? "{count} payment shown" : "{count} payments shown", { count: formatCount(list.meta.total, fmt) })}</span>
                     <b className="font-bold text-ink">{t("Your share {amount}", { amount: money(shareShown) })}</b>
@@ -178,7 +178,7 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
               )
             }
           >
-            <ListHead columns={COLUMNS}>
+            <ListHead columns={COLUMNS} className="h-[35px] gap-x-3.5 border-t md:px-5">
               <ListHeadCell>{t("Date")}</ListHeadCell>
               <ListHeadCell>{t("From@@referral")}</ListHeadCell>
               <ListHeadCell>{t("For@@referral")}</ListHeadCell>
@@ -193,7 +193,7 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
               list.data.map((line) => {
                 const gone = line.status === "REVERSED" || line.status === "CANCELLED";
                 return (
-                  <ListRow key={line.id} columns={COLUMNS} density="relaxed">
+                  <ListRow key={line.id} columns={COLUMNS} density="relaxed" className="gap-x-3.5 md:min-h-13 md:px-5">
                     <ListCell className="text-ink-2 tabular-nums max-md:hidden">{dayLabel(line.paidAt)}</ListCell>
                     <ListCell className="flex min-w-0 flex-col items-start">
                       <button type="button" onClick={() => setFriend({ id: line.referralId, name: line.friendName })} className="max-w-full truncate rounded-sm text-left font-semibold text-ink hover:underline">
