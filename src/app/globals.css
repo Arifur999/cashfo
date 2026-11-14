@@ -32,10 +32,10 @@
   /* The shell behind the cards. */
   --page: #f4f5f5;
   /* Column heads, and the group, opening and total rows of a list. */
-  --table-head: #f8f8f8;
+  --table-head: #f9fafa;
   /* Bands inside a card: footers, notes, stat tiles, input addons and
      read-only fields. */
-  --strip: #f8f8f8;
+  --strip: #f9fafa;
   /* A row or list item under the pointer. */
   --hover: #f8f9f9;
   /* A shared DataTable row under the pointer: the same hover in light. */
@@ -43,22 +43,22 @@
   --surface: #ffffff;
   --surface-raised: #ffffff;
   /* Tracks, button and icon hovers, the menu highlight and neutral chips. */
-  --surface-sunken: #f4f5f5;
+  --surface-sunken: #f0f2f2;
   /* The edge of a card or control. */
-  --line: #e1e7e6;
-  /* The separator between rows inside a card (design-v4: #f4f5f5). */
-  --divider: #f4f5f5;
+  --line: #e3e8e7;
+  /* The separator between rows inside a card (the boards' --sm-sunken). */
+  --divider: #f0f2f2;
   --line-strong: #838f8c;
-  /* The edge of a card (design-v4: a shade lighter than a control's). */
-  --line-card: #e6ebea;
+  /* The edge of a card, as a control's (the boards' --sm-border). */
+  --line-card: #e3e8e7;
 
   /* Ink */
   --ink: #12201d;
-  --ink-2: #33413e;
+  --ink-2: #3a4845;
   /* Between ink-2 and muted: inactive menu pages, the top bar's icons. */
   --ink-soft: #4a5754;
   --ink-muted: #5f6b68;
-  --ink-faint: #8a9693;
+  --ink-faint: #687572;
   --focus-ring: #1c7567;
 
   /* The primary's own tint and edge (design-v4 shell): the open menu row,
@@ -315,8 +315,8 @@
   --accent-foreground: var(--ink);
   --destructive: var(--expense-fill);
   --border: var(--line);
-  /* The edge of a field, a select and a secondary button (design-v4). */
-  --input: #c9d3d1;
+  /* The edge of a field, a select and a secondary button (--sm-border-strong). */
+  --input: #cdd6d4;
   --ring: var(--focus-ring);
   --chart-1: var(--chart-income);
   --chart-2: var(--chart-expense);
