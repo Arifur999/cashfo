@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Info, Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { mineSummary, paisa } from "@/lib/customer/eventsDisplay";
 import type { EventPerson, SocialEvent } from "@/lib/customer/eventsTypes";
 import { cn } from "@/lib/utils";
@@ -18,14 +18,13 @@ interface EventsMineProps {
   onAdd: () => void;
   onAddGift: (event: SocialEvent) => void;
   onDownload: (event: SocialEvent) => void;
-  onDetails: (id: string) => void;
 }
 
 const LIST_COLUMNS = "grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)_120px] gap-x-3 px-3.5";
 
 // The My events page: your own events on the left, and the one picked with
 // what came in (or went out, for Eid salami) and from whom.
-export function EventsMine({ events, people, selected, words, readOnly, onSelect, onAdd, onAddGift, onDownload, onDetails }: EventsMineProps) {
+export function EventsMine({ events, people, selected, words, readOnly, onSelect, onAdd, onAddGift, onDownload }: EventsMineProps) {
   const { t, money, count } = words;
   const nameOf = (id: string) => people.find((person) => person.id === id)?.name ?? "";
   const summary = selected ? mineSummary(selected) : null;
@@ -80,15 +79,6 @@ export function EventsMine({ events, people, selected, words, readOnly, onSelect
               <span className="text-small text-ink-muted">{[words.day(selected.date), selected.time && words.clock(selected.time), selected.place].filter(Boolean).join(" · ")}</span>
             </span>
             <span className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => onDetails(selected.id)}
-                aria-label={t("Event details")}
-                title={t("Event details")}
-                className="flex size-9.5 items-center justify-center rounded-full border border-input bg-surface text-ink-soft hover:bg-surface-sunken"
-              >
-                <Info className="size-4" aria-hidden="true" />
-              </button>
               <button type="button" onClick={() => onDownload(selected)} className="flex h-9.5 items-center gap-1.5 rounded-full border border-input bg-surface px-3.5 text-small font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
                 <Download className="size-3.5 text-ink-soft" strokeWidth={2.25} aria-hidden="true" />
                 {t("Download list")}
@@ -108,23 +98,23 @@ export function EventsMine({ events, people, selected, words, readOnly, onSelect
               { label: "Gifts, at their value", value: money(summary.items) },
               { label: "People", value: count(summary.people) },
             ].map((tile) => (
-              <div key={tile.label} className="flex flex-col gap-[3px] rounded-[14px] border border-line-card bg-table-head px-3.5 py-3">
+              <div key={tile.label} className="flex flex-col gap-[3px] rounded-[14px] border border-head-rule bg-head-wash px-3.5 py-3">
                 <span className="text-[12.5px] text-ink-muted">{t(tile.label)}</span>
                 <span className="text-[19px] font-bold text-ink tabular-nums">{tile.value}</span>
               </div>
             ))}
           </div>
 
-          <div className="overflow-x-auto rounded-[14px] border border-line-card">
+          <div className="overflow-x-auto rounded-[14px] border border-head-rule">
             <div className="min-w-[480px]">
-              <div className={cn(LIST_COLUMNS, "bg-table-head py-2.5 text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase")}>
+              <div className={cn(LIST_COLUMNS, "bg-head-wash py-2.5 text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase")}>
                 <span>#</span>
                 <span>{t(summary.received ? "From" : "To")}</span>
                 <span>{t("Gift")}</span>
                 <span className="text-right">{t("Value")}</span>
               </div>
               {selected.gifts.map((gift, index) => (
-                <div key={gift.id} className={cn(LIST_COLUMNS, "min-h-11.5 items-center border-t border-divider text-body")}>
+                <div key={gift.id} className={cn(LIST_COLUMNS, "min-h-11.5 items-center border-t border-page text-body")}>
                   <span className="text-ink-faint">{count(index + 1)}</span>
                   <span className="truncate font-semibold text-ink">{nameOf(gift.personId)}</span>
                   <span className="flex min-w-0 items-center gap-1.5 text-ink-2">
@@ -134,7 +124,7 @@ export function EventsMine({ events, people, selected, words, readOnly, onSelect
                   <span className="text-right font-semibold text-ink tabular-nums">{money(paisa(gift.amount))}</span>
                 </div>
               ))}
-              {selected.gifts.length === 0 && <p className="border-t border-divider px-3.5 py-4 text-body text-ink-muted">{t("No gift written down yet.")}</p>}
+              {selected.gifts.length === 0 && <p className="border-t border-page px-3.5 py-4 text-body text-ink-muted">{t("No gift written down yet.")}</p>}
             </div>
           </div>
         </section>

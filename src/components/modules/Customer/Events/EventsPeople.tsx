@@ -56,7 +56,7 @@ export function EventsPeople({ people, events, ledger, today, words, onOpenPerso
               type="button"
               aria-pressed={filter === option.value}
               onClick={() => setFilter(option.value)}
-              className={cn("rounded-[9px] px-3 text-small font-semibold whitespace-nowrap", filter === option.value ? "bg-emerald-soft text-emerald" : "text-ink-soft hover:text-ink")}
+              className={cn("rounded-[9px] px-3 text-small font-semibold whitespace-nowrap", filter === option.value ? "bg-emerald-soft text-emerald" : "text-ink-2 hover:text-ink")}
             >
               {t(option.label)}
             </button>
@@ -66,7 +66,7 @@ export function EventsPeople({ people, events, ledger, today, words, onOpenPerso
 
       <section aria-label={t("People")} className="overflow-x-auto rounded-[18px] border border-line-card bg-surface shadow-card">
         <div className="min-w-[860px]">
-          <div role="row" className={cn(COLUMNS, "h-10.5 border-b border-line-card bg-table-head text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase")}>
+          <div role="row" className={cn(COLUMNS, "h-[43px] border-b border-line-card bg-head-wash text-caption font-semibold tracking-[0.03em] text-ink-muted uppercase")}>
             <span role="columnheader">{t("Person")}</span>
             <span role="columnheader">{t("Latest event")}</span>
             <span role="columnheader" className="text-right">
@@ -84,7 +84,7 @@ export function EventsPeople({ people, events, ledger, today, words, onOpenPerso
             const avatar = TINT[avatarTint(person.id)];
             const tint = STANDING_TINT[standing.kind];
             return (
-              <div key={person.id} className={cn(COLUMNS, "min-h-15.5 border-b border-divider last:border-b-0")}>
+              <div key={person.id} className={cn(COLUMNS, "min-h-[63px] border-b border-page")}>
                 <span className="flex min-w-0 items-center gap-3">
                   <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-full text-body font-bold", avatar.bg, avatar.fg)} aria-hidden="true">
                     {wordInitials(person.name)}

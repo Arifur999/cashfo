@@ -210,6 +210,8 @@
   --card-rule: #f1f3f3;
   --head-wash: #f7f9f8;
   --head-rule: #eef1f0;
+  /* A calendar day outside the month on show (Calendar & Events). */
+  --day-out: #b4bdbb;
   --due-ink: #92400e;
   --alert-wash: #fff7ed;
   --note-ink: #134e4a;
@@ -471,6 +473,7 @@
   --card-rule: #1c2724;
   --head-wash: #2c3331;
   --head-rule: #1c2724;
+  --day-out: #b4bdbb;
   --due-ink: #fcd34d;
   --alert-wash: #33200e;
   --note-ink: #9cc7be;
@@ -861,6 +864,7 @@ html:not(.dark) [data-app="habit"] {
   --color-card-rule: var(--card-rule);
   --color-head-wash: var(--head-wash);
   --color-head-rule: var(--head-rule);
+  --color-day-out: var(--day-out);
   --color-due-ink: var(--due-ink);
   --color-alert-wash: var(--alert-wash);
   --color-note-ink: var(--note-ink);
