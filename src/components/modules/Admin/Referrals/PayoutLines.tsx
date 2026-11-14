@@ -303,7 +303,7 @@ export function ReviewFacts({ payout }: { payout: IPayoutDetail }) {
   return (
     <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
       {facts.map((fact) => (
-        <div key={fact.label} className="flex min-w-0 flex-col gap-0.75 rounded-md border border-surface-sunken px-3 py-2.5">
+        <div key={fact.label} className="flex min-w-0 flex-col gap-0.75 rounded-md border border-divider px-3 py-2.5">
           <dt className="text-[11.5px] text-ink-muted">{translate(fact.label)}</dt>
           <dd className={cn("truncate text-body font-bold tabular-nums", fact.warn ? "text-warning" : "text-ink")}>{fact.value}</dd>
         </div>

@@ -110,7 +110,7 @@ export function FriendDialog({ friend, onClose, currency, today }: FriendDialogP
               ) : (
                 <ul className="flex flex-col gap-2">
                   {loaded.data.payments.map((payment) => (
-                    <li key={payment.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-field border border-surface-sunken px-3 py-2.5 text-[13.5px] tabular-nums sm:grid-cols-[90px_minmax(0,1fr)_84px_140px]">
+                    <li key={payment.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-field border border-divider px-3 py-2.5 text-[13.5px] tabular-nums sm:grid-cols-[90px_minmax(0,1fr)_84px_140px]">
                       <span className="text-ink-soft max-sm:hidden">{formatDate(payment.paidAt, payment.paidAt.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yy", "", fmt)}</span>
                       <span className="flex min-w-0 flex-col gap-px">
                         <span className="truncate font-semibold text-ink">{[payment.planName, money(payment.paidAmount)].filter(Boolean).join(" · ")}</span>

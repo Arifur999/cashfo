@@ -243,7 +243,7 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
                       )}
                     </div>
                     {expanded && request.lines.length > 0 && (
-                      <div id={linesId} className="overflow-hidden rounded-md border border-surface-sunken bg-surface">
+                      <div id={linesId} className="overflow-hidden rounded-md border border-divider bg-surface">
                         <ul>
                           {request.lines.map((line) => (
                             <li key={line.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 border-b border-divider px-3 py-2 text-[13px] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_150px_90px_90px] sm:gap-x-3">
