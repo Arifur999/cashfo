@@ -1449,6 +1449,10 @@ export interface GroupExpense {
   split: GroupSplit;
   // The members it names; none: everyone in the group that day.
   splits: GroupExpenseSplit[];
+  // Each member's part, worked out by the API as Settlement does (the
+  // weights of its date, to the paisa); empty while meals share it. Absent
+  // from an older API.
+  parts?: { groupMemberId: string; amount: string }[];
   // Who recorded it (an Editor changes only their own); null: the owner.
   createdByUserId?: string | null;
   createdAt: string;

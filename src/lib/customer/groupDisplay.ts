@@ -262,9 +262,12 @@ export const poolsMeals = (mealsOn: boolean, settlement: Pick<GroupSettlementRes
 // members it names (by units or exact amounts), else everyone in the group
 // that day. A by-meals expense is pooled into the meal rate instead (0
 // here) while meals are pooled, and shared equally otherwise.
-export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsPooled: boolean): number {
+export function expenseShare(expense: Pick<GroupExpense, "amount" | "date" | "split" | "splits" | "parts">, memberId: string, members: GroupMember[], range: Pick<MonthRange, "from" | "to">, mealsPooled: boolean): number {
   const amount = Number(expense.amount);
   if (expense.split === "MEALS" && mealsPooled) return 0;
+  // The API's own parts when it sent them: they follow the weights of the
+  // expense's date and add up to the paisa.
+  if (expense.parts && expense.parts.length > 0) return Number(expense.parts.find((part) => part.groupMemberId === memberId)?.amount ?? 0);
   const sharing = members.filter((member) => inRange(member, range));
   const thatDay = sharing.filter((member) => inGroupOn(member, expense.date.slice(0, 10)));
   const everyone = thatDay.length > 0 ? thatDay : sharing;

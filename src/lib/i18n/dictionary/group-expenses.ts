@@ -1642,8 +1642,12 @@ export const groupExpensesDictionary: Record<string, string> = {
   // v16 Group: member sign-in
   "Log in": "লগইন",
   // Group Expense: the dashboard's recent entries
+  "Name, first month, budget warning, how new categories are shared, and each member’s shares.": "নাম, প্রথম মাস, বাজেট সতর্কতা, নতুন ক্যাটাগরি কীভাবে ভাগ হবে, আর প্রত্যেকের শেয়ার।",
   "{date} · by {name}": "{date} · {name} লিখেছেন",
   "{name}’s own pocket": "{name}-এর নিজের পকেট",
+  // Group Expense: Settings, the General card's footer
+  "Everything is saved": "সব সেভ করা আছে",
+  "You have unsaved changes": "সেভ না করা পরিবর্তন আছে",
   // Group Expense: first steps, the access-link step
   "Send access links": "অ্যাক্সেস লিংক পাঠান",
   "Manage access": "অ্যাক্সেস দেখুন",
