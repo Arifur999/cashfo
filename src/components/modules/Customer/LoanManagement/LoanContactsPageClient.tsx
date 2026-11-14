@@ -155,7 +155,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
 
   const counted = (label: string, count: number) => (
     <>
-      {label} <span className="text-ink-faint in-aria-pressed:text-emerald">{formatCount(count, fmt)}</span>
+      {label} <span className="text-ink-faint in-aria-pressed:text-income">{formatCount(count, fmt)}</span>
     </>
   );
   const tabs = [
@@ -211,7 +211,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2.5">
-            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} size="coarse" className="border-line-card p-1 max-md:w-full max-md:overflow-x-auto" itemClassName="gap-1.5 not-aria-pressed:text-ink-2 aria-pressed:bg-emerald-soft aria-pressed:text-emerald" />
+            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} size="coarse" className="border-line-card p-1 max-md:w-full max-md:overflow-x-auto" itemClassName="gap-1.5 not-aria-pressed:text-ink-2 aria-pressed:bg-emerald-soft aria-pressed:text-income" />
             <NativeSelect size="sm" frameClassName="[&_svg]:right-2.5" value={kind} onChange={(event) => setKind(event.target.value as ContactType | "")} aria-label={t("Kind")} className="h-10 pr-7.5 pl-2.5 text-small pointer-coarse:h-11">
               <option value="">{t("All types")}</option>
               {LOAN_KINDS.map((option) => (

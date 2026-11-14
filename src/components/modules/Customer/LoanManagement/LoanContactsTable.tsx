@@ -31,7 +31,7 @@ interface LoanContactsTableProps {
 
 // Contact, phone, where the balance stands, what happened last, the
 // balance, and Edit and Delete; a phone scrolls it sideways.
-const COLUMNS = "grid leading-[normal] grid-cols-[minmax(0,1.5fr)_150px_120px_minmax(150px,1fr)_160px_84px] items-center gap-x-4 min-w-220";
+const COLUMNS = "grid grid-cols-[minmax(0,1.5fr)_150px_120px_minmax(150px,1fr)_160px_84px] items-center gap-x-4 min-w-220";
 
 // Loan contacts as a table (LoanContacts board): the name opens the
 // statement; Delete waits until nothing was ever entered with them.
@@ -40,7 +40,7 @@ export function LoanContactsTable({ contacts, currency, canManage, busy, lastOf,
   const money = (value: number) => formatCurrency(value, currency, fmt);
   return (
     <section aria-label={t("Contacts table")} className="flex min-h-0 flex-col overflow-x-auto rounded-[18px] border border-line-card bg-surface shadow-card md:flex-1">
-      <div className={cn(COLUMNS, "border-b border-line bg-strip px-5 py-3 text-[12px] font-medium text-ink-muted")}>
+      <div className={cn(COLUMNS, "border-b border-line bg-strip px-5 py-3 text-[12px] font-medium text-ink-muted", "leading-[normal]")}>
         <span>{t("Contact")}</span>
         <span>{t("Phone")}</span>
         <span>{t("Status")}</span>
@@ -61,7 +61,7 @@ export function LoanContactsTable({ contacts, currency, canManage, busy, lastOf,
           // Nothing entered with them yet: they can go for good.
           const removable = contact.lastActivityAt === null;
           return (
-            <div key={contact.id} className={cn(COLUMNS, "min-h-16 border-b border-divider px-5 py-2.5 tabular-nums", archived && "opacity-60")}>
+            <div key={contact.id} className={cn(COLUMNS, "min-h-16 border-b border-divider px-5 py-2.5 tabular-nums", archived && "opacity-60", "leading-[normal]")}>
               <span className="flex min-w-0 items-center gap-3">
                 <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={36} initials={wordInitials(contact.name)} className="size-9.5" />
                 <span className="flex min-w-0 flex-col gap-0.5">
@@ -114,7 +114,7 @@ export function LoanContactsTable({ contacts, currency, canManage, busy, lastOf,
           );
         })}
       </div>
-      <div className={cn(COLUMNS, "border-t border-line bg-strip px-5 py-3 text-[13px] font-bold tabular-nums")}>
+      <div className={cn(COLUMNS, "border-t border-line bg-strip px-5 py-3 text-[13px] font-bold tabular-nums", "leading-[normal]")}>
         <span>{t(contacts.length === 1 ? "Total · {count} contact" : "Total · {count} contacts", { count: formatCount(contacts.length, fmt) })}</span>
         <span />
         <span />
