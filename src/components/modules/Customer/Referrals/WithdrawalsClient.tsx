@@ -221,7 +221,7 @@ export function WithdrawalsClient({ info, withdrawals, currency, today, pageSize
                     </div>
                     <div role="cell" className={cn("flex flex-wrap items-center gap-2.5 rounded-field px-3 py-2.5 text-[13px] leading-[1.45] md:flex-nowrap", look.className)}>
                       <Icon className="size-3.75 shrink-0" aria-hidden="true" />
-                      <span className="min-w-0 flex-1 break-words">{noteOf(request)}</span>
+                      <span className="min-w-0 flex-1 break-words max-md:basis-[calc(100%-26px)]">{noteOf(request)}</span>
                       {request.lines.length > 0 && (
                         <button type="button" aria-expanded={expanded} aria-controls={linesId} onClick={() => toggle(request.id)} className="flex h-7.5 shrink-0 items-center rounded-full border border-input bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:bg-surface-sunken">
                           {expanded ? t("Hide payments") : t(request.lines.length === 1 ? "{count} payment" : "{count} payments", { count: formatCount(request.lines.length, fmt) })}
