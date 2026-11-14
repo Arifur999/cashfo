@@ -52,7 +52,7 @@ export function ReferralsPageClient({ info, currency, origin, today }: Referrals
 
   if (showsLockedPage(info)) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <PageFrame className="max-md:pt-4 md:gap-5 leading-[normal] md:pt-7 md:pb-8">
         <TopbarExtras title={t("Referral Program")} />
         <PageHeader
           title={t("Referral Program")}

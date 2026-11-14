@@ -114,7 +114,7 @@ export function ReferralLocked({ info, currency }: { info: ReferralProgramInfo; 
               <StepTile icon={step.icon} size={32} />
               <span className="flex flex-col gap-0.75">
                 <span className="text-body leading-[normal] font-semibold text-ink">{step.title}</span>
-                <span className="text-[13px] leading-[normal] text-ink-muted">{step.body}</span>
+                <span className="text-[13px] leading-normal text-ink-muted">{step.body}</span>
               </span>
             </div>
           ))}

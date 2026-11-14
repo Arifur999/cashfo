@@ -67,7 +67,7 @@ export function HowItWorksCard({ program, currency }: { program: Program; curren
           <StepTile icon={step.icon} />
           <span className="flex flex-col gap-0.5">
             <span className="text-body leading-[normal] font-semibold text-ink">{step.title}</span>
-            <span className="text-[13px] leading-[normal] text-ink-muted">{step.body}</span>
+            <span className="text-[13px] leading-normal text-ink-muted">{step.body}</span>
           </span>
         </li>
       ))}
