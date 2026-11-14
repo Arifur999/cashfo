@@ -448,4 +448,5 @@ export const vaultDictionary: Record<string, string> = {
   "All {total} logins look fine": "{total}টি লগইনই ঠিক আছে",
   "{length}, numbers only": "{length}, শুধু সংখ্যা",
   "Checked just now. No reused, weak or old passwords.": "এইমাত্র যাচাই হলো। কোনো পুনঃব্যবহৃত, দুর্বল বা পুরনো পাসওয়ার্ড নেই।",
+  "If one of these sites leaks it, the others are open too.": "এর একটি সাইট থেকে ফাঁস হলে বাকিগুলোও খোলা হয়ে যাবে।",
 };

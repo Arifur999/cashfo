@@ -19,8 +19,8 @@ const TIPS = [
   { icon: Shield, title: "A checkup for your logins", body: "It points out weak, reused and old passwords so you know what to change first." },
 ];
 
-// A 56px tile, four to a row of 196px (two on a phone, where both lines
-// truncate instead of spilling out of the tile).
+// A 56px tile, four to a row of 196px, a long name on two lines (two to a
+// row on a phone, where both lines truncate instead).
 const TILE = "flex h-14 min-w-0 items-center gap-3 rounded-[12px] px-3 text-left leading-[normal]";
 
 // An empty vault (design VaultEmpty): the accounts people open most, one
@@ -42,7 +42,7 @@ export function VaultEmpty({ onPick }: VaultEmptyProps) {
                 {avatarLetter(presetTitle(preset, t))}
               </span>
               <span className="flex min-w-0 flex-col gap-px">
-                <span className="truncate text-body font-semibold text-ink">{presetTitle(preset, t)}</span>
+                <span className="text-body font-semibold text-ink max-sm:truncate">{presetTitle(preset, t)}</span>
                 <span className="truncate text-caption text-ink-muted">{t(preset.kind)}</span>
               </span>
             </button>
