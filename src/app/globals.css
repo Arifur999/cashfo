@@ -200,6 +200,9 @@
      a picked row, a sold card, a card's inner rule, the dashboard table's
      head, and the Update due chip. */
   --loss-ink: #b91c1c;
+  /* The loan boards: a Pawna tile wash, and the words under a Dena balance. */
+  --pawna-wash: #eef6f4;
+  --dena-ink: #991b1b;
   --gain-wash: #f0fdf4;
   --loss-wash: #fef2f2;
   --quiet-chip: #f0f2f2;
@@ -459,6 +462,8 @@
   --asset-leaf: #6ee7a0;
   --asset-grey: #9aa7a4;
   --loss-ink: #f87171;
+  --pawna-wash: #15302a;
+  --dena-ink: #fca5a5;
   --gain-wash: #10261a;
   --loss-wash: #2a1516;
   --quiet-chip: #17241f;
@@ -851,6 +856,8 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-green: var(--tint-green);
   --color-tint-green-ink: var(--tint-green-ink);
   --color-loss-ink: var(--loss-ink);
+  --color-pawna-wash: var(--pawna-wash);
+  --color-dena-ink: var(--dena-ink);
   --color-gain-wash: var(--gain-wash);
   --color-loss-wash: var(--loss-wash);
   --color-quiet-chip: var(--quiet-chip);

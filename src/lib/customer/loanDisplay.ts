@@ -1,9 +1,10 @@
 import { formatCount } from "@/lib/i18n/digits";
-import type { FormatLocale } from "@/lib/i18n/formatPrefs";
+import { numericDates, type FormatLocale } from "@/lib/i18n/formatPrefs";
 import { localName, type Translate } from "@/lib/i18n/message";
 import type { Locale } from "@/lib/i18n/translate";
 import { paginate } from "@/lib/table/paginate";
 import type { ContactBalanceDetail, ContactType, LoanActivityKind, LoanBalanceDirection, LoanDashboardRow, LoanMonth, LoanStatementRow, Transaction } from "./api";
+import { formatDate } from "./date";
 import { toEnglishDigits } from "./money";
 import { cancelledLabel } from "./transactionDisplay";
 import { WALLET_TYPES } from "./walletVisuals";
@@ -57,15 +58,27 @@ export interface DirectionMeta {
   // "owes you" / "you owe" / "Settled", after an amount on a phone row.
   short: string;
   chip: "income" | "expense" | "neutral";
+  // The balance itself (the boards' balFg: Dena in danger-2, Settled faint).
   text: string;
-  // The tile behind a balance inside a card.
+  // The words under a balance (labelFg).
+  ink: string;
+  // The tile behind a balance inside a card, and the status pill.
   box: string;
+  // The status pill on the box (chipFg).
+  status: string;
+  // The tag beside a balance on the dashboard (tint and ink).
+  tag: string;
 }
 
+// The loan boards' two date lengths: "1 Jan 26" in a table row, "1 January
+// 2026" on a card. A reader who picked a numeric date style keeps it.
+export const loanRowDate = (date: string | Date, fmt: FormatLocale) => formatDate(date, numericDates(fmt) ? undefined : "d MMM yy", fmt);
+export const loanLongDate = (date: string | Date, fmt: FormatLocale) => formatDate(date, numericDates(fmt) ? undefined : "d MMMM yyyy", fmt);
+
 export const DIRECTION_META: Record<LoanBalanceDirection, DirectionMeta> = {
-  PAWNA: { name: "Pawna", label: "They owe you", short: "owes you", chip: "income", text: "text-income", box: "bg-mint-50/50" },
-  DENA: { name: "Dena", label: "You owe them", short: "you owe", chip: "expense", text: "text-expense", box: "bg-expense-soft/50" },
-  SETTLED: { name: "Settled", label: "Nothing outstanding", short: "Settled", chip: "neutral", text: "text-ink-muted", box: "bg-strip" },
+  PAWNA: { name: "Pawna", label: "They owe you", short: "owes you", chip: "income", text: "text-income", ink: "text-brand-ink", box: "bg-pawna-wash", status: "text-income", tag: "bg-income-soft text-income" },
+  DENA: { name: "Dena", label: "You owe them", short: "you owe", chip: "expense", text: "text-expense-fill", ink: "text-dena-ink", box: "bg-loss-wash", status: "text-loss-ink", tag: "bg-expense-soft text-loss-ink" },
+  SETTLED: { name: "Settled", label: "Nothing outstanding", short: "Settled", chip: "neutral", text: "text-ink-faint", ink: "text-ink-muted", box: "bg-page", status: "text-ink-2", tag: "bg-page text-ink-2" },
 };
 
 // The four principal entries, as the API records them: a loan given is a

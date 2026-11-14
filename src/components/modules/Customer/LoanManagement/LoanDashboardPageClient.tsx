@@ -1,14 +1,13 @@
 "use client";
 
-import { ArrowDownLeft, ArrowDownWideNarrow, ArrowUpRight, CalendarDays, Check, ChevronDown, HandCoins, Plus, Search, UserPlus } from "lucide-react";
+import { ArrowDownLeft, ArrowDownWideNarrow, ArrowUpRight, CalendarDays, Check, ChevronDown, Plus, Search, UserPlus } from "lucide-react";
 import { useState } from "react";
 import AmountText from "@/components/smartly/AmountText";
 import Button from "@/components/smartly/Button";
 import Card from "@/components/smartly/Card";
 import Chip from "@/components/smartly/Chip";
-import EmptyState from "@/components/smartly/EmptyState";
 import Input from "@/components/smartly/form/Input";
-import { ListCard, ListCell, ListEmpty, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
+import { ListCard, ListCell, ListHead, ListHeadCell, ListRow, ListRowLink, ListTotalRow } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
@@ -69,7 +68,10 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   // Loan contacts only, whatever the API sends: a trade customer or
   // supplier belongs to Books, and its statement here would be empty. The
   // totals are worked out from the same rows, so they always agree.
-  const rows = dashboard.rows.filter((row) => contactsById.has(row.contactId));
+  // Every loan contact is a row, as on the board: one with nothing entered
+  // yet stands at ৳ 0, Settled (the API lists only those with money moved).
+  const apiRows = new Map(dashboard.rows.map((row) => [row.contactId, row]));
+  const rows = contacts.filter((contact) => apiRows.has(contact.id) || contact.status === "ACTIVE").map((contact) => apiRows.get(contact.id) ?? emptyRow(contact));
   const totalPawna = rows.reduce((sum, row) => sum + Math.max(0, Number(row.currentBalance)), 0);
   const totalDena = rows.reduce((sum, row) => sum + Math.max(0, -Number(row.currentBalance)), 0);
   const net = totalPawna - totalDena;
@@ -112,7 +114,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
   );
 
   return (
-    <PageFrame className="md:min-h-full md:gap-4.5 md:pt-6">
+    <PageFrame className="md:min-h-full md:gap-4.5 md:pt-6 md:pb-8">
       {/* The board has no title from md: the topbar names the page. */}
       <PageHeader
         eyebrow={t("Loans")}
@@ -180,72 +182,29 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
         </div>
       </section>
 
-      {contacts.length === 0 ? (
-        <EmptyState
-          tone="loans"
-          icon={<HandCoins />}
-          title={t("Nothing outstanding")}
-          description={t("Add a bank or person, then record the loan you gave or took.")}
-          action={
-            canManage && (
-              <Button onClick={() => setContactOpen(true)}>
-                <UserPlus />
-                {t("Add bank / person")}
-              </Button>
-            )
-          }
-          className="min-h-80"
-        />
-      ) : rows.length === 0 ? (
-        // People are added, but no loan is recorded yet: the next step is the entry.
-        <div className="flex flex-col gap-4">
-          <EmptyState
-            tone="loans"
-            icon={<HandCoins />}
-            title={t("No loans recorded yet")}
-            description={t("Record the loan you gave or took, and everyone with a balance shows up here.")}
-            action={
-              canManage && (
-                <>
-                  {activeContacts.length > 0 && (
-                    <Button onClick={() => setEntry({})} className="max-md:hidden">
-                      <Plus strokeWidth={2.5} className="size-4" />
-                      {t("New loan entry")}
-                    </Button>
-                  )}
-                  <Button variant="secondary" onClick={() => setContactOpen(true)}>
-                    <UserPlus className="text-ink-2" />
-                    {t("Add bank / person")}
-                  </Button>
-                </>
-              )
-            }
-            className="min-h-80"
-          />
-          {phoneEntryButtons}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4 md:flex-1">
+      <div className="flex flex-col gap-4 md:flex-1">
           {/* Phone: the direction switch above the list, as the board has it. */}
-          <SegmentedControl
-            options={[
-              { value: "ALL" as Tab, label: counted(t("All"), counts.ALL) },
-              { value: "PAWNA" as Tab, label: t("Owe you") },
-              { value: "DENA" as Tab, label: t("You owe") },
-              { value: "SETTLED" as Tab, label: t("Settled") },
-            ]}
-            value={tab}
-            onChange={setTab}
-            label={t("Balance")}
-            size="coarse"
-            stretch
-            className="md:hidden"
-          />
+          {rows.length > 0 && (
+            <SegmentedControl
+              options={[
+                { value: "ALL" as Tab, label: counted(t("All"), counts.ALL) },
+                { value: "PAWNA" as Tab, label: t("Owe you") },
+                { value: "DENA" as Tab, label: t("You owe") },
+                { value: "SETTLED" as Tab, label: t("Settled") },
+              ]}
+              value={tab}
+              onChange={setTab}
+              label={t("Balance")}
+              size="coarse"
+              stretch
+              className="md:hidden"
+            />
+          )}
           <ListCard
             label={t("Loans")}
             header={
               <div className="hidden items-center justify-between gap-4 px-6 py-3.5 md:flex">
-                <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} className="rounded-full p-1" itemClassName="gap-1.5 px-3" />
+                <SegmentedControl options={tabs} value={tab} onChange={setTab} label={t("Balance")} className="rounded-full p-1" itemClassName="gap-1.5 px-3 not-aria-pressed:text-ink-2" />
                 <div className="flex min-w-0 flex-1 gap-2.5 lg:ml-4">
                   <Input size="sm" type="search" value={search} onChange={(event) => setSearch(event.target.value)} leading={<Search />} placeholder={t("Search name or phone…")} aria-label={t("Search by name or phone")} frameClassName="min-w-0 flex-1" />
                   <SortMenu value={sort} onChange={setSort} />
@@ -263,7 +222,16 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
               <ListHeadCell align="end">{t("Profit paid")}</ListHeadCell>
               <ListHeadCell align="end">{t("Balance")}</ListHeadCell>
             </ListHead>
-            {shown.length === 0 && <ListEmpty title={t("No one matches")} />}
+            {shown.length === 0 && (
+              <BalancesEmpty
+                none={rows.length === 0}
+                query={search.trim()}
+                tab={tab}
+                onClear={() => setSearch("")}
+                onShowAll={() => setTab("ALL")}
+                onAdd={canManage ? () => setContactOpen(true) : undefined}
+              />
+            )}
             {shown.map((row) => (
               <DashboardRow key={row.contactId} row={row} contact={contactsById.get(row.contactId)} currency={currency} />
             ))}
@@ -292,8 +260,7 @@ export function LoanDashboardPageClient({ businessId, dashboard, contacts, curre
             {shown.length > 0 && <ListTotalRow label={t("Net")} value={<AmountText value={sums.net} currency={currency} signed size="sm" className="text-body font-bold" />} className="hidden md:mt-auto md:flex xl:hidden" />}
           </ListCard>
           {phoneEntryButtons}
-        </div>
-      )}
+      </div>
 
       <LoanContactDrawer open={contactOpen} onClose={() => setContactOpen(false)} businessId={businessId} editing={null} currency={currency} canTrade={canTrade} />
       <LoanEntryDrawer open={entry !== null} onClose={() => setEntry(null)} businessId={businessId} contacts={activeContacts} currency={currency} initialKind={entry?.kind} />
@@ -404,12 +371,74 @@ function SortMenu({ value, onChange }: { value: Sort; onChange: (next: Sort) => 
   );
 }
 
+// A contact with nothing entered yet: ৳ 0 everywhere, Settled.
+function emptyRow(contact: Contact): LoanDashboardRow {
+  const balance = Number(contact.currentBalance ?? contact.openingBalance ?? 0);
+  return {
+    contactId: contact.id,
+    contactName: contact.name,
+    contactPhone: contact.phone ?? null,
+    openingBalance: String(contact.openingBalance ?? "0"),
+    totalReceive: "0",
+    totalPayment: "0",
+    profitPaid: "0",
+    profitReceived: "0",
+    currentBalance: String(balance),
+    direction: balance > 0 ? "PAWNA" : balance < 0 ? "DENA" : "SETTLED",
+    entries: 0,
+    lastEntry: null,
+    firstEntryDate: null,
+  };
+}
+
+// The board's empty table: no contacts yet, nobody matching the search, or
+// nobody on the picked side; each with the way back.
+function BalancesEmpty({ none, query, tab, onClear, onShowAll, onAdd }: { none: boolean; query: string; tab: Tab; onClear: () => void; onShowAll: () => void; onAdd?: () => void }) {
+  const { t } = useLocale();
+  const hasQuery = !none && query !== "";
+  const hasTab = !none && tab !== "ALL";
+  const button = "h-9.5 rounded-full border border-input bg-surface px-4 text-[13.5px] font-semibold text-ink hover:bg-page";
+  return (
+    <div className="flex flex-col items-center justify-center gap-2.5 px-6 py-12 text-center leading-[normal]">
+      <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-[14px] bg-page text-ink-muted">
+        {none ? <UserPlus className="size-5.5" strokeWidth={2} /> : <Search className="size-5.5" strokeWidth={2} />}
+      </span>
+      <span className="text-[15px] font-semibold text-ink">{none ? t("No loan contacts yet") : hasQuery ? t("No one matches “{query}”", { query }) : t("No one here right now")}</span>
+      <span className="max-w-105 text-[13px] leading-normal text-ink-muted">
+        {none
+          ? t("Add the people, shops, banks or NGOs you lend to or borrow from. Their balances show up here.")
+          : hasQuery
+            ? t(tab !== "ALL" ? "Try another name or phone number, or look in All." : "Try another name or phone number.")
+            : t("No contact has this balance status.")}
+      </span>
+      <span className="mt-1 flex gap-2">
+        {hasQuery && (
+          <button type="button" onClick={onClear} className={button}>
+            {t("Clear search")}
+          </button>
+        )}
+        {hasTab && (
+          <button type="button" onClick={onShowAll} className={button}>
+            {t("Show all")}
+          </button>
+        )}
+        {none && onAdd && (
+          <Button onClick={onAdd} className="h-9.5 px-4 text-[13.5px]">
+            {t("Add contact")}
+          </Button>
+        )}
+      </span>
+    </div>
+  );
+}
+
 // One contact: the phone's two lines (who, then where it stands) below xl,
 // plus a line of its figures from md, and the board's columns from xl. The name is the link, stretched over the row.
 function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; contact?: Contact; currency: string }) {
   const { t, fmt } = useLocale();
   const meta = DIRECTION_META[row.direction];
   const settled = row.direction === "SETTLED";
+  const sub = [row.contactPhone, contact?.notes].filter(Boolean).join(" · ");
   // The figures the xl columns show, those that are not nothing.
   const movements = [
     Number(row.openingBalance) !== 0 && `${t("Opening")} ${formatSignedCurrency(row.openingBalance, currency, fmt)}`,
@@ -428,14 +457,14 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
               {row.contactName}
             </ListRowLink>
             {contact && (
-              <Chip tone="neutral" size="sm" className="hidden font-semibold xl:inline-flex">
+              <Chip tone="neutral" size="sm" className="hidden h-auto bg-page py-px font-semibold xl:inline-flex">
                 {t(LOAN_KIND_LABELS[contact.type])}
               </Chip>
             )}
           </span>
           <span className="truncate text-caption font-normal text-ink-muted xl:hidden">{contact ? [t(LOAN_KIND_LABELS[contact.type]), contact.notes].filter(Boolean).join(" · ") : (row.contactPhone ?? "")}</span>
-          {/* A bank or NGO by what the loan is ("House loan"), a person by their number. */}
-          <span className="hidden truncate text-caption font-normal text-ink-muted xl:block">{(contact && (contact.type === "BANK" || contact.type === "NGO") && contact.notes) || row.contactPhone || contact?.email || contact?.address || "—"}</span>
+          {/* The number and what the loan is ("House loan"), as the board joins them. */}
+          {sub && <span className="hidden truncate text-[12px] text-ink-muted xl:block">{sub}</span>}
           {/* Tablet and small laptop: the board's four figures, on a line of their own. */}
           {movements.length > 0 && <span className="hidden truncate text-caption font-normal text-ink-muted tabular-nums md:block xl:hidden">{movements.join(" · ")}</span>}
         </span>
@@ -462,7 +491,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
         )}
         {settled && <b className={cn("hidden text-body font-bold tabular-nums xl:inline", meta.text)}>{formatCurrency(0, currency, fmt)}</b>}
         {!settled && <span className="text-caption leading-[normal] font-normal text-ink-muted xl:hidden">{t(meta.short)}</span>}
-        <Chip tone={meta.chip} size="sm" className="hidden font-semibold xl:inline-flex">
+        <Chip tone={meta.chip} size="sm" className={cn("hidden h-auto px-2 py-0.5 font-semibold xl:inline-flex", meta.tag)}>
           {t(meta.name)}
         </Chip>
       </ListCell>
