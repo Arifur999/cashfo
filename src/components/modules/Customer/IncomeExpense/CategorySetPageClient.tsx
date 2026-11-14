@@ -164,7 +164,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, curre
   }
 
   return (
-    <PageFrame className="gap-4 leading-[normal]">
+    <PageFrame className="gap-4 leading-[normal] md:pb-8">
       <PageHeader
         title={t("Category Set")}
         description={t("These names show in the category list when you add a transaction. Counts are for all time.")}
@@ -227,7 +227,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, curre
           <label htmlFor="category-sort" className="text-small text-ink-muted">
             {t("Sort")}
           </label>
-          <NativeSelect id="category-sort" size="sm" value={sort} onChange={(event) => setSort(event.target.value as Sort)} frameClassName="h-10" className="h-10 rounded-[10px] text-[13.5px] font-normal">
+          <NativeSelect id="category-sort" size="sm" value={sort} onChange={(event) => setSort(event.target.value as Sort)} frameClassName="h-10" className="h-10 rounded-[10px] pr-6.5 pl-3.5 text-[13.5px] font-normal">
             {SORTS.map(([value, label]) => (
               <option key={value} value={value}>
                 {t(label)}
@@ -259,7 +259,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, curre
                   </Button>
                 )}
               </div>
-              <div aria-hidden="true" className="hidden grid-cols-[minmax(0,1fr)_132px_96px] gap-3 border-b border-divider bg-head-wash py-2 pr-3 pl-5 text-[11.5px] font-semibold tracking-[0.04em] text-ink-muted uppercase sm:grid">
+              <div aria-hidden="true" className="hidden grid-cols-[minmax(0,1fr)_132px_96px] gap-3 border-b border-divider bg-table-head py-2 pr-3 pl-5 text-[11.5px] font-semibold tracking-[0.04em] text-ink-muted uppercase sm:grid">
                 <span>{t("Category")}</span>
                 <span>{t("All-time total")}</span>
                 <span />
@@ -297,7 +297,7 @@ export function CategorySetPageClient({ businessId, categories, canManage, curre
                     event.preventDefault();
                     quickAdd(group.type);
                   }}
-                  className="bg-head-wash"
+                  className="bg-table-head"
                 >
                   <div className="flex items-center gap-2.5 py-3 pr-3 pl-5">
                     <span aria-hidden="true" style={{ "--cat": ieCategoryColor(freeColor(allColors)) } as React.CSSProperties} className="flex size-10 shrink-0 items-center justify-center rounded-[12px] border-[1.5px] border-dashed border-(--cat) text-(--cat)">

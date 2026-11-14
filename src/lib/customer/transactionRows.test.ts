@@ -463,6 +463,8 @@ describe("owningFeature", () => {
     expect(owningFeature(transaction({ description: "Savings contribution: Hajj" }))).toBe("savings");
     expect(owningFeature(transaction({ description: "Referral Program withdrawal" }))).toBe("referral");
     expect(owningFeature(transaction({ entries: [entry({ categoryId: "Referral Bonus" })] }))).toBe("referral");
+    expect(owningFeature(transaction({ description: "Investment profit: Karim Garments -- August share" }))).toBe("investment");
+    expect(owningFeature(transaction({ entries: [entry({ categoryId: "Investment profit" })] }))).toBe("investment");
     expect(owningFeature(transaction({ description: "Lunch" }))).toBeNull();
   });
 });

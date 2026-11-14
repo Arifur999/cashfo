@@ -614,6 +614,22 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Recorded on the Assets page. Change it there.": "অ্যাসেট পেজে রাখা হয়েছে। সেখানে বদলান।",
   "Recorded on the Savings goals page. Change it there.": "সঞ্চয় লক্ষ্য পেজে রাখা হয়েছে। সেখানে বদলান।",
   "Recorded by the referral program.": "রেফারেল প্রোগ্রাম থেকে রাখা হয়েছে।",
+  "Recorded on the Investments page. Change it there.": "বিনিয়োগ পেজে রাখা হয়েছে। সেখানে বদলান।",
+  "Open Investments": "বিনিয়োগ খুলুন",
+  // The New category popup's Quick picks and its Preview.
+  "Quick picks": "দ্রুত বাছাই",
+  "Rental income": "ভাড়া থেকে আয়",
+  Bonus: "বোনাস",
+  "Profit@@category": "মুনাফা",
+  "Refund@@category": "রিফান্ড",
+  "Mobile & Internet": "মোবাইল ও ইন্টারনেট",
+  Charity: "দান-সদকা",
+  Travel: "ভ্রমণ",
+  "Family support": "পরিবারকে সহায়তা",
+  "Preview@@category": "প্রিভিউ",
+  "In the transaction form": "লেনদেন ফর্মে এভাবে দেখাবে",
+  // An investment's posting on Transactions: a pill as narrow as the board's Zakat.
+  "Invest@@pill": "বিনিয়োগ",
   // The transaction popup: a category added in place, the description box.
   "No categories yet. Add the first one here.": "এখনো কোনো ক্যাটাগরি নেই। প্রথমটি এখানেই যোগ করুন।",
   "New income category": "নতুন আয়ের ক্যাটাগরি",

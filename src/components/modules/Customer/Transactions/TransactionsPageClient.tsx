@@ -297,7 +297,7 @@ export function TransactionsPageClient({ businessId, transactions, accounts, cat
   return (
     // Desktop: the frame is the window's height and the list card takes the
     // rest, its rows scrolling inside it with the pager pinned (the board).
-    <PageFrame className="leading-[normal] md:h-full">
+    <PageFrame className="leading-[normal] md:h-full md:pb-8">
       {/* On a phone the floating + adds, and the title stands alone. */}
       <PageHeader title={t("Every income and expense transaction.")} actions={addButton} hideActionsOnPhone className="md:items-center" />
 
@@ -456,6 +456,7 @@ function sourceOf(row: TransactionRow): { href: string; label: string; tip: stri
   if (feature === "asset") return { href: "/assets-management/purchase-sell", label: "Assets", tip: "Recorded on the Assets page. Change it there.", tone: grey };
   if (feature === "savings") return { href: "/savings-goals/dashboard", label: "Savings", tip: "Recorded on the Savings goals page. Change it there.", tone: grey };
   if (feature === "referral") return { href: "/referrals", label: "Referrals", tip: "Recorded by the referral program.", tone: grey };
+  if (feature === "investment") return { href: "/investments/transactions", label: "Invest@@pill", tip: "Recorded on the Investments page. Change it there.", tone: grey };
   return null;
 }
 

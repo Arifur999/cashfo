@@ -62,6 +62,7 @@ const FEATURE_PAGE: Record<OwningFeature, { href: string; label: string }> = {
   asset: { href: "/assets-management/purchase-sell", label: "Open Buy & sell" },
   savings: { href: "/savings-goals/dashboard", label: "Open Savings" },
   referral: { href: "/referrals", label: "Open Invite & earn" },
+  investment: { href: "/investments/transactions", label: "Open Investments" },
 };
 
 const ENTRY_COLUMNS = "md:grid-cols-[minmax(0,1fr)_120px_120px]";
