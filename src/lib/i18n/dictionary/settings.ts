@@ -1381,4 +1381,5 @@ export const settingsDictionary: Record<string, string> = {
   "The small files that keep you signed in.": "যে ছোট ফাইলগুলো আপনাকে সাইন ইন রাখে।",
   "How members and admins treat each other in Group Expense.": "গ্রুপ খরচে সদস্য আর অ্যাডমিনরা একে অপরের সাথে কেমন আচরণ করবেন।",
   "{count} payment · {amount} paid": "{count}টি পেমেন্ট · {amount} পরিশোধিত",
+  "Money Tracker · version {version}": "মানি ট্র্যাকার · সংস্করণ {version}",
 };

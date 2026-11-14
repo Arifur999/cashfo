@@ -140,6 +140,6 @@ describe("help", () => {
 
 describe("resources", () => {
   it("names the legal pages as the Resources board does", () => {
-    expect(LEGAL_LINKS.map((link) => link.title)).toEqual(["Terms of service", "Privacy policy", "Refund policy"]);
+    expect(LEGAL_LINKS.map((link) => link.title)).toEqual(["Terms of service", "Privacy policy", "Refund policy", "Cookie policy", "Community rules for groups"]);
   });
 });

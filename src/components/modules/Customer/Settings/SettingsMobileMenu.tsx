@@ -113,7 +113,7 @@ export function SettingsMobileMenu({ devices, remindersOn }: SettingsMobileMenuP
         <LogOut className="size-4.5" aria-hidden="true" />
         {t("Sign out")}
       </button>
-      <span className="text-center text-caption text-ink-faint">{t("Smartly · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</span>
+      <span className="text-center text-[12px] text-ink-faint">{t("Money Tracker · version {version}", { version: toLocaleDigits(APP_VERSION, fmt) })}</span>
     </div>
   );
 }
