@@ -155,11 +155,15 @@ export interface UserNotification {
   locked?: boolean;
   readAt: string | null;
   createdAt: string;
+  // When it went to the bell's Deleted tab (null in the feed itself).
+  deletedAt?: string | null;
 }
 
 export interface NotificationFeed {
   data: UserNotification[];
   unreadCount: number;
+  // The Deleted tab, newest deletion first; missing from an older backend.
+  deleted?: UserNotification[];
 }
 
 // Settings > App > Reminders.

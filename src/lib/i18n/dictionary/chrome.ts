@@ -275,4 +275,12 @@ export const chromeDictionary: Record<string, string> = {
   "Switch to Money Tracker": "মানি ট্র্যাকারে যান",
   "{done} of {total} habits done today": "আজ {total}টি অভ্যাসের মধ্যে {done}টি হয়েছে",
   "Try it": "দেখুন",
+  // The bell (AppTopbar board): Delete, Deleted and Restore
+  "You are all caught up.": "নতুন কোনো নোটিফিকেশন নেই।",
+  "Nothing deleted.": "মুছে ফেলা কোনো নোটিফিকেশন নেই।",
+  "Notification deleted": "নোটিফিকেশন মুছে ফেলা হয়েছে",
+  "Notifications you delete wait here. Restore puts one back in your list. They are removed for good after 30 days.": "যেগুলো মুছেছেন সেগুলো এখানে থাকে। ফিরিয়ে আনুন চাপলে আবার আগের তালিকায় চলে যাবে। ৩০ দিন পর এগুলো নিজে থেকেই মুছে যায়।",
+  "Messages from the Smartly team, sent to everyone. Delete any you don't need.": "Smartly টিম থেকে সবার জন্য পাঠানো বার্তা। দরকার না হলে মুছে ফেলুন।",
+  "Couldn't delete the notification": "নোটিফিকেশন মুছে ফেলা যায়নি",
+  "Couldn't restore the notification": "নোটিফিকেশন ফিরিয়ে আনা যায়নি",
 };

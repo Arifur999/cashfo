@@ -47,6 +47,19 @@ export async function markNotificationReadAction(id: string): Promise<ActionResu
   }, "Failed to mark the notification as read");
 }
 
+// The bell's Delete (it waits 30 days in Deleted) and Restore.
+export async function deleteNotificationAction(id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/notifications/${encodeURIComponent(id)}/delete`, {}, { headers: await authHeaders() });
+  }, "Couldn't delete the notification");
+}
+
+export async function restoreNotificationAction(id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/notifications/${encodeURIComponent(id)}/restore`, {}, { headers: await authHeaders() });
+  }, "Couldn't restore the notification");
+}
+
 export async function markAllNotificationsReadAction(): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.post(`${API_BASE_URL}/api/notifications/read-all`, {}, { headers: await authHeaders() });
