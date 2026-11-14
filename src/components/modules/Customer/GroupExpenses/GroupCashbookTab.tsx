@@ -222,7 +222,8 @@ export function GroupCashbookTab({ data, view, onAccountant, busy, canAdd, canTo
                 ).map(([label, value, tone]) => (
                   <span key={label} className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-[11.5px] text-ink-muted">{t(label)}</span>
-                    <span className={cn("truncate text-[13.5px] font-semibold", tone)}>{money(value)}</span>
+                    {/* A long figure wraps rather than hide its paisa. */}
+                    <span className={cn("text-[13.5px] leading-tight font-semibold [overflow-wrap:anywhere]", tone)}>{money(value)}</span>
                   </span>
                 ))}
               </span>
