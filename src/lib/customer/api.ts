@@ -85,6 +85,10 @@ export interface CurrentUser {
   emailReady?: boolean;
   // Two-step sign-in with an authenticator app is on.
   twoFactorEnabled?: boolean;
+  // A group member's portal login (made from an access link): it opens only
+  // Group Expense. Its username signs it in. Absent from an older backend.
+  portalOnly?: boolean;
+  username?: string | null;
   businesses: UserBusiness[];
   // Set when this is a super admin's read-only "View as customer" session.
   impersonatedBy?: { name: string; email: string | null } | null;
@@ -1310,7 +1314,42 @@ export type GroupPayMethod = "CASH" | "BKASH" | "NAGAD" | "BANK";
 export type GroupContributionKind = "DEPOSIT" | "RETURN" | "SETTLE" | "CARRY";
 // Member: gives money to an accountant. Accountant: keeps the cash and does
 // the bazar (up to 2 in a group).
+// MEMBER: counted in the costs, no access. VIEWER: may open the group and
+// see everything. ACCOUNTANT ("Editor"): keeps cash and adds money entries
+// in their own name.
 export type GroupMemberRole = "MEMBER" | "ACCOUNTANT" | "VIEWER";
+
+// A member's login and waiting access link, as the group's owner sees them
+// (null for everyone else).
+export interface GroupMemberAccess {
+  login: { username: string | null; lastLoginAt: string | null; ownAccount: boolean } | null;
+  link: { kind: GroupAccessLinkKind; createdAt: string; expiresAt: string; canCopy: boolean } | null;
+}
+
+export type GroupAccessLinkKind = "JOIN" | "RESET";
+
+// An access link the owner just made (or copies again): the token the
+// /join/<token> link carries.
+export interface GroupAccessLink {
+  token: string;
+  kind: GroupAccessLinkKind;
+  createdAt: string;
+  expiresAt: string;
+}
+
+// What /join/<token> shows before the link is used.
+export interface GroupInvitePreview {
+  kind: GroupAccessLinkKind;
+  memberName: string;
+  role: GroupMemberRole;
+  groupName: string;
+  groupKind: GroupKind;
+  adminName: string | null;
+  // A reset link: the login's username. A join link: a free username to start from.
+  username: string | null;
+  suggestedUsername: string | null;
+  expiresAt: string;
+}
 // How costs shared "by cost split" are weighted.
 export type GroupCostSplit = "EQUAL" | "CUSTOM";
 
@@ -1356,8 +1395,10 @@ export interface GroupMember {
   household?: string | null;
   // Their percent when the group's cost split is custom.
   costPercent?: string | null;
-  // The owner's view only: their login and a waiting access link (null for others).
-  access?: { login: { username: string | null; lastLoginAt: string | null; ownAccount: boolean } | null; link: { kind: "JOIN" | "RESET"; createdAt: string; expiresAt: string; canCopy: boolean } | null } | null;
+  // The login that opens the group as this member, once their access link
+  // was used; and their access, for the owner only. Absent from an older API.
+  userId?: string | null;
+  access?: GroupMemberAccess | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1382,6 +1423,8 @@ export interface GroupContribution {
   payMethod?: GroupPayMethod | null;
   // The member who recorded it; null on older rows.
   recordedByName?: string | null;
+  // Who recorded it (an Editor changes only their own); null: the owner.
+  createdByUserId?: string | null;
 }
 
 export interface GroupExpenseSplit {
@@ -1406,6 +1449,8 @@ export interface GroupExpense {
   split: GroupSplit;
   // The members it names; none: everyone in the group that day.
   splits: GroupExpenseSplit[];
+  // Who recorded it (an Editor changes only their own); null: the owner.
+  createdByUserId?: string | null;
   createdAt: string;
   // The member who recorded it; null on older rows.
   recordedByName?: string | null;
@@ -1500,6 +1545,8 @@ export interface GroupCashbookRow {
   balance: string;
   // A handover's other holder: who got the cash (OUT) or gave it (IN).
   otherId?: string;
+  // A handover's recorder (an Editor changes only their own).
+  createdByUserId?: string | null;
 }
 
 export interface GroupCashbook {

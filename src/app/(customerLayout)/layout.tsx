@@ -19,7 +19,7 @@ import { TodayTasksProvider } from "@/components/modules/Customer/Providers/Toda
 import { ChooseWorkspaceRedirect } from "@/components/modules/Customer/Workspace/ChooseWorkspaceRedirect";
 import { WorkspaceLockScreen } from "@/components/modules/Customer/Workspace/WorkspaceLockScreen";
 import { AppLockGate } from "@/components/modules/Customer/Settings/AppLockGate";
-import { CUSTOMER_HOME_ROUTE, MAINTENANCE_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
+import { ACCESS_CHANGED_REASON, CUSTOMER_HOME_ROUTE, MAINTENANCE_ROUTE, MEMBER_LOGIN_ROUTE, SESSION_EXPIRED_LOGIN_ROUTE } from "@/lib/authUtils";
 import { resolveActiveWorkspace } from "@/lib/customer/activeBusiness";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getSidebarPlan } from "@/lib/customer/billing";
@@ -60,6 +60,17 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
   const user = await getCurrentUser();
   if (!user) {
     redirect(await signInAgainRoute());
+  }
+
+  // A group member's portal login opens Group Expense and nothing else (the
+  // API refuses the rest too). With no group left -- the admin took the
+  // access away -- it is signed out, and the member sign-in page says why.
+  if (user.portalOnly) {
+    if (!user.businesses.some((business) => business.type === "GROUP")) {
+      redirect(`${MEMBER_LOGIN_ROUTE}?reason=${ACCESS_CHANGED_REASON}`);
+    }
+    const asked = (await headers()).get("x-pathname") ?? "";
+    if (!/^\/group-expenses(\/|\?|$)/.test(asked)) redirect("/group-expenses");
   }
 
   const [workspace, locale, overrides, prayerSettings, plan] = await Promise.all([
@@ -153,7 +164,7 @@ export default async function CustomerLayout({ children }: LayoutProps<"/">) {
                           </main>
                         </div>
                       </ShellFrame>
-                      <QuickAddFab />
+                      {!user.portalOnly && <QuickAddFab />}
                       <ShellNotice />
                       {/* Keeps this device's push subscription in the reader's language. */}
                       <PushResync enabled={!user.impersonatedBy} />

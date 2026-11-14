@@ -96,7 +96,7 @@ export function GroupPageClient({ data }: { data: GroupPageData }) {
   const messLayout = data.settings.mealsOn;
   // Skip, go to dashboard: a new group shows its dashboard from then on.
   const [setupSeen, setSetupSeen] = useStoredChoice<"open" | "skipped">(`smartly-group-setup:${data.businessId}`, ["open", "skipped"], "open");
-  useTellGroupNav(data.businessId, messLayout);
+  useTellGroupNav(data.businessId, messLayout, data.role === "OWNER");
 
   const view = useMemo<GroupView>(() => {
     const activeMembers = data.members.filter((m) => m.status === "ACTIVE");

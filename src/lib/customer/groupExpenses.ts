@@ -9,6 +9,7 @@ import {
   type GroupExpense,
   type GroupExpenseCategory,
   type GroupExpenseCategoryOption,
+  type GroupInvitePreview,
   type GroupMeal,
   type GroupMember,
   type GroupMonthlyBudget,
@@ -213,3 +214,14 @@ export const getGroupEntryCount = cache(async (businessId: string): Promise<numb
     return emptyUnlessOutage(error, null);
   }
 });
+
+// What an access link is for (/join/<token>), or null for a link that no
+// longer works. Needs no sign-in: the link is the proof.
+export async function getGroupInvite(token: string): Promise<GroupInvitePreview | null> {
+  try {
+    const res = await customerApi.get<GroupInvitePreview>(`${API_BASE_URL}/api/group-invites/${encodeURIComponent(token)}`);
+    return res.data;
+  } catch (error) {
+    return emptyUnlessOutage(error, null);
+  }
+}
