@@ -170,7 +170,7 @@ export function SavingsPlansPageClient({ businessId, plans, goalsMonthly, curren
             style={kpi.hero ? { background: deepBand("var(--emerald)") } : undefined}
           >
             {kpi.hero && <span aria-hidden="true" className="pointer-events-none absolute -top-17.5 -right-12.5 size-45 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.16)_0,transparent_68%)]" />}
-            <span className={cn("relative flex items-center gap-2 text-[12.5px] font-semibold", kpi.hero ? "text-white/85" : "text-ink-soft")}>
+            <span className={cn("relative flex items-center gap-2 text-[12.5px] font-semibold", kpi.hero ? "text-white/85" : "text-ink-2")}>
               <span aria-hidden="true" className={cn("flex size-7 items-center justify-center rounded-[9px]", kpi.hero ? "bg-white/16 text-white" : kpi.tile)}>
                 <kpi.icon className="size-3.75" strokeWidth={2} />
               </span>
@@ -290,7 +290,7 @@ export function SavingsPlansPageClient({ businessId, plans, goalsMonthly, curren
                               <span className="text-[12px] text-ink-muted">{t("a month")}</span>
                             </span>
                           </div>
-                          {plan.note && <p className="text-[12.5px] leading-[1.5] text-ink-soft">{plan.note}</p>}
+                          {plan.note && <p className="text-[12.5px] leading-[1.5] text-ink-2">{plan.note}</p>}
                           {plan.link && (
                             <a href={linkHref(plan.link)} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-1.25 self-start truncate text-[12.5px] font-semibold" style={{ color: shade(c, -0.18) }}>
                               <Link2 className="size-3.5 shrink-0" strokeWidth={2.25} aria-hidden="true" />
@@ -324,7 +324,7 @@ export function SavingsPlansPageClient({ businessId, plans, goalsMonthly, curren
                       const c = colorOf(plan);
                       return (
                         <div key={plan.id} className="flex min-w-0 items-center gap-3 rounded-[16px] border border-dashed border-input bg-surface px-4 py-3.5">
-                          <span aria-hidden="true" className="flex size-9.5 shrink-0 items-center justify-center rounded-[11px] border text-[18px]" style={{ background: `linear-gradient(180deg, ${shade(c, 0.9)} 0%, ${shade(c, 0.96)} 100%)`, borderColor: shade(c, 0.72) }}>
+                          <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-[11px] border text-[18px]" style={{ background: `linear-gradient(180deg, ${shade(c, 0.9)} 0%, ${shade(c, 0.96)} 100%)`, borderColor: shade(c, 0.72) }}>
                             {planEmoji(plan.category)}
                           </span>
                           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -367,7 +367,7 @@ export function SavingsPlansPageClient({ businessId, plans, goalsMonthly, curren
                       <tr key={plan.id} className="border-t border-head-rule">
                         <td className="py-3 pr-2.5 pl-4.5">
                           <span className="flex min-w-0 items-center gap-2.5">
-                            <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-[9px] border text-[15px]" style={{ background: `linear-gradient(180deg, ${shade(c, 0.9)} 0%, ${shade(c, 0.96)} 100%)`, borderColor: shade(c, 0.72) }}>
+                            <span aria-hidden="true" className="flex size-8.5 shrink-0 items-center justify-center rounded-[9px] border text-[15px]" style={{ background: `linear-gradient(180deg, ${shade(c, 0.9)} 0%, ${shade(c, 0.96)} 100%)`, borderColor: shade(c, 0.72) }}>
                               {planEmoji(plan.category)}
                             </span>
                             <span className="flex max-w-57.5 min-w-0 flex-col gap-px">
@@ -389,7 +389,7 @@ export function SavingsPlansPageClient({ businessId, plans, goalsMonthly, curren
                         <td className="px-2.5 py-3 text-right font-semibold whitespace-nowrap" style={{ color: shade(c, -0.18) }}>
                           {Number(plan.monthly) > 0 ? t("{amount} a month", { amount: money(plan.monthly) }) : "–"}
                         </td>
-                        <td className="px-2.5 py-3 whitespace-nowrap text-ink-soft">{formatDay(plan.plannedOn, "d MMM yy", fmt)}</td>
+                        <td className="px-2.5 py-3 whitespace-nowrap text-ink-2">{formatDay(plan.plannedOn, "d MMM yy", fmt)}</td>
                         <td className="py-3 pr-4 pl-1.5">
                           {canManage && (
                             <span className="flex items-center justify-end gap-1.5">
