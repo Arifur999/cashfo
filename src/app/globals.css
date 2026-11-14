@@ -212,6 +212,10 @@
   --head-rule: #eef1f0;
   --due-ink: #92400e;
   --alert-wash: #fff7ed;
+  /* A month left open (the board's warning-2 pill: Close October). */
+  --warn2-wash: #fff7ed;
+  --warn2-ink: #9a3412;
+  --warn2-line: #f5c9a3;
   --note-ink: #134e4a;
   /* Notes (the NotesHome board): a card's tint, and the five journal moods
      from Great to Hard. */
@@ -473,6 +477,9 @@
   --head-rule: #1c2724;
   --due-ink: #fcd34d;
   --alert-wash: #33200e;
+  --warn2-wash: #2b1e12;
+  --warn2-ink: #fdba74;
+  --warn2-line: #454a40;
   --note-ink: #9cc7be;
   --note-yellow: #29250f;
   --note-green: #10261a;
@@ -863,6 +870,9 @@ html:not(.dark) [data-app="habit"] {
   --color-head-rule: var(--head-rule);
   --color-due-ink: var(--due-ink);
   --color-alert-wash: var(--alert-wash);
+  --color-warn2-wash: var(--warn2-wash);
+  --color-warn2-ink: var(--warn2-ink);
+  --color-warn2-line: var(--warn2-line);
   --color-note-ink: var(--note-ink);
   --color-tint-indigo: var(--tint-indigo);
   --color-tint-indigo-ink: var(--tint-indigo-ink);

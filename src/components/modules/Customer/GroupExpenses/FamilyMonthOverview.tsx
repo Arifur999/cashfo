@@ -56,9 +56,6 @@ export function FamilyMonthOverview({ data, view, me, canAdd, canPay, onAddExpen
   const closed = view.closed;
   const isAdmin = canManage(data.access);
   const actions = canAdd && !closed;
-  // The month before this one, finished but never closed (it is asked for first).
-  const previous = current && isAdmin && !data.settings.pausedAt ? unclosedPreviousMonth(data.history, data.members, data.range) : null;
-  const unclosed = previous && previous.to < data.today ? previous : null;
 
   // Tile 1: spent against the month's budget.
   const spent = Number(settlement.totalExpense);
@@ -104,6 +101,11 @@ export function FamilyMonthOverview({ data, view, me, canAdd, canPay, onAddExpen
   const cashSum = holders.length > 0 ? holders.reduce((sum, row) => sum + Number(row.cash), 0) : view.cash;
   const booksMatch = Math.abs(totals.balance - cashSum) < 0.005;
 
+  // The month before this one, finished but never closed (it is asked for
+  // first); money dated into it keeps it open even if every member came later.
+  const previous = current && isAdmin && !data.settings.pausedAt ? unclosedPreviousMonth(data.history, data.members, data.range, !booksMatch) : null;
+  const unclosed = previous && previous.to < data.today ? previous : null;
+
   // Where the money went: the month's spending by category, biggest first.
   const cats = categoryRows(data.expenses, data.categories).filter((row) => row.amount > 0);
 
@@ -147,7 +149,7 @@ export function FamilyMonthOverview({ data, view, me, canAdd, canPay, onAddExpen
         {actions && (
           <div className="flex flex-wrap items-center gap-2 md:shrink-0 md:flex-nowrap">
             {unclosed && (
-              <Button asChild variant="secondary" className="border-warning-line bg-warning-soft text-[13.5px] text-warning-ink hover:bg-warning-soft/70">
+              <Button asChild variant="secondary" className="border-warn2-line bg-warn2-wash text-[13.5px] text-warn2-ink hover:bg-warn2-wash/70">
                 <Link href={groupTabHref(data.businessId, "settlement", { month: unclosed.key })}>
                   <Lock aria-hidden="true" />
                   {t("Close {month}", { month: formatDay(`${unclosed.key}-01`, "MMMM", fmt) })}

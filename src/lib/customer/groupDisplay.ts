@@ -166,9 +166,13 @@ export function hasActivity(settlement: GroupSettlementResult): boolean {
 // reminds the reader to close it. A record that only overlaps it (the start
 // day moved after 1-30 Sep was closed, so last month is now 10 Sep - 9 Oct)
 // counts too: the server refuses to close a period that overlaps a record.
-export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: (Pick<GroupMember, "createdAt"> & { joinedOn?: string | null })[], range: MonthRange): MonthRange | null {
+// `moneyBefore`: entries dated before `range` sit in no closed month (the
+// balances don't add up to the cash), so last month is open even when every
+// member was added later.
+export function unclosedPreviousMonth(history: GroupSettlementRecord[], members: (Pick<GroupMember, "createdAt"> & { joinedOn?: string | null })[], range: MonthRange, moneyBefore = false): MonthRange | null {
   const previous = monthRangeOf(shiftMonth(range.key, -1), startDayOf(range));
   if (history.some((record) => record.periodStart.slice(0, 10) <= previous.to && record.periodEnd.slice(0, 10) >= previous.from)) return null;
+  if (moneyBefore) return previous;
   // A member added late but dated back (joined on the 1st) counts from then.
   return members.some((member) => member.createdAt.slice(0, 10) <= previous.to || (!!member.joinedOn && member.joinedOn.slice(0, 10) <= previous.to)) ? previous : null;
 }

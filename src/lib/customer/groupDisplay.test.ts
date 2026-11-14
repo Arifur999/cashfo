@@ -108,6 +108,9 @@ describe("months", () => {
     expect(unclosedPreviousMonth([record({ periodStart: "2026-09-01T00:00:00.000Z", periodEnd: "2026-09-30T00:00:00.000Z" })], old, october)).toBeNull();
     // Started this month: there was no last month to close.
     expect(unclosedPreviousMonth([], [{ createdAt: "2026-10-02T09:00:00.000Z" }], october)).toBeNull();
+    // ...unless money is dated into last month all the same (members added later, entries backdated).
+    expect(unclosedPreviousMonth([], [{ createdAt: "2026-10-02T09:00:00.000Z" }], october, true)).toMatchObject({ key: "2026-09" });
+    expect(unclosedPreviousMonth([record({ periodStart: "2026-09-01T00:00:00.000Z", periodEnd: "2026-09-30T00:00:00.000Z" })], old, october, true)).toBeNull();
     // A month starting on the 10th looks at 10 Aug – 9 Sep.
     expect(unclosedPreviousMonth([], old, monthRangeOf("2026-09", 10))).toMatchObject({ key: "2026-08", from: "2026-08-10", to: "2026-09-09" });
     // The start day moved from the 1st to the 10th after 1-30 Sep was closed:
