@@ -133,13 +133,10 @@ export function DeleteAccountDialog({ open, onClose, onDownload }: DeleteAccount
             <span className="flex size-10.5 shrink-0 items-center justify-center rounded-field bg-expense-soft text-expense-fill [&_svg]:size-5">
               <TriangleAlert aria-hidden="true" />
             </span>
-            <div className="flex min-w-0 flex-col gap-1 pr-6">
+            <div className="flex min-w-0 flex-col gap-1">
               <AlertDialogTitle className="text-[19px] font-semibold text-ink">{t("Delete your account?")}</AlertDialogTitle>
               <AlertDialogDescription className="text-body leading-normal text-ink-soft">{t("This removes your account and everything in it:")}</AlertDialogDescription>
             </div>
-            <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="absolute top-4 right-4 flex size-8.5 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11">
-              <X className="size-4.5" aria-hidden="true" />
-            </button>
           </div>
           <div className="flex flex-col gap-3.5 overflow-y-auto px-6 pt-3.5 pb-5">
             <ul className="flex flex-col gap-1.75 sm:ml-14">
@@ -150,29 +147,18 @@ export function DeleteAccountDialog({ open, onClose, onDownload }: DeleteAccount
                 </li>
               ))}
             </ul>
-            {preview && (
-              <p className="text-caption text-ink-muted sm:ml-14">
-                {t("{wallets} wallets, {transactions} transactions, {goals} savings goals, {assets} assets and {loans} loan contacts.", {
-                  wallets: formatCount(preview.wallets, fmt),
-                  transactions: formatCount(preview.transactions, fmt),
-                  goals: formatCount(preview.savingsGoals, fmt),
-                  assets: formatCount(preview.assets, fmt),
-                  loans: formatCount(preview.loanContacts, fmt),
-                })}
-              </p>
-            )}
-            <div className="flex items-start gap-2.5 rounded-field border border-warning-line bg-warning-50 px-3.5 py-3 text-small leading-normal text-warning-ink">
+            <div className="flex items-start gap-2.5 rounded-[12px] border border-warning-line bg-warning-50 px-3.5 py-3 text-small leading-normal text-warning-ink">
               <Clock className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
               <span>
-                {preview ? t("We keep it for {days} days. Sign in before {date} to cancel. After that it is gone for good.", { days: formatCount(graceDays, fmt), date: formatDate(preview.deletionDate, "d MMM yyyy", fmt) }) : t("We keep it for {days} days. Sign in before then to cancel. After that it is gone for good.", { days: formatCount(graceDays, fmt) })}{" "}
-                <button type="button" onClick={onDownload} className="font-semibold text-warning-ink underline pointer-coarse:min-h-11">
+                {preview ? t("We keep it for {days} days. Sign in before {date} to cancel. After that it is gone for good.", { days: formatCount(graceDays, fmt), date: formatDate(preview.deletionDate, "d MMMM yyyy", fmt) }) : t("We keep it for {days} days. Sign in before then to cancel. After that it is gone for good.", { days: formatCount(graceDays, fmt) })}{" "}
+                <button type="button" onClick={onDownload} className="font-semibold text-warning-ink hover:underline pointer-coarse:min-h-11">
                   {t("Download my data first")}
                 </button>
               </span>
             </div>
             {hasPassword ? (
               <Field htmlFor="da-pass" label={t("Your account password")}>
-                <PasswordField id="da-pass" size="md" className="text-body-lg" value={password} onChange={setPassword} autoComplete="current-password" autoFocus />
+                <PasswordField id="da-pass" size="md" className="text-[15px]" eye={false} value={password} onChange={setPassword} autoComplete="current-password" autoFocus />
               </Field>
             ) : (
               <p className="text-small text-ink-muted">{t("You sign in with Google, so a sign-in in the last 10 minutes confirms it's you.")}</p>
