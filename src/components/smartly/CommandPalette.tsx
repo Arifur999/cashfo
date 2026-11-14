@@ -95,7 +95,10 @@ export function useCommandShortcut(onToggle: () => void) {
     if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey) {
       if (inAField(event) || document.querySelector('[role="dialog"]')) return;
       event.preventDefault();
-      onToggle();
+      // A page with its own search (Settings › Help) takes the cursor there.
+      const own = document.querySelector<HTMLInputElement>("[data-slash-search]");
+      if (own) own.focus();
+      else onToggle();
       return;
     }
     if (event.key.toLowerCase() !== "k" || !(event.ctrlKey || event.metaKey)) return;

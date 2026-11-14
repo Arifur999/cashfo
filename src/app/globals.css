@@ -292,6 +292,9 @@
   --soft-row: #f8faf9;
   /* A ticked chip on the Settings boards. */
   --soft-check: #f3f9f7;
+  /* A support conversation waiting on the customer (HelpConversation board). */
+  --wait-soft: #ffedd5;
+  --wait-ink: #9a3412;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -575,6 +578,8 @@
   --soft-wash: #162421;
   --soft-row: #2c3331;
   --soft-check: #2b3331;
+  --wait-soft: #2c322e;
+  --wait-ink: #fdba74;
 }
 
 /* The Habit Tracker (every page under /habit-tracker): the same tokens in
@@ -912,6 +917,8 @@ html:not(.dark) [data-app="habit"] {
   --color-soft-wash: var(--soft-wash);
   --color-soft-row: var(--soft-row);
   --color-soft-check: var(--soft-check);
+  --color-wait-soft: var(--wait-soft);
+  --color-wait-ink: var(--wait-ink);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);
