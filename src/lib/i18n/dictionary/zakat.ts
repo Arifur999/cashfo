@@ -280,4 +280,17 @@ export const zakatDictionary: Record<string, string> = {
   "Not enough for {amount}": "{amount}-এর জন্য যথেষ্ট নয়",
   "{wallet} after this: {amount}": "এরপর {wallet}-এ থাকবে {amount}",
   "{wallet} has only {amount}. Pick another account or give less.": "{wallet}-এ আছে মাত্র {amount}। অন্য অ্যাকাউন্ট বেছে নিন বা কম দিন।",
+  // The board's own Bangla where another page says the same English otherwise
+  "Not counted@@zakat-step": "হিসাবে নেই",
+  "Not counted@@zakat-line": "হিসাবে ধরা হচ্ছে না",
+  "Bank account@@zakat": "ব্যাংক অ্যাকাউন্ট",
+  "Checked@@zakat": "মিলিয়েছেন",
+  "How it works@@zakat": "কীভাবে কাজ করে",
+  "Save@@zakat": "সেভ করুন",
+  "Undo@@zakat": "ফিরিয়ে আনুন",
+  "Paid from@@zakat": "কোন অ্যাকাউন্ট থেকে",
+  "Given to@@zakat": "কাকে দিলেন",
+  "Owed to you@@zakat": "পাওনা",
+  "You owe@@zakat": "দেনা",
+  "Entry deleted@@zakat": "লেখাটি মুছে ফেলা হয়েছে",
 };

@@ -31,8 +31,8 @@ export function ZakatHero({ summary, money, onHow }: ZakatHeroProps) {
   const have = Number(totals.have) + Number(totals.givenBack);
   const formula: { label: string; amount: string; op?: string; key?: boolean }[] = [
     { label: "What you have", amount: money(have) },
-    { op: "+", label: "Owed to you", amount: money(totals.owed) },
-    { op: "−", label: "You owe", amount: money(totals.owe) },
+    { op: "+", label: "Owed to you@@zakat", amount: money(totals.owed) },
+    { op: "−", label: "You owe@@zakat", amount: money(totals.owe) },
     { op: "=", label: "Zakat is due on", amount: money(totals.net), key: true },
     { op: "×", label: "Rate", amount: `${toLocaleDigits("2.5", fmt)}%` },
   ];

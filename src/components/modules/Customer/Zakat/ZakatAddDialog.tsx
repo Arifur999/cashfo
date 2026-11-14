@@ -126,7 +126,7 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
           </Button>
           <Button type="submit" disabled={isPending} className="px-4.5">
             {isPending && <Loader size={16} onDark label={t("Saving...")} />}
-            {t(weigh ? "Save" : "Add")}
+            {t(weigh ? "Save@@zakat" : "Add")}
           </Button>
         </>
       }
