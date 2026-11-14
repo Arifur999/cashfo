@@ -579,7 +579,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
 // A balance line on the table-head band, under the Balance column.
 function BalanceLine({ label, kind, value, strong = false }: { label: string; kind: StatementLine["kind"]; value: string; strong?: boolean }) {
   return (
-    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("h-11.5 py-0 text-body", strong && "h-auto min-h-13.5 py-1.5")}>
+    <ListSummaryRow kind={kind} columns={COLUMNS} className={cn("h-11.5 py-0 text-body", strong ? "h-auto min-h-13.5 py-1.5" : "bg-opening-band")}>
       <ListCell aria-hidden="true" />
       <ListCell aria-colspan={6} className="col-span-6">
         <span className={cn("font-semibold", strong ? "font-bold text-ink" : "text-ink-2")}>{label}</span>

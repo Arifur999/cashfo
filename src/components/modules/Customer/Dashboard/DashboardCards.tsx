@@ -224,9 +224,9 @@ export function KpiCards({ data }: { data: HomeData }) {
     {
       label: t("Income"),
       Icon: ArrowDownLeft,
-      tile: "bg-mint-50 text-emerald",
+      tile: "bg-mint-50 text-emerald-fill",
       value: money(income),
-      valueTone: "text-emerald",
+      valueTone: "text-emerald-fill",
       href: "/income-expense",
       bar: incomeRate !== null ? { width: Math.min(100, incomeRate), tone: incomeRate >= 100 ? "bg-tint-green-ink" : "bg-emerald" } : null,
       pill: incomeRate === null ? delta(income, data.compare?.income, true) : null,
@@ -417,7 +417,8 @@ export function GoalsCard({ data }: { data: HomeData }) {
               </span>
             </div>
             <span className={cn(BAR, "h-1.75")}>
-              <span className={cn("block h-full rounded-full", goal.paused ? "bg-ink-faint" : percent < 10 ? "bg-tint-orange-ink" : "bg-emerald")} style={{ width: `${Math.min(100, percent)}%` }} />
+              {/* Each goal in its own card colour, as the board draws it. */}
+              <span className="block h-full rounded-full" style={{ width: `${Math.min(100, percent)}%`, background: goal.color }} />
             </span>
             <span className="text-caption text-ink-faint">{t(goal.paused ? "{percent}% saved · paused" : "{percent}% saved", { percent: toLocaleDigits(String(percent), fmt) })}</span>
           </div>

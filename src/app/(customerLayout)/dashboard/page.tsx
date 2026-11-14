@@ -23,6 +23,7 @@ import { type Period, periodRange, readPickedPeriod, type YearMonth } from "@/li
 import { getPlatform } from "@/lib/customer/platform";
 import { getLoanDashboard } from "@/lib/customer/receivablesPayables";
 import { getActiveMonths, getCategoryBreakdown, getMonthlyBreakdown, getMoneyFlow } from "@/lib/customer/reports";
+import { goalColor } from "@/lib/customer/savingsDisplay";
 import { getSavingsGoals } from "@/lib/customer/savingsGoals";
 import { categoryIndex } from "@/lib/customer/transactionRows";
 import { getTransactions, getTransactionsSummary } from "@/lib/customer/transactions";
@@ -300,7 +301,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       .filter((goal) => goal.status === "ACTIVE" || goal.status === "PAUSED")
       .sort((a, b) => Number(b.currentAmount) - Number(a.currentAmount))
       .slice(0, GOAL_ROWS)
-      .map((goal) => ({ id: goal.id, name: goal.name, saved: Number(goal.currentAmount), target: Number(goal.targetAmount), paused: goal.status === "PAUSED" })),
+      .map((goal) => ({ id: goal.id, name: goal.name, saved: Number(goal.currentAmount), target: Number(goal.targetAmount), paused: goal.status === "PAUSED", color: goalColor(goal, goalList.indexOf(goal)) })),
     loanPeople: [...sideOf(1), ...sideOf(-1)],
     assetRows: [...assetList]
       .sort((a, b) => Number(b.currentValue) - Number(a.currentValue))

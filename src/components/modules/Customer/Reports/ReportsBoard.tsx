@@ -16,6 +16,7 @@ import type { PeriodReport } from "@/lib/customer/periodReport";
 import { categoryLabel } from "@/lib/customer/transactionRows";
 import { formatDay } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
+import { ownColor } from "@/lib/customer/savingsColors";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { plural } from "@/lib/i18n/message";
 import { cn } from "@/lib/utils";
@@ -202,7 +203,7 @@ export function ReportsBoard({ data }: { data: ReportsData }) {
 
       <div id="summary" className="grid scroll-mt-4 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: t("Income"), Icon: ArrowDownLeft, tile: "bg-mint-50 text-emerald", value: money(income), tone: "text-emerald", sub: <>{pill(change(income, data.totals.incomeBefore), true)}<span className="truncate">{t("vs {period}", { period: data.beforeLabel })}</span></> },
+          { label: t("Income"), Icon: ArrowDownLeft, tile: "bg-mint-50 text-emerald-fill", value: money(income), tone: "text-emerald-fill", sub: <>{pill(change(income, data.totals.incomeBefore), true)}<span className="truncate">{t("vs {period}", { period: data.beforeLabel })}</span></> },
           { label: t("Expense"), Icon: ArrowUpRight, tile: "bg-expense-soft text-expense-fill", value: money(expense), tone: "text-expense-fill", sub: <>{pill(change(expense, data.totals.expenseBefore), false)}<span className="truncate">{t("vs {period}", { period: data.beforeLabel })}</span></> },
           { label: t("Saved"), Icon: PiggyBank, tile: "bg-warning-soft text-warning", value: signed(saved), tone: saved < 0 ? "text-expense-fill" : "text-ink", sub: <span className="truncate">{income > 0 ? t("Income minus expense · {percent} kept", { percent: percent(keptRate) }) : t("No income recorded")}</span> },
         ].map((card) => (
@@ -550,7 +551,7 @@ function PeriodParts({ report, label, money, signed, count }: { report: PeriodRe
             <span className="text-right">{t("Added")}</span>
             <span className="text-right">{t("Saved / target")}</span>
           </div>
-          {savings.goals.map((goal) => {
+          {savings.goals.map((goal, index) => {
             const percent = goal.target > 0 ? Math.min(100, Math.round((goal.saved / goal.target) * 100)) : 0;
             return (
               <div key={goal.id} className={cn(TR, "grid-cols-[minmax(0,1fr)_100px_150px] py-2")}>
@@ -561,7 +562,7 @@ function PeriodParts({ report, label, money, signed, count }: { report: PeriodRe
                     {goal.status === "PAUSED" && <span className="rounded-full bg-surface-sunken px-1.75 py-px text-[11px] font-semibold text-ink-soft">{t("Paused")}</span>}
                   </span>
                   <span className="block h-1 w-full max-w-50 overflow-hidden rounded-full bg-line-card">
-                    <span className={cn("block h-full rounded-full", goal.status === "PAUSED" ? "bg-ink-faint" : goal.status === "COMPLETED" ? "bg-cat-11" : "bg-emerald")} style={{ width: `${percent}%` }} />
+                    <span className="block h-full rounded-full" style={{ width: `${percent}%`, background: ownColor(goal.color, index) }} />
                   </span>
                 </span>
                 <span className={cn("text-right font-semibold tabular-nums", goal.added ? "text-tint-green-ink" : "text-ink-faint")}>{goal.added ? signed(goal.added) : "–"}</span>
