@@ -42,11 +42,11 @@ export interface CheckLine {
 
 // What each check says, when it passed and when it didn't.
 const CHECK_WORDS: Record<PayoutCheckKey, { ok: string; fail: string }> = {
-  NAME_MATCHES: { ok: "Name matches", fail: "Name doesn't match" },
+  NAME_MATCHES: { ok: "Name matches", fail: "Name differs from profile" },
   CODE_CONFIRMED: { ok: "Code confirmed", fail: "No code confirmed" },
   HOLDS_OVER: { ok: "Holds over", fail: "Still on hold" },
   NO_REFUNDS: { ok: "No refunds", fail: "A friend was refunded" },
-  FRIEND_PAID_FROM_THIS_NUMBER: { ok: "Friends paid from other numbers", fail: "Friend paid from this number" },
+  FRIEND_PAID_FROM_THIS_NUMBER: { ok: "Friends paid from other numbers", fail: "Paid from the affiliate's own phone" },
   WRONG_NUMBER_FOR_METHOD: { ok: "A {method} number", fail: "Not a {method} number" },
 };
 
@@ -59,15 +59,19 @@ export const checkLine = (check: IPayoutCheck, method: Pick<IPayoutMethodSnapsho
 // Any check that didn't pass: a waiting request with one "needs a look".
 export const hasWarnings = (row: Pick<IPayoutRow, "checks">): boolean => row.checks.some((check) => !check.ok);
 
-// The two lines of the Checks column: a paid request shows its transaction
-// ID; a closed one only what went wrong; an open one its warnings first,
-// then what passed.
-export const rowChecks = (row: Pick<IPayoutRow, "checks" | "status" | "trxId" | "method">): CheckLine[] => {
+// The Checks column, as the board words it: a paid request its transaction
+// ID; a rejected or cancelled one what happened; an open one whether the
+// name matches, then its first other warning or how many payments it found.
+export const rowChecks = (row: Pick<IPayoutRow, "checks" | "status" | "trxId" | "method" | "lineCount">): CheckLine[] => {
   if (row.status === "PAID") return row.trxId ? [{ ok: true, text: "TrxID {id}", values: { id: row.trxId } }] : [];
-  const failing = row.checks.filter((check) => !check.ok);
-  const passing = row.checks.filter((check) => check.ok);
-  const shown = row.status === "REJECTED" || row.status === "CANCELLED" ? failing : [...failing, ...passing];
-  return shown.slice(0, 2).map((check) => checkLine(check, row.method));
+  if (row.status === "REJECTED") return [{ ok: false, text: "Rejected · see reason" }];
+  if (row.status === "CANCELLED") return [{ ok: false, text: "Cancelled by the user" }];
+  const name = row.checks.find((check) => check.key === "NAME_MATCHES");
+  const warning = row.checks.find((check) => !check.ok && check.key !== "NAME_MATCHES");
+  return [
+    ...(name ? [checkLine(name, row.method)] : []),
+    warning ? checkLine(warning, row.method) : { ok: true, text: row.lineCount === 1 ? "{count} payment found" : "{count} payments found", values: { count: row.lineCount } },
+  ];
 };
 
 // The status chip: amber waiting, blue approved, green paid, red rejected.
@@ -79,15 +83,15 @@ export const PAYOUT_STATUS_CHIP: Record<PayoutStatus, { label: string; tone: Bad
   CANCELLED: { label: "Cancelled@@referral", tone: "neutral" },
 };
 
-export type RowAction = "reject" | "review" | "pay" | "view";
+export type RowAction = "review" | "pay" | "view";
 
-// What the Action column offers. A waiting request is approved only from
-// its review, where each friend payment is checked. Those who can only
-// look get View.
+// What the Action column offers. A waiting request is approved or rejected
+// only from its review, where each friend payment is checked; an approved
+// one is marked paid, or viewed. Those who can only look get View.
 export const rowActions = (row: Pick<IPayoutRow, "status" | "checks">, canManage: boolean): RowAction[] => {
   if (!canManage) return ["view"];
-  if (row.status === "REQUESTED") return ["review", "reject"];
-  if (row.status === "APPROVED") return ["pay"];
+  if (row.status === "REQUESTED") return ["review"];
+  if (row.status === "APPROVED") return ["pay", "view"];
   return ["view"];
 };
 
@@ -165,11 +169,11 @@ export const deskChecks = (detail: Pick<IPayoutDetail, "checks" | "method" | "co
   const lines: DeskLine[] = detail.checks.map((check) => {
     switch (check.key) {
       case "NAME_MATCHES":
-        return { ok: check.ok, text: check.ok ? "Account name matches the profile" : "Account name differs from the profile", value: detail.method.accountName };
+        return { ok: check.ok, text: check.ok ? "Account name matches profile" : "Account name differs from profile", value: detail.method.accountName };
       case "CODE_CONFIRMED":
         return check.ok && detail.codeConfirmedAt ? { ok: true, text: "Confirmed with a one-time code", value: moment(detail.codeConfirmedAt) } : { ok: false, text: "No one-time code confirmed" };
       case "HOLDS_OVER":
-        return { ok: check.ok, text: check.ok ? "All refund holds are over" : "Some payments are still inside the refund hold" };
+        return { ok: check.ok, text: check.ok ? "All holds are over" : "Some payments are still inside the refund hold" };
       case "NO_REFUNDS": {
         const refunded = detail.lines.filter((line) => line.reached === "REFUNDED").length;
         return check.ok ? { ok: true, text: "No refunds on these payments" } : { ok: false, text: refunded === 1 ? "{count} payment was refunded" : "{count} payments were refunded", values: { count: refunded } };

@@ -15,7 +15,6 @@ import { PAYOUT_STATUS_CHIP, payoutAccountLine, payoutDestination, rowActions, r
 
 export interface PayoutRowHandlers {
   canManage: boolean;
-  onReject: (row: IPayoutRow) => void;
   onOpen: (row: IPayoutRow) => void;
 }
 
@@ -51,11 +50,11 @@ const NewBadge = () => {
 const Checks = ({ row }: { row: IPayoutRow }) => {
   const { translate } = useLocale();
   return (
-    <span className="flex flex-col gap-0.75">
+    <span className="flex min-w-0 flex-col gap-0.75 whitespace-normal">
       {rowChecks(row).map((line, index) => (
-        <span key={index} className={cn("flex items-center gap-1.25 truncate text-caption", line.ok ? "text-emerald" : "text-warning")}>
-          {line.ok ? <Check className="size-3 shrink-0" strokeWidth={2.75} aria-hidden="true" /> : <AlertTriangle className="size-3 shrink-0" aria-hidden="true" />}
-          <span className="truncate">{translate(line.text, line.values)}</span>
+        <span key={index} className={cn("flex items-start gap-1.25 text-caption", line.ok ? "text-emerald" : "text-warning")}>
+          {line.ok ? <Check className="mt-px size-3 shrink-0" strokeWidth={2.75} aria-hidden="true" /> : <AlertTriangle className="mt-px size-3 shrink-0" strokeWidth={2.75} aria-hidden="true" />}
+          <span>{translate(line.text, line.values)}</span>
         </span>
       ))}
     </span>
@@ -76,8 +75,7 @@ const Status = ({ row }: { row: IPayoutRow }) => {
 };
 
 const ACTION_BUTTON: Record<RowAction, { label: string; className: string; primary?: boolean }> = {
-  reject: { label: "Reject", className: "border-expense-line text-expense hover:bg-expense-soft" },
-  review: { label: "Review", className: "" },
+  review: { label: "Review", className: "", primary: true },
   pay: { label: "Mark paid", className: "", primary: true },
   view: { label: "View", className: "" },
 };
@@ -88,18 +86,17 @@ const Actions = ({ row, handlers }: { row: IPayoutRow; handlers: PayoutRowHandle
     <span className="flex justify-end gap-1.5">
       {rowActions(row, handlers.canManage).map((action) => {
         const look = ACTION_BUTTON[action];
-        const onClick = action === "reject" ? handlers.onReject : handlers.onOpen;
         return (
           <Button
             key={action}
             type="button"
             size="xs"
             variant={look.primary ? "primary" : "secondary"}
-            className={cn("h-8 px-2.75 text-[12.5px]", look.className)}
+            className={cn("h-8 px-2.75 text-[12.5px]", !look.primary && "border-input", look.className)}
             aria-label={`${translate(look.label)} ${row.displayId}`}
             onClick={(event) => {
               event.stopPropagation();
-              onClick(row);
+              handlers.onOpen(row);
             }}
           >
             {translate(look.label)}
@@ -178,14 +175,14 @@ export const buildPayoutColumns = (handlers: PayoutRowHandlers): ColumnDef<IPayo
         </span>
       </span>
     ),
-    meta: { width: 236 },
+    meta: { width: 220 },
   },
   {
     id: "checks",
     header: "Checks",
     enableSorting: false,
     cell: ({ row }) => <Checks row={row.original} />,
-    meta: { width: 184 },
+    meta: { width: 196 },
   },
   {
     id: "status",
@@ -193,7 +190,7 @@ export const buildPayoutColumns = (handlers: PayoutRowHandlers): ColumnDef<IPayo
     header: "Status",
     enableSorting: false,
     cell: ({ row }) => <Status row={row.original} />,
-    meta: { width: 112 },
+    meta: { width: 120 },
   },
   {
     id: "action",
