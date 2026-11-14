@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, HandCoins, Pencil, Plus, Printer, Search, Trash2, TriangleAlert } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Printer, Search, Trash2, TriangleAlert } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -17,14 +17,14 @@ import Chip from "@/components/smartly/Chip";
 import Input from "@/components/smartly/form/Input";
 import NativeSelect from "@/components/smartly/form/NativeSelect";
 import IconAction from "@/components/smartly/IconAction";
-import { ListCard, ListCell, ListEmpty, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
+import { ListCard, ListCell, ListFooter, ListHead, ListHeadCell, ListRow, ListRowActions, ListRowLink } from "@/components/smartly/list";
 import PageFrame from "@/components/smartly/PageFrame";
 import SegmentedControl from "@/components/smartly/SegmentedControl";
 import { usePageParam } from "@/hooks/usePageParam";
 import type { Contact, Transaction } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { DIRECTION_META, loanDirection, loanEditOf, loanPaymentRow, loanTotals, wordInitials, type LoanEdit } from "@/lib/customer/loanDisplay";
+import { DIRECTION_META, loanDirection, loanLongDate, loanRowDate, loanEditOf, loanPaymentRow, loanTotals, wordInitials, type LoanEdit } from "@/lib/customer/loanDisplay";
 import { toEnglishDigits } from "@/lib/customer/money";
 import { periodHref, type PickedPeriod } from "@/lib/customer/period";
 import { restoreTransactionAction, voidTransactionAction } from "@/lib/customer/transactionActions";
@@ -125,9 +125,10 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const archivedContacts = loanContacts.filter((contact) => contact.status === "ARCHIVED");
   const rows = transactions.map((transaction) => {
     const contact = transaction.contactId ? contactsById.get(transaction.contactId) : undefined;
-    // The board's Note: the slip or note it was saved with.
+    const row = loanPaymentRow(transaction, locale);
+    // The board's Note: the slip or note it was saved with, else the account the money moved through.
     const note = transaction.referenceNo ?? transaction.description ?? transaction.entries.find((entry) => entry.note)?.note ?? null;
-    return { transaction, ...loanPaymentRow(transaction, locale), contact, name: transaction.contact?.name ?? contact?.name ?? "—", note };
+    return { transaction, ...row, contact, name: transaction.contact?.name ?? contact?.name ?? "—", note, noteOrWallet: note ?? row.wallet ?? null };
   });
   const kindRows = show === "all" ? rows : rows.filter((row) => (show === "profit") === (row.profit !== null));
   // Search: a name, a note, or an amount as typed (Bangla digits too).
@@ -247,7 +248,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   const moneyIn = totals.in + totals.profitReceived;
   const moneyOut = totals.out + totals.profitPaid;
   const kindChip = (isProfit: boolean) => (
-    <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className={cn("px-2 font-bold", isProfit && "text-due-ink")}>
+    <Chip tone={isProfit ? "warning" : "neutral"} size="sm" className={cn("h-auto px-2 py-0.5 font-bold", isProfit ? "text-due-ink" : "bg-page")}>
       {t(isProfit ? "Profit" : "Principal")}
     </Chip>
   );
@@ -258,7 +259,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     return (
       <span className={cn("flex flex-col items-end gap-px", className)}>
         <span className="font-semibold text-ink tabular-nums xl:leading-[normal]">{formatCurrency(Math.abs(Number(balance)), currency, fmt)}</span>
-        <span className={cn("text-caption font-semibold xl:text-[11px] xl:leading-[normal]", direction === "SETTLED" ? "text-ink-muted" : DIRECTION_META[direction].text)}>{t(DIRECTION_META[direction].name)}</span>
+        <span className={cn("text-caption font-semibold xl:text-[11px] xl:leading-[normal]", direction === "SETTLED" ? "text-ink-muted" : DIRECTION_META[direction].status)}>{t(DIRECTION_META[direction].name)}</span>
       </span>
     );
   };
@@ -268,17 +269,17 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     <PrintPreview look="bar" printLabel="Print or save PDF" subtitle={t("Pick “Save as PDF” in the print window to get a PDF.")} onClose={() => setPreviewing(false)}>
       <LoanTransactionsPrint
         sub={[periodLabel, selectedContactId ? contactsById.get(selectedContactId)?.name : null, show === "all" ? null : t(SHOW_LABELS[show]), t(filteredRows.length === 1 ? "{count} entry" : "{count} entries", { count: formatCount(filteredRows.length, fmt) })].filter(Boolean).join(" · ")}
-        madeOn={t("Made on {date}", { date: formatDate(today, "d MMM yyyy", fmt) })}
+        madeOn={t("Made on {date}", { date: loanLongDate(today, fmt) })}
         moneyIn={`+ ${formatCurrency(moneyIn, currency, fmt)}`}
         moneyOut={`− ${formatCurrency(moneyOut, currency, fmt)}`}
-        rows={filteredRows.map(({ transaction, title, signedAmount, cancelled, name, note }) => {
+        rows={filteredRows.map(({ transaction, profit, title, signedAmount, cancelled, name, note }) => {
           const balance = transaction.loanBalanceAfter;
           const after = balance === null || balance === undefined ? null : Number(balance);
           return {
             key: transaction.id,
-            date: formatDate(transaction.transactionDate, "d MMM yyyy", fmt),
+            date: loanRowDate(transaction.transactionDate, fmt),
             name,
-            what: `${title ? t(title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}${cancelled ? ` (${t(cancelled)})` : ""}`,
+            what: `${profit ? t(profit.paid ? "I paid profit or interest" : "I received profit or interest") : title ? t(title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType])}${cancelled ? ` (${t(cancelled)})` : ""}`,
             note: note ?? "",
             amount: `${signedAmount > 0 ? "+" : "−"} ${formatCurrency(Math.abs(signedAmount), currency, fmt)}`,
             received: signedAmount > 0,
@@ -290,7 +291,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   );
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 md:h-full md:pb-8">
       {preview}
       {/* While the preview is open, only its page prints. */}
       <div className={cn("contents", previewing && "print:hidden")}>
@@ -327,7 +328,9 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
         id={LIST_ID}
         label={t("Loan transactions")}
         busy={isPending}
-        tableClassName={cn("transition-opacity", isPending && "opacity-60")}
+        // From md the card fills the page and its rows scroll inside, the footer pinned, as the board has it.
+        className="rounded-[18px] md:flex md:min-h-55 md:flex-1 md:flex-col print:block"
+        tableClassName={cn("transition-opacity md:min-h-0 md:flex-1 md:overflow-y-auto print:overflow-visible", isPending && "opacity-60")}
         header={
           <div className="flex flex-col gap-3 border-b border-line px-4 py-3 md:px-6">
             <div className="flex flex-wrap items-center gap-2.5 print:hidden">
@@ -398,37 +401,12 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
           )
         }
       >
-        {transactions.length === 0 && !filtered ? (
-          <ListEmpty
-            tone="loans"
-            icon={<HandCoins />}
-            title={t("No loan entry yet")}
-            description={t("Record a loan you gave or took, or a repayment, and it shows up here.")}
-            action={canManage && <Button onClick={() => setDrawerOpen(true)}>{t("New loan entry")}</Button>}
-          />
-        ) : filteredRows.length === 0 ? (
-          // Filters that match nothing: say so, with the way back to everything.
-          <ListEmpty
-            tone="loans"
-            icon={<HandCoins />}
-            title={t("No entries match these filters")}
-            description={t("Try another bank or person, or a longer period.")}
-            action={
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setSearch("");
-                  navigate({ contactId: undefined, show: undefined });
-                  if (period.kind !== "all") pickPeriod({ kind: "all" });
-                }}
-              >
-                {t("Show all entries")}
-              </Button>
-            }
-          />
+        {filteredRows.length === 0 ? (
+          // The board's one line: nothing in the period, or nothing matching.
+          <p className="px-6 py-7 text-center text-[14px] text-ink-muted">{transactions.length === 0 && !filtered ? t("No entries for {period}.", { period: periodLabel }) : t("No entries match your search or filters.")}</p>
         ) : (
           <>
-            <ListHead columns={cn(COLUMNS, PRINT_COLUMNS)} className="hidden xl:grid xl:h-9 print:grid">
+            <ListHead columns={cn(COLUMNS, PRINT_COLUMNS)} className="hidden font-semibold xl:sticky xl:top-0 xl:z-1 xl:grid xl:h-9 print:static print:grid [&_*]:font-semibold">
               <ListHeadCell className={WIDEST}>#</ListHeadCell>
               <ListHeadCell>{t("Date")}</ListHeadCell>
               <ListHeadCell>{t("Bank / Person")}</ListHeadCell>
@@ -442,7 +420,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 {t("Actions")}
               </ListHeadCell>
             </ListHead>
-            {listed.map(({ transaction, profit, title, signedAmount, cancelled, contact, name, note }, index) => {
+            {listed.map(({ transaction, profit, title, signedAmount, cancelled, contact, name, note, noteOrWallet }, index) => {
               const received = signedAmount > 0;
               const edit = canManage && transaction.voidable ? loanEditOf(transaction) : null;
               const entryTitle = title ? t(title) : t(TRANSACTION_TYPE_LABELS[transaction.transactionType]);
@@ -455,7 +433,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                 <ListRow key={transaction.id} columns={cn(COLUMNS, PRINT_COLUMNS)} muted={!!cancelled} className="print:break-inside-avoid xl:min-h-15.25">
                   <ListCell className={cn(WIDEST, "text-small text-ink-muted tabular-nums")}>{formatCount(firstNumber + index, fmt)}</ListCell>
                   {/* Below xl the date sits under the name, past the avatar. */}
-                  <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 max-xl:pl-10.5 xl:text-small print:pl-0", AT_XL)}>{formatDate(transaction.transactionDate, undefined, fmt)}</ListCell>
+                  <ListCell className={cn("col-start-1 row-start-2 text-caption text-ink-2 max-xl:pl-10.5 xl:text-small print:pl-0", AT_XL)}>{loanRowDate(transaction.transactionDate, fmt)}</ListCell>
                   <ListCell className={cn("col-start-1 row-start-1 flex min-w-0 items-center gap-2.5", AT_XL)}>
                     <PersonAvatar name={name} src={contact?.photoUrl} kind={contact?.type} size={30} initials={wordInitials(name)} />
                     <span className="flex min-w-0 flex-col">
@@ -484,11 +462,11 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
                       {t(received ? "Received" : "Payment")}
                     </Chip>
                   </ListCell>
-                  <ListCell className={cn(WIDEST, "truncate text-[13px] text-ink-soft")}>{note}</ListCell>
+                  <ListCell className={cn(WIDEST, "truncate text-[13px] text-ink-2")}>{noteOrWallet}</ListCell>
                   <ListCell align="end" className={cn("col-start-2 row-start-1", AT_XL)}>
-                    <AmountText value={signedAmount} currency={currency} size="sm" signed tone={cancelled ? "neutral" : "auto"} className={cn("font-semibold", cancelled && "text-ink-muted line-through")} />
+                    <AmountText value={signedAmount} currency={currency} size="sm" signed tone={cancelled ? "neutral" : "auto"} className={cn("font-semibold", !cancelled && signedAmount < 0 && "text-expense-fill", cancelled && "text-ink-muted line-through")} />
                   </ListCell>
-                  <ListCell align="end" className={cn(FROM_XL, "text-[13px] text-ink-soft tabular-nums")}>
+                  <ListCell align="end" className={cn(FROM_XL, "text-[13px] text-ink-2 tabular-nums")}>
                     {transaction.charge && Number(transaction.charge) > 0 ? formatCurrency(transaction.charge, currency, fmt) : "–"}
                   </ListCell>
                   <ListCell align="end" className={cn("col-start-2 row-start-2 text-small xl:text-body", AT_XL)}>
