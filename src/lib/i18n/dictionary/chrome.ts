@@ -283,4 +283,10 @@ export const chromeDictionary: Record<string, string> = {
   "Messages from the Smartly team, sent to everyone. Delete any you don't need.": "Smartly টিম থেকে সবার জন্য পাঠানো বার্তা। দরকার না হলে মুছে ফেলুন।",
   "Couldn't delete the notification": "নোটিফিকেশন মুছে ফেলা যায়নি",
   "Couldn't restore the notification": "নোটিফিকেশন ফিরিয়ে আনা যায়নি",
+  // The search palette (AppTopbar board)
+  "Jump to": "পেজে যান",
+  "{count} result": "{count}টি ফল",
+  "{count} results": "{count}টি ফল",
+  "Type a page, like transactions or wallets": "পেজের নাম লিখুন, যেমন লেনদেন বা ওয়ালেট",
+  "Esc to close": "Esc বন্ধ করতে",
 };

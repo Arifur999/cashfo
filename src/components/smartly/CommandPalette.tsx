@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { CornerDownLeft, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useId, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -48,6 +48,9 @@ interface CommandPaletteProps {
   // A search is on its way: "empty" waits for its answer.
   loading?: boolean;
   minQueryLength?: number;
+  // "board": the customer app's AppTopbar board: 580px, 44px rows with the
+  // tile, the name and its section on one line, Esc as a button.
+  variant?: "default" | "board";
 }
 
 // The round tile at the start of a row: initials on forest for a person, a
@@ -113,7 +116,9 @@ const CommandPalette = ({
   footer,
   loading = false,
   minQueryLength = 2,
+  variant = "default",
 }: CommandPaletteProps) => {
+  const board = variant === "board";
   const router = useRouter();
   const baseId = useId();
   const listId = `${baseId}-results`;
@@ -161,11 +166,16 @@ const CommandPalette = ({
         // Without a description Radix wants the attribute named as absent.
         {...(description ? {} : { "aria-describedby": undefined })}
         showCloseButton={false}
-        className="top-24 w-160 max-w-[calc(100%-2rem)] translate-y-0 gap-0 overflow-hidden rounded-lg bg-surface p-0 text-ink shadow-overlay ring-0 sm:max-w-160"
+        className={cn(
+          "gap-0 overflow-hidden bg-surface p-0 text-ink ring-0",
+          board
+            ? "flex max-h-[min(560px,calc(100%-2rem))] w-145 max-w-[calc(100%-2rem)] flex-col rounded-[20px] shadow-[0_24px_60px_rgba(18,32,29,0.28)] sm:max-w-145"
+            : "top-24 w-160 max-w-[calc(100%-2rem)] translate-y-0 rounded-lg shadow-overlay sm:max-w-160",
+        )}
       >
         <DialogTitle className="sr-only">{title ?? label}</DialogTitle>
         {description && <DialogDescription className="sr-only">{description}</DialogDescription>}
-        <div className="flex h-15 items-center gap-3 border-b border-line px-4">
+        <div className={cn("flex shrink-0 items-center border-b px-4", board ? "h-14.5 gap-2.5 border-divider" : "h-15 gap-3 border-line")}>
           <Search className="size-4.5 shrink-0 text-ink-muted" aria-hidden="true" />
           <input
             autoFocus
@@ -179,18 +189,28 @@ const CommandPalette = ({
             aria-activedescendant={items[active] ? optionId(items[active].key) : undefined}
             aria-label={label}
             placeholder={placeholder ?? label}
-            className="min-w-0 flex-1 bg-transparent text-[18px] text-ink outline-none placeholder:text-ink-faint"
+            className={cn("min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-ink-faint", board ? "h-14 text-[16px]" : "text-[18px]")}
           />
-          <Kbd className="shrink-0 text-caption font-medium">Esc</Kbd>
+          {board ? (
+            <button type="button" onClick={() => onOpenChange(false)} className="h-6.5 shrink-0 rounded-[6px] border border-line bg-table-head px-2 text-[11.5px] font-semibold text-ink-muted">
+              Esc
+            </button>
+          ) : (
+            <Kbd className="shrink-0 text-caption font-medium">Esc</Kbd>
+          )}
         </div>
 
-        <div className="max-h-[min(28rem,calc(100vh-14rem))] overflow-y-auto pt-1 pb-2">
+        <div className={cn("overflow-y-auto", board ? "min-h-0 p-2" : "max-h-[min(28rem,calc(100vh-14rem))] pt-1 pb-2")}>
           {short && idle && <p className="px-4 py-6 text-center text-small text-ink-muted">{idle}</p>}
           {!short && !loading && items.length === 0 && empty && <p className="px-4 py-6 text-center text-small text-ink-muted">{empty}</p>}
           <div id={listId} role="listbox" aria-label={label} aria-busy={loading || undefined}>
             {shown.map((group, groupIndex) => (
               <div key={`${groupIndex}:${group.label}`} role="group" aria-labelledby={`${baseId}-group-${groupIndex}`}>
-                <span id={`${baseId}-group-${groupIndex}`} role="presentation" className="block px-4 pt-3 pb-1 text-caption font-bold tracking-[0.08em] text-ink-muted uppercase">
+                <span
+                  id={`${baseId}-group-${groupIndex}`}
+                  role="presentation"
+                  className={cn("block uppercase", board ? "px-2.5 pt-1.5 pb-1 text-[11px] font-semibold tracking-[0.06em] text-ink-faint" : "px-4 pt-3 pb-1 text-caption font-bold tracking-[0.08em] text-ink-muted")}
+                >
                   {group.label}
                 </span>
                 {group.items.map((item, itemIndex) => {
@@ -207,14 +227,26 @@ const CommandPalette = ({
                       aria-selected={index === active}
                       onMouseEnter={() => setCursor({ results, index })}
                       onClick={() => choose(item)}
-                      className={cn("flex w-full items-center gap-3 px-4 py-3 text-left", index === active && "bg-mint-50")}
+                      className={cn(
+                        "group flex w-full items-center gap-3 text-left",
+                        board ? "h-11 rounded-[12px] px-2.5" : "px-4 py-3",
+                        index === active && (board ? "bg-pick-wash" : "bg-mint-50"),
+                      )}
                     >
                       {item.mark}
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <b className="truncate text-body font-semibold text-ink">{item.title}</b>
-                        {item.sub && <span className="truncate text-caption text-ink-muted">{item.sub}</span>}
-                      </span>
+                      {board ? (
+                        <>
+                          <span className="min-w-0 flex-1 truncate text-body font-medium text-ink">{item.title}</span>
+                          {item.sub && <span className="max-w-[45%] shrink truncate text-caption text-ink-faint">{item.sub}</span>}
+                        </>
+                      ) : (
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <b className="truncate text-body font-semibold text-ink">{item.title}</b>
+                          {item.sub && <span className="truncate text-caption text-ink-muted">{item.sub}</span>}
+                        </span>
+                      )}
                       {item.badge && <span className="flex h-6 shrink-0 items-center rounded-full bg-surface-sunken px-3 text-caption font-semibold text-ink-2">{item.badge}</span>}
+                      {board && index === active && <CornerDownLeft className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />}
                     </button>
                   );
                 })}
@@ -223,7 +255,7 @@ const CommandPalette = ({
           </div>
         </div>
 
-        {footer && <div className="hidden gap-4 border-t border-line bg-strip px-4 py-3 text-caption text-ink-muted sm:flex">{footer}</div>}
+        {footer && <div className={cn("hidden shrink-0 gap-4 border-t px-4 text-caption text-ink-muted sm:flex", board ? "border-divider bg-table-head py-2.5" : "border-line bg-strip py-3")}>{footer}</div>}
       </DialogContent>
     </Dialog>
   );
