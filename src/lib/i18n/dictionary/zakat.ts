@@ -272,4 +272,7 @@ export const zakatDictionary: Record<string, string> = {
   "Pick the day of these prices": "এ দামগুলো যে দিনের, সেটা বেছে নিন",
   // v16 board: the cash step reads from Balance › Accounts
   "From Balance › Accounts": "ব্যালেন্স › অ্যাকাউন্ট থেকে নেওয়া",
+  // An open investment in the Investments step
+  "Matures {date}": "মেয়াদ শেষ {date}",
+  Investment: "বিনিয়োগ",
 };

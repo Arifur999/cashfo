@@ -206,6 +206,13 @@
   --chart-cost: #a8b3b0;
   --toggle-track: #e9edec;
   --pick-wash: #f0f7f5;
+  /* The boards' --sm-primary-soft, --sm-sunken (as a rule and a track),
+     --sm-x991B1B (who may not receive zakat, a debt's note) and
+     --sm-x78350F (below nisab), with their own dark values. */
+  --primary-soft: #eef6f4;
+  --sunken-rule: #f0f2f2;
+  --deny-ink: #991b1b;
+  --below-ink: #78350f;
   --sold-card: #fbfbfb;
   --card-rule: #f1f3f3;
   --head-wash: #f7f9f8;
@@ -465,6 +472,10 @@
   --chart-cost: #4f5f5a;
   --toggle-track: #17241f;
   --pick-wash: #2b3331;
+  --primary-soft: #15302a;
+  --sunken-rule: #1c2724;
+  --deny-ink: #d19898;
+  --below-ink: #c2a493;
   --chart-band: #2b3331;
   --forest-ink: #a7e6d8;
   --sold-card: #0d1915;
@@ -857,6 +868,10 @@ html:not(.dark) [data-app="habit"] {
   --color-chart-cost: var(--chart-cost);
   --color-toggle-track: var(--toggle-track);
   --color-pick-wash: var(--pick-wash);
+  --color-primary-soft: var(--primary-soft);
+  --color-sunken-rule: var(--sunken-rule);
+  --color-deny-ink: var(--deny-ink);
+  --color-below-ink: var(--below-ink);
   --color-sold-card: var(--sold-card);
   --color-card-rule: var(--card-rule);
   --color-head-wash: var(--head-wash);

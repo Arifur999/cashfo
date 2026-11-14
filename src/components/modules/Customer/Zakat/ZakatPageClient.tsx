@@ -42,6 +42,10 @@ interface ZakatPageClientProps {
 
 type Modal = "settings" | "pay" | "how" | null;
 
+// The board's main: 24px 32px 40px, 18px between blocks, its text at
+// normal line height.
+const FRAME = "gap-[18px] leading-[normal] md:pt-6 md:pb-10";
+
 // The Zakat calculator (board: Zakat). Every change answers the summary
 // worked out afresh, which replaces the one on screen. One change runs at
 // a time, so an older answer can never land over a newer one.
@@ -68,7 +72,7 @@ export function ZakatPageClient({ businessId, summary: initial, canSee, currency
 
   if (!canSee) {
     return (
-      <PageFrame className="gap-4.5">
+      <PageFrame className={FRAME}>
         <PageHeader title={t("Zakat calculator")} />
         <StatePanel icon={<HandCoins />} title={t("Only the owner or an accountant sees zakat")} description={t("Zakat is worked out from this workspace's money. Ask its owner, or open your own workspace.")} />
       </PageFrame>
@@ -76,7 +80,7 @@ export function ZakatPageClient({ businessId, summary: initial, canSee, currency
   }
   if (!summary) {
     return (
-      <PageFrame className="gap-4.5">
+      <PageFrame className={FRAME}>
         <PageHeader title={t("Zakat calculator")} />
         <StatePanel
           icon={<HandCoins />}
@@ -174,35 +178,35 @@ export function ZakatPageClient({ businessId, summary: initial, canSee, currency
   };
 
   return (
-    <PageFrame className="gap-4.5">
+    <PageFrame className={FRAME}>
       <PageHeader
         title={t("Zakat calculator")}
         description={t("We add up what you have from your own records. Check each step, then record what you give.")}
         actions={
-          <>
-            <Button variant="secondary" onClick={() => setModal("how")}>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="secondary" onClick={() => setModal("how")} className="gap-1.75 px-3.5">
               <CircleHelp className="text-ink-2" />
               {t("How it works")}
             </Button>
             {!readOnly && (
               <>
-                <Button variant="secondary" onClick={() => setModal("settings")}>
+                <Button variant="secondary" onClick={() => setModal("settings")} className="gap-1.75 px-3.5">
                   <SlidersHorizontal className="text-ink-2" />
                   {t("Settings")}
                 </Button>
-                <Button onClick={() => setModal("pay")}>
+                <Button onClick={() => setModal("pay")} className="gap-1.75 px-4.5">
                   <Plus strokeWidth={2.25} />
                   {t("Record zakat given")}
                 </Button>
               </>
             )}
-          </>
+          </div>
         }
       />
 
       <ZakatHero summary={summary} money={money} onHow={() => setModal("how")} />
 
-      <div className="grid items-start gap-4.5 lg:grid-cols-[minmax(0,1fr)_350px]">
+      <div className="grid items-start gap-[18px] lg:grid-cols-[minmax(0,1fr)_350px]">
         <ZakatSteps
           summary={summary}
           money={money}

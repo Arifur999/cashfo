@@ -221,6 +221,16 @@ export function partsLine(summary: ZakatSummary, money: (value: number | string)
   return `${head} ${t("Or give about {amount} a month, {count} times.", { amount: money(summary.totals.perPart), count: formatCount(summary.totals.parts, locale) })}`;
 }
 
+// An investment's kind, as the Investments pages name it.
+const INVESTMENT_KIND_NOTE: Record<string, string> = {
+  BUSINESS: "Business@@investment",
+  SANCHAYAPATRA: "Sanchayapatra",
+  FDR: "Bank FDR",
+  SHARES: "Shares",
+  PROPERTY: "Property",
+  OTHER: "Investment",
+};
+
 const SUBTYPE_NOTE: Record<string, string> = { cash: "Cash in hand", bank: "Bank account", mfs: "Mobile banking", savings: "Savings account" };
 
 // The muted line under a line's name.
@@ -232,8 +242,14 @@ export function lineNote(line: ZakatLine, step: ZakatStepId, perVori: Record<Zak
     return t("You added this");
   }
   if (line.source === "ACCOUNT") {
+    // An older backend sent the number in place of the subtype.
     if (line.detail?.startsWith("••••")) return t("Account {number}", { number: line.detail });
-    return t(SUBTYPE_NOTE[line.detail ?? ""] ?? "Wallet");
+    const kind = t(SUBTYPE_NOTE[line.detail ?? ""] ?? "Wallet");
+    return line.number ? `${kind} ${line.number}` : kind;
+  }
+  if (line.source === "INVESTMENT") {
+    if (line.maturesOn) return t("Matures {date}", { date: formatDay(line.maturesOn, "MMM yyyy", locale) });
+    return t(INVESTMENT_KIND_NOTE[line.detail ?? ""] ?? "Investment");
   }
   if (line.source === "ASSET") {
     if (line.forSale) return t("Bought to sell · value today");
