@@ -2,7 +2,7 @@
 // day, the lists they are filed under, overdue and Someday, the time-of-day
 // groups, the week, the streak and the side cards. Pure, so the page and its
 // tests agree. Days are plain "YYYY-MM-DD" keys on the app's calendar.
-import { toDateInputValue } from "@/lib/date";
+import { formatDay, toDateInputValue } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
 import type { FormatLocale } from "@/lib/i18n/formatPrefs";
 import { inEnglish, type Translate } from "@/lib/i18n/message";
@@ -140,11 +140,12 @@ export function dayWord(day: string | null, today: string, t: Translate, fmt: Fo
   return word ? t(word) : dayText(day, fmt, "short");
 }
 
-// "8 to 14 Nov 2026", "29 Nov to 5 Dec 2026", or across a new year in full.
+// "8 to 14 November 2026", "29 November to 5 December 2026", or across a
+// new year in full, as the TodoBoard board writes a week.
 export function rangeText(from: string, to: string, t: Translate, fmt: FormatLocale): string {
-  if (from.slice(0, 4) !== to.slice(0, 4)) return t("{from} to {to}", { from: dayText(from, fmt, "dayMonthYear"), to: dayText(to, fmt, "dayMonthYear") });
-  if (from.slice(5, 7) !== to.slice(5, 7)) return t("{from} to {to}", { from: dayText(from, fmt, "dayMonth"), to: dayText(to, fmt, "dayMonthYear") });
-  return t("{from} to {to}", { from: formatCount(Number(from.slice(8, 10)), fmt), to: dayText(to, fmt, "dayMonthYear") });
+  if (from.slice(0, 4) !== to.slice(0, 4)) return t("{from} to {to}", { from: formatDay(from, "d MMMM yyyy", fmt), to: formatDay(to, "d MMMM yyyy", fmt) });
+  if (from.slice(5, 7) !== to.slice(5, 7)) return t("{from} to {to}", { from: formatDay(from, "d MMMM", fmt), to: formatDay(to, "d MMMM yyyy", fmt) });
+  return t("{from} to {to}", { from: formatCount(Number(from.slice(8, 10)), fmt), to: formatDay(to, "d MMMM yyyy", fmt) });
 }
 
 // The week a day falls in, from the reader's first day of the week.
