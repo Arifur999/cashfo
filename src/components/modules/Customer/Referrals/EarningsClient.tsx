@@ -193,7 +193,7 @@ export function EarningsClient({ info, list, status, period, currency, today }: 
               list.data.map((line) => {
                 const gone = line.status === "REVERSED" || line.status === "CANCELLED";
                 return (
-                  <ListRow key={line.id} columns={COLUMNS} density="relaxed" className="gap-x-3.5 md:min-h-13 md:px-5">
+                  <ListRow key={line.id} columns={COLUMNS} density="relaxed" className="gap-x-3.5 md:min-h-17 md:px-5">
                     <ListCell className="text-ink-2 tabular-nums max-md:hidden">{dayLabel(line.paidAt)}</ListCell>
                     <ListCell className="flex min-w-0 flex-col items-start">
                       <button type="button" onClick={() => setFriend({ id: line.referralId, name: line.friendName })} className="max-w-full truncate rounded-sm text-left font-semibold text-ink hover:underline">

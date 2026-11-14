@@ -454,6 +454,7 @@ export const referralsDictionary: Record<string, string> = {
   "Main link": "মূল লিংক",
   "Make default": "ডিফল্ট করুন",
   "Make one link for each place you share, like your Facebook page or a YouTube video. Every link earns the same; separate links just show you which place brings paying people.": "যেখানে শেয়ার করেন প্রতিটি জায়গার জন্য একটি লিংক বানান, যেমন আপনার ফেসবুক পেজ বা কোনো ইউটিউব ভিডিও। প্রতিটি লিংকে আয় একই; আলাদা লিংক শুধু দেখায় কোন জায়গা থেকে পেমেন্ট করা মানুষ আসছেন।",
+  "Make one link for each place you share, like your Facebook page or a YouTube video. Every link earns the same {pct}; separate links just show you which place brings paying people.": "যেখানে শেয়ার করেন প্রতিটি জায়গার জন্য একটি লিংক বানান, যেমন আপনার ফেসবুক পেজ বা কোনো ইউটিউব ভিডিও। প্রতিটি লিংকে আয় একই {pct}; আলাদা লিংক শুধু দেখায় কোন জায়গা থেকে পেমেন্ট করা মানুষ আসছেন।",
   "Manage payout accounts": "পেআউট অ্যাকাউন্ট সামলান",
   "Name your friends see": "বন্ধুরা যে নাম দেখেন",
   "New invite link": "নতুন আমন্ত্রণ লিংক",
