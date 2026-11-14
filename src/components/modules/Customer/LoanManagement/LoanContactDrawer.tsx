@@ -173,7 +173,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
           // Undo puts every field back as it was, the opening balance too.
           const before = editing;
           offerUndo({
-            message: t("Contact updated"),
+            message: t("Saved changes to {name}", { name: name.trim() }),
             run: () =>
               updateContactAction(businessId, before.id, {
                 name: before.name,
@@ -194,7 +194,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
           // Nothing is entered with them yet, so Undo deletes them for good.
           const addedId = result.data.id;
           offerUndo({
-            message: t("Contact added"),
+            message: t("{name} added", { name: name.trim() }),
             run: () => deleteContactAction(businessId, addedId),
             done: t("Contact removed"),
             failed: t("Couldn't remove the contact"),

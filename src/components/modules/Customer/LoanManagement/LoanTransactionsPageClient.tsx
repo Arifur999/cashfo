@@ -130,7 +130,10 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
     const note = transaction.referenceNo ?? transaction.description ?? transaction.entries.find((entry) => entry.note)?.note ?? null;
     return { transaction, ...row, contact, name: transaction.contact?.name ?? contact?.name ?? "—", note, noteOrWallet: note ?? row.wallet ?? null };
   });
-  const kindRows = show === "all" ? rows : rows.filter((row) => (show === "profit") === (row.profit !== null));
+  // Standing entries only, as the board lists them: a deleted or edited
+  // entry and its reversal stay in the Transactions page's history.
+  const standingRows = rows.filter((row) => !row.cancelled);
+  const kindRows = show === "all" ? standingRows : standingRows.filter((row) => (show === "profit") === (row.profit !== null));
   // Search: a name, a note, or an amount as typed (Bangla digits too).
   const query = toEnglishDigits(search.trim().toLowerCase());
   const digits = query.replace(/tk|[,\s৳]/g, "");

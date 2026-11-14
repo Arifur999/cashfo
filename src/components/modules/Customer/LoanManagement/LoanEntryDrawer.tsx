@@ -582,8 +582,9 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
         </div>
       </div>
 
-      {/* Not on the board: shown only to edit an entry that has a charge,
-          so its money stays in sight and can be changed. */}
+      {/* Not on the board's empty form: shown to edit an entry that has a
+          charge, or once Add a charge (in the After this box) is pressed, so
+          the Charge column and the statement's charge lines can be filled. */}
       {showCharge && (
         <div className="-mt-1 flex flex-col gap-1.5">
           <label htmlFor="loan-charge" className={LABEL}>
@@ -603,7 +604,7 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
             <span className="truncate text-ink-2">{contact.name}</span>
             <span className="whitespace-nowrap">
               <span className="text-ink-muted">{directionText(balanceNow)} → </span>
-              {profit ? <b className="font-bold text-ink-muted">{t("no change")}</b> : <b className={cn("font-bold", DIRECTION_META[loanDirection(balanceAfter)].text)}>{directionText(balanceAfter)}</b>}
+              {profit ? <b className="font-bold text-ink-muted">{t("no change")}</b> : <b className={cn("font-bold", DIRECTION_META[loanDirection(balanceAfter)].status)}>{directionText(balanceAfter)}</b>}
             </span>
           </div>
           {chargeValue > 0 && (
@@ -620,6 +621,11 @@ export function LoanEntryDrawer({ open, onClose, businessId, contacts, currency,
                 <b className="font-bold text-ink">{formatCurrency(walletAfter, currency, fmt)}</b>
               </span>
             </div>
+          )}
+          {!showCharge && (
+            <button type="button" onClick={() => setShowCharge(true)} className="w-fit rounded-sm text-[12.5px] font-semibold text-emerald hover:underline">
+              {t("Add a bank or service charge")}
+            </button>
           )}
         </div>
       )}

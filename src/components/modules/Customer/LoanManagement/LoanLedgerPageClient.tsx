@@ -134,19 +134,24 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   useEffect(() => {
     if (selectedContactId) document.cookie = `${LEDGER_CONTACT_COOKIE}=${encodeURIComponent(selectedContactId)}; path=/; SameSite=Lax`;
   }, [selectedContactId]);
-  const rows: StatementRow[] = statement?.rows ?? [];
+  // Standing entries only, as the board lists them: a deleted or edited
+  // entry and its reversal never moved the running balance, and they stay
+  // in the Transactions page's history.
+  const rows: StatementRow[] = (statement?.rows ?? []).filter((row) => !isCancelledRow(row));
   const openingBalance = statement ? Number(statement.balanceBroughtForward) : 0;
   const closing = statement ? Number(statement.closingBalance) : 0;
   const { received, paid } = statementTotals(rows);
   const profit = statementProfit(rows);
-  const standing = rows.filter((row) => !isCancelledRow(row));
+  const standing = rows;
   const paidCount = standing.filter((row) => Number(row.profitPaid ?? 0) > 0).length;
   const receivedCount = standing.filter((row) => Number(row.profitReceived ?? 0) > 0).length;
   const hasProfit = profit.paid > 0 || profit.received > 0;
   const activeContacts = contacts.filter((c) => c.status === "ACTIVE");
   const day = (value: string) => formatDate(value, "d MMM yyyy", fmt);
   // The day the period opens: its own first day, else their first entry.
-  const openedOn = periodFrom ?? activity?.firstEntryDate ?? contact?.createdAt ?? null;
+  // The period's first day, or the day they were first entered when that is later (the board's since).
+  const startedOn = activity?.firstEntryDate ?? contact?.createdAt ?? null;
+  const openedOn = periodFrom && startedOn && startedOn.slice(0, 10) > periodFrom ? startedOn : (periodFrom ?? startedOn);
 
   // The screen shows a page, which the pager follows; paper gets the whole
   // period on one, with every run open.
@@ -310,7 +315,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
   const closeSide = loanDirection(closing);
   const openSide = loanDirection(openingBalance);
   const entries = activity?.entries;
-  const since = activity?.firstEntryDate ?? contact?.createdAt ?? null;
+  const since = startedOn;
 
   // The page on paper: every entry in the period, none folded.
   const sideTag = (value: number) => t(DIRECTION_META[loanDirection(value)].name);
