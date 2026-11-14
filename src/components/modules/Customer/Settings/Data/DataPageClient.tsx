@@ -33,7 +33,7 @@ export function DataPageClient({ data, backups, importContext, businessId, today
 
   if (!data) {
     return (
-      <PageFrame className="gap-5 leading-[normal]">
+      <PageFrame className="gap-5 leading-[normal] md:pt-7 md:pb-10">
         <h1 className="text-page-title text-ink">{t("Data & privacy")}</h1>
         <StatePanel icon={<ShieldCheck />} tone="warning" title={t("Couldn't load your data settings.")} description={t("Check your connection and try again.")} />
       </PageFrame>
@@ -41,7 +41,7 @@ export function DataPageClient({ data, backups, importContext, businessId, today
   }
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="gap-5.5 leading-[normal] md:pt-7 md:pb-10">
       <div className="flex flex-col gap-1">
         <SettingsBack />
         <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Data & privacy")}</h1>

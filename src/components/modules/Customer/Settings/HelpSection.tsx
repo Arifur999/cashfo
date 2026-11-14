@@ -127,7 +127,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
   ];
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="gap-5.5 leading-[normal] md:pt-7 md:pb-10">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <SettingsBack />

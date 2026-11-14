@@ -72,7 +72,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
   );
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="gap-5.5 leading-[normal] md:pt-7 md:pb-10">
       <div className="flex flex-col gap-1">
         <SettingsBack />
         <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Resources & legal")}</h1>

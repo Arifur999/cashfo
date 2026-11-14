@@ -118,7 +118,7 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
 
   if (!page) {
     return (
-      <PageFrame className="gap-5 leading-[normal]">
+      <PageFrame className="gap-5 leading-[normal] md:pt-7 md:pb-10">
         <h1 className="text-page-title text-ink">{t("Notifications")}</h1>
         <StatePanel icon={<Bell />} tone="warning" title={t("Couldn't load your notification settings.")} description={t("Check your connection and try again.")} />
       </PageFrame>
