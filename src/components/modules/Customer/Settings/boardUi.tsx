@@ -48,7 +48,7 @@ export function CheckChip({ on, label, disabled, onClick }: { on: boolean; label
       aria-checked={on}
       disabled={disabled}
       onClick={onClick}
-      className={cn("inline-flex h-8.5 items-center gap-1.75 rounded-full border pr-3 pl-2 text-small font-medium whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50", on ? "border-primary bg-mint-50 text-ink" : "border-input bg-surface text-ink-2")}
+      className={cn("inline-flex h-8.5 items-center gap-1.75 rounded-full border pr-3 pl-2 text-small font-medium whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50", on ? "border-primary bg-soft-check text-ink" : "border-input bg-surface text-ink-2")}
     >
       <span aria-hidden="true" className={cn("flex size-4 items-center justify-center rounded-[5px] border-[1.5px]", on ? "border-primary bg-primary text-white" : "border-ink-faint bg-surface")}>
         {on && (

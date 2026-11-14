@@ -127,7 +127,7 @@ export function AppLockGate({ userId }: { userId: string }) {
     <div role="dialog" aria-modal="true" aria-labelledby="app-lock-title" className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 bg-page px-6">
       <Logo />
       <div className="flex w-full max-w-90 flex-col items-center gap-4 rounded-card border border-line-card bg-surface px-6 py-7 text-center shadow-card">
-        <span className="flex size-12 items-center justify-center rounded-2xl bg-mint-50 text-primary">
+        <span className="flex size-12 items-center justify-center rounded-[14px] bg-mint-50 text-primary">
           <LockKeyhole className="size-5.5" aria-hidden="true" />
         </span>
         <div className="flex flex-col gap-1">

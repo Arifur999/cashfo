@@ -266,7 +266,7 @@ function CurrentPlanCard({ overview, payments, readOnly, busy, onSeePlans, onCan
   return (
     <section aria-labelledby="cp-h" className={CARD}>
       <div className="flex items-center gap-3 px-5 pt-4.5 pb-3.5">
-        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", look.tile)}>
+        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px]", look.tile)}>
           <look.Icon className="size-4.5" aria-hidden="true" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-px">

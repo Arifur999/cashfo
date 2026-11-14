@@ -112,7 +112,7 @@ export function ChangePhotoDialog({ kind, open, onClose }: ChangePhotoDialogProp
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <AlertDialogContent className="w-110 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-110 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border border-line bg-surface p-0 shadow-overlay ring-0">
         <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-5">
           <AlertDialogTitle className="text-h3 text-ink">{t(copy.title)}</AlertDialogTitle>
           <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
@@ -124,7 +124,7 @@ export function ChangePhotoDialog({ kind, open, onClose }: ChangePhotoDialogProp
           {/* A local preview or the photo; without one, the top bar's avatar
               (forest, mint initials) as large as the preview. */}
           {kind === "cover" ? (
-            <div className={cn("h-28 w-full rounded-xl bg-cover bg-center", !shown && COVER_FALLBACK)} style={shown ? { backgroundImage: `url("${shown}")` } : undefined} />
+            <div className={cn("h-28 w-full rounded-[12px] bg-cover bg-center", !shown && COVER_FALLBACK)} style={shown ? { backgroundImage: `url("${shown}")` } : undefined} />
           ) : (
             <Avatar name={user.name} src={shown} size={120} alt="" className="font-extrabold" />
           )}

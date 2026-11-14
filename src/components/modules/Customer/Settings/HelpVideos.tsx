@@ -58,14 +58,14 @@ export function HelpVideos({ videos, all }: { videos: HelpVideo[]; all: HelpVide
         </div>
       )}
       {videos.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-small text-ink-muted">{t("No video guides here yet. Try the common questions, or send us a message.")}</p>
+        <p className="rounded-[12px] border border-dashed border-line px-4 py-8 text-center text-small text-ink-muted">{t("No video guides here yet. Try the common questions, or send us a message.")}</p>
       ) : (
         <ul className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 @3xl:grid-cols-3">
           {shown.map((video) => {
             const { tile, Icon } = LOOK[video.category] ?? LOOK.OTHER;
             return (
               <li key={video.id}>
-                <button type="button" onClick={() => setPlaying(video)} className="group flex h-full w-full flex-col overflow-hidden rounded-xl border border-line-card bg-surface text-left hover:border-primary/40 hover:shadow-card">
+                <button type="button" onClick={() => setPlaying(video)} className="group flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-line-card bg-surface text-left hover:border-primary/40 hover:shadow-card">
                   <span className={cn("relative flex h-31.5 w-full items-center justify-center overflow-hidden text-white", tile)}>
                     <span className="absolute top-2.5 left-3 text-[12px] font-semibold">{t(CATEGORY_LABEL[video.category] ?? "Other")}</span>
                     <Icon className="absolute -right-3 -bottom-4 size-24 opacity-20" strokeWidth={1.5} aria-hidden="true" />
@@ -118,7 +118,7 @@ export function HelpVideos({ videos, all }: { videos: HelpVideo[]; all: HelpVide
         }
       >
         {playing && (
-          <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
+          <div className="aspect-video w-full overflow-hidden rounded-[12px] bg-black">
             {/* youtube-nocookie: no tracking cookie until the person presses play. */}
             <iframe key={playing.id} title={videoTitle(playing, bangla)} src={`https://www.youtube-nocookie.com/embed/${playing.youtubeId}?rel=0&modestbranding=1`} className="size-full" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
           </div>

@@ -34,7 +34,7 @@ export function BackupCard({ initial, readOnly }: { initial: BackupsPage | null;
     setPage(initial);
   }
 
-  const day = (row: BackupRow) => formatDate(row.createdAt, "d MMMM yyyy", "—", fmt);
+  const day = (row: BackupRow) => formatDate(row.createdAt, "d MMM yy", "—", fmt);
   const time = (row: BackupRow) => formatDate(row.createdAt, "HH:mm", "—", fmt);
 
   async function save(change: Partial<BackupSettings>) {
@@ -94,19 +94,19 @@ export function BackupCard({ initial, readOnly }: { initial: BackupsPage | null;
           </h2>
           <p className="text-small leading-normal text-ink-muted">{t("Backups are kept safely in Smartly. Your money records are in them; Password Manager and the Habit Tracker are not.")}</p>
         </div>
-        <Button size="sm" className="h-8.5 px-3.5 text-small" disabled={busy !== null || readOnly} onClick={() => void backUpNow()}>
+        <Button size="sm" className="h-8.5 px-3.5 text-[13px]" disabled={busy !== null || readOnly} onClick={() => void backUpNow()}>
           <RotateCw className={cn("size-3.75", busy === "backup" && "animate-spin")} aria-hidden="true" />
           {t(busy === "backup" ? "Backing up…" : "Back up now")}
         </Button>
       </div>
-      <div className="flex items-center gap-4.5 border-t border-divider px-5.5 py-3.25">
+      <div className="flex items-center gap-4.5 border-t border-sunken px-5.5 py-3.25">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium text-ink">{t("Automatic backup")}</span>
           <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("A full copy of your money records, made at 2:00 at night.")}</span>
         </span>
         <SmallSwitch on={settings.auto} label={t("Automatic backup")} disabled={busy !== null || readOnly} onClick={() => void save({ auto: !settings.auto })} />
       </div>
-      <div className="flex flex-wrap items-center gap-4.5 border-t border-divider px-5.5 py-3.25">
+      <div className="flex flex-wrap items-center gap-4.5 border-t border-sunken px-5.5 py-3.25">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium text-ink">{t("How often")}</span>
           <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Daily is safer if you add many entries.")}</span>
@@ -123,7 +123,7 @@ export function BackupCard({ initial, readOnly }: { initial: BackupsPage | null;
           ]}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-4.5 border-t border-divider px-5.5 py-3.25">
+      <div className="flex flex-wrap items-center gap-4.5 border-t border-sunken px-5.5 py-3.25">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium text-ink">{t("Keep")}</span>
           <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Older backups are removed at the next backup.")}</span>
@@ -136,27 +136,27 @@ export function BackupCard({ initial, readOnly }: { initial: BackupsPage | null;
           ))}
         </select>
       </div>
-      <div className="border-t border-divider px-5.5 pt-3 pb-1.5 text-[12px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{backups.length > SHOWN && !all ? t("Last {count} backups", { count: formatCount(SHOWN, fmt) }) : t("Your backups")}</div>
-      {backups.length === 0 && <p className="border-t border-divider px-5.5 py-3.5 text-small text-ink-muted">{t(settings.auto ? "No backup yet. The first one is made tonight at 2:00." : "No backup yet.")}</p>}
+      <div className="border-t border-sunken px-5.5 pt-3 pb-1.5 text-[12px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{backups.length > SHOWN && !all ? t("Last {count} backups", { count: formatCount(SHOWN, fmt) }) : t("Your backups")}</div>
+      {backups.length === 0 && <p className="border-t border-sunken px-5.5 py-3.5 text-small text-ink-muted">{t(settings.auto ? "No backup yet. The first one is made tonight at 2:00." : "No backup yet.")}</p>}
       {shown.map((row, index) => (
-        <div key={row.id} className="flex items-center gap-3.5 border-t border-divider px-5.5 py-2.5">
-          <span className="flex size-8.5 shrink-0 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-soft">
+        <div key={row.id} className="flex items-center gap-3.5 border-t border-sunken px-5.5 py-2.5">
+          <span className="flex size-8.5 shrink-0 items-center justify-center rounded-[10px] bg-page text-ink-2">
             <Database className="size-4" aria-hidden="true" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-px">
             <span className="flex flex-wrap items-center gap-2 text-body font-medium text-ink">
               {day(row)}
-              {index === 0 && <span className="inline-flex h-5 items-center rounded-full bg-income-soft px-2 text-[11px] font-semibold text-income">{t("Latest")}</span>}
+              {index === 0 && <span className="inline-flex h-5 items-center rounded-full bg-success-soft px-2 text-[11px] font-semibold text-tint-green-ink">{t("Latest")}</span>}
             </span>
-            <span className="text-[12.5px] text-ink-muted">{t("at {time} · {size} · {kind}", { time: time(row), size: fileSizeText(row.size, fmt), kind: t(KIND[row.kind]) })}</span>
+            <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("at {time} · {size} · {kind}", { time: time(row), size: fileSizeText(row.size, fmt), kind: t(KIND[row.kind]) })}</span>
           </span>
-          <Button variant="secondary" size="sm" className="h-8.5 px-3.5 text-small" disabled={busy !== null || readOnly} onClick={() => setAsked(row)}>
+          <Button variant="secondary" size="sm" className="h-8.5 px-3.5 text-[13px]" disabled={busy !== null || readOnly} onClick={() => setAsked(row)}>
             {t("Restore")}
           </Button>
         </div>
       ))}
       {backups.length > SHOWN && (
-        <div className="border-t border-divider px-5.5 py-2.5">
+        <div className="border-t border-sunken px-5.5 py-2.5">
           <button type="button" onClick={() => setAll(!all)} className="text-small font-semibold text-emerald hover:underline">
             {all ? t("Show fewer") : t("Show all {count}", { count: formatCount(backups.length, fmt) })}
           </button>

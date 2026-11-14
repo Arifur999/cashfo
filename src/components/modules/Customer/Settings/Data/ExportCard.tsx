@@ -231,11 +231,11 @@ export function ExportCard({ today, startSignal }: { today: string; startSignal:
         title={
           <>
             {phase === "done" ? (
-              <span className="flex size-13 items-center justify-center rounded-2xl bg-income-soft text-income">
+              <span className="flex size-13 items-center justify-center rounded-[14px] bg-income-soft text-income">
                 <Check className="size-6" strokeWidth={2.4} aria-hidden="true" />
               </span>
             ) : (
-              <span className="flex size-13 items-center justify-center rounded-2xl bg-mint-50 text-primary">
+              <span className="flex size-13 items-center justify-center rounded-[14px] bg-mint-50 text-primary">
                 <LoaderCircle className="size-6 animate-spin" aria-hidden="true" />
               </span>
             )}
@@ -252,7 +252,7 @@ export function ExportCard({ today, startSignal }: { today: string; startSignal:
           ready &&
           tile && (
             <>
-              <div className="flex w-full items-center gap-3 rounded-xl border border-line px-3.5 py-3 text-left">
+              <div className="flex w-full items-center gap-3 rounded-[12px] border border-line px-3.5 py-3 text-left">
                 <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] text-[10.5px] font-bold", tile.className)}>{tile.ext}</span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-[13.5px] font-semibold text-ink">{ready.name}</span>

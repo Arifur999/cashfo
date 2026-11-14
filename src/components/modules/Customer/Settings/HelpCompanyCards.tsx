@@ -73,7 +73,7 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
               {t("Contact the company")}
             </h2>
             <div className="flex items-center gap-3">
-              <span className="flex size-10.5 shrink-0 items-center justify-center rounded-xl bg-primary text-[17px] font-bold text-white">{company.name.slice(0, 1).toUpperCase()}</span>
+              <span className="flex size-10.5 shrink-0 items-center justify-center rounded-[12px] bg-primary text-[17px] font-bold text-white">{company.name.slice(0, 1).toUpperCase()}</span>
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-body-lg font-semibold text-ink">{company.name}</span>
                 {tagline && <span className="text-[12.5px] leading-[1.4] text-ink-muted">{tagline}</span>}
@@ -140,7 +140,7 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
 
       {company && company.replyHours > 0 && (
         <section aria-labelledby="hp-reply" className={cn(CARD, "flex gap-3.5 px-5 py-4.5")}>
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunken text-ink-soft">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-soft">
             <MessagesSquare className="size-4.5" aria-hidden="true" />
           </span>
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -154,7 +154,7 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
       )}
 
       <section aria-labelledby="hp-idea" className={cn(CARD, "flex gap-3.5 px-5 py-4.5")}>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning-soft text-warning">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-warning-soft text-warning">
           <Lightbulb className="size-4.5" aria-hidden="true" />
         </span>
         <span className="flex min-w-0 flex-col gap-1">

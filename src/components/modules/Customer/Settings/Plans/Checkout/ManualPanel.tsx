@@ -156,7 +156,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
     extra: <div className="flex flex-wrap gap-2">{referenceChip}</div>,
   });
 
-  const fieldClass = "h-11.5 rounded-xl border bg-surface px-3.5 text-[15px] text-ink outline-none placeholder:text-ink-faint focus-visible:ring-2 focus-visible:ring-focus-ring/40 disabled:opacity-60";
+  const fieldClass = "h-11.5 rounded-[10px] border bg-surface px-3.5 text-[15px] text-ink outline-none placeholder:text-ink-faint focus-visible:ring-2 focus-visible:ring-focus-ring/40 disabled:opacity-60";
   const fromBad = tried && !fromOk;
   const trxBad = tried && !trxOk;
 
@@ -241,7 +241,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
           event.target.value = "";
         }} />
         {form.shot || savedShot ? (
-          <span className="flex h-10 items-center gap-2.5 rounded-xl border border-mint-200 bg-emerald-soft pr-1.5 pl-3 text-[13.5px] font-semibold text-brand-ink">
+          <span className="flex h-10 items-center gap-2.5 rounded-[10px] border border-mint-200 bg-emerald-soft pr-1.5 pl-3 text-[13.5px] font-semibold text-brand-ink">
             <ImageIcon className="size-4" strokeWidth={2} aria-hidden="true" />
             <span className="max-w-55 truncate">{form.shot ? form.shot.name : t("Screenshot added")}</span>
             <IconAction tone="danger" onClick={() => (form.shot ? onChange({ shot: null }) : savedShot?.onRemove())} disabled={readOnly} aria-label={t("Remove screenshot")}>
@@ -254,7 +254,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={readOnly}
-              className="flex h-10 items-center gap-2 rounded-xl border border-dashed border-ink-faint bg-surface px-3.5 text-[13.5px] font-semibold text-ink-2 hover:bg-surface-sunken disabled:opacity-60"
+              className="flex h-10 items-center gap-2 rounded-[10px] border border-dashed border-ink-faint bg-surface px-3.5 text-[13.5px] font-semibold text-ink-2 hover:bg-surface-sunken disabled:opacity-60"
             >
               <Upload className="size-4" strokeWidth={2} aria-hidden="true" />
               {t("Add a screenshot")}
@@ -265,7 +265,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
       </div>
 
       {!stepsHidden && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-warning-line bg-warning-50 px-3.5 py-3">
+        <div className="flex items-start gap-2.5 rounded-[12px] border border-warning-line bg-warning-50 px-3.5 py-3">
           <Info className="mt-px size-4.5 shrink-0 text-warning" strokeWidth={2} aria-hidden="true" />
           <span className="text-[13px] leading-normal text-warning-ink">
             {t("Send the exact amount, {amount}. If the amount is different, checking takes longer. We check payments from 9 am to 10 pm, usually within 2 hours.", { amount: amountText })}

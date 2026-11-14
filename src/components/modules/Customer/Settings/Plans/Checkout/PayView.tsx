@@ -165,7 +165,7 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
     <div className="grid items-start gap-4.5 lg:grid-cols-[minmax(0,1fr)_390px]">
       <div className="flex min-w-0 flex-col gap-4">
         {notice && (
-          <div role="status" className="flex items-start gap-2.5 rounded-xl border border-warning-line bg-warning-50 px-3.5 py-3 text-[13.5px] leading-normal text-warning-ink">
+          <div role="status" className="flex items-start gap-2.5 rounded-[12px] border border-warning-line bg-warning-50 px-3.5 py-3 text-[13.5px] leading-normal text-warning-ink">
             <Info className="mt-px size-4.5 shrink-0 text-warning" strokeWidth={2} aria-hidden="true" />
             {notice}
           </div>
@@ -221,7 +221,7 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
               onClick={() => online && setMethod("online")}
               className={cn(optionClass(method === "online"), "items-start gap-3", !online && "cursor-not-allowed hover:border-line")}
             >
-              <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl bg-info-soft text-info-ink", !online && "opacity-60")}>
+              <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-info-soft text-info-ink", !online && "opacity-60")}>
                 <CreditCard className="size-5" strokeWidth={2} aria-hidden="true" />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -238,7 +238,7 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
               </span>
             </button>
             <button type="button" role="radio" aria-checked={method === "manual"} onClick={() => setMethod("manual")} className={cn(optionClass(method === "manual"), "items-start gap-3")}>
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-soft text-rose">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-rose-soft text-rose">
                 <Send className="size-5" strokeWidth={2} aria-hidden="true" />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-1">
