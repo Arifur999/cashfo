@@ -1321,4 +1321,6 @@ export const settingsDictionary: Record<string, string> = {
   "Type it in English letters to see it on the PDF receipt too.": "PDF রসিদেও দেখতে চাইলে ইংরেজি অক্ষরে লিখুন।",
   "Export, backup": "ডাউনলোড, ব্যাকআপ",
   "Manage@@plan": "দেখুন",
+  "Sent to {email} and to the bell in the app.": "{email} ঠিকানায় আর অ্যাপের ঘণ্টায় পাঠানো হয়।",
+  "Tell me when a new device signs in": "নতুন ডিভাইসে সাইন ইন হলে জানান",
 };

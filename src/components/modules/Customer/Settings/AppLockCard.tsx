@@ -45,16 +45,16 @@ export function AppLockCard() {
 
   return (
     <section id="ss-lock" aria-labelledby="ss-lock-h" className={cn(CARD, "scroll-mt-4 overflow-hidden")}>
-      <div className="flex flex-col gap-0.75 px-5.5 pt-4.5 pb-3.5">
-        <h2 id="ss-lock-h" className="text-[16px] leading-[1.35] font-semibold text-ink">
+      <div className="flex flex-col gap-0.5 px-5.5 py-4">
+        <h2 id="ss-lock-h" className="text-[16px] font-semibold text-ink">
           {t("App lock")}
         </h2>
-        <p className="text-small leading-normal text-ink-muted">{t("A 4-digit PIN to open Smartly on this device, even when you are signed in.")}</p>
+        <p className="text-[13px] text-ink-muted">{t("A 4-digit PIN to open Smartly on this device, even when you are signed in.")}</p>
       </div>
-      <div className="flex items-center gap-4.5 border-t border-divider px-5.5 py-3.25">
+      <div className="flex items-center gap-4.5 border-t border-sunken px-5.5 py-3.25">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium text-ink">{t("Lock the app with a PIN")}</span>
-          <span className="text-[12.5px] leading-[1.45] text-ink-muted">
+          <span className="text-[12.5px] text-ink-muted">
             {lock.on ? t("On · the PIN is asked after {count} min away", { count: String(lock.after) }) : t("Off · anyone holding this device can open the app")}
             {lock.on && !readOnly && (
               <>
@@ -68,10 +68,10 @@ export function AppLockCard() {
         </span>
         <SmallSwitch on={lock.on} label={t("Lock the app with a PIN")} disabled={readOnly} onClick={toggleLock} />
       </div>
-      <div className={cn("flex flex-wrap items-center gap-4.5 border-t border-divider px-5.5 py-3.25", !lock.on && "opacity-60")}>
+      <div className={cn("flex flex-wrap items-center gap-4.5 border-t border-sunken px-5.5 py-3.25", !lock.on && "opacity-60")}>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium text-ink">{t("Ask for the PIN after")}</span>
-          <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("How long you can be away before it locks again.")}</span>
+          <span className="text-[12.5px] text-ink-muted">{t("How long you can be away before it locks again.")}</span>
         </span>
         <BoardSegment
           value={String(lock.after) as `${LockAfter}`}
@@ -82,10 +82,10 @@ export function AppLockCard() {
           options={LOCK_AFTER.map((minutes) => ({ value: String(minutes) as `${LockAfter}`, label: t("{count} min", { count: String(minutes) }) }))}
         />
       </div>
-      <div className="flex items-center gap-4.5 border-t border-divider px-5.5 py-3.25">
+      <div className="flex items-center gap-4.5 border-t border-sunken px-5.5 py-3.25">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-body font-medium text-ink">{t("Hide balances when the app opens")}</span>
-          <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Amounts show as ••••• until you tap them. Handy in public.")}</span>
+          <span className="text-[12.5px] text-ink-muted">{t("Amounts show as ••••• until you tap them. Handy in public.")}</span>
         </span>
         <SmallSwitch on={lock.hide} label={t("Hide balances when the app opens")} disabled={readOnly} onClick={() => save({ ...lock, hide: !lock.hide }, "Saved")} />
       </div>
