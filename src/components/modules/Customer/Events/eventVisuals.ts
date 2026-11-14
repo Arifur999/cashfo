@@ -26,6 +26,13 @@ const TYPE_ICON: Record<SocialEventType, LucideIcon> = {
   OTHER: CalendarDays,
 };
 
+// The Events board's popup frame: 22px corners and a 38px filled close
+// button on the page grey, so its head is 18px (20px with a lead) a side.
+export const POPUP = {
+  className: "rounded-[22px] leading-[normal]",
+  closeClassName: "my-0 size-9.5 bg-page text-ink-2 hover:bg-surface-sunken",
+};
+
 // An event type's icon and colours.
 export function typeLook(type: SocialEventType) {
   const meta = eventTypeMeta(type);

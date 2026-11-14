@@ -7,7 +7,7 @@ import type { EventPerson, NewEventInput, SocialEventType } from "@/lib/customer
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PopupDialog } from "../Shared/PopupDialog";
-import { typeLook } from "./eventVisuals";
+import { POPUP, typeLook } from "./eventVisuals";
 import { Segmented, Switch } from "./EventControls";
 
 export interface AddEventStart {
@@ -80,7 +80,9 @@ function AddEventForm({ start, people, busy, onClose, onSave }: AddEventDialogPr
       open
       onClose={onClose}
       busy={busy}
-      className="leading-[normal]"
+      className={POPUP.className}
+      closeClassName={POPUP.closeClassName}
+      headClassName="items-center py-4.5"
       width={580}
       title={t("Add an event")}
       onSubmit={save}
@@ -188,7 +190,7 @@ function AddEventForm({ start, people, busy, onClose, onSave }: AddEventDialogPr
       </label>
       <Switch checked={remind} onChange={() => setRemind((on) => !on)} icon={<Bell className="size-4 text-ink-soft" aria-hidden="true" />} label={t("Remind me a day before")} />
       {error && (
-        <div role="alert" className="rounded-[10px] bg-expense-soft px-3.5 py-2.5 text-small font-medium text-expense">
+        <div role="alert" className="rounded-[10px] bg-loss-wash px-3.5 py-2.5 text-small font-medium text-loss-ink">
           {error.message}
         </div>
       )}
