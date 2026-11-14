@@ -288,6 +288,8 @@
   --tip-ink: #78350f;
   /* The primary washed 92% out (the Settings boards' "soft"): App preferences' preview. */
   --soft-wash: #edf4f3;
+  /* A group band or a hovered row on the Settings boards (#f8faf9, #2c3331 dark). */
+  --soft-row: #f8faf9;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -569,6 +571,7 @@
   --brand-shade: #93bdb7;
   --tip-ink: #c2a493;
   --soft-wash: #162421;
+  --soft-row: #2c3331;
 }
 
 /* The Habit Tracker (every page under /habit-tracker): the same tokens in
@@ -904,6 +907,7 @@ html:not(.dark) [data-app="habit"] {
   --color-progress-low: var(--progress-low);
   --color-tip-ink: var(--tip-ink);
   --color-soft-wash: var(--soft-wash);
+  --color-soft-row: var(--soft-row);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);
