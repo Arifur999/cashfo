@@ -37,7 +37,7 @@ const OwnerProfileHeader = async ({ owner, actions }: OwnerProfileHeaderProps) =
           {/* The plan's own colour, as on every list: Free grey, Business amber. */}
           {owner.planName && <PlanChipCell plan={owner.planName} />}
         </div>
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-small text-ink-soft">
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-small text-ink-2">
           {/* A long address breaks anywhere on a phone instead of widening the page. */}
           <span className="flex min-w-0 items-center gap-1.25">
             <Mail className="size-3.5 shrink-0 text-ink-muted" strokeWidth={2} aria-hidden="true" />
@@ -49,6 +49,9 @@ const OwnerProfileHeader = async ({ owner, actions }: OwnerProfileHeaderProps) =
               {owner.phone}
             </span>
           )}
+        </div>
+        {/* Its own line under the contact details, as the board sets it. */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-small text-ink-2">
           <span>{member}</span>
           <span>{lastActive}</span>
         </div>
