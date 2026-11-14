@@ -285,7 +285,7 @@ export const savingsGoalsDictionary: Record<string, string> = {
   "{amount} added to {name}. It is now {percent}% saved.": "{name}-এ {amount} যোগ হয়েছে। এখন {percent}% জমা।",
   "Suggested for {month} · {amount}": "{month}-এর জন্য প্রস্তাবিত · {amount}",
   "{month} is covered · next month {amount}": "{month} পূরণ হয়েছে · আগামী মাসে {amount}",
-  "All that's left · {amount}": "বাকি পুরোটা · {amount}",
+  "All that’s left · {amount}": "বাকি পুরোটা · {amount}",
   "{amount} left to reach {target}": "{target}-এ পৌঁছাতে বাকি {amount}",
   "Select an account": "একটি হিসাব বেছে নিন",
   "Select a savings account": "একটি সঞ্চয়ের হিসাব বেছে নিন",

@@ -88,7 +88,7 @@ export function DayButton({ value, onChange, today, min, max, quick = false, lab
             <span className={cn("truncate text-[14px]", value ? "font-semibold text-ink" : "text-ink-faint")}>{value ? formatDay(value, "d MMMM yyyy", fmt) : placeholder}</span>
             {!compact && value && <span className="text-[12px] text-ink-muted">{formatDay(value, "EEEE", fmt)}</span>}
           </span>
-          {!compact && pill && <span className="shrink-0 rounded-full bg-emerald-soft px-2.25 py-0.75 text-[11.5px] font-bold text-brand-ink">{pill}</span>}
+          {!compact && pill && <span className="shrink-0 rounded-full bg-emerald-soft px-2.25 py-0.75 text-[11.5px] font-bold text-emerald">{pill}</span>}
           <ChevronDown className={cn("size-4 shrink-0 text-ink-muted transition-transform duration-150", open && "rotate-180")} strokeWidth={2} aria-hidden="true" />
         </button>
       </PopoverTrigger>
@@ -144,7 +144,7 @@ export function DayButton({ value, onChange, today, min, max, quick = false, lab
                 key={option.day}
                 type="button"
                 onClick={() => pick(option.day)}
-                className={cn("h-8 flex-1 rounded-full border text-[12.5px] font-semibold", value === option.day ? "border-emerald-line bg-emerald-soft text-brand-ink" : "border-line bg-surface text-ink-2 hover:border-input")}
+                className={cn("h-8 flex-1 rounded-full border text-[12.5px] font-semibold", value === option.day ? "border-emerald-line bg-emerald-soft text-emerald" : "border-line bg-surface text-ink-2 hover:border-input")}
               >
                 {option.label}
               </button>

@@ -122,12 +122,12 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
           </IconAction>
         )
       }
-      footerClassName="justify-start"
+      footerClassName="justify-start gap-2"
       footer={
         canManage && (
           <>
             {canWithdraw && (
-              <Button variant="secondary" onClick={() => onAction("withdraw")} disabled={busy} className="border-expense-line px-3 text-[13px] text-expense hover:bg-expense-soft">
+              <Button variant="secondary" onClick={() => onAction("withdraw")} disabled={busy} className="border-expense-line px-3 text-[13px] text-loss-ink hover:bg-expense-soft">
                 {completed ? t("Withdraw to balance") : t("Withdraw")}
               </Button>
             )}
@@ -186,10 +186,10 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
             <Landmark className="size-4.25" strokeWidth={2} />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-px">
-            <span className="text-[12px] text-ink-soft">{closed ? t("Was kept in") : t("Kept in")}</span>
+            <span className="text-[12px] text-ink-2">{closed ? t("Was kept in") : t("Kept in")}</span>
             <span className="truncate text-[14.5px] font-bold text-ink">{kept.name}</span>
           </span>
-          {kept.number && <span className="shrink-0 text-[12.5px] whitespace-nowrap text-ink-soft tabular-nums">{kept.number}</span>}
+          {kept.number && <span className="shrink-0 text-[12.5px] whitespace-nowrap text-ink-2 tabular-nums">{kept.number}</span>}
         </div>
       )}
 
@@ -256,7 +256,7 @@ export function GoalDetailsDialog({ open, onClose, businessId, goal, color, curr
               : t("No money has moved for this goal yet.")}
           </span>
         </span>
-        <Button variant="secondary" size="sm" onClick={() => onAction("statement")} className="pointer-coarse:h-11">
+        <Button variant="secondary" size="sm" onClick={() => onAction("statement")} className="h-9.5 gap-1.5 px-3.5 pointer-coarse:h-11">
           {t("View statement")}
           <ArrowRight className="size-3.25" strokeWidth={2.5} />
         </Button>
