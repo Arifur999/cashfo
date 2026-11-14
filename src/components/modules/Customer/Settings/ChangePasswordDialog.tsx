@@ -78,35 +78,35 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
       <AlertDialogContent className="w-120 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} className="flex max-h-[90vh] flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-line px-6 py-4.5">
-            <AlertDialogTitle className="text-h3 text-ink">{t("Change password")}</AlertDialogTitle>
-            <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="-mr-1.5 flex size-8.5 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
+            <AlertDialogTitle className="text-[18px] leading-[1.3] font-semibold text-ink">{t("Change password")}</AlertDialogTitle>
+            <button type="button" onClick={onClose} disabled={isPending} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-full bg-page text-ink-2 hover:bg-line disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:size-11">
               <X className="size-4.5" aria-hidden="true" />
             </button>
           </div>
           <AlertDialogDescription className="sr-only">{t("Your current password, then the new one twice.")}</AlertDialogDescription>
           <div className="flex flex-col gap-3.5 overflow-y-auto px-6 py-5">
             <Field htmlFor="cp-current" label={t("Current password")}>
-              <PasswordField id="cp-current" size="md" className="text-body-lg" visible={show} eye={false} value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
+              <PasswordField id="cp-current" size="md" className="text-[15px]" visible={show} eye={false} value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
             </Field>
             <div className="flex flex-col gap-1.5">
               <Field
                 htmlFor="cp-new"
                 label={t("New password")}
                 aside={
-                  <button type="button" onClick={() => setShow(!show)} aria-pressed={show} className="text-small font-semibold text-emerald hover:underline">
+                  <button type="button" onClick={() => setShow(!show)} aria-pressed={show} className="text-[12.5px] font-semibold text-emerald hover:underline">
                     {t(show ? "Hide" : "Show")}
                     <span className="sr-only"> {t("passwords")}</span>
                   </button>
                 }
               >
-                <PasswordField id="cp-new" size="md" className="text-body-lg" visible={show} eye={false} value={password} onChange={setPassword} autoComplete="new-password" aria-describedby="cp-rules" />
+                <PasswordField id="cp-new" size="md" className="text-[15px]" visible={show} eye={false} value={password} onChange={setPassword} autoComplete="new-password" aria-describedby="cp-rules" />
               </Field>
-              <StrengthMeter password={password} />
-              <ul id="cp-rules" className="mt-0.5 grid gap-x-2.5 gap-y-1.5 sm:grid-cols-2" aria-label={t("Rules")}>
+              <StrengthMeter password={password} reserve className="gap-2.5" />
+              <ul id="cp-rules" className="mt-0.5 grid grid-cols-2 gap-x-2.5 gap-y-1.5" aria-label={t("Rules")}>
                 {rules
                   .filter((rule) => rule.key !== "match")
                   .map((rule) => (
-                    <li key={rule.key} className={cn("flex items-center gap-1.5 text-[12.5px]", rule.ok ? "text-income" : "text-ink-muted")}>
+                    <li key={rule.key} className={cn("flex items-center gap-1.5 text-[12.5px] leading-[normal]", rule.ok ? "text-tint-green-ink" : "text-ink-faint")}>
                       {tick(rule.ok)}
                       {t(rule.label)}
                     </li>
@@ -125,7 +125,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged, otherDevices = 
                 ) : undefined
               }
             >
-              <PasswordField id="cp-confirm" size="md" className="text-body-lg" visible={show} eye={false} value={confirm} onChange={setConfirm} autoComplete="new-password" />
+              <PasswordField id="cp-confirm" size="md" className="text-[15px]" visible={show} eye={false} value={confirm} onChange={setConfirm} autoComplete="new-password" />
             </Field>
             {/* Ticked to start with: the API signs the other devices out
                 unless this is cleared. */}

@@ -16,6 +16,8 @@ export const LEGAL_PAGES: readonly LegalPageEntry[] = [
   { page: "terms", href: "/terms", label: "Terms of service", versioned: true },
   { page: "privacy", href: "/privacy", label: "Privacy policy", versioned: true },
   { page: "refund-policy", href: "/refund-policy", label: "Refund policy", versioned: true },
+  { page: "cookie-policy", href: "/cookie-policy", label: "Cookie policy", versioned: true },
+  { page: "community-rules", href: "/community-rules", label: "Community rules for groups", versioned: true },
   { page: "faq", href: "/faq", label: "Common questions", versioned: false },
 ];
 

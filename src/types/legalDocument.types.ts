@@ -1,4 +1,4 @@
-export const LEGAL_DOC_TYPES = ["TERMS_OF_SERVICE", "PRIVACY_POLICY", "REFUND_POLICY", "FAQ"] as const;
+export const LEGAL_DOC_TYPES = ["TERMS_OF_SERVICE", "PRIVACY_POLICY", "REFUND_POLICY", "COOKIE_POLICY", "COMMUNITY_RULES", "FAQ"] as const;
 export type LegalDocType = (typeof LEGAL_DOC_TYPES)[number];
 
 export interface ILegalDocument {

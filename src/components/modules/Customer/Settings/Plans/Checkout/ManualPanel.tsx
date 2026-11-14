@@ -85,7 +85,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
         className={cn(
           "flex shrink-0 items-center gap-1.25 rounded-lg font-semibold transition-colors",
           small ? "h-6.5 px-2.25 text-[12px]" : "h-7 px-2.5 text-[12.5px]",
-          done ? "bg-emerald text-white" : "bg-mint-50 text-brand-ink hover:bg-mint-200/60",
+          done ? "bg-emerald text-white" : "bg-primary-soft text-brand-ink hover:bg-mint-50",
         )}
       >
         {!small && (done ? <Check className="size-3.25" strokeWidth={2.4} aria-hidden="true" /> : <Copy className="size-3.25" strokeWidth={2.2} aria-hidden="true" />)}
@@ -98,7 +98,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
     <span key={key} className="flex h-10 items-center gap-2.5 rounded-field border border-line bg-surface pr-1.5 pl-3">
       <span className="flex flex-col leading-[1.15]">
         <span className="text-[11px] text-ink-muted">{label}</span>
-        <b className="text-[14.5px] font-semibold tracking-[0.01em] text-ink tabular-nums" lang="en">
+        <b className="text-[14.5px] font-bold tracking-[0.01em] text-ink tabular-nums" lang="en">
           {shown}
         </b>
       </span>
@@ -163,7 +163,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
   return (
     <div className="flex flex-col gap-3.5">
       {wallets.length > 1 && (
-        <div role="radiogroup" aria-label={t("Send from")} className="flex flex-wrap gap-1 self-start rounded-[14px] bg-surface-sunken p-1">
+        <div role="radiogroup" aria-label={t("Send from")} className="flex flex-wrap gap-1 self-start rounded-[14px] bg-page p-1">
           {wallets.map((option) => {
             const on = option.id === form.wallet;
             return (
@@ -173,7 +173,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
                 role="radio"
                 aria-checked={on}
                 onClick={() => onChange({ wallet: option.id })}
-                className={cn("flex h-9.5 items-center gap-1.75 rounded-field px-4 text-[14px] font-semibold transition-colors", on ? "bg-surface text-ink shadow-button" : "text-ink-soft hover:text-ink")}
+                className={cn("flex h-9.5 items-center gap-1.75 rounded-field px-4 text-[14px] font-semibold transition-colors", on ? "bg-surface text-ink shadow-button" : "text-ink-2 hover:text-ink")}
               >
                 <span aria-hidden="true" className={cn("size-2 rounded-full", option.dot)} />
                 {option.id === "BANK" ? t("Bank") : option.name}
@@ -191,7 +191,7 @@ export function ManualPanel({ wallets, account, instructions, amount, amountText
                 {formatCount(index + 1, fmt)}
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-2 pt-0.75">
-                <span className="text-[14px] leading-[1.45] whitespace-pre-line text-ink">{step.text}</span>
+                <span className="text-[14px] leading-[1.45] whitespace-pre-line text-step-ink">{step.text}</span>
                 {step.extra}
               </div>
             </li>

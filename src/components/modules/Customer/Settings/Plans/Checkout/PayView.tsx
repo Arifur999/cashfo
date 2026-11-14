@@ -29,7 +29,7 @@ interface PayViewProps {
 const CARD = "flex flex-col rounded-card border border-line-card bg-surface px-5 shadow-card";
 
 // A radio card's frame and dot (the Checkout board's plan and way to pay).
-const optionClass = (on: boolean) => cn("flex rounded-[14px] p-3.5 text-left transition-colors", on ? "border-2 border-emerald bg-emerald-wash" : "border border-line bg-surface hover:border-input");
+const optionClass = (on: boolean) => cn("flex rounded-[14px] p-3.5 text-left transition-colors", on ? "border-2 border-emerald bg-sel-wash" : "border border-line bg-surface hover:border-input");
 const RadioDot = ({ on, off = false }: { on: boolean; off?: boolean }) => (
   <span aria-hidden="true" className={cn("block size-5 shrink-0 rounded-full bg-surface", on ? "border-[6px] border-emerald" : "border-[1.5px] border-ink-faint", off && "opacity-50")} />
 );
@@ -60,7 +60,7 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
 
   const plan = options.find((option) => option.id === planId) ?? options[0];
   const money = (amount: number | string) => formatCurrency(amount, "BDT", fmt);
-  const day = (date: Date) => formatDate(date.toISOString(), "d MMM yyyy", "", fmt);
+  const day = (date: Date) => formatDate(date.toISOString(), "d MMM yy", "", fmt);
 
   const price = Number(plan.price);
   const friendPercent = overview.referralDiscount?.percent ?? null;
@@ -184,7 +184,7 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
                 <button key={option.id} type="button" role="radio" aria-checked={on} onClick={() => choosePlan(option)} disabled={busy} className={cn(optionClass(on), "items-center gap-3")}>
                   <RadioDot on={on} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <b className="text-[15px] font-semibold text-ink">{t(option.name)}</b>
+                    <b className="text-[15px] font-bold text-ink">{t(option.name)}</b>
                     <span className="text-[12.5px] text-ink-muted">
                       {deal
                         ? t("{percent}% off · about {amount} a month", { percent: formatCount(deal.percentOff, fmt), amount: money(deal.perMonth) })
@@ -194,7 +194,7 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
                     </span>
                   </span>
                   <span className="flex flex-col items-end gap-0.75">
-                    <b className="text-[16px] font-semibold whitespace-nowrap text-ink tabular-nums">
+                    <b className="text-[16px] font-bold whitespace-nowrap text-ink tabular-nums">
                       {money(option.price)}
                       {yearly ? t(" / year") : t(" / month")}
                     </b>
@@ -221,12 +221,12 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
               onClick={() => online && setMethod("online")}
               className={cn(optionClass(method === "online"), "items-start gap-3", !online && "cursor-not-allowed hover:border-line")}
             >
-              <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-info-soft text-info-ink", !online && "opacity-60")}>
+              <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-info-soft text-info-ink", !online && "opacity-60")}>
                 <CreditCard className="size-5" strokeWidth={2} aria-hidden="true" />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
-                  <b className={cn("text-[15px] font-semibold whitespace-nowrap", online ? "text-ink" : "text-ink-muted")}>{t("Pay online")}</b>
+                  <b className={cn("text-[15px] font-bold whitespace-nowrap", online ? "text-ink" : "text-ink-muted")}>{t("Pay online")}</b>
                   <span className={cn("rounded-full px-2 py-px text-[11.5px] font-bold whitespace-nowrap", online ? "bg-mint-50 text-brand-ink" : "bg-surface-sunken text-ink-muted")}>{online ? t("Instant") : t("Soon")}</span>
                 </span>
                 <span className="text-[12.5px] leading-[1.45] text-ink-soft">
@@ -238,15 +238,15 @@ export function PayView({ plans, overview, planId: initialPlanId, notice }: PayV
               </span>
             </button>
             <button type="button" role="radio" aria-checked={method === "manual"} onClick={() => setMethod("manual")} className={cn(optionClass(method === "manual"), "items-start gap-3")}>
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-rose-soft text-rose">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-rose-soft text-rose">
                 <Send className="size-5" strokeWidth={2} aria-hidden="true" />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="flex flex-wrap items-center gap-2">
-                  <b className="text-[15px] font-semibold whitespace-nowrap text-ink">{t("Send money yourself")}</b>
-                  <span className="rounded-full bg-warning-soft px-2 py-px text-[11.5px] font-bold whitespace-nowrap text-warning-ink">{t("2 hours")}</span>
+                <span className="flex items-center gap-2">
+                  <b className="text-[15px] font-bold whitespace-nowrap text-ink">{t("Send money yourself")}</b>
+                  <span className="rounded-full bg-warning-soft px-2 py-px text-[11.5px] font-bold whitespace-nowrap text-due-ink">{t("2 hours")}</span>
                 </span>
-                <span className="text-[12.5px] leading-[1.45] text-ink-soft">{t("Send from bKash, Nagad, Rocket or your bank, then give us the TrxID.")}</span>
+                <span className="text-[12.5px] leading-[1.45] text-ink-2">{t("Send from bKash, Nagad, Rocket or your bank, then give us the TrxID.")}</span>
               </span>
               <span className="mt-0.5">
                 <RadioDot on={method === "manual"} />

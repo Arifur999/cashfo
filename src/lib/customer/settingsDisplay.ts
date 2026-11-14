@@ -145,24 +145,37 @@ export function fileNameFrom(disposition: string | null): string | null {
   return name || null;
 }
 
+export type FaqGroup = "start" | "ie" | "bal" | "sav" | "grp" | "sec" | "pay";
+// The question groups, in the SettingsHelp board's order.
+export const FAQ_GROUPS: { key: FaqGroup; label: string }[] = [
+  { key: "start", label: "Getting started" },
+  { key: "ie", label: "Income & Expense" },
+  { key: "bal", label: "Balance & wallets" },
+  { key: "sav", label: "Savings & loans" },
+  { key: "grp", label: "Group Expense" },
+  { key: "sec", label: "Account & security" },
+  { key: "pay", label: "Plans & payments" },
+];
+
 export interface Faq {
   id: string;
+  group: FaqGroup;
   // Dictionary keys.
   question: string;
   answer: string;
 }
 
 export const FAQS: Faq[] = [
-  { id: "void", question: "How do I fix or cancel a transaction?", answer: "Open it from Transactions. Edit fixes the amount, category, wallet, date or note: the original stays in its history, crossed out and marked as corrected, so your balances always add up. Void cancels one that should never have been added." },
-  { id: "transfer", question: "How do I move money between my wallets?", answer: "Open Add at the top (the + button on a phone) and pick Transfer. Choose the wallet the money leaves and the one it goes to, and the amount. Both balances change at once and nothing counts as income or spending." },
-  { id: "opening", question: "How do I add the money I already have?", answer: "Add each wallet with what it holds today as its opening balance: cash in hand, each bank account, bKash or Nagad. An opening balance is not income, so it never counts as money earned this month; from then on record what comes in and goes out." },
-  { id: "loans", question: "How do I keep track of loans and dues?", answer: "Open Loan. Add the bank or person, then record each payment, profit or charge as it happens. Each loan keeps its own statement and balance, and Smartly reminds you before a payment date." },
-  { id: "start", question: "Where do I start?", answer: "Add your wallets first, under Wallets: cash, a bank account, bKash or Nagad, each with what it holds today. Then record each income and expense with Add as it happens. Home sums it up: what you have, and what came in and went out this month." },
-  { id: "budget", question: "How do budgets work?", answer: "Open Budget and give each kind of spending a monthly limit. Each category then shows what is left, or how far over it went. When one passes 90% of its limit, the bell tells you; you can turn that off under App preferences, Reminders." },
-  { id: "group", question: "How is my share worked out in Group expenses?", answer: "Each expense is shared the way it was added: equally, by shares, by meals or in exact amounts, among the members in the group that day. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom." },
-  { id: "vault", question: "I forgot my vault password. Are my saved logins gone?", answer: "Yes. The logins are locked with the vault password itself, so a reset can only start over: you set a new vault password with your account password and the old entries are deleted." },
-  { id: "referral", question: "When can I withdraw referral earnings?", answer: "A reward counts 30 days after your friend joined. Everything counted so far can be withdrawn in one go into any of your wallets or savings wallets." },
-  { id: "bangla", question: "Can I use the app in Bangla?", answer: "Yes. Tap বাংলা at the top of any page (in the menu on a phone), or pick it under App preferences so every device opens in Bangla." },
+  { id: "void", group: "ie", question: "How do I fix or cancel a transaction?", answer: "Open it from Transactions. Edit fixes the amount, category, wallet, date or note: the original stays in its history, crossed out and marked as corrected, so your balances always add up. Void cancels one that should never have been added." },
+  { id: "transfer", group: "bal", question: "How do I move money between my wallets?", answer: "Open Add at the top (the + button on a phone) and pick Transfer. Choose the wallet the money leaves and the one it goes to, and the amount. Both balances change at once and nothing counts as income or spending." },
+  { id: "opening", group: "start", question: "How do I add the money I already have?", answer: "Add each wallet with what it holds today as its opening balance: cash in hand, each bank account, bKash or Nagad. An opening balance is not income, so it never counts as money earned this month; from then on record what comes in and goes out." },
+  { id: "loans", group: "sav", question: "How do I keep track of loans and dues?", answer: "Open Loan. Add the bank or person, then record each payment, profit or charge as it happens. Each loan keeps its own statement and balance, and Smartly reminds you before a payment date." },
+  { id: "start", group: "start", question: "Where do I start?", answer: "Add your wallets first, under Wallets: cash, a bank account, bKash or Nagad, each with what it holds today. Then record each income and expense with Add as it happens. Home sums it up: what you have, and what came in and went out this month." },
+  { id: "budget", group: "ie", question: "How do budgets work?", answer: "Open Budget and give each kind of spending a monthly limit. Each category then shows what is left, or how far over it went. When one passes 90% of its limit, the bell tells you; you can turn that off under App preferences, Reminders." },
+  { id: "group", group: "grp", question: "How is my share worked out in Group expenses?", answer: "Each expense is shared the way it was added: equally, by shares, by meals or in exact amounts, among the members in the group that day. Your balance is what you put in minus your share of what was spent, and Settle up shows who pays whom." },
+  { id: "vault", group: "sec", question: "I forgot my vault password. Are my saved logins gone?", answer: "Yes. The logins are locked with the vault password itself, so a reset can only start over: you set a new vault password with your account password and the old entries are deleted." },
+  { id: "referral", group: "pay", question: "When can I withdraw referral earnings?", answer: "A reward counts 30 days after your friend joined. Everything counted so far can be withdrawn in one go into any of your wallets or savings wallets." },
+  { id: "bangla", group: "start", question: "Can I use the app in Bangla?", answer: "Yes. Tap বাংলা at the top of any page (in the menu on a phone), or pick it under App preferences so every device opens in Bangla." },
 ];
 
 export function searchFaqs(faqs: Faq[], query: string, t: (key: string) => string): Faq[] {
@@ -176,7 +189,7 @@ export function searchFaqs(faqs: Faq[], query: string, t: (key: string) => strin
 export const SHORTCUTS: { what: string; key: string }[] = [
   { what: "Search anything", key: "Ctrl K" },
   { what: "New transaction", key: "N" },
-  { what: "Close a drawer", key: "Esc" },
+  { what: "Close a popup", key: "Esc" },
 ];
 
 export type GuideCategory = "start" | "money" | "groups" | "security";
@@ -207,6 +220,8 @@ export const LEGAL_SUMMARY: Record<string, string> = {
   terms: "The rules for using Smartly, in plain words.",
   privacy: "What we collect, why, and the choices you have.",
   "refund-policy": "When and how you get your money back.",
+  "cookie-policy": "The small files that keep you signed in.",
+  "community-rules": "How members and admins treat each other in Group Expense.",
 };
 
 // What is new in this version (About Smartly).
@@ -217,8 +232,10 @@ export const WHATS_NEW = [
   "Habit Tracker with namaz and Ramadan, next to your money.",
 ];
 
-export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" }[] = [
+export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" | "cookie-policy" | "community-rules" }[] = [
   { title: "Terms of service", page: "terms" },
   { title: "Privacy policy", page: "privacy" },
   { title: "Refund policy", page: "refund-policy" },
+  { title: "Cookie policy", page: "cookie-policy" },
+  { title: "Community rules for groups", page: "community-rules" },
 ];

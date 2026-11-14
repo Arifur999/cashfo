@@ -51,7 +51,7 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
   if (!plans || !overview) {
     return (
       <>
-        <h1 className="text-[30px] leading-[1.2] font-semibold tracking-[-0.03em] text-ink">{t("Plans & billing")}</h1>
+        <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Plans & billing")}</h1>
         <ErrorState title={t("Couldn't load the plans")} onRetry={() => router.refresh()} />
       </>
     );
@@ -217,9 +217,9 @@ export function PlansPage({ plans, overview: initialOverview, payments }: PlansP
   const seePlans = () => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
   return (
     <>
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.03em] text-ink md:text-[30px]">{t("Plans & billing")}</h1>
-        <p className="text-[14.5px] text-ink-muted">{t("Pick a plan, see what you paid and manage renewal. Prices are in taka.")}</p>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Plans & billing")}</h1>
+        <p className="text-body text-ink-muted">{t("Pick a plan, see what you paid and manage renewal. Prices are in taka.")}</p>
       </div>
 
       <PlanStatusStrip

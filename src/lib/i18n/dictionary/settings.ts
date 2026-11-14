@@ -245,7 +245,6 @@ export const settingsDictionary: Record<string, string> = {
   "Every question we have answered, kept up to date.": "আমাদের দেওয়া প্রতিটি উত্তর, হালনাগাদ রাখা।",
   "Open the FAQ": "FAQ খুলুন",
   "Keyboard shortcuts": "কিবোর্ড শর্টকাট",
-  "Close a drawer": "ড্রয়ার বন্ধ করুন",
 
   // Resources
   Guides: "গাইড",
@@ -1369,4 +1368,17 @@ export const settingsDictionary: Record<string, string> = {
   "Write your reply": "আপনার উত্তর লিখুন",
   "Smartly replied": "স্মার্টলি উত্তর দিয়েছে",
   "You wrote": "আপনি লিখেছেন",
+  "Short answers to what people ask us most.": "মানুষ সবচেয়ে বেশি যা জানতে চান, তার ছোট উত্তর।",
+  "Thanks for telling us.": "জানানোর জন্য ধন্যবাদ।",
+  "Sorry it did not help.": "দুঃখিত, এটি কাজে লাগেনি।",
+  "Ask our team": "টিমকে জিজ্ঞেস করুন",
+  "Balance & wallets": "ব্যালান্স ও ওয়ালেট",
+  "Savings & loans": "সঞ্চয় ও ঋণ",
+  "Plans & payments": "প্ল্যান ও পেমেন্ট",
+  "Cookie policy": "কুকি নীতি",
+  "Community rules for groups": "গ্রুপের কমিউনিটি নিয়ম",
+  "The small files that keep you signed in.": "যে ছোট ফাইলগুলো আপনাকে সাইন ইন রাখে।",
+  "How members and admins treat each other in Group Expense.": "গ্রুপ খরচে সদস্য আর অ্যাডমিনরা একে অপরের সাথে কেমন আচরণ করবেন।",
+  "{count} payment · {amount} paid": "{count}টি পেমেন্ট · {amount} পরিশোধিত",
+  "Money Tracker · version {version}": "মানি ট্র্যাকার · সংস্করণ {version}",
 };
