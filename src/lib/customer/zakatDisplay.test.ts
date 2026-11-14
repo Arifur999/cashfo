@@ -154,6 +154,9 @@ describe("words", () => {
     const note = (patch: Partial<ZakatLine>, id: ZakatStep["step"] = "CASH") => lineNote(line(patch), id, PER_VORI, money, inEnglish, "en");
     expect(note({})).toBe("Cash in hand");
     expect(note({ detail: "•••• 7890" })).toBe("Account •••• 7890");
+    expect(note({ detail: "bank", number: "•••• 7890" })).toBe("Bank account •••• 7890");
+    expect(note({ source: "INVESTMENT", detail: "SANCHAYAPATRA", maturesOn: "2030-02-15" }, "INVESTMENTS")).toBe("Matures Feb 2030");
+    expect(note({ source: "INVESTMENT", detail: "SHARES", maturesOn: null }, "INVESTMENTS")).toBe("Shares");
     expect(note({ counted: false })).toBe("Not counted");
     expect(note({ source: "EXTRA", detail: null })).toBe("You added this");
     expect(note({ source: "EXTRA", detail: null, metal: "GOLD_22", weightVori: "3", byWeight: true }, "GOLD")).toBe("3 vori · Gold, 22 karat");

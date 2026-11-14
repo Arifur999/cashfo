@@ -13,6 +13,7 @@ import { cleanVori, EXTRA_NAME_MAX, METAL_LABEL, METALS, metalValue, parseVori, 
 import type { ZakatCheckStep, ZakatLine, ZakatMetal, ZakatSummary } from "@/lib/customer/zakatTypes";
 import { toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { ZAKAT_POPUP } from "./zakatPopup";
 
 // Add something not in the app to a step, or weigh a gold or silver asset.
 export type AddTarget = { kind: "extra"; step: ZakatCheckStep } | { kind: "weigh"; line: ZakatLine };
@@ -104,9 +105,11 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
       open
       onClose={onClose}
       busy={isPending}
-      width={480}
-      title={title}
+      width={460}
+      title={<span className="block leading-[normal]">{title}</span>}
       sub={sub}
+      {...ZAKAT_POPUP}
+      subClassName="text-[13px] leading-[1.45]"
       onSubmit={(event) => {
         event.preventDefault();
         save();
@@ -121,7 +124,7 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
           <Button variant="secondary" onClick={onClose} disabled={isPending}>
             {t("Cancel")}
           </Button>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending} className="px-4.5">
             {isPending && <Loader size={16} onDark label={t("Saving...")} />}
             {t(weigh ? "Save" : "Add")}
           </Button>
@@ -135,7 +138,7 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
               key={suggestion}
               type="button"
               onClick={() => setName(t(suggestion))}
-              className="h-7.5 rounded-full border border-line bg-surface px-2.75 text-[12.5px] font-semibold text-ink-2 hover:border-line-strong hover:bg-surface-sunken pointer-coarse:h-11"
+              className="h-7.5 rounded-full border border-line bg-surface px-2.75 text-[12.5px] font-semibold text-ink-2 hover:bg-pick-wash pointer-coarse:h-11"
             >
               {t(suggestion)}
             </button>
@@ -151,7 +154,7 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
         <>
           <div className="grid gap-3 sm:grid-cols-[1.55fr_1fr]">
             <Field htmlFor="zk-add-metal" label={t("Type")}>
-              <NativeSelect id="zk-add-metal" size="md" value={metal} onChange={(event) => setMetal(event.target.value as ZakatMetal)}>
+              <NativeSelect id="zk-add-metal" size="md" className="text-[13.5px] font-normal" value={metal} onChange={(event) => setMetal(event.target.value as ZakatMetal)}>
                 {METALS.map((each) => (
                   <option key={each} value={each}>{`${t(METAL_LABEL[each])} · ${money(summary.prices.perVori[each])}`}</option>
                 ))}
@@ -187,7 +190,7 @@ export function ZakatAddDialog({ target, onClose, businessId, summary, currency,
           {error}
         </p>
       )}
-      <p className="rounded-xl bg-strip px-3 py-2.5 text-[12.5px] leading-normal text-ink-2">
+      <p className="rounded-[12px] bg-strip px-3 py-2.5 text-[12.5px] leading-normal text-ink-2">
         {t(weigh ? "This stays only on this page. Assets keeps the value you wrote there." : "This stays only on this page. It does not change your wallets, assets or loans.")}
       </p>
     </PopupDialog>
