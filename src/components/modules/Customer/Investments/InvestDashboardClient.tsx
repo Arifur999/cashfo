@@ -125,9 +125,9 @@ export function InvestDashboardClient() {
                 ? t("Matured on {date} · {amount} to take back", { date: day(w.day), amount: money(w.figures.capital) })
                 : (w.rank === 1 ? t("Was due {date}", { date: day(w.day) }) : day(w.day)) + (w.figures.per ? ` · ${money(w.figures.per)}` : "");
               return (
-                <div key={inv.id} className="flex min-h-[69px] items-center gap-3 rounded-[12px] border-b border-head-rule p-2.5">
+                <div key={inv.id} className="flex min-h-[69px] items-center gap-3 rounded-[12px] border-b border-head-rule p-2.5 max-sm:flex-wrap">
                   <KindTile kind={inv.kind} size={38} />
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 max-sm:basis-[calc(100%-50px)]">
                     <span data-i18n-skip="" className="truncate text-[14px] font-semibold text-ink">
                       {inv.name}
                     </span>
