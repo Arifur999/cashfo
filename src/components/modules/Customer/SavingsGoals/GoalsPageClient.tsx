@@ -349,7 +349,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
               onNew={canManage && tab === "ALL" && !showBehind ? () => setModal({ kind: "goal" }) : null}
             />
           ) : view === "cards" && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
               {shown.map((goal) => (
                 <GoalCard key={goal.id} goal={goal} color={colorOf(goal)} currency={currency} today={today} canManage={canManage} noWallet={noWallet} canMoveTo={canMoveTo(goal)} busy={isPending} onAction={(action) => act(goal, action)} />
               ))}
