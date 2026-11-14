@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert, Lock, RefreshCw, ShieldCheck } from "lucide-react";
+import { RefreshCw, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
@@ -10,7 +10,6 @@ import { confirmWithdrawalAction, resendWithdrawalCodeAction, type ReferralResul
 import type { PayoutRequest, WithdrawalChallenge } from "@/lib/customer/referralTypes";
 import { countdownText } from "@/lib/customer/vaultDisplay";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +52,6 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
   const [sendsLeft, setSendsLeft] = useState(1);
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(0);
-  const [focused, setFocused] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isResending, startResend] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -164,12 +162,8 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
             <ShieldCheck className="size-6" strokeWidth={2} />
           </span>
           <AlertDialogTitle className="text-[20px] leading-[normal] font-semibold text-ink">{t("Confirm it's you")}</AlertDialogTitle>
-          <AlertDialogDescription className="text-body leading-[1.55] text-ink-soft">
-            {fillNodes(channel === "SMS" ? t("We sent a 6-digit code by SMS to {email}. Enter it to send {amount} to {destination}.") : t("We sent a 6-digit code by email to {email}. Enter it to send {amount} to {destination}."), {
-              email: <b className="font-semibold break-words text-ink">{sentTo}</b>,
-              amount: <b className="font-semibold whitespace-nowrap text-ink">{amount}</b>,
-              destination,
-            })}
+          <AlertDialogDescription className="text-body leading-[1.55] break-words text-ink-soft">
+            {t(channel === "SMS" ? "We sent a 6-digit code by SMS to {email}. Enter it to ask for {amount} to {destination}." : "We sent a 6-digit code by email to {email}. Enter it to ask for {amount} to {destination}.", { email: sentTo, amount, destination })}
           </AlertDialogDescription>
         </div>
 
@@ -180,72 +174,47 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
           }}
           className="flex flex-col"
         >
-          <div className="flex flex-col gap-3.5 px-5 pt-4 pb-5.5 sm:px-7">
-            <div role="group" aria-label={t("6-digit code")} className="relative grid grid-cols-6 gap-2" onClick={() => inputRef.current?.focus()}>
-              {Array.from({ length: LENGTH }, (_, index) => {
-                const active = focused && (index === code.length || (index === LENGTH - 1 && code.length === LENGTH));
-                return (
-                  <span
-                    key={index}
-                    aria-hidden="true"
-                    className={cn(
-                      "flex h-14 items-center justify-center rounded-field border bg-surface text-[24px] font-bold text-ink tabular-nums transition-[border-color,box-shadow]",
-                      error && !gone ? "border-expense" : active ? "border-[1.5px] border-emerald focus-halo" : "border-input",
-                      gone && "opacity-50",
-                    )}
-                  >
-                    {code[index] ? toLocaleDigits(code[index], fmt) : ""}
-                  </span>
-                );
-              })}
-              <input
-                ref={inputRef}
-                value={code}
-                onChange={(event) => {
-                  setCode(event.target.value.replace(/[^\d০-৯]/g, "").replace(/[০-৯]/g, (d) => String("০১২৩৪৫৬৭৮৯".indexOf(d))).slice(0, LENGTH));
-                  if (!gone) setError(null);
-                }}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={LENGTH}
-                disabled={gone || isPending}
-                aria-label={t("6-digit code")}
-                aria-invalid={!!error || undefined}
-                aria-describedby={error ? "otp-error" : undefined}
-                className="absolute inset-0 cursor-default opacity-0"
-              />
-            </div>
+          <div className="flex flex-col gap-3 px-5 pt-4 pb-5.5 sm:px-7">
+            <input
+              ref={inputRef}
+              value={toLocaleDigits(code, fmt)}
+              onChange={(event) => {
+                setCode(event.target.value.replace(/[^\d০-৯]/g, "").replace(/[০-৯]/g, (d) => String("০১২৩৪৫৬৭৮৯".indexOf(d))).slice(0, LENGTH));
+                if (!gone) setError(null);
+              }}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={LENGTH}
+              disabled={gone || isPending}
+              placeholder="••••••"
+              aria-label={t("6-digit code")}
+              aria-invalid={!!error || undefined}
+              aria-describedby={error ? "otp-error" : undefined}
+              className={cn(
+                "h-15 w-full rounded-md border-[1.5px] bg-surface pl-[0.5em] text-center text-[30px] font-bold tracking-[0.5em] text-ink tabular-nums outline-none placeholder:text-ink-faint focus-visible:focus-halo disabled:opacity-50",
+                error && !gone ? "border-expense" : "border-emerald",
+              )}
+            />
 
             {error && (
-              <p id="otp-error" role="alert" className="flex items-start gap-2 text-caption text-expense">
-                <CircleAlert className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+              <p id="otp-error" role="alert" className="rounded-field bg-expense-soft px-3 py-2 text-center text-[13px] font-medium text-expense">
                 {error}
               </p>
             )}
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
-              <span className="text-ink-muted">
-                {t("Didn't get it?")} {waiting ? <span className="text-ink-faint">{t("Resend in {time}", { time: toLocaleDigits(countdownText(waitLeft), fmt) })}</span> : channel !== "SMS" && t("Check your spam folder too.")}
-              </span>
-              <span className="flex flex-wrap items-center gap-x-4">
-                <button type="button" onClick={() => resend()} disabled={waiting || busy || (!gone && sendsLeft === 0)} className="flex min-h-9 items-center gap-1.5 font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
-                  {isResending ? <Loader size={14} label={t("Loading...")} /> : gone ? <RefreshCw className="size-3.5" aria-hidden="true" /> : null}
-                  {gone ? t("Get a new code") : t("Resend code")}
+              <button type="button" onClick={() => resend()} disabled={waiting || busy || (!gone && sendsLeft === 0)} className="flex items-center gap-1.5 font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
+                {isResending ? <Loader size={14} label={t("Loading...")} /> : gone ? <RefreshCw className="size-3.5" aria-hidden="true" /> : null}
+                {gone ? t("Get a new code") : waiting ? t("Resend in {time}", { time: toLocaleDigits(countdownText(waitLeft), fmt) }) : t("Resend code")}
+              </button>
+              {channel === "SMS" && !gone && (
+                <button type="button" onClick={() => resend(true)} disabled={waiting || busy || sendsLeft === 0} className="font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
+                  {t("Send by email instead")}
                 </button>
-                {channel === "SMS" && !gone && (
-                  <button type="button" onClick={() => resend(true)} disabled={waiting || busy || sendsLeft === 0} className="flex min-h-9 items-center font-semibold text-emerald hover:underline disabled:text-ink-faint disabled:no-underline">
-                    {t("Send by email instead")}
-                  </button>
-                )}
-              </span>
+              )}
             </div>
 
-            <div className="flex items-start gap-2 rounded-[14px] bg-strip px-3 py-2.5 text-[12.5px] leading-[normal] text-ink-soft">
-              <Lock className="mt-0.5 size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
-              <span>{t("Never share this code. Smartly staff will never ask you for it.")}</span>
-            </div>
+            <p className="rounded-md bg-strip px-3 py-2.5 text-[12.5px] leading-normal text-ink-soft">{t("Never share this code. Smartly staff will never ask you for it.")}</p>
           </div>
 
           <div className="flex items-center justify-end gap-2.5 border-t border-line bg-strip px-5 py-3.5 sm:px-7">
@@ -254,7 +223,7 @@ export function WithdrawOtpDialog({ challenge, issuedAt, amount, destination, on
             </Button>
             <Button type="submit" size="lg" disabled={busy || gone} className="h-10.5 px-4.5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
-              {t("Confirm withdrawal")}
+              {t("Send request")}
             </Button>
           </div>
         </form>

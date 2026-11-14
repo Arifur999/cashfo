@@ -16,14 +16,12 @@ import { accountDisplayName, displayLanguage } from "@/lib/customer/accountDispl
 import type { Account } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { startWithdrawalAction, type ReferralResult } from "@/lib/customer/referralActions";
-import { addWorkingDays, balancesOf, maskAccount, maskWallet, METHOD_BRANDS, programOf, speedOf } from "@/lib/customer/referralDisplay";
+import { addWorkingDays, balancesOf, maskAccount, maskEmail, maskWallet, METHOD_BRANDS, programOf, speedOf } from "@/lib/customer/referralDisplay";
 import type { Earning, PayoutMethod, PayoutRequest, ReferralProgramInfo, WithdrawalChallenge } from "@/lib/customer/referralTypes";
 import { formatDate } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
-import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { useEarningLine } from "./DashboardCards";
 import { WITHDRAWALS_ROUTE } from "./EarningsHero";
 import { PayoutMethodDrawer } from "./PayoutMethodDrawer";
 import { useMethodWords } from "./PayoutMethodsCard";
@@ -43,6 +41,9 @@ interface WithdrawPageClientProps {
   savingsWallets: Account[];
   currency: string;
   userName: string;
+  // Where the code goes: the verified phone, else the email; null when the
+  // profile could not be read.
+  codeTo: { phone: string } | { email: string } | null;
   today: string;
 }
 
@@ -58,11 +59,12 @@ type Problem = { field: "amount" | "method" | "income" | "form"; message: string
 // Referral income in a wallet when paid; optional), with the summary
 // beside it. Continue emails a one-time code; the code makes the request,
 // and the page turns into the request sent.
-export function WithdrawPageClient({ info, lines, methods: initialMethods, businessId, wallets, savingsWallets, currency, userName, today }: WithdrawPageClientProps) {
+export function WithdrawPageClient({ info, lines, methods: initialMethods, businessId, wallets, savingsWallets, currency, userName, codeTo, today }: WithdrawPageClientProps) {
   const { t, locale, fmt } = useLocale();
   const router = useRouter();
   const words = useMethodWords();
-  const describe = useEarningLine();
+  // "Yearly Pro · first payment · 5 Sep", as the board words a line.
+  const shortDay = (at: string) => formatDate(at, at.slice(0, 4) === today.slice(0, 4) ? "d MMM" : "d MMM yyyy", "", fmt);
   const program = info ? programOf(info) : null;
   const balances = info ? balancesOf(info) : null;
   const available = balances?.available ?? 0;
@@ -185,23 +187,18 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
     return (
       <PageFrame className="max-md:pt-4 leading-[normal] md:pt-6 md:pb-8">
         <TopbarExtras heading={t("Withdrawals")} />
-        <WithdrawSubmitted
-          request={submitted.request}
-          left={submitted.left}
-          pending={balances.onHold}
-          pendingNextAt={balances.onHoldNextAt}
-          incomeWallet={submitted.request.income ? (submitted.request.income.accountName ?? (wallet ? walletName(wallet) : null)) : null}
-          currency={currency}
-          today={today}
-        />
+        <WithdrawSubmitted request={submitted.request} bySms={!!codeTo && "phone" in codeTo} currency={currency} />
       </PageFrame>
     );
   }
 
   const facts = [
-    { icon: Clock, text: t("Paid by {date} ({days} working days; Friday and Saturday are off).", { date: payByText, days: formatCount(program.payWithinDays, fmt) }) },
+    { icon: Clock, text: t("Expected by {date} ({days} working days; Friday and Saturday are off).", { date: payByText, days: formatCount(program.payWithinDays, fmt) }) },
     { icon: X, text: t("You can cancel while we are still checking.") },
-    { icon: ShieldCheck, text: t("We send you a 6-digit code before anything is sent.") },
+    {
+      icon: ShieldCheck,
+      text: !codeTo ? t("We send you a 6-digit code before anything is sent.") : t("We send a 6-digit code to {to} first.", { to: "phone" in codeTo ? maskWallet(codeTo.phone) : maskEmail(codeTo.email) }),
+    },
   ];
 
   return (
@@ -211,7 +208,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
         <ChevronLeft className="size-4" aria-hidden="true" />
         {t("Withdrawals")}
       </Link>
-      <div className="flex flex-col gap-1">
+      <div className="-mt-1.5 flex flex-col gap-1">
         <h1 className="text-page-title text-ink">{t("Withdraw your earnings")}</h1>
         <p className="text-body text-ink-muted">{t("Pick what to withdraw and where to send it. We check each friend's payment, then send the money, usually within {days} working days.", { days: formatCount(program.payWithinDays, fmt) })}</p>
       </div>
@@ -231,7 +228,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                   <StepNumber n={1} />
                   {t("What you're withdrawing")}
                 </h2>
-                {readyLines.length > 1 && (
+                {readyLines.length > 0 && (
                   <button type="button" onClick={() => pick(allPicked ? [] : readyLines.map((line) => line.id))} className="rounded-sm text-[13px] font-semibold text-emerald hover:underline">
                     {allPicked ? t("Untick all") : t("Tick all")}
                   </button>
@@ -250,7 +247,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                             <Checkbox checked={on} onCheckedChange={(next) => pick(next === true ? [...picked, line.id] : [...picked].filter((id) => id !== line.id))} className="size-4.5 rounded-[5px] border-[1.5px] border-ink-faint" />
                             <span className="flex min-w-0 flex-1 flex-col">
                               <span className="truncate text-body font-semibold text-ink">{line.friendName}</span>
-                              <span className="truncate text-caption text-ink-muted">{describe(line, today)}</span>
+                              <span className="truncate text-caption text-ink-muted">{[line.planName, t(KIND_LINE[line.kind]), shortDay(line.paidAt)].filter(Boolean).join(" · ")}</span>
                             </span>
                             <span className="text-caption text-ink-muted tabular-nums max-sm:hidden">{Number(line.paidAmount) > 0 ? t("paid {amount}", { amount: money(line.paidAmount) }) : ""}</span>
                             <span className={cn("w-24 text-right text-body font-bold tabular-nums", on ? "text-ink" : "text-ink-muted")}>{money(line.amount)}</span>
@@ -353,7 +350,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                         }}
                         className="size-4.5 rounded-[5px] border-[1.5px] border-ink-faint"
                       />
-                      <span>{fillNodes(t("When it's paid, add {amount} as {income} to my wallet"), { amount: money(amount || 0), income: <b className="font-semibold">{t("Referral income")}</b> })}</span>
+                      <span>{t("When it's paid, add {amount} as Referral income to my wallet", { amount: money(amount || 0) })}</span>
                     </label>
                     <NativeSelect
                       size="sm"
@@ -405,9 +402,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                     <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
                     {errorFor("income")}
                   </p>
-                ) : (
-                  <span className="text-[12.5px] text-ink-muted">{t("Pick the wallet where the money will land. You can add a bKash wallet under Balance › Wallet.")}</span>
-                )}
+                ) : null}
               </section>
             )}
 
@@ -423,7 +418,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                 <Link href={WITHDRAWALS_ROUTE}>{t("Cancel")}</Link>
               </Button>
               <Button type="submit" size="lg" disabled={isPending || readyLines.length === 0 || available < minimum} className="h-10.5 px-4.5">
-                {isPending ? <Loader size={16} onDark label={t("Loading...")} /> : <ShieldCheck className="size-4" />}
+                {isPending && <Loader size={16} onDark label={t("Loading...")} />}
                 {t("Continue · confirm with a code")}
               </Button>
             </div>
@@ -435,6 +430,11 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
             <h2 id="wd-sum" className="text-title text-ink">
               {t("Summary")}
             </h2>
+            <div className="flex flex-col gap-1 rounded-[14px] border border-emerald-line bg-emerald-soft p-3.5">
+              <span className="text-[12.5px] text-brand-ink">{t("You receive")}</span>
+              <span className="text-[26px] font-bold text-emerald tabular-nums">{money(receive)}</span>
+              {method && <span className="text-[12.5px] text-brand-ink">{t("{service} {number} · {name}", { service: destination, number: destinationNumber, name: method.accountName })}</span>}
+            </div>
             <dl className="flex flex-col gap-2.5 text-body tabular-nums">
               <div className="flex justify-between gap-3">
                 <dt className="text-ink-soft">{t("Ready now")}</dt>
@@ -445,26 +445,17 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
                 <dd className="font-semibold text-ink">− {money(amount || 0)}</dd>
               </div>
               <div className="flex justify-between gap-3">
+                <dt className="text-ink-soft">{t("Left after this")}</dt>
+                <dd className="font-semibold text-ink">{money(Math.max(0, available - (amount || 0)))}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
                 <dt className="text-ink-soft">{t("Transfer fee")}</dt>
                 <dd className={cn("font-semibold", fee > 0 ? "text-ink" : "text-emerald")}>{fee > 0 ? money(fee) : t("{amount} · we pay it", { amount: money(0) })}</dd>
               </div>
             </dl>
-            <div className="flex flex-col gap-1 rounded-[14px] border border-emerald-line bg-emerald-soft p-3.5">
-              <span className="text-[12.5px] text-brand-ink">{t("You receive")}</span>
-              <span className="text-[26px] leading-[normal] font-bold text-emerald tabular-nums">{money(receive)}</span>
-              {method && (
-                <span className="text-[12.5px] text-brand-ink">
-                  {t("on {service} {number} · {name}", { service: destination, number: destinationNumber, name: method.accountName })}
-                </span>
-              )}
-            </div>
-            <div className="flex justify-between gap-3 text-body tabular-nums">
-              <span className="text-ink-soft">{t("Left after this")}</span>
-              <b className="font-bold text-ink">{money(Math.max(0, available - (amount || 0)))}</b>
-            </div>
             <ul className="flex flex-col gap-2.25 border-t border-divider pt-3">
               {facts.map((fact) => (
-                <li key={fact.text} className="flex gap-2 text-[12.5px] leading-[normal] text-ink-soft">
+                <li key={fact.text} className="flex gap-2 text-[12.5px] leading-normal text-ink-soft">
                   <fact.icon className="mt-0.5 size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
                   <span>{fact.text}</span>
                 </li>
@@ -479,7 +470,7 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
         challenge={challenge}
         issuedAt={issuedAt}
         amount={money(amount)}
-        destination={destination}
+        destination={`${destination} ${destinationNumber}`.trim()}
         onBack={() => setChallenge(null)}
         onConfirmed={(request) => {
           setChallenge(null);
@@ -492,3 +483,9 @@ export function WithdrawPageClient({ info, lines, methods: initialMethods, busin
     </PageFrame>
   );
 }
+
+const KIND_LINE: Record<Earning["kind"], string> = {
+  FIRST: "first payment",
+  RENEWAL: "renewal",
+  BONUS: "sign-up bonus",
+};
