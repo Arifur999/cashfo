@@ -511,6 +511,8 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
               variant="pill"
               value={tab}
               onChange={pickTab}
+              className="max-w-full overflow-x-auto [scrollbar-width:none]"
+              itemClassName="shrink-0"
               options={[
                 { value: "going", label: `${t("Going now")} · ${count(going.length)}` },
                 { value: "completed", label: `${t("Completed")} · ${count(completed.length)}` },
