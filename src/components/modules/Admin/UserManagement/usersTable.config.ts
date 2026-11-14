@@ -25,7 +25,7 @@ export const USERS_TABLE_BASE_CONFIG = {
 } as const satisfies Pick<ServerDataTableConfig, "queryKeys" | "defaults">;
 
 // The board's chips under the tabs: plan, when they joined, when they were
-// last active and how many workspaces they own, then the order on the right.
+// last active, then the order on the right.
 const JOINED_OPTIONS = [
   { value: "today", label: "Today" },
   { value: "7d", label: "Last 7 days" },
@@ -38,11 +38,6 @@ const LAST_ACTIVE_OPTIONS = [
   { value: "over30d", label: "Not in 30 days" },
   { value: "never", label: "Never" },
 ];
-const WORKSPACE_OPTIONS = [
-  { value: "1", label: "Just one" },
-  { value: "2+", label: "2 or more" },
-  { value: "3+", label: "3 or more" },
-];
 const SORT_OPTIONS = [
   { value: "lastActive", label: "Last active, newest first" },
   { value: "joined", label: "Joined, newest first" },
@@ -54,7 +49,7 @@ const SORT_OPTIONS = [
 // loaded (memoize the result -- it must stay stable).
 export const buildUsersTableConfig = (plans: IPlanOption[], statusCounts?: Record<OwnerStatus, number>, openStatus?: string | null): ServerDataTableConfig => ({
   ...USERS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Search name, email, phone or workspace" },
+  search: { placeholder: "Search name, email or phone" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: ownerStatusTabs(statusCounts, openStatus) },
     // A plan's name is data ("Business"), never a word to translate.
@@ -62,7 +57,6 @@ export const buildUsersTableConfig = (plans: IPlanOption[], statusCounts?: Recor
     // "Joined@@date" is the date they joined (যোগদান), not "has joined".
     { id: "joined", type: "single-select", label: "Joined@@date", allLabel: "Any time", options: JOINED_OPTIONS },
     { id: "lastActive", type: "single-select", label: "Last active", allLabel: "Any time", options: LAST_ACTIVE_OPTIONS },
-    { id: "workspaces", type: "single-select", label: "Workspaces", allLabel: "Any number", options: WORKSPACE_OPTIONS },
     { id: "sort", type: "sort", label: "Sort", options: SORT_OPTIONS },
   ],
 });

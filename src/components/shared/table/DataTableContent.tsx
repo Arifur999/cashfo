@@ -36,17 +36,17 @@ interface DataTableContentProps<TData> {
   layout?: DataTableLayout;
 }
 
-// The design's grid in a table: 20px at the card's edges, the gap split
+// The design's grid in a table: 18px at the card's edges, the gap split
 // between neighbouring cells.
-const EDGE = 20;
+const EDGE = 18;
 const GAP_CLASS = {
   12: "[&_td]:px-1.5 [&_th]:px-1.5",
   16: "[&_td]:px-2 [&_th]:px-2",
 } as const;
-const EDGE_CLASS = "[&_td:first-child]:pl-5 [&_th:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:last-child]:pr-5";
+const EDGE_CLASS = "[&_td:first-child]:pl-4.5 [&_th:first-child]:pl-4.5 [&_td:last-child]:pr-4.5 [&_th:last-child]:pr-4.5";
 // The list card's width on a 1440 board: the page less the sidebar and the
 // 32px margins.
-const DESIGN_WIDTH = 1136;
+const DESIGN_WIDTH = 1130;
 // Below this a gridded table scrolls sideways instead of crushing its columns.
 const MIN_TABLE = "min-w-180";
 const MIN_TABLE_PX = 720;
@@ -123,7 +123,7 @@ const DataTableContent = <TData,>({
   useEffect(() => {
     frame.current?.querySelector<HTMLElement>("[data-slot=table-container]")?.scrollTo({ top: 0 });
   }, [pageIndex, pageSize]);
-  const { gap = 12, rowHeight = 54, headPadding = 8, designWidth = DESIGN_WIDTH, flexMinWidth } = layout ?? {};
+  const { gap = 12, rowHeight = 54, headPadding = 9, designWidth = DESIGN_WIDTH, flexMinWidth } = layout ?? {};
   const padding = (index: number) => (index === 0 ? EDGE : gap / 2) + (index === columnCount - 1 ? EDGE : gap / 2);
   // Widths given = the design's fixed grid; a list without any keeps the
   // browser's own column sizing.
@@ -186,7 +186,7 @@ const DataTableContent = <TData,>({
                     className={cn(
                       "h-auto",
                       HEAD,
-                      headPadding === 12 ? "py-3" : "py-2",
+                      headPadding === 12 ? "py-3" : headPadding === 9 ? "py-2.25" : "py-2",
                       header.column.columnDef.meta?.align === "right" && "text-right",
                       header.column.columnDef.meta?.headerClassName,
                       getPinnedClassName(header.column, true),

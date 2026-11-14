@@ -15,7 +15,7 @@ export const generateMetadata = adminPageTitle("Referral settings");
 const ReferralSettingsPage = async () => {
   const admin = await getUserInfo();
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <div className="flex flex-col gap-3">
         <PageHeader title={REFERRALS_PAGE_TITLE} description={REFERRALS_PAGE_DESCRIPTION.settings} />
         <ReferralsTabs />

@@ -19,7 +19,7 @@ const RevenuePage = async () => {
 
   return (
     <ExportProvider>
-      <div className="space-y-4">
+      <div className="space-y-4.5">
         <PageHeader {...PAYMENTS_PAGE} actions={<ExportButton hint="Download MRR at the end of each month as CSV" />} />
         <PaymentsTabs showRevenue />
         <RevenueExport history={overview.mrrHistory} />

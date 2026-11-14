@@ -30,7 +30,7 @@ const ManageOwnersPage = async ({ searchParams }: PageProps<"/admin/manage-owner
   if (last !== null) redirect(pageHref(OWNERS_ROUTE, params, last));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader
         title="Manage owners"
         description="Every owner's account. If an owner asks for a fresh start, reset their workspace's money data here. Their login stays as it is."

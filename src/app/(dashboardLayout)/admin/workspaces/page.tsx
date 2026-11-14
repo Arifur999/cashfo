@@ -25,7 +25,7 @@ const WorkspacesPage = async ({ searchParams }: PageProps<"/admin/workspaces">) 
   if (last !== null) redirect(pageHref(WORKSPACES_ROUTE, params, last));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader title="Workspaces" description="People with more than one workspace, and what the extra workspaces could earn as an add-on." />
       <QueryPrefetch
         prefetch={async (client) => {

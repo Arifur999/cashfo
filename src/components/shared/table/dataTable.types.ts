@@ -113,7 +113,7 @@ export interface DataTableSimplePager {
 export interface DataTableLayout {
   gap?: 12 | 16;
   rowHeight?: number;
-  headPadding?: 8 | 12;
+  headPadding?: 8 | 9 | 12;
   actionsWidth?: number;
   // The card's width on the 1440 board (1136, or less beside a side card):
   // columns keep their share of it at any screen width.

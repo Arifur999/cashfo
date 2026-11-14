@@ -18,7 +18,7 @@ const CouponsPage = async () => {
   const canManageCoupons = canManage(admin?.role, "subscriptions");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader {...SUBSCRIPTIONS_PAGE} actions={canManageCoupons && <CreateCouponButton />} />
       <SubscriptionsTabs />
       <QueryPrefetch

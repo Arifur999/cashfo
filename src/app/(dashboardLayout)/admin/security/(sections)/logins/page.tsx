@@ -22,7 +22,7 @@ const SignInsPage = async ({ searchParams }: PageProps<"/admin/security/logins">
     <QueryPrefetch
       prefetch={(client) => Promise.all([client.prefetchQuery(loginAttemptsSummaryQuery()), client.prefetchQuery(loginAttemptsListQuery(queryString))])}
     >
-      <div className="space-y-4">
+      <div className="space-y-4.5">
         <LoginKpis />
         {/* The table needs about 800px for its four columns, so the side
             card only sits beside it on wide screens (the design's 1440). */}

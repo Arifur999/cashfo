@@ -31,7 +31,7 @@ const DataTableSimplePager = <TData,>({ table, totalRows, pager, defaultPageSize
   const page = clampPage(pageIndex + 1, pageCount);
 
   return (
-    <ListFooter className="px-5 md:px-5">
+    <ListFooter className="px-4.5 md:px-4.5">
       <Pagination
         variant="simple"
         page={page}

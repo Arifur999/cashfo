@@ -25,7 +25,7 @@ const DataTablePagination = <TData,>({ table, totalRows, defaultPageSize, focusT
   const { pageIndex, pageSize } = table.getState().pagination;
 
   return (
-    <ListFooter className="px-5 md:px-5">
+    <ListFooter className="px-4.5 md:px-4.5">
       <Pagination
         page={pageIndex + 1}
         totalPages={table.getPageCount()}

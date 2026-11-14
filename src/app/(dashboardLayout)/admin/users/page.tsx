@@ -29,7 +29,7 @@ const UsersPage = async ({ searchParams }: PageProps<"/admin/users">) => {
 
   return (
     <ExportProvider>
-      <div className="space-y-4">
+      <div className="space-y-4.5">
         <PageHeader
           title="Users"
           description="Everyone with a Smartly account. Open a person to change their plan, reset their password or suspend them."

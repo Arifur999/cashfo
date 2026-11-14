@@ -15,7 +15,7 @@ const PlansPage = async () => {
   const canManagePlans = canManage(admin?.role, "subscriptions");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader {...SUBSCRIPTIONS_PAGE} actions={canManagePlans && <CreatePlanButton />} />
       <SubscriptionsTabs />
       <QueryPrefetch prefetch={(client) => Promise.all([client.prefetchQuery(plansQuery()), client.prefetchQuery(planAnalyticsQuery())])}>
