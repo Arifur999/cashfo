@@ -100,7 +100,10 @@ export function describeTransaction(transaction: Transaction, categoriesById: Re
     if (from && to) wallet = `${from} → ${to}`;
   }
   const amount = Number(transaction.entries[0]?.amount ?? 0);
-  const signedAmount = transaction.transactionType === "EXPENSE" ? -amount : amount;
+  // Any other posting (an investment, an asset bought, a journal entry) is
+  // money in or out by its wallet's side: a wallet credited paid out.
+  const walletEntry = ["INCOME", "EXPENSE", "TRANSFER"].includes(transaction.transactionType) ? undefined : transaction.entries.find(isWallet);
+  const signedAmount = transaction.transactionType === "EXPENSE" || walletEntry?.entryType === "CREDIT" ? -amount : amount;
   return {
     transaction,
     // What the reader wrote: the description, else the note a quick entry
