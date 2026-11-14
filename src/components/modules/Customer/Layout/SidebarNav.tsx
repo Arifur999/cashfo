@@ -282,7 +282,10 @@ const SCROLLER = "relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none]
 // time.
 export function MoneyMenu({ collapsed = false, touch = false, className, style, navRef }: MenuProps) {
   const { t } = useLocale();
+  const { user } = useAuth();
   const sections = menuSections(useNavSections(), "money");
+  // A portal login has no account pages: Settings and the rest stay off.
+  const foot = user.portalOnly ? [] : NAV_FOOT;
   const { location } = useNavLocation();
   const { isExpanded, toggle } = useExpandedGroups(location);
   const groupPages = useGroupPages();
@@ -390,7 +393,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
               // The board names no section here: the space between says it.
               section.label && <span className="sr-only">{t(section.label)}</span>
             )}
-            {(index === sections.length - 1 ? [...section.items, ...NAV_FOOT] : section.items).map(renderItem)}
+            {(index === sections.length - 1 ? [...section.items, ...foot] : section.items).map(renderItem)}
           </div>
         ))}
       </div>
