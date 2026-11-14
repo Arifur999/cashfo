@@ -21,13 +21,13 @@ const DevicesCard = ({ data, query, inPeriod }: { data: IDeviceBreakdownEntry[] 
   const percent = (value: number) => toLocaleDigits(formatPercent(value), locale);
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-3 px-5 py-4">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-title text-ink">
           <T>Devices</T>
         </h2>
         {query.status === "ready" && (
-          <span className="text-small text-ink-muted">{total > 0 ? translate("{count} sign-ins {period}", { count: formatCount(total, locale), period: inPeriod }) : translate("No sign-ins {period}", { period: inPeriod })}</span>
+          <span className="text-[12.5px] leading-[normal] text-ink-muted">{total > 0 ? translate("{count} sign-ins {period}", { count: formatCount(total, locale), period: inPeriod }) : translate("No sign-ins {period}", { period: inPeriod })}</span>
         )}
       </div>
       {query.status === "pending" && <ListPlaceholder />}

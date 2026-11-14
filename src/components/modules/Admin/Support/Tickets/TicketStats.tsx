@@ -57,6 +57,7 @@ const TicketStats = () => {
     <div className="grid grid-cols-2 gap-3 sm:gap-3.5 xl:grid-cols-4">
       <Kpi
         size="sm"
+        figure={23}
         href={needsReply.href}
         label="Need a reply"
         value={count(needsReply.value)}
@@ -69,10 +70,11 @@ const TicketStats = () => {
           </span>
         }
       />
-      <Kpi size="sm" className={FIGURE} href={ticketStatusHref("IN_PROGRESS")} label="In progress" value={count(stats.inProgressCount)} note={lateNote(stats.inProgressOver24hCount)} />
-      <Kpi size="sm" className={FIGURE} href={ticketStatusHref("WAITING_ON_USER")} label="Waiting on the user" value={count(stats.waitingOnUserCount)} note="Closed after 7 quiet days" />
+      <Kpi size="sm" figure={23} className={FIGURE} href={ticketStatusHref("IN_PROGRESS")} label="In progress" value={count(stats.inProgressCount)} note={lateNote(stats.inProgressOver24hCount)} />
+      <Kpi size="sm" figure={23} className={FIGURE} href={ticketStatusHref("WAITING_ON_USER")} label="Waiting on the user" value={count(stats.waitingOnUserCount)} note="Closed after 7 quiet days" />
       <Kpi
         size="sm"
+        figure={23}
         className={FIGURE}
         label="Solved this week"
         value={count(stats.solvedThisWeekCount)}

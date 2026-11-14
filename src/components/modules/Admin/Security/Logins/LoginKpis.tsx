@@ -26,12 +26,16 @@ const LoginKpis = () => {
     <div className="grid gap-4 md:grid-cols-3">
       <Kpi
         size="sm"
+        figure={23}
+        noteSize={12.5}
         label="Failed sign-ins, 24 hours"
         value={count(summary?.failedLast24h)}
         note={summary && <Note tone={concentrated ? "expense" : "muted"}>{busiestNetworkNote(summary, translate, locale)}</Note>}
       />
       <Kpi
         size="sm"
+        figure={23}
+        noteSize={12.5}
         label="Failed sign-ins, 7 days"
         value={count(summary?.failedLast7d)}
         note={
@@ -40,7 +44,7 @@ const LoginKpis = () => {
           </Note>
         }
       />
-      <Kpi size="sm" label="Paused right now" value={count(summary ? paused : undefined)} note={summary && <Note tone={paused > 0 ? "warning" : "muted"}>{pausedNote(summary, translate, locale)}</Note>} />
+      <Kpi size="sm" figure={23} noteSize={12.5} label="Paused right now" value={count(summary ? paused : undefined)} note={summary && <Note tone={paused > 0 ? "warning" : "muted"}>{pausedNote(summary, translate, locale)}</Note>} />
     </div>
   );
 };
