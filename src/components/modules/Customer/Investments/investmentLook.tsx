@@ -33,12 +33,12 @@ export function Glyph({ d, size = 16, stroke = 2, className }: { d: string; size
 
 // Each kind's long and short name (dictionary keys), glyph and tint.
 export const KIND_LOOK: Record<InvestmentKind, { label: string; short: string; icon: string; tile: string }> = {
-  BUSINESS: { label: "Business / partnership", short: "Business@@investment", icon: "M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16 M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z", tile: "bg-mint-50 text-emerald" },
+  BUSINESS: { label: "Business / partnership", short: "Business@@investment", icon: "M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16 M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z", tile: "bg-mint-50 text-primary-ink" },
   SANCHAYAPATRA: { label: "Sanchayapatra / bond", short: "Sanchayapatra", icon: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z M14 2v4a2 2 0 0 0 2 2h4 M16 13H8 M16 17H8 M10 9H8", tile: "bg-warning-soft text-due-ink" },
   FDR: { label: "Bank FDR, profit paid out", short: "Bank FDR", icon: "M3 22h18 M6 18v-7 M10 18v-7 M14 18v-7 M18 18v-7 M12 2l8 5H4z", tile: "bg-tint-blue text-tint-blue-ink" },
-  SHARES: { label: "Shares / mutual fund", short: "Shares", icon: "M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z M21.21 15.89A10 10 0 1 1 8 2.83", tile: "bg-tint-violet text-tint-violet-ink" },
-  PROPERTY: { label: "Rent / property", short: "Property", icon: "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8 M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", tile: "bg-tint-pink text-tint-pink-ink" },
-  OTHER: { label: "Something else", short: "Other@@investment", icon: "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z M12 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z", tile: "bg-quiet-chip text-ink-2" },
+  SHARES: { label: "Shares / mutual fund", short: "Shares", icon: "M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z M21.21 15.89A10 10 0 1 1 8 2.83", tile: "bg-tint-violet text-violet-deep" },
+  PROPERTY: { label: "Rent / property", short: "Property", icon: "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8 M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", tile: "bg-pink-wash text-pink-deep" },
+  OTHER: { label: "Something else", short: "Other@@investment", icon: "M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z M12 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z", tile: "bg-sunken text-ink-2" },
 };
 
 export function KindTile({ kind, size = 40 }: { kind: InvestmentKind; size?: 36 | 38 | 40 | 48 }) {
@@ -53,8 +53,8 @@ export function KindTile({ kind, size = 40 }: { kind: InvestmentKind; size?: 36 
 
 // An entry type's chip.
 export const ENTRY_LOOK: Record<InvestmentEntryType, { label: string; chip: string }> = {
-  INVEST: { label: "Invested", chip: "bg-tint-teal text-note-ink" },
-  ADD: { label: "Invested more", chip: "bg-tint-teal text-note-ink" },
+  INVEST: { label: "Invested", chip: "bg-tint-teal text-primary-deep" },
+  ADD: { label: "Invested more", chip: "bg-tint-teal text-primary-deep" },
   PROFIT: { label: "Profit@@investment", chip: "bg-tint-green text-tint-green-ink" },
   BACK: { label: "Capital back", chip: "bg-tint-blue text-tint-blue-ink" },
   LOSS: { label: "Loss", chip: "bg-expense-soft text-loss-ink" },
@@ -64,7 +64,7 @@ export const STATUS_CHIP: Record<InvestmentStatus, string> = {
   late: "bg-expense-soft text-loss-ink",
   soon: "bg-warning-soft text-warning",
   ok: "bg-tint-green text-tint-green-ink",
-  open: "bg-quiet-chip text-ink-2",
+  open: "bg-sunken text-ink-2",
   matured: "bg-tint-blue text-tint-blue-ink",
   closed: "bg-slate-soft text-slate-ink",
 };
@@ -86,8 +86,8 @@ export function Chip({ className, children }: { className: string; children: Rea
 export const CARD = "rounded-[18px] border border-line-card bg-surface shadow-[0_1px_2px_rgba(18,32,29,0.04),0_6px_20px_rgba(18,32,29,0.05)]";
 const BTN = "inline-flex h-10 shrink-0 items-center gap-1.75 rounded-full px-4 text-[14px] font-semibold whitespace-nowrap transition-[filter,background-color,border-color] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-60";
 export const BTN_PRIMARY = cn(BTN, "border-0 bg-emerald text-on-action shadow-[0_1px_2px_rgba(18,32,29,0.10)] hover:brightness-110");
-export const BTN_SECONDARY = cn(BTN, "border border-input bg-surface text-ink hover:border-mint-200 hover:bg-pick-wash");
-export const BTN_GHOST = "h-11 rounded-full px-4 text-[14px] font-semibold text-ink-2 hover:bg-quiet-chip focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-60";
+export const BTN_SECONDARY = cn(BTN, "border border-input bg-surface text-ink hover:border-mint-200 hover:bg-primary-soft");
+export const BTN_GHOST = "h-11 rounded-full px-4 text-[14px] font-semibold text-ink-2 hover:bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-60";
 export const ICON_BTN =
-  "inline-flex size-8.5 shrink-0 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted transition-colors hover:border-mint-200 hover:bg-pick-wash hover:text-emerald hover:shadow-[0_1px_2px_rgba(18,32,29,0.06)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)";
-export const NAME_LINK = "truncate text-ink no-underline hover:text-emerald hover:underline";
+  "inline-flex size-8.5 shrink-0 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted transition-colors hover:border-mint-200 hover:bg-primary-soft hover:text-primary-ink hover:shadow-[0_1px_2px_rgba(18,32,29,0.06)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)";
+export const NAME_LINK = "truncate text-ink no-underline hover:text-primary-ink hover:underline";

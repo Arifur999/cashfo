@@ -10,6 +10,9 @@ import { BTN_PRIMARY, BTN_SECONDARY, CARD, Chip, Glyph, IC, KIND_LOOK, KindTile,
 import { useInvestments } from "./InvestmentsProvider";
 import { NextPayout, StatusChip } from "./statusText";
 
+// The board writes a date that has room in full ("5 November 2026").
+const LONG = "d MMMM yyyy";
+
 // Investments › Dashboard (the InvestDashboard board): this month's
 // payouts, the totals, payouts to watch, profit by month and every active
 // investment as a card.
@@ -47,7 +50,7 @@ export function InvestDashboardClient() {
       value: money(totals.capital),
       sub: t("{active} active · {closed} closed", { active: formatCount(totals.activeCount, fmt), closed: formatCount(totals.closedCount, fmt) }),
       icon: IC.wallet,
-      tile: "bg-mint-50 text-emerald",
+      tile: "bg-mint-50 text-primary-ink",
       tone: "text-ink",
     },
     { label: t("Profit received@@total"), value: money(totals.profit), sub: t("This year {amount}", { amount: money(totals.profitThisYear) }), icon: IC.coins, tile: "bg-tint-green text-tint-green-ink", tone: "text-tint-green-ink" },
@@ -64,7 +67,7 @@ export function InvestDashboardClient() {
           className="flex h-14 min-w-0 flex-1 items-center gap-[18px] overflow-hidden rounded-[16px] border border-line-card bg-surface px-[18px] whitespace-nowrap tabular-nums max-lg:basis-full max-md:h-auto max-md:flex-wrap max-md:gap-3 max-md:py-3"
         >
           <span className="flex shrink-0 items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-[10px] bg-surface-sunken text-ink-muted">
+            <span className="flex size-8 items-center justify-center rounded-[10px] bg-page text-ink-muted">
               <Glyph d={IC.calendar} />
             </span>
             <span className="flex flex-col gap-px">
@@ -122,10 +125,10 @@ export function InvestDashboardClient() {
               const inv = w.figures.investment;
               const matured = w.rank === 0;
               const sub = matured
-                ? t("Matured on {date} · {amount} to take back", { date: day(w.day), amount: money(w.figures.capital) })
-                : (w.rank === 1 ? t("Was due {date}", { date: day(w.day) }) : day(w.day)) + (w.figures.per ? ` · ${money(w.figures.per)}` : "");
+                ? t("Matured on {date} · {amount} to take back", { date: day(w.day, LONG), amount: money(w.figures.capital) })
+                : (w.rank === 1 ? t("Was due {date}", { date: day(w.day, LONG) }) : day(w.day, LONG)) + (w.figures.per ? ` · ${money(w.figures.per)}` : "");
               return (
-                <div key={inv.id} className="flex min-h-[69px] items-center gap-3 rounded-[12px] border-b border-head-rule p-2.5 max-sm:flex-wrap">
+                <div key={inv.id} className="flex min-h-[69px] items-center gap-3 rounded-[12px] border-b border-sunken p-2.5 max-sm:flex-wrap">
                   <KindTile kind={inv.kind} size={38} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5 max-sm:basis-[calc(100%-50px)]">
                     <span data-i18n-skip="" className="truncate text-[14px] font-semibold text-ink">
@@ -157,7 +160,7 @@ export function InvestDashboardClient() {
             </h2>
             <p className="m-0 mt-0.75 text-[12.5px] text-ink-muted">{t("Last 12 months · {amount} in all", { amount: money(barTotal) })}</p>
           </div>
-          <div role="img" aria-label={t("Bar chart of profit received each month")} className="grid min-h-47.5 flex-auto grid-cols-12 items-end gap-2 px-5.5 pt-3.5 pb-2">
+          <div role="img" aria-label={t("Bar chart of profit received each month")} className="grid min-h-[212px] flex-auto grid-cols-12 items-end gap-2 px-5.5 pt-3.5 pb-2">
             {bars.map((b) => (
               <span key={b.month} title={`${monthName(b.month, "MMM yyyy")}: ${money(b.profit)}`} className="flex h-full min-w-0 flex-col items-center justify-end gap-1.5">
                 <span className={cn("min-h-0.75 w-full max-w-7.5 rounded-[7px_7px_3px_3px]", b.current ? "bg-emerald" : "bg-mint-200")} style={{ height: `${((b.profit / barMax) * 100).toFixed(1)}%` }} />
@@ -165,7 +168,7 @@ export function InvestDashboardClient() {
               </span>
             ))}
           </div>
-          <div className="flex justify-between gap-2.5 border-t border-head-rule px-5.5 pt-2.5 pb-4 text-[12.5px] text-ink-muted tabular-nums">
+          <div className="flex justify-between gap-2.5 border-t border-sunken px-5.5 pt-2.5 pb-4 text-[12.5px] text-ink-muted tabular-nums">
             <span>{t("Best month {month}", { month: best.profit > 0 ? `${monthName(best.month)} · ${money(best.profit)}` : "–" })}</span>
             <span>{t("Monthly average {amount}", { amount: money(Math.round(barTotal / 12)) })}</span>
           </div>
@@ -177,7 +180,7 @@ export function InvestDashboardClient() {
           <h2 id="iv-cards-h" className="m-0 text-[16px] font-bold text-ink">
             {t("Your investments")} <span className="font-medium text-ink-faint">{formatCount(active.length, fmt)}</span>
           </h2>
-          <Link href="/investments/list" className="text-[13px] font-semibold text-emerald no-underline hover:underline">
+          <Link href="/investments/list" className="text-[13px] font-semibold text-primary-ink no-underline hover:underline">
             {t("See all")}
           </Link>
         </div>
@@ -219,7 +222,7 @@ export function InvestDashboardClient() {
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-[11.5px] text-ink-muted">{c.step ? t("Next payout") : t("Payouts@@investment")}</span>
                     <span className="truncate text-[13px] font-semibold">
-                      <NextPayout figures={c} />
+                      <NextPayout figures={c} pattern={LONG} />
                     </span>
                   </span>
                   <StatusChip figures={c} />
@@ -238,7 +241,7 @@ export function InvestDashboardClient() {
         </div>
         {!investments.length && (
           <div className={cn(CARD, "flex flex-col items-center gap-2.5 px-6 py-10 text-center")}>
-            <span className="flex size-13 items-center justify-center rounded-[16px] bg-mint-50 text-emerald">
+            <span className="flex size-13 items-center justify-center rounded-[16px] bg-mint-50 text-primary-ink">
               <Glyph d={IC.trend} size={24} />
             </span>
             <span className="text-[16px] font-bold">{t("No investments yet")}</span>

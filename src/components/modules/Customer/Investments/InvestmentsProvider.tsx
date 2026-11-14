@@ -56,6 +56,14 @@ interface InvestmentsContext {
 
 const Ctx = createContext<InvestmentsContext | null>(null);
 
+// The InvestApp board's toast over the app's pill: a 14px-cornered ink box
+// (the same in dark), 14px words, a white Undo on a faint white pill.
+const IV_TOAST = {
+  toast: "min-h-0! gap-3.5! rounded-[14px]! bg-toast! py-3! pr-3.5! pl-4.5! text-[14px]! font-normal! text-white! shadow-[0_12px_32px_rgba(18,32,29,0.3)]! ring-0!",
+  title: "font-normal!",
+  actionButton: "font-semibold! text-white!",
+};
+
 export function useInvestments(): InvestmentsContext {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useInvestments outside InvestmentsProvider");
@@ -110,8 +118,10 @@ export function InvestmentsProvider({ businessId, currency, today, investments, 
     }
   }
 
+  // The board's toast: words alone, Undo for six seconds when there is one
+  // (pressing it puts things back and the toast goes), else 2.6 seconds.
   const undoable = (message: string, undo?: () => Promise<ActionResult<unknown>>) =>
-    toast.success(message, undo ? { duration: 6000, action: { label: t("Undo"), onClick: () => void run(undo, () => toast.success(t("Undone"))) } } : undefined);
+    toast(message, { icon: null, classNames: IV_TOAST, duration: undo ? 6000 : 2600, ...(undo ? { action: { label: t("Undo"), onClick: () => void run(undo, () => {}) } } : {}) });
 
   const saveInvestment = async (input: InvestmentInput) => {
     const editing = form?.id ?? null;

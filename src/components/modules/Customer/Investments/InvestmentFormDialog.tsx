@@ -194,7 +194,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
         <span data-i18n-skip="">{walletLabel(w.name, balanceText(w.id))}</span>
       </Pill>
     ));
-  const row = "flex min-h-[49px] items-center gap-2.5 border-b border-head-rule px-3.5";
+  const row = "flex min-h-[49px] items-center gap-2.5 border-b border-sunken px-3.5";
 
   return (
     <IvDialog
@@ -298,7 +298,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
                   />
                   {isPct && <span className="text-[13px] whitespace-nowrap text-ink-muted">{t("a year@@rate")}</span>}
                 </span>
-                <div role="radiogroup" aria-label={t("Amount or yearly rate")} className="flex rounded-[12px] bg-quiet-chip p-0.75">
+                <div role="radiogroup" aria-label={t("Amount or yearly rate")} className="flex rounded-[12px] bg-sunken p-0.75">
                   {(["tk", "pct"] as const).map((u) => {
                     const on = f.unit === u;
                     return (
@@ -319,9 +319,9 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
               <Err>{errors.each}</Err>
             </div>
           )}
-          <div aria-live="polite" className="flex items-start gap-2.5 rounded-[14px] border border-mint-200 bg-pick-wash px-3.5 py-3">
-            <Glyph d={IC.trend} className="mt-0.5 text-emerald" />
-            <span data-i18n-skip="" className="text-[13px] leading-[1.5] text-brand-ink">
+          <div aria-live="polite" className="flex items-start gap-2.5 rounded-[14px] border border-mint-200 bg-primary-soft px-3.5 py-3">
+            <Glyph d={IC.trend} className="mt-0.5 text-primary-ink" />
+            <span data-i18n-skip="" className="text-[13px] leading-[1.5] text-forest-ink">
               {summary}
             </span>
           </div>
@@ -338,7 +338,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
                   </LinkButton>
                 </div>
                 {f.chFd && (
-                  <div className="px-3.5 pt-2 pb-3">
+                  <div className="px-3.5 pb-3">
                     <input type="date" aria-label={t("First profit")} value={fd} onChange={(e) => put({ firstDue: e.target.value, fdTouched: true }, ["firstDue"])} className={cn(INPUT, edge(errors.firstDue), "max-w-60")} />
                   </div>
                 )}
@@ -355,7 +355,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
               </LinkButton>
             </div>
             {f.chIn && (
-              <div role="radiogroup" aria-label={t("Profit comes into")} className="flex flex-wrap gap-2 px-3.5 pt-2 pb-3">
+              <div role="radiogroup" aria-label={t("Profit comes into")} className="flex flex-wrap gap-2 px-3.5 pb-3">
                 {walletPills(inKey, (id) => put({ acctIn: id, inTouched: true, chIn: false }, ["acctIn"]))}
               </div>
             )}
@@ -368,7 +368,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
               </LinkButton>
             </div>
             {f.chType && (
-              <div role="radiogroup" aria-label={t("Kind")} className="flex flex-wrap gap-2 px-3.5 pt-2 pb-3">
+              <div role="radiogroup" aria-label={t("Kind")} className="flex flex-wrap gap-2 px-3.5 pb-3">
                 {KINDS.map((k) => (
                   <Pill key={k} on={kindNow === k} onClick={() => put({ kind: k, kindTouched: true, chType: false })}>
                     {t(KIND_LOOK[k].label)}

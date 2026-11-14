@@ -7,7 +7,7 @@ import { Glyph, IC } from "./investmentLook";
 
 // The popups' fields (46px, 12px corners; red when wrong, a halo when focused).
 export const INPUT =
-  "h-11.5 w-full rounded-[12px] border bg-surface px-3 text-[14px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-faint focus:border-emerald focus:shadow-[0_0_0_3px_var(--mint-50)] focus-within:border-emerald focus-within:shadow-[0_0_0_3px_var(--mint-50)]";
+  "h-11.5 w-full rounded-[12px] border bg-surface px-3 text-[14px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-faint focus:border-primary-ink focus:shadow-[0_0_0_3px_var(--mint-50)] focus-within:border-primary-ink focus-within:shadow-[0_0_0_3px_var(--mint-50)]";
 export const edge = (wrong: boolean | string | undefined) => (wrong ? "border-loss-ink" : "border-input");
 export const LBL = "text-[13px] font-semibold text-ink-2";
 
@@ -58,7 +58,7 @@ export function Pill({ on, onClick, children }: { on: boolean; onClick: () => vo
       onClick={onClick}
       className={cn(
         "h-9.5 rounded-full border-[1.5px] px-3.5 text-[13.5px] font-semibold whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
-        on ? "border-emerald bg-pick-wash text-brand-ink" : "border-line bg-surface text-ink hover:border-mint-200",
+        on ? "border-emerald bg-primary-soft text-forest-ink" : "border-line bg-surface text-ink hover:border-mint-200",
       )}
     >
       {children}
@@ -68,7 +68,7 @@ export function Pill({ on, onClick, children }: { on: boolean; onClick: () => vo
 
 export function LinkButton({ onClick, expanded, children }: { onClick: () => void; expanded?: boolean; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} aria-expanded={expanded} className="shrink-0 rounded-[6px] px-0 py-0.5 text-[13.5px] font-semibold whitespace-nowrap text-emerald hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)">
+    <button type="button" onClick={onClick} aria-expanded={expanded} className="shrink-0 rounded-[6px] px-0 py-0.5 text-[13.5px] font-semibold whitespace-nowrap text-primary-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)">
       {children}
     </button>
   );
@@ -82,6 +82,7 @@ export function IvDialog({ open, onClose, width, title, sub, footer, children, b
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent
+        data-scrim="board"
         showCloseButton={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
         className={cn(
@@ -89,17 +90,17 @@ export function IvDialog({ open, onClose, width, title, sub, footer, children, b
           w,
         )}
       >
-        <div className="flex shrink-0 items-center gap-3 border-b border-head-rule py-3.5 pr-5 pl-6">
+        <div className="flex shrink-0 items-center gap-3 border-b border-sunken pt-4 pb-3.5 pr-5 pl-6">
           <span className="flex grow flex-col gap-0.5">
             <DialogTitle className="m-0 text-[18px] font-bold text-ink">{title}</DialogTitle>
             {sub ? <DialogDescription className="text-[12.5px] text-ink-muted">{sub}</DialogDescription> : <DialogDescription className="sr-only">{title}</DialogDescription>}
           </span>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-soft hover:bg-quiet-chip focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)">
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-full bg-page text-ink-2 hover:bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)">
             <Glyph d={IC.close} size={17} stroke={2.25} />
           </button>
         </div>
         <div className={cn("flex min-h-0 flex-col gap-4 overflow-y-auto px-6", bodyPad)}>{children}</div>
-        <div className="flex shrink-0 items-center gap-2.5 border-t border-head-rule bg-strip px-6 py-3.5">{footer}</div>
+        <div className="flex shrink-0 items-center gap-2.5 border-t border-sunken bg-strip px-6 py-3.5">{footer}</div>
       </DialogContent>
     </Dialog>
   );

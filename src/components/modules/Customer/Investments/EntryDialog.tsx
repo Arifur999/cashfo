@@ -185,13 +185,13 @@ export function EntryDialog({
                 }}
                 className={cn(
                   "flex min-h-11.5 items-center gap-2 rounded-[12px] border-[1.5px] px-3 py-2.25 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
-                  on ? "border-emerald bg-pick-wash" : "border-line bg-surface hover:border-mint-200",
+                  on ? "border-emerald bg-primary-soft" : "border-line bg-surface hover:border-mint-200",
                   off && "opacity-45",
                 )}
               >
                 <Glyph d={option.icon} className={cn("mt-px", on ? "text-emerald" : "text-ink-muted")} />
                 <span className="flex flex-col gap-px">
-                  <span className={cn("text-[13.5px] font-semibold", on ? "text-brand-ink" : "text-ink")}>{t(option.label)}</span>
+                  <span className={cn("text-[13.5px] font-semibold", on ? "text-forest-ink" : "text-ink")}>{t(option.label)}</span>
                   <span className="text-[11.5px] text-ink-muted">{t(option.sub)}</span>
                 </span>
               </button>
