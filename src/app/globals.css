@@ -88,6 +88,8 @@
      deep brown words. */
   --warning-50: #fffbeb;
   --warning-line: #fde68a;
+  /* The loan statement's amber pill edge (Tailwind amber-300). */
+  --pill-amber-line: #fcd34d;
   --warning-ink: #78350f;
   --info: #2563eb;
   --info-soft: #dbeafe;
@@ -377,6 +379,7 @@
   --warning-soft: #2e2410;
   --warning-50: #2a2110;
   --warning-line: #5a4612;
+  --pill-amber-line: #5a4612;
   --warning-ink: #fcd34d;
   --info: #93b4fb;
   --info-soft: #172540;
@@ -789,6 +792,7 @@ html:not(.dark) [data-app="habit"] {
   --color-warning-soft: var(--warning-soft);
   --color-warning-50: var(--warning-50);
   --color-warning-line: var(--warning-line);
+  --color-pill-amber-line: var(--pill-amber-line);
   --color-warning-ink: var(--warning-ink);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
