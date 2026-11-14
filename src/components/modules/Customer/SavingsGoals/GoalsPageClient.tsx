@@ -502,7 +502,7 @@ function PlansBanner({ count }: { count: number }) {
         <span className="text-[14px] font-bold">{count === 1 ? t("1 saving plan is waiting") : t("{count} saving plans are waiting", { count: formatCount(count, fmt) })}</span>
         <span className="truncate text-[12.5px] text-ink-muted">{t("Things you want to save for later. Start one as a goal when you are ready.")}</span>
       </span>
-      <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-brand-ink">
+      <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-emerald">
         {t("See saving plans")}
         <ArrowRight className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
       </span>
