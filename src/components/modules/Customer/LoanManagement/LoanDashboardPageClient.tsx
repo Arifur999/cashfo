@@ -471,7 +471,7 @@ function DashboardRow({ row, contact, currency }: { row: LoanDashboardRow; conta
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
         {/* Signed and coloured by side, so the column adds up to the Net below it. */}
-        {Number(row.openingBalance) === 0 ? NOTHING : <span className={cn("tabular-nums", Number(row.openingBalance) > 0 ? "text-income" : "text-expense")}>{formatSignedCurrency(row.openingBalance, currency, fmt)}</span>}
+        {Number(row.openingBalance) === 0 ? NOTHING : <span className={cn("tabular-nums", Number(row.openingBalance) > 0 ? "text-income" : "text-expense-fill")}>{formatSignedCurrency(row.openingBalance, currency, fmt)}</span>}
       </ListCell>
       <ListCell align="end" className="hidden xl:block">
         {figure(row.totalReceive, currency, fmt)}
