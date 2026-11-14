@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export const iconActionClass = (tone: "default" | "danger" = "default") =>
   cn(
     "inline-flex size-8.5 shrink-0 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted transition-[background-color,border-color,color,box-shadow] outline-none",
-    "hover:border-mint-200 hover:bg-emerald-soft hover:text-emerald hover:shadow-[0_1px_2px_rgba(18,32,29,0.06)] focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+    "hover:border-mint-200 hover:bg-action-hover hover:text-emerald hover:shadow-[0_1px_2px_rgba(18,32,29,0.06)] focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
     "disabled:pointer-events-none disabled:opacity-50 pointer-coarse:size-11 [&_svg]:size-3.75",
     tone === "danger" && "hover:border-expense-line hover:bg-expense-soft hover:text-expense-fill",
   );

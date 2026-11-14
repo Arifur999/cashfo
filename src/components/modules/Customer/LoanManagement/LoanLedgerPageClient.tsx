@@ -285,7 +285,7 @@ export function LoanLedgerPageClient({ businessId, contacts, currency, canManage
                 aria-expanded={open}
                 aria-controls={open ? item.rows.map(rowId).join(" ") : undefined}
                 onClick={() => toggle(item.key)}
-                className="flex h-7.5 shrink-0 items-center gap-1 rounded-full border border-warning-line bg-surface px-3 text-[12.5px] font-bold whitespace-nowrap text-warning-ink hover:bg-warning-soft pointer-coarse:h-10"
+                className="flex h-7.5 shrink-0 items-center gap-1 rounded-full border border-pill-amber-line bg-surface px-3 text-[12.5px] font-bold whitespace-nowrap text-warning-ink hover:bg-warning-soft pointer-coarse:h-10"
               >
                 {open ? <ChevronUp className="size-3.5" strokeWidth={2.5} aria-hidden="true" /> : <ChevronDown className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
                 {open ? t("Show fewer") : t("Show {count} more", { count })}
