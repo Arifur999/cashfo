@@ -260,4 +260,7 @@ export const investmentsDictionary: Record<string, string> = {
   "Company, bank or person": "প্রতিষ্ঠান, ব্যাংক বা মানুষ",
   "Like Karim Garments Ltd, Narayanganj": "যেমন: করিম গার্মেন্টস লি., নারায়ণগঞ্জ",
   "Search by name or where you invested": "নাম বা প্রতিষ্ঠান দিয়ে খুঁজুন",
+  "This changed again since, so it can no longer be undone.": "এর মধ্যে আবার বদলেছে, তাই আর ফিরিয়ে আনা যাবে না।",
+  "This can no longer be undone.": "এটা আর ফিরিয়ে আনা যাবে না।",
+  "Entries were added since it was reopened. Close it again instead.": "আবার চালু করার পর এন্ট্রি যোগ হয়েছে। বরং আবার বন্ধ করুন।",
 };

@@ -16,6 +16,7 @@ import {
   restoreInvestmentAction,
   restoreInvestmentEntryAction,
   undoCloseInvestmentAction,
+  undoInvestmentChangeAction,
   updateInvestmentAction,
   updateInvestmentEntryAction,
 } from "@/lib/customer/investmentActions";
@@ -115,9 +116,9 @@ export function InvestmentsProvider({ businessId, currency, today, investments, 
   const saveInvestment = async (input: InvestmentInput) => {
     const editing = form?.id ?? null;
     if (editing) {
-      return run(() => updateInvestmentAction(businessId, editing, input), () => {
+      return run(() => updateInvestmentAction(businessId, editing, input), (saved) => {
         setForm(null);
-        toast.success(t("Changes saved"));
+        undoable(t("Changes saved"), saved.undoId ? () => undoInvestmentChangeAction(businessId, editing, saved.undoId!) : undefined);
       });
     }
     return run(() => createInvestmentAction(businessId, input), (made) => {
@@ -130,9 +131,9 @@ export function InvestmentsProvider({ businessId, currency, today, investments, 
 
   const saveEntry = async (investmentId: string, input: EntryInput, entryId: string | null, edit: EntryEditInput) => {
     if (entryId) {
-      return run(() => updateInvestmentEntryAction(businessId, investmentId, entryId, edit), () => {
+      return run(() => updateInvestmentEntryAction(businessId, investmentId, entryId, edit), (saved) => {
         setEntry(null);
-        toast.success(t("Entry updated"));
+        undoable(t("Entry updated"), saved.undoId ? () => undoInvestmentChangeAction(businessId, investmentId, saved.undoId!) : undefined);
       });
     }
     const name = byId.get(investmentId)?.investment.name ?? "";
@@ -176,8 +177,8 @@ export function InvestmentsProvider({ businessId, currency, today, investments, 
   };
 
   const reopen = (id: string) =>
-    void run(() => reopenInvestmentAction(businessId, id), () => {
-      toast.success(t("Investment reopened"));
+    void run(() => reopenInvestmentAction(businessId, id), (saved) => {
+      undoable(t("Investment reopened"), saved.undoId ? () => undoInvestmentChangeAction(businessId, id, saved.undoId!) : undefined);
     });
 
   const value: InvestmentsContext = {

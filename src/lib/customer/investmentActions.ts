@@ -23,6 +23,9 @@ const REFUSALS: { status?: number; pattern: RegExp; message: string }[] = [
   { pattern: /^a delete can be undone for 10 minutes only$/i, message: "A delete can be undone for 10 minutes only" },
   { status: 404, pattern: /^this delete can no longer be undone/i, message: "This delete can no longer be undone." },
   { status: 404, pattern: /^investment not found$/i, message: "This investment was deleted." },
+  { status: 409, pattern: /can no longer be undone/i, message: "This changed again since, so it can no longer be undone." },
+  { pattern: /can no longer be undone/i, message: "This can no longer be undone." },
+  { status: 409, pattern: /^entries were added since it was reopened/i, message: "Entries were added since it was reopened. Close it again instead." },
 ];
 
 async function callApi<T>(fn: () => Promise<T>, fallbackMessage: string): Promise<ActionResult<T>> {
@@ -44,8 +47,16 @@ export async function createInvestmentAction(businessId: string, input: Investme
   return callApi(async () => (await customerApi.post<Investment>(base(businessId), input)).data, "Failed to add the investment");
 }
 
-export async function updateInvestmentAction(businessId: string, id: string, input: InvestmentInput): Promise<ActionResult<Investment>> {
-  return callApi(async () => (await customerApi.patch<Investment>(`${base(businessId)}/${id}`, input)).data, "Failed to save the changes");
+// What an edit or a reopen answers: the investment, and the id its Undo takes.
+type Undoable = Investment & { undoId?: string };
+
+export async function updateInvestmentAction(businessId: string, id: string, input: InvestmentInput): Promise<ActionResult<Undoable>> {
+  return callApi(async () => (await customerApi.patch<Undoable>(`${base(businessId)}/${id}`, input)).data, "Failed to save the changes");
+}
+
+// Undo of an edit, an entry's edit or a reopen.
+export async function undoInvestmentChangeAction(businessId: string, id: string, undoId: string): Promise<ActionResult<Investment>> {
+  return callApi(async () => (await customerApi.post<Investment>(`${base(businessId)}/${id}/undo/${encodeURIComponent(undoId)}`, {})).data, "Failed to undo");
 }
 
 // Kept for a few minutes: restoreInvestmentAction() undoes it.
@@ -63,8 +74,8 @@ export async function addInvestmentEntryAction(businessId: string, id: string, i
   return callApi(async () => (await customerApi.post<{ entryId: string; investment: Investment }>(`${base(businessId)}/${id}/entries`, input)).data, "Failed to save the entry");
 }
 
-export async function updateInvestmentEntryAction(businessId: string, id: string, entryId: string, input: EntryEditInput): Promise<ActionResult<Investment>> {
-  return callApi(async () => (await customerApi.patch<Investment>(`${base(businessId)}/${id}/entries/${entryId}`, input)).data, "Failed to save the changes");
+export async function updateInvestmentEntryAction(businessId: string, id: string, entryId: string, input: EntryEditInput): Promise<ActionResult<Undoable>> {
+  return callApi(async () => (await customerApi.patch<Undoable>(`${base(businessId)}/${id}/entries/${entryId}`, input)).data, "Failed to save the changes");
 }
 
 export async function deleteInvestmentEntryAction(businessId: string, id: string, entryId: string): Promise<ActionResult<Investment>> {
@@ -83,6 +94,6 @@ export async function undoCloseInvestmentAction(businessId: string, id: string):
   return callApi(async () => (await customerApi.post<Investment>(`${base(businessId)}/${id}/undo-close`, {})).data, "Failed to undo");
 }
 
-export async function reopenInvestmentAction(businessId: string, id: string): Promise<ActionResult<Investment>> {
-  return callApi(async () => (await customerApi.post<Investment>(`${base(businessId)}/${id}/reopen`, {})).data, "Failed to reopen the investment");
+export async function reopenInvestmentAction(businessId: string, id: string): Promise<ActionResult<Undoable>> {
+  return callApi(async () => (await customerApi.post<Undoable>(`${base(businessId)}/${id}/reopen`, {})).data, "Failed to reopen the investment");
 }
