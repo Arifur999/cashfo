@@ -329,7 +329,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
               "flex min-w-0 flex-1 items-center gap-2.5 rounded-md pl-3 text-body whitespace-nowrap transition-colors",
               touch ? "h-11" : "h-9.5",
               subs ? "pr-9" : "pr-2.5",
-              self ? "bg-emerald-soft font-semibold text-emerald" : inGroup ? "font-semibold text-ink hover:bg-surface-sunken" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
+              self ? "bg-nav-on font-semibold text-emerald" : inGroup ? "font-semibold text-ink hover:bg-surface-sunken" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
             )}
           >
             <Icon className={cn("size-4.5 shrink-0", self || inGroup ? "text-emerald" : "text-ink-muted")} strokeWidth={2} aria-hidden="true" />
@@ -358,7 +358,7 @@ export function MoneyMenu({ collapsed = false, touch = false, className, style, 
                 className={cn(
                   "relative flex items-center rounded-[10px] px-2.5 text-[13.5px] whitespace-nowrap transition-colors",
                   touch ? "h-10" : "h-8",
-                  sub.on ? "bg-emerald-soft font-semibold text-emerald" : "font-medium text-ink-soft hover:bg-surface-sunken hover:text-ink",
+                  sub.on ? "bg-nav-on font-semibold text-emerald" : "font-medium text-ink-2 hover:bg-surface-sunken hover:text-ink",
                 )}
               >
                 <span className="min-w-0 truncate">{t(sub.label)}</span>

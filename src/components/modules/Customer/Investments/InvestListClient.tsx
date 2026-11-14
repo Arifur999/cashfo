@@ -71,7 +71,7 @@ export function InvestListClient() {
           <Kpi key={k.label} {...k} />
         ))}
       </div>
-      <section aria-label={t("Your investments")} className={cn(CARD, "flex min-h-90 flex-col overflow-hidden lg:h-[calc(100dvh-231px)]")}>
+      <section aria-label={t("Your investments")} className={cn(CARD, "flex min-h-90 flex-col overflow-hidden lg:h-[calc(100dvh-230px)]")}>
         <div className="flex shrink-0 items-center gap-3 px-5 py-3.5 max-lg:flex-wrap">
           <Tabs label={t("Show investments")} tabs={tabs} value={tab} onChange={setTab} />
           <SearchBox value={q} onChange={setQ} label={t("Search by name or where you invested")} />
@@ -86,7 +86,7 @@ export function InvestListClient() {
                 return (
                   <DropdownMenuItem key={key} onSelect={() => setSort(key)} className={cn("min-h-10 justify-between rounded-[8px] px-2.5 text-[13.5px] text-ink", on ? "font-semibold" : "font-medium")}>
                     {t(SORT_LABELS[key])}
-                    {on && <Glyph d={IC.check} size={15} stroke={2.5} className="text-emerald" />}
+                    {on && <Glyph d={IC.check} size={15} stroke={2.5} className="text-primary-ink" />}
                   </DropdownMenuItem>
                 );
               })}
@@ -112,9 +112,9 @@ export function InvestListClient() {
               const inv = c.investment;
               const look = KIND_LOOK[inv.kind];
               const open = !c.closed;
-              const nextText = c.closed ? day(inv.closedAt ?? "") : c.next ? day(c.next) : c.last ? t("Last {date}", { date: day(c.last.date) }) : "";
+              const nextText = c.closed ? day(inv.closedAt ?? "", "d MMM yy") : c.next ? day(c.next, "d MMM yy") : c.last ? t("Last {date}", { date: day(c.last.date, "d MMMM yyyy") }) : "";
               return (
-                <div key={inv.id} className={cn(LIST_COLS, "min-h-16 border-b border-card-rule px-5 py-2 text-[14px] tabular-nums transition-colors hover:bg-strip", c.closed && "opacity-[0.78]")}>
+                <div key={inv.id} className={cn(LIST_COLS, "min-h-16 border-b border-sunken px-5 py-2 text-[14px] tabular-nums transition-colors hover:bg-strip", c.closed && "opacity-[0.78]")}>
                   <span className="flex min-w-0 items-center gap-3">
                     <KindTile kind={inv.kind} size={36} />
                     <span className="flex min-w-0 flex-col gap-0.5">

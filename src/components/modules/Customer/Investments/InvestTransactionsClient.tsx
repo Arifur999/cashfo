@@ -49,14 +49,14 @@ export function InvestTransactionsClient() {
           <Kpi key={k.label} {...k} />
         ))}
       </div>
-      <section aria-label={t("Investment transactions")} className={cn(CARD, "flex min-h-95 flex-col overflow-hidden lg:h-[calc(100dvh-231px)]")}>
+      <section aria-label={t("Investment transactions")} className={cn(CARD, "flex min-h-95 flex-col overflow-hidden lg:h-[calc(100dvh-230px)]")}>
         <div className="flex shrink-0 flex-wrap items-center gap-3 px-5 py-3.5">
           <Tabs label={t("Entry type")} tabs={tabs} value={tab} onChange={setTab} />
           <select
             value={ivId}
             onChange={(event) => setIvId(event.target.value)}
             aria-label={t("All investments")}
-            className="select-chevron h-9.5 w-57.5 cursor-pointer rounded-[10px] border border-input bg-surface pl-3 text-[14px] text-ink outline-none focus:border-emerald max-sm:w-full"
+            className="select-chevron h-9.5 w-57.5 cursor-pointer rounded-[10px] border border-input bg-surface pl-3 text-[14px] text-ink outline-none focus:border-primary-ink max-sm:w-full"
           >
             <option value="">{t("All investments")}</option>
             {options.map((f) => (
@@ -87,8 +87,8 @@ export function InvestTransactionsClient() {
               const sign = ENTRY_SIGN[entry.type];
               const kind = t(look.label);
               return (
-                <div key={entry.id} className={cn(COLS, "min-h-14 border-b border-card-rule px-5 py-1.5 text-[14px] tabular-nums transition-colors hover:bg-strip")}>
-                  <span className="text-[13px] whitespace-nowrap text-ink-2">{day(dayOf(entry.date))}</span>
+                <div key={entry.id} className={cn(COLS, "min-h-14 border-b border-sunken px-5 py-1.5 text-[14px] tabular-nums transition-colors hover:bg-strip")}>
+                  <span className="text-[13px] whitespace-nowrap text-ink-2">{day(dayOf(entry.date), "d MMM yy")}</span>
                   <span className="flex min-w-0 flex-col gap-px">
                     <Link href={statementHref(investment.id)} data-i18n-skip="" className={cn(NAME_LINK, "font-semibold")}>
                       {investment.name}

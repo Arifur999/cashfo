@@ -269,6 +269,21 @@
   /* Investments' closed chip (the boards' --sm-slate-soft / --sm-slate-ink). */
   --slate-soft: #f1f5f9;
   --slate-ink: #334155;
+  /* The InvestApp board's own --sm-* values no other token carries: its
+     sunken fill and row rule, the primary's soft wash, deep and link inks,
+     and the violet and pink kinds (whose inks stay the same in dark). */
+  --sunken: #f0f2f2;
+  --primary-soft: #eef6f4;
+  --primary-deep: #144f46;
+  --primary-ink: #1c7567;
+  --violet-deep: #5b21b6;
+  --pink-deep: #be185d;
+  --pink-wash: #fce7f3;
+  /* Its toast box and popup scrim, which stay the same in the dark theme. */
+  --toast: #12201d;
+  /* The AppSidebar board's lit item: the primary 90% toward the card. */
+  --nav-on: #e8f1f0;
+  --scrim-board: rgba(18, 32, 29, 0.45);
   /* The Dashboard's net worth card is dark in both themes: its pale green
      and red for up and down, and its note. */
   --worth-up: #86efac;
@@ -513,6 +528,12 @@
   --tint-purple-ink: #d8b4fe;
   --slate-soft: #1c2530;
   --slate-ink: #cbd5e1;
+  --sunken: #1c2724;
+  --primary-soft: #15302a;
+  --primary-deep: #8eddcb;
+  --primary-ink: #5cc8b2;
+  --pink-wash: #34172a;
+  --nav-on: #162623;
   --emerald-tint: #1c4536;
 
   --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -872,6 +893,15 @@ html:not(.dark) [data-app="habit"] {
   --color-tint-purple-ink: var(--tint-purple-ink);
   --color-slate-soft: var(--slate-soft);
   --color-slate-ink: var(--slate-ink);
+  --color-sunken: var(--sunken);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-ink: var(--primary-ink);
+  --color-violet-deep: var(--violet-deep);
+  --color-pink-deep: var(--pink-deep);
+  --color-pink-wash: var(--pink-wash);
+  --color-toast: var(--toast);
+  --color-nav-on: var(--nav-on);
   --color-worth-up: var(--worth-up);
   --color-worth-down: var(--worth-down);
   --color-worth-note: var(--worth-note);
@@ -1203,6 +1233,13 @@ html:not(.dark) [data-app="habit"] {
 [data-slot="alert-dialog-overlay"] {
   background-color: var(--scrim);
   backdrop-filter: none;
+}
+
+/* A popup that asks for its board's own scrim (the InvestApp board keeps it
+   in the dark theme too) marks its content data-scrim="board". */
+[data-slot="dialog-overlay"]:has(+ [data-scrim="board"]),
+[data-slot="alert-dialog-overlay"]:has(+ [data-scrim="board"]) {
+  background-color: var(--scrim-board);
 }
 
 /* An alert dialog is as wide as its w-* class says (every one sets it), up

@@ -152,7 +152,8 @@ function Topbar() {
         </Link>
       )}
 
-      <nav aria-label={t("Breadcrumb")} className="hidden min-w-0 flex-1 items-center md:flex">
+      {/* The board sets the trail 20px in from the page edge (its header spaces two empty slots before it). */}
+      <nav aria-label={t("Breadcrumb")} className="hidden min-w-0 flex-1 items-center md:flex md:pl-5">
         <ol className="flex min-w-0 items-center gap-2 text-body text-ink-muted">
           {trail.map((part, index) => (
             // Tablets and small laptops keep only the step just above the

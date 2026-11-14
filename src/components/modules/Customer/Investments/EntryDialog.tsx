@@ -185,13 +185,13 @@ export function EntryDialog({
                 }}
                 className={cn(
                   "flex min-h-11.5 items-center gap-2 rounded-[12px] border-[1.5px] px-3 py-2.25 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
-                  on ? "border-emerald bg-pick-wash" : "border-line bg-surface hover:border-mint-200",
+                  on ? "border-emerald bg-primary-soft" : "border-line bg-surface hover:border-mint-200",
                   off && "opacity-45",
                 )}
               >
                 <Glyph d={option.icon} className={cn("mt-px", on ? "text-emerald" : "text-ink-muted")} />
                 <span className="flex flex-col gap-px">
-                  <span className={cn("text-[13.5px] font-semibold", on ? "text-brand-ink" : "text-ink")}>{t(option.label)}</span>
+                  <span className={cn("text-[13.5px] font-semibold", on ? "text-forest-ink" : "text-ink")}>{t(option.label)}</span>
                   <span className="text-[11.5px] text-ink-muted">{t(option.sub)}</span>
                 </span>
               </button>
@@ -271,7 +271,7 @@ export function EntryDialog({
         <div aria-live="polite" className="flex flex-col gap-2 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-[13px] tabular-nums">
           <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("After you save")}</span>
           {preview.map((p) => (
-            <div key={p.label} className="flex justify-between gap-2.5">
+            <div key={p.label} className="flex min-h-[17px] justify-between gap-2.5">
               <span data-i18n-skip="" className="truncate text-ink-2">
                 {p.label}
               </span>
