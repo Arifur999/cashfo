@@ -1369,4 +1369,11 @@ export const settingsDictionary: Record<string, string> = {
   "Write your reply": "আপনার উত্তর লিখুন",
   "Smartly replied": "স্মার্টলি উত্তর দিয়েছে",
   "You wrote": "আপনি লিখেছেন",
+  "Short answers to what people ask us most.": "মানুষ সবচেয়ে বেশি যা জানতে চান, তার ছোট উত্তর।",
+  "Thanks for telling us.": "জানানোর জন্য ধন্যবাদ।",
+  "Sorry it did not help.": "দুঃখিত, এটি কাজে লাগেনি।",
+  "Ask our team": "টিমকে জিজ্ঞেস করুন",
+  "Balance & wallets": "ব্যালান্স ও ওয়ালেট",
+  "Savings & loans": "সঞ্চয় ও ঋণ",
+  "Plans & payments": "প্ল্যান ও পেমেন্ট",
 };
