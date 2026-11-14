@@ -1645,6 +1645,12 @@ export const groupExpensesDictionary: Record<string, string> = {
   "Name, first month, budget warning, how new categories are shared, and each member’s shares.": "নাম, প্রথম মাস, বাজেট সতর্কতা, নতুন ক্যাটাগরি কীভাবে ভাগ হবে, আর প্রত্যেকের শেয়ার।",
   "{date} · by {name}": "{date} · {name} লিখেছেন",
   "{name}’s own pocket": "{name}-এর নিজের পকেট",
+  // Group Expense: Record a payment, each member's standing
+  "gets back {amount}": "পাবেন {amount}",
+  "owes {amount}": "দেবেন {amount}",
+  "Gets back {amount} for {month}": "{month}-এ ফেরত পাবেন {amount}",
+  "Owes {amount} for {month}": "{month}-এ দেবেন {amount}",
+  "Settled for {month}": "{month}-এ হিসাব মিটে গেছে",
   // Group Expense: Settings, the General card's footer
   "Everything is saved": "সব সেভ করা আছে",
   "You have unsaved changes": "সেভ না করা পরিবর্তন আছে",
