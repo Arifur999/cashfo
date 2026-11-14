@@ -170,7 +170,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
         )
       }
     >
-      <ListHead columns={COLUMNS} className="h-8.75 border-t border-line bg-strip">
+      <ListHead columns={COLUMNS} className="h-9.5 border-t border-line bg-strip">
         <ListHeadCell>{t("Date")}</ListHeadCell>
         <ListHeadCell>{t("From → To")}</ListHeadCell>
         <ListHeadCell align="end">{t("Amount")}</ListHeadCell>
@@ -213,7 +213,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
   );
 
   const blocked = open.length < 2 ? [t("You need at least two goals to move money between them.")] : funded.length === 0 ? [t("No goal has money saved yet."), t("Add money to a goal first, then you can move it to another.")] : null;
-  const label = "text-small font-medium text-ink-soft";
+  const label = "text-small font-medium text-ink-2";
 
   return (
     <PageFrame className="gap-5 leading-[normal]">
@@ -297,7 +297,7 @@ export function SavingsTransferPageClient({ businessId, goals, transfers, curren
                     }}
                     currency={currency}
                     size="lg"
-                    frameClassName="rounded-field"
+                    frameClassName="h-12.5 rounded-field"
                     invalid={!!problem}
                     describedBy={hint ? "st-amount-hint" : undefined}
                   />
