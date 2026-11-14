@@ -14,7 +14,7 @@ import TabBar from "@/components/smartly/TabBar";
 import type { Account, SavingsGoal, SavingsGoalStatus, SavingsPlan } from "@/lib/customer/api";
 import { formatCurrency } from "@/lib/customer/currency";
 import { formatDate } from "@/lib/customer/date";
-import { deleteSavingsGoalAction, moveGoalToPlansAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
+import { backToGoalAction, deleteSavingsGoalAction, moveGoalToPlansAction, updateSavingsGoalStatusAction } from "@/lib/customer/savingsGoalActions";
 import { goalColor, savingsError } from "@/lib/customer/savingsDisplay";
 import { behindFirst, goalsHero, isBehind, monthlyFromNow } from "@/lib/customer/savingsPlan";
 import { formatCount } from "@/lib/i18n/digits";
@@ -93,6 +93,8 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
   const [view, setView] = useStoredChoice<ListView>("smartly-savings-view", LIST_VIEWS, "cards");
   const [modal, setModal] = useState<Modal | null>(null);
   const [isPending, startTransition] = useTransition();
+  // A statement's print preview is open: only it prints.
+  const [printing, setPrinting] = useState(false);
 
   // ?new=1 opens New goal (Home's "Add a goal"); ?goal=<id> opens a goal's
   // details (the bell's reminder); ?plan=<id> opens New goal filled in from
@@ -174,7 +176,22 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         toast.error(savingsError(result.message, "Failed to move the goal", t, currency, fmt));
         return;
       }
-      toast.success(t("{name} moved back to your saving plans.", { name: goal.name }));
+      const planId = result.data?.planId;
+      toast.success(t("{name} moved back to your saving plans.", { name: goal.name }), {
+        duration: 6000,
+        // Undo makes it the same goal again.
+        action: planId
+          ? {
+              label: t("Undo"),
+              onClick: () =>
+                void backToGoalAction(businessId, planId).then((undone) => {
+                  if (undone.success) toast.success(t("{name} is a goal again.", { name: goal.name }));
+                  else toast.error(savingsError(undone.message, "Couldn't undo that. Try again.", t, currency, fmt));
+                  router.refresh();
+                }),
+            }
+          : undefined,
+      });
       setModal(null);
       router.refresh();
     });
@@ -265,7 +282,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
   };
 
   return (
-    <PageFrame className="gap-5 leading-[normal]">
+    <PageFrame className={cn("gap-5 leading-[normal]", printing && "print:hidden")}>
       <PageHeader
         title={t("Savings goals")}
         description={t("Put money aside for what matters, and watch each goal fill up.")}
@@ -444,6 +461,7 @@ export function GoalsPageClient({ businessId, goals, currency, canManage, saving
         goal={modal?.kind === "statement" ? current : null}
         currency={currency}
         person={person}
+        onPrinting={setPrinting}
       />
       <SavingsAccountDialog open={modal?.kind === "wallet"} onClose={close} businessId={businessId} editing={null} names={walletNames} addedNote="goals" />
       <PopupDialog
