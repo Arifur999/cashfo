@@ -11,6 +11,9 @@ const TONES = {
   insights: "bg-pillar-insights-soft text-pillar-insights",
   rose: "bg-rose-soft text-rose",
   neutral: "bg-surface-sunken text-ink-2",
+  // Ledger: money put into an investment, and capital back from one.
+  teal: "bg-tint-teal text-note-ink",
+  green: "bg-tint-green text-tint-green-ink",
   // The "Earn ৳" tag and the balance trend on the hero.
   glow: "bg-mint-glow text-forest",
   // On the Night sidebar and the aurora hero.

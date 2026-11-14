@@ -135,6 +135,8 @@ export const LEDGER_KIND_META: Record<LedgerKind, KindMeta> = {
   PAYMENT_OUT: { label: "Payment made", tone: "rose", kickerIn: "Paid to", kickerOut: "Paid to" },
   ASSET_PURCHASE: { label: "Asset purchase", tone: "insights", kickerIn: "Bought", kickerOut: "Bought" },
   ASSET_SALE: { label: "Asset sale", tone: "insights", kickerIn: "Sold", kickerOut: "Sold" },
+  INVESTMENT: { label: "Investment", tone: "teal", kickerIn: "Invested in", kickerOut: "Invested in" },
+  INVESTMENT_RETURN: { label: "Investment return", tone: "green", kickerIn: "Capital back from", kickerOut: "Capital back from" },
   ADJUSTMENT: { label: "Adjustment", tone: "neutral", kickerIn: "Matched to", kickerOut: "Matched to" },
   OTHER: { label: "Other@@ledger", tone: "neutral", kickerIn: "With", kickerOut: "With" },
 };
@@ -157,8 +159,10 @@ export function partyOf(row: Pick<LedgerRow, "party" | "counterAccounts" | "cate
 
 // Where a row's record lives, for Entry details' button; null for an
 // adjustment (it is removed right there) and a cancelled row.
-export function entrySource(row: Pick<LedgerRow, "transactionId" | "contactId" | "chargeForId" | "date">, kind: LedgerKind): { href: string; label: string } | null {
+export function entrySource(row: Pick<LedgerRow, "transactionId" | "contactId" | "chargeForId" | "date" | "investmentId">, kind: LedgerKind): { href: string; label: string } | null {
   if (row.chargeForId) return { href: "/balance/transfer", label: "Open in Transfers" };
+  // Money put in, its profit and capital back: the investment's statement.
+  if (row.investmentId) return { href: `/investments/statement?id=${encodeURIComponent(row.investmentId)}`, label: "Open in Investments" };
   switch (kind) {
     case "INCOME":
     case "EXPENSE":

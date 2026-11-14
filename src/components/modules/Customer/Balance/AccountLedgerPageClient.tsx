@@ -101,6 +101,8 @@ const KIND_ICON: Record<LedgerKind, LucideIcon> = {
   PAYMENT_OUT: Store,
   ASSET_PURCHASE: Package,
   ASSET_SALE: Package,
+  INVESTMENT: TrendingUp,
+  INVESTMENT_RETURN: TrendingUp,
   ADJUSTMENT: CircleCheckBig,
   OTHER: BookText,
 };
