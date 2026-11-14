@@ -230,7 +230,7 @@ export function LoanContactDrawer({ open, onClose, businessId, editing, currency
       busy={isPending}
       onSubmit={submit}
       headClassName="items-center border-head-rule pt-4 pr-5 pb-3.5 pl-6 [&>div]:gap-px"
-      titleClassName="text-[18px] font-bold leading-[normal]!"
+      titleClassName="text-[18px] font-bold! leading-[normal]!"
       subClassName="flex"
       closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line [&_svg]:size-4.25 [&_svg]:stroke-[2.25]"
       bodyClassName="gap-4 px-6 py-4.5"

@@ -33,7 +33,7 @@ export function LoanDeleteDialog({ open, onClose, title, body, onConfirm, confir
         <span aria-hidden="true" className={cn("flex size-11.5 items-center justify-center rounded-[14px]", blocked ? "bg-warning-soft text-warning" : "bg-expense-soft text-expense-fill")}>
           {blocked ? <TriangleAlert className="size-5.5" strokeWidth={2} /> : <Trash2 className="size-5.5" strokeWidth={2} />}
         </span>
-        <DialogTitle className="text-[18px] font-bold wrap-anywhere text-ink">{title}</DialogTitle>
+        <DialogTitle className="text-[18px] font-bold! wrap-anywhere text-ink">{title}</DialogTitle>
         <DialogDescription className="text-[13.5px] leading-[1.55] text-ink-soft">{body}</DialogDescription>
         <div className="mt-1 flex flex-wrap justify-end gap-2.5">
           <Button type="button" variant="secondary" size="lg" onClick={onClose} disabled={busy} className="px-4.5">
