@@ -1376,4 +1376,8 @@ export const settingsDictionary: Record<string, string> = {
   "Balance & wallets": "ব্যালান্স ও ওয়ালেট",
   "Savings & loans": "সঞ্চয় ও ঋণ",
   "Plans & payments": "প্ল্যান ও পেমেন্ট",
+  "Cookie policy": "কুকি নীতি",
+  "Community rules for groups": "গ্রুপের কমিউনিটি নিয়ম",
+  "The small files that keep you signed in.": "যে ছোট ফাইলগুলো আপনাকে সাইন ইন রাখে।",
+  "How members and admins treat each other in Group Expense.": "গ্রুপ খরচে সদস্য আর অ্যাডমিনরা একে অপরের সাথে কেমন আচরণ করবেন।",
 };

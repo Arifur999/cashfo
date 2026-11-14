@@ -220,6 +220,8 @@ export const LEGAL_SUMMARY: Record<string, string> = {
   terms: "The rules for using Smartly, in plain words.",
   privacy: "What we collect, why, and the choices you have.",
   "refund-policy": "When and how you get your money back.",
+  "cookie-policy": "The small files that keep you signed in.",
+  "community-rules": "How members and admins treat each other in Group Expense.",
 };
 
 // What is new in this version (About Smartly).
@@ -230,8 +232,10 @@ export const WHATS_NEW = [
   "Habit Tracker with namaz and Ramadan, next to your money.",
 ];
 
-export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" }[] = [
+export const LEGAL_LINKS: { title: string; page: "terms" | "privacy" | "refund-policy" | "cookie-policy" | "community-rules" }[] = [
   { title: "Terms of service", page: "terms" },
   { title: "Privacy policy", page: "privacy" },
   { title: "Refund policy", page: "refund-policy" },
+  { title: "Cookie policy", page: "cookie-policy" },
+  { title: "Community rules for groups", page: "community-rules" },
 ];
