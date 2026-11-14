@@ -13,6 +13,8 @@
 :root {
   /* Brand */
   --forest: #0f3f38;
+  /* The forest as words: the Upgrade card's title (AppSidebar board, primary-900). */
+  --forest-ink: #0f3f38;
   --forest-hover: #155c51;
   --emerald: #1c7567;
   --emerald-hover: #155c51;
@@ -145,6 +147,11 @@
   --bar-expense-phone: #ef6b6b;
   --bar-expense-phone-dim: #f8c9c9;
   --bar-expense-key: #fca5a5;
+  /* The Dashboard's Cash flow bars, money in and out (the same in both themes). */
+  --flow-in: #86c5b6;
+  --flow-out: #f4a3a3;
+  /* The Income vs Expense chart's open-month band (Dashboard board). */
+  --chart-band: #f3f8f7;
   --cat-1: #1c7567;
   --cat-2: #ea580c;
   --cat-3: #7c3aed;
@@ -458,6 +465,8 @@
   --chart-cost: #4f5f5a;
   --toggle-track: #17241f;
   --pick-wash: #2b3331;
+  --chart-band: #2b3331;
+  --forest-ink: #a7e6d8;
   --sold-card: #0d1915;
   --card-rule: #1c2724;
   --head-wash: #2c3331;
@@ -605,38 +614,39 @@ html:not(.dark) [data-app="habit"] {
 /* Design v4 dark: the primary's words and icons take --emerald-ink while its
    fills and edges keep --emerald (see .dark). The rules sit after Tailwind's
    utilities, so the state classes that pair with text-emerald are restated
-   after it to keep winning. */
+   after it to keep winning. Their class names are escaped (dark:, [, /):
+   an unescaped one is an invalid selector, which drops its whole rule. */
 @layer utilities {
   .dark .text-emerald,
   .dark .text-primary,
-  .dark .dark:text-emerald,
-  .dark .data-open:text-emerald[data-open],
-  .dark .data-[state=open]:text-emerald[data-state="open"] {
+  .dark .dark\:text-emerald,
+  .dark .data-open\:text-emerald[data-open],
+  .dark .data-\[state\=open\]\:text-emerald[data-state="open"] {
     color: var(--emerald-ink);
   }
   @media (hover: hover) {
-    .dark .hover:text-emerald:hover {
+    .dark .hover\:text-emerald:hover {
       color: var(--emerald-ink);
     }
-    .dark .hover:text-emerald-hover:hover {
+    .dark .hover\:text-emerald-hover:hover {
       color: var(--brand-ink);
     }
   }
   @media (width >= 48rem) {
-    .dark .md:data-[state=open]:text-emerald[data-state="open"] {
+    .dark .md\:data-\[state\=open\]\:text-emerald[data-state="open"] {
       color: var(--emerald-ink);
     }
   }
-  .dark .dark:text-forest {
+  .dark .dark\:text-forest {
     color: var(--forest);
   }
-  .dark .disabled:text-ink-faint:disabled {
+  .dark .disabled\:text-ink-faint:disabled {
     color: var(--ink-faint);
   }
-  .dark .disabled:text-ink-muted:disabled {
+  .dark .disabled\:text-ink-muted:disabled {
     color: var(--ink-muted);
   }
-  .dark .disabled:text-white/70:disabled {
+  .dark .disabled\:text-white\/70:disabled {
     color: rgb(255 255 255 / 0.7);
   }
 }
@@ -876,6 +886,10 @@ html:not(.dark) [data-app="habit"] {
   --color-bar-income-dim: var(--bar-income-dim);
   --color-bar-expense: var(--bar-expense);
   --color-bar-expense-dim: var(--bar-expense-dim);
+  --color-flow-in: var(--flow-in);
+  --color-flow-out: var(--flow-out);
+  --color-chart-band: var(--chart-band);
+  --color-forest-ink: var(--forest-ink);
   --color-bar-expense-phone: var(--bar-expense-phone);
   --color-bar-expense-phone-dim: var(--bar-expense-phone-dim);
   --color-bar-expense-key: var(--bar-expense-key);
@@ -1273,193 +1287,208 @@ html:not(.dark) [data-app="habit"] {
    (HomePageClient); every other page and dark mode keep their look. The
    rules follow the board's CSS one for one, on the Dashboard board's own
    class names (rp-card, rp-h2, rp-num, db-row...), which the Dashboard's
-   components carry too, and on the shell around it. */
-html:not(.dark) body:has([data-skin="premium"]) {
-  background: #e9f0ee;
-}
-html:not(.dark) [data-app]:has([data-skin="premium"]) {
-  --page: transparent;
-  --strip: rgba(255, 255, 255, 0.45);
-  --table-head: rgba(255, 255, 255, 0.45);
-  --hover: rgba(255, 255, 255, 0.45);
-  --surface-sunken: rgba(14, 52, 46, 0.06);
-  --quiet-chip: rgba(14, 52, 46, 0.06);
-  --line: rgba(14, 52, 46, 0.08);
-  --line-card: rgba(14, 52, 46, 0.08);
-  --divider: rgba(14, 52, 46, 0.06);
-  background:
-    radial-gradient(900px 520px at 92% -8%, rgba(111, 172, 161, 0.3), transparent 62%),
-    radial-gradient(760px 520px at 18% 108%, rgba(187, 217, 211, 0.55), transparent 60%),
-    radial-gradient(700px 420px at 55% 40%, rgba(255, 255, 255, 0.55), transparent 70%),
-    linear-gradient(180deg, #eef4f2 0%, #e6eeec 100%);
-}
+   components carry too, and on the shell around it. From md up only: the
+   DashboardMobile board draws the phone plain, as DashboardEmpty draws a
+   new account (HomePageClient sets the attribute only once set up). */
+@media (min-width: 768px) {
+  html:not(.dark) body:has([data-skin="premium"]) {
+    background: #e9f0ee;
+  }
+  html:not(.dark) [data-app]:has([data-skin="premium"]) {
+    --page: transparent;
+    --strip: rgba(255, 255, 255, 0.45);
+    --table-head: rgba(255, 255, 255, 0.45);
+    --hover: rgba(255, 255, 255, 0.45);
+    --surface-sunken: rgba(14, 52, 46, 0.06);
+    --quiet-chip: rgba(14, 52, 46, 0.06);
+    --line: rgba(14, 52, 46, 0.08);
+    --line-card: rgba(14, 52, 46, 0.08);
+    --divider: rgba(14, 52, 46, 0.06);
+    background:
+      radial-gradient(900px 520px at 92% -8%, rgba(111, 172, 161, 0.3), transparent 62%),
+      radial-gradient(760px 520px at 18% 108%, rgba(187, 217, 211, 0.55), transparent 60%),
+      radial-gradient(700px 420px at 55% 40%, rgba(255, 255, 255, 0.55), transparent 70%),
+      linear-gradient(180deg, #eef4f2 0%, #e6eeec 100%);
+  }
 
-/* display type */
-html:not(.dark) [data-skin="premium"] h1 {
-  font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
-  font-weight: 400;
-  font-size: 34px;
-  letter-spacing: -0.025em;
-}
-html:not(.dark) [data-skin="premium"] .rp-h2,
-html:not(.dark) [data-app]:has([data-skin="premium"]) header [aria-current="page"] {
-  font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-html:not(.dark) [data-skin="premium"] .rp-h2 {
-  font-size: 18px;
-}
-html:not(.dark) [data-skin="premium"] .rp-sub {
-  color: #86938f;
-}
-@media (min-width: 640px) {
-  html:not(.dark) [data-skin="premium"] .rp-nw {
+  /* display type */
+  html:not(.dark) [data-skin="premium"] h1 {
     font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
-    font-size: 50px;
-    font-weight: 300;
-    letter-spacing: -0.035em;
+    font-weight: 400;
+    font-size: 34px;
+    letter-spacing: -0.025em;
   }
-}
-html:not(.dark) [data-skin="premium"] .rp-kpi {
-  font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
-  font-size: 32px;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-}
-html:not(.dark) [data-skin="premium"] .rp-n20,
-html:not(.dark) [data-skin="premium"] .rp-tv {
-  font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-}
-
-/* glass surfaces */
-html:not(.dark) [data-skin="premium"] .rp-card {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  border-radius: 26px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(14, 52, 46, 0.05), 0 18px 40px -22px rgba(14, 52, 46, 0.28);
-  backdrop-filter: blur(22px) saturate(160%);
-}
-html:not(.dark) [data-app]:has([data-skin="premium"]) aside > div {
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  border-radius: 28px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(14, 52, 46, 0.05), 0 18px 40px -22px rgba(14, 52, 46, 0.28);
-  backdrop-filter: blur(24px) saturate(160%);
-}
-html:not(.dark) [data-skin="premium"] .rp-tile-plain {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(255, 255, 255, 0.9);
-}
-html:not(.dark) [data-skin="premium"] .rp-tile {
-  border-radius: 18px;
-}
-html:not(.dark) [data-skin="premium"] .rp-th {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(14, 52, 46, 0.07);
-  color: #86938f;
-  letter-spacing: 0.02em;
-}
-html:not(.dark) [data-skin="premium"] .rp-bar {
-  background: rgba(14, 52, 46, 0.07);
-}
-html:not(.dark) [data-skin="premium"] .db-row:hover {
-  background: rgba(255, 255, 255, 0.7);
-}
-html:not(.dark) [data-skin="premium"] .db-kpi {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-html:not(.dark) [data-skin="premium"] .db-kpi:hover {
-  transform: translateY(-2px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 24px 44px -22px rgba(14, 52, 46, 0.38);
-}
-
-/* icon chips become soft circles; the chart's columns round off */
-html:not(.dark) [data-skin="premium"] .size-9.rounded-\[10px\],
-html:not(.dark) [data-skin="premium"] .size-8\.5.rounded-\[10px\],
-html:not(.dark) [data-skin="premium"] .size-7\.5.rounded-\[9px\] {
-  border-radius: 50%;
-}
-html:not(.dark) [data-skin="premium"] .rp-colbar {
-  border-radius: 999px;
-}
-
-/* buttons */
-html:not(.dark) [data-skin="premium"] a.bg-emerald,
-html:not(.dark) [data-skin="premium"] button.bg-emerald {
-  background: linear-gradient(180deg, #23897b 0%, #155c51 100%);
-  color: #ffffff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 10px 22px -10px rgba(21, 92, 81, 0.65);
-}
-@media (min-width: 768px) {
-  html:not(.dark) [data-skin="premium"] > div:first-child a.rounded-full,
-  html:not(.dark) [data-skin="premium"] > div:first-child button.rounded-full {
-    height: 44px;
-    padding: 0 20px;
+  html:not(.dark) [data-skin="premium"] .rp-h2,
+  html:not(.dark) [data-app]:has([data-skin="premium"]) header [aria-current="page"] {
+    font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
-}
-html:not(.dark) [data-skin="premium"] a.rounded-full.bg-surface,
-html:not(.dark) [data-skin="premium"] button.rounded-full.bg-surface {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: inset 0 1px 0 #ffffff, 0 8px 18px -12px rgba(14, 52, 46, 0.4);
-  backdrop-filter: blur(14px);
-}
+  html:not(.dark) [data-skin="premium"] .rp-h2 {
+    font-size: 18px;
+  }
+  html:not(.dark) [data-skin="premium"] .rp-sub {
+    color: #86938f;
+  }
+  @media (min-width: 640px) {
+    html:not(.dark) [data-skin="premium"] .rp-nw {
+      font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
+      font-size: 50px;
+      font-weight: 300;
+      letter-spacing: -0.035em;
+    }
+  }
+  html:not(.dark) [data-skin="premium"] .rp-kpi {
+    font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+  html:not(.dark) [data-skin="premium"] .rp-n20,
+  html:not(.dark) [data-skin="premium"] .rp-tv {
+    font-family: var(--font-outfit), "Hind Siliguri", sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
 
-/* sidebar: the open page as a teal pill, every row round */
-html:not(.dark) [data-app]:has([data-skin="premium"]) aside a.h-9\.5,
-html:not(.dark) [data-app]:has([data-skin="premium"]) aside button.h-9\.5 {
-  border-radius: 999px;
-}
-html:not(.dark) [data-app]:has([data-skin="premium"]) aside a.bg-emerald-soft {
-  background: linear-gradient(180deg, #1e7d70 0%, #13564c 100%);
-  color: #ffffff;
-  border-radius: 999px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 10px 20px -12px rgba(15, 63, 56, 0.7);
-}
-html:not(.dark) [data-app]:has([data-skin="premium"]) aside a.bg-emerald-soft svg {
-  color: #ffffff;
-  stroke: #ffffff;
-}
-html:not(.dark) [data-app]:has([data-skin="premium"]) aside a:not(.bg-emerald-soft):hover,
-html:not(.dark) [data-app]:has([data-skin="premium"]) aside button:hover {
-  background: rgba(255, 255, 255, 0.7);
-}
+  /* glass surfaces */
+  html:not(.dark) [data-skin="premium"] .rp-card {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 26px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(14, 52, 46, 0.05), 0 18px 40px -22px rgba(14, 52, 46, 0.28);
+    backdrop-filter: blur(22px) saturate(160%);
+  }
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside > div {
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 28px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(14, 52, 46, 0.05), 0 18px 40px -22px rgba(14, 52, 46, 0.28);
+    backdrop-filter: blur(24px) saturate(160%);
+  }
+  /* The board's 248px panel sits inside that 1px glass edge: 250 across. */
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside:not([data-collapsed]) > div {
+    width: 250px;
+  }
+  html:not(.dark) [data-skin="premium"] .rp-tile-plain {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 255, 255, 0.9);
+  }
+  html:not(.dark) [data-skin="premium"] .rp-tile {
+    border-radius: 18px;
+  }
+  html:not(.dark) [data-skin="premium"] .rp-th {
+    background: rgba(255, 255, 255, 0.35);
+    border-color: rgba(14, 52, 46, 0.07);
+    color: #86938f;
+    letter-spacing: 0.02em;
+  }
+  html:not(.dark) [data-skin="premium"] .rp-bar {
+    background: rgba(14, 52, 46, 0.07);
+  }
+  html:not(.dark) [data-skin="premium"] .db-row:hover {
+    background: rgba(255, 255, 255, 0.7);
+  }
+  html:not(.dark) [data-skin="premium"] .db-kpi {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  html:not(.dark) [data-skin="premium"] .db-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 24px 44px -22px rgba(14, 52, 46, 0.38);
+  }
 
-/* top bar: on the backdrop, its round buttons glass */
-html:not(.dark) [data-app]:has([data-skin="premium"]) header {
-  background: transparent;
-}
-@media (min-width: 768px) {
-  html:not(.dark) [data-app]:has([data-skin="premium"]) header .md\:size-9\.5.md\:rounded-full {
-    width: 42px;
-    height: 42px;
+  /* icon chips become soft circles; the chart's columns round off */
+  html:not(.dark) [data-skin="premium"] .size-9.rounded-\[10px\],
+  html:not(.dark) [data-skin="premium"] .size-8\.5.rounded-\[10px\],
+  html:not(.dark) [data-skin="premium"] .size-7\.5.rounded-\[9px\] {
+    border-radius: 50%;
+  }
+  html:not(.dark) [data-skin="premium"] .rp-colbar {
+    border-radius: 999px;
+  }
+
+  /* buttons */
+  html:not(.dark) [data-skin="premium"] a.bg-emerald,
+  html:not(.dark) [data-skin="premium"] button.bg-emerald {
+    background: linear-gradient(180deg, #23897b 0%, #155c51 100%);
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 10px 22px -10px rgba(21, 92, 81, 0.65);
+  }
+  @media (min-width: 768px) {
+    html:not(.dark) [data-skin="premium"] > div:first-child a.rounded-full,
+    html:not(.dark) [data-skin="premium"] > div:first-child button.rounded-full {
+      height: 44px;
+      padding: 0 20px;
+    }
+  }
+  html:not(.dark) [data-skin="premium"] a.rounded-full.bg-surface,
+  html:not(.dark) [data-skin="premium"] button.rounded-full.bg-surface {
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.85);
     box-shadow: inset 0 1px 0 #ffffff, 0 8px 18px -12px rgba(14, 52, 46, 0.4);
     backdrop-filter: blur(14px);
   }
-  html:not(.dark) [data-app]:has([data-skin="premium"]) header a.md\:bg-emerald-soft {
-    height: 42px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.85);
-    box-shadow: inset 0 1px 0 #ffffff, 0 8px 18px -12px rgba(14, 52, 46, 0.4);
-  }
-}
 
-/* the net worth card */
-html:not(.dark) [data-skin="premium"] .bg-worth-hero {
-  border-radius: 26px;
-  background:
-    radial-gradient(120% 80% at 100% 0%, rgba(111, 172, 161, 0.38) 0%, transparent 55%),
-    radial-gradient(90% 70% at 0% 100%, rgba(10, 40, 36, 0.55) 0%, transparent 60%),
-    linear-gradient(150deg, #17635a 0%, #0f3f38 55%, #0a2b27 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 30px 60px -28px rgba(10, 43, 39, 0.65);
-}
-html:not(.dark) [data-skin="premium"] .bg-worth-hero .bg-white\/7 {
-  border-radius: 18px;
+  /* sidebar: the open page as a teal pill, every row round */
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside a.h-9\.5,
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside button.h-9\.5 {
+    border-radius: 999px;
+  }
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside a.bg-emerald-soft {
+    background: linear-gradient(180deg, #1e7d70 0%, #13564c 100%);
+    color: #ffffff;
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 10px 20px -12px rgba(15, 63, 56, 0.7);
+  }
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside a.bg-emerald-soft svg {
+    color: #ffffff;
+    stroke: #ffffff;
+  }
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside a:not(.bg-emerald-soft):hover,
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside button:hover {
+    background: rgba(255, 255, 255, 0.7);
+  }
+  /* the Upgrade to Pro card: a teal wash fading to glass */
+  html:not(.dark) [data-app]:has([data-skin="premium"]) aside section[aria-labelledby="sidebar-upgrade"] {
+    background: linear-gradient(155deg, rgba(28, 117, 103, 0.16) 0%, rgba(255, 255, 255, 0.55) 70%);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  /* top bar: on the backdrop, its round buttons glass */
+  html:not(.dark) [data-app]:has([data-skin="premium"]) header {
+    background: transparent;
+  }
+  @media (min-width: 768px) {
+    html:not(.dark) [data-app]:has([data-skin="premium"]) header .md\:size-9\.5.md\:rounded-full {
+      width: 42px;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: inset 0 1px 0 #ffffff, 0 8px 18px -12px rgba(14, 52, 46, 0.4);
+      backdrop-filter: blur(14px);
+    }
+    html:not(.dark) [data-app]:has([data-skin="premium"]) header a.md\:bg-emerald-soft {
+      height: 42px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: inset 0 1px 0 #ffffff, 0 8px 18px -12px rgba(14, 52, 46, 0.4);
+    }
+  }
+
+  /* the net worth card */
+  html:not(.dark) [data-skin="premium"] .bg-worth-hero {
+    border-radius: 26px;
+    background:
+      radial-gradient(120% 80% at 100% 0%, rgba(111, 172, 161, 0.38) 0%, transparent 55%),
+      radial-gradient(90% 70% at 0% 100%, rgba(10, 40, 36, 0.55) 0%, transparent 60%),
+      linear-gradient(150deg, #17635a 0%, #0f3f38 55%, #0a2b27 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 30px 60px -28px rgba(10, 43, 39, 0.65);
+  }
+  html:not(.dark) [data-skin="premium"] .bg-worth-hero .bg-white\/7 {
+    border-radius: 18px;
+  }
 }

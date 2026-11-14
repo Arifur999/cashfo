@@ -67,7 +67,7 @@ export function SetupGuide({ data, onAddTransaction }: { data: HomeData; onAddTr
       href: "/balance/accounts?new=1",
     },
     { title: "Add your first transaction", text: "Record an income or an expense to start tracking.", done: setup.hasTransaction, doneText: t("Your first one is in."), cta: "Add transaction" },
-    { title: "Set a monthly budget", text: "Set this month's income target and expense budget so you're warned early.", done: setup.hasBudget, doneText: t("Your budget is planned"), cta: "Set budget", href: "/categories" },
+    { title: "Set a monthly budget", text: "Give each spending category a limit so you're warned early.", done: setup.hasBudget, doneText: t("Your budget is planned"), cta: "Set budget", href: "/categories" },
     {
       title: "Create a savings goal",
       text: "Save towards something that matters and track progress.",

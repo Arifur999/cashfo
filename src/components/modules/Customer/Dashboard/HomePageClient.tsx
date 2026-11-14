@@ -14,6 +14,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { PhoneFigures, SetupFigures } from "./HomeHero";
 import { AiSummaryLine, AssetsCard, CashFlowCard, GoalsCard, KpiCards, LoansCard, NetWorthHero, UpcomingEventsCard, useAmountsHidden, WealthCard } from "./DashboardCards";
+import { AccountsCard, IncomeVsExpenseCard, SpendingBoardCard } from "./DashboardBoardCards";
 import { WalletsCard } from "./HomeMoney";
 import { SetupGuide } from "./HomeSetup";
 import type { HomeData } from "./homeTypes";
@@ -61,10 +62,10 @@ export function HomePageClient({ data }: { data: HomeData }) {
   );
 
   return (
-    <PageFrame data-skin="premium" className={cn(outfit.variable, "gap-4 md:gap-6")}>
+    <PageFrame data-skin={setup ? undefined : "premium"} className={cn(outfit.variable, "gap-4 md:gap-6")}>
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex min-w-0 flex-col gap-0.5 md:gap-1">
-          <h1 className={cn("leading-[1.3] font-semibold text-ink", setup ? "text-[20px] tracking-[-0.01em] md:text-page-title" : "text-[20px] tracking-[-0.01em] md:text-[30px] md:leading-[1.2] md:tracking-[-0.03em]")}>{title}</h1>
+          <h1 className={cn("font-semibold text-ink", setup ? "text-[20px] tracking-[-0.01em] leading-[1.3] md:text-page-title" : "text-[20px] tracking-[-0.01em] leading-[1.3] md:text-[30px] md:leading-[1.2] md:tracking-[-0.03em]")}>{title}</h1>
           <p className="text-[13px] leading-[normal] text-ink-muted md:text-body">
             {setup ? (
               t("Welcome to Money Tracker. Let's get your money organized.")
@@ -100,7 +101,7 @@ export function HomePageClient({ data }: { data: HomeData }) {
             <SpendingCard data={data} />
           </div>
           <div className="grid gap-4 md:gap-6 xl:grid-cols-3">
-            <RecentTransactionsCard businessId={data.businessId} transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={data.currency} canManage={data.canManage} onAdd={() => add("expense")} />
+            <RecentTransactionsCard transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={data.currency} canManage={data.canManage} onAdd={() => add("expense")} />
             <WalletsCard data={data} />
           </div>
         </>
@@ -118,20 +119,20 @@ export function HomePageClient({ data }: { data: HomeData }) {
           </div>
           <div className="grid gap-4 max-md:hidden xl:grid-cols-3">
             <CashFlowCard data={data} />
+            <SpendingBoardCard data={data} />
+          </div>
+          <div className="grid gap-4 max-md:hidden xl:grid-cols-3">
+            <IncomeVsExpenseCard points={data.chart} currency={data.currency} />
+            <UpcomingEventsCard data={data} />
+          </div>
+          {/* The phone board's shorter chart and ring. */}
+          <div className="flex flex-col gap-4 md:hidden">
+            <IncomeExpenseChart points={data.chart} currency={data.currency} onAdd={data.canManage ? () => add("expense") : undefined} />
             <SpendingCard data={data} />
           </div>
           <div className="grid gap-4 xl:grid-cols-3">
-            <IncomeExpenseChart points={data.chart} currency={data.currency} onAdd={data.canManage ? () => add("expense") : undefined} />
-            <div className="max-md:hidden">
-              <UpcomingEventsCard data={data} />
-            </div>
-            <div className="md:hidden">
-              <SpendingCard data={data} />
-            </div>
-          </div>
-          <div className="grid gap-4 xl:grid-cols-3">
-            <RecentTransactionsCard businessId={data.businessId} transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={data.currency} canManage={data.canManage} onAdd={() => add("expense")} />
-            <WalletsCard data={data} variant="accounts" hidden={hidden} />
+            <RecentTransactionsCard transactions={data.recentTransactions} categoriesById={data.categoriesById} currency={data.currency} canManage={data.canManage} onAdd={() => add("expense")} />
+            <AccountsCard data={data} hidden={hidden} className="max-md:hidden" />
           </div>
           <div className="grid gap-4 max-md:hidden md:grid-cols-2 xl:grid-cols-3">
             <GoalsCard data={data} />

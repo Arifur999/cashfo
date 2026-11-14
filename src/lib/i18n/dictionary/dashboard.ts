@@ -346,4 +346,6 @@ export const dashboardDictionary: Record<string, string> = {
   "No assets yet.": "এখনো কোনো সম্পদ নেই।",
   "Accounts": "অ্যাকাউন্ট",
   "Total in accounts": "অ্যাকাউন্টে মোট",
+  // DashboardEmpty's budget step
+  "Give each spending category a limit so you're warned early.": "প্রতিটি খরচের ক্যাটাগরির একটি সীমা দিন, যাতে আগেভাগেই সতর্ক হতে পারেন।",
 };

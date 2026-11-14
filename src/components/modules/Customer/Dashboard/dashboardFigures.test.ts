@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryChartColor, changePercent, donutGradient, isDay, quarterAxis, readDashboardPeriod, spendingSlices } from "./dashboardFigures";
+import { categoryChartColor, changePercent, donutArcs, donutGradient, fourStepAxis, isDay, quarterAxis, readDashboardPeriod, spendingSlices } from "./dashboardFigures";
 
 describe("readDashboardPeriod", () => {
   it("reads this month so far against the same days of last month", () => {
@@ -92,5 +92,28 @@ describe("quarterAxis", () => {
     expect(quarterAxis(85000)).toEqual([100000, 75000, 50000, 25000, 0]);
     expect(quarterAxis(130000)).toEqual([200000, 150000, 100000, 50000, 0]);
     expect(quarterAxis(0)).toBeNull();
+  });
+});
+
+describe("fourStepAxis", () => {
+  it("steps in a round 1, 2, 2.5 or 5 of a power of ten", () => {
+    expect(fourStepAxis(185000)).toEqual([200000, 150000, 100000, 50000, 0]);
+    expect(fourStepAxis(120500)).toEqual([200000, 150000, 100000, 50000, 0]);
+    expect(fourStepAxis(90000)).toEqual([100000, 75000, 50000, 25000, 0]);
+    expect(fourStepAxis(400)).toEqual([400, 300, 200, 100, 0]);
+    expect(fourStepAxis(0)).toBeNull();
+  });
+});
+
+describe("donutArcs", () => {
+  it("lays each slice after the last, Other in its grey", () => {
+    const arcs = donutArcs([
+      { name: "Rent", amount: 75, percent: 75, color: "purple" },
+      { name: "Other", amount: 25, percent: 25, color: null },
+    ]);
+    expect(arcs).toEqual([
+      { name: "Rent", color: "var(--cat-3)", dash: "75.000 25.000", offset: "0.000" },
+      { name: "Other", color: "var(--chart-other)", dash: "25.000 75.000", offset: "-75.000" },
+    ]);
   });
 });

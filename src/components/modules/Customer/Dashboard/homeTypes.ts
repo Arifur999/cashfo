@@ -32,6 +32,8 @@ export interface HomeWallet {
   // cash / bank / mfs
   subtype: string | null;
   balance: number;
+  // The account card colour (balanceDisplay accountColor), for its tile.
+  color: string;
 }
 
 // A spending category with a limit this month.

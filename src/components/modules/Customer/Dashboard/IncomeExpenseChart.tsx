@@ -202,7 +202,7 @@ export function IncomeExpenseChart({ points, currency, onAdd }: IncomeExpenseCha
 
 // The dark tooltip over a month: its income, expense and what was saved.
 // It sits beside the month, on whichever side has room.
-function ChartTip({ point, currency, index, count }: { point: HomeChartPoint; currency: string; index: number; count: number }) {
+export function ChartTip({ point, currency, index, count }: { point: HomeChartPoint; currency: string; index: number; count: number }) {
   const { t, fmt } = useLocale();
   const saved = point.income - point.expense;
   const center = ((index + 0.5) / count) * 100;
