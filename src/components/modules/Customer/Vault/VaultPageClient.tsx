@@ -13,7 +13,6 @@ import type { VaultResetChallenge, VaultUnlock } from "@/lib/customer/passwordVa
 import { draftFor, isLockedMessage, settle, unlockSpanMs, type LockReason } from "@/lib/customer/vaultDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
 import { VaultGate } from "./VaultGate";
 import { VaultHome, type DrawerState, type VaultLoad } from "./VaultHome";
 import { VaultPasswordForm, type VaultPasswordMode } from "./VaultPasswordForm";
@@ -192,7 +191,7 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
   // Every unlock, set-up or reset would be refused here: say so instead.
   if (readOnly) {
     return (
-      <PageFrame className="gap-6 max-md:pt-4">
+      <PageFrame className="gap-4.5 max-md:pt-4 md:pt-7">
         {header}
         <StatePanel icon={<Lock />} tone="vault" title={t("The vault stays locked in a support view")} description={t("It holds the customer's passwords for other sites, so only they can open it, with their own vault password.")} />
       </PageFrame>
@@ -219,10 +218,10 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
     );
   }
 
-  const formMode: VaultPasswordMode | null = mode === "setup" || mode === "change" || mode === "reset" ? mode : null;
+  const formMode: VaultPasswordMode | null = mode === "setup" || mode === "reset" ? mode : null;
 
   return (
-    <PageFrame className={cn(formMode ? "gap-6" : "gap-7", "max-md:pt-4")}>
+    <PageFrame className="gap-4.5 max-md:pt-4 md:pt-7">
       {header}
       <VaultGate>
         {formMode ? (
@@ -247,7 +246,6 @@ export function VaultPageClient({ hasVaultPassword, hasAccountPassword, lockMinu
           <VaultUnlockForm
             onUnlocked={unlocked}
             onForgot={() => setMode("reset")}
-            onChange={() => setMode("change")}
             onNoVault={() => setMode("setup")}
             lockMinutes={lockTime.lockMinutes}
             effectiveMinutes={lockTime.effectiveMinutes}
