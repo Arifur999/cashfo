@@ -48,7 +48,8 @@ interface FamilyMonthOverviewProps {
 export function FamilyMonthOverview({ data, view, me, canAdd, canPay, onAddExpense, onAddContribution, onRecordPayment, onStatement }: FamilyMonthOverviewProps) {
   const { t, fmt } = useLocale();
   const { currency, settlement } = data;
-  const money = (value: number | string) => formatCurrency(value, currency, fmt);
+  // A figure below 0 (a member who received more than they paid in) reads "− Tk 500.25", as the boards write it.
+  const money = (value: number | string) => (Number(value) < -0.004 ? `− ${formatCurrency(-Number(value), currency, fmt)}` : formatCurrency(value, currency, fmt));
   const signed = (value: number) => (Math.abs(value) < 0.005 ? money(0) : `${value < 0 ? "− " : "+ "}${money(Math.abs(value))}`);
   const month = monthName(data.range.key, fmt, "long", true);
   const current = data.range.key === groupMonthOf(data.today, data.startDay);
