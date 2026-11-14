@@ -339,6 +339,8 @@ export const referralsDictionary: Record<string, string> = {
   "on {service} {number} · {name}": "{service} {number}-এ · {name}",
   "Left to withdraw later": "পরে তোলার জন্য থাকবে",
   "Paid by {date} ({days} working days; Friday and Saturday are off).": "{date}-এর মধ্যে দেওয়া হবে ({days} কর্মদিবস; শুক্র ও শনিবার ছুটি)।",
+  "came from {link}": "এসেছেন {link} থেকে",
+  "came from your main link": "এসেছেন আপনার মূল লিংক থেকে",
   "Refunded": "রিফান্ড হয়েছে",
   "Pending": "অপেক্ষমাণ",
   "{plan} · joined {date}": "{plan} · যোগ দিয়েছেন {date}",
