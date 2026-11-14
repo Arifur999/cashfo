@@ -13,7 +13,10 @@ import { VAULT_CATEGORY_LABELS, VAULT_CATEGORY_TONE } from "./vaultCategoryDispl
 
 // The wide list's columns (design VaultHome): # · Login · Website · Safety
 // · Change · View.
-export const TABLE_GRID = "grid-cols-[48px_minmax(0,1.3fr)_minmax(180px,1fr)_124px_112px_100px]";
+// A row is the number, the three middle columns in a grid of their own,
+// then Change and View, 10px apart; the middle columns sit 12px apart.
+export const TABLE_ROW = "flex items-center gap-2.5 pr-3.5";
+export const TABLE_MIDDLE = "grid min-w-0 flex-1 grid-cols-[minmax(0,1.3fr)_minmax(180px,1fr)_124px] items-center gap-x-3";
 
 interface RowProps {
   entry: VaultEntrySummary;
@@ -41,30 +44,32 @@ export const EntryTableRow = memo(function EntryTableRow({ entry, number, safety
   const host = hostOf(entry.websiteUrl);
   const problem = safety !== null && safety !== "safe";
   return (
-    <div role="row" className={cn("grid min-h-16 items-center gap-x-3 border-b border-divider pr-3.5 last:border-b-0", TABLE_GRID)}>
-      <span role="cell" className="text-center text-[13px] font-medium text-ink-faint tabular-nums">
+    <div role="row" className={cn(TABLE_ROW, "min-h-[65px] border-b border-page leading-[normal]")}>
+      <span role="cell" className="w-12 shrink-0 text-center text-[13px] font-medium text-ink-faint tabular-nums">
         {formatCount(number, fmt)}
       </span>
-      <span role="cell" className="flex min-w-0 items-center gap-3">
-        <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] text-body-lg font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
-          {avatarLetter(entry.title)}
-        </span>
-        <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[15px] font-semibold text-ink">{entry.title}</span>
-            {entry.isFavorite && <Star className="size-3.25 shrink-0 fill-warning-fill text-warning-fill" strokeWidth={1.5} role="img" aria-label={t("Starred")} />}
+      <div className={TABLE_MIDDLE}>
+        <span role="cell" className="flex min-w-0 items-center gap-3">
+          <span aria-hidden="true" className={cn("flex size-10 shrink-0 items-center justify-center rounded-[12px] text-body-lg font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
+            {avatarLetter(entry.title)}
           </span>
-          <span className="truncate text-[13px] text-ink-muted">{entry.usernameOrEmail || "—"}</span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate text-[15px] font-semibold text-ink">{entry.title}</span>
+              {entry.isFavorite && <Star className="size-3.25 shrink-0 fill-warning-fill text-warning-fill" strokeWidth={1.5} role="img" aria-label={t("Starred")} />}
+            </span>
+            <span className="truncate text-[13px] text-ink-muted">{entry.usernameOrEmail || "—"}</span>
+          </span>
         </span>
-      </span>
-      <span role="cell" className="flex min-w-0 flex-col gap-0.5">
-        <span className={cn("truncate text-[13px]", host ? "text-ink-2" : "text-ink-faint")}>{host || "—"}</span>
-        <span className="truncate text-caption text-ink-faint">
-          {t(VAULT_CATEGORY_LABELS[entry.category])} · {age}
+        <span role="cell" className="flex min-w-0 flex-col gap-0.5">
+          <span className={cn("truncate text-[13px]", host ? "text-ink-2" : "text-ink-faint")}>{host || "—"}</span>
+          <span className="truncate text-caption text-ink-faint">
+            {t(VAULT_CATEGORY_LABELS[entry.category])} · {age}
+          </span>
         </span>
-      </span>
-      <span role="cell">{safety ? <SafetyBadge safety={safety} /> : <span className="text-caption text-ink-faint">…</span>}</span>
-      <span role="cell">
+        <span role="cell">{safety ? <SafetyBadge safety={safety} /> : <span className="text-caption text-ink-faint">…</span>}</span>
+      </div>
+      <span role="cell" className="shrink-0">
         <button
           type="button"
           onClick={() => onChange(entry)}
@@ -72,14 +77,14 @@ export const EntryTableRow = memo(function EntryTableRow({ entry, number, safety
           title={t(problem ? "This password needs a fix. Change it" : "Change this password")}
           className={cn(
             "flex h-8.5 w-28 items-center justify-center gap-1.5 rounded-full border text-[12.5px] font-semibold whitespace-nowrap pointer-coarse:h-11",
-            problem ? "border-warning-line bg-warning-soft text-warning hover:bg-warning-soft/70" : "border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken",
+            problem ? "border-warning-line bg-warning-soft text-warning hover:bg-warning-soft/70" : "border-input bg-surface text-ink-2 hover:bg-surface-sunken",
           )}
         >
           <PencilLine className="size-3.25" strokeWidth={2.25} aria-hidden="true" />
           {t("Change")}
         </button>
       </span>
-      <span role="cell">
+      <span role="cell" className="shrink-0">
         <button type="button" onClick={() => onView(entry.id)} aria-label={t("View {title}", { title: entry.title })} className="flex h-8.5 w-25 items-center justify-center gap-1.5 rounded-full bg-primary text-[12.5px] font-semibold whitespace-nowrap text-primary-foreground hover:bg-emerald-hover pointer-coarse:h-11">
           <Eye className="size-3.5" strokeWidth={2.25} aria-hidden="true" />
           {t("View")}
@@ -105,7 +110,7 @@ export const EntryCard = memo(function EntryCard({ entry, safety, copied, onView
   const { t } = useLocale();
   const age = useAge(entry);
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-line-card bg-surface p-3.5 shadow-card">
+    <div className="flex flex-col gap-3 rounded-lg border border-line-card bg-surface p-3.5 leading-[normal] shadow-sm">
       <button type="button" onClick={() => onView(entry.id)} className="flex min-w-0 items-center gap-3 rounded-md text-left">
         <span aria-hidden="true" className={cn("flex size-10.5 shrink-0 items-center justify-center rounded-[12px] text-[17px] font-bold", SOFT_TONE[VAULT_CATEGORY_TONE[entry.category]])}>
           {avatarLetter(entry.title)}
@@ -130,7 +135,7 @@ export const EntryCard = memo(function EntryCard({ entry, safety, copied, onView
           onClick={() => onCopyUsername(entry)}
           disabled={!entry.usernameOrEmail}
           aria-label={t("Copy username for {title}", { title: entry.title })}
-          className={cn("flex h-8.5 items-center justify-center gap-1.5 rounded-full border text-caption font-semibold whitespace-nowrap disabled:opacity-40 pointer-coarse:h-11", copied === "username" ? "border-emerald bg-emerald-soft text-emerald" : "border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken")}
+          className={cn("flex h-8.5 items-center justify-center gap-1.5 rounded-full border text-caption font-semibold whitespace-nowrap disabled:opacity-40 pointer-coarse:h-11", copied === "username" ? "border-emerald bg-emerald-soft text-brand-ink" : "border-input bg-surface text-ink-2 hover:bg-surface-sunken")}
         >
           {copied === "username" ? <Check className="size-3.25" aria-hidden="true" /> : <UserRound className="size-3.25" aria-hidden="true" />}
           {t(copied === "username" ? "Copied" : "Copy username")}

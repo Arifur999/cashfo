@@ -100,6 +100,8 @@
   --orange: #c2410c;
   --orange-fill: #f97316;
   --orange-soft: #ffedd5;
+  /* The edge of an orange chip (the vault's Weak filter). */
+  --orange-line: #fdba74;
   --info-50: #eff6ff;
   --info-line: #bfdbfe;
   --info-ink: #1e40af;
@@ -393,6 +395,7 @@
   --orange: #fb923c;
   --orange-fill: #f97316;
   --orange-soft: #3a1d0a;
+  --orange-line: #7c3a12;
   --info-50: #0f1a33;
   --info-line: #1e3a6b;
   --info-ink: #a9c4f5;
@@ -809,6 +812,7 @@ html:not(.dark) [data-app="habit"] {
   --color-orange: var(--orange);
   --color-orange-fill: var(--orange-fill);
   --color-orange-soft: var(--orange-soft);
+  --color-orange-line: var(--orange-line);
   --color-info-50: var(--info-50);
   --color-info-line: var(--info-line);
   --color-info-ink: var(--info-ink);

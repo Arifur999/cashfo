@@ -22,6 +22,8 @@ interface EntryDetailsProps {
   // checkup answers).
   issues: VaultIssue[];
   safety: Safety | null;
+  // The other logins with the same password, by title.
+  sharedWith: string[];
   // The password, while it is shown; the page keeps it, so a copy that
   // failed can open the login with it on screen.
   revealed: string | null;
@@ -45,7 +47,7 @@ interface EntryDetailsProps {
 function Action({ label, icon: Icon, onClick, href, on = false, disabled = false, pressed }: { label: string; icon: typeof Copy; onClick?: () => void; href?: string; on?: boolean; disabled?: boolean; pressed?: boolean }) {
   const className = cn(
     "flex h-8.5 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold whitespace-nowrap disabled:opacity-50 pointer-coarse:h-11 [&_svg]:size-3.25",
-    on ? "border-emerald bg-emerald-soft text-emerald" : "border-line-strong bg-surface text-ink-2 hover:bg-surface-sunken",
+    on ? "border-emerald bg-emerald-soft text-brand-ink" : "border-input bg-surface text-ink-2 hover:bg-surface-sunken",
   );
   if (href) {
     return (
@@ -66,7 +68,7 @@ function Action({ label, icon: Icon, onClick, href, on = false, disabled = false
 // A login in full (design: the details popup): website, username, the
 // password shown or copied on demand, the holder's name and notes, what the
 // checkup found with a button to fix it, and Delete, Close and Edit.
-export function EntryDetails({ entry, onClose, issues, safety, revealed, busy, copied, onToggleReveal, onCopyPassword, onCopyUsername, onCopy, onFavorite, onEdit, onFix, onDelete }: EntryDetailsProps) {
+export function EntryDetails({ entry, onClose, issues, safety, sharedWith, revealed, busy, copied, onToggleReveal, onCopyPassword, onCopyUsername, onCopy, onFavorite, onEdit, onFix, onDelete }: EntryDetailsProps) {
   const { t, locale, fmt } = useLocale();
   if (!entry) return <VaultDialog open={false} onClose={onClose} title="" />;
 
@@ -77,7 +79,12 @@ export function EntryDetails({ entry, onClose, issues, safety, revealed, busy, c
   // The checkup's findings, worst first, in the board's words.
   const warnings = issues.map((issue) => ({
     issue,
-    text: issue === "reused" ? t("This password is also used for another login. If one site leaks it, both are open.") : issue === "weak" ? t("This password is easy to guess. Use Generate when you change it.") : t("Password not changed for {count} months. Change it on the website, then update it here.", { count: months }),
+    text:
+      issue === "reused"
+        ? sharedWith.length > 0
+          ? t("Same password as {titles}. If one site leaks it, both accounts are open.", { titles: sharedWith.join(", ") })
+          : t("This password is also used for another login. If one site leaks it, both are open.")
+        : issue === "weak" ? t("This password is easy to guess. Use Generate when you change it.") : t("Password not changed for {count} months. Change it on the website, then update it here.", { count: months }),
   }));
   // "Jan 2025", and in Bangla the month's own name with Bangla digits.
   const added = formatDate(entry.createdAt, locale === "bn" ? "MMMM yyyy" : "MMM yyyy", fmt);
@@ -176,8 +183,8 @@ export function EntryDetails({ entry, onClose, issues, safety, revealed, busy, c
         {rows.map((row) => (
           <div key={row.label} className={cn("flex gap-2.5 rounded-[14px] border border-divider bg-strip px-3.5 py-3", row.wraps ? "items-start" : "items-center")}>
             <div className="flex min-w-0 flex-1 flex-col gap-0.75">
-              <dt className="text-caption font-medium text-ink-muted">{row.label}</dt>
-              <dd className={cn("min-w-0 text-body font-medium", row.link ? "text-emerald" : "text-ink", !row.wraps && "truncate")}>{row.value}</dd>
+              <dt className="text-caption leading-[normal] font-medium text-ink-muted">{row.label}</dt>
+              <dd className={cn("min-w-0 text-body leading-[normal] font-medium", row.link ? "text-brand-ink" : "text-ink", !row.wraps && "truncate")}>{row.value}</dd>
             </div>
             {row.actions && <span className="flex shrink-0 flex-wrap justify-end gap-1.5">{row.actions}</span>}
           </div>
@@ -185,11 +192,11 @@ export function EntryDetails({ entry, onClose, issues, safety, revealed, busy, c
       </dl>
       {entry.notes && (
         <div className="flex flex-col gap-1.5 rounded-[14px] border border-divider bg-strip px-3.5 py-3">
-          <span className="text-caption font-medium text-ink-muted">{t("Notes")}</span>
+          <span className="text-caption leading-[normal] font-medium text-ink-muted">{t("Notes")}</span>
           <span className="text-body leading-normal whitespace-pre-wrap wrap-anywhere text-ink-2">{entry.notes}</span>
         </div>
       )}
-      <span className="px-1 text-caption text-ink-faint">
+      <span className="px-1 text-caption leading-[normal] text-ink-faint">
         {t("Added {date}", { date: added })} · {t("Password changed {age}", { age: age.key === "Today" ? t("today") : ageText })}
       </span>
     </VaultDialog>

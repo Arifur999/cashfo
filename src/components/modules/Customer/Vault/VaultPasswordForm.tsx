@@ -269,7 +269,6 @@ function PasswordForm({ mode, hasAccountPassword = true, userName, onUnlocked, o
     return () => clearInterval(id);
   }, [challenge]);
 
-  const wrongFor = (field: FieldKey) => (wrong?.field === field ? wrong.message : undefined);
   const clearWrong = (field: FieldKey) => {
     if (wrong?.field === field) setWrong(null);
     setNotice(null);
