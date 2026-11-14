@@ -1323,4 +1323,8 @@ export const settingsDictionary: Record<string, string> = {
   "Manage@@plan": "দেখুন",
   "Sent to {email} and to the bell in the app.": "{email} ঠিকানায় আর অ্যাপের ঘণ্টায় পাঠানো হয়।",
   "Tell me when a new device signs in": "নতুন ডিভাইসে সাইন ইন হলে জানান",
+  "Focus search": "সার্চে যান",
+  "Put the cursor in search": "সার্চ বক্সে কার্সর নিন",
+  "Close a popup": "পপআপ বন্ধ",
+  "Show this list": "এই তালিকা দেখুন",
 };

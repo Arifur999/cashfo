@@ -80,11 +80,25 @@ const typingElsewhere = (event: KeyboardEvent) => {
   return target instanceof HTMLTextAreaElement || (target instanceof HTMLInputElement && MAC_EDIT_INPUT.test(target.type));
 };
 
-// Ctrl K (⌘K on a Mac) anywhere on the page calls onToggle.
+// A plain key typed into a field, a select or an editable area is its own.
+const inAField = (event: KeyboardEvent) => {
+  const target = event.target;
+  return target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select, [data-command-palette]") !== null);
+};
+
+// Ctrl K (⌘K on a Mac) anywhere on the page calls onToggle, and so does /
+// outside a field (Settings › App preferences lists both).
 export function useCommandShortcut(onToggle: () => void) {
   const handle = useEffectEvent((event: KeyboardEvent) => {
     // Autofill fires keydowns with no key at all.
-    if (typeof event.key !== "string" || event.key.toLowerCase() !== "k" || !(event.ctrlKey || event.metaKey)) return;
+    if (typeof event.key !== "string") return;
+    if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      if (inAField(event) || document.querySelector('[role="dialog"]')) return;
+      event.preventDefault();
+      onToggle();
+      return;
+    }
+    if (event.key.toLowerCase() !== "k" || !(event.ctrlKey || event.metaKey)) return;
     if (typingElsewhere(event)) return;
     event.preventDefault();
     onToggle();

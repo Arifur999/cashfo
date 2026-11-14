@@ -286,6 +286,8 @@
   --progress-low: #d97706;
   /* The title of Security's "we never ask for your codes" note. */
   --tip-ink: #78350f;
+  /* The primary washed 92% out (the Settings boards' "soft"): App preferences' preview. */
+  --soft-wash: #edf4f3;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -566,6 +568,7 @@
   --soft-band: #2c3332;
   --brand-shade: #93bdb7;
   --tip-ink: #c2a493;
+  --soft-wash: #162421;
 }
 
 /* The Habit Tracker (every page under /habit-tracker): the same tokens in
@@ -900,6 +903,7 @@ html:not(.dark) [data-app="habit"] {
   --color-brand-shade: var(--brand-shade);
   --color-progress-low: var(--progress-low);
   --color-tip-ink: var(--tip-ink);
+  --color-soft-wash: var(--soft-wash);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);
