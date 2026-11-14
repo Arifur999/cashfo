@@ -29,7 +29,8 @@ export function DeleteAccountDialog({ account, name, busy, onClose, onDelete, on
   if (!account) return null;
   const history = hasHistory(account);
   const archived = account.status === "ARCHIVED";
-  const count = account.entryCount ?? 0;
+  // The transactions its ledger lists, not the deleted ones still on file.
+  const count = account.standingCount ?? account.entryCount ?? 0;
 
   return (
     <Dialog open onOpenChange={(next) => !next && !busy && onClose()}>

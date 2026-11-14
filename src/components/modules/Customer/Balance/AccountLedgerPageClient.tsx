@@ -405,7 +405,7 @@ export function AccountLedgerPageClient(props: AccountLedgerPageClientProps) {
             <Card role="group" aria-label={t("Opening balance plus money in, minus money out, plus transfers, equals closing balance")} className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 md:py-4.5 xl:flex xl:items-stretch xl:gap-2.5">
               <Term label={t("Opening balance")} value={shown(ledger.balanceBroughtForward)} />
               <Operator>+</Operator>
-              <Term label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalIn, currency, fmt)} className={money ? "text-emerald" : undefined} />
+              <Term label={money ? t("Money in@@wallet") : t("Increase@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalIn, currency, fmt)} className={money ? "text-emerald dark:text-emerald-ink" : undefined} />
               <Operator>−</Operator>
               <Term label={money ? t("Money out@@wallet") : t("Decrease@@statement")} value={hidden ? maskedMoney(symbol) : formatCurrency(summary.totalOut, currency, fmt)} className={money ? "text-expense" : undefined} />
               {showTransfers && (
