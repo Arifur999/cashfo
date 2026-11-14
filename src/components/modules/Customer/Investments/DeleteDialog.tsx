@@ -33,7 +33,7 @@ export function DeleteDialog({ target, onClose, onConfirm, busy }: { target: Del
         <span className="flex size-11.5 items-center justify-center rounded-[14px] bg-expense-soft text-expense-fill">
           <Glyph d={IC.trash} size={22} />
         </span>
-        <AlertDialogTitle className="m-0 text-[18px] font-bold text-ink">{title}</AlertDialogTitle>
+        <AlertDialogTitle className="m-0 text-[18px] font-bold! text-ink">{title}</AlertDialogTitle>
         <AlertDialogDescription data-i18n-skip="" className="m-0 text-[13.5px] leading-[1.55] text-ink-2">
           {body}
         </AlertDialogDescription>

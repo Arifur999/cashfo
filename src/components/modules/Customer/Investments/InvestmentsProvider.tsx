@@ -222,7 +222,11 @@ export function InvestmentsProvider({ businessId, currency, today, investments, 
     <Ctx.Provider value={value}>
       {children}
       <InvestmentFormDialog open={form} onClose={() => setForm(null)} onSave={saveInvestment} busy={busy} />
-      <EntryDialog open={entry} onClose={() => setEntry(null)} onSave={saveEntry} onDelete={(investmentId, entryId) => setDeleting({ kind: "entry", investmentId, entryId })} busy={busy} />
+      <EntryDialog open={entry} onClose={() => setEntry(null)} onSave={saveEntry} onDelete={(investmentId, entryId) => {
+          // As on the board, the entry popup gives way to the confirm.
+          setEntry(null);
+          setDeleting({ kind: "entry", investmentId, entryId });
+        }} busy={busy} />
       <CloseDialog id={closing} onClose={() => setClosing(null)} onSave={saveClose} busy={busy} />
       <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onConfirm={confirmDelete} busy={busy} />
     </Ctx.Provider>

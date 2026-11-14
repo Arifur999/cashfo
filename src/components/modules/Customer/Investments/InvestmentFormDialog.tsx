@@ -376,7 +376,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
                 ))}
               </div>
             )}
-            <div className={cn(row, "border-b-0")}>
+            <div className={cn(row, "min-h-12 border-b-0")}>
               <span className="shrink-0 text-[13px] text-ink-muted">{t("End date, note")}</span>
               <span data-i18n-skip="" className="min-w-0 grow truncate text-right text-[13.5px] font-semibold text-ink">
                 {moreBits.length ? moreBits.join(" · ") : t("None")}

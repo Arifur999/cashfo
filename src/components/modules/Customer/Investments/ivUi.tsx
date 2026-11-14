@@ -92,7 +92,7 @@ export function IvDialog({ open, onClose, width, title, sub, footer, children, b
       >
         <div className="flex shrink-0 items-center gap-3 border-b border-sunken pt-4 pb-3.5 pr-5 pl-6">
           <span className="flex grow flex-col gap-0.5">
-            <DialogTitle className="m-0 text-[18px] font-bold text-ink">{title}</DialogTitle>
+            <DialogTitle className="m-0 text-[18px] font-bold! text-ink">{title}</DialogTitle>
             {sub ? <DialogDescription className="text-[12.5px] text-ink-muted">{sub}</DialogDescription> : <DialogDescription className="sr-only">{title}</DialogDescription>}
           </span>
           <button type="button" onClick={onClose} aria-label={t("Close")} className="flex size-9 shrink-0 items-center justify-center rounded-full bg-page text-ink-2 hover:bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)">

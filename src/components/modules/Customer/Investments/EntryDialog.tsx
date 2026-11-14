@@ -271,7 +271,7 @@ export function EntryDialog({
         <div aria-live="polite" className="flex flex-col gap-2 rounded-[14px] border border-line bg-strip px-3.5 py-3 text-[13px] tabular-nums">
           <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-muted uppercase">{t("After you save")}</span>
           {preview.map((p) => (
-            <div key={p.label} className="flex justify-between gap-2.5">
+            <div key={p.label} className="flex min-h-[17px] justify-between gap-2.5">
               <span data-i18n-skip="" className="truncate text-ink-2">
                 {p.label}
               </span>
