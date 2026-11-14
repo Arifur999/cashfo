@@ -118,7 +118,7 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
 
   if (!page) {
     return (
-      <PageFrame className="gap-5 leading-[normal]">
+      <PageFrame className="gap-5 leading-[normal] md:pt-7 md:pb-10">
         <h1 className="text-page-title text-ink">{t("Notifications")}</h1>
         <StatePanel icon={<Bell />} tone="warning" title={t("Couldn't load your notification settings.")} description={t("Check your connection and try again.")} />
       </PageFrame>
@@ -157,25 +157,25 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
   };
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="gap-5.5 leading-[normal] md:pt-7 md:pb-10">
       <div className="flex items-end gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <SettingsBack />
           <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Notifications")}</h1>
           <p className="text-body text-ink-muted">{t("Choose what Smartly tells you about, and where it reaches you.")}</p>
         </div>
-        <span className="flex h-7 shrink-0 items-center rounded-full bg-emerald-soft px-3 text-[12.5px] font-semibold text-emerald">{t("{on} of {total} turned on", { on: formatCount(page.on, fmt), total: formatCount(page.total, fmt) })}</span>
+        <span className="flex h-7 shrink-0 items-center rounded-full bg-soft-wash px-3 text-[12.5px] font-semibold text-emerald">{t("{on} of {total} turned on", { on: formatCount(page.on, fmt), total: formatCount(page.total, fmt) })}</span>
       </div>
 
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="@container flex min-w-0 flex-col gap-5">
         <section aria-labelledby="nt-m" className={cn(CARD, "overflow-x-auto")}>
-          <div className="flex flex-wrap items-start justify-between gap-3 px-5.5 pt-5 pb-4">
+          <div className="flex flex-wrap items-start justify-between gap-4 px-5.5 pt-4.5 pb-3.5">
             <div>
-              <h2 id="nt-m" className="text-[17px] font-semibold text-ink">
+              <h2 id="nt-m" className="text-[16px] leading-[1.35] font-semibold text-ink">
                 {t("What to tell me")}
               </h2>
-              <p className="mt-0.5 text-small text-ink-muted">{t("Turn each alert on or off for each place. Changes save right away.")}</p>
+              <p className="mt-[3px] text-[13px] leading-[1.5] text-ink-muted">{t("Turn each alert on or off for each place. Changes save right away.")}</p>
             </div>
             <div className="flex shrink-0 gap-2">
               <button type="button" onClick={() => setConfirm("off")} disabled={busy} className="flex h-8.5 items-center gap-1.75 rounded-full border border-input bg-surface px-3.75 text-small font-semibold text-ink hover:bg-surface-sunken disabled:opacity-50">
@@ -207,19 +207,19 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
             </div>
             {GROUPS.map((group) => (
               <div key={group.name} role="rowgroup">
-                <div role="row" className="flex items-center gap-2.25 border-b border-divider bg-table-head px-5.5 py-2.5">
+                <div role="row" className="flex items-center gap-2.25 border-b border-sunken bg-soft-row px-5.5 py-2.5">
                   <span className={cn("flex size-6.5 shrink-0 items-center justify-center rounded-[8px]", group.tile)}>
                     <group.Icon className="size-3.5" aria-hidden="true" />
                   </span>
-                  <span role="rowheader" className="text-small font-semibold text-ink-2">
+                  <span role="rowheader" className="text-[13px] font-semibold text-ink-2">
                     {t(group.name)}
                   </span>
                 </div>
                 {group.rows.map((row) => (
-                  <div key={row.key} role="row" className={cn(GRID, "border-b border-divider px-5.5 py-3 hover:bg-row-hover")}>
+                  <div key={row.key} role="row" className={cn(GRID, "border-b border-sunken px-5.5 py-3 hover:bg-row-hover")}>
                     <span role="cell" className="flex min-w-0 flex-col gap-[3px] pr-3">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-[14.5px] text-ink">{t(row.label)}</span>
+                        <span className="truncate text-body font-medium text-ink">{t(row.label)}</span>
                         {page.locked[row.key] && (
                           <span className="flex h-5 shrink-0 items-center gap-1 rounded-full bg-surface-sunken px-2 text-[11px] font-semibold text-ink-soft">
                             <Lock className="size-3" aria-hidden="true" />
@@ -229,7 +229,7 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
                       </span>
                       <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t(row.help)}</span>
                       {row.pick && (
-                        <span className="mt-1 flex items-center gap-2 text-[12.5px] text-ink-soft">
+                        <span className="mt-1 flex items-center gap-2 text-[12.5px] text-ink-2">
                           <span>{t("Remind me")}</span>
                           <select
                             aria-label={t("How early")}
@@ -276,21 +276,21 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
         </div>
 
         <div className="flex flex-col gap-4 xl:sticky xl:top-0">
-          <section aria-labelledby="nt-q" className={cn(CARD, "flex flex-col gap-3.5 px-5.5 py-5")}>
-            <div className="flex items-start justify-between gap-3">
+          <section aria-labelledby="nt-q" className={cn(CARD, "flex flex-col gap-3.5 px-5.5 pt-4.5 pb-4.5")}>
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 id="nt-q" className="text-[17px] font-semibold text-ink">
+                <h2 id="nt-q" className="text-[16px] leading-[1.35] font-semibold text-ink">
                   {t("Quiet hours")}
                 </h2>
-                <p className="mt-1 text-small leading-normal text-ink-muted">{t("No SMS or push in this time. Alerts wait in the bell. Security alerts still come.")}</p>
+                <p className="mt-[3px] text-[13px] leading-[1.5] text-ink-muted">{t("No SMS or push in this time. Alerts wait in the bell. Security alerts still come.")}</p>
               </div>
               <SmallSwitch on={prefs.quiet.on} label={t("Quiet hours")} disabled={busy} onClick={() => void save({ quietOn: !prefs.quiet.on }, "Saved")} />
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               {(["from", "to"] as const).map((end) => (
                 <label key={end} className="flex flex-col gap-1.5">
-                  <span className="text-small font-semibold text-ink">{t(end === "from" ? "From" : "To@@date")}</span>
-                  <select value={prefs.quiet[end]} disabled={!prefs.quiet.on || busy} onChange={(event) => void save(end === "from" ? { quietFrom: event.target.value } : { quietTo: event.target.value }, "Saved")} className={cn(SELECT, "h-9.5")}>
+                  <span className="text-[12.5px] font-semibold text-ink-2">{t(end === "from" ? "From" : "To@@date")}</span>
+                  <select value={prefs.quiet[end]} disabled={!prefs.quiet.on || busy} onChange={(event) => void save(end === "from" ? { quietFrom: event.target.value } : { quietTo: event.target.value }, "Saved")} className={cn(SELECT, "h-9")}>
                     {HOURS.map((hour) => (
                       <option key={hour} value={hour}>
                         {toLocaleDigits(hour, fmt)}
@@ -302,20 +302,20 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
             </div>
           </section>
 
-          <section aria-labelledby="nt-s" className={cn(CARD, "flex flex-col gap-3.5 px-5.5 py-5")}>
+          <section aria-labelledby="nt-s" className={cn(CARD, "flex flex-col gap-3 px-5.5 pt-4.5 pb-4.5")}>
             <div>
-              <h2 id="nt-s" className="text-[17px] font-semibold text-ink">
+              <h2 id="nt-s" className="text-[16px] leading-[1.35] font-semibold text-ink">
                 {t("Daily or weekly summary")}
               </h2>
-              <p className="mt-1 text-small leading-normal text-ink-muted">{t("A short email: money in, money out and what is due next.")}</p>
+              <p className="mt-[3px] mb-0.5 text-[13px] leading-[1.5] text-ink-muted">{t("A short email: money in, money out and what is due next.")}</p>
             </div>
             <BoardSegment value={prefs.summary.mode} label={t("Daily or weekly summary")} disabled={busy} onChange={(mode) => void save({ summaryMode: mode }, "Saved")} options={[{ value: "off", label: "Off" }, { value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }]} />
             {prefs.summary.mode !== "off" && (
               <>
                 <div className="grid grid-cols-2 gap-2.5">
                   <label className="flex flex-col gap-1.5">
-                    <span className="text-small font-semibold text-ink">{t("On@@day")}</span>
-                    <select value={prefs.summary.day} disabled={prefs.summary.mode !== "weekly" || busy} onChange={(event) => void save({ summaryDay: event.target.value }, "Saved")} className={cn(SELECT, "h-9.5")}>
+                    <span className="text-[12.5px] font-semibold text-ink-2">{t("On@@day")}</span>
+                    <select value={prefs.summary.day} disabled={prefs.summary.mode !== "weekly" || busy} onChange={(event) => void save({ summaryDay: event.target.value }, "Saved")} className={cn(SELECT, "h-9")}>
                       {DAYS.map(([value, name]) => (
                         <option key={value} value={value}>
                           {t(name)}
@@ -324,8 +324,8 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
                     </select>
                   </label>
                   <label className="flex flex-col gap-1.5">
-                    <span className="text-small font-semibold text-ink">{t("At@@time")}</span>
-                    <select value={prefs.summary.time} disabled={busy} onChange={(event) => void save({ summaryTime: event.target.value }, "Saved")} className={cn(SELECT, "h-9.5")}>
+                    <span className="text-[12.5px] font-semibold text-ink-2">{t("At@@time")}</span>
+                    <select value={prefs.summary.time} disabled={busy} onChange={(event) => void save({ summaryTime: event.target.value }, "Saved")} className={cn(SELECT, "h-9")}>
                       {HOURS.map((hour) => (
                         <option key={hour} value={hour}>
                           {toLocaleDigits(hour, fmt)}
@@ -334,7 +334,7 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
                     </select>
                   </label>
                 </div>
-                <span className="flex items-center gap-1.5 text-[12.5px] text-ink-muted">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-ink-2">
                   <Clock className="size-3.5 text-emerald" aria-hidden="true" />
                   {t("Next one: {day} at {time}", { day: formatDay(nextSummary(), "EEEE, d MMMM yyyy", fmt), time: toLocaleDigits(prefs.summary.time, fmt) })}
                 </span>
@@ -343,7 +343,7 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
           </section>
 
           <section aria-labelledby="nt-w" className={cn(CARD, "overflow-hidden")}>
-            <h2 id="nt-w" className="px-5.5 pt-5 pb-3 text-[17px] font-semibold text-ink">
+            <h2 id="nt-w" className="px-5.5 pt-4.5 pb-1.5 text-[16px] leading-[1.35] font-semibold text-ink">
               {t("Where we send")}
             </h2>
             {[
@@ -351,17 +351,17 @@ export function NotificationsPageClient({ initial, today, reminderProps }: { ini
               { Icon: MessageSquare, label: "Phone for SMS", value: page.destinations.phone ?? t("No phone added yet") },
               { Icon: Smartphone, label: "Push", value: page.destinations.devices.length ? t("{count} devices", { count: formatCount(page.destinations.devices.length, fmt) }) : t("No device yet") },
             ].map((row) => (
-              <div key={row.label} className="flex items-center gap-3 border-t border-divider px-5.5 py-2.5">
-                <span className="flex size-8 items-center justify-center rounded-[8px] border border-line-card text-ink-soft">
+              <div key={row.label} className="flex items-center gap-3 border-t border-sunken px-5.5 py-2.5">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-page text-ink-2">
                   <row.Icon className="size-4" aria-hidden="true" />
                 </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="text-caption text-ink-muted">{t(row.label)}</span>
-                  <span className="truncate text-body font-semibold text-ink">{row.value}</span>
+                <span className="flex min-w-0 flex-col gap-px">
+                  <span className="text-[12px] text-ink-muted">{t(row.label)}</span>
+                  <span className="truncate text-[13.5px] font-semibold text-ink">{row.value}</span>
                 </span>
               </div>
             ))}
-            <div className="flex flex-col gap-3 border-t border-divider px-5.5 pt-3 pb-5">
+            <div className="flex flex-col gap-3 border-t border-sunken px-5.5 pt-3 pb-4.5">
               <Link href="/settings/profile" className="inline-flex items-center gap-1 text-small font-semibold text-emerald hover:underline">
                 {t("Change them in Profile")}
                 <ArrowRight className="size-3.5" aria-hidden="true" />

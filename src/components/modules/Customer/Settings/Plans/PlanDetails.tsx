@@ -93,7 +93,7 @@ export function WaysToPayCard({ online }: { online: boolean }) {
         const Icon = way.icon;
         return (
           <div key={way.key} className="flex gap-3 rounded-[14px] bg-strip p-3">
-            <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-xl [&_svg]:size-4.75", way.tile)}>
+            <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-[11px] [&_svg]:size-4.75", way.tile)}>
               <Icon strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="flex min-w-0 flex-col gap-1">

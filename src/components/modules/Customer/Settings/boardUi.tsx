@@ -21,7 +21,7 @@ export function SmallSwitch({ on, label, disabled, title, onClick }: { on: boole
 export function BoardSegment<T extends string>({ value, options, label, disabled, onChange, className }: { value: T; options: { value: T; label: string }[]; label: string; disabled?: boolean; onChange: (value: T) => void; className?: string }) {
   const { t } = useLocale();
   return (
-    <div role="radiogroup" aria-label={label} className={cn("flex shrink-0 gap-0.5 self-start rounded-full bg-surface-sunken p-[3px]", disabled && "opacity-50", className)}>
+    <div role="radiogroup" aria-label={label} className={cn("flex shrink-0 gap-0.5 self-start rounded-full bg-page p-[3px]", disabled && "opacity-50", className)}>
       {options.map((option) => (
         <button
           key={option.value}
@@ -30,7 +30,7 @@ export function BoardSegment<T extends string>({ value, options, label, disabled
           aria-checked={value === option.value}
           disabled={disabled}
           onClick={() => value !== option.value && onChange(option.value)}
-          className={cn("h-8 rounded-full px-3.25 text-small whitespace-nowrap disabled:cursor-not-allowed", value === option.value ? "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(18,32,29,0.10)] dark:bg-surface-raised" : "font-medium text-ink-soft hover:text-ink")}
+          className={cn("h-8 rounded-full px-3.25 text-small whitespace-nowrap disabled:cursor-not-allowed", value === option.value ? "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(18,32,29,0.10)] dark:bg-surface-raised" : "font-medium text-ink-2 hover:text-ink")}
         >
           {t(option.label)}
         </button>
@@ -48,7 +48,7 @@ export function CheckChip({ on, label, disabled, onClick }: { on: boolean; label
       aria-checked={on}
       disabled={disabled}
       onClick={onClick}
-      className={cn("inline-flex h-8.5 items-center gap-1.75 rounded-full border pr-3 pl-2 text-small font-medium whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50", on ? "border-primary bg-mint-50 text-ink" : "border-input bg-surface text-ink-2")}
+      className={cn("inline-flex h-8.5 items-center gap-1.75 rounded-full border pr-3 pl-2 text-small font-medium whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50", on ? "border-primary bg-soft-check text-ink" : "border-input bg-surface text-ink-2")}
     >
       <span aria-hidden="true" className={cn("flex size-4 items-center justify-center rounded-[5px] border-[1.5px]", on ? "border-primary bg-primary text-white" : "border-ink-faint bg-surface")}>
         {on && (

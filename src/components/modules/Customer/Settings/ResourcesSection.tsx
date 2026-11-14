@@ -60,7 +60,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
 
   const pointer = (href: string, Icon: LucideIcon, title: string, body: string) => (
     <Link href={href} className={cn(CARD, "flex items-center gap-3.5 px-5 py-4 hover:border-primary/40")}>
-      <span className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-surface-sunken text-ink-soft">
+      <span className="flex size-9.5 shrink-0 items-center justify-center rounded-[11px] bg-surface-sunken text-ink-soft">
         <Icon className="size-4.5" aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -72,7 +72,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
   );
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="gap-5.5 leading-[normal] md:pt-7 md:pb-10">
       <div className="flex flex-col gap-1">
         <SettingsBack />
         <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Resources & legal")}</h1>
@@ -104,7 +104,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
                 const { Icon, tile } = GUIDE_LOOK[guide.faqId];
                 return (
                   <li key={guide.title}>
-                    <Link href={`/settings/help?open=${guide.faqId}`} className="flex h-full flex-col gap-2 rounded-xl border border-line-card p-4 hover:border-primary/40 hover:shadow-card">
+                    <Link href={`/settings/help?open=${guide.faqId}`} className="flex h-full flex-col gap-2 rounded-[12px] border border-line-card p-4 hover:border-primary/40 hover:shadow-card">
                       <span className="flex items-start justify-between gap-2">
                         <span className={cn("flex size-9.5 items-center justify-center rounded-[10px]", tile)}>
                           <Icon className="size-4.5" aria-hidden="true" />
@@ -160,7 +160,7 @@ export function ResourcesSection({ legalUpdated }: ResourcesSectionProps) {
         <div className="flex flex-col gap-4 xl:sticky xl:top-4">
           <section aria-labelledby="rs-about" className={cn(CARD, "flex flex-col gap-3.5 px-5 py-4.5")}>
             <div className="flex items-center gap-3">
-              <span className="flex size-10.5 shrink-0 items-center justify-center rounded-xl bg-mint-50 text-primary">
+              <span className="flex size-10.5 shrink-0 items-center justify-center rounded-[12px] bg-mint-50 text-primary">
                 <Leaf className="size-5" aria-hidden="true" />
               </span>
               <span className="flex min-w-0 flex-col">

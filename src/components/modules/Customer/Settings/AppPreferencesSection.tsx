@@ -53,8 +53,9 @@ const SHORTCUTS: { group: string; items: { keys: string[]; label: string }[] }[]
     group: "Anywhere",
     items: [
       { keys: ["Ctrl", "K"], label: "Open search and jump to a page" },
+      { keys: ["/"], label: "Put the cursor in search" },
       { keys: ["Esc"], label: "Close the open popup" },
-      { keys: ["?"], label: "Show this list (on this page)" },
+      { keys: ["?"], label: "Show this list" },
     ],
   },
   {
@@ -64,6 +65,15 @@ const SHORTCUTS: { group: string; items: { keys: string[]; label: string }[] }[]
       { keys: ["Enter"], label: "Save the open form" },
     ],
   },
+];
+// The board's key cap: 26px high, a 2px bottom edge.
+const KBD = "h-6.5 min-w-6.5 justify-center rounded-[7px] border-input border-b-2 px-1.75 py-0 text-[12px] font-semibold text-ink-2";
+// The four the card lists without opening the popup.
+const SHORT_KEYS: { keys: string[]; label: string }[] = [
+  { keys: ["Ctrl", "K"], label: "Search" },
+  { keys: ["N"], label: "New transaction" },
+  { keys: ["Esc"], label: "Close a popup" },
+  { keys: ["/"], label: "Focus search" },
 ];
 
 // The SettingsApp board: language and look, numbers and dates, money,
@@ -216,7 +226,7 @@ export function AppPreferencesSection({ today, businessId, wallets, hijri }: App
   ];
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="md:pt-7 md:pb-10 gap-5.5 leading-[normal]">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <SettingsBack />
@@ -253,7 +263,7 @@ export function AppPreferencesSection({ today, businessId, wallets, hijri }: App
                 row(
                   "Theme",
                   "Dark is easier on the eyes at night.",
-                  <div role="radiogroup" aria-label={t("Theme")} className="flex shrink-0 gap-0.5 self-start rounded-full bg-surface-sunken p-[3px] @xl:self-center">
+                  <div role="radiogroup" aria-label={t("Theme")} className="flex shrink-0 gap-0.5 self-start rounded-full bg-page p-[3px] @xl:self-center">
                     {(
                       [
                         ["light", "Light", <Sun key="s" />],
@@ -261,7 +271,7 @@ export function AppPreferencesSection({ today, businessId, wallets, hijri }: App
                         ["system", "Match device", <Monitor key="d" />],
                       ] as [ThemePreference, string, React.ReactNode][]
                     ).map(([value, label, icon]) => (
-                      <button key={value} type="button" role="radio" aria-checked={preference === value} onClick={() => setTheme(value)} className={cn("flex h-8 items-center gap-1.5 rounded-full px-3.25 text-small whitespace-nowrap [&_svg]:size-3.5", preference === value ? "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(18,32,29,0.10)] dark:bg-surface-raised" : "font-medium text-ink-soft hover:text-ink")}>
+                      <button key={value} type="button" role="radio" aria-checked={preference === value} onClick={() => setTheme(value)} className={cn("flex h-8 items-center gap-1.5 rounded-full px-3.25 text-small whitespace-nowrap [&_svg]:size-3.5", preference === value ? "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(18,32,29,0.10)] dark:bg-surface-raised" : "font-medium text-ink-2 hover:text-ink")}>
                         {icon}
                         {t(label)}
                       </button>
@@ -346,9 +356,9 @@ export function AppPreferencesSection({ today, businessId, wallets, hijri }: App
               {row(
                 "Currency",
                 "Smartly works in Bangladeshi taka only.",
-                <span className="inline-flex h-9.5 shrink-0 items-center gap-2.5 self-start rounded-[10px] border border-dashed border-line px-3 text-[13.5px] font-semibold text-ink @xl:self-center">
+                <span className="inline-flex h-9.5 shrink-0 items-center gap-2.5 self-start rounded-[10px] border border-dashed border-input bg-strip px-3 text-[13.5px] font-semibold text-ink-2 @xl:self-center">
                   {t("BDT · Taka ({sign})", { sign: takaSign(locale) })}
-                  <span className="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
+                  <span className="inline-flex h-5 items-center gap-1 rounded-full bg-page px-2 text-[11px] font-semibold text-ink-muted dark:bg-sunken">
                     <Lock className="size-3" aria-hidden="true" />
                     {t("Fixed")}
                   </span>
@@ -404,82 +414,96 @@ export function AppPreferencesSection({ today, businessId, wallets, hijri }: App
             </>,
           )}
 
-          <section aria-labelledby="sa-keys" className={cn(CARD, "flex flex-wrap items-center gap-4 px-5.5 py-4.5")}>
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-sunken text-ink-soft">
-              <Keyboard className="size-4.5" aria-hidden="true" />
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col gap-0.75">
-              <h2 id="sa-keys" className="text-[16px] leading-[1.35] font-semibold text-ink">
-                {t("Keyboard shortcuts")}
-              </h2>
-              <span className="text-small text-ink-muted">{t("Work faster on a computer.")}</span>
-            </span>
-            <Button variant="secondary" size="sm" className="h-9.5 px-3.75 text-[13.5px]" onClick={() => setKeysOpen(true)}>
-              {t("Show shortcuts")}
-            </Button>
+          <section aria-labelledby="sa-keys" className={cn(CARD, "overflow-hidden")}>
+            <div className="flex flex-wrap items-center gap-4 px-5.5 pt-4.5 pb-3.5">
+              <span className="flex min-w-0 flex-1 flex-col gap-0.75">
+                <h2 id="sa-keys" className="text-[16px] leading-[1.35] font-semibold text-ink">
+                  {t("Keyboard shortcuts")}
+                </h2>
+                <span className="text-[13px] leading-[1.5] text-ink-muted">{t("Work faster on a computer.")}</span>
+              </span>
+              <Button variant="secondary" className="h-9.5 gap-1.75 px-3.75 text-[13.5px]" onClick={() => setKeysOpen(true)}>
+                <Keyboard className="size-4" aria-hidden="true" />
+                {t("Show shortcuts")}
+              </Button>
+            </div>
+            <div className="grid border-t border-sunken @xl:grid-cols-2">
+              {SHORT_KEYS.map((item) => (
+                <div key={item.label} className="flex items-center gap-3 border-b border-sunken px-5.5 py-3">
+                  <span className="flex min-w-18.5 gap-1">
+                    {item.keys.map((key) => (
+                      <Kbd key={key} className={KBD}>{key}</Kbd>
+                    ))}
+                  </span>
+                  <span className="text-[13.5px] text-ink-2">{t(item.label)}</span>
+                </div>
+              ))}
+            </div>
           </section>
         </div>
 
         <div className="flex flex-col gap-4 xl:sticky xl:top-4">
-          <section aria-labelledby="sa-pv" className={cn(CARD, "flex flex-col gap-3 px-5 py-4.5")} aria-live="polite">
+          <section aria-labelledby="sa-pv" className={cn(CARD, "flex flex-col overflow-hidden")} aria-live="polite">
+            <div className="flex flex-col gap-0.75 px-5.5 pt-4.5 pb-2.5">
             <div className="flex items-center gap-2">
               <h2 id="sa-pv" className="text-[16px] leading-[1.35] font-semibold text-ink">
                 {t("Preview")}
               </h2>
-              <span className="inline-flex h-5 items-center gap-1 rounded-full bg-income-soft px-2 text-[11px] font-semibold text-income">
-                <span aria-hidden="true" className="size-1.5 rounded-full bg-income" />
+              <span className="inline-flex h-5 items-center gap-1 rounded-full bg-soft-wash px-2 text-[11px] font-semibold text-emerald">
+                <span aria-hidden="true" className="size-1.5 rounded-full bg-emerald" />
                 {t("Live")}
               </span>
             </div>
-            <span className="-mt-1.5 text-small text-ink-muted">{t("Changes here show up as you pick them.")}</span>
-            <div className="flex flex-col gap-1 rounded-xl bg-mint-50/60 px-4 py-3.5">
-              <span className="flex items-center gap-1.5 text-[12.5px] text-ink-muted">
+            <span className="text-[13px] leading-[1.5] text-ink-muted">{t("Changes here show up as you pick them.")}</span>
+            </div>
+            <div className="mx-5.5 flex flex-col gap-1 rounded-[14px] bg-soft-wash p-4">
+              <span className="flex items-center gap-1.5 text-[12.5px] text-ink-2">
                 {t("Total balance")}
                 <Eye className="size-3.5" aria-hidden="true" />
               </span>
-              <span className="text-[26px] leading-tight font-bold tracking-[-0.02em] text-ink tabular-nums">{lock.hide ? "•••••" : formatCurrency(123456.5, "BDT", fmt)}</span>
-              <span className="text-[12.5px] text-ink-muted">{t(lock.hide ? "Hidden when the app opens" : prefs.roundAmounts ? "Rounded to whole taka" : "With paisa")}</span>
+              <span className="text-[26px] font-bold tracking-[-0.02em] text-ink tabular-nums">{lock.hide ? "•••••" : formatCurrency(123456.5, "BDT", fmt)}</span>
+              <span className="text-[12px] text-ink-muted">{t(lock.hide ? "Hidden when the app opens" : prefs.roundAmounts ? "Rounded to whole taka" : "With paisa")}</span>
             </div>
-            <dl className="flex flex-col text-small">
+            <dl className="flex flex-col px-5.5 pt-1.5 pb-1">
               {[
                 ["Today", formatDay(today, "EEEE, d MMMM yyyy", fmt)],
                 ...(prefs.showHijri ? [["Hijri", hijri]] : []),
                 ["This week", t("{from} to {to}", { from: formatDay(weekFrom, "EEEE d MMMM", fmt), to: formatDay(weekTo, "EEEE d MMMM", fmt) })],
                 ["Financial year", t("{from} to {to}", { from: formatDay(fyFrom, "d MMMM yyyy", fmt), to: formatDay(fyTo, "d MMMM yyyy", fmt) })],
               ].map(([label, value], index) => (
-                <div key={label} className={cn("flex items-start justify-between gap-3 py-2.25", index > 0 && "border-t border-divider")}>
-                  <dt className="shrink-0 text-ink-muted">{t(label)}</dt>
-                  <dd className="text-right font-semibold text-ink">{value}</dd>
+                <div key={label} className={cn("flex items-baseline justify-between gap-3 py-2.5", index > 0 && "border-t border-dashed border-line")}>
+                  <dt className="shrink-0 text-[12.5px] text-ink-muted">{t(label)}</dt>
+                  <dd className="text-right text-[13.5px] font-semibold text-ink">{value}</dd>
                 </div>
               ))}
             </dl>
-            <div className="overflow-hidden rounded-xl border border-line-card">
-              <div className="flex items-center justify-between bg-strip px-3 py-2 text-[12px] font-semibold text-ink-muted">
+            <div className="mx-5.5 mt-1 mb-4.5 overflow-hidden rounded-[12px] border border-line">
+              <div className="flex items-center justify-between bg-strip px-3 py-1.75 text-[11.5px] font-semibold text-ink-muted">
                 <span>{t("Transactions")}</span>
                 <span>{t("{count} rows a page", { count: String(prefs.rowsPerPage) }) + (prefs.compactTables ? ` · ${t("compact")}` : "")}</span>
               </div>
               {sample.map((item) => (
-                <div key={item.name} className={cn("flex items-center gap-3 border-t border-divider px-3", prefs.compactTables ? "py-1.5" : "py-2.5")}>
+                <div key={item.name} className={cn("flex items-center gap-2.5 border-t border-sunken px-3 text-[13px]", prefs.compactTables ? "py-1.5" : "py-2.5")}>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-[13px] font-semibold text-ink">{t(item.name)}</span>
-                    <span className="truncate text-[11.5px] text-ink-muted">{`${item.meta} · ${formatDay(item.day, "d MMMM yyyy", fmt)}`}</span>
+                    <span className="truncate text-[11.5px] text-ink-faint">{`${item.meta} · ${formatDay(item.day, "d MMMM yyyy", fmt)}`}</span>
                   </span>
-                  <span className={cn("text-[13px] font-semibold tabular-nums", item.amount < 0 ? "text-expense" : "text-income")}>{(item.amount < 0 ? "−" : "") + formatCurrency(Math.abs(item.amount), "BDT", fmt)}</span>
+                  <span className={cn("text-[13px] font-semibold tabular-nums", item.amount < 0 ? "text-loss-ink" : "text-tint-green-ink")}>{(item.amount < 0 ? "−" : "") + formatCurrency(Math.abs(item.amount), "BDT", fmt)}</span>
                 </div>
               ))}
             </div>
           </section>
 
-          <section aria-labelledby="sa-rem" className={cn(CARD, "flex gap-3.5 px-5 py-4.5")}>
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-mint-50 text-primary">
+          <section aria-labelledby="sa-rem" className={cn(CARD, "flex items-start gap-3.5 px-5.5 py-4.5")}>
+            <span className="flex size-9.5 shrink-0 items-center justify-center rounded-[11px] bg-soft-wash text-income">
               <Bell className="size-4.5" aria-hidden="true" />
             </span>
             <span className="flex min-w-0 flex-col gap-1">
-              <h2 id="sa-rem" className="text-body font-semibold text-ink">
+              <h2 id="sa-rem" className="text-[15px] leading-[1.35] font-semibold text-ink">
                 {t("Looking for reminders?")}
               </h2>
-              <span className="text-[12.5px] leading-[1.5] text-ink-muted">{t("Budget, loan and savings reminders now live in Notifications, with email, SMS and quiet hours.")}</span>
-              <Link href="/settings/notifications" className="mt-0.5 inline-flex w-fit items-center gap-1.25 text-small font-semibold text-emerald hover:underline">
+              <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Budget, loan and savings reminders now live in Notifications, with email, SMS and quiet hours.")}</span>
+              <Link href="/settings/notifications" className="mt-1 inline-flex w-fit items-center gap-1.25 text-[13px] font-semibold text-emerald hover:underline">
                 {t("Open Notifications")}
                 <ArrowRight className="size-3.5" aria-hidden="true" />
               </Link>
@@ -515,7 +539,7 @@ export function AppPreferencesSection({ today, businessId, wallets, hijri }: App
                 <span className="text-small text-ink">{t(item.label)}</span>
                 <span className="flex gap-1">
                   {item.keys.map((key) => (
-                    <Kbd key={key}>{key}</Kbd>
+                    <Kbd key={key} className={KBD}>{key}</Kbd>
                   ))}
                 </span>
               </div>

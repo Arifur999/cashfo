@@ -22,7 +22,7 @@ import { CARD } from "./boardUi";
 import { VerifyPhoneDialog } from "./VerifyPhoneDialog";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const TILE = "flex size-9.5 shrink-0 items-center justify-center rounded-[11px] [&_svg]:size-4.5";
+const TILE = "flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4.5";
 
 // The SettingsSecurity board's Recovery card: a recovery email (proved
 // with a code) that reset links go to as well, the recovery phone (the
@@ -104,18 +104,18 @@ export function RecoveryCard({ twoStepOn, codesLeft, onShowCodes }: { twoStepOn:
 
   return (
     <section id="ss-rec" aria-labelledby="ss-rec-h" className={cn(CARD, "scroll-mt-4 overflow-hidden")}>
-      <div className="flex flex-col gap-0.75 px-5.5 pt-4.5 pb-3.5">
-        <h2 id="ss-rec-h" className="text-[16px] leading-[1.35] font-semibold text-ink">
+      <div className="flex flex-col gap-0.5 px-5.5 py-4">
+        <h2 id="ss-rec-h" className="text-[16px] font-semibold text-ink">
           {t("Recovery")}
         </h2>
-        <p className="text-small leading-normal text-ink-muted">{t("Ways to get back in if you forget your password or lose your phone.")}</p>
+        <p className="text-[13px] text-ink-muted">{t("Ways to get back in if you forget your password or lose your phone.")}</p>
       </div>
       {rows.map((row) => (
-        <div key={row.key} className="flex flex-wrap items-center gap-3.5 border-t border-divider px-5.5 py-3">
-          <span className={cn(TILE, row.set ? "bg-emerald-soft text-emerald" : row.key === "codes" ? "bg-surface-sunken text-ink-soft" : "bg-warning-soft text-warning")}>{row.icon}</span>
+        <div key={row.key} className="flex flex-wrap items-center gap-3.5 border-t border-sunken px-5.5 py-3.25">
+          <span className={cn(TILE, row.set ? "bg-primary-soft text-income" : row.key === "codes" ? "bg-surface-sunken text-ink-soft" : "bg-warning-soft text-warning")}>{row.icon}</span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-body font-medium text-ink">{t(row.title)}</span>
-            <span className={cn("text-[12.5px] break-all", row.value || row.key === "codes" ? "text-ink-muted" : "text-warning-ink")}>{row.value ?? t(row.empty)}</span>
+            <span className={cn("text-[12.5px] break-all", row.value || row.key === "codes" ? "text-ink-muted" : "text-warning")}>{row.value ?? t(row.empty)}</span>
           </span>
           <span className="flex items-center gap-1">{row.action}</span>
         </div>

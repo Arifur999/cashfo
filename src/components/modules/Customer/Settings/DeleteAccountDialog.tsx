@@ -98,7 +98,7 @@ export function DeleteAccountDialog({ open, onClose, onDownload }: DeleteAccount
   if (scheduledFor) {
     return (
       <AlertDialog open={open} onOpenChange={(next) => !next && signOut()}>
-        <AlertDialogContent className="w-130 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-2xl border-0 bg-surface p-0 shadow-overlay ring-0">
+        <AlertDialogContent className="w-130 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 shadow-overlay ring-0">
           <div className="flex gap-3.5 px-6 pt-5.5 pb-5">
             <span className="flex size-10.5 shrink-0 items-center justify-center rounded-field bg-mint-50 text-emerald [&_svg]:size-5">
               <CircleCheck aria-hidden="true" />
@@ -127,7 +127,7 @@ export function DeleteAccountDialog({ open, onClose, onDownload }: DeleteAccount
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !isPending && onClose()}>
-      <AlertDialogContent className="w-130 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-2xl border-0 bg-surface p-0 shadow-overlay ring-0">
+      <AlertDialogContent className="w-130 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} noValidate className="flex max-h-[92vh] flex-col">
           <div className="relative flex gap-3.5 px-6 pt-5.5">
             <span className="flex size-10.5 shrink-0 items-center justify-center rounded-field bg-expense-soft text-expense-fill [&_svg]:size-5">

@@ -132,7 +132,7 @@ export function DoneView({ payment, plans }: { payment: CustomerPayment; plans: 
               <div className="grid gap-2.5 sm:grid-cols-2">
                 {tiles.map(({ href, icon: Icon, tone, title, sub }) => (
                   <Link key={title} href={href} className="flex items-center gap-3 rounded-[14px] border border-divider bg-strip px-3.5 py-3 text-ink hover:border-line">
-                    <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-xl", tone)}>
+                    <span className={cn("flex size-9.5 shrink-0 items-center justify-center rounded-[11px]", tone)}>
                       <Icon className="size-4.75" strokeWidth={2} aria-hidden="true" />
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">

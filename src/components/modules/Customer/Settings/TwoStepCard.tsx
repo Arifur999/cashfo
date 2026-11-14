@@ -23,7 +23,7 @@ const BACKUP_CODES = 10;
 
 // A method row's square: the board's 36px strip-grey tile with a line.
 const METHOD_TILE = "flex size-9 shrink-0 items-center justify-center rounded-field border border-line bg-strip text-ink-soft [&_svg]:size-4";
-const ROW = "flex flex-wrap items-center gap-x-3.5 gap-y-2 border-t border-divider px-4 py-3.5 md:px-5.5";
+const ROW = "flex flex-wrap items-center gap-x-3.5 gap-y-2 border-t border-sunken px-4 py-3.5 md:px-5.5";
 
 interface TwoStepCardProps {
   // Read by the page; null when it couldn't be read (the card offers Try again).
@@ -103,14 +103,14 @@ export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
           <Smartphone aria-hidden="true" />
         </span>
         <span className="flex min-w-48 flex-1 flex-col gap-0.5">
-          <span className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
+          <span className="flex flex-wrap items-center gap-2 text-body font-medium text-ink">
             {t("Authenticator app")}
             {enabled ? (
               <Chip tone="income" size="sm">
                 {status?.enabledAt ? t("On since {date}", { date: formatDate(status.enabledAt, "d MMM yyyy", fmt) }) : t("On@@switch")}
               </Chip>
             ) : (
-              <Chip tone="mint" size="sm">
+              <Chip tone="mint" size="sm" className="text-income">
                 {t("Recommended")}
               </Chip>
             )}
@@ -135,7 +135,7 @@ export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
               <KeyRound aria-hidden="true" />
             </span>
             <span className="flex min-w-48 flex-1 flex-col gap-0.5">
-              <span className="text-body font-semibold text-ink">{t("Backup codes")}</span>
+              <span className="text-body font-medium text-ink">{t("Backup codes")}</span>
               <span className={cn("text-[12.5px] leading-[1.45]", codesLeft <= 3 ? "text-warning" : "text-ink-muted")}>
                 {t("{left} of {total} left. Each one gets you in once if you lose your phone.", { left: formatCount(codesLeft, fmt), total: formatCount(BACKUP_CODES, fmt) })}
               </span>
@@ -172,7 +172,7 @@ export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
                         <span className="flex flex-wrap items-center gap-2 text-small font-semibold text-ink">
                           {label}
                           {device.current && (
-                            <Chip tone="mint" size="sm">
+                            <Chip tone="mint" size="sm" className="text-income">
                               {t("This computer")}
                             </Chip>
                           )}
@@ -200,7 +200,7 @@ export function TwoStepCard({ initialStatus }: TwoStepCardProps) {
           <Mail aria-hidden="true" />
         </span>
         <span className="flex min-w-48 flex-1 flex-col gap-0.5">
-          <span className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
+          <span className="flex flex-wrap items-center gap-2 text-body font-medium text-ink">
             {t("Code by email")}
             <Chip tone="neutral" size="sm">
               {t("Coming soon")}

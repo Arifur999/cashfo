@@ -52,7 +52,7 @@ export function OrderSummary({ planName, period, price, discount, total, coupon,
         {t("Order summary")}
       </h2>
       <div className="flex items-center gap-3 rounded-[14px] bg-emerald-wash p-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-forest text-mint-200">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-forest text-mint-200">
           <Crown className="size-4.75" strokeWidth={2} aria-hidden="true" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -67,7 +67,7 @@ export function OrderSummary({ planName, period, price, discount, total, coupon,
           {t("Promo code")}
         </label>
         {coupon ? (
-          <div className="flex h-11 items-center gap-2.5 rounded-xl border border-mint-200 bg-emerald-soft pr-1.5 pl-3">
+          <div className="flex h-11 items-center gap-2.5 rounded-[10px] border border-mint-200 bg-emerald-soft pr-1.5 pl-3">
             <Tag className="size-4 text-brand-ink" strokeWidth={2} aria-hidden="true" />
             <span className="flex min-w-0 flex-1 flex-col leading-[1.2]">
               <b className="text-[13.5px] tracking-[0.03em] text-brand-ink" lang="en">
@@ -103,7 +103,7 @@ export function OrderSummary({ planName, period, price, discount, total, coupon,
                 aria-describedby={couponError ? "checkout-code-error" : undefined}
                 disabled={readOnly}
                 className={cn(
-                  "h-11 min-w-0 flex-1 rounded-xl border bg-surface px-3.5 text-[14.5px] font-semibold tracking-[0.02em] text-ink outline-none placeholder:font-medium placeholder:text-ink-faint focus-visible:ring-2 focus-visible:ring-focus-ring/40 disabled:opacity-60",
+                  "h-11 min-w-0 flex-1 rounded-[10px] border bg-surface px-3.5 text-[14.5px] font-semibold tracking-[0.02em] text-ink outline-none placeholder:font-medium placeholder:text-ink-faint focus-visible:ring-2 focus-visible:ring-focus-ring/40 disabled:opacity-60",
                   couponError ? "border-expense-fill" : "border-input",
                 )}
               />
@@ -111,7 +111,7 @@ export function OrderSummary({ planName, period, price, discount, total, coupon,
                 type="button"
                 onClick={apply}
                 disabled={readOnly || checkingCoupon}
-                className="flex h-11 items-center gap-2 rounded-xl border border-input bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-surface-sunken disabled:opacity-60"
+                className="flex h-11 items-center gap-2 rounded-[10px] border border-input bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-surface-sunken disabled:opacity-60"
               >
                 {checkingCoupon && <Loader size={14} label={t("Loading...")} />}
                 {t("Apply")}

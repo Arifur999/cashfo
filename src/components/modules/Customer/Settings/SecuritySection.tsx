@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, KeyRound, Laptop, MailWarning, Smartphone, X } from "lucide-react";
+import { Check, KeyRound, Laptop, Smartphone, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -36,7 +36,6 @@ import { SettingSwitch } from "./SettingSwitch";
 import { SupportAccessCard } from "./SupportAccessCard";
 import { TwoStepCard } from "./TwoStepCard";
 import { useAppLock } from "./useAppLock";
-import { useVerifyEmail } from "./useVerifyEmail";
 
 // Rows shown at first, and added by each "Show more".
 const DEVICE_STEP = 6;
@@ -47,7 +46,7 @@ const CARD_HEAD = "px-4 py-4 md:px-5.5";
 const ROW_X = "px-4 md:px-5.5";
 
 const ALERTS: { key: keyof Omit<SecurityAlerts, "emailReady">; title: string; body: string }[] = [
-  { key: "alertNewDevice", title: "Email me when a new device signs in", body: "You will know straight away if someone else uses your password." },
+  { key: "alertNewDevice", title: "Tell me when a new device signs in", body: "You will know straight away if someone else uses your password." },
   { key: "alertFailedTries", title: "Warn me about unusual sign-in tries", body: "For example, many wrong passwords in a row." },
   { key: "askCodeBeforeReset", title: "Ask for a code before a password reset", body: "So nobody can reset your password with just your email." },
 ];
@@ -89,8 +88,7 @@ interface SecuritySectionProps {
 }
 
 // Password, two-step sign-in, support access, the devices signed in, the
-// last tries and the alerts (design-v4 SettingsSecurity). An address not
-// verified yet is asked for first: the alerts and reset links go there.
+// last tries and the alerts (SettingsSecurity board).
 export function SecuritySection({ initialSessions, initialHistory, initialTwoStep, initialAlerts }: SecuritySectionProps) {
   const { t, fmt } = useLocale();
   const { user } = useAuth();
@@ -112,8 +110,6 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
   const hasPassword = user.hasPassword !== false;
   const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
   const [isSending, startSending] = useTransition();
-  const verify = useVerifyEmail();
-  const verified = user.emailVerified ?? Boolean(user.emailVerifiedAt);
   const appLock = useAppLock(user.id);
 
   // The page read again (after a password change, a language switch): its
@@ -226,7 +222,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
   }
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="gap-5.5 leading-[normal] md:pt-7 md:pb-10">
       <div className="flex flex-col gap-1">
         <SettingsBack />
         <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Security")}</h1>
@@ -234,29 +230,6 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
       </div>
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
     <div className="@container flex min-w-0 flex-col gap-4.5">
-      {!verified && (
-        <Card padding="none" className="flex flex-wrap items-center gap-3.5 border-warning-line bg-warning-50 px-4 py-4 md:px-5.5">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-warning-soft text-warning [&_svg]:size-5">
-            <MailWarning aria-hidden="true" />
-          </span>
-          <span className="flex min-w-48 flex-1 flex-col gap-0.5">
-            <h2 className="flex flex-wrap items-center gap-2 text-title font-semibold text-ink">
-              {t("Verify your email")}
-              <Chip tone="warning" className="h-4.5 px-2 text-[11.5px]">
-                {t("Not verified")}
-              </Chip>
-            </h2>
-            <span className="text-small leading-normal text-warning-ink" aria-live="polite">
-              {verify.sentTo ? t("We sent a link to {email}. Open it to verify your email.", { email: verify.sentTo }) : t("Security alerts and password reset links go to {email}. Confirm it's yours.", { email: user.email })}
-            </span>
-          </span>
-          <Button variant="secondary" size="sm" onClick={verify.send} disabled={verify.sending || readOnly} aria-busy={verify.sending || undefined} className="max-sm:w-full pointer-coarse:h-11">
-            {verify.sending && <Loader size={14} />}
-            {t(verify.sentTo ? "Send it again" : "Send a verification email")}
-          </Button>
-        </Card>
-      )}
-
       <Card id="ss-pass" padding="none" className="flex scroll-mt-4 flex-wrap items-center gap-3.5 px-4 py-4.5 md:px-5.5">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-emerald-soft text-emerald [&_svg]:size-5">
           <KeyRound aria-hidden="true" />
@@ -318,7 +291,7 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
                     <span className="flex min-w-0 items-center gap-2 text-body font-semibold text-ink">
                       <span className="truncate">{deviceLabelText(session.deviceLabel, t)}</span>
                       {session.isCurrent && (
-                        <Chip tone="mint" size="sm">
+                        <Chip tone="mint" size="sm" className="text-income">
                           {t("This device")}
                         </Chip>
                       )}
@@ -365,12 +338,12 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
               return (
                 // From 640px of section the device and the time get columns
                 // of their own; narrower they sit under the result.
-                <li key={entry.id} className={cn("grid min-h-11.5 grid-cols-[22px_minmax(0,1fr)] items-start gap-x-3 border-t border-divider py-1.5 text-[13.5px] tabular-nums @2xl:grid-cols-[22px_minmax(0,1fr)_160px_150px] @2xl:items-center", ROW_X, !entry.success && "bg-warning-50")}>
-                  <span className={cn("mt-px flex size-5.5 items-center justify-center rounded-full @2xl:mt-0", entry.success ? "bg-mint-50 text-emerald" : "bg-expense-soft text-expense")}>{entry.success ? <Check className="size-3" strokeWidth={3} aria-hidden="true" /> : <X className="size-3" strokeWidth={3} aria-hidden="true" />}</span>
+                <li key={entry.id} className={cn("grid min-h-11.5 grid-cols-[26px_minmax(0,1fr)] items-start gap-x-3 border-t border-sunken py-1.5 text-[13.5px] tabular-nums @2xl:grid-cols-[26px_minmax(0,1fr)_170px_190px] @2xl:items-center", ROW_X, !entry.success && "bg-warning-50")}>
+                  <span className={cn("mt-px flex size-5.5 items-center justify-center rounded-full @2xl:mt-0", entry.success ? "bg-mint-50 text-income" : "bg-expense-soft text-loss-ink")}>{entry.success ? <Check className="size-3" strokeWidth={3} aria-hidden="true" /> : <X className="size-3" strokeWidth={3} aria-hidden="true" />}</span>
                   <span className="flex min-w-0 flex-col gap-px">
-                    <span className={cn("font-semibold", entry.success ? "text-ink" : "text-expense")}>{t(signInResult(entry))}</span>
+                    <span className={cn("font-semibold", entry.success ? "text-ink" : "text-loss-ink")}>{t(signInResult(entry))}</span>
                     {hasPassword && triedThePassword(entry) && (
-                      <span className="text-caption text-warning-ink">
+                      <span className="text-[12px] text-due-ink">
                         {t("Wasn't you?")}{" "}
                         <button type="button" onClick={() => setPasswordOpen(true)} disabled={readOnly} className="inline-flex items-center font-semibold underline pointer-coarse:min-h-11">
                           {t("Change your password")}
@@ -402,7 +375,10 @@ export function SecuritySection({ initialSessions, initialHistory, initialTwoSte
 
       <Card id="ss-alert" padding="none" className="scroll-mt-4 overflow-hidden">
         <div className={cn("flex items-center gap-2.5", CARD_HEAD)}>
-          <h2 className="flex-1 text-title font-semibold text-ink">{t("Alerts")}</h2>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <h2 className="text-title font-semibold text-ink">{t("Alerts")}</h2>
+            <span className="text-small text-ink-muted">{t("Sent to {email} and to the bell in the app.", { email: user.email })}</span>
+          </span>
           {alerts?.emailReady === false && (
             <Chip tone="neutral" className="h-5.5 px-2.25">
               {t("Email not on yet")}

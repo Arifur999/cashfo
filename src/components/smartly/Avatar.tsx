@@ -26,6 +26,9 @@ const TONES = {
   // The primary's tint with its own colour: design-v4's avatars (the sidebar's
   // profile row, the top bar's account button), teal in the Habit Tracker.
   soft: "bg-mint-50 text-emerald font-bold",
+  // The primary run darker on a slant with white initials: Settings › Profile's
+  // photo-less avatar (SettingsProfile board).
+  brand: "bg-linear-135 from-emerald to-brand-shade text-white font-bold",
   // Mint on the Night drawer.
   mint: "bg-mint-200 text-forest font-bold",
 } as const;

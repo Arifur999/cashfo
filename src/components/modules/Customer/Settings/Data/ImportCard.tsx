@@ -57,10 +57,10 @@ function DropZone({ onFile, onPick, disabled }: { onFile: (file: File) => void; 
         const file = event.dataTransfer.files[0];
         if (file && !disabled) onFile(file);
       }}
-      className={cn("flex flex-col items-center gap-2 rounded-[14px] border-[1.5px] border-dashed p-5.5 text-center transition-colors", disabled ? "cursor-not-allowed border-line bg-surface-sunken opacity-60" : "cursor-pointer border-mint-200 bg-mint-50/40 hover:border-primary hover:bg-mint-50", over && "border-primary bg-mint-50")}
+      className={cn("flex flex-col items-center gap-2 rounded-[14px] border-[1.5px] border-dashed p-5.5 text-center transition-colors", disabled ? "cursor-not-allowed border-line bg-surface-sunken opacity-60" : "cursor-pointer border-mint-200 bg-strip hover:border-primary hover:bg-primary-soft", over && "border-primary bg-primary-soft")}
     >
-      <span className="flex size-10.5 items-center justify-center rounded-xl border border-line bg-surface text-primary">
-        <Upload className="size-4.5" aria-hidden="true" />
+      <span className="flex size-10.5 items-center justify-center rounded-[12px] border border-line bg-surface text-income">
+        <Upload className="size-5" aria-hidden="true" />
       </span>
       <span className="text-body font-semibold text-ink">{t("Drop a file here or click to choose")}</span>
       <span className="text-[12.5px] text-ink-muted">{t("CSV or XLSX, up to 5 MB")}</span>
@@ -235,7 +235,7 @@ export function ImportCard({ businessId, context, today, readOnly, onImported }:
         {step === 1 && (
           <>
             {file ? (
-              <div className="flex items-center gap-3 rounded-xl border border-line p-3.5">
+              <div className="flex items-center gap-3 rounded-[12px] border border-line p-3.5">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-income-soft text-[10.5px] font-bold text-income">{file.ext}</span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body font-semibold text-ink">{file.name}</span>
@@ -262,7 +262,7 @@ export function ImportCard({ businessId, context, today, readOnly, onImported }:
         {step === 2 && file && map && (
           <>
             <span className="text-[12.5px] leading-[1.45] text-ink-muted">{t("Tell us which column in your file holds each detail. Fields with * are needed.")}</span>
-            <div className="overflow-hidden rounded-xl border border-line-card">
+            <div className="overflow-hidden rounded-[12px] border border-line-card">
               <div className={cn("grid grid-cols-[110px_minmax(0,1fr)] gap-3 px-3.5 py-2 sm:grid-cols-[150px_200px_minmax(0,1fr)]", HEAD)}>
                 <span>{t("In Smartly")}</span>
                 <span>{t("Column in your file")}</span>
@@ -301,11 +301,11 @@ export function ImportCard({ businessId, context, today, readOnly, onImported }:
         {step === 3 && (
           <>
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="flex flex-col gap-0.75 rounded-xl border border-income/25 bg-income-soft/60 p-3">
+              <div className="flex flex-col gap-0.75 rounded-[12px] border border-income/25 bg-income-soft/60 p-3">
                 <span className="text-[24px] font-bold text-income">{formatCount(review.good.length, fmt)}</span>
                 <span className="text-[12.5px] text-income">{t("rows to add")}</span>
               </div>
-              <div className={cn("flex flex-col gap-0.75 rounded-xl border p-3", review.bad.length > 0 ? "border-expense/25 bg-expense-soft/60 text-expense" : "border-line-card bg-strip text-ink-muted")}>
+              <div className={cn("flex flex-col gap-0.75 rounded-[12px] border p-3", review.bad.length > 0 ? "border-expense/25 bg-expense-soft/60 text-expense" : "border-line-card bg-strip text-ink-muted")}>
                 <span className="text-[24px] font-bold">{formatCount(review.bad.length, fmt)}</span>
                 <span className="text-[12.5px]">{t("rows with errors")}</span>
               </div>
@@ -317,7 +317,7 @@ export function ImportCard({ businessId, context, today, readOnly, onImported }:
               </>
             )}
             {review.good.length > 0 && (
-              <div className="overflow-hidden rounded-xl border border-line-card">
+              <div className="overflow-hidden rounded-[12px] border border-line-card">
                 <div className={cn("px-3.5 py-2", HEAD)}>{t("First rows to add")}</div>
                 {review.good.slice(0, 3).map((row) => (
                   <div key={row.row} className="grid grid-cols-[110px_minmax(0,1fr)_110px] items-center gap-2.5 border-t border-divider px-3.5 py-2 text-[13px] sm:grid-cols-[130px_minmax(0,1fr)_110px]">
@@ -333,7 +333,7 @@ export function ImportCard({ businessId, context, today, readOnly, onImported }:
 
         {step === 4 && result && (
           <div className="flex flex-col items-center gap-2.5 px-0 pt-3 pb-1 text-center">
-            <span className={cn("flex size-13 items-center justify-center rounded-2xl", result.failed && result.added === 0 ? "bg-expense-soft text-expense" : "bg-income-soft text-income")}>
+            <span className={cn("flex size-13 items-center justify-center rounded-[14px]", result.failed && result.added === 0 ? "bg-expense-soft text-expense" : "bg-income-soft text-income")}>
               <Check className="size-6" strokeWidth={2.4} aria-hidden="true" />
             </span>
             <span className="text-[18px] font-semibold text-ink">{t("{count} transactions added", { count: formatCount(result.added, fmt) })}</span>
@@ -360,7 +360,7 @@ export function ImportCard({ businessId, context, today, readOnly, onImported }:
 function ProblemList({ problems }: { problems: ImportProblem[] }) {
   const { t, fmt } = useLocale();
   return (
-    <div className="overflow-hidden rounded-xl border border-expense/30">
+    <div className="overflow-hidden rounded-[12px] border border-expense/30">
       {problems.slice(0, 5).map((problem, index) => (
         <div key={`${problem.row}-${index}`} className="flex gap-3 border-t border-expense/15 bg-expense-soft/30 px-3.5 py-2.25 text-[13px] first:border-t-0">
           <span className="w-16 shrink-0 font-semibold text-expense">{t("Row {n}", { n: formatCount(problem.row, fmt) })}</span>

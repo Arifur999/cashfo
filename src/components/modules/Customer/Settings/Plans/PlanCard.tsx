@@ -62,7 +62,7 @@ export function PlanCard({ card }: { card: PlanCardModel }) {
       )}
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-2.5">
-          <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl [&_svg]:size-5", current ? "bg-mint-200/16 text-mint-200" : TILES[card.tone])}>
+          <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-5", current ? "bg-mint-200/16 text-mint-200" : TILES[card.tone])}>
             <Icon strokeWidth={2} aria-hidden="true" />
           </span>
           <span className="flex min-w-0 flex-col gap-px">

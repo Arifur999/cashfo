@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, ExternalLink, Globe, Lightbulb, Mail, MapPin, MessageCircle, MessagesSquare, Phone } from "lucide-react";
+import { Clock, Globe, Lightbulb, Mail, MapPin, MessageCircle, MessagesSquare, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 import Kbd from "@/components/smartly/Kbd";
 import { clockIn, companyTagline, DAY_NAME, officeDays, officeState, telHref, webHref, whatsappHref, type HelpCompany } from "@/lib/customer/helpPage";
@@ -17,7 +17,7 @@ const FacebookMark = () => (
     <path d="M14 8.5V6.6c0-.8.5-1.1 1.2-1.1H17V2h-2.6C11.6 2 10.5 3.9 10.5 6.4v2.1H8V12h2.5v10H14V12h2.6l.4-3.5z" />
   </svg>
 );
-const YoutubeMark = () => (
+export const YoutubeMark = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className="text-brand-youtube">
     <rect x="2" y="5" width="20" height="14" rx="4" fill="currentColor" />
     <path d="M10 9v6l5.2-3z" className="fill-white" />
@@ -52,8 +52,8 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
         company.whatsapp && { icon: <MessageCircle />, tone: "bg-income-soft text-income", label: "WhatsApp", value: company.whatsapp, href: whatsappHref(company.whatsapp), action: "Chat", external: true },
         company.email && { icon: <Mail />, tone: "bg-tint-blue text-tint-blue-ink", label: "Email", value: company.email, href: `mailto:${company.email}`, action: "Write" },
         company.openDays.length > 0 && { icon: <Clock />, tone: "bg-warning-soft text-warning", label: "Office hours", value: daysText, sub: t("{from} to {to} (Dhaka time)", { from: toLocaleDigits(clock(company.opensAt), fmt), to: toLocaleDigits(clock(company.closesAt), fmt) }) },
-        company.headOffice && { icon: <MapPin />, tone: "bg-surface-sunken text-ink-soft", label: "Head office", value: company.headOffice },
-        company.dhakaOffice && { icon: <MapPin />, tone: "bg-surface-sunken text-ink-soft", label: "Dhaka office", value: company.dhakaOffice },
+        company.headOffice && { icon: <MapPin />, tone: "bg-page text-ink-2", label: "Head office", value: company.headOffice, place: true },
+        company.dhakaOffice && { icon: <MapPin />, tone: "bg-page text-ink-2", label: "Dhaka office", value: company.dhakaOffice, place: true },
       ].filter(Boolean)
     : [];
   const links = company
@@ -68,22 +68,22 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
     <div className="flex flex-col gap-4 xl:sticky xl:top-4">
       {company && (
         <section aria-labelledby="hp-co" className={cn(CARD, "overflow-hidden")}>
-          <div className="flex flex-col gap-3 px-5 pt-4.5 pb-4">
-            <h2 id="hp-co" className="text-[16px] leading-[1.35] font-semibold text-ink">
+          <div className="flex flex-col gap-2.5 px-4.5 pt-4 pb-3">
+            <h2 id="hp-co" className="text-[16px] font-semibold text-ink">
               {t("Contact the company")}
             </h2>
             <div className="flex items-center gap-3">
-              <span className="flex size-10.5 shrink-0 items-center justify-center rounded-xl bg-primary text-[17px] font-bold text-white">{company.name.slice(0, 1).toUpperCase()}</span>
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate text-body-lg font-semibold text-ink">{company.name}</span>
+              <span className="flex size-10.5 shrink-0 items-center justify-center rounded-[12px] bg-primary text-[18px] font-bold text-white">{company.name.slice(0, 1).toUpperCase()}</span>
+              <span className="flex min-w-0 flex-col gap-px">
+                <span className="truncate text-[15px] font-semibold text-ink">{company.name}</span>
                 {tagline && <span className="text-[12.5px] leading-[1.4] text-ink-muted">{tagline}</span>}
               </span>
             </div>
             {state && company.openDays.length > 0 && (
-              <span className={cn("inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold", state.open ? "bg-income-soft text-income" : "bg-expense-soft text-expense")}>
-                <span aria-hidden="true" className={cn("size-1.5 rounded-full", state.open ? "bg-income" : "bg-expense")} />
+              <span className={cn("inline-flex h-7 w-fit items-center gap-1.75 rounded-full px-2.75 text-[12.5px] font-semibold whitespace-nowrap", state.open ? "bg-income-soft text-income" : "bg-expense-soft text-expense")}>
+                <span aria-hidden="true" className={cn("size-1.75 rounded-full", state.open ? "bg-income" : "bg-expense")} />
                 {t(state.open ? "Open now" : "Closed now")}
-                <span className="font-normal">
+                <span className="font-medium">
                   {" · "}
                   {state.open
                     ? t("closes at {time}", { time: toLocaleDigits(clock(state.closesAt), fmt) })
@@ -101,15 +101,15 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
           {rows.map(
             (row) =>
               row && (
-                <div key={row.label} className="flex items-start gap-3 border-t border-divider px-5 py-3">
+                <div key={row.label} className={cn("flex gap-3 border-t border-sunken px-4.5", "href" in row && row.href ? "items-center py-2.5" : "items-start py-3")}>
                   <span className={cn("flex size-8.5 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-4", row.tone)}>{row.icon}</span>
-                  <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="flex min-w-0 flex-1 flex-col gap-px">
                     <span className="text-[12px] text-ink-muted">{t(row.label)}</span>
-                    <span className="text-body font-semibold break-words text-ink">{row.value}</span>
-                    {"sub" in row && row.sub && <span className="text-small text-ink-2">{row.sub}</span>}
+                    <span className={cn("break-words text-ink", "place" in row && row.place ? "text-[13.5px] leading-[1.45] font-medium" : "text-body font-semibold")}>{row.value}</span>
+                    {"sub" in row && row.sub && <span className="text-[13px] text-ink-2">{row.sub}</span>}
                   </span>
                   {"href" in row && row.href && (
-                    <a href={row.href} {...("external" in row && row.external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="mt-2 shrink-0 text-small font-semibold text-emerald hover:underline">
+                    <a href={row.href} {...("external" in row && row.external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="shrink-0 text-[12.5px] font-semibold whitespace-nowrap text-emerald hover:underline">
                       {t(row.action)}
                     </a>
                   )}
@@ -117,11 +117,11 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
               ),
           )}
           {links.length > 0 && (
-            <div className="flex flex-wrap gap-2 border-t border-divider px-5 py-3.5">
+            <div className="flex gap-2 border-t border-sunken px-4.5 py-3">
               {links.map(
                 (link) =>
                   link && (
-                    <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="inline-flex h-8.5 items-center gap-1.5 rounded-[10px] border border-line px-3 text-small font-semibold text-ink-2 hover:bg-surface-sunken [&_svg]:size-3.75">
+                    <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-line px-2 text-[12.5px] font-semibold text-ink-2 hover:bg-soft-hover [&_svg]:size-3.75">
                       {link.icon}
                       {t(link.label)}
                     </a>
@@ -130,35 +130,35 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
             </div>
           )}
           {(company.legalName || company.tradeLicence) && (
-            <div className="flex flex-col gap-0.5 border-t border-divider px-5 py-3 text-[12px] text-ink-muted">
-              <span>{[company.legalName, company.tradeLicence && t("Trade licence")].filter(Boolean).join(" · ")}</span>
+            <p className="border-t border-sunken px-4.5 pt-2.5 pb-3.5 text-[12px] leading-[1.5] text-ink-muted">
+              {[company.legalName, company.tradeLicence && t("Trade licence")].filter(Boolean).join(" · ")}{" "}
               {company.tradeLicence && <span className="font-mono text-ink-2">{company.tradeLicence}</span>}
-            </div>
+            </p>
           )}
         </section>
       )}
 
       {company && company.replyHours > 0 && (
-        <section aria-labelledby="hp-reply" className={cn(CARD, "flex gap-3.5 px-5 py-4.5")}>
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface-sunken text-ink-soft">
+        <section aria-labelledby="hp-reply" className={cn(CARD, "flex gap-3 px-4.5 py-4")}>
+          <span className="flex size-9.5 shrink-0 items-center justify-center rounded-[11px] bg-soft-wash text-income">
             <MessagesSquare className="size-4.5" aria-hidden="true" />
           </span>
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span id="hp-reply" className="text-[12.5px] text-ink-muted">
+          <span className="flex min-w-0 flex-col gap-0.75">
+            <span id="hp-reply" className="text-[13px] font-medium text-ink-muted">
               {t("Average reply time")}
             </span>
-            <span className="text-[20px] font-bold text-ink">{t(company.replyHours === 1 ? "About {count} hour" : "About {count} hours", { count: formatCount(company.replyHours, fmt) })}</span>
+            <span className="text-[20px] font-bold tracking-[-0.01em] text-ink">{t(company.replyHours === 1 ? "About {count} hour" : "About {count} hours", { count: formatCount(company.replyHours, fmt) })}</span>
             <span className="text-[12.5px] leading-[1.5] text-ink-muted">{t("For the first reply, during office hours. Urgent messages are answered first.")}</span>
           </span>
         </section>
       )}
 
-      <section aria-labelledby="hp-idea" className={cn(CARD, "flex gap-3.5 px-5 py-4.5")}>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-warning-soft text-warning">
+      <section aria-labelledby="hp-idea" className={cn(CARD, "flex gap-3 p-4")}>
+        <span className="flex size-8.5 shrink-0 items-center justify-center rounded-[10px] bg-warning-soft text-warning">
           <Lightbulb className="size-4.5" aria-hidden="true" />
         </span>
-        <span className="flex min-w-0 flex-col gap-1">
-          <h2 id="hp-idea" className="text-body font-semibold text-ink">
+        <span className="flex min-w-0 flex-col items-start gap-1.5">
+          <h2 id="hp-idea" className="text-[14.5px] font-semibold text-ink">
             {t("Have an idea?")}
           </h2>
           <span className="text-[12.5px] leading-[1.5] text-ink-muted">{t("Tell us what would make Smartly better for you.")}</span>
@@ -169,20 +169,16 @@ export function HelpCompanyCards({ company, clock: initialClock, onIdea }: { com
       </section>
 
       {/* The shortcuts need a keyboard: a phone or tablet has none to press. */}
-      <section aria-labelledby="hp-keys" className={cn(CARD, "flex flex-col gap-2.5 px-5 py-4.5 pointer-coarse:hidden")}>
-        <h2 id="hp-keys" className="text-body font-semibold text-ink">
+      <section aria-labelledby="hp-keys" className={cn(CARD, "flex flex-col gap-2.5 p-4 pointer-coarse:hidden")}>
+        <h2 id="hp-keys" className="text-[14.5px] font-semibold text-ink">
           {t("Keyboard shortcuts")}
         </h2>
         {[...SHORTCUTS.slice(0, 1), { what: "Search help", key: "/" }, ...SHORTCUTS.slice(1)].map((shortcut) => (
-          <span key={shortcut.key} className="flex items-center justify-between gap-3 text-small text-ink-2">
+          <span key={shortcut.key} className="flex items-center justify-between gap-2.5 text-[13px] text-ink-2">
             {t(shortcut.what)}
-            <Kbd className="rounded-[6px] border-b-2 bg-strip font-sans text-caption font-semibold text-ink">{shortcut.key}</Kbd>
+            <Kbd className="rounded-[6px] border-b-2 bg-strip px-2 font-sans text-[12px] font-semibold text-ink">{shortcut.key}</Kbd>
           </span>
         ))}
-        <a href="/faq" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex w-fit items-center gap-1 text-small font-semibold text-emerald hover:underline">
-          {t("More answers in the FAQ")}
-          <ExternalLink className="size-3.5" aria-hidden="true" />
-        </a>
       </section>
     </div>
   );
