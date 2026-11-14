@@ -24,6 +24,9 @@ export interface InvestmentEntry {
 export interface Investment {
   id: string;
   name: string;
+  // Where the money went (company, bank or person); missing from a backend
+  // before it.
+  organisation?: string | null;
   kind: InvestmentKind;
   startDate: string;
   frequency: InvestmentFrequency;
@@ -48,6 +51,7 @@ export interface Investment {
 // New investment and Edit investment.
 export interface InvestmentInput {
   name: string;
+  organisation: string | null;
   kind: InvestmentKind;
   amount: number;
   startDate: string;

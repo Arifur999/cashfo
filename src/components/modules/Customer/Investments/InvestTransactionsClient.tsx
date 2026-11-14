@@ -27,7 +27,7 @@ export function InvestTransactionsClient() {
   const needle = q.trim().toLowerCase();
   const rows = base
     .filter((row) => entryInTab(row.entry, tab))
-    .filter((row) => !needle || `${row.investment.name} ${row.entry.note ?? ""} ${walletName(row.entry.accountId)}`.toLowerCase().includes(needle));
+    .filter((row) => !needle || `${row.investment.name} ${row.entry.note ?? ""} ${walletName(row.entry.accountId)} ${row.investment.organisation ?? ""}`.toLowerCase().includes(needle));
   const profit = sumOf(rows, ["PROFIT"]);
   const invested = sumOf(rows, ["INVEST", "ADD"]);
   const back = sumOf(rows, ["BACK"]);
@@ -93,6 +93,11 @@ export function InvestTransactionsClient() {
                     <Link href={statementHref(investment.id)} data-i18n-skip="" className={cn(NAME_LINK, "font-semibold")}>
                       {investment.name}
                     </Link>
+                    {investment.organisation && (
+                      <span data-i18n-skip="" className="truncate text-[12px] text-ink-muted">
+                        {investment.organisation}
+                      </span>
+                    )}
                   </span>
                   <span>
                     <Chip className={look.chip}>{kind}</Chip>

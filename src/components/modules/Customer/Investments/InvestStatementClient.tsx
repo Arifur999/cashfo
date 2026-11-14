@@ -107,7 +107,9 @@ export function InvestStatementClient({ selectedId }: { selectedId: string | nul
               <h1 data-i18n-skip="" className="m-0 truncate text-[20px] font-bold tracking-[-0.01em] text-ink">
                 {inv.name}
               </h1>
-              <span className="text-[13px] text-ink-muted">–</span>
+              <span data-i18n-skip="" className="truncate text-[13px] text-ink-muted">
+                {inv.organisation || "–"}
+              </span>
             </span>
           </div>
           <div className="flex flex-wrap gap-2">

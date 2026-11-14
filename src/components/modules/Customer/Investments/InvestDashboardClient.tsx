@@ -193,6 +193,11 @@ export function InvestDashboardClient() {
                     <Link href={statementHref(inv.id)} data-i18n-skip="" className={cn(NAME_LINK, "text-[14.5px] font-bold")}>
                       {inv.name}
                     </Link>
+                    {inv.organisation && (
+                      <span data-i18n-skip="" className="truncate text-[12.5px] text-ink-muted">
+                        {inv.organisation}
+                      </span>
+                    )}
                   </span>
                   <Chip className={look.tile}>{t(look.short)}</Chip>
                 </div>

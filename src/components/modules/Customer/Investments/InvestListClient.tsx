@@ -74,7 +74,7 @@ export function InvestListClient() {
       <section aria-label={t("Your investments")} className={cn(CARD, "flex min-h-90 flex-col overflow-hidden lg:h-[calc(100dvh-231px)]")}>
         <div className="flex shrink-0 items-center gap-3 px-5 py-3.5 max-lg:flex-wrap">
           <Tabs label={t("Show investments")} tabs={tabs} value={tab} onChange={setTab} />
-          <SearchBox value={q} onChange={setQ} label={t("Search by name or kind")} />
+          <SearchBox value={q} onChange={setQ} label={t("Search by name or where you invested")} />
           <DropdownMenu>
             <DropdownMenuTrigger className={cn(BTN_SECONDARY, "h-9.5 rounded-[10px] text-[13px] font-medium")}>
               <Glyph d={IC.sort} size={15} className="text-ink-muted" />
@@ -121,7 +121,10 @@ export function InvestListClient() {
                       <Link href={statementHref(inv.id)} data-i18n-skip="" className={cn(NAME_LINK, "font-semibold")}>
                         {inv.name}
                       </Link>
-                      <span className={cn("truncate text-[12px] font-semibold", look.tile.split(" ").find((c2) => c2.startsWith("text-")))}>{t(look.short)}</span>
+                      <span className="truncate text-[12px] text-ink-muted">
+                        <span className={cn("font-semibold", look.tile.split(" ").find((c2) => c2.startsWith("text-")))}>{t(look.short)}</span>
+                        {inv.organisation && <span data-i18n-skip="">{` · ${inv.organisation}`}</span>}
+                      </span>
                     </span>
                   </span>
                   <span className="text-right font-semibold whitespace-nowrap">{money(c.capital)}</span>

@@ -29,6 +29,7 @@ interface Form {
   inTouched: boolean;
   maturity: string;
   note: string;
+  org: string;
   chSrc: boolean;
   chFd: boolean;
   chIn: boolean;
@@ -77,10 +78,11 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
           inTouched: true,
           maturity: dayOf(editing.maturityDate),
           note: editing.note ?? "",
+          org: editing.organisation ?? "",
           ...SHUT,
         });
       } else {
-        setF({ step: 1, name: "", kind: "OTHER", kindTouched: false, amount: "", start: today, src: "acct", acct: "", freq: "MONTHLY", unit: "tk", each: "", firstDue: "", fdTouched: false, acctIn: "", inTouched: false, maturity: "", note: "", ...SHUT });
+        setF({ step: 1, name: "", kind: "OTHER", kindTouched: false, amount: "", start: today, src: "acct", acct: "", freq: "MONTHLY", unit: "tk", each: "", firstDue: "", fdTouched: false, acctIn: "", inTouched: false, maturity: "", note: "", org: "", ...SHUT });
       }
     }
   }
@@ -157,6 +159,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
     }
     await onSave({
       name: f.name.trim(),
+      organisation: f.org.trim() || null,
       kind: kindNow,
       amount: Math.round(amountN * 100) / 100,
       startDate: f.start,
@@ -183,7 +186,7 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
     put({ step: 2 });
   };
 
-  const moreBits = [f.maturity ? t("Ends {date}", { date: day(f.maturity) }) : "", f.note.trim() ? t("Note added") : ""].filter(Boolean);
+  const moreBits = [f.org.trim(), f.maturity ? t("Ends {date}", { date: day(f.maturity) }) : "", f.note.trim() ? t("Note added") : ""].filter(Boolean);
   const s1 = f.step === 1;
   const walletPills = (current: string, pick: (id: string) => void) =>
     openWallets.map((w) => (
@@ -384,6 +387,12 @@ export function InvestmentFormDialog({ open, onClose, onSave, busy }: { open: { 
             </div>
             {f.chMore && (
               <div className="flex flex-col gap-3 px-3.5 pt-0.5 pb-3.5">
+                <label className="flex flex-col gap-1.5">
+                  <span className={LBL}>
+                    {t("Company, bank or person")} <span className="font-normal text-ink-faint">{t("(optional)")}</span>
+                  </span>
+                  <input type="text" maxLength={80} value={f.org} onChange={(e) => put({ org: e.target.value })} placeholder={t("Like Karim Garments Ltd, Narayanganj")} className={cn(INPUT, "border-input")} />
+                </label>
                 <label className="flex flex-col gap-1.5">
                   <span className={LBL}>{t("Ends or matures on")}</span>
                   <input type="date" value={f.maturity} onChange={(e) => put({ maturity: e.target.value }, ["maturity"])} className={cn(INPUT, edge(errors.maturity), "max-w-60")} />

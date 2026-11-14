@@ -113,11 +113,12 @@ describe("dashboard", () => {
 
 describe("lists", () => {
   it("filters by tab and search and sorts", () => {
-    const small = investment({ id: "s", name: "Rahman Poultry Farm", startDate: "2026-03-01T00:00:00.000Z", entries: [entry("INVEST", "2026-03-01", 200_000)] });
+    const small = investment({ id: "s", name: "Rahman Poultry Farm", organisation: "Gazipur", startDate: "2026-03-01T00:00:00.000Z", entries: [entry("INVEST", "2026-03-01", 200_000)] });
     const all = [figuresOf(karim, TODAY), figuresOf(small, TODAY)];
     const label = () => "Business";
     expect(listInvestments(all, "active", "", "capital", label).map((f) => f.investment.id)).toEqual(["i", "s"]);
     expect(listInvestments(all, "active", "poultry", "capital", label).map((f) => f.investment.id)).toEqual(["s"]);
+    expect(listInvestments(all, "active", "gazipur", "capital", label).map((f) => f.investment.id)).toEqual(["s"]);
     expect(listInvestments(all, "closed", "", "capital", label)).toEqual([]);
     expect(listInvestments(all, "all", "", "newest", label).map((f) => f.investment.id)).toEqual(["s", "i"]);
   });

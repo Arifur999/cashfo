@@ -98,7 +98,6 @@ export const investmentsDictionary: Record<string, string> = {
   "No active investments": "কোনো চালু বিনিয়োগ নেই",
   "Switch the tab above to see the others.": "অন্যগুলো দেখতে ওপরের ট্যাব বদলান।",
   "Show investments": "বিনিয়োগ দেখান",
-  "Search by name or kind": "নাম বা ধরন দিয়ে খুঁজুন",
   "Most invested first": "বেশি বিনিয়োগ আগে",
   "Most profit first": "বেশি লাভ আগে",
   "Best return first": "বেশি রিটার্ন আগে",
@@ -258,4 +257,7 @@ export const investmentsDictionary: Record<string, string> = {
   "Personal finance · Loan": "ব্যক্তিগত হিসাব · ঋণ",
   "From Loan (pawna)": "ঋণ (পাওনা) থেকে নেওয়া",
   "From Loan (dena)": "ঋণ (দেনা) থেকে নেওয়া",
+  "Company, bank or person": "প্রতিষ্ঠান, ব্যাংক বা মানুষ",
+  "Like Karim Garments Ltd, Narayanganj": "যেমন: করিম গার্মেন্টস লি., নারায়ণগঞ্জ",
+  "Search by name or where you invested": "নাম বা প্রতিষ্ঠান দিয়ে খুঁজুন",
 };

@@ -273,7 +273,7 @@ export function listInvestments(all: InvestmentFigures[], tab: InvestmentTab, se
   const needle = search.trim().toLowerCase();
   const rows = all
     .filter((f) => (tab === "active" ? !f.closed : tab === "closed" ? f.closed : true))
-    .filter((f) => !needle || `${f.investment.name} ${kindLabel(f.investment.kind)}`.toLowerCase().includes(needle));
+    .filter((f) => !needle || `${f.investment.name} ${f.investment.organisation ?? ""} ${kindLabel(f.investment.kind)}`.toLowerCase().includes(needle));
   // Ties keep the order the investments were added in.
   const added = (a: InvestmentFigures, b: InvestmentFigures) => a.investment.createdAt.localeCompare(b.investment.createdAt);
   return rows.sort((a, b) => {
