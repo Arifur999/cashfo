@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { flowBar, flowLines, summaryFacts, worth, worthBar, worthShare } from "./dashboardWorth";
 
-const parts = { cash: 72_388, savings: 180_000, assets: 5_720_000, pawna: 123_000, dena: 600_000 };
+const parts = { cash: 72_388, savings: 180_000, assets: 5_720_000, investments: 1_700_000, pawna: 123_000, dena: 600_000 };
 
 describe("dashboardWorth", () => {
   it("adds up the net worth and each part's share as the board does", () => {
-    expect(worth(parts)).toEqual({ own: 6_095_388, owe: 600_000, net: 5_495_388 });
-    expect(["cash", "savings", "assets", "pawna", "dena"].map((key) => worthShare(parts, key as keyof typeof parts))).toEqual([1, 3, 94, 2, 10]);
-    expect(worthBar(parts).map((bar) => bar.key)).toEqual(["cash", "savings", "assets", "pawna", "dena"]);
-    expect(worthBar({ cash: 0, savings: 0, assets: 0, pawna: 0, dena: 0 })).toEqual([]);
+    expect(worth(parts)).toEqual({ own: 7_795_388, owe: 600_000, net: 7_195_388 });
+    expect(["cash", "savings", "assets", "investments", "pawna", "dena"].map((key) => worthShare(parts, key as keyof typeof parts))).toEqual([1, 2, 73, 22, 2, 8]);
+    expect(worthBar(parts).map((bar) => bar.key)).toEqual(["cash", "savings", "assets", "investments", "pawna", "dena"]);
+    expect(worthBar({ cash: 0, savings: 0, assets: 0, investments: 0, pawna: 0, dena: 0 })).toEqual([]);
   });
 
   it("nets the cash flow lines, money out below the middle", () => {
@@ -19,10 +19,11 @@ describe("dashboardWorth", () => {
       loans: { took: 0, gotBack: 0, gave: 0, paidBack: 0 },
       assets: { bought: 0, sold: 0 },
       gifts: { gave: 1_000, got: 0 },
+      investments: { put: 50_000, profit: 2_000, back: 10_000 },
       worthChange: 20_000,
     });
-    expect(lines.map((line) => line.value)).toEqual([120_500, -63_000, -20_000, 0, 0, -1_000]);
-    expect(net).toBe(36_500);
+    expect(lines.map((line) => line.value)).toEqual([120_500, -63_000, -20_000, 0, 0, -38_000, -1_000]);
+    expect(net).toBe(-1_500);
     expect(flowBar(-63_000, 120_500)).toEqual({ left: 50 - (63_000 / 120_500) * 50, width: (63_000 / 120_500) * 50 });
     expect(flowBar(120_500, 120_500)).toEqual({ left: 50, width: 50 });
   });

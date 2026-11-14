@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, Box, Eye, EyeOff, Landmark, PiggyBank, Sparkles, X, type LucideIcon } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, Box, Eye, EyeOff, Landmark, PiggyBank, Sparkles, TrendingUp, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useStoredChoice } from "@/components/modules/Customer/Balance/useStoredChoice";
 import { typeLook } from "@/components/modules/Customer/Events/eventVisuals";
@@ -142,7 +142,7 @@ export function NetWorthHero({ data, hidden, onToggle }: { data: HomeData; hidde
           <span className="truncate text-[17px] font-semibold text-worth-down tabular-nums">{mask(money(owe))}</span>
         </span>
       </div>
-      <p className="relative text-[12.5px] leading-normal text-worth-note">{t("Everything you own (accounts, savings, assets and money people owe you) minus every loan you still have to repay.")}</p>
+      <p className="relative text-[12.5px] leading-normal text-worth-note">{t("Everything you own (accounts, savings, assets, investments and money people owe you) minus every loan you still have to repay.")}</p>
     </section>
   );
 }
@@ -151,6 +151,7 @@ const WEALTH: Record<WorthKey, { label: string; Icon: LucideIcon; tile: string; 
   cash: { label: "Money in accounts", Icon: Landmark, tile: "bg-mint-50 text-emerald", bar: "bg-emerald", href: "/balance/accounts" },
   savings: { label: "Savings goals", Icon: PiggyBank, tile: "bg-warning-soft text-warning", bar: "bg-cat-11", href: "/savings-goals/dashboard" },
   assets: { label: "Assets", Icon: Box, tile: "bg-tint-blue text-tint-blue-ink", bar: "bg-info", href: "/assets-management/dashboard" },
+  investments: { label: "Investments", Icon: TrendingUp, tile: "bg-tint-teal text-tint-teal-ink", bar: "bg-cat-9", href: "/investments/dashboard" },
   pawna: { label: "People owe you (pawna)", Icon: ArrowDownLeft, tile: "bg-tint-violet text-tint-violet-ink", bar: "bg-cat-3", href: "/loan-management/dashboard" },
   dena: { label: "You owe (dena)", Icon: ArrowUpRight, tile: "bg-expense-soft text-expense", bar: "bg-expense-fill", href: "/loan-management/dashboard" },
 };
@@ -165,6 +166,7 @@ export function WealthCard({ data, hidden }: { data: HomeData; hidden: boolean }
     cash: t("{count} bank, mobile and cash accounts", { count: count(counts.accounts) }),
     savings: t("{count} goals in savings accounts", { count: count(counts.goals) }),
     assets: t("{count} assets at today's value", { count: count(counts.assets) }),
+    investments: t("{count} investments, capital still in", { count: count(counts.investments) }),
     pawna: t("From {count} people", { count: count(counts.pawna) }),
     dena: t("To {count} lenders, still to repay", { count: count(counts.dena) }),
   };
@@ -268,7 +270,7 @@ export function KpiCards({ data }: { data: HomeData }) {
       href: "/reports/detailed",
       bar: null,
       pill: null,
-      sub: t("After savings, loans, assets and gifts"),
+      sub: t("After savings, loans and investments"),
     },
   ];
   return (
@@ -297,7 +299,7 @@ export function KpiCards({ data }: { data: HomeData }) {
   );
 }
 
-const FLOW_LABEL: Record<FlowKey, string> = { income: "Income", expenses: "Expenses", savings: "Savings goals", loans: "Loans", assets: "Assets", gifts: "Event gifts" };
+const FLOW_LABEL: Record<FlowKey, string> = { income: "Income", expenses: "Expenses", savings: "Savings goals", loans: "Loans", assets: "Assets", investments: "Investments", gifts: "Event gifts" };
 
 // Cash flow: each way money moved in the period, in or out from the middle.
 export function CashFlowCard({ data }: { data: HomeData }) {
@@ -322,6 +324,7 @@ export function CashFlowCard({ data }: { data: HomeData }) {
     loans: t("Took {in} · paid out {out}", { in: money(flow.loans.took + flow.loans.gotBack), out: money(flow.loans.gave + flow.loans.paidBack) }),
     assets: t("Bought {bought} · sold {sold}", { bought: money(flow.assets.bought), sold: money(flow.assets.sold) }),
     gifts: t("Gave {gave} · got {got}", { gave: money(flow.gifts.gave), got: money(flow.gifts.got) }),
+    investments: t("Put in {put} · profit {profit} · back {back}", { put: money(flow.investments?.put ?? 0), profit: money(flow.investments?.profit ?? 0), back: money(flow.investments?.back ?? 0) }),
   };
   return (
     <section className={cn(BOARD_CARD, "flex flex-col gap-2.5 px-5.5 py-5 xl:col-span-2")}>

@@ -8,6 +8,7 @@ import { resolveActiveBusinessId } from "@/lib/customer/activeBusiness";
 import { API_BASE_URL, type CategoryBreakdown, type WalletOverviewRow, type WalletsOverview } from "@/lib/customer/api";
 import { customerApi } from "@/lib/customer/apiClient";
 import { getAssets } from "@/lib/customer/assets";
+import { getInvestments } from "@/lib/customer/investments";
 import { getCurrentUser } from "@/lib/customer/auth";
 import { getEventsOverview } from "@/lib/customer/events";
 import { getBudgetCategoryNames, getBudgetOverview, getMonthlyPlan } from "@/lib/customer/budgets";
@@ -183,7 +184,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   });
   const spendingRead = getCategoryBreakdown(activeBusinessId, "EXPENSE", range.dateFrom, range.dateTo);
 
-  const [walletsOverview, chartIncome, chartExpense, spending, money, before, recent, start, incomeNames, goals, assets, budget, loanDashboard, monthPlan, flow, events, activeMonths] = await Promise.all([
+  const [walletsOverview, chartIncome, chartExpense, spending, money, before, recent, start, incomeNames, goals, assets, budget, loanDashboard, monthPlan, flow, events, activeMonths, investments] = await Promise.all([
     walletsRead,
     // The chart, in two calls: one column per month, up to the period's end.
     getMonthlyBreakdown(activeBusinessId, "INCOME", chartFrom, chartTo),
@@ -207,6 +208,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     // Events are the owner's and accountant's.
     canManage ? part(() => getEventsOverview(activeBusinessId)) : null,
     getActiveMonths(activeBusinessId).catch(() => null),
+    part(() => getInvestments(activeBusinessId)),
   ]);
 
   const unavailable: HomePart[] = [];
@@ -223,6 +225,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const goalList = read("savings", goals, []);
   const savings = savingsTotals(goalList);
   const assetList = read("assets", assets, []).filter((a) => a.status === "ACTIVE");
+  // The capital still in each investment (closed ones hold none).
+  const investedList = read("investments", investments, []).filter((inv) => Number(inv.capital) > 0);
   const budgetOverview = read("budget", budget, null);
   // Every expense category, with its limit and what went against it.
   const expenseCategories = budgetOverview?.categories ?? [];
@@ -281,12 +285,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         cash: balance,
         savings: savings.saved,
         assets: assetList.reduce((sum, a) => sum + Number(a.currentValue), 0),
+        investments: investedList.reduce((sum, inv) => sum + Number(inv.capital), 0),
         pawna: Math.abs(Number(loans?.totalPawna ?? 0)),
         dena: Math.abs(Number(loans?.totalDena ?? 0)),
       },
       change: flowRead ? flowRead.worthChange : null,
       since: previousMonthEnd(today),
-      counts: { accounts: activeWallets.length, goals: savings.count, assets: assetList.length, pawna: counts.oweYou, dena: counts.youOwe },
+      counts: { accounts: activeWallets.length, goals: savings.count, assets: assetList.length, investments: investedList.length, pawna: counts.oweYou, dena: counts.youOwe },
     },
     flow: flowRead,
     events: eventsRead

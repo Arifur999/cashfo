@@ -249,4 +249,8 @@ export const investmentsDictionary: Record<string, string> = {
   "Investment return: {name}": "বিনিয়োগ ফেরত: {name}",
   "Investment: {name}": "বিনিয়োগ: {name}",
   "Investment profit": "বিনিয়োগের লাভ",
+  "Everything you own (accounts, savings, assets, investments and money people owe you) minus every loan you still have to repay.": "আপনার যা আছে (অ্যাকাউন্ট, সঞ্চয়, সম্পদ, বিনিয়োগ আর পাওনা টাকা) থেকে যত ঋণ শোধ বাকি তা বাদ দিলে এই হিসাব।",
+  "{count} investments, capital still in": "{count}টি বিনিয়োগ, এখনো যে মূলধন আছে",
+  "After savings, loans and investments": "সঞ্চয়, ঋণ আর বিনিয়োগের পরে",
+  "Put in {put} · profit {profit} · back {back}": "দেওয়া {put} · লাভ {profit} · ফেরত {back}",
 };

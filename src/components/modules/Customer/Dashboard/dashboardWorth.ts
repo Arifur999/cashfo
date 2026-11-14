@@ -3,11 +3,13 @@
 // flow lines and the AI summary's facts. Amounts are in taka.
 
 export interface WorthParts {
-  // Money in the wallets, saved in goals, assets at today's value, owed to
-  // you (pawna) and owed by you (dena, a positive amount).
+  // Money in the wallets, saved in goals, assets at today's value, the
+  // capital still in investments, owed to you (pawna) and owed by you
+  // (dena, a positive amount).
   cash: number;
   savings: number;
   assets: number;
+  investments: number;
   pawna: number;
   dena: number;
 }
@@ -15,7 +17,7 @@ export interface WorthParts {
 export type WorthKey = keyof WorthParts;
 
 export function worth(parts: WorthParts) {
-  const own = parts.cash + parts.savings + parts.assets + parts.pawna;
+  const own = parts.cash + parts.savings + parts.assets + parts.investments + parts.pawna;
   return { own, owe: parts.dena, net: own - parts.dena };
 }
 
@@ -27,7 +29,7 @@ export function worthShare(parts: WorthParts, key: WorthKey): number {
 
 // The stacked bar: each part's width of own + owe, at least a sliver.
 export function worthBar(parts: WorthParts): { key: WorthKey; width: number }[] {
-  const keys: WorthKey[] = ["cash", "savings", "assets", "pawna", "dena"];
+  const keys: WorthKey[] = ["cash", "savings", "assets", "investments", "pawna", "dena"];
   const total = keys.reduce((sum, key) => sum + Math.max(0, parts[key]), 0);
   if (total <= 0) return [];
   return keys.filter((key) => parts[key] > 0).map((key) => ({ key, width: Math.max(1.2, Math.round((parts[key] / total) * 10_000) / 100) }));
@@ -40,10 +42,13 @@ export interface MoneyFlow {
   loans: { took: number; gotBack: number; gave: number; paidBack: number };
   assets: { bought: number; sold: number };
   gifts: { gave: number; got: number };
+  // Money put into investments from a wallet, and profit and capital back
+  // into one (missing from a backend before Investments).
+  investments?: { put: number; profit: number; back: number };
   worthChange: number;
 }
 
-export type FlowKey = "income" | "expenses" | "savings" | "loans" | "assets" | "gifts";
+export type FlowKey = "income" | "expenses" | "savings" | "loans" | "assets" | "investments" | "gifts";
 
 // The Cash flow card: each line in (+) or out (−), and the net after all.
 export function flowLines(flow: MoneyFlow): { lines: { key: FlowKey; value: number }[]; net: number } {
@@ -54,6 +59,7 @@ export function flowLines(flow: MoneyFlow): { lines: { key: FlowKey; value: numb
       { key: "savings", value: flow.savings.takenOut - flow.savings.added },
       { key: "loans", value: flow.loans.took + flow.loans.gotBack - flow.loans.gave - flow.loans.paidBack },
       { key: "assets", value: flow.assets.sold - flow.assets.bought },
+      { key: "investments", value: flow.investments ? flow.investments.profit + flow.investments.back - flow.investments.put : 0 },
       { key: "gifts", value: flow.gifts.got - flow.gifts.gave },
     ] as { key: FlowKey; value: number }[]
   ).map((line) => ({ ...line, value: Math.round(line.value * 100) / 100 }));
