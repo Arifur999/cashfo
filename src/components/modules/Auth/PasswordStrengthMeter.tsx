@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 const BAR_COLORS: Record<Exclude<PasswordStrength, 0>, string> = {
   1: "bg-expense-fill",
   2: "bg-warning-fill",
-  3: "bg-income",
-  4: "bg-income",
+  3: "bg-emerald",
+  4: "bg-emerald",
 };
 
 const LABEL_COLORS: Record<Exclude<PasswordStrength, 0>, string> = {
@@ -70,7 +70,7 @@ const StrengthDetails = ({ password, strength, size }: { password: string; stren
     <span className="flex flex-col gap-2">
       <span className={cn("grid grid-cols-4", size === "md" ? "gap-1" : "gap-1.5")} aria-hidden="true">
         {STEPS.map((step) => (
-          <span key={step} className={cn("rounded-full bg-surface-sunken transition-colors", size === "md" ? "h-1.5" : "h-1", step <= strength && BAR_COLORS[strength])} />
+          <span key={step} className={cn("rounded-full bg-line transition-colors", size === "md" ? "h-1.5" : "h-1", step <= strength && BAR_COLORS[strength])} />
         ))}
       </span>
       {/* Screen readers get the strength from the announcement instead. */}

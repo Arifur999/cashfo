@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 // account orange with a "no" sign, too many tries red with a clock, a
 // session that ended blue; a quiet grey note carries the small print.
 const TONES = {
-  error: { box: "bg-expense-soft/60 text-expense", icon: TriangleAlert },
-  suspended: { box: "bg-orange-soft/60 text-orange", icon: Ban },
-  throttled: { box: "bg-expense-soft/60 text-expense", icon: Clock },
-  info: { box: "bg-info-50 text-info-ink", icon: Info },
+  error: { box: "bg-loss-wash text-loss-ink", icon: TriangleAlert },
+  suspended: { box: "bg-warn2-wash text-warn2-ink", icon: Ban },
+  throttled: { box: "bg-loss-wash text-loss-ink", icon: Clock },
+  info: { box: "bg-note-blue text-tint-blue-ink", icon: Info },
   warning: { box: "border border-warning-line bg-warning-50 text-warning-ink", icon: TriangleAlert },
-  note: { box: "bg-surface-sunken text-ink-soft text-small", icon: Info },
-  problem: { box: "bg-expense-soft/60 text-expense", icon: CircleAlert },
+  note: { box: "bg-page text-ink-2 text-small", icon: Info },
+  problem: { box: "bg-loss-wash text-loss-ink", icon: CircleAlert },
 } as const;
 
 export type AuthAlertTone = keyof typeof TONES;
