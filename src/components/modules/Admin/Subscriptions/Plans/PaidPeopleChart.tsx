@@ -38,7 +38,7 @@ const PaidPeopleChart = ({ analytics }: { analytics: IPlanAnalytics }) => {
   });
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3 px-4.5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-title text-ink"><T>Paid people at the end of each month</T></h2>

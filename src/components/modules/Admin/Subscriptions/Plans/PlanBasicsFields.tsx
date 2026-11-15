@@ -23,11 +23,11 @@ const checkNewName = ({ value }: { value: string }) => checkName({ value }) ?? (
 // What a plan can't change, shown in the read-only band where its field
 // would be.
 const ReadOnlyField = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex flex-col gap-2">
-    <span className="text-small font-semibold text-ink-2">
+  <div className="flex flex-col gap-1.5">
+    <span className="text-body font-medium text-ink">
       <T>{label}</T>
     </span>
-    <span className="flex h-11 items-center rounded-md border border-line bg-strip px-4 text-body text-ink-muted">{children}</span>
+    <span className="flex h-11 items-center rounded-sm border border-line bg-strip px-3 text-[15px] leading-[normal] text-ink-muted">{children}</span>
   </div>
 );
 

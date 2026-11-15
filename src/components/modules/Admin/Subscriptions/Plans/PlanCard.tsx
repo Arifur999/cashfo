@@ -48,7 +48,7 @@ const PlanCard = ({ plan, analytics, figuresKnown, totalUsers, canManage, onEdit
     <Card padding="none" elevated={plan.isActive} className={cn("flex flex-col gap-3 p-4.5", !plan.isActive && "border-dashed")}>
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-title text-ink">{plan.name}</h2>
-        <Chip tone={plan.isActive ? "mint" : "neutral"} size="sm">
+        <Chip tone={plan.isActive ? "mint" : "neutral"} size="sm" className="text-[11.5px] leading-[normal]">
           <T>{plan.isActive ? "On sale" : "Not on sale"}</T>
         </Chip>
       </div>
