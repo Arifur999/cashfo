@@ -228,6 +228,8 @@ export const adminSupportDictionary: Record<string, string> = {
   "Write to {name}. They see it in Settings › Help & support › My messages.": "{name}-কে লিখুন। তিনি এটি সেটিংস › সাহায্য ও সাপোর্ট › আমার বার্তায় দেখবেন।",
   "{count} new message came in from the Help page.": "সাহায্য পাতা থেকে {count}টি নতুন বার্তা এসেছে।",
   "{count} new messages came in from the Help page.": "সাহায্য পাতা থেকে {count}টি নতুন বার্তা এসেছে।",
+  "{count} new message came in from the Help page. It is at the top of the list.": "সাহায্য পাতা থেকে {count}টি নতুন বার্তা এসেছে। এটি তালিকার একদম উপরে আছে।",
+  "{count} new messages came in from the Help page. They are at the top of the list.": "সাহায্য পাতা থেকে {count}টি নতুন বার্তা এসেছে। সেগুলো তালিকার একদম উপরে আছে।",
   "Show all tickets": "সব টিকিট দেখান",
   "Sent from Settings › Help & support · replies show in the user's My messages": "সেটিংস › সাহায্য ও সাপোর্ট থেকে পাঠানো · উত্তর ব্যবহারকারীর আমার বার্তায় দেখা যায়",
   "No notes yet. Use \"Note for admins\" above; users never see notes.": "এখনো কোনো নোট নেই। ওপরের \"অ্যাডমিনদের নোট\" ব্যবহার করুন; ব্যবহারকারীরা নোট কখনো দেখেন না।",

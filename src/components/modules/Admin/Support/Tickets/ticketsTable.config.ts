@@ -3,7 +3,7 @@ import type { ServerDataTableConfig } from "@/hooks/useServerDataTable";
 import { buildTableQueryString } from "@/lib/queryString";
 import { OPEN_TICKET_STATUSES, ticketCount } from "@/lib/tickets";
 import type { IAdminOption, ITicketStats, TicketStatus } from "@/types/ticket.types";
-import { TICKET_CATEGORY_OPTIONS, TICKET_PRIORITY_OPTIONS } from "../ticketOptions";
+import { TICKET_CATEGORY_OPTIONS } from "../ticketOptions";
 
 // What the page needs to build the identical query string on the server.
 // The inbox opens on everything still in the queue. The API searches the
@@ -67,7 +67,7 @@ const tabCount = (stats: ITicketStats | undefined, tab: (typeof TICKET_QUEUE_TAB
 };
 
 // The board's toolbar, one row: the status tabs on the left, who has it and
-// its type on the right, and how urgent beside them. The assignee chip lists
+// its type on the right. The assignee chip lists
 // the admin roster and the tabs carry the counts, both from the API, so the
 // full config is built once they load (memoize the result -- it must stay
 // stable). The search box shows only while the URL carries a search (a
@@ -82,8 +82,7 @@ export const buildTicketsTableConfig = (admins: IAdminOption[], stats?: ITicketS
       label: "Status",
       options: TICKET_QUEUE_TABS.map((tab) => ({ value: tab.value, label: tab.label, count: tabCount(stats, tab) })),
     },
-    { id: "assignedToAdminId", type: "single-select", label: "Assigned", allLabel: "Anyone", options: buildAssigneeOptions(admins, currentAdminId), align: "end" },
-    { id: "category", type: "single-select", label: "Type", allLabel: "All", options: TICKET_CATEGORY_OPTIONS, align: "end" },
-    { id: "priority", type: "single-select", label: "Priority", allLabel: "All", options: TICKET_PRIORITY_OPTIONS, align: "end" },
+    { id: "assignedToAdminId", type: "single-select", label: "Assigned", allLabel: "Anyone", options: buildAssigneeOptions(admins, currentAdminId), align: "end", chip: "pill" },
+    { id: "category", type: "single-select", label: "Type", allLabel: "All", options: TICKET_CATEGORY_OPTIONS, align: "end", chip: "pill" },
   ],
 });

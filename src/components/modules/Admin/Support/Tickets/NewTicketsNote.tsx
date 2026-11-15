@@ -22,7 +22,7 @@ const NewTicketsNote = () => {
 
   const message = showingNew
     ? translate("Showing only the tickets nobody has opened yet.")
-    : plural(translate, count, "{count} new message came in from the Help page.", "{count} new messages came in from the Help page.", undefined, locale);
+    : plural(translate, count, "{count} new message came in from the Help page. It is at the top of the list.", "{count} new messages came in from the Help page. They are at the top of the list.", undefined, locale);
 
   return (
     <div role="status" className="flex items-center gap-2.5 rounded-[14px] border border-info-line bg-info-50 px-4 py-2.75 text-[13.5px] leading-[normal] text-info-ink">
