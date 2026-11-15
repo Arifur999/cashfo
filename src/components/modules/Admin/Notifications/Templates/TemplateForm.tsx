@@ -169,11 +169,11 @@ const TemplateForm = ({ template, canManage, draft, onDraftChange, headingId }: 
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-4.5 py-3.5">
         <div className="flex grow flex-col gap-0.5">
           {/* Focused when the template is picked on a phone (see TemplatesEditor). */}
-          <h2 id={headingId} tabIndex={-1} className="scroll-mt-4 text-title font-semibold text-ink focus-visible:outline-offset-4">
-            {translate(templateName(template.key))}
+          <h2 id={headingId} tabIndex={-1} className="scroll-mt-4 font-mono text-title font-semibold text-ink focus-visible:outline-offset-4">
+            {template.key}
           </h2>
           <span className="text-[12.5px] leading-[normal] text-ink-muted">
-            <T>{channel}</T> · <T>{templateWhen(template.key)}</T> · <code className="font-mono">{template.key}</code>
+            <T>{channel}</T> · <T>{templateWhen(template.key)}</T>
           </span>
         </div>
         {/* The design's On switch: an off template can't be sent. Named the
