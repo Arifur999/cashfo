@@ -8,8 +8,6 @@ export const LEGAL_DOC_LABELS: Record<LegalDocType, string> = {
   COOKIE_POLICY: "Cookie Policy",
   COMMUNITY_RULES: "Community Rules",
   FAQ: "FAQ",
-  COOKIE_POLICY: "Cookie policy",
-  COMMUNITY_RULES: "Community rules",
 };
 
 // Where people read each document (the (legal) pages, LEGAL_ROUTES).
