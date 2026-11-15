@@ -236,12 +236,15 @@ export interface PushSubscriptionInput {
 }
 
 // Settings > Help: messages to the support team (/api/support/messages).
-export type SupportTopic = "TECHNICAL" | "BUG_REPORT" | "ACCOUNT" | "BILLING" | "OTHER";
+export type SupportTopic = "TECHNICAL" | "BUG_REPORT" | "ACCOUNT" | "BILLING" | "FEATURE_REQUEST" | "OTHER";
 export type SupportStatus = "OPEN" | "IN_PROGRESS" | "WAITING_ON_USER" | "RESOLVED" | "CLOSED";
 
 export interface SupportMessage {
   id: string;
   senderType: "USER" | "ADMIN";
+  // The team member who wrote an answer (null on the customer's own lines,
+  // and from an API that doesn't send it yet).
+  senderName?: string | null;
   message: string;
   // A screenshot, opened through /api/support-attachments/<id>.
   attachmentId: string | null;
@@ -250,8 +253,11 @@ export interface SupportMessage {
 
 export interface SupportConversation {
   id: string;
+  // The ticket number (#468).
+  number?: number;
   subject: string;
-  category: SupportTopic | "FEATURE_REQUEST";
+  category: SupportTopic;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   status: SupportStatus;
   createdAt: string;
   updatedAt: string;

@@ -42,7 +42,7 @@ export function DataSide({ data, backups }: { data: DataPrivacyPage; backups: Ba
         </h2>
         <div className="grid grid-cols-2 gap-2">
           {glance.map(([count, label]) => (
-            <div key={label} className="flex min-w-0 items-baseline gap-2 rounded-xl border border-line-card px-3 py-2.25">
+            <div key={label} className="flex min-w-0 items-baseline gap-2 rounded-[12px] border border-line-card px-3 py-2.25">
               <span className="text-[17px] font-bold tracking-[-0.01em] text-ink tabular-nums">{formatCount(count, fmt)}</span>
               <span className="truncate text-[12px] text-ink-muted">{t(label)}</span>
             </div>

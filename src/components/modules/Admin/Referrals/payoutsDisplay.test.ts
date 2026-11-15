@@ -23,27 +23,30 @@ describe("payoutDestination", () => {
 describe("rowChecks", () => {
   const checks = [ok("NAME_MATCHES"), ok("CODE_CONFIRMED"), ok("NO_REFUNDS"), bad("FRIEND_PAID_FROM_THIS_NUMBER")];
 
-  it("puts what went wrong first, two lines at most", () => {
-    const lines = rowChecks({ checks, status: "REQUESTED", trxId: null, method: bkash });
-    expect(lines.map((line) => line.text)).toEqual(["Friend paid from this number", "Name matches"]);
+  it("says whether the name matches, then the first warning", () => {
+    const lines = rowChecks({ checks, status: "REQUESTED", trxId: null, method: bkash, lineCount: 1 });
+    expect(lines.map((line) => line.text)).toEqual(["Name matches", "Paid from the affiliate's own phone"]);
   });
 
-  it("shows a paid request's transaction ID instead", () => {
-    expect(rowChecks({ checks, status: "PAID", trxId: "8J3LW1P0QS", method: bkash })).toEqual([{ ok: true, text: "TrxID {id}", values: { id: "8J3LW1P0QS" } }]);
-  });
-
-  it("shows only the warnings on a rejected request", () => {
-    expect(rowChecks({ checks: [ok("NAME_MATCHES"), bad("WRONG_NUMBER_FOR_METHOD")], status: "REJECTED", trxId: null, method: bkash })).toEqual([
-      { ok: false, text: "Not a {method} number", values: { method: "bKash" } },
+  it("counts the payments found when nothing is wrong", () => {
+    expect(rowChecks({ checks: [ok("NAME_MATCHES"), ok("NO_REFUNDS")], status: "APPROVED", trxId: null, method: bkash, lineCount: 6 })).toEqual([
+      { ok: true, text: "Name matches", values: undefined },
+      { ok: true, text: "{count} payments found", values: { count: 6 } },
     ]);
+  });
+
+  it("shows a paid request's transaction ID, and what happened to a closed one", () => {
+    expect(rowChecks({ checks, status: "PAID", trxId: "8J3LW1P0QS", method: bkash, lineCount: 2 })).toEqual([{ ok: true, text: "TrxID {id}", values: { id: "8J3LW1P0QS" } }]);
+    expect(rowChecks({ checks, status: "REJECTED", trxId: null, method: bkash, lineCount: 2 })).toEqual([{ ok: false, text: "Rejected · see reason" }]);
+    expect(rowChecks({ checks, status: "CANCELLED", trxId: null, method: bkash, lineCount: 2 })).toEqual([{ ok: false, text: "Cancelled by the user" }]);
   });
 });
 
 describe("rowActions and statusNote", () => {
   it("offers Review (approve line by line) on every waiting request, then Mark paid", () => {
-    expect(rowActions({ status: "REQUESTED", checks: [ok("NAME_MATCHES")] }, true)).toEqual(["review", "reject"]);
-    expect(rowActions({ status: "REQUESTED", checks: [bad("NAME_MATCHES")] }, true)).toEqual(["review", "reject"]);
-    expect(rowActions({ status: "APPROVED", checks: [] }, true)).toEqual(["pay"]);
+    expect(rowActions({ status: "REQUESTED", checks: [ok("NAME_MATCHES")] }, true)).toEqual(["review"]);
+    expect(rowActions({ status: "REQUESTED", checks: [bad("NAME_MATCHES")] }, true)).toEqual(["review"]);
+    expect(rowActions({ status: "APPROVED", checks: [] }, true)).toEqual(["pay", "view"]);
     expect(rowActions({ status: "PAID", checks: [] }, true)).toEqual(["view"]);
   });
 
@@ -81,7 +84,7 @@ describe("deskChecks", () => {
 
   it("says what passed, with the name and when the code was confirmed", () => {
     const lines = deskChecks(detail, () => "30 Sep, 4:05 pm");
-    expect(lines.map((l) => l.text)).toEqual(["Account name matches the profile", "Confirmed with a one-time code", "All refund holds are over", "No refunds on these payments"]);
+    expect(lines.map((l) => l.text)).toEqual(["Account name matches profile", "Confirmed with a one-time code", "All holds are over", "No refunds on these payments"]);
     expect(lines[0].value).toBe("Nasrin Akter");
     expect(lines[1].value).toBe("30 Sep, 4:05 pm");
   });
@@ -91,7 +94,7 @@ describe("deskChecks", () => {
     expect(lines.map((l) => [l.ok, l.text])).toEqual([
       [false, "{count} payment was refunded"],
       [false, "Some payments are still inside the refund hold"],
-      [true, "Account name matches the profile"],
+      [true, "Account name matches profile"],
     ]);
   });
 });

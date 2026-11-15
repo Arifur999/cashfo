@@ -158,7 +158,7 @@ const SettingsFormBody = ({ settings, canManage }: { settings: IReferralSettings
                       onCheckedChange={(checked) => field.handleChange(checked)}
                       disabled={disabled}
                       aria-label={translate("Referral Program on")}
-                      className="data-checked:bg-emerald data-unchecked:bg-line-strong"
+                      className="px-[3px] data-checked:bg-emerald data-unchecked:bg-line-strong data-[size=default]:h-6.5 data-[size=default]:w-11 [&>span]:group-data-[size=default]/switch:size-5 [&>span]:group-data-[size=default]/switch:data-checked:translate-x-4"
                     />
                   </label>
                 )}
@@ -242,7 +242,7 @@ const SettingsFormBody = ({ settings, canManage }: { settings: IReferralSettings
                           <label
                             key={type}
                             className={cn(
-                              "flex h-10.5 cursor-pointer items-center gap-2 rounded-[8px] border px-2.5 text-small font-semibold text-ink",
+                              "flex h-11 cursor-pointer items-center gap-2 rounded-[8px] border px-2.5 text-small font-semibold text-ink",
                               on ? "border-mint-200 bg-emerald-soft" : "border-line bg-surface",
                             )}
                           >
@@ -341,7 +341,7 @@ const SettingsFormBody = ({ settings, canManage }: { settings: IReferralSettings
           <form.Subscribe selector={(state) => state.isDirty}>
             {(dirty) => (
               <span className="flex shrink-0 gap-2.5">
-                <Button type="button" variant="secondary" size="md" disabled={!dirty || isPending} onClick={() => form.reset()}>
+                <Button type="button" variant="secondary" size="md" disabled={!dirty || isPending} onClick={() => form.reset()} className="px-3.5">
                   {translate("Discard")}
                 </Button>
                 <AppSubmitButton isPending={isPending} pendingLabel={translate("Saving...")} variant="action" size="md" className="w-auto" disabled={!dirty}>

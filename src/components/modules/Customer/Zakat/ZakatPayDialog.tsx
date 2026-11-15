@@ -144,7 +144,7 @@ export function ZakatPayDialog({ open, onClose, businessId, summary, currency, m
         </Field>
         <div className="flex min-w-0 flex-col gap-1.5">
           <span id="zk-from-l" className="text-[14px] font-medium">
-            {t("Paid from")}
+            {t("Paid from@@zakat")}
           </span>
           <Popover open={listOpen} onOpenChange={setListOpen}>
             <PopoverTrigger asChild>
@@ -239,7 +239,7 @@ export function ZakatPayDialog({ open, onClose, businessId, summary, currency, m
         htmlFor="zk-pay-to"
         label={
           <span className="flex flex-col gap-1.5">
-            {t("Given to")}
+            {t("Given to@@zakat")}
             <span className="text-[12.5px] font-normal text-ink-muted">{t("(optional, only you see this)")}</span>
           </span>
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Link2, Plus, QrCode, Trash2, X } from "lucide-react";
+import { Info, Plus, QrCode, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -11,7 +11,6 @@ import Card from "@/components/smartly/Card";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import ErrorState from "@/components/smartly/ErrorState";
 import IconAction from "@/components/smartly/IconAction";
-import Field from "@/components/smartly/form/Field";
 import Input from "@/components/smartly/form/Input";
 import PageFrame from "@/components/smartly/PageFrame";
 import PageHeader from "@/components/smartly/PageHeader";
@@ -32,6 +31,9 @@ interface InviteLinksClientProps {
   origin: string;
   currency: string;
   today: string;
+  // The program's share, for the note under the list; null when the
+  // program could not be read.
+  commissionPct: number | null;
 }
 
 // Link | Clicks | Joined | Paying | Earned | Share
@@ -41,7 +43,7 @@ const COLUMNS = "md:grid-cols-[minmax(0,1fr)_80px_80px_80px_100px_190px]";
 // member shares, so they see which place brings paying people. Each counts
 // its opens, sign-ups, paying friends and earnings; Copy and QR on every
 // row; a tagged link can be deleted (its friends keep its name).
-export function InviteLinksClient({ links: initial, code, origin, currency, today }: InviteLinksClientProps) {
+export function InviteLinksClient({ links: initial, code, origin, currency, today, commissionPct }: InviteLinksClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
   const copy = useCopy();
@@ -60,8 +62,8 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
 
   if (!links || !code) {
     return (
-      <PageFrame className="max-md:pt-4 md:gap-5">
-        <TopbarExtras title={t("Invite links")} />
+      <PageFrame className="max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+        <TopbarExtras heading={t("Invite links")} />
         <ErrorState title={t("Couldn't load your invite links.")} onRetry={() => router.refresh()} />
       </PageFrame>
     );
@@ -94,25 +96,25 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
   ];
 
   return (
-    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-5">
-      <TopbarExtras title={t("Invite links")} />
+    <PageFrame className="max-md:gap-3.5 max-md:pt-4 md:gap-[18px] leading-[normal] md:pt-6 md:pb-8">
+      <TopbarExtras heading={t("Invite links")} />
       <PageHeader
         title={t("Invite links")}
         description={t("One link for each place you share, so you can see what works.")}
         hideDescriptionOnPhone
         className="max-md:[&_h1]:sr-only"
         actions={
-          <Button size="lg" onClick={() => setCreating(true)} className="rounded-full">
+          <Button size="lg" onClick={() => setCreating(true)} className="h-10 rounded-full px-4">
             <Plus className="size-4" />
             {t("New link")}
           </Button>
         }
       />
-      <div className="grid gap-2.5 sm:grid-cols-3 md:gap-3.5">
+      <div className="grid gap-2.5 sm:grid-cols-3 md:gap-3">
         {stats.map((stat) => (
-          <Card key={stat.label} padding="none" className="flex flex-col gap-1 px-4.5 py-3.5">
-            <span className="text-[12.5px] leading-normal text-ink-muted">{stat.label}</span>
-            <span className="truncate text-[22px] leading-normal font-bold text-ink tabular-nums">{stat.value}</span>
+          <Card key={stat.label} padding="none" elevated={false} className="flex flex-col gap-1 rounded-lg px-4.5 py-3.5">
+            <span className="text-[12.5px] leading-[normal] text-ink-muted">{stat.label}</span>
+            <span className="truncate text-[22px] leading-[normal] font-bold text-ink tabular-nums">{stat.value}</span>
             <span className="text-caption text-ink-muted">{stat.sub}</span>
           </Card>
         ))}
@@ -121,13 +123,15 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
       <ListCard
         label={t("Invite links")}
         footer={
-          <p className="flex items-start gap-2 border-t border-divider bg-strip px-4 py-3 text-[13px] leading-[1.45] text-ink-soft md:px-5">
-            <Info className="mt-0.5 size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
-            {t("Make one link for each place you share, like your Facebook page or a YouTube video. Every link earns the same; separate links just show you which place brings paying people.")}
+          <p className="flex items-start gap-2.5 bg-strip px-4 py-3 text-[13px] leading-normal text-ink-soft md:px-5">
+            <Info className="mt-0.5 size-3.75 shrink-0 text-emerald" aria-hidden="true" />
+            {commissionPct === null
+              ? t("Make one link for each place you share, like your Facebook page or a YouTube video. Every link earns the same; separate links just show you which place brings paying people.")
+              : t("Make one link for each place you share, like your Facebook page or a YouTube video. Every link earns the same {pct}; separate links just show you which place brings paying people.", { pct: `${formatCount(commissionPct, fmt)}%` })}
           </p>
         }
       >
-        <ListHead columns={COLUMNS}>
+        <ListHead columns={COLUMNS} className="gap-x-3.5 md:px-5">
           <ListHeadCell>{t("Link")}</ListHeadCell>
           <ListHeadCell align="end">{t("Clicks")}</ListHeadCell>
           <ListHeadCell align="end">{t("Joined")}</ListHeadCell>
@@ -138,7 +142,7 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
         {links.map((link) => {
           const url = urlOf(link);
           return (
-            <ListRow key={link.id} columns={COLUMNS} density="spacious">
+            <ListRow key={link.id} columns={COLUMNS} density="spacious" className="gap-x-3.5 md:min-h-20 md:px-5">
               <ListCell className="flex min-w-0 flex-col gap-0.5 max-md:col-span-2">
                 <span className="flex items-center gap-2 font-semibold text-ink">
                   <span className="truncate">{link.main ? t("Main link") : link.label}</span>
@@ -167,16 +171,17 @@ export function InviteLinksClient({ links: initial, code, origin, currency, toda
                 {money(link.earned)}
               </ListCell>
               <ListCell align="end" className="flex items-center justify-end gap-1.5 max-md:col-span-2 max-md:justify-start">
-                <Button size="sm" onClick={() => copy(url, t("Link copied"))} className="rounded-full">
+                <Button size="sm" onClick={() => copy(url, t("Link copied"))} className="h-8 rounded-full px-3 text-[12.5px]">
                   {t("Copy")}
                 </Button>
-                <button type="button" onClick={() => setQr({ url, label: link.main ? t("Main link") : link.label, tag: link.tag })} aria-label={t("QR code for {name}", { name: link.main ? t("Main link") : link.label })} className="flex h-8 items-center justify-center rounded-full border border-line-strong bg-surface px-2.5 text-[12.5px] font-semibold text-ink hover:bg-surface-sunken">
+                <button type="button" onClick={() => setQr({ url, label: link.main ? t("Main link") : link.label, tag: link.tag })} aria-label={t("QR code for {name}", { name: link.main ? t("Main link") : link.label })} className="flex h-8 items-center justify-center rounded-full border border-input bg-surface px-2.5 text-[12.5px] font-semibold text-ink hover:bg-surface-sunken">
                   <QrCode className="size-3.75 md:hidden" aria-hidden="true" />
                   <span aria-hidden="true" className="max-md:hidden">
                     QR
                   </span>
                 </button>
-                {!link.main && (
+                {/* Only a link nobody joined through goes; the others keep their friends. */}
+                {!link.main && link.joined === 0 && (
                   <IconAction tone="danger" onClick={() => setRemoving(link)} aria-label={t("Delete {name}", { name: link.label })}>
                     <Trash2 aria-hidden="true" />
                   </IconAction>
@@ -248,21 +253,21 @@ function NewLinkDialog({ open, onClose, preview, onCreated }: { open: boolean; o
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
-      <DialogContent showCloseButton={false} className="w-110 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 shadow-overlay ring-0">
+      <DialogContent showCloseButton={false} className="w-125 max-w-[calc(100vw-32px)] gap-0 sm:max-w-125 overflow-hidden rounded-[20px] border-0 bg-surface p-0 shadow-overlay ring-0">
         <form onSubmit={submit} noValidate>
-          <div className="flex items-start justify-between gap-3 px-6 pt-5">
-            <div className="flex flex-col gap-1">
-              <DialogTitle className="text-h3 text-ink">{t("New invite link")}</DialogTitle>
-              <DialogDescription className="text-small text-ink-muted">{t("Every link earns the same. Separate links show which place works.")}</DialogDescription>
-            </div>
-            <button type="button" onClick={close} aria-label={t("Close")} className="-mt-1 -mr-2 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink">
+          <div className="flex items-center gap-3 border-b border-line px-6 py-4.5">
+            <DialogTitle className="flex-1 text-[18px] leading-[normal] font-semibold text-ink">{t("New invite link")}</DialogTitle>
+            <DialogDescription className="sr-only">{t("Every link earns the same. Separate links show which place works.")}</DialogDescription>
+            <button type="button" onClick={close} aria-label={t("Close")} className="flex size-8.5 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink">
               <X className="size-4.5" aria-hidden="true" />
             </button>
           </div>
-          <div className="flex flex-col gap-4 px-6 py-5">
-            <Field label={t("Where will you share it?")} htmlFor="nl-label" error={error?.field === "label" ? error.message : undefined}>
+          <div className="flex flex-col gap-3.5 px-6 py-4.5 leading-[normal]">
+            <label htmlFor="nl-label" className="flex flex-col gap-1.5">
+              <span className="text-[13.5px] font-semibold text-ink">{t("Where will you share it?")}</span>
               <Input
                 id="nl-label"
+                size="md"
                 value={label}
                 maxLength={40}
                 onChange={(event) => {
@@ -271,11 +276,15 @@ function NewLinkDialog({ open, onClose, preview, onCreated }: { open: boolean; o
                 }}
                 placeholder={t("e.g. Instagram bio")}
                 invalid={error?.field === "label"}
+                frameClassName="h-10.5"
               />
-            </Field>
-            <Field label={t("Short tag")} htmlFor="nl-tag" hint={t("Small letters and numbers only. It goes at the end of the link.")} error={error?.field === "tag" ? error.message : undefined}>
+              {error?.field === "label" && <span role="alert" className="text-caption text-expense">{error.message}</span>}
+            </label>
+            <label htmlFor="nl-tag" className="flex flex-col gap-1.5">
+              <span className="text-[13.5px] font-semibold text-ink">{t("Short tag")}</span>
               <Input
                 id="nl-tag"
+                size="md"
                 value={shownTag}
                 onChange={(event) => {
                   setTagTouched(true);
@@ -286,26 +295,25 @@ function NewLinkDialog({ open, onClose, preview, onCreated }: { open: boolean; o
                 invalid={error?.field === "tag"}
                 autoCapitalize="none"
                 spellCheck={false}
+                frameClassName="h-10.5"
               />
-            </Field>
-            <div className="flex flex-col gap-1 rounded-field bg-strip px-3.5 py-2.5">
-              <span className="flex items-center gap-1.5 text-caption text-ink-muted">
-                <Link2 className="size-3.5" aria-hidden="true" />
-                {t("Your new link")}
-              </span>
-              <span className="text-[13px] break-all text-ink">{preview(shownTag)}</span>
+              {error?.field === "tag" ? <span role="alert" className="text-caption text-expense">{error.message}</span> : <span className="text-caption text-ink-muted">{t("Small letters and numbers only. It goes at the end of the link.")}</span>}
+            </label>
+            <div className="flex flex-col gap-1 rounded-md bg-strip px-3.5 py-3">
+              <span className="text-caption text-ink-muted">{t("Your new link")}</span>
+              <span className="text-[13.5px] break-all text-ink">{preview(shownTag)}</span>
             </div>
             {error?.field === "form" && (
-              <p role="alert" className="rounded-field bg-expense-soft px-3.5 py-2.5 text-small text-expense">
+              <p role="alert" className="rounded-field bg-expense-soft px-3.5 py-2.5 text-[13px] font-medium text-expense">
                 {error.message}
               </p>
             )}
           </div>
           <div className="flex items-center justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
-            <Button type="button" variant="secondary" onClick={close}>
+            <Button type="button" variant="secondary" onClick={close} className="h-10 px-4">
               {t("Cancel")}
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} className="h-10 px-4.5">
               {isPending && <Loader size={16} onDark label={t("Loading...")} />}
               {t("Create link")}
             </Button>

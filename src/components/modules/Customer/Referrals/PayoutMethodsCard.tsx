@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilLine, Plus, TriangleAlert } from "lucide-react";
+import { PencilLine, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -83,7 +83,7 @@ export function PayoutMethodsCard({ methods: initial, userName, allowed }: Payou
 
   return (
     <Card padding="none" className="overflow-clip" role="region" aria-labelledby="pm-title">
-      <div className="flex flex-col gap-0.5 px-4.5 pt-4 pb-3 md:px-5">
+      <div className="flex flex-col gap-0.5 px-4.5 pt-4 pb-3 md:px-5 md:pt-4.5">
         <h2 id="pm-title" className="text-title text-ink">
           {t("Where we send your money")}
         </h2>
@@ -113,8 +113,7 @@ export function PayoutMethodsCard({ methods: initial, userName, allowed }: Payou
               </IconAction>
             </div>
             {warning && (
-              <span className="flex gap-1.5 rounded-lg bg-warning-50 px-2.5 py-2 text-caption leading-[1.45] text-warning-ink">
-                <TriangleAlert className="mt-px size-3.25 shrink-0 text-warning" aria-hidden="true" />
+              <span className="flex gap-1.5 rounded-sm bg-warning-50 px-2.5 py-2 text-caption leading-[1.45] text-due-ink">
                 {warning}
               </span>
             )}
@@ -122,7 +121,7 @@ export function PayoutMethodsCard({ methods: initial, userName, allowed }: Payou
         );
       })}
       {methods.length === 0 && <p className="border-t border-divider px-4.5 py-3 text-small text-ink-muted md:px-5">{t("No account saved yet. Add bKash, Nagad, Rocket or a bank account.")}</p>}
-      <div className="border-t border-divider px-4.5 pt-3 pb-4 md:px-5">
+      <div className="border-t border-divider px-4.5 pt-3 pb-4 md:px-5 md:pb-4.5">
         <button
           type="button"
           onClick={() => setDrawer({ open: true, method: null })}

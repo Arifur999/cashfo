@@ -67,7 +67,7 @@ export function CheckInboxDialog({ open, email, resending, resent, onOpened, onR
             {t("We sent a link to {email}. It works for 24 hours.", { email })}
           </AlertDialogDescription>
         </div>
-        <ol className="w-full list-decimal rounded-xl bg-strip py-3 pr-3.5 pl-8 text-left text-[13px] leading-[1.6] text-ink-2">
+        <ol className="w-full list-decimal rounded-[12px] bg-strip py-3 pr-3.5 pl-8 text-left text-[13px] leading-[1.6] text-ink-2">
           <li>{t("Open the email from Smartly.")}</li>
           <li>{t('Tap "Verify my email".')}</li>
           <li>{t("Come back here. The badge turns green.")}</li>
@@ -98,7 +98,7 @@ export function LeaveDialog({ open, onStay, onLeave }: { open: boolean; onStay: 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && onStay()}>
       <AlertDialogContent className={FRAME}>
-        <span className="flex size-11 items-center justify-center rounded-xl bg-warning-soft text-warning">
+        <span className="flex size-11 items-center justify-center rounded-[12px] bg-warning-soft text-warning">
           <TriangleAlert className="size-5.5" strokeWidth={2} aria-hidden="true" />
         </span>
         <div className="flex flex-col gap-1.5">

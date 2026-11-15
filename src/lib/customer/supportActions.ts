@@ -58,6 +58,11 @@ export async function replySupportMessageAction(id: string, message: string): Pr
   return callApi(async () => (await customerApi.post<SupportConversation>(`${SUPPORT}/messages/${encodeURIComponent(id)}/replies`, { message }, { headers: await authHeaders() })).data, "Failed to send your reply");
 }
 
+// "Mark as solved" in a conversation.
+export async function solveSupportMessageAction(id: string): Promise<ActionResult<SupportConversation>> {
+  return callApi(async () => (await customerApi.post<SupportConversation>(`${SUPPORT}/messages/${encodeURIComponent(id)}/solve`, {}, { headers: await authHeaders() })).data, "Couldn't mark it as solved");
+}
+
 export async function getIdeasAction(): Promise<ActionResult<FeatureIdea[]>> {
   return callApi(async () => (await customerApi.get<FeatureIdea[]>(`${SUPPORT}/ideas`, { headers: await authHeaders() })).data, "Failed to load ideas");
 }

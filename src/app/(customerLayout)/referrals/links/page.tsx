@@ -9,5 +9,5 @@ export const generateMetadata = () => customerPageMetadata("/referrals/links");
 export default async function InviteLinksPage() {
   const { currency, origin, today } = await referralPageContext();
   const [info, links] = await Promise.all([referralInfoForPage(), getReferralLinks()]);
-  return <InviteLinksClient links={links} code={info?.referralCode ?? null} origin={origin} currency={currency} today={today} />;
+  return <InviteLinksClient links={links} code={info?.referralCode ?? null} origin={origin} currency={currency} today={today} commissionPct={info ? info.program.commissionPct : null} />;
 }

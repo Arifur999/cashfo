@@ -25,7 +25,7 @@ const SUM_LINES: { step: ZakatStepId; label: string }[] = [
   { step: "SAVINGS", label: "Savings" },
   { step: "GOLD", label: "Gold and silver" },
   { step: "INVESTMENTS", label: "Investments" },
-  { step: "OWED_TO_YOU", label: "Owed to you" },
+  { step: "OWED_TO_YOU", label: "Owed to you@@zakat" },
 ];
 
 // The right-hand column (board: Zakat): the total, step by step, down to
@@ -58,7 +58,7 @@ export function ZakatSide({ summary, money, walletName, onRecord, onDelete, pend
             </div>
           )}
           <div className={row}>
-            <span className="flex-1">{t("You owe")}</span>
+            <span className="flex-1">{t("You owe@@zakat")}</span>
             <span className="font-semibold whitespace-nowrap text-loss-ink tabular-nums">− {money(summary.totals.owe)}</span>
           </div>
           <div className="my-0.5 h-px bg-line" />

@@ -66,7 +66,7 @@ export function HowItWorksCard({ program, currency }: { program: Program; curren
         <li key={step.title} className="flex gap-3">
           <StepTile icon={step.icon} />
           <span className="flex flex-col gap-0.5">
-            <span className="text-body leading-normal font-semibold text-ink">{step.title}</span>
+            <span className="text-body leading-[normal] font-semibold text-ink">{step.title}</span>
             <span className="text-[13px] leading-normal text-ink-muted">{step.body}</span>
           </span>
         </li>
@@ -77,7 +77,7 @@ export function HowItWorksCard({ program, currency }: { program: Program; curren
   const ruleList = (
     <ul className="flex flex-col gap-2.25">
       {rules.map((rule) => (
-        <li key={rule} className="flex gap-2 text-[13px] leading-normal text-ink-2">
+        <li key={rule} className="flex gap-2 text-[13px] leading-[normal] text-ink-2">
           <Check className="mt-0.75 size-3.5 shrink-0 text-emerald" strokeWidth={2.5} aria-hidden="true" />
           <span>{rule}</span>
         </li>

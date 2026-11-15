@@ -25,6 +25,10 @@ export interface ReceiptModel {
   words: string;
 }
 
+// The full receipt writes every amount with its paisa (CheckoutReceipt's
+// "Tk 1,910.00"), however the rest of the app shortens whole taka.
+const withPaisa = (amount: string) => (/[.][0-9০-৯]{2}$/.test(amount) ? amount : /[০-৯]/.test(amount) ? `${amount}.০০` : `${amount}.00`);
+
 export const invoicePdfHref = (invoiceId: string, inline = false) => `/api/invoices/${encodeURIComponent(invoiceId)}${inline ? "?inline=1" : ""}`;
 
 const Kicker = ({ children, small = false }: { children: React.ReactNode; small?: boolean }) => (
@@ -175,23 +179,23 @@ export function ReceiptDialog({ receipt, open, onClose }: { receipt: ReceiptMode
                   <span className="text-[12px] text-ink-2 sm:hidden">{receipt.period}</span>
                 </span>
                 <span className="hidden text-ink-2 sm:block">{receipt.period}</span>
-                <span className="text-right tabular-nums">{receipt.subtotal}</span>
+                <span className="text-right tabular-nums">{withPaisa(receipt.subtotal)}</span>
               </div>
               <div className="flex justify-end pt-3">
                 <div className="flex w-70 max-w-full flex-col gap-1.75 text-[13.5px]">
                   <span className="flex justify-between">
                     <span className="text-ink-muted">{t("Subtotal")}</span>
-                    <span className="tabular-nums">{receipt.subtotal}</span>
+                    <span className="tabular-nums">{withPaisa(receipt.subtotal)}</span>
                   </span>
                   {receipt.discount && (
                     <span className="flex justify-between gap-3">
                       <span className="text-ink-muted">{receipt.discount.label}</span>
-                      <span className="text-emerald tabular-nums">− {receipt.discount.amount}</span>
+                      <span className="text-emerald tabular-nums">− {withPaisa(receipt.discount.amount)}</span>
                     </span>
                   )}
                   <span className="flex justify-between border-t-2 border-ink pt-2.25 text-[17px] font-bold">
                     <span>{t("Total paid")}</span>
-                    <span className="tabular-nums">{receipt.total}</span>
+                    <span className="tabular-nums">{withPaisa(receipt.total)}</span>
                   </span>
                 </div>
               </div>

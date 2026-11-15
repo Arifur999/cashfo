@@ -79,7 +79,7 @@ export async function countInviteClickAction(code: string, src: string | null): 
 
 // --- Profile & payouts ---
 
-export async function updateReferralProfileAction(input: { referralName?: string | null; emailEarned?: boolean; emailPayouts?: boolean }): Promise<ReferralResult<ReferralProfile>> {
+export async function updateReferralProfileAction(input: { referralName?: string | null; emailEarned?: boolean; emailPayouts?: boolean; monthlyStatement?: boolean }): Promise<ReferralResult<ReferralProfile>> {
   return callApi(async () => (await customerApi.patch<ReferralProfile>("/api/referrals/profile", input)).data, "Couldn't save your profile.");
 }
 

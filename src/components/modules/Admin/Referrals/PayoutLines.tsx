@@ -47,14 +47,14 @@ interface ReviewTableProps {
 
 // The review's table: each friend payment with its tick, to match with the
 // gateway; an unticked one is struck through and held back.
-function ReviewTable({ payout, excluded, onToggle, money }: ReviewTableProps) {
+export function ReviewTable({ payout, excluded, onToggle, money }: ReviewTableProps) {
   const { translate, locale } = useLocale();
   // The share column is headed by the rate when every line has the same one.
   const rates = [...new Set(payout.lines.map((line) => line.rate))];
   const share = rates.length === 1 ? `${toLocaleDigits(String(rates[0]), locale)}%` : translate("Share");
   return (
-    <div role="table" aria-label={translate("Friend payments in this request")} className="border-t border-line">
-      <div role="row" className={cn(REVIEW_COLUMNS, "items-center bg-table-head px-3 py-2 text-[11.5px] leading-normal font-medium text-ink-muted max-md:hidden")}>
+    <div role="table" aria-label={translate("Friend payments in this request")}>
+      <div role="row" className={cn(REVIEW_COLUMNS, "items-center border-b border-line bg-strip px-3 py-2 text-[11.5px] leading-[normal] font-medium text-ink-muted max-md:hidden")}>
         <span role="columnheader" aria-label={translate("Include")} />
         <span role="columnheader">{translate("Friend")}</span>
         <span role="columnheader">{translate("Plan · paid on")}</span>
@@ -71,7 +71,7 @@ function ReviewTable({ payout, excluded, onToggle, money }: ReviewTableProps) {
         const chip = REACHED_CHIP[line.reached];
         const paidOn = line.payment?.paidAt ? formatDate(line.payment.paidAt, "d MMM", "", locale) : "";
         return (
-          <div key={line.id} role="row" className={cn(REVIEW_COLUMNS, "items-center gap-y-1 border-t border-divider px-3 py-2.25 text-[13px] leading-normal tabular-nums", !on && "bg-warning-50/50")}>
+          <div key={line.id} role="row" className={cn(REVIEW_COLUMNS, "items-center gap-y-1 border-b border-divider px-3 py-2.25 text-[13px] leading-[normal] tabular-nums", !on && "bg-warning-50/50")}>
             <span role="cell" className="flex">
               <Checkbox
                 checked={on}
@@ -286,5 +286,44 @@ export function LinesCard({ payout, excluded, onToggle, canManage }: LinesCardPr
         cancelLabel={translate("Back")}
       />
     </section>
+  );
+}
+
+// The review's four facts about the member (AdminPayoutReview): since when,
+// how many people, paid before, and this request in amber.
+export function ReviewFacts({ payout }: { payout: IPayoutDetail }) {
+  const { translate, locale } = useLocale();
+  const money = (value: string | number | null) => formatCurrency(value ?? 0, undefined, Number(value ?? 0) % 1 ? 2 : 0, locale);
+  const facts = [
+    { label: "Affiliate since", value: payout.member.since ? formatDate(payout.member.since, "d MMM yy", "—", locale) : "—" },
+    { label: "People referred", value: formatCount(payout.member.referred, locale) },
+    { label: "Paid to them before", value: money(payout.member.paidBefore) },
+    { label: "This request", value: money(payout.requestedAmount), warn: true },
+  ];
+  return (
+    <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      {facts.map((fact) => (
+        <div key={fact.label} className="flex min-w-0 flex-col gap-0.75 rounded-md border border-divider px-3 py-2.5">
+          <dt className="text-[11.5px] text-ink-muted">{translate(fact.label)}</dt>
+          <dd className={cn("truncate text-body font-bold tabular-nums", fact.warn ? "text-warning" : "text-ink")}>{fact.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+// The checks as pills: green when they passed, amber when not.
+export function CheckPills({ payout }: { payout: IPayoutDetail }) {
+  const { translate, locale } = useLocale();
+  const lines = deskChecks(payout, (iso) => formatDate(iso, MOMENT, "—", locale));
+  return (
+    <ul aria-label={translate("Checks")} className="flex flex-wrap gap-2">
+      {lines.map((line) => (
+        <li key={line.text} className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.25 text-[12.5px] font-semibold", line.ok ? "bg-mint-50 text-brand-ink" : "bg-warning-soft text-due-ink")}>
+          {line.ok ? <Check className="size-3 shrink-0" strokeWidth={2.75} aria-hidden="true" /> : <AlertTriangle className="size-3 shrink-0" strokeWidth={2.5} aria-hidden="true" />}
+          {translate(line.text, line.values && Object.fromEntries(Object.entries(line.values).map(([k, v]) => [k, typeof v === "number" ? formatCount(v, locale) : v])))}
+        </li>
+      ))}
+    </ul>
   );
 }

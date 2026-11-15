@@ -66,7 +66,7 @@ export function QrDialog({ open, onClose, link, code, label, tag }: QrDialogProp
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent showCloseButton={false} className="flex w-105 max-w-[calc(100vw-32px)] flex-col items-center gap-3 rounded-[20px] border-0 bg-surface px-7 py-6.5 text-center shadow-overlay ring-0">
         <DialogTitle className="text-h3 text-ink">{label ? t("QR code · {name}", { name: label }) : t("QR code")}</DialogTitle>
-        <DialogDescription className="text-[13.5px] leading-normal text-ink-muted">{t("Friends scan it to sign up with your link. Print it for a poster or your shop counter.")}</DialogDescription>
+        <DialogDescription className="text-[13.5px] leading-[normal] text-ink-muted">{t("Friends scan it to sign up with your link. Print it for a poster or your shop counter.")}</DialogDescription>
         {modules ? (
           <svg role="img" aria-label={t("QR code for your invite link")} viewBox={`0 0 ${size} ${size}`} shapeRendering="crispEdges" className="size-58 rounded-[14px] border border-line bg-white p-3">
             <path d={qrPath(modules, QUIET)} fill="#000" />

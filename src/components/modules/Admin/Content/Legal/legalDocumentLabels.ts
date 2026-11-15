@@ -5,6 +5,8 @@ export const LEGAL_DOC_LABELS: Record<LegalDocType, string> = {
   TERMS_OF_SERVICE: "Terms of Service",
   PRIVACY_POLICY: "Privacy Policy",
   REFUND_POLICY: "Refund Policy",
+  COOKIE_POLICY: "Cookie Policy",
+  COMMUNITY_RULES: "Community Rules",
   FAQ: "FAQ",
 };
 
@@ -13,6 +15,8 @@ export const LEGAL_DOC_ROUTES: Record<LegalDocType, string> = {
   TERMS_OF_SERVICE: "/terms",
   PRIVACY_POLICY: "/privacy",
   REFUND_POLICY: "/refund-policy",
+  COOKIE_POLICY: "/cookie-policy",
+  COMMUNITY_RULES: "/community-rules",
   FAQ: "/faq",
 };
 

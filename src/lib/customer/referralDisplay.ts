@@ -172,13 +172,10 @@ export function peopleMix(people: Record<"PAYING" | "FREE" | "STOPPED" | "REFUND
   return keys.map((key) => ({ key, count: people[key], pct: (people[key] / total) * 100 }));
 }
 
-// "Earnings by month": the months from the first one with money (at most
-// the last `max`), so a new member's chart isn't a row of empty bars.
-export function chartMonths(months: { month: string; amount: string }[], max = 6): { month: string; amount: number }[] {
-  const rows = months.map((m) => ({ month: m.month, amount: Number(m.amount) }));
-  const first = rows.findIndex((m) => m.amount > 0);
-  const from = first < 0 ? rows.length - 1 : Math.max(first, rows.length - max);
-  return rows.slice(Math.max(0, from));
+// "Earnings by month": the last three months, this one last, as the board
+// draws them before the dashed bar for next month.
+export function chartMonths(months: { month: string; amount: string }[], count = 3): { month: string; amount: number }[] {
+  return months.slice(-count).map((m) => ({ month: m.month, amount: Number(m.amount) }));
 }
 
 // --- Payout methods ---

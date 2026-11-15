@@ -64,7 +64,7 @@ export function PendingView({ payment, plans }: { payment: CustomerPayment; plan
   ];
 
   return (
-    <section aria-labelledby="pending-title" className="flex w-180 max-w-full flex-col gap-4.5 self-center rounded-panel border border-line-card bg-surface p-5 shadow-card sm:p-7">
+    <section aria-labelledby="pending-title" className="flex w-194 max-w-full flex-col gap-4.5 self-center rounded-panel border border-line-card bg-surface p-5 shadow-card sm:p-7">
       <div className="flex items-start gap-4">
         <span className="flex size-13 shrink-0 items-center justify-center rounded-full bg-warning-soft text-warning">
           <Clock className="size-6.5" strokeWidth={2} aria-hidden="true" />

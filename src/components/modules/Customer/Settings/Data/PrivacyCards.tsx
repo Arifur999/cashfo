@@ -147,7 +147,7 @@ export function DeleteCard({ readOnly, onDownload }: { readOnly: boolean; onDown
   const [open, setOpen] = useState(false);
   return (
     <section aria-labelledby="sd-dz" className={cn(CARD, "flex flex-wrap items-center gap-4 border-expense/30 px-5.5 py-4.5")}>
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-expense-soft text-expense">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-expense-soft text-expense">
         <Trash2 className="size-4.5" aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.75">

@@ -341,6 +341,28 @@
   --mark-green-edge: #22c55e;
   --mark-pink: #fbcfe8;
   --mark-pink-edge: #ec4899;
+  /* The Settings boards' own grounds: the primary's soft wash (--sm-primary-soft),
+     the sunken band and row rule (--sm-sunken), a button's hover and a
+     card's quiet foot, the dark end of a photo-less avatar, and the amber
+     of a profile that is under 60% done. */
+  --soft-hover: #f4f7f6;
+  --soft-band: #fbfcfc;
+  --brand-shade: #145248;
+  --progress-low: #d97706;
+  /* The title of Security's "we never ask for your codes" note. */
+  --tip-ink: #78350f;
+  /* The primary washed 92% out (the Settings boards' "soft"): App preferences' preview. */
+  --soft-wash: #edf4f3;
+  /* A group band or a hovered row on the Settings boards (#f8faf9, #2c3331 dark). */
+  --soft-row: #f8faf9;
+  /* A ticked chip on the Settings boards. */
+  --soft-check: #f3f9f7;
+  /* A support conversation waiting on the customer (HelpConversation board). */
+  --wait-soft: #ffedd5;
+  --wait-ink: #9a3412;
+  /* The Checkout board's picked option wash and its steps' words. */
+  --sel-wash: #f4faf8;
+  --step-ink: #1e2d2a;
 
   /* Elevation (exposed as shadow-card/float/overlay/drawer/button below; the
      raw values use another prefix so they don't collide with Tailwind's
@@ -660,6 +682,17 @@
   --color-neutral-800: #eaf2ee;
   --color-neutral-900: #f4f8f6;
   --color-neutral-950: #ffffff;
+  --soft-hover: #2b3331;
+  --soft-band: #2c3332;
+  --brand-shade: #93bdb7;
+  --tip-ink: #c2a493;
+  --soft-wash: #162421;
+  --soft-row: #2c3331;
+  --soft-check: #2b3331;
+  --wait-soft: #2c322e;
+  --wait-ink: #fdba74;
+  --sel-wash: #2b3331;
+  --step-ink: #9aa09f;
 }
 
 /* The Habit Tracker (every page under /habit-tracker): the same tokens in
@@ -1065,6 +1098,18 @@ html:not(.dark) [data-app="habit"] {
   --color-mark-green-edge: var(--mark-green-edge);
   --color-mark-pink: var(--mark-pink);
   --color-mark-pink-edge: var(--mark-pink-edge);
+  --color-soft-hover: var(--soft-hover);
+  --color-soft-band: var(--soft-band);
+  --color-brand-shade: var(--brand-shade);
+  --color-progress-low: var(--progress-low);
+  --color-tip-ink: var(--tip-ink);
+  --color-soft-wash: var(--soft-wash);
+  --color-soft-row: var(--soft-row);
+  --color-soft-check: var(--soft-check);
+  --color-wait-soft: var(--wait-soft);
+  --color-wait-ink: var(--wait-ink);
+  --color-sel-wash: var(--sel-wash);
+  --color-step-ink: var(--step-ink);
   --color-pillar-habits: var(--pillar-habits);
   --color-pillar-habits-soft: var(--pillar-habits-soft);
   --color-pillar-vault: var(--pillar-vault);

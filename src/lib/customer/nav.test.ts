@@ -127,7 +127,7 @@ describe("findNavLocation", () => {
 
   it("names a Habit Tracker page under its section, and the Money Tracker's pages alone", () => {
     expect(breadcrumbFor(locate("/group-expenses")!)).toEqual({ crumbs: [], heading: "Group Expense", tone: "money" });
-    expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: ["Referrals"], heading: "Referral dashboard", tone: "neutral" });
+    expect(breadcrumbFor(locate("/referrals")!)).toEqual({ crumbs: ["Referrals"], heading: "Dashboard", tone: "neutral" });
     expect(breadcrumbFor(locate("/password-manager")!)).toEqual({ crumbs: [], heading: "Password Manager", tone: "vault" });    expect(breadcrumbFor(locate("/dashboard")!)).toEqual({ crumbs: [], heading: "Dashboard", tone: "money" });
     expect(breadcrumbFor(locate("/zakat")!)).toEqual({ crumbs: [], heading: "Zakat calculator", tone: "neutral" });
     expect(breadcrumbFor(locate("/reports/detailed")!)).toEqual({ crumbs: [], heading: "Reports", tone: "insights" });

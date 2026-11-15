@@ -52,8 +52,10 @@ const GENDERS = [
   { value: "FEMALE", label: "Female" },
   { value: "UNSAID", label: "Prefer not to say" },
 ] as const;
-const HINT = "text-[12.5px] leading-[1.45]";
-const PHONE_PREFIX = <span className="-ml-3 flex h-full items-center border-r border-line bg-strip px-2.75 text-body font-medium text-ink-2">+880</span>;
+const HINT = "text-[12.5px]";
+const PHONE_PREFIX = <span className="flex h-full items-center border-r border-line bg-strip px-2.5 text-body font-medium text-ink-2">+880</span>;
+// The frame for a phone box: the +880 band runs its full height, flush left.
+const PHONE_FRAME = "gap-3 overflow-hidden pl-0 [&>span:first-child]:self-stretch";
 
 type Form = Record<Exclude<ProfileField, "phone2WhatsApp">, string> & {
   phone2WhatsApp: boolean;
@@ -322,7 +324,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
   ];
 
   return (
-    <PageFrame className="gap-5.5 leading-[normal]">
+    <PageFrame className="gap-5.5 leading-[normal] md:pt-7 md:pb-10">
       <div className="flex flex-col gap-1">
         <SettingsBack />
         <h1 className="text-[26px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Profile")}</h1>
@@ -331,18 +333,18 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <form onSubmit={submit} noValidate className="@container flex min-w-0 flex-col gap-4.5">
           <section aria-labelledby="pf-personal" className={CARD}>
-            <div className="flex flex-col gap-0.75 px-5.5 pt-4.5 pb-3.5">
+            <div className="flex flex-col gap-0.75 px-6 pt-5">
               <h2 id="pf-personal" className="text-[16px] leading-[1.35] font-semibold text-ink">
                 {t("Personal info")}
               </h2>
-              <p className="text-small leading-normal text-ink-muted">{t("How you appear in Smartly and in the groups you run.")}</p>
+              <p className="text-[13px] text-ink-muted">{t("How you appear in Smartly and in the groups you run.")}</p>
             </div>
-            <div className="flex flex-col gap-4 px-5.5 pb-5">
-              <div className="flex flex-wrap items-center gap-4 border-b border-divider pb-4">
-                <Avatar name={user.name} src={user.avatarUrl} size={64} tone="soft" alt="" className="tracking-wide" />
-                <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="flex flex-col gap-4.5 px-6 pt-5 pb-5.5">
+              <div className="flex flex-wrap items-center gap-4.5 border-b border-divider pb-4.5">
+                <Avatar name={user.name} src={user.avatarUrl} size={72} tone="brand" alt="" className="text-[24px] tracking-[0.02em]" />
+                <div className="flex min-w-0 flex-col gap-2">
                   <span className="text-body font-medium text-ink">{t("Profile photo")}</span>
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input
                       ref={photoInput}
                       type="file"
@@ -355,12 +357,12 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                         event.target.value = "";
                       }}
                     />
-                    <Button type="button" variant="secondary" size="sm" onClick={() => photoInput.current?.click()} disabled={readOnly} className="h-9.5 px-3.5 text-[13.5px] pointer-coarse:h-11">
+                    <Button type="button" variant="secondary" size="sm" onClick={() => photoInput.current?.click()} disabled={readOnly} className="h-9 px-3.5 text-[13.5px] pointer-coarse:h-11">
                       <Camera className="size-3.75" />
                       {user.avatarUrl ? t("Change photo") : t("Add photo")}
                     </Button>
                     {user.avatarUrl && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveOpen(true)} disabled={readOnly} className="h-9.5 px-3 text-[13.5px] text-ink-2 pointer-coarse:h-11">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveOpen(true)} disabled={readOnly} className="h-9 px-3 text-[13.5px] text-ink-2 pointer-coarse:h-11">
                         {t("Remove")}
                       </Button>
                     )}
@@ -368,7 +370,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                   <span className={cn(HINT, "text-ink-muted")}>{t("JPG, PNG, WEBP or GIF, up to 5 MB. A square photo looks best.")}</span>
                 </div>
               </div>
-              <div className="grid gap-x-4 gap-y-3.5 @xl:grid-cols-2">
+              <div className="grid gap-x-4 gap-y-4.5 @xl:grid-cols-2">
                 <Field htmlFor="pf-name" label={t("Full name")} hint={<span className={HINT}>{t("Shown on your groups, statements and invites.")}</span>} error={shownError("name")}>
                   <Input id="pf-name" size="md" className="text-[14.5px]" value={form.name} onChange={(event) => edit("name", event.target.value)} maxLength={120} autoComplete="name" required invalid={Boolean(problems.name)} readOnly={readOnly} />
                 </Field>
@@ -387,9 +389,9 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                   />
                 </Field>
               </div>
-              <div className="grid gap-x-4 gap-y-3.5 @xl:grid-cols-3">
+              <div className="grid gap-x-4 gap-y-4.5 @xl:grid-cols-3">
                 <Field htmlFor="pf-dob" label={t("Date of birth")} hint={<span className={HINT}>{t("Only you can see this.")}</span>} error={shownError("dateOfBirth")}>
-                  <DayInput id="pf-dob" size="md" value={form.dateOfBirth} max={today} min="1920-01-01" onChange={(value) => edit("dateOfBirth", value)} invalid={Boolean(problems.dateOfBirth)} placeholder={t("Pick a date")} />
+                  <DayInput id="pf-dob" size="md" value={form.dateOfBirth} max={today} min="1920-01-01" onChange={(value) => edit("dateOfBirth", value)} invalid={Boolean(problems.dateOfBirth)} placeholder={t("Pick a date")} className="text-[14.5px]" />
                 </Field>
                 <Field htmlFor="pf-gender" label={t("Gender")} hint={<span className={HINT}>{t("Only you can see this.")}</span>}>
                   <select id="pf-gender" value={form.gender} disabled={readOnly} onChange={(event) => edit("gender", event.target.value)} className={cn(SELECT, "h-11 w-full rounded-field text-[14.5px]", !form.gender && "text-ink-faint")}>
@@ -422,7 +424,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                 hint={
                   <span className={cn(HINT, "flex justify-between gap-3")}>
                     <span>{t("Printed on PDF statements you download.")}</span>
-                    <span className="tabular-nums">{toLocaleDigits(`${tidy(form.address).length}/200`, fmt)}</span>
+                    <span className="text-ink-faint tabular-nums">{toLocaleDigits(`${tidy(form.address).length}/200`, fmt)}</span>
                   </span>
                 }
                 error={shownError("address")}
@@ -430,7 +432,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                 <Textarea
                   id="pf-address"
                   rows={2}
-                  className="min-h-16 text-[14.5px]"
+                  className="min-h-[66px] py-2.5 leading-[1.5] text-[14.5px]"
                   value={form.address}
                   onChange={(event) => edit("address", event.target.value)}
                   maxLength={240}
@@ -444,20 +446,19 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
           </section>
 
           <section aria-labelledby="pf-contact" className={CARD}>
-            <div className="flex flex-col gap-0.75 px-5.5 pt-4.5 pb-3.5">
+            <div className="flex flex-col gap-0.75 px-6 pt-5">
               <h2 id="pf-contact" className="text-[16px] leading-[1.35] font-semibold text-ink">
                 {t("Contact")}
               </h2>
-              <p className="text-small leading-normal text-ink-muted">{t("Used for sign-in, receipts and withdrawal codes. We never share them.")}</p>
+              <p className="text-[13px] text-ink-muted">{t("Used for sign-in, receipts and withdrawal codes. We never share them.")}</p>
             </div>
-            <div className="flex flex-col gap-4 px-5.5 pb-5">
+            <div className="flex flex-col gap-4.5 px-6 pt-5 pb-5.5">
               <Field
                 htmlFor="pf-email"
-                className="border-b border-divider pb-4"
-                label={
+                                label={
                   <span className="flex items-center gap-2">
                     {t("Email")}
-                    <span className={cn("inline-flex h-4.5 items-center rounded-full px-2 text-[11px] font-semibold", verified ? "bg-income-soft text-income" : "bg-warning-soft text-warning-ink")}>{verified ? t("Verified") : t("Not verified")}</span>
+                    <span className={cn("inline-flex items-center rounded-full px-2 py-px text-[11.5px] font-semibold", verified ? "bg-success-soft text-success" : "bg-warning-soft text-warning")}>{verified ? t("Verified") : t("Not verified")}</span>
                   </span>
                 }
                 hint={
@@ -493,14 +494,14 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                   trailing={<Lock className="size-3.75 text-ink-faint" aria-label={t("To change your email, contact support")} />}
                 />
               </Field>
-              <div className="grid gap-x-4 gap-y-3.5 @xl:grid-cols-2">
+              <div className="grid gap-x-4 gap-y-4.5 border-t border-divider pt-4.5 @xl:grid-cols-2">
                 <Field
                   htmlFor="pf-phone"
                   label={
                     <span className="flex items-center gap-2">
                       {t("Phone")}
                       {savedPhone && (
-                        <span className={cn("inline-flex h-4.5 items-center rounded-full px-2 text-[11px] font-semibold", phoneVerified ? "bg-income-soft text-income" : "bg-warning-soft text-warning-ink")}>
+                        <span className={cn("inline-flex items-center rounded-full px-2 py-px text-[11.5px] font-semibold", phoneVerified ? "bg-success-soft text-success" : "bg-warning-soft text-warning")}>
                           {phoneVerified ? t("Verified") : t("Not verified")}
                         </span>
                       )}
@@ -536,6 +537,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                     onChange={(event) => edit("phone", cleanLocalPhone(event.target.value))}
                     placeholder="1XXX-XXXXXX"
                     leading={PHONE_PREFIX}
+                    frameClassName={PHONE_FRAME}
                     trailing={
                       form.phone && !readOnly ? (
                         <button type="button" onClick={() => edit("phone", "")} aria-label={t("Clear phone number")} className="-mr-1.5 flex size-7 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink">
@@ -549,7 +551,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                     readOnly={readOnly}
                   />
                 </Field>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
                   <Field
                     htmlFor="pf-phone2"
                     label={
@@ -569,6 +571,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                       onChange={(event) => edit("phone2", cleanLocalPhone(event.target.value))}
                       placeholder="1XXX-XXXXXX"
                       leading={PHONE_PREFIX}
+                    frameClassName={PHONE_FRAME}
                       trailing={
                         form.phone2 && !readOnly ? (
                           <button type="button" onClick={() => edit("phone2", "")} aria-label={t("Clear second number")} className="-mr-1.5 flex size-7 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink">
@@ -582,7 +585,7 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                       readOnly={readOnly}
                     />
                   </Field>
-                  <label className={cn("flex w-fit items-center gap-2 text-[13px] text-ink-2", (!form.phone2 || readOnly) && "opacity-50")}>
+                  <label className={cn("flex w-fit items-center gap-2 text-[13.5px]", !form.phone2 || readOnly ? "text-ink-faint" : "cursor-pointer text-ink-2")}>
                     <input type="checkbox" className="size-4 accent-primary" checked={form.phone2WhatsApp && Boolean(form.phone2)} disabled={!form.phone2 || readOnly} onChange={(event) => edit("phone2WhatsApp", event.target.checked)} />
                     {t("This number has WhatsApp")}
                   </label>
@@ -592,15 +595,15 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
           </section>
 
           {/* Amber while there is something to save, green just after. */}
-          <div className={cn(CARD, "flex flex-wrap items-center justify-end gap-2.5 px-5.5 py-3.5", dirty && !isPending && "bg-warning-50")}>
-            <span role="status" className={cn("flex w-full min-w-0 items-center gap-2 text-[13px] @lg:w-auto @lg:flex-1", invalid ? "font-semibold text-expense" : dirty ? "font-semibold text-warning-ink" : "text-ink-muted")}>
-              <span aria-hidden="true" className={cn("size-1.75 shrink-0 rounded-full", invalid ? "bg-expense-fill" : dirty ? "bg-warning-fill" : justSaved ? "bg-emerald" : "bg-input")} />
+          <div className={cn("sticky bottom-0 z-5 flex flex-wrap items-center justify-end gap-2.5 rounded-[16px] border py-3 pr-4 pl-5 shadow-[0_-2px_14px_rgba(18,32,29,0.06),0_6px_20px_rgba(18,32,29,0.06)]", dirty && !isPending ? "border-warning-line bg-warning-50" : "border-line bg-surface")}>
+            <span role="status" className={cn("flex w-full min-w-0 items-center gap-2 text-[13px] @lg:w-auto @lg:flex-1", invalid ? "font-semibold text-loss-ink" : dirty ? "font-semibold text-due-ink" : "text-ink-muted")}>
+              <span aria-hidden="true" className={cn("size-1.75 shrink-0 rounded-full", invalid ? "bg-expense-fill" : dirty ? "bg-warning-fill" : justSaved ? "bg-success" : "bg-input")} />
               {status}
             </span>
-            <Button type="button" variant="secondary" onClick={discard} disabled={!dirty || isPending} className="px-3.5 pointer-coarse:h-11">
+            <Button type="button" variant="secondary" onClick={discard} disabled={!dirty || isPending} className="h-10 px-3.5 text-body pointer-coarse:h-11">
               {t("Discard")}
             </Button>
-            <Button type="submit" disabled={!dirty || invalid || isPending || readOnly} className="min-w-33 px-4.5 pointer-coarse:h-11">
+            <Button type="submit" disabled={!dirty || invalid || isPending || readOnly} className="h-10 min-w-33 px-4.5 text-body pointer-coarse:h-11">
               {isPending && <Loader />}
               {isPending ? t("Saving") : t("Save changes")}
             </Button>
@@ -611,60 +614,59 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
 
         <div className="flex flex-col gap-4 xl:sticky xl:top-4">
           <section aria-label={t("Your account")} className={cn(CARD, "overflow-hidden")}>
-            <div className="flex flex-col gap-3.5 px-5 pt-4.5 pb-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <Avatar name={user.name} src={user.avatarUrl} size={52} tone="soft" alt="" />
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate text-[16px] font-semibold text-ink">{user.name}</span>
-                  <span className="truncate text-[12.5px] text-ink-muted">{user.email}</span>
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5 rounded-xl border border-line-card bg-strip px-3 py-2.5">
-                <Crown className="size-4 shrink-0 text-ink-soft" aria-hidden="true" />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[11.5px] text-ink-muted">{t("Your plan")}</span>
-                  <span className="truncate text-body font-semibold text-ink">{plan.status === "free" ? t("Free") : plan.label}</span>
-                </span>
-                <Link href={PLANS_ROUTE} className="text-small font-semibold text-emerald hover:underline">
-                  {t(plan.status === "paid" ? "Manage plan" : "See plans")}
-                </Link>
-              </div>
-              <dl className="flex flex-col">
-                {facts.map((fact, index) => (
-                  <div key={fact.label} className={cn("flex items-center justify-between gap-3 py-2.5", index > 0 && "border-t border-divider")}>
-                    <dt className="text-small text-ink-muted">{t(fact.label)}</dt>
-                    <dd className="flex min-w-0 items-center gap-2 text-small font-semibold text-ink">
-                      <span className="truncate">{fact.value}</span>
-                      {fact.copy && (
-                        <button
-                          type="button"
-                          onClick={() => copy(fact.copy!, "User ID copied")}
-                          aria-label={t("Copy user ID")}
-                          className="flex size-7 items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-sunken hover:text-ink"
-                        >
-                          <Copy className="size-3.5" aria-hidden="true" />
-                        </button>
-                      )}
-                      {fact.link && (
-                        <Link href={fact.link.href} className="text-[12.5px] font-semibold text-emerald hover:underline">
-                          {t(fact.link.label)}
-                        </Link>
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+            <div className="flex min-w-0 items-center gap-3 px-5 pt-4.5 pb-3.5">
+              <Avatar name={user.name} src={user.avatarUrl} size={52} tone="brand" alt="" className="text-[18px]" />
+              <span className="flex min-w-0 flex-col gap-0.75">
+                <span className="truncate text-[16px] font-semibold text-ink">{user.name}</span>
+                <span className="truncate text-[12.5px] text-ink-muted">{user.email}</span>
+              </span>
             </div>
-            <div className="flex flex-col gap-2.5 border-t border-divider px-5 pt-4 pb-4.5">
-              <div className="flex items-baseline justify-between gap-3">
+            <div className={cn("mx-5 flex items-center gap-2.5 rounded-[12px] border px-3 py-2.5", plan.status === "free" ? "border-line bg-strip" : "border-mint-200 bg-primary-soft")}>
+              <Crown className={cn("size-4.25 shrink-0", plan.status === "free" ? "text-ink-faint" : "text-income")} aria-hidden="true" />
+              <span className="flex min-w-0 flex-1 flex-col gap-px">
+                <span className="text-[11.5px] text-ink-muted">{t("Your plan")}</span>
+                <span className="truncate text-body font-bold text-ink">{plan.status === "free" ? t("Free") : plan.label}</span>
+              </span>
+              <Link href={PLANS_ROUTE} className="shrink-0 text-[13px] font-semibold whitespace-nowrap text-emerald hover:underline">
+                {t(plan.status === "paid" ? "Manage@@plan" : "See plans")}
+              </Link>
+            </div>
+            <dl className="mt-2 flex flex-col px-5">
+              {facts.map((fact, index) => (
+                <div key={fact.label} className={cn("flex min-h-10 items-center gap-2.5", index > 0 && "min-h-[41px] border-t border-sunken")}>
+                  <dt className="flex-1 text-[13px] text-ink-muted">{t(fact.label)}</dt>
+                  <dd className="flex min-w-0 items-center gap-2 text-[13.5px] font-semibold whitespace-nowrap text-ink tabular-nums">
+                    <span className="truncate">{fact.value}</span>
+                    {fact.copy && (
+                      <button
+                        type="button"
+                        onClick={() => copy(fact.copy!, "User ID copied")}
+                        aria-label={t("Copy user ID")}
+                        title={t("Copy user ID")}
+                        className="flex size-7 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-muted hover:bg-soft-hover hover:text-ink"
+                      >
+                        <Copy className="size-3.5" aria-hidden="true" />
+                      </button>
+                    )}
+                    {fact.link && (
+                      <Link href={fact.link.href} className="text-[12.5px] font-semibold text-emerald hover:underline">
+                        {t(fact.link.label)}
+                      </Link>
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-1.5 flex flex-col gap-2.5 border-t border-sunken bg-soft-band px-5 pt-4 pb-4.5">
+              <div className="flex items-baseline justify-between gap-2.5">
                 <span className="text-body font-semibold text-ink">{t("Profile complete")}</span>
-                <span className={cn("text-[17px] font-bold tabular-nums", percent === 100 ? "text-income" : "text-warning")}>{toLocaleDigits(`${percent}%`, fmt)}</span>
+                <span className={cn("text-[18px] font-bold tabular-nums", percent === 100 ? "text-tint-green-ink" : percent >= 60 ? "text-brand-ink" : "text-warning")}>{toLocaleDigits(`${percent}%`, fmt)}</span>
               </div>
-              <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={t("Profile complete")} className="h-1.5 overflow-hidden rounded-full bg-surface-sunken">
-                <div className={cn("h-full rounded-full", percent === 100 ? "bg-income" : "bg-warning")} style={{ width: `${percent}%` }} />
+              <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={t("Profile complete")} className="h-2 overflow-hidden rounded-full bg-line">
+                <div className={cn("h-full rounded-full", percent === 100 ? "bg-success" : percent >= 60 ? "bg-emerald" : "bg-progress-low")} style={{ width: `${percent}%` }} />
               </div>
               {missing.length === 0 ? (
-                <span className="flex items-center gap-1.5 text-[12.5px] text-income">
+                <span className="flex items-center gap-1.5 text-[13px] font-semibold text-tint-green-ink">
                   <Check className="size-3.5" aria-hidden="true" />
                   {t("Everything is filled in.")}
                 </span>
@@ -682,9 +684,9 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
                         type="button"
                         onClick={() => goTo(check.key)}
                         disabled={readOnly}
-                        className="inline-flex h-7.5 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 text-[12.5px] font-medium text-ink-2 hover:border-primary hover:text-ink disabled:opacity-60"
+                        className="inline-flex h-7.5 items-center gap-1.5 rounded-full border border-line bg-surface pr-2.75 pl-2 text-[12.5px] font-medium whitespace-nowrap text-ink hover:border-primary disabled:opacity-60"
                       >
-                        <span aria-hidden="true" className="size-3 rounded-full border-[1.5px] border-dashed border-warning" />
+                        <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full border-[1.5px] border-dashed border-warning" />
                         {t(check.label)}
                       </button>
                     ))}
@@ -696,23 +698,25 @@ export function ProfileSection({ lastSignIn = null, referral = null, today }: Pr
 
           {referral && (
             <section aria-labelledby="pf-ref" className={cn(CARD, "flex flex-col gap-3 px-5 py-4.5")}>
-              <h2 id="pf-ref" className="text-[16px] leading-[1.35] font-semibold text-ink">
+              <div className="flex flex-col gap-0.75">
+              <h2 id="pf-ref" className="text-[16px] font-semibold text-ink">
                 {t("Your referral code")}
               </h2>
-              <p className="text-small leading-normal text-ink-muted">
+              <p className="text-[13px] leading-[1.45] text-ink-muted">
                 {t("Friends get {discount}% off their first payment. You get {commission}% of every payment they make.", {
                   discount: formatCount(referral.friendDiscountPct, fmt),
                   commission: formatCount(referral.commissionPct, fmt),
                 })}
               </p>
-              <div className="flex items-center gap-2 rounded-xl border border-dashed border-mint-200 bg-mint-50/50 py-1.5 pr-1.5 pl-3.5">
-                <span className="min-w-0 flex-1 truncate font-mono text-[16px] font-bold tracking-[0.12em] text-brand-ink">{referral.code}</span>
-                <Button type="button" size="sm" className="h-8.5 px-3 text-small" onClick={() => copy(referral.code, "Code copied")}>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-[12px] border-[1.5px] border-dashed border-mint-200 bg-primary-soft py-2 pr-2 pl-3.5">
+                <span className="min-w-0 flex-1 truncate font-mono text-[18px] font-bold tracking-[0.08em] text-brand-ink">{referral.code}</span>
+                <Button type="button" size="sm" className="h-8.5 gap-1.5 px-3.5 text-[13px]" onClick={() => copy(referral.code, "Code copied")}>
                   <Copy className="size-3.5" aria-hidden="true" />
                   {t("Copy")}
                 </Button>
               </div>
-              <Link href="/referrals" className="w-fit text-small font-semibold text-emerald hover:underline">
+              <Link href="/referrals" className="w-fit text-[13px] font-semibold text-emerald hover:underline">
                 {t("See your referrals")}
               </Link>
             </section>

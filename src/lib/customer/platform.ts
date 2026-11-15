@@ -33,7 +33,7 @@ export interface PlatformInfo extends PublicPlatformInfo {
   announcements: CustomerAnnouncement[];
 }
 
-export type LegalPage = "terms" | "privacy" | "refund-policy" | "faq";
+export type LegalPage = "terms" | "privacy" | "refund-policy" | "cookie-policy" | "community-rules" | "faq";
 
 export interface LegalDocument {
   type: string;
