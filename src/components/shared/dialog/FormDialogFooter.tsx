@@ -18,9 +18,12 @@ interface FormDialogFooterProps {
   // itself must be a flex column that fills the drawer), and stay in view
   // while a long one scrolls, as the design's drawers keep their foot.
   pinned?: boolean;
+  // A second action beside the submit button in Cancel's place (the
+  // campaign dialog's Save as draft); the close button still cancels.
+  secondary?: React.ReactNode;
 }
 
-const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disabled, extra, pinned = false }: FormDialogFooterProps) => {
+const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disabled, extra, pinned = false, secondary }: FormDialogFooterProps) => {
   const { translate } = useLocale();
   return (
     // The design's dialog foot: a strip across the bottom of the card.
@@ -29,11 +32,13 @@ const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disab
       <div className="flex flex-col-reverse gap-2.5 sm:flex-row">
         {/* The secondary button ConfirmDialog's Cancel is: white, the
             line-strong edge, sunken on hover. */}
-        <DialogClose asChild>
-          <Button type="button" variant="secondary" size="md" disabled={isPending}>
-            {translate("Cancel")}
-          </Button>
-        </DialogClose>
+        {secondary ?? (
+          <DialogClose asChild>
+            <Button type="button" variant="secondary" size="md" disabled={isPending}>
+              {translate("Cancel")}
+            </Button>
+          </DialogClose>
+        )}
         <AppSubmitButton isPending={isPending} pendingLabel={pendingLabel} variant={variant === "destructive" ? "destructive" : "action"} disabled={disabled} size="md" className="w-auto">
           {translate(submitLabel)}
         </AppSubmitButton>
