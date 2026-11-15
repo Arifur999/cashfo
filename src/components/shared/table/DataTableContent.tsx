@@ -243,7 +243,7 @@ const DataTableContent = <TData,>({
                           key={cell.id}
                           id={naming ? nameId : undefined}
                           className={cn(
-                            "py-2 text-body text-ink",
+                            "py-2 text-[13.5px] leading-[normal] text-ink",
                             covered && LINK_CELL,
                             cell.column.columnDef.meta?.align === "right" && "text-right",
                             cell.column.columnDef.meta?.cellClassName,

@@ -13,6 +13,6 @@ export const MANAGE_OWNERS_TABLE_BASE_CONFIG = {
 // full config is built once a page has loaded (memoize the result).
 export const buildManageOwnersTableConfig = (statusCounts?: Record<OwnerStatus, number>, openStatus?: string | null): ServerDataTableConfig => ({
   ...MANAGE_OWNERS_TABLE_BASE_CONFIG,
-  search: { placeholder: "Search by name, business, email, phone" },
+  search: { placeholder: "Search by name, email, phone", width: 340 },
   filters: [{ id: "status", type: "tabs", label: "Status", options: ownerStatusTabs(statusCounts, openStatus) }],
 });

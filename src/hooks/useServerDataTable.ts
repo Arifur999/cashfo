@@ -15,7 +15,7 @@ export interface ServerDataTableConfig {
   // Every query param the endpoint accepts besides page/limit.
   queryKeys: readonly string[];
   filters?: DataTableFilterConfig[];
-  search?: { placeholder: string; queryKey?: string; width?: "sm" | "md" };
+  search?: { placeholder: string; queryKey?: string; width?: "sm" | "md" | 280 | 340 };
   defaultLimit?: number;
   // What the list shows while the URL names nothing else; a tabs filter
   // with a default has no "All" tab.

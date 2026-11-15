@@ -19,8 +19,9 @@ interface InlineButton<TData> {
 
 // The smartly secondary button at the row's 32px; a destructive one in the
 // person page's red outline.
-const BUTTON = "h-8 px-3";
-const DANGER = "border-expense-line text-expense hover:bg-expense-soft";
+// The boards' row pills: 32px, 10px in, 12.5px; a red one in #B91C1C on a #FCA5A5 line.
+const BUTTON = "h-8 px-2.5 text-[12.5px]";
+const DANGER = "border-danger-line-strong text-danger-ink hover:bg-expense-soft";
 
 // The row's actions as the design's small buttons (View, Reset data): the
 // safe ones first, the destructive ones outlined in red. In "split" mode
