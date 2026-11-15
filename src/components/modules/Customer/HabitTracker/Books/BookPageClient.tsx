@@ -8,11 +8,12 @@ import { toast } from "sonner";
 import Loader from "@/components/shared/Loader";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import PageFrame from "@/components/smartly/PageFrame";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import type { BookDetail, BookNote, Reminder } from "@/lib/customer/api";
 import { addBookNoteAction, deleteBookAction, removeBookNoteAction, updateBookAction } from "@/lib/customer/bookActions";
 import { formatCurrency } from "@/lib/customer/currency";
-import { actionError } from "@/lib/customer/habitDisplay";
+import { actionError, dayText } from "@/lib/customer/habitDisplay";
 import { longDay, MY_BOOKS_HREF, NOTE_KINDS, type NoteSort, noteDay, noteKind, notePreview, noteStatsOf, shelfOf, sortNotes } from "@/lib/customer/libraryBoard";
 import { toDateInputValue } from "@/lib/date";
 import { formatCount } from "@/lib/i18n/digits";
@@ -134,7 +135,8 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
   ];
 
   return (
-    <PageFrame className="gap-3.5 leading-[normal] md:pt-4 md:pb-5.5">
+    <PageFrame className="gap-3.5 leading-[normal] md:pt-4 md:pb-5.5 xl:min-h-full">
+      <TopbarExtras heading={t("Book")} />
       <Link href={MY_BOOKS_HREF} className="inline-flex items-center gap-1.5 self-start text-[13.5px] font-semibold text-ink-soft hover:text-ink">
         <ChevronLeft className="size-4" strokeWidth={2.25} aria-hidden="true" />
         {t("All books")}
@@ -203,7 +205,7 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
       </div>
 
       {tab === "notes" ? (
-        <section className={cn(LB_CARD, "flex min-h-65 flex-col overflow-hidden")}>
+        <section className={cn(LB_CARD, "flex min-h-65 flex-1 flex-col overflow-hidden")}>
           {sorted.length === 0 ? (
             <div className="flex min-h-65 flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
               <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-[16px] bg-emerald-soft">
@@ -227,7 +229,7 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
                 <PageTile page={note.page} size="lg" />
                 <span className="flex min-w-0 flex-col gap-1.25">
                   <span className="flex flex-wrap items-center gap-2.5 text-[12.5px] text-ink-muted">
-                    <span>{longDay(noteDay(note), fmt)}</span>
+                    <span>{dayText(noteDay(note), fmt, "dayMonthYY")}</span>
                     <KindChip kind={noteKind(note)} className="px-2.25 text-[12px]" />
                     {note.line && (
                       <span className="inline-flex items-center gap-1 text-ink-faint">
@@ -244,7 +246,7 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
           )}
         </section>
       ) : (
-        <section className={cn(LB_CARD, "flex min-h-65 flex-col overflow-hidden")}>
+        <section className={cn(LB_CARD, "flex min-h-65 flex-1 flex-col overflow-hidden")}>
           {book.summary ? (
             <>
               <div className="flex items-center justify-between gap-3 border-b border-divider px-5 py-3.5">
@@ -312,7 +314,7 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
         open={viewing !== null && form === null && confirm === null}
         onClose={() => setViewId(null)}
         width={620}
-        className="w-160 rounded-[16px]"
+        className="w-160 rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
         headClassName="items-start px-5.5 py-4.5"
         title={
           viewing ? (
@@ -369,7 +371,7 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
         onClose={() => setSummaryOpen(false)}
         busy={isPending}
         width={620}
-        className="w-170 rounded-[16px]"
+        className="w-170 rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
         headClassName="items-center px-5.5 py-4"
         title={t("Book summary")}
         sub={<span className="block truncate text-[13px]">{book.title}</span>}

@@ -126,7 +126,7 @@ export function BookNoteDialog({ open, onClose, book, editing, startPage, today,
       onClose={onClose}
       busy={isPending}
       width={620}
-      className="w-150 rounded-[16px]"
+      className="w-150 rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
       headClassName={cn("items-center gap-3.5 bg-linear-to-b to-surface px-5.5 py-4", HEAD_FROM[kind])}
       titleClassName="text-[18px] font-bold"
       lead={<Spine color={book.color} className="h-12 w-8.5" />}

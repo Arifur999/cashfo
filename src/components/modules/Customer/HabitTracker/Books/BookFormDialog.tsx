@@ -14,7 +14,7 @@ import { takaSign } from "@/lib/i18n/formatPrefs";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { draftFromReminder, type ReminderBook, ReminderSection } from "../Reminders";
-import { BOOK_PALETTE, suggestColor } from "./bookPalette";
+import { suggestColor } from "./bookPalette";
 import { LB_ERROR, LB_FIELD, LB_LABEL, LB_OUTLINE, LB_PRIMARY } from "./LibraryBits";
 
 const STATUS_OPTIONS: { value: BookStatus; label: string }[] = [
@@ -64,7 +64,6 @@ export function BookFormDialog({ open, onClose, editing, shelves, startShelf, re
   const [status, setStatus] = useState<BookStatus>("WANT_TO_READ");
   const [pages, setPages] = useState("");
   const [read, setRead] = useState("");
-  const [pickedColor, setPickedColor] = useState<string | null>(null);
   const [reminder, setReminder] = useState(() => draftFromReminder("BOOK", null));
   const [errors, setErrors] = useState<Errors>({});
   const [isPending, startTransition] = useTransition();
@@ -83,13 +82,13 @@ export function BookFormDialog({ open, onClose, editing, shelves, startShelf, re
       setStatus(editing?.status ?? "WANT_TO_READ");
       setPages(editing ? String(editing.totalPages) : "");
       setRead("");
-      setPickedColor(editing?.color ?? null);
       setReminder(draftFromReminder("BOOK", null));
       setErrors({});
     }
   }
 
-  const color = pickedColor ?? suggestColor(title.trim());
+  // The boards' form has no colour: a new book gets one from its name.
+  const color = editing?.color ?? suggestColor(title.trim());
   const options = shelfList(shelves);
   const digits = (value: string) => latinDigits(value).replace(/\D/g, "").slice(0, 5);
   const clear = (field: keyof Errors) => errors[field] && setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -151,7 +150,7 @@ export function BookFormDialog({ open, onClose, editing, shelves, startShelf, re
       onClose={onClose}
       busy={isPending}
       width={480}
-      className="rounded-[16px]"
+      className="rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center px-5.5 py-4.5"
       title={t(editing ? "Edit book" : "Add a book")}
       bodyClassName="gap-3.5 px-5.5 py-4.5"
@@ -209,48 +208,28 @@ export function BookFormDialog({ open, onClose, editing, shelves, startShelf, re
         />
         {errors.author && <span className={LB_ERROR}>{errors.author}</span>}
       </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_140px] gap-3 max-sm:grid-cols-1">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="bf-price" className={LB_LABEL}>
-            {t("Price you paid ({sign})", { sign: takaSign(fmt) })} <span className="font-normal text-ink-muted">{t("(optional)")}</span>
-          </label>
-          <span className="relative block">
-            <span aria-hidden="true" className="absolute top-2.75 left-3 text-[14px] text-ink-muted">
-              {takaSign(fmt)}
-            </span>
-            <input
-              id="bf-price"
-              inputMode="decimal"
-              value={price}
-              onChange={(event) => {
-                setPrice(event.target.value.slice(0, 16));
-                clear("price");
-              }}
-              placeholder={t("Leave empty if you do not remember")}
-              aria-invalid={!!errors.price || undefined}
-              className={cn(LB_FIELD, "pl-8")}
-            />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="bf-price" className={LB_LABEL}>
+          {t("Price you paid ({sign})", { sign: takaSign(fmt) })} <span className="font-normal text-ink-muted">{t("(optional)")}</span>
+        </label>
+        <span className="relative block">
+          <span aria-hidden="true" className="absolute top-2.75 left-3 text-[14px] text-ink-muted">
+            {takaSign(fmt)}
           </span>
-          {errors.price && <span className={LB_ERROR}>{errors.price}</span>}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="bf-pages" className={LB_LABEL}>
-            {t("Total pages")} <span className="text-expense">*</span>
-          </label>
           <input
-            id="bf-pages"
-            inputMode="numeric"
-            value={pages}
+            id="bf-price"
+            inputMode="decimal"
+            value={price}
             onChange={(event) => {
-              setPages(digits(event.target.value));
-              clear("pages");
+              setPrice(event.target.value.slice(0, 16));
+              clear("price");
             }}
-            placeholder={t("e.g. 208")}
-            aria-invalid={!!errors.pages || undefined}
-            className={LB_FIELD}
+            placeholder={t("Leave empty if you do not remember")}
+            aria-invalid={!!errors.price || undefined}
+            className={cn(LB_FIELD, "pl-8")}
           />
-          {errors.pages && <span className={LB_ERROR}>{errors.pages}</span>}
-        </div>
+        </span>
+        {errors.price && <span className={LB_ERROR}>{errors.price}</span>}
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bf-shelf" className={LB_LABEL}>
@@ -310,50 +289,49 @@ export function BookFormDialog({ open, onClose, editing, shelves, startShelf, re
         </div>
         {editing && status !== editing.status && status === "WANT_TO_READ" && editing.pagesRead > 0 && <span className="text-[12.5px] text-warning">{t("Its page goes back to the start; the days you read stay in your history.")}</span>}
       </div>
-      {!editing && status === "READING" && (
+      {/* Not on the boards' form, but a book's page count drives its progress. */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="bf-read" className={LB_LABEL}>
-            {t("Pages read so far")} <span className="font-normal text-ink-muted">{t("(optional)")}</span>
+          <label htmlFor="bf-pages" className={LB_LABEL}>
+            {t("Total pages")} <span className="text-expense">*</span>
           </label>
           <input
-            id="bf-read"
+            id="bf-pages"
             inputMode="numeric"
-            value={read}
+            value={pages}
             onChange={(event) => {
-              setRead(digits(event.target.value));
-              clear("read");
+              setPages(digits(event.target.value));
+              clear("pages");
             }}
-            placeholder={formatCount(0, fmt)}
-            aria-invalid={!!errors.read || undefined}
-            className={cn(LB_FIELD, "w-40")}
+            placeholder={t("e.g. 208")}
+            aria-invalid={!!errors.pages || undefined}
+            className={LB_FIELD}
           />
-          {errors.read && <span className={LB_ERROR}>{errors.read}</span>}
+          {errors.pages && <span className={LB_ERROR}>{errors.pages}</span>}
         </div>
-      )}
-      <div className="flex flex-col gap-2">
-        <span id="bf-color" className={LB_LABEL}>
-          {t("Cover colour")}
-        </span>
-        <div role="radiogroup" aria-labelledby="bf-color" className="flex flex-wrap gap-2.5">
-          {BOOK_PALETTE.map((option) => {
-            const on = option.key === color;
-            return (
-              <button
-                key={option.key}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                aria-label={t(option.label)}
-                title={t(option.label)}
-                onClick={() => setPickedColor(option.key)}
-                className="relative size-7 rounded-full after:absolute after:-inset-1"
-                style={{ backgroundImage: `linear-gradient(135deg, ${option.from}, ${option.to})`, ...(on && { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${option.from}` }) }}
-              />
-            );
-          })}
-        </div>
+        {!editing && status === "READING" && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="bf-read" className={LB_LABEL}>
+              {t("Pages read so far")} <span className="font-normal text-ink-muted">{t("(optional)")}</span>
+            </label>
+            <input
+              id="bf-read"
+              inputMode="numeric"
+              value={read}
+              onChange={(event) => {
+                setRead(digits(event.target.value));
+                clear("read");
+              }}
+              placeholder={formatCount(0, fmt)}
+              aria-invalid={!!errors.read || undefined}
+              className={LB_FIELD}
+            />
+            {errors.read && <span className={LB_ERROR}>{errors.read}</span>}
+          </div>
+        )}
       </div>
-      {reminders && <ReminderSection kind="BOOK" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to pick up the book and read.")} />}
+      {/* Not on the boards' Add a book: kept on Edit so a reminder already set stays in reach. */}
+      {editing && reminders && <ReminderSection kind="BOOK" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to pick up the book and read.")} />}
     </PopupDialog>
   );
 }

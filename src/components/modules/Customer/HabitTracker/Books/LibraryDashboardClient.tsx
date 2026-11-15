@@ -1,19 +1,14 @@
 "use client";
 
-import { MoreVertical, Pencil, Play, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import { monthLabel } from "@/components/modules/Customer/Budget/MonthSwitcher";
 import { PeriodPicker } from "@/components/modules/Customer/Shared/PeriodPicker";
-import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import LoadMore from "@/components/smartly/LoadMore";
 import PageFrame from "@/components/smartly/PageFrame";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { Book, BookPages, BooksOverview, BookYear, Reminder } from "@/lib/customer/api";
-import { deleteBookAction, updateBookAction } from "@/lib/customer/bookActions";
-import { actionError, dayText } from "@/lib/customer/habitDisplay";
+import type { BookPages, BooksOverview, BookYear } from "@/lib/customer/api";
+import { dayText } from "@/lib/customer/habitDisplay";
 import { monthName } from "@/lib/customer/insights";
 import { LIBRARY_DASHBOARD_HREF, MY_BOOKS_HREF, READING_NOW_HREF } from "@/lib/customer/libraryBoard";
 import { type BookShelf as Shelf, bookShelf, daysWithBook, finishedByMonth, periodFigures, progressPct, shelves } from "@/lib/customer/libraryDisplay";
@@ -22,9 +17,7 @@ import { toDateInputValue } from "@/lib/date";
 import { formatCount, toLocaleDigits } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import { useReminderBook } from "../Reminders";
 import { paletteFor } from "./bookPalette";
-import { BookFormDialog } from "./BookFormDialog";
 import { LB_CARD } from "./LibraryBits";
 
 interface LibraryDashboardClientProps {
@@ -33,8 +26,6 @@ interface LibraryDashboardClientProps {
   pages: BookPages;
   period: Period;
   today: string;
-  // Saved reminders (each book's is set in its edit popup); null when they couldn't be read.
-  reminders: Reminder[] | null;
 }
 
 type Tab = "all" | Shelf;
@@ -55,25 +46,22 @@ const CHIP: Record<Shelf, { label: string; tone: string }> = {
 const ORDER: Record<Shelf, number> = { reading: 0, paused: 1, finished: 2, want: 3 };
 // The most green books drawn over one month's bar; more show as a number.
 const MAX_MARKS = 3;
-const COLUMNS = "grid-cols-[minmax(0,1.6fr)_120px_120px_130px_60px_200px_36px]";
+// The board's table: the book takes what the other columns leave.
+const COLUMNS = "grid-cols-[minmax(0,1fr)_162px_126px_183px_71px_216px]";
 
 // My Library › Dashboard (the LibraryDashboard board): the period picked --
 // a month, a year or the reader's own days -- in five figures, its year's
 // pages month by month (a month a tap away), and every book with its dates,
 // days and progress.
-export function LibraryDashboardClient({ overview, bookYear, pages, period, today, reminders: savedReminders }: LibraryDashboardClientProps) {
+export function LibraryDashboardClient({ overview, bookYear, pages, period, today }: LibraryDashboardClientProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
-  const reminders = useReminderBook(savedReminders);
   const { books } = overview;
   const { year, months } = bookYear;
   const count = (n: number) => formatCount(n, fmt);
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(STEP);
-  const [editing, setEditing] = useState<Book | null>(null);
-  const [removing, setRemoving] = useState<Book | null>(null);
-  const [isPending, startTransition] = useTransition();
   const [isSwitching, startSwitch] = useTransition();
 
   const range = periodRange(period) as { dateFrom: string; dateTo: string };
@@ -119,34 +107,10 @@ export function LibraryDashboardClient({ overview, bookYear, pages, period, toda
     .sort((a, b) => ORDER[bookShelf(a)] - ORDER[bookShelf(b)] || (b.finishedAt ?? b.startedAt ?? b.createdAt).localeCompare(a.finishedAt ?? a.startedAt ?? a.createdAt));
   const visible = rows.slice(0, shown);
 
-  function move(book: Book, input: { status?: "READING"; paused?: boolean }, message: string) {
-    startTransition(async () => {
-      const result = await updateBookAction(book.id, input);
-      if (result.success) toast.success(t(message, { title: book.title }));
-      else toast.error(actionError(result.message, "Failed to update", t, fmt));
-      router.refresh();
-    });
-  }
-
-  function remove() {
-    if (!removing) return;
-    const target = removing;
-    startTransition(async () => {
-      const result = await deleteBookAction(target.id);
-      if (result.success) {
-        toast.success(t("Book removed"));
-        setRemoving(null);
-      } else {
-        toast.error(actionError(result.message, "Failed to remove book", t, fmt));
-      }
-      router.refresh();
-    });
-  }
-
-  const full = (iso: string | null) => (iso ? dayText(toDateInputValue(iso), fmt, "dayMonthYear") : "–");
+  const full = (iso: string | null) => (iso ? dayText(toDateInputValue(iso), fmt, "dayMonthYY") : "–");
 
   return (
-    <PageFrame className="gap-3.5 leading-[normal] md:pt-5 md:pb-5.5">
+    <PageFrame className="gap-3.5 leading-[normal] md:pt-5 md:pb-5.5 xl:min-h-full">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-0.75">
           <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Library dashboard")}</h1>
@@ -236,7 +200,7 @@ export function LibraryDashboardClient({ overview, bookYear, pages, period, toda
         </div>
       </section>
 
-      <section aria-labelledby="bk-title" className={cn(LB_CARD, "flex flex-col gap-2.5 px-4 pt-3 pb-1.5")}>
+      <section aria-labelledby="bk-title" className={cn(LB_CARD, "flex flex-1 flex-col gap-2.5 px-4 pt-3 pb-1.5")}>
         <div className="flex flex-wrap items-center gap-3">
           <h2 id="bk-title" className="text-[15px] font-semibold text-ink">
             {t("All books")}
@@ -280,7 +244,6 @@ export function LibraryDashboardClient({ overview, bookYear, pages, period, toda
               <span className="px-2 py-1.5">{t("Finished")}</span>
               <span className="px-2 py-1.5 text-right">{t("Days")}</span>
               <span className="px-2 py-1.5">{t("Progress")}</span>
-              <span className="sr-only">{t("Actions")}</span>
             </div>
             {rows.length === 0 ? (
               <div className="p-6 text-center text-[13.5px] text-ink-muted">{books.length === 0 ? t("No books yet.") : t("No books match.")}</div>
@@ -320,41 +283,6 @@ export function LibraryDashboardClient({ overview, bookYear, pages, period, toda
                         </>
                       )}
                     </span>
-                    <span className="flex justify-end p-1">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger aria-label={t("More for {name}", { name: book.title })} className="flex size-8 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken data-open:bg-surface-sunken pointer-coarse:size-11">
-                          <MoreVertical className="size-4.5" aria-hidden="true" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 rounded-md border border-line bg-surface p-1 shadow-overlay ring-0">
-                          {shelf === "want" && (
-                            <DropdownMenuItem disabled={isPending} onSelect={() => move(book, { status: "READING" }, "Now reading {title}")} className="rounded-sm px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
-                              <Play className="size-4" aria-hidden="true" />
-                              {t("Start reading")}
-                            </DropdownMenuItem>
-                          )}
-                          {shelf === "paused" && (
-                            <DropdownMenuItem disabled={isPending} onSelect={() => move(book, { paused: false }, "Now reading {title}")} className="rounded-sm px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
-                              <Play className="size-4" aria-hidden="true" />
-                              {t("Resume")}
-                            </DropdownMenuItem>
-                          )}
-                          {shelf === "finished" && (
-                            <DropdownMenuItem disabled={isPending} onSelect={() => move(book, { status: "READING" }, "Reading {title} again")} className="rounded-sm px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
-                              <RotateCcw className="size-4" aria-hidden="true" />
-                              {t("Read again")}
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onSelect={() => setEditing(book)} className="rounded-sm px-3 py-2 text-body text-ink focus:bg-surface-sunken pointer-coarse:min-h-11">
-                            <Pencil className="size-4" aria-hidden="true" />
-                            {t("Edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => setRemoving(book)} className="rounded-sm px-3 py-2 text-body text-expense focus:bg-expense-soft focus:text-expense pointer-coarse:min-h-11">
-                            <Trash2 className="size-4" aria-hidden="true" />
-                            {t("Remove")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </span>
                   </div>
                 );
               })
@@ -368,20 +296,6 @@ export function LibraryDashboardClient({ overview, bookYear, pages, period, toda
         )}
       </section>
 
-      <BookFormDialog
-        open={editing !== null}
-        onClose={() => setEditing(null)}
-        editing={editing}
-        shelves={overview.shelves ?? []}
-        reminders={reminders}
-        onDelete={() => {
-          const target = editing;
-          setEditing(null);
-          setRemoving(target);
-        }}
-        onSaved={(_, change) => toast.success(t(change.finishedNow ? "Congratulations on finishing the book!" : "Book saved"))}
-      />
-      <ConfirmDialog open={removing !== null} onClose={() => !isPending && setRemoving(null)} onConfirm={remove} isPending={isPending} danger title={t("Remove book")} description={removing ? t("Remove \"{name}\"? Your progress on it will be lost.", { name: removing.title }) : ""} confirmLabel={t("Remove")} />
     </PageFrame>
   );
 }

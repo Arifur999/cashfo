@@ -5,7 +5,6 @@ import { getCurrentUser } from "@/lib/customer/auth";
 import { getBookPages, getBooksOverview, getBookYear } from "@/lib/customer/books";
 import { customerPageMetadata } from "@/lib/customer/pageTitle";
 import { type Period, periodRange, readPickedPeriod } from "@/lib/customer/period";
-import { getReminders } from "@/lib/customer/reminders";
 import { getAppToday } from "@/lib/date";
 
 export const generateMetadata = () => customerPageMetadata("/habit-tracker/habits/library");
@@ -24,8 +23,8 @@ export default async function LibraryDashboardPage({ searchParams }: PageProps<"
   const period: Period = picked.kind === "all" ? fallback : picked;
   const range = periodRange(period) as { dateFrom: string; dateTo: string };
   const chartYear = period.kind === "custom" ? Number(period.to.slice(0, 4)) : period.year;
-  const [overview, bookYear, pages, reminders] = await Promise.all([getBooksOverview(), getBookYear(chartYear), getBookPages(range.dateFrom, range.dateTo), getReminders()]);
+  const [overview, bookYear, pages] = await Promise.all([getBooksOverview(), getBookYear(chartYear), getBookPages(range.dateFrom, range.dateTo)]);
   // Never "no books yet" when the request merely failed.
   if (!overview || !bookYear || !pages) return <BooksLoadError />;
-  return <LibraryDashboardClient overview={overview} bookYear={bookYear} pages={pages} period={period} today={today} reminders={reminders?.reminders ?? null} />;
+  return <LibraryDashboardClient overview={overview} bookYear={bookYear} pages={pages} period={period} today={today} />;
 }

@@ -353,7 +353,7 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: "Reading now", href: "/habit-tracker/habits", query: { category: "Book" } },
           // A book's own page (/library/books/<id>) lights My books.
           { label: "My books", href: "/habit-tracker/habits/library/books" },
-          { label: "Dashboard", href: "/habit-tracker/habits/library", heading: "Library dashboard" },
+          { label: "Dashboard", href: "/habit-tracker/habits/library" },
         ],
       },
       {
@@ -365,7 +365,7 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: "Learning now", href: "/habit-tracker/habits", query: { category: "Course" } },
           // A skill's own page (/skills/<id>) lights My skills.
           { label: "My skills", href: "/habit-tracker/habits/skills" },
-          { label: "Dashboard", href: "/habit-tracker/habits/skills/dashboard", heading: "Skills dashboard" },
+          { label: "Dashboard", href: "/habit-tracker/habits/skills/dashboard" },
         ],
       },
     ],

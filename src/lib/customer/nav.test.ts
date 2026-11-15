@@ -137,7 +137,7 @@ describe("findNavLocation", () => {
     expect(breadcrumbFor(locate("/habit-tracker/daily")!)).toEqual({ crumbs: ["Habits"], heading: "Daily habits", tone: "habits" });
     expect(breadcrumbFor(locate("/habit-tracker/habits", personal, { category: "Namaz" })!)).toEqual({ crumbs: ["Worship"], heading: "Namaz", tone: "habits" });
     expect(breadcrumbFor(locate("/habit-tracker/daily/report")!)).toEqual({ crumbs: ["Daily habits"], heading: "Monthly report", tone: "habits" });
-    expect(breadcrumbFor(locate("/habit-tracker/habits/library")!)).toEqual({ crumbs: ["My Library"], heading: "Library dashboard", tone: "habits" });
+    expect(breadcrumbFor(locate("/habit-tracker/habits/library")!)).toEqual({ crumbs: ["My Library"], heading: "Dashboard", tone: "habits" });
     expect(breadcrumbFor(locate("/habit-tracker/journal")!)).toEqual({ crumbs: ["Notes & Journal"], heading: "Journal", tone: "habits" });
   });
 

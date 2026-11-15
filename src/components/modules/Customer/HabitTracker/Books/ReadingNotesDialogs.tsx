@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { PopupDialog } from "@/components/modules/Customer/Shared/PopupDialog";
 import type { BookNote, NoteMark, NoteMarkColor } from "@/lib/customer/api";
 import { updateBookNoteAction } from "@/lib/customer/bookActions";
-import { actionError } from "@/lib/customer/habitDisplay";
+import { actionError, dayText } from "@/lib/customer/habitDisplay";
 import { addMark, longDay, markSegments, removeMark, NOTE_KINDS, type NoteSort, noteDay, noteKind, notePreview, READER_SIZES } from "@/lib/customer/libraryBoard";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -60,7 +60,7 @@ export function NotesListDialog({ open, onClose, bookTitle, notes, sort, onSort,
       open={open}
       onClose={onClose}
       width={620}
-      className="h-[min(680px,calc(100dvh-48px))] w-180 rounded-[16px]"
+      className="h-[min(680px,calc(100dvh-48px))] w-180 rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="px-5.5 py-4"
       title={t("All notes")}
       sub={
@@ -99,7 +99,7 @@ export function NotesListDialog({ open, onClose, bookTitle, notes, sort, onSort,
                 <PageTile page={note.page} />
                 <span className="flex min-w-0 flex-col gap-1">
                   <span className="flex flex-wrap items-center gap-2 text-[12.5px] text-ink-muted">
-                    <span>{longDay(noteDay(note), fmt)}</span>
+                    <span>{dayText(noteDay(note), fmt, "dayMonthYY")}</span>
                     <KindChip kind={noteKind(note)} />
                     {marks > 0 && <span className="rounded-full bg-tint-yellow px-2 py-0.5 text-[11.5px] font-semibold text-tint-yellow-ink">{t("{count} highlighted", { count: formatCount(marks, fmt) })}</span>}
                   </span>

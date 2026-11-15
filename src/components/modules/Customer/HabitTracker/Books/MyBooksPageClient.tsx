@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Check, ChevronRight, LayoutList, Library, Pencil, Plus, Search } from "lucide-react";
+import { BookOpen, Check, ChevronRight, Library, List, Pencil, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,8 +10,8 @@ import { useStoredChoice } from "@/components/modules/Customer/Balance/useStored
 import type { Book, BooksOverview, BookShelf, Reminder } from "@/lib/customer/api";
 import { createBookShelfAction } from "@/lib/customer/bookActions";
 import { formatCurrency } from "@/lib/customer/currency";
-import { actionError } from "@/lib/customer/habitDisplay";
-import { BUILT_IN_SHELVES, longDay, MY_BOOKS_HREF, shelfList, shelfNameProblem, shelfOf, type ShelfOption } from "@/lib/customer/libraryBoard";
+import { actionError, dayText } from "@/lib/customer/habitDisplay";
+import { BUILT_IN_SHELVES, MY_BOOKS_HREF, shelfList, shelfNameProblem, shelfOf, type ShelfOption } from "@/lib/customer/libraryBoard";
 import { isPaused } from "@/lib/customer/libraryDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -117,7 +117,7 @@ export function MyBooksPageClient({ overview, reminders: savedReminders, openAdd
     .filter((row) => row.mine.length > 0 || filter === row.shelf.id);
 
   return (
-    <PageFrame className="gap-3.5 leading-[normal] md:pt-5 md:pb-5.5">
+    <PageFrame className="gap-3.5 leading-[normal] md:pt-5 md:pb-5.5 xl:min-h-full">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-0.75">
           <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("My books")}</h1>
@@ -173,7 +173,7 @@ export function MyBooksPageClient({ overview, reminders: savedReminders, openAdd
                     onClick={() => setView(value)}
                     className={cn("inline-flex h-8.5 items-center gap-1.5 rounded-[8px] px-3 text-[13px] font-semibold", view === value ? "bg-surface text-emerald shadow-[0_1px_3px_rgba(15,23,42,0.12)]" : "text-ink-soft hover:text-ink")}
                   >
-                    {value === "shelf" ? <Library className="size-3.75" aria-hidden="true" /> : <LayoutList className="size-3.75" aria-hidden="true" />}
+                    {value === "shelf" ? <Library className="size-3.75" aria-hidden="true" /> : <List className="size-3.75" aria-hidden="true" />}
                     {t(value === "shelf" ? "Shelf@@view" : "List")}
                   </button>
                 ))}
@@ -248,7 +248,7 @@ export function MyBooksPageClient({ overview, reminders: savedReminders, openAdd
                               </span>
                             </span>
                             <span className={cn("text-right text-[14px] font-semibold tabular-nums", st?.count ? "text-ink" : "text-ink-faint")}>{count(st?.count ?? 0)}</span>
-                            <span className={cn("text-[13.5px] whitespace-nowrap", st?.last ? "text-ink-2" : "text-ink-faint")}>{st?.last ? longDay(st.last, fmt) : t("No notes yet")}</span>
+                            <span className={cn("text-[13.5px] whitespace-nowrap", st?.last ? "text-ink-2" : "text-ink-faint")}>{st?.last ? dayText(st.last, fmt, "dayMonthYY") : t("No notes yet")}</span>
                             <ChevronRight className="ml-auto size-4.5 text-ink-faint" aria-hidden="true" />
                           </button>
                         );
@@ -403,7 +403,7 @@ function NewShelfDialog({ open, onClose, own, onMade }: { open: boolean; onClose
       onClose={onClose}
       busy={isPending}
       width={420}
-      className="rounded-[16px]"
+      className="rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="border-b-0 px-5.5 pt-4.5 pb-1.5"
       title={t("New shelf")}
       sub={<span className="text-[13px]">{t("A shelf is a group of books, like Religion or Novels.")}</span>}

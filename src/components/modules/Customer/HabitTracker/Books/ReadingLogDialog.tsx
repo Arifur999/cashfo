@@ -110,7 +110,7 @@ export function ReadingLogDialog({ open, onClose, book, last, today, finishedThi
       onClose={onClose}
       busy={isPending}
       width={540}
-      className="rounded-[18px]"
+      className="rounded-[18px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center gap-3.5 px-5.5 py-4.5"
       headStyle={{ background: `linear-gradient(180deg, ${soft} 0%, var(--surface) 100%)` }}
       titleClassName="text-[19px] font-bold"
@@ -165,7 +165,7 @@ export function ReadingLogDialog({ open, onClose, book, last, today, finishedThi
         {dayError && <span className={LB_ERROR}>{dayError}</span>}
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-stretch gap-2.5">
+      <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-stretch gap-2.5 leading-[normal]">
         <div className="flex flex-col gap-1 rounded-[12px] border border-line bg-page p-3.5">
           <span className="flex items-center gap-1.5 text-[12.5px] text-ink-muted">
             <Lock className="size-3" strokeWidth={2.25} aria-hidden="true" />
