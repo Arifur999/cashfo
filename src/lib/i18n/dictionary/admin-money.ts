@@ -49,6 +49,7 @@ export const adminMoneyDictionary: Record<string, string> = {
   // The search still matches the id as the list prints it (PAY-3F2A1C9B),
   // with or without PAY-; the placeholder stays short to fit its box.
   "ID, name, email or ref": "আইডি, নাম, ইমেইল বা রেফারেন্স",
+  "Payment ID, name or bKash ref": "পেমেন্ট আইডি, নাম বা বিকাশ রেফারেন্স",
   Person: "ব্যক্তি",
   "Paid with": "যেভাবে পরিশোধ",
   "No payments match these filters.": "এই ফিল্টারে কোনো পেমেন্ট মেলেনি।",

@@ -57,6 +57,7 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
             <DataTableDateRangeFilter
               key={config.id}
               title={config.label}
+              chip={config.chip}
               value={getValue(config) as DateRangeValue | undefined}
               onChange={(value) => setValue(config, value)}
             />
@@ -117,6 +118,7 @@ const DataTableFilters = <TData,>({ table, filters, configs = filters.configs }:
           <DataTableFacetedFilter
             key={config.id}
             title={config.label}
+            chip={config.chip}
             options={config.options}
             emptyLabel={config.allLabel}
             multiple={multiple}

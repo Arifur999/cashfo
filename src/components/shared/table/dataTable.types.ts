@@ -49,7 +49,12 @@ export type DataTableFilterConfig = (
   // "end" puts the filter at the far right of the toolbar, beside the table
   // tools ("When: Last 24 hours", "Sensitive only").
   align?: "start" | "end";
+  // The chip's shape, as each board draws it: 34px with 10px corners by
+  // default, "compact" 32px (Users), "pill" 34px and round (Payments).
+  chip?: FilterChipShape;
 };
+
+export type FilterChipShape = "default" | "compact" | "pill";
 
 export interface DateRangeValue {
   from?: string;

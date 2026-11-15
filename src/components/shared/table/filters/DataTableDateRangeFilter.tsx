@@ -9,11 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { formatDate } from "@/lib/date";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { Locale } from "@/lib/i18n/translate";
-import type { DateRangeValue } from "../dataTable.types";
-import { FILTER_CHIP_CLASS } from "./DataTableFacetedFilter";
+import type { DateRangeValue, FilterChipShape } from "../dataTable.types";
+import { filterChipClass } from "./DataTableFacetedFilter";
 
 interface DataTableDateRangeFilterProps {
   title: string;
+  chip?: FilterChipShape;
   value: DateRangeValue | undefined;
   onChange: (value: DateRangeValue | undefined) => void;
 }
@@ -31,7 +32,7 @@ const describeRange = ({ from, to }: DateRangeValue, translate: (key: string) =>
 
 // Edits a draft and only applies on "Apply", so picking two dates fires one
 // query instead of two.
-const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRangeFilterProps) => {
+const DataTableDateRangeFilter = ({ title, chip, value, onChange }: DataTableDateRangeFilterProps) => {
   const { translate, locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRangeValue>(value ?? {});
@@ -53,7 +54,7 @@ const DataTableDateRangeFilter = ({ title, value, onChange }: DataTableDateRange
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="secondary" size="sm" className={FILTER_CHIP_CLASS}>
+        <Button variant="secondary" size="sm" className={filterChipClass(chip)}>
           <CalendarRange className="size-3.5 text-ink-muted" aria-hidden="true" />
           <span>{translate(title)}:</span>
           <b className="font-semibold text-ink">{isActive && value ? describeRange(value, translate, locale) : translate("Any time")}</b>

@@ -38,7 +38,7 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
     header: "Payment",
     enableSorting: false,
     cell: ({ row }) => (
-      <span className="block truncate font-mono text-small font-semibold text-ink">
+      <span className="block truncate font-mono text-[12.5px] leading-[normal] font-semibold text-ink">
         {shortPaymentId(row.original.id)}
       </span>
     ),
@@ -98,7 +98,7 @@ export const paymentsColumns: ColumnDef<IPayment>[] = [
       const badge = paymentBadge(row.original);
       return <StatusBadgeCell status={row.original.status} label={badge.label} tone={badge.tone} dot />;
     },
-    meta: { width: 128, exportValue: (row) => PAYMENT_STATUS_LABEL[row.status] },
+    meta: { width: 150, exportValue: (row) => PAYMENT_STATUS_LABEL[row.status] },
   },
   {
     id: "createdAt",

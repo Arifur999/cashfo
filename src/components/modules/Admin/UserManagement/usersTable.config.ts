@@ -53,10 +53,10 @@ export const buildUsersTableConfig = (plans: IPlanOption[], statusCounts?: Recor
   filters: [
     { id: "status", type: "tabs", label: "Status", options: ownerStatusTabs(statusCounts, openStatus) },
     // A plan's name is data ("Business"), never a word to translate.
-    { id: "planId", type: "single-select", label: "Plan", allLabel: "All plans", options: plans.map((plan) => ({ value: plan.id, label: plan.name, raw: true })) },
+    { id: "planId", type: "single-select", label: "Plan", allLabel: "All plans", options: plans.map((plan) => ({ value: plan.id, label: plan.name, raw: true })), chip: "compact" },
     // "Joined@@date" is the date they joined (যোগদান), not "has joined".
-    { id: "joined", type: "single-select", label: "Joined@@date", allLabel: "Any time", options: JOINED_OPTIONS },
-    { id: "lastActive", type: "single-select", label: "Last active", allLabel: "Any time", options: LAST_ACTIVE_OPTIONS },
+    { id: "joined", type: "single-select", label: "Joined@@date", allLabel: "Any time", options: JOINED_OPTIONS, chip: "compact" },
+    { id: "lastActive", type: "single-select", label: "Last active", allLabel: "Any time", options: LAST_ACTIVE_OPTIONS, chip: "compact" },
     { id: "sort", type: "sort", label: "Sort", options: SORT_OPTIONS },
   ],
 });

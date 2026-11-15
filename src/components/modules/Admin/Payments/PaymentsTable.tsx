@@ -7,6 +7,7 @@ import type { DataTableActions, DataTableSimplePager } from "@/components/shared
 import ShowingRange from "@/components/shared/table/ShowingRange";
 import DataTable from "@/components/shared/table/DataTable";
 import { useRowDialogs } from "@/hooks/useRowDialogs";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { buildTableQueryString } from "@/lib/queryString";
 import { shortPaymentId } from "@/lib/payments";
@@ -34,13 +35,15 @@ const PAGER: DataTableSimplePager = {
 // Each column keeps its px, and Person gives way down to 150px before the
 // table scrolls sideways (1,056px in all, inside the list card on a 1366
 // laptop), so a phone never cuts an id or a plan to "PAY-2…". The actions
-// column has room for "আবার চেষ্টা" as well as "Retry".
-const LAYOUT = { rowHeight: 54, actionsWidth: 104, flexMinWidth: 150 } as const;
+// column is the board's 70px for "Retry", and 104px for "আবার চেষ্টা".
+const LAYOUT = { rowHeight: 54, actionsWidth: 70, flexMinWidth: 150 } as const;
+const LAYOUT_BN = { ...LAYOUT, actionsWidth: 104 } as const;
 
 // Retry is for finance roles; a failed payment goes back to Pending so it
 // can be collected again (no gateway is charged from here).
 const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
   const searchParams = useSearchParams();
+  const { locale } = useLocale();
   const plans = useQuery(plansQuery()).data?.data;
   const filtered = hasAnyParam(searchParams, PAYMENT_NARROWING_KEYS) || Boolean(searchParams.get("status"));
 
@@ -92,7 +95,7 @@ const PaymentsTable = ({ canRetry }: { canRetry: boolean }) => {
         errorDescription="The server didn't answer. Nothing was changed."
         data={query.data?.data}
         columns={paymentsColumns}
-        layout={LAYOUT}
+        layout={locale === "bn" ? LAYOUT_BN : LAYOUT}
         getRowId={(row) => row.id}
         actions={actions}
         pager={PAGER}
