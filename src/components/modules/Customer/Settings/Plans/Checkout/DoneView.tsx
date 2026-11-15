@@ -37,7 +37,9 @@ export function DoneView({ payment, plans }: { payment: CustomerPayment; plans: 
   const { user } = useAuth();
   const [receiptOpen, setReceiptOpen] = useState(false);
   const money = (amount: string | number) => formatCurrency(amount, "BDT", fmt);
-  const day = (iso: string) => formatDate(iso, "d MMM yyyy", "", fmt);
+  const day = (iso: string) => formatDate(iso, "d MMMM yyyy", "", fmt);
+  // The timeline's short dates (CheckoutDone board: "28 Oct 27").
+  const short = (iso: string) => formatDate(iso, "d MMM yy", "", fmt);
   const family = t(familyName(payment.planName));
   const limits = plans.plans.find((plan) => plan.id === payment.planId)?.featureLimits ?? {};
   const method = sentByLabel(payment.gateway, t);
@@ -63,7 +65,7 @@ export function DoneView({ payment, plans }: { payment: CustomerPayment; plans: 
     reference: payment.reference ?? null,
     item: t("{plan} plan", { plan: t(payment.planName) }),
     itemSub: features.length > 0 ? features.join(", ").replace(/^./, (first) => first.toUpperCase()) : t(payment.planName),
-    period: payment.periodStart && periodEnd ? t("{start} to {end}", { start: day(payment.periodStart), end: day(periodEnd) }) : "—",
+    period: payment.periodStart && periodEnd ? t("{start} to {end}", { start: short(payment.periodStart), end: short(periodEnd) }) : "—",
     subtotal: money(listPrice),
     discount: discount === null ? null : {
       label: payment.couponCode ? t("Promo {code}", { code: payment.couponCode }) : payment.referralDiscount ? t("Referral discount") : t("Discount"),
@@ -80,11 +82,11 @@ export function DoneView({ payment, plans }: { payment: CustomerPayment; plans: 
   ];
   const paidToday = toDateInputValue(paidAt) === toDateInputValue(new Date());
   const next = [
-    { title: t("{plan} is on", { plan: family }), sub: method, date: paidToday ? t("Today") : day(paidAt), dot: "bg-emerald", icon: Check },
+    { title: t("{plan} is on", { plan: family }), sub: method, date: paidToday ? t("Today") : short(paidAt), dot: "bg-emerald", icon: Check },
     ...(periodEnd
       ? [
-          { title: t("We remind you"), sub: t("3 days before your plan ends, by notification and email"), date: day(new Date(new Date(periodEnd).getTime() - 3 * DAY_MS).toISOString()), dot: "bg-warning-fill", icon: Bell },
-          { title: t("Plan ends"), sub: t("Renew if you want to keep {plan}. Nothing is taken automatically.", { plan: family }), date: day(periodEnd), dot: "bg-ink-faint", icon: Clock },
+          { title: t("We remind you"), sub: t("3 days before your plan ends, by notification and email"), date: short(new Date(new Date(periodEnd).getTime() - 3 * DAY_MS).toISOString()), dot: "bg-warning-fill", icon: Bell },
+          { title: t("Plan ends"), sub: t("Renew if you want to keep {plan}. Nothing is taken automatically.", { plan: family }), date: short(periodEnd), dot: "bg-ink-faint", icon: Clock },
         ]
       : []),
   ];

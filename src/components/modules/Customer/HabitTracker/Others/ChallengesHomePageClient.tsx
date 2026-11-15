@@ -71,15 +71,15 @@ const TAG: Record<ChallengeOutcome, { label: string; tone: string }> = {
 };
 // A day on a card's strip, and on the panel's grid.
 const STRIP: Record<ChallengeMark, string> = {
-  done: "bg-emerald",
-  missed: "bg-expense-fill/55",
+  done: "bg-streak-done",
+  missed: "bg-rose-strip",
   today: "bg-surface ring-[1.5px] ring-emerald ring-inset",
   later: "bg-line",
   notReached: "bg-surface-sunken",
 };
 const GRID: Record<ChallengeMark, string> = {
-  done: "bg-emerald text-on-action",
-  missed: "bg-expense-soft text-expense",
+  done: "bg-streak-done text-white",
+  missed: "bg-rose-tint text-rose-deep",
   today: "border-[1.5px] border-dashed border-emerald bg-surface text-emerald",
   later: "border border-line bg-surface text-ink-faint",
   notReached: "bg-surface-sunken text-ink-faint/60",
@@ -278,8 +278,8 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
           {totals ? (
             // Too many days for a segment each: done, missed and still to come.
             <span role="img" aria-label={t("{name}: {done} days done, {missed} missed, {left} still to come", { name, done: count(totals.done), missed: count(totals.missed), left: count(totals.toCome) })} className="flex h-2.5 overflow-hidden rounded-[3px] bg-line">
-              <span className="bg-emerald" style={{ width: `${(totals.done / tracker.totalDays) * 100}%` }} />
-              <span className="bg-expense-fill/55" style={{ width: `${(totals.missed / tracker.totalDays) * 100}%` }} />
+              <span className="bg-streak-done" style={{ width: `${(totals.done / tracker.totalDays) * 100}%` }} />
+              <span className="bg-rose-strip" style={{ width: `${(totals.missed / tracker.totalDays) * 100}%` }} />
             </span>
           ) : (
             <span role="img" aria-label={t("{name} day by day", { name })} className="flex h-2.5 min-w-0 gap-0.5">
@@ -289,7 +289,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
               })}
             </span>
           )}
-          <span className="flex flex-wrap gap-x-3.5 gap-y-0.5 text-[12.5px] text-ink-2">
+          <span className="flex flex-wrap gap-x-3.5 gap-y-0.5 text-[12.5px] text-ink-soft">
             <span>
               <b className="font-bold text-income tabular-nums">{count(summary.done)}</b> {t("done@@days")}
             </span>
@@ -299,7 +299,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
             <span>
               <b className="font-bold text-ink tabular-nums">{count(left)}</b> {t(window.status === "finished" ? "days not reached" : "days left")}
             </span>
-            <span className="ml-auto text-ink-muted">{window.status === "finished" ? t("{done} of {total} days", { done: count(summary.done), total: count(tracker.totalDays) }) : upcoming ? t("Starts {date}", { date: short(window.start) }) : t("Day {day} of {total}", { day: count(window.today), total: count(tracker.totalDays) })}</span>
+            <span className="ml-auto font-semibold text-ink">{window.status === "finished" ? t("{done} of {total} days", { done: count(summary.done), total: count(tracker.totalDays) }) : upcoming ? t("Starts {date}", { date: short(window.start) }) : t("Day {day} of {total}", { day: count(window.today), total: count(tracker.totalDays) })}</span>
           </span>
         </span>
       </div>
@@ -332,7 +332,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
     ];
     const items = dailyItems(tracker);
     return (
-      <div className={cn("flex min-w-0 flex-col gap-3", inSheet && "px-4 pt-1 pb-5")}>
+      <div className={cn("flex min-w-0 flex-col gap-3", inSheet ? "px-4 pt-1 pb-5" : "flex-1")}>
         <div className="flex items-center gap-3">
           <span role="img" aria-label={going ? t("Day {day} of {total}", { day: count(window.today), total: count(tracker.totalDays) }) : t("{pct}% done", { pct: count(summary.pct) })} className="relative size-17.5 shrink-0">
             <svg viewBox="0 0 70 70" className="size-17.5 -rotate-90">
@@ -432,10 +432,10 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
         <div className="mt-auto flex gap-2 pt-1">
           {going && (
             <>
-              <Button variant="secondary" onClick={() => setConfirm({ kind: "restart", row })} className="h-9.5 flex-1 rounded-sm pointer-coarse:h-11">
+              <Button variant="secondary" onClick={() => setConfirm({ kind: "restart", row })} className="h-9.5 flex-1 rounded-sm text-[13.5px] pointer-coarse:h-11">
                 {t("Restart")}
               </Button>
-              <Button variant="secondary" onClick={() => setConfirm({ kind: "end", row })} className="h-9.5 flex-1 rounded-sm border-expense-line bg-expense-soft text-expense hover:bg-expense-soft/70 pointer-coarse:h-11">
+              <Button variant="secondary" onClick={() => setConfirm({ kind: "end", row })} className="h-9.5 flex-1 rounded-sm border-expense-line bg-loss-wash text-[13.5px] text-loss-ink hover:bg-expense-soft pointer-coarse:h-11">
                 {t("End challenge")}
               </Button>
             </>
@@ -451,7 +451,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
   };
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3.5 md:pt-5 md:pb-5.5 xl:min-h-full">
       <PageHeader
         title={t("Challenges")}
         description={t("Pick a goal for a set number of days and tick it off every day.")}
@@ -481,12 +481,12 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
           const on = stat.key !== null && stat.key === tab;
           const body = (
             <>
-              <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-muted">
+              <span className="flex items-center gap-1.5 text-[12.5px] leading-[normal] font-semibold text-ink-muted">
                 <span aria-hidden="true" className={cn("size-2 rounded-full", stat.dot)} />
                 {stat.label}
               </span>
-              <span className="text-[24px] leading-tight font-bold text-ink tabular-nums">{stat.value}</span>
-              <span className="truncate text-caption text-ink-muted">{stat.sub}</span>
+              <span className="text-[24px] leading-[normal] font-bold text-ink tabular-nums">{stat.value}</span>
+              <span className="truncate text-caption leading-[normal] text-ink-muted">{stat.sub}</span>
             </>
           );
           const look = cn("flex min-w-0 flex-col gap-0.5 rounded-md border-[1.5px] px-4 py-2.75 text-left shadow-card", on ? "border-emerald bg-mint-50/60" : "border-line bg-surface");
@@ -502,7 +502,7 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
         })}
       </div>
 
-      <div className="grid items-start gap-3.5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid items-start gap-3.5 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-stretch">
         <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-[14px] px-4 py-3.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-[16px] font-semibold text-ink">{t("Your challenges")}</h2>
@@ -511,6 +511,8 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
               variant="pill"
               value={tab}
               onChange={pickTab}
+              className="max-w-full overflow-x-auto [scrollbar-width:none]"
+              itemClassName="shrink-0"
               options={[
                 { value: "going", label: `${t("Going now")} · ${count(going.length)}` },
                 { value: "completed", label: `${t("Completed")} · ${count(completed.length)}` },
@@ -520,15 +522,15 @@ export function ChallengesHomePageClient({ trackers: serverTrackers, today, open
             />
           </div>
           {list.length === 0 ? (
-            <p className="rounded-md border border-dashed border-line px-4 py-8 text-center text-body text-ink-muted">{t(EMPTY[tab])}</p>
+            <p className="rounded-md border border-dashed border-line px-4 py-8 text-center text-body text-ink-muted xl:mb-auto">{t(EMPTY[tab])}</p>
           ) : (
-            <div className="flex flex-col gap-2.5">{visible.map(card)}</div>
+            <div className="flex flex-col gap-2.5 xl:flex-1">{visible.map(card)}</div>
           )}
           {list.length > STEP && <LoadMore shown={Math.min(shown, list.length)} total={list.length} step={STEP} onMore={() => setShown((value) => value + STEP)} onLess={shown >= list.length ? () => setShown(STEP) : undefined} />}
           <span className="text-caption text-ink-muted">{t("Completed means you reached the last day with at least {pct}% of the days done.", { pct: count(COMPLETED_PCT) })}</span>
         </Card>
 
-        <Card padding="none" className="flex min-h-80 min-w-0 flex-col rounded-[14px] px-4.5 py-4 max-xl:hidden xl:sticky xl:top-20">
+        <Card padding="none" className="flex min-h-80 min-w-0 flex-col rounded-[14px] px-4.5 py-4 max-xl:hidden">
           {panel(selected, false)}
         </Card>
       </div>

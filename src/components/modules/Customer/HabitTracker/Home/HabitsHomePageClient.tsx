@@ -47,7 +47,7 @@ export function HabitsHomePageClient({ data }: HabitsHomePageClientProps) {
   const streaks = streakRows(data.todayRows, { skills: data.skills?.streak ?? 0, reading: data.books?.reading.streak ?? 0, prayers: prayerStreak(data.namaz, today) });
 
   return (
-    <PageFrame className="md:gap-5">
+    <PageFrame className="md:gap-5 md:pt-7">
       <div className="flex flex-col gap-0.5 md:hidden">
         <h1 className="text-[20px] leading-[1.3] font-semibold tracking-[-0.01em] text-ink">{t("{greeting}, {name}", { greeting: t(data.greeting), name: data.firstName })}</h1>
         <p className="text-small leading-[normal] text-ink-muted">

@@ -103,7 +103,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
 
   if (!sheet) {
     return (
-      <PageFrame className="gap-3.5 md:pt-6">
+      <PageFrame className="gap-3.5 md:pt-4.5">
         {header}
         <Card padding="lg" className="flex flex-col items-center gap-3 rounded-[12px] py-10 text-center">
           <p className="text-body text-ink-muted">{isCurrent ? (opener.failed ? t("Couldn't open this month's sheet") : t("This month's sheet is opening…")) : t("No sheet for {month} yet.", { month: monthName(month, fmt, "long", true) })}</p>
@@ -185,7 +185,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
     insights.push({ key: "goal", icon: Target, tone: "warn", text: pct >= goal ? t("Goal of {goal}% reached.", { goal: count(goal) }) : t("{gap}% to go to reach the goal of {goal}%.", { gap: count(goal - pct), goal: count(goal) }) });
 
   return (
-    <PageFrame className="gap-3.5 md:pt-6">
+    <PageFrame className="gap-3.5 md:pt-4.5">
       {header}
 
       <ReportStats stats={stats} />
@@ -193,7 +193,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
       <Card padding="none" className="flex min-w-0 flex-col gap-3 rounded-[12px] px-4.5 pt-3 pb-3.5">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <h2 className="text-[15px] font-semibold text-ink">{t("Prayer sheet")}</h2>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-ink-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-ink-soft">
             {LEGEND.map((entry) => (
               <span key={entry.state} className="flex items-center gap-1.25">
                 <BoxSwatch state={entry.state} />
@@ -203,7 +203,7 @@ export function NamazDashboardClient({ trackers, month, today }: NamazDashboardC
             <span className="border-l border-line pl-3 text-ink-muted print:hidden">{t("Tap a box to change it")}</span>
           </div>
         </div>
-        <PrayerSheet tracker={sheet} onMark={mark} totalsLabel={t("Prayed that day")} rowLabel={(item) => t(item)} />
+        <PrayerSheet compact tracker={sheet} onMark={mark} totalsLabel={t("Prayed that day")} rowLabel={(item) => t(item)} />
       </Card>
 
       <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)_minmax(0,1fr)]">

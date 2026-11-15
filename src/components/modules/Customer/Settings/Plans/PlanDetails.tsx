@@ -36,10 +36,10 @@ export function FreeOrProCard({ rows }: { rows: CompareRow[] }) {
               <th scope="col" className="px-5.5 py-2.5 text-left font-medium">
                 {t("Feature")}
               </th>
-              <th scope="col" className="w-47.5 px-3 py-2.5 text-center font-medium">
+              <th scope="col" className="w-[214px] px-3 py-2.5 text-center font-medium">
                 Free
               </th>
-              <th scope="col" className="w-55 bg-emerald-soft px-3 py-2.5 text-center font-semibold text-brand-ink">
+              <th scope="col" className="w-[245px] bg-primary-soft px-3 py-2.5 text-center font-semibold text-brand-ink">
                 Pro
               </th>
             </tr>
@@ -51,7 +51,7 @@ export function FreeOrProCard({ rows }: { rows: CompareRow[] }) {
                   {row.label}
                 </th>
                 <td className={cn("px-3 py-3 text-center tabular-nums", tone(row.freeKind))}>{cell(row.freeKind, row.free)}</td>
-                <td className={cn("bg-emerald-soft/60 px-3 py-3 text-center font-semibold tabular-nums", tone(row.proKind))}>{cell(row.proKind, row.pro)}</td>
+                <td className={cn("bg-soft-check px-3 py-3 text-center font-semibold tabular-nums", tone(row.proKind))}>{cell(row.proKind, row.pro)}</td>
               </tr>
             ))}
           </tbody>

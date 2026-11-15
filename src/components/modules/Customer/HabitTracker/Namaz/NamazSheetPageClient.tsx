@@ -116,7 +116,7 @@ export function NamazSheetPageClient({ tracker, previous, months, today, qaza = 
   const missedSub = summary.missed === 0 ? t("Nothing new to make up") : qaza ? t("Added to qaza · {count} still to make up", { count: count(qaza.totalLeft) }) : t("Added to qaza");
 
   return (
-    <PageFrame className="gap-5">
+    <PageFrame className="gap-5 md:pt-6">
       <TopbarExtras record={monthName(key, fmt, "long", true)} />
       <div className="flex flex-col gap-1">
         <RecordEyebrow href="/habit-tracker/habits?category=Namaz" back={t("All months")} />

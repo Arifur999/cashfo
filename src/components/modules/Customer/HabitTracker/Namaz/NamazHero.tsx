@@ -39,15 +39,15 @@ export function NamazHero({ today, chips, onSettings, openFailed = false, onRetr
         <MosqueIcon className="size-6.5" />
       </span>
       <div className="flex min-w-0 flex-1 basis-72 flex-col gap-0.75">
-        <span id="next-title" className="text-caption font-semibold tracking-[0.06em] uppercase opacity-85">
+        <span id="next-title" className="text-caption leading-[normal] font-semibold tracking-[0.06em] uppercase opacity-85">
           {t("Next prayer")}
         </span>
         <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-          <span className="text-[28px] leading-tight font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
+          <span className="text-[28px] leading-[normal] font-bold tracking-[-0.02em]">{next ? t(next.prayer) : " "}</span>
           <span className="text-[18px] font-semibold tabular-nums opacity-95">{next ? timeLabel(clockOf(next.at), t, fmt) : ""}</span>
           {wait && <span className="inline-flex h-6.5 items-center rounded-full bg-white/18 px-2.5 text-small font-semibold">{wait}</span>}
         </span>
-        <span className="text-[12.5px] opacity-85">
+        <span className="text-[12.5px] leading-[normal] opacity-85">
           {t(settings.city)} · {t("{method} method", { method: t(methodShort(settings.method)) })} · {t(settings.asrSchool === "HANAFI" ? "Hanafi Asr" : "Shafi'i Asr")} ·{" "}
           <button type="button" onClick={onSettings} className="font-semibold underline pointer-coarse:min-h-11">
             {t("Change")}
@@ -65,11 +65,11 @@ export function NamazHero({ today, chips, onSettings, openFailed = false, onRetr
           </span>
         )}
       </div>
-      <div className="grid w-full grid-cols-3 gap-2.5 sm:flex sm:w-auto">
+      <div className="grid w-full grid-cols-3 gap-2.5 sm:flex sm:w-auto sm:gap-6">
         {chips.map((chip) => (
-          <div key={chip.label} className={cn("flex min-w-0 flex-col gap-0.5 rounded-[12px] border border-white/18 bg-white/12 px-3.5 py-2.5 sm:min-w-33")}>
-            <span className="truncate text-caption opacity-85">{chip.label}</span>
-            <span className="truncate text-[20px] font-bold tabular-nums">{chip.value}</span>
+          <div key={chip.label} className={cn("flex min-w-0 flex-col gap-0.5 rounded-[12px] border border-white/18 bg-white/12 px-3.5 py-2.5 sm:w-[162px]")}>
+            <span className="truncate text-caption leading-[normal] opacity-85">{chip.label}</span>
+            <span className="truncate text-[20px] leading-[normal] font-bold tabular-nums">{chip.value}</span>
           </div>
         ))}
       </div>

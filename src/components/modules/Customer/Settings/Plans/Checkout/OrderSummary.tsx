@@ -56,10 +56,10 @@ export function OrderSummary({ planName, period, price, discount, total, coupon,
           <Crown className="size-4.75" strokeWidth={2} aria-hidden="true" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <b className="text-[15px] font-semibold text-ink">{t(planName)}</b>
+          <b className="text-[15px] font-bold text-ink">{t(planName)}</b>
           <span className="text-[12.5px] text-ink-muted">{period}</span>
         </span>
-        <b className="text-[15px] font-semibold text-ink tabular-nums">{money(price)}</b>
+        <b className="text-[15px] font-bold text-ink tabular-nums">{money(price)}</b>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -138,7 +138,7 @@ export function OrderSummary({ planName, period, price, discount, total, coupon,
       </dl>
       <div className="flex items-baseline justify-between border-t border-dashed border-input pt-3">
         <span className="text-[15px] font-semibold text-ink">{t("Total to pay")}</span>
-        <b className="text-[28px] font-semibold tracking-[-0.02em] text-ink tabular-nums">{money(total)}</b>
+        <b className="text-[28px] font-bold tracking-[-0.02em] text-ink tabular-nums">{money(total)}</b>
       </div>
 
       <button
@@ -164,7 +164,7 @@ export function OrderSummary({ planName, period, price, discount, total, coupon,
           { icon: RefreshCw, text: t("Nothing renews by itself") },
           { icon: Mail, text: t("Receipt sent to your email") },
         ].map(({ icon: Icon, text }) => (
-          <li key={text} className="flex items-center gap-2.25 text-[12.5px] text-ink-soft">
+          <li key={text} className="flex items-center gap-2.25 text-[12.5px] text-ink-2">
             <Icon className="size-3.75 shrink-0 text-emerald" strokeWidth={2} aria-hidden="true" />
             {text}
           </li>

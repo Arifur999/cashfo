@@ -49,11 +49,8 @@ describe("topbarTrail", () => {
   });
 
   it("opens a habit list with its own category", () => {
-    // A month of Namaz is a record under its Dashboard.
-    expect(topbarTrail(locate("/habit-tracker/habits/namaz/2026-10"), true)).toEqual([
-      { label: "Namaz", href: "/habit-tracker/habits?category=Namaz" },
-      { label: "Dashboard", href: "/habit-tracker/habits/namaz" },
-    ]);
+    // A month of Namaz follows Namaz itself, as the NamazSheet board heads it.
+    expect(topbarTrail(locate("/habit-tracker/habits/namaz/2026-10"), true)).toEqual([{ label: "Namaz", href: "/habit-tracker/habits?category=Namaz" }]);
   });
 
   it("leaves the list as text for a record shown on the list's own page", () => {

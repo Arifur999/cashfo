@@ -82,7 +82,7 @@ export function PlanCard({ card }: { card: PlanCardModel }) {
       <div className={cn("h-px", current ? "bg-mint-200/18" : "bg-divider")} />
       <ul className="flex flex-1 flex-col gap-2.75">
         {card.features.map((feature) => (
-          <li key={feature.label} className={cn("flex items-center gap-2.5 text-[14.5px]", current ? "text-white" : "text-ink-2")}>
+          <li key={feature.label} className={cn("flex items-center gap-2.5 text-[14.5px] leading-[normal]", current ? "text-white" : "text-ink-2")}>
             <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full", current ? "bg-mint-200 text-forest" : "bg-mint-50 text-emerald")}>
               <Check className="size-3" strokeWidth={3} aria-hidden="true" />
             </span>

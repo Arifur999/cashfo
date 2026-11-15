@@ -146,7 +146,7 @@ export function JournalPageClient({ data: initialData, categories, date: initial
   const lockedDay = selected.entry?.locked === true;
 
   return (
-    <PageFrame className="gap-3.5 md:pt-7">
+    <PageFrame className="gap-3.5 md:pt-5 md:pb-5.5 xl:min-h-full">
       <PageHeader
         title={t("Journal")}
         description={t("A few lines a day. Your diary stays private.")}
@@ -195,14 +195,14 @@ export function JournalPageClient({ data: initialData, categories, date: initial
               {kpi.emoji}
             </span>
             <span className="flex min-w-0 flex-col gap-px">
-              <span className="truncate text-[12.5px] text-ink-muted">{kpi.label}</span>
-              <span className="text-[19px] font-bold text-ink tabular-nums">{kpi.value}</span>
+              <span className="truncate text-[12.5px] leading-[normal] text-ink-muted">{kpi.label}</span>
+              <span className="text-[19px] leading-[normal] font-bold text-ink tabular-nums">{kpi.value}</span>
             </span>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-3.5 lg:grid-cols-[330px_minmax(0,1fr)]">
+      <div className="grid gap-3.5 lg:grid-cols-[330px_minmax(0,1fr)] xl:flex-1">
         <div className="flex flex-col gap-3">
           <Card padding="none" className={cn("flex flex-col gap-2 rounded-[14px] px-3.5 py-3", isLoading && "opacity-70")} aria-busy={isLoading}>
             <div className="flex items-center justify-between">
@@ -248,7 +248,7 @@ export function JournalPageClient({ data: initialData, categories, date: initial
                       !on && (entry ? "bg-surface hover:border-line-strong" : "bg-strip hover:border-line-strong"),
                     )}
                   >
-                    <span className={cn("text-[11.5px] leading-none font-semibold tabular-nums", future ? "text-ink-faint" : "text-ink")}>{formatCount(Number(day.slice(8)), fmt)}</span>
+                    <span className={cn("text-[11.5px] leading-none font-semibold tabular-nums", future ? "text-input" : "text-ink")}>{formatCount(Number(day.slice(8)), fmt)}</span>
                     <span aria-hidden="true" className="h-3 text-[12px] leading-none">
                       {mood}
                     </span>
@@ -258,9 +258,9 @@ export function JournalPageClient({ data: initialData, categories, date: initial
             </div>
           </Card>
 
-          <Card padding="none" className="flex flex-col gap-2 rounded-[14px] px-3.5 py-3">
+          <Card padding="none" className="flex flex-col gap-2 rounded-[14px] px-3.5 py-3 xl:flex-1">
             <h2 className="text-[14.5px] font-semibold text-ink">{t("Mood in {month}", { month: formatDay(`${data.month}-01`, "MMMM", fmt) })}</h2>
-            <div className="flex h-37.5 items-end gap-2.5" role="img" aria-label={MOODS.map((mood, i) => `${t(mood.label)}: ${count(moods[i])}`).join(", ")}>
+            <div className="flex h-37.5 items-end gap-2.5 xl:h-auto xl:min-h-37.5 xl:flex-1" role="img" aria-label={MOODS.map((mood, i) => `${t(mood.label)}: ${count(moods[i])}`).join(", ")}>
               {MOODS.map((mood, i) => (
                 <span key={mood.label} title={t("{mood}: {count} days", { mood: t(mood.label), count: count(moods[i]) })} className="flex h-full flex-1 flex-col items-center justify-end gap-0.75">
                   <span className="text-[11px] font-bold text-ink-soft tabular-nums">{moods[i] ? count(moods[i]) : ""}</span>

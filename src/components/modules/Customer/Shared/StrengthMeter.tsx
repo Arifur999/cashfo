@@ -11,6 +11,9 @@ interface StrengthMeterProps {
   // Four 40px bars with the words beside them wrapping (the vault's Add
   // login), rather than bars across the width.
   fixedBars?: boolean;
+  // A 70px slot kept for the word on the right, so the bars never jump
+  // (Settings › Security's Change password).
+  reserve?: boolean;
   className?: string;
 }
 
@@ -18,7 +21,7 @@ const TONE = ["", "bg-expense-fill", "bg-warning-fill", "bg-emerald", "bg-emeral
 const TEXT = ["text-ink-muted", "text-expense", "text-warning", "text-income", "text-income"];
 
 // Four bars and a word for how strong a password is.
-export function StrengthMeter({ password, detail, fixedBars = false, className }: StrengthMeterProps) {
+export function StrengthMeter({ password, detail, fixedBars = false, reserve = false, className }: StrengthMeterProps) {
   const { t } = useLocale();
   const { score, label } = passwordStrength(password);
   return (
@@ -28,8 +31,9 @@ export function StrengthMeter({ password, detail, fixedBars = false, className }
           <span key={bar} className={cn("h-1.25 rounded-full", bar <= score ? TONE[score] : "bg-line")} />
         ))}
       </div>
+      {reserve && password.length === 0 && <span aria-hidden="true" className="w-17.5 shrink-0" />}
       {password.length > 0 && (
-        <span className={cn(fixedBars ? "text-[12.5px] leading-normal" : "text-small whitespace-nowrap", TEXT[score])}>
+        <span className={cn(reserve && "w-17.5 shrink-0 text-right text-[12.5px]", fixedBars ? "text-[12.5px] leading-normal" : "text-small whitespace-nowrap", TEXT[score])}>
           <b className="font-bold">{t(label)}</b>
           {detail && <span className="hidden sm:inline"> · {detail}</span>}
         </span>

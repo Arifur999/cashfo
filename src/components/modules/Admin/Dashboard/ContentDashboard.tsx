@@ -32,7 +32,7 @@ interface ContentDashboardProps extends ContentDashboardData {
 }
 
 // English, passed through translate().
-const LEGAL_LABEL: Record<LegalDocType, string> = { TERMS_OF_SERVICE: "Terms of service", PRIVACY_POLICY: "Privacy policy", REFUND_POLICY: "Refund policy", FAQ: "FAQ", COOKIE_POLICY: "Cookie policy", COMMUNITY_RULES: "Community rules" };
+const LEGAL_LABEL: Record<LegalDocType, string> = { TERMS_OF_SERVICE: "Terms of service", PRIVACY_POLICY: "Privacy policy", REFUND_POLICY: "Refund policy", COOKIE_POLICY: "Cookie policy", COMMUNITY_RULES: "Community rules for groups", FAQ: "FAQ" };
 const ANNOUNCEMENT_STATUS: Record<AnnouncementStatus, { label: string; tone: "income" | "info" | "neutral" }> = { ACTIVE: { label: "Live", tone: "income" }, SCHEDULED: { label: "Scheduled", tone: "info" }, EXPIRED: { label: "Ended", tone: "neutral" }, DISABLED: { label: "Off", tone: "neutral" } };
 
 // The content admin's dashboard: the words and pages still missing their

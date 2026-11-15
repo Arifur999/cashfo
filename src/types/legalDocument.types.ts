@@ -1,7 +1,4 @@
-// The API's LegalDocumentType. Cookie policy and Community rules came with
-// the Settings redesign; they are read in the app's Settings, not on a page
-// of their own here.
-export const LEGAL_DOC_TYPES = ["TERMS_OF_SERVICE", "PRIVACY_POLICY", "REFUND_POLICY", "FAQ", "COOKIE_POLICY", "COMMUNITY_RULES"] as const;
+export const LEGAL_DOC_TYPES = ["TERMS_OF_SERVICE", "PRIVACY_POLICY", "REFUND_POLICY", "COOKIE_POLICY", "COMMUNITY_RULES", "FAQ"] as const;
 export type LegalDocType = (typeof LEGAL_DOC_TYPES)[number];
 
 export interface ILegalDocument {

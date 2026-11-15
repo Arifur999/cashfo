@@ -22,7 +22,7 @@ export const GOOGLE_SIGN_IN_ROUTE = "/login/google";
 // Where customers are sent while maintenance mode is on (app/maintenance).
 export const MAINTENANCE_ROUTE = "/maintenance";
 // The admin-maintained legal pages, readable without an account.
-export const LEGAL_ROUTES = ["/terms", "/privacy", "/refund-policy", "/faq"];
+export const LEGAL_ROUTES = ["/terms", "/privacy", "/refund-policy", "/cookie-policy", "/community-rules", "/faq"];
 
 // Where a PIN-locked workspace asks for its PIN (app/unlock-workspace).
 export const UNLOCK_WORKSPACE_ROUTE = "/unlock-workspace";

@@ -196,6 +196,8 @@ export function TodoTaskDialog({ editing, draft, categories, today, busy, onClos
       className="rounded-[18px]"
       headClassName="items-center px-5.5 py-4 bg-linear-to-b from-emerald-soft to-surface"
       titleClassName="text-[18px] font-bold"
+      subClassName="text-[12.5px] leading-[normal] text-ink-muted"
+      closeClassName="size-8.5 rounded-sm"
       bodyClassName="gap-4 px-5.5 py-4.5 [scrollbar-width:thin]"
       footerClassName="justify-start gap-2.5 px-5.5 py-3.5"
       onOpenAutoFocus={(event) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, ChevronDown, ChevronRight, CircleHelp, ExternalLink, MessageSquare, PlayCircle, Search, Send } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, ChevronRight, CreditCard, DollarSign, Rocket, Shield, Users, Wallet, CircleHelp, MessageSquare, PlayCircle, Search, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/modules/Customer/Providers/AuthProvider";
@@ -10,7 +10,7 @@ import Kbd from "@/components/smartly/Kbd";
 import PageFrame from "@/components/smartly/PageFrame";
 import type { SupportConversation } from "@/lib/customer/api";
 import { CATEGORY_LABEL, searchVideos, type HelpPageData } from "@/lib/customer/helpPage";
-import { FAQS, searchFaqs } from "@/lib/customer/settingsDisplay";
+import { FAQ_GROUPS, FAQS, searchFaqs, type FaqGroup } from "@/lib/customer/settingsDisplay";
 import { getSupportMessagesAction } from "@/lib/customer/supportActions";
 import { supportStatusOf, topicName, waitsOnYou } from "@/lib/customer/supportDisplay";
 import { formatDate, formatRecentDateTime } from "@/lib/date";
@@ -40,6 +40,8 @@ interface HelpSectionProps {
   clock: { day: number; minutes: number };
 }
 
+const FAQ_ICON: Record<FaqGroup, typeof Rocket> = { start: Rocket, ie: DollarSign, bal: Wallet, sav: ArrowLeftRight, grp: Users, sec: Shield, pay: CreditCard };
+
 type Tab = "videos" | "questions" | "contact" | "messages";
 
 const POPULAR = ["void a transaction", "budget", "bKash", "two-step sign-in"];
@@ -61,6 +63,7 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
   const [readingMessages, setReadingMessages] = useState(false);
   const found = (list: SupportConversation[] | null, id: string | undefined) => (id && list?.some((conversation) => conversation.id === id) ? id : null);
   const [selectedId, setSelectedId] = useState<string | null>(initialConversations === null ? (openMessageId ?? null) : found(initialConversations, openMessageId));
+  const [faqGroup, setFaqGroup] = useState<FaqGroup | "all">("all");
   const [mineFilter, setMineFilter] = useState<"all" | "active" | "solved">("all");
   const [ideasOpen, setIdeasOpen] = useState(false);
   const videos = help?.videos ?? [];
@@ -183,40 +186,72 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
 
           {tab === "questions" && (
             <section aria-labelledby="hp-faq" className={cn(CARD, "overflow-hidden")}>
-              <h2 id="hp-faq" className="px-5.5 py-4 text-[16px] font-semibold text-ink">
-                {t("Common questions")}
-              </h2>
+              <div className="flex flex-col gap-3 px-5 pt-4 pb-3.5">
+                <span className="flex flex-col gap-0.5">
+                  <h2 id="hp-faq" className="text-[16px] font-semibold text-ink">
+                    {t("Common questions")}
+                  </h2>
+                  <span className="text-[13px] text-ink-muted">{t("Short answers to what people ask us most.")}</span>
+                </span>
+                <div role="group" aria-label={t("Common questions")} className="flex flex-wrap gap-2">
+                  {([{ key: "all", label: "All" }, ...FAQ_GROUPS] as const).map(({ key, label }) => {
+                    const count = key === "all" ? shownFaqs.length : shownFaqs.filter((faq) => faq.group === key).length;
+                    if (key !== "all" && count === 0) return null;
+                    const on = faqGroup === key;
+                    return (
+                      <button key={key} type="button" aria-pressed={on} onClick={() => setFaqGroup(key)} className={cn("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px]", on ? "border-primary bg-primary font-semibold text-white" : "border-line bg-surface font-medium text-ink-2 hover:bg-soft-hover")}>
+                        {t(label)}
+                        <span className={cn("text-[11.5px]", on ? "text-white/75" : "text-ink-faint")}>{formatCount(count, locale)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               {shownFaqs.length === 0 && (
-                <p className="border-t border-divider px-5.5 py-6 text-small text-ink-muted">
+                <p className="border-t border-line px-5 py-6 text-small text-ink-muted">
                   {t("Nothing matches. Try other words.")}{" "}
                   <button type="button" onClick={() => messageUs(query)} className={TEXT_BUTTON}>
                     {t("Send us a message")}
                   </button>
                 </p>
               )}
-              {shownFaqs.map((faq) => {
+              {FAQ_GROUPS.filter((group) => faqGroup === "all" || faqGroup === group.key).map((group) => {
+                const items = shownFaqs.filter((faq) => faq.group === group.key);
+                if (items.length === 0) return null;
+                const GroupIcon = FAQ_ICON[group.key];
+                return (
+                  <div key={group.key}>
+                    <div className="flex items-center gap-2 border-t border-line bg-soft-row px-5 py-2.25 text-[12.5px] font-semibold text-ink-2">
+                      <GroupIcon className="size-3.5" aria-hidden="true" />
+                      {t(group.label)}
+                      <span className="font-medium text-ink-faint">{formatCount(items.length, locale)}</span>
+                    </div>
+              {items.map((faq) => {
                 const expanded = open === faq.id;
                 const answer = helped[faq.id];
                 return (
-                  <div key={faq.id} className={cn("border-t border-divider", expanded && "bg-emerald-soft/60")}>
-                    <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : faq.id)} className="flex min-h-13 w-full items-center gap-3 px-5.5 py-2 text-left focus-visible:-outline-offset-2">
+                  <div key={faq.id} className={cn("border-t border-sunken", expanded && "bg-soft-wash")}>
+                    <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : faq.id)} className="flex min-h-13 w-full items-center gap-3 px-5 py-2 text-left hover:bg-soft-row focus-visible:-outline-offset-2">
                       <span className={cn("flex-1 text-body font-semibold", expanded ? "text-emerald" : "text-ink")}>{t(faq.question)}</span>
                       <ChevronDown className={cn("size-4 shrink-0 transition-transform motion-reduce:transition-none", expanded ? "rotate-180 text-emerald" : "text-ink-muted")} aria-hidden="true" />
                     </button>
                     {expanded && (
-                      <div className="flex flex-col gap-2.5 px-5.5 pb-4">
+                      <div className="flex flex-col gap-2.5 px-5 pb-4">
                         <p className="text-[13.5px] leading-[1.6] text-ink-2">{t(faq.answer)}</p>
                         {answer ? (
-                          <span role="status" className="text-small text-ink-muted">
+                          <span role="status" className="text-[12.5px] text-ink-muted">
                             {answer === "yes" ? (
-                              t("Glad it helped.")
+                              <span className="flex items-center gap-1.5 font-semibold text-tint-green-ink">
+                                <Check className="size-3.5" aria-hidden="true" />
+                                {t("Thanks for telling us.")}
+                              </span>
                             ) : (
-                              <>
-                                {t("Sorry about that.")}{" "}
-                                <button type="button" onClick={() => messageUs(t(faq.question))} className={TEXT_BUTTON}>
-                                  {t("Send us a message")}
+                              <span className="flex flex-wrap items-center gap-2">
+                                {t("Sorry it did not help.")}
+                                <button type="button" onClick={() => messageUs(t(faq.question))} className="h-7 rounded-full bg-primary px-3 text-[12.5px] font-semibold text-white pointer-coarse:h-11">
+                                  {t("Ask our team")}
                                 </button>
-                              </>
+                              </span>
                             )}
                           </span>
                         ) : (
@@ -235,12 +270,9 @@ export function HelpSection({ openId, openMessageId, conversations: initialConve
                   </div>
                 );
               })}
-              <a href="/faq" target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center gap-2 border-t border-divider px-5.5 text-small font-semibold text-emerald hover:underline focus-visible:-outline-offset-2">
-                <BookOpen className="size-4" aria-hidden="true" />
-                {t("More answers in the FAQ")}
-                <ExternalLink className="size-3.5" aria-hidden="true" />
-                <span className="sr-only">({t("opens in a new tab")})</span>
-              </a>
+                  </div>
+                );
+              })}
             </section>
           )}
 

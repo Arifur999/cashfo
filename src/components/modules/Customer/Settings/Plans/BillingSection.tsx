@@ -91,7 +91,7 @@ function HistoryCard({ overview, initial, onSeePlans }: { overview: BillingOverv
     total === 0
       ? t("Every payment and receipt shows up here.")
       : allShown
-        ? t("{count} payments · {amount} paid", { count: formatCount(total, fmt), amount: money(paidSum) })
+        ? t(total === 1 ? "{count} payment · {amount} paid" : "{count} payments · {amount} paid", { count: formatCount(total, fmt), amount: money(paidSum) })
         : t("{count} payments", { count: formatCount(total, fmt) });
 
   function more() {
