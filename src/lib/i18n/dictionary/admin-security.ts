@@ -103,6 +103,8 @@ export const adminSecurityDictionary: Record<string, string> = {
   "Cancelled a notification campaign": "একটি নোটিফিকেশন ক্যাম্পেইন বাতিল করেছেন",
   "Deleted a notification campaign": "একটি নোটিফিকেশন ক্যাম্পেইন মুছেছেন",
   "Deleted an announcement": "একটি ঘোষণা মুছেছেন",
+  "Made an announcement": "একটি ঘোষণা দিয়েছেন",
+  "Changed an announcement": "একটি ঘোষণা বদলেছেন",
   "Deleted a notification template": "একটি নোটিফিকেশন টেমপ্লেট মুছেছেন",
   "Added a feature flag": "একটি ফিচার ফ্ল্যাগ যোগ করেছেন",
   "Added a translation string": "একটি অনুবাদ যোগ করেছেন",
