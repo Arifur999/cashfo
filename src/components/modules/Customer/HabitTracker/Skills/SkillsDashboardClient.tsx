@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import PageFrame from "@/components/smartly/PageFrame";
 import type { Skill, SkillLogRow, SkillsOverview } from "@/lib/customer/api";
+import { dayText } from "@/lib/customer/habitDisplay";
 import { longDay } from "@/lib/customer/libraryBoard";
 import {
   agoText,
@@ -163,7 +164,7 @@ export function SkillsDashboardClient({ overview, yearLogs, period, today }: Ski
   const kpiEmoji = "flex size-9.5 shrink-0 items-center justify-center rounded-[10px] text-[18px]";
 
   return (
-    <PageFrame className="gap-3.5 leading-[normal] md:pt-5 md:pb-5.5">
+    <PageFrame className="gap-2.5 leading-[normal] md:pt-4 md:pb-4.5 xl:min-h-full">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-0.75">
           <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("Skills dashboard")}</h1>
@@ -527,7 +528,7 @@ export function SkillsDashboardClient({ overview, yearLogs, period, today }: Ski
         </section>
       </div>
 
-      <section aria-labelledby="skb-tt" className={cn(LB_CARD, "flex flex-col gap-1.5 px-4 pt-2.5 pb-1")}>
+      <section aria-labelledby="skb-tt" className={cn(LB_CARD, "flex flex-1 flex-col gap-1.5 px-4 pt-2.5 pb-1")}>
         <div className="flex flex-wrap items-center gap-3">
           <h2 id="skb-tt" className="text-[15px] font-semibold whitespace-nowrap text-ink">
             {t("All skills")}
@@ -564,7 +565,7 @@ export function SkillsDashboardClient({ overview, yearLogs, period, today }: Ski
                   ["Started", "w-[14.5%]"],
                   ["Finished / last", "w-[14.5%]"],
                 ].map(([label, width]) => (
-                  <th key={label} className={cn("truncate border-b border-line px-2 py-1.5 font-semibold", width)}>
+                  <th key={label} className={cn("border-b border-line px-2 py-1.5 font-semibold whitespace-nowrap", width)}>
                     {t(label)}
                   </th>
                 ))}
@@ -613,11 +614,11 @@ export function SkillsDashboardClient({ overview, yearLogs, period, today }: Ski
                     </td>
                     <td className="px-2 py-1.5 text-right text-ink-2 tabular-nums">{count(summary?.sessions ?? 0)}</td>
                     <td className="truncate px-2 py-1.5 text-right text-ink-2 tabular-nums">{summary?.logged ? amountOf(skill.unit, summary.logged, t, fmt) : "–"}</td>
-                    <td className="truncate px-2 py-1.5 text-ink-2">{skill.startedAt ? longDay(skill.startedAt.slice(0, 10), fmt) : "–"}</td>
+                    <td className="truncate px-2 py-1.5 text-ink-2">{skill.startedAt ? dayText(skill.startedAt.slice(0, 10), fmt, "dayMonthYY") : "–"}</td>
                     <td className="px-2 py-1.5">
                       <span className={cn("flex min-w-0 items-center gap-1.25", done ? "font-semibold text-tint-green-ink" : lastDay ? "text-ink-2" : "text-ink-faint")}>
                         {done && <Check className="size-3.25 shrink-0" strokeWidth={3} aria-hidden="true" />}
-                        <span className="truncate">{done ? (skill.completedAt ? longDay(skill.completedAt.slice(0, 10), fmt) : t("Completed")) : lastDay ? agoText(lastDay, today, t, fmt) : "–"}</span>
+                        <span className="truncate">{done ? (skill.completedAt ? dayText(skill.completedAt.slice(0, 10), fmt, "dayMonthYY") : t("Completed")) : lastDay ? agoText(lastDay, today, t, fmt) : "–"}</span>
                       </span>
                     </td>
                   </tr>

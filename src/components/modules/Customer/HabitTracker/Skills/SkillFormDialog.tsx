@@ -156,7 +156,7 @@ export function SkillFormDialog({ open, onClose, editing, hasPractice = false, s
       onClose={onClose}
       busy={isPending}
       width={620}
-      className="w-165 rounded-[16px]"
+      className="w-165 rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center gap-3 px-5.5 py-3.5"
       lead={
         <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-[11px] text-white" style={{ background: `linear-gradient(140deg, ${palette.from} 0%, ${palette.to} 100%)` }}>

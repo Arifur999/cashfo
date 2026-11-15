@@ -64,7 +64,7 @@ export function SkillNoteFormDialog({ open, onClose, skill, editing, today, onSa
       onClose={onClose}
       busy={isPending}
       width={620}
-      className="w-150 rounded-[18px]"
+      className="w-150 rounded-[18px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center gap-3.5 px-5.5 py-4"
       headStyle={{ background: `linear-gradient(180deg, ${soft} 0%, var(--surface) 100%)` }}
       titleClassName="text-[18px] font-bold"
@@ -261,7 +261,7 @@ export function SkillResourceDialog({ open, onClose, skill, editing, onSaved }: 
       onClose={onClose}
       busy={isPending}
       width={500}
-      className="rounded-[18px]"
+      className="rounded-[18px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center px-5.5 py-4"
       titleClassName="text-[18px] font-bold"
       title={t(editing ? "Edit resource" : "Add resource")}

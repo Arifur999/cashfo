@@ -190,7 +190,7 @@ export function PracticeDialog({ open, onClose, skill, entries: given, pace, tod
       onClose={onClose}
       busy={isPending}
       width={560}
-      className="rounded-[18px]"
+      className="rounded-[18px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center gap-3.5 px-5.5 py-4.5"
       headStyle={{ background: `linear-gradient(180deg, ${soft} 0%, var(--surface) 100%)` }}
       titleClassName="text-[19px] font-bold"

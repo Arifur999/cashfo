@@ -69,7 +69,7 @@ export function QuickNoteDialog({ open, onClose, skill, today }: { open: boolean
       onClose={onClose}
       busy={isPending}
       width={560}
-      className="rounded-[16px]"
+      className="rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center gap-3.5 px-5.5 py-4"
       headStyle={{ background: `linear-gradient(180deg, ${soft} 0%, var(--surface) 100%)` }}
       titleClassName="text-[18px] font-bold"
@@ -210,7 +210,7 @@ export function TargetDialog({ open, onClose, skill, left, pace, today }: { open
       onClose={onClose}
       busy={isPending}
       width={440}
-      className="rounded-[16px]"
+      className="rounded-[16px] leading-[normal]" subClassName="leading-[normal]"
       headClassName="items-center gap-3 px-5.5 py-4"
       titleClassName="text-[17px] font-bold"
       lead={<SkillBadge skill={skill} className="size-9" rounded="rounded-[10px]" iconClassName="size-4.5" />}

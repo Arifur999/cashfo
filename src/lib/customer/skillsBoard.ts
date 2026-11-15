@@ -214,13 +214,14 @@ export const RESOURCE_KINDS: { id: SkillResourceKind; label: string }[] = [
 // --- Days of practice ---
 
 // "Today", "Yesterday", "3 days ago", else the long date.
-export function agoText(day: string | null, today: string, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
+// A week or more back it is the date: in full, or "12 Oct 26" in a table.
+export function agoText(day: string | null, today: string, t: Translate = inEnglish, locale: FormatLocale = "en", pattern = "d MMMM yyyy"): string {
   if (!day) return t("Not started");
   const n = daysBetween(day, today);
   if (n <= 0) return t("Today");
   if (n === 1) return t("Yesterday");
   if (n < 7) return t("{count} days ago", { count: formatCount(n, locale) });
-  return formatDay(day, "d MMMM yyyy", locale);
+  return formatDay(day, pattern, locale);
 }
 
 // Days in a row with any practice up to today (or yesterday while today has none).

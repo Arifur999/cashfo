@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, Check, CircleCheck, Clock, GraduationCap, LayoutGrid, LayoutList, MapPin, Pause, Pencil, Play, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronsUpDown, CircleCheck, Clock, GraduationCap, LayoutGrid, List, MapPin, Pause, Pencil, Play, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -9,7 +9,7 @@ import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import PageFrame from "@/components/smartly/PageFrame";
 import { useStoredChoice } from "@/components/modules/Customer/Balance/useStoredChoice";
 import type { Reminder, Skill, SkillsOverview } from "@/lib/customer/api";
-import { actionError } from "@/lib/customer/habitDisplay";
+import { actionError, dayText } from "@/lib/customer/habitDisplay";
 import { longDay } from "@/lib/customer/libraryBoard";
 import { deleteSkillAction, restoreSkillAction, updateSkillAction } from "@/lib/customer/skillActions";
 import {
@@ -178,7 +178,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
               stop(event);
               move(skill, next.to);
             }} disabled={isPending} title={t(next.label)} aria-label={t(next.label)} className="flex size-7.5 items-center justify-center rounded-[8px] hover:bg-surface-sunken" style={next.tone ? undefined : { color: dark }}>
-            <Icon className={cn("size-3.75", next.tone && "text-ink-soft")} aria-hidden="true" />
+            <Icon className={cn("size-3.75", next.tone && "text-ink-soft")} fill={state === "done" ? "none" : "currentColor"} aria-hidden="true" />
           </button>
         ) : (
           <button
@@ -192,7 +192,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
             className={cn("inline-flex h-7.5 min-w-0 items-center gap-1.5 overflow-hidden rounded-[8px] px-2.5 text-[12.5px] font-semibold whitespace-nowrap hover:brightness-96", next.tone)}
             style={next.tone ? undefined : { background: `color-mix(in srgb, ${color} 10%, var(--surface))`, color: dark }}
           >
-            <Icon className="size-3.5 shrink-0" fill={state === "want" || state === "paused" ? "currentColor" : "none"} aria-hidden="true" />
+            <Icon className="size-3.5 shrink-0" fill={state === "done" ? "none" : "currentColor"} aria-hidden="true" />
             <span className="truncate">{t(next.label)}</span>
           </button>
         )}
@@ -306,7 +306,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
 
   const sortHead = (key: "name" | "pct" | "last", label: string) => {
     const on = sort?.key === key;
-    const Icon = on ? (sort?.dir === 1 ? ArrowUp : ArrowDown) : ArrowUpDown;
+    const Icon = on ? (sort?.dir === 1 ? ArrowUp : ArrowDown) : ChevronsUpDown;
     return (
       <span role="columnheader" aria-sort={on ? (sort?.dir === 1 ? "ascending" : "descending") : "none"}>
         <button type="button" onClick={() => setSort(on && sort ? { key, dir: sort.dir === 1 ? -1 : 1 } : { key, dir: key === "name" ? 1 : -1 })} className={cn("inline-flex items-center gap-1 rounded-[4px] hover:text-ink", on ? "text-emerald" : "text-ink-muted")}>
@@ -318,7 +318,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
   };
 
   return (
-    <PageFrame className="gap-3.5 leading-[normal] md:pt-5 md:pb-5.5">
+    <PageFrame className="gap-3.5 leading-[normal] md:pt-5 md:pb-5.5 xl:min-h-full">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-0.75">
           <h1 className="text-[24px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{t("My skills")}</h1>
@@ -336,7 +336,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
                   onClick={() => setView(value)}
                   className={cn("inline-flex h-8.5 items-center gap-1.5 rounded-[8px] px-3 text-[13px] font-semibold", view === value ? "bg-surface text-emerald shadow-[0_1px_3px_rgba(15,23,42,0.12)]" : "text-ink-soft hover:text-ink")}
                 >
-                  {value === "board" ? <LayoutGrid className="size-3.75" aria-hidden="true" /> : <LayoutList className="size-3.75" aria-hidden="true" />}
+                  {value === "board" ? <LayoutGrid className="size-3.75" aria-hidden="true" /> : <List className="size-3.75" aria-hidden="true" />}
                   {t(value === "board" ? "Board" : "List")}
                 </button>
               ))}
@@ -439,7 +439,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
                           onClick={() => setForm({ editing: null, category: cat.id })}
                           aria-label={t("Add a skill to {category}", { category: t(cat.label) })}
                           className={cn("flex flex-col items-center justify-center gap-2 rounded-[14px] border-2 border-dashed p-4 text-[13.5px] font-semibold transition-[transform,background] hover:-translate-y-0.5 hover:bg-surface", cat.ink, mine.length ? "" : "min-h-53.5")}
-                          style={{ borderColor: "color-mix(in srgb, currentColor 33%, transparent)", background: "color-mix(in srgb, currentColor 5%, transparent)" }}
+                          style={{ borderColor: "color-mix(in srgb, currentColor 33%, transparent)" }}
                         >
                           <span className="flex size-9 items-center justify-center rounded-full bg-surface shadow-[0_2px_6px_rgba(15,23,42,0.08)]">
                             <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
@@ -509,10 +509,10 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
                             <StateChip state={state} className="px-2.25 text-[12px]" />
                           </span>
                           <span role="cell" className={cn("truncate text-[13px]", skill.startedAt ? "text-ink-2" : "text-ink-faint")}>
-                            {skill.startedAt ? longDay(skill.startedAt.slice(0, 10), fmt) : "–"}
+                            {skill.startedAt ? dayText(skill.startedAt.slice(0, 10), fmt, "dayMonthYY") : "–"}
                           </span>
                           <span role="cell" className={cn("truncate text-[13px]", lastDay ? "text-ink-2" : "text-ink-faint")}>
-                            {lastDay ? agoText(lastDay, today, t, fmt) : "–"}
+                            {lastDay ? agoText(lastDay, today, t, fmt, "d MMM yy") : "–"}
                           </span>
                           <span role="cell" className="flex justify-end gap-0.5">
                             {actions(skill, true)}

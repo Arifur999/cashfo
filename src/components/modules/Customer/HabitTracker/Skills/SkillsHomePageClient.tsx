@@ -284,7 +284,7 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
               {t("Mark completed")}
             </button>
             <button type="button" onClick={() => move(skill, "paused", t("{name} paused. It is in Up next.", { name: skill.name }))} disabled={waiting} className={cn(LB_SM, "border-line bg-surface text-ink-muted hover:bg-hover")}>
-              <Pause className="size-3.25" strokeWidth={2.5} aria-hidden="true" />
+              <Pause className="size-3.25" fill="currentColor" strokeWidth={1} aria-hidden="true" />
               {t("Pause")}
             </button>
           </div>

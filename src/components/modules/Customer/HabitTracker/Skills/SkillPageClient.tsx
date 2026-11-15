@@ -1,14 +1,15 @@
 "use client";
 
-import { ArrowLeft, CalendarDays, Check, ChevronDown, ChevronUp, CircleCheck, ExternalLink, FileText, Flame, Link2, List, ListChecks, MapPin, Pause, Pencil, Play, Plus, Quote, RotateCcw, Search, Target, Trash2, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, ChevronDown, ChevronUp, CircleCheck, ExternalLink, FileText, Flame, Link2, List, ListChecks, MapPin, Pause, Pencil, Play, Plus, RotateCcw, Search, SquareCheckBig, Target, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/smartly/ConfirmDialog";
 import PageFrame from "@/components/smartly/PageFrame";
+import { TopbarExtras } from "@/components/modules/Customer/Layout/TopbarExtras";
 import type { Reminder, Skill, SkillDetail, SkillNote, SkillResource } from "@/lib/customer/api";
-import { actionError } from "@/lib/customer/habitDisplay";
+import { actionError, dayText } from "@/lib/customer/habitDisplay";
 import { longDay } from "@/lib/customer/libraryBoard";
 import {
   addSkillNoteAction,
@@ -61,7 +62,7 @@ import { SkillCongratsDialog, SkillNoteFormDialog, SkillNoteViewDialog, SkillRes
 type Tab = "log" | "roadmap" | "notes" | "resources";
 const TABS: { id: Tab; label: string; icon: typeof CalendarDays }[] = [
   { id: "log", label: "Practice log", icon: CalendarDays },
-  { id: "roadmap", label: "Roadmap", icon: ListChecks },
+  { id: "roadmap", label: "Roadmap", icon: SquareCheckBig },
   { id: "notes", label: "Notes", icon: FileText },
   { id: "resources", label: "Resources", icon: Link2 },
 ];
@@ -318,7 +319,8 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
   }
 
   return (
-    <PageFrame className="gap-3.5 leading-[normal] md:pt-4 md:pb-5.5">
+    <PageFrame className="gap-3.5 leading-[normal] md:pt-4 md:pb-5.5 xl:min-h-full">
+      <TopbarExtras heading={t("Skill")} />
       <BackLink />
 
       <section className="relative rounded-[16px] border border-line shadow-card" style={{ background: `linear-gradient(115deg, ${soft} 0%, var(--surface) 42%)` }}>
@@ -351,7 +353,9 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
             </div>
             {skill.why && (
               <div className="flex max-w-160 min-w-0 items-center gap-2 rounded-[0_10px_10px_0] border-l-3 px-3 py-1.75" style={{ borderLeftColor: color, background: `color-mix(in srgb, ${color} 6%, var(--surface))` }}>
-                <Quote className="size-3.5 shrink-0 opacity-70" style={{ color }} fill="currentColor" aria-hidden="true" />
+                <svg viewBox="0 0 24 24" className="size-3.5 shrink-0 opacity-70" style={{ color }} fill="currentColor" aria-hidden="true">
+                  <path d="M7 7h4v4c0 3-1.5 5-4 6l-.5-1c1.5-1 2.3-2.2 2.4-4H7z M14 7h4v4c0 3-1.5 5-4 6l-.5-1c1.5-1 2.3-2.2 2.4-4H14z" />
+                </svg>
                 <span className="truncate text-[13.5px] text-ink-2 italic">{skill.why}</span>
               </div>
             )}
@@ -456,7 +460,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
       </div>
 
       {tab === "log" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-1 flex-col gap-3">
           <section className={cn(LB_CARD, "grid items-stretch max-xl:grid-cols-1 xl:grid-cols-[auto_minmax(0,1fr)]")}>
             <div className="overflow-x-auto py-3.5 pr-5 pl-4">
               <div className="grid w-max grid-cols-[22px_auto] gap-x-1.5 gap-y-1">
@@ -524,7 +528,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
             </div>
           </section>
 
-          <section className={cn(LB_CARD, "flex flex-col overflow-hidden")}>
+          <section className={cn(LB_CARD, "flex flex-1 flex-col overflow-hidden")}>
             {logs.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2.5 p-6 text-center">
                 <span aria-hidden="true" className="flex size-13 items-center justify-center rounded-[16px]" style={{ background: soft }}>
@@ -549,7 +553,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
                   return (
                     <div key={log.date} className="grid grid-cols-[210px_130px_minmax(0,1fr)_72px] items-center gap-x-4 border-b border-divider px-4.5 py-2.5 transition-colors hover:bg-hover max-md:grid-cols-[1fr_100px_60px]">
                       <span className="flex min-w-0 flex-col gap-px">
-                        <span className="truncate text-[14px] font-semibold text-ink">{longDay(log.date, fmt)}</span>
+                        <span className="truncate text-[14px] font-semibold text-ink">{dayText(log.date, fmt, "dayMonthYY")}</span>
                         {ago < 7 && <span className="text-[12px] text-ink-faint">{agoText(log.date, today, t, fmt)}</span>}
                       </span>
                       <span className="justify-self-start rounded-full px-2.5 py-0.75 text-[13px] font-bold whitespace-nowrap tabular-nums" style={{ background: soft, color: dark }}>
@@ -595,7 +599,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
       )}
 
       {tab === "roadmap" && (
-        <section className={cn(LB_CARD, "flex flex-col overflow-hidden")}>
+        <section className={cn(LB_CARD, "flex flex-1 flex-col overflow-hidden")}>
           <div className="flex flex-wrap items-center gap-4.5 border-b border-divider px-5 py-3.5">
             <span className="text-[15px] font-bold whitespace-nowrap text-ink">{t("{done} of {total} steps done", { done: count(stepsDone), total: count(steps.length) })}</span>
             <span className="h-2 w-60 overflow-hidden rounded-full bg-surface-sunken max-sm:w-full">
@@ -609,7 +613,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
               <span className="text-[13px] font-semibold text-tint-green-ink">{t("All steps done. Well done!")}</span>
             ) : null}
           </div>
-          <div>
+          <div className="flex-1">
             {steps.length === 0 ? (
               <div className="flex min-h-50 flex-col items-center justify-center gap-2.5 p-6 text-center">
                 <span aria-hidden="true" className="flex size-13 items-center justify-center rounded-[16px]" style={{ background: soft }}>
