@@ -68,8 +68,8 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
   const columns = showDeclined ? [...FEATURE_REQUEST_COLUMNS, DECLINED_COLUMN] : FEATURE_REQUEST_COLUMNS;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2.5 text-small text-ink-soft">
+    <div className="flex flex-col gap-4.5">
+      <div className="flex flex-wrap items-center gap-2.5 text-small text-ink-2">
         <span className="flex items-center gap-2.5">
           <Info className="size-3.75 shrink-0 text-ink-muted" aria-hidden="true" />
           <T>{canManage ? "Drag a card to change its status. People who voted hear about it when it moves to Planned or Shipped." : "What people have asked for, most voted first."}</T>
@@ -107,7 +107,7 @@ const FeatureRequestBoard = ({ canManage }: { canManage: boolean }) => {
                     }
                   : undefined
               }
-              className={cn("flex min-h-40 flex-col gap-2 rounded-[14px] p-2.5 transition-colors", over === column.status ? "bg-mint-50" : "bg-surface-sunken")}
+              className={cn("flex min-h-40 flex-col gap-2 rounded-[14px] p-2.5 transition-colors", over === column.status ? "bg-mint-50" : "bg-page")}
             >
               <div className="flex items-center gap-2 px-1 py-0.5">
                 <span className={cn("size-2 rounded-full", column.dot)} aria-hidden="true" />
