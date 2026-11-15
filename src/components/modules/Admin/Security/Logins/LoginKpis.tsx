@@ -23,7 +23,7 @@ const LoginKpis = () => {
   const count = (value: number | undefined) => (value === undefined ? "—" : formatCount(value, locale));
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-3.5 md:grid-cols-3">
       <Kpi
         size="sm"
         figure={23}
