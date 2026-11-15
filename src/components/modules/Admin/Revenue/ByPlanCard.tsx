@@ -16,7 +16,7 @@ const ByPlanCard = async ({ overview }: { overview: IRevenueOverview }) => {
   const refunds = overview.refundsThisMonth;
 
   return (
-    <Card padding="none" className="flex flex-col gap-4 px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3.5 px-4.5 py-4">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-title text-ink">{t("{month} by plan", { month: t(formatMonthName(overview.month)) })}</h2>
         <b className="text-body font-semibold text-ink tabular-nums">{formatCurrency(total, undefined, 0, locale)}</b>

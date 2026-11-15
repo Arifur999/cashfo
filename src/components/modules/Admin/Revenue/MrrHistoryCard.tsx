@@ -21,7 +21,7 @@ const MrrHistoryCard = async ({ history }: { history: IMrrHistoryPoint[] }) => {
   const nothing = history.every((point) => point.mrr === 0);
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3 px-4.5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 className="text-title text-ink"><T>MRR at the end of each month</T></h2>
         {growth !== null && history.length > 1 && (

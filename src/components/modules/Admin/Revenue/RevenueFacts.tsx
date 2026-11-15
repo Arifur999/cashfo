@@ -40,10 +40,10 @@ const RevenueFacts = async ({ overview, fromReferrals }: { overview: IRevenueOve
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       {facts.map((fact) => (
-        <Card key={fact.label} padding="none" className="flex flex-col gap-2 px-5 py-4">
+        <Card key={fact.label} padding="none" className="flex flex-col gap-1.5 px-4.5 py-4">
           <span className="text-small text-ink-muted">{t(fact.label)}</span>
-          <span className="text-h2 text-ink tabular-nums">{fact.value}</span>
-          <span className="text-small leading-relaxed text-ink-2">{fact.sub}</span>
+          <span className="text-[20px] leading-[normal] font-bold text-ink tabular-nums">{fact.value}</span>
+          <span className="text-[12.5px] leading-[1.45] text-ink-2">{fact.sub}</span>
         </Card>
       ))}
     </div>
