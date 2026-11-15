@@ -19,10 +19,10 @@ const STAMP: Record<InvoiceStamp, { label: string; className: string }> = {
 };
 
 // One line of the totals: the label, then the amount under the Amount column.
-const TOTAL_ROW = "grid grid-cols-[auto_120px] gap-x-4 text-right";
+const TOTAL_ROW = "grid grid-cols-[140px_120px] text-right";
 
 // The sheet's small capitals over each block and column.
-const LABEL = "text-caption font-semibold tracking-[0.04em] text-ink-muted uppercase";
+const LABEL = "text-[11.5px] font-semibold tracking-[0.06em] text-ink-muted uppercase";
 
 // "2 Oct – 1 Nov 2026": the period a line paid for.
 const periodText = (from: string | null | undefined, to: string | null | undefined, locale: "en" | "bn") => {
@@ -62,28 +62,28 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
     <article
       aria-labelledby="invoice-title"
       // Room for the sheet's content on a phone, the design's wide margins from sm up.
-      className="flex flex-col gap-8 rounded-sm border border-line bg-surface px-5 py-6 shadow-float sm:px-12 sm:py-10 print:border-0 print:shadow-none"
+      className="flex flex-col gap-7 rounded-[6px] border border-line bg-surface px-5 py-6 shadow-float sm:px-12 sm:py-10 print:border-0 print:shadow-none"
     >
       <div className="flex flex-wrap items-start justify-between gap-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Logo variant="icon" height={36} alt="" />
           <span className="flex flex-col">
-            <b className="text-title text-ink"><T>Smartly</T></b>
-            <span className="text-small text-ink-muted"><T>Dhaka, Bangladesh</T></span>
+            <b className="text-base leading-[normal] font-bold text-ink"><T>Smartly</T></b>
+            <span className="text-[12.5px] leading-[normal] text-ink-muted"><T>Dhaka, Bangladesh</T></span>
           </span>
         </div>
         {/* At the right, on its own line too when a phone wraps the header. */}
         <div className="ml-auto flex flex-col items-end gap-1 text-right">
           {/* The page's heading: the invoice and its number. */}
           <h1 id="invoice-title" className="flex flex-col items-end gap-1">
-            <span className="text-h1 text-ink"><T>Invoice</T></span>
-            <code className="font-mono text-small font-normal text-ink-2">{invoice.invoiceNumber}</code>
+            <span className="text-[26px] leading-[normal] font-bold tracking-[-0.02em] text-ink"><T>Invoice</T></span>
+            <code className="font-mono text-[13px] font-normal text-ink-2">{invoice.invoiceNumber}</code>
           </h1>
           <span className={cn("rounded-full px-3 py-0.5 text-caption font-bold", stamp.className)}>{t(stamp.label)}</span>
         </div>
       </div>
 
-      <div className="grid gap-5 text-body leading-relaxed sm:grid-cols-3">
+      <div className="grid gap-5 text-[13.5px] leading-[1.6] sm:grid-cols-3">
         <div className="flex min-w-0 flex-col">
           <span className={LABEL}><T>Issued to</T></span>
           <b className="font-semibold wrap-break-word text-ink">{issuedTo.name}</b>
@@ -107,13 +107,13 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
       </div>
 
       <div className="flex flex-col">
-        <div className={cn("grid gap-x-3 border-b-2 border-ink py-3 text-ink-2", LABEL, period ? "grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)_120px]" : "grid-cols-[minmax(0,1fr)_120px]")}>
+        <div className={cn("grid gap-x-3 border-b-2 border-ink py-2.5 text-xs font-semibold tracking-[0.04em] text-ink-2 uppercase", period ? "grid-cols-[minmax(0,1fr)_minmax(0,200px)_120px]" : "grid-cols-[minmax(0,1fr)_120px]")}>
           <span><T>Description</T></span>
           {period && <span><T>Period</T></span>}
           <span className="text-right"><T>Amount</T></span>
         </div>
         {invoice.lineItems.map((item, index) => (
-          <div key={`${item.description}-${index}`} className={cn("grid gap-x-3 border-b border-line py-4 text-body", period ? "grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)_120px]" : "grid-cols-[minmax(0,1fr)_120px]")}>
+          <div key={`${item.description}-${index}`} className={cn("grid gap-x-3 border-b border-line py-3.5 text-body", period ? "grid-cols-[minmax(0,1fr)_minmax(0,200px)_120px]" : "grid-cols-[minmax(0,1fr)_120px]")}>
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="font-semibold text-ink">{item.description}</span>
               {index === 0 && planSummary && <span className="text-[12.5px] leading-[normal] text-ink-muted">{planSummary}</span>}
@@ -122,7 +122,7 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
             <span className="text-right text-ink tabular-nums">{money(item.amount)}</span>
           </div>
         ))}
-        <div className="flex flex-col items-end gap-2 pt-4 text-body tabular-nums">
+        <div className="flex flex-col items-end gap-1.5 pt-3.5 text-body tabular-nums">
           <span className={TOTAL_ROW}>
             <span className="text-ink-muted"><T>Subtotal</T></span>
             <span className="text-ink">{money(subtotal)}</span>
@@ -131,7 +131,7 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
             <span className="text-ink-muted"><T>Discount</T></span>
             <span className="text-ink">{money(discount)}</span>
           </span>
-          <span className={cn(TOTAL_ROW, "border-t border-line pt-2 text-h3 text-ink")}>
+          <span className={cn(TOTAL_ROW, "border-t border-line pt-2 text-[17px] leading-[normal] font-bold text-ink")}>
             <span><T>Total paid</T></span>
             <span>{money(invoice.totalAmount)}</span>
           </span>
@@ -143,7 +143,7 @@ const InvoiceDocument = async ({ invoice, refunded = false, refund = null }: Inv
         </div>
       </div>
 
-      <span className="text-small text-ink-muted"><T>Thank you for using Smartly. Questions about this invoice? Reply from the Help page in the app.</T></span>
+      <span className="text-[12.5px] leading-[normal] text-ink-muted"><T>Thank you for using Smartly. Questions about this invoice? Reply from the Help page in the app.</T></span>
     </article>
   );
 };

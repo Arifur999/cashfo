@@ -36,7 +36,7 @@ const InvoiceDetailPage = async ({ params, searchParams }: PageProps<"/admin/inv
       <BreadcrumbTitle title={invoice.invoiceNumber} />
       {/* The section's header and tabs over the sheet, as the board draws
           it: the Invoices tab is the way back to the list. */}
-      <div className="flex flex-col gap-4 print:hidden">
+      <div className="flex flex-col gap-4.5 print:hidden">
         <PageHeader {...PAYMENTS_PAGE} />
         <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
       </div>
