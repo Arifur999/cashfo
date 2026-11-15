@@ -39,12 +39,12 @@ const HealthCard = ({ service }: { service: ServiceHealth }) => {
         <span className="text-small text-ink-muted">
           <T>{service.name}</T>
         </span>
-        <span className="flex items-center gap-1.5 text-[15px] font-semibold text-ink">
+        <span className="flex items-center gap-1.5 text-[15px] leading-[normal] font-semibold text-ink">
           <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", DOT[service.tone])} />
           <T>{service.state}</T>
         </span>
         {service.sub && (
-          <span className="text-[12.5px] text-ink-muted">
+          <span className="text-[12.5px] leading-[normal] text-ink-muted">
             <T>{service.sub}</T>
           </span>
         )}
@@ -119,7 +119,8 @@ const HealthCards = () => {
       );
 
   return (
-    <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+    // One row, as the board draws its health cards (it has four; SMS is the fifth).
+    <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {SERVICES.map((service, index) => (
         <HealthCard key={service.name} service={{ ...service, ...states[index] }} />
       ))}
