@@ -128,7 +128,7 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
 
   return (
     <div className="flex flex-1 flex-col gap-4.5">
-      <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3.5 gap-y-2.5 text-[13.5px]">
+      <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3.5 gap-y-2.5 text-[13.5px] leading-4">
         <dt className="text-ink-muted">
           <T>Admin</T>
         </dt>
