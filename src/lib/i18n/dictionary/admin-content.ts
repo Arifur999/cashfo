@@ -75,6 +75,8 @@ export const adminContentDictionary: Record<string, string> = {
   "Terms of Service": "সেবার শর্তাবলি",
   "Privacy Policy": "গোপনীয়তা নীতি",
   "Refund Policy": "ফেরত নীতি",
+  "Cookie policy": "কুকি নীতি",
+  "Community rules": "কমিউনিটির নিয়ম",
   FAQ: "সাধারণ প্রশ্ন",
   "Updated {date}": "হালনাগাদ {date}",
   // Whether a Bangla text exists, not whether it follows the latest English.

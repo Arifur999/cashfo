@@ -2,7 +2,7 @@
 
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { Bold, ExternalLink, Heading, Italic, Link2, List, TriangleAlert, Undo2, type LucideIcon } from "lucide-react";
+import { Bold, Heading, Italic, Link2, List, TriangleAlert, Undo2, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { discardLegalDraftAction, publishLegalDraftAction, saveAndPublishLegalAction, saveLegalDraftAction } from "@/app/(dashboardLayout)/admin/content/legal/_action";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { legalVersionsQuery } from "@/queries/legalDocument.queries";
 import type { ILegalDocument, LegalDocType } from "@/types/legalDocument.types";
 import { type ILegalDocumentFormValues, legalDocumentFormZodSchema } from "@/zod/legalDocument.validation";
-import { banglaState, LEGAL_DOC_LABELS, LEGAL_DOC_ROUTES, legalEditorHeadingId, toLegalDocumentFormValues } from "./legalDocumentLabels";
+import { banglaState, LEGAL_DOC_LABELS, legalEditorHeadingId, toLegalDocumentFormValues } from "./legalDocumentLabels";
 import Loader from "@/components/shared/Loader";
 
 const { shape } = legalDocumentFormZodSchema;
@@ -198,16 +198,6 @@ const LegalDocumentEditor = ({ document, canManage, onDirtyChange }: LegalDocume
             <h2 id={legalEditorHeadingId(document.type)} tabIndex={-1} className="scroll-mt-4 text-title text-ink focus-visible:outline-offset-4">
               {label}
             </h2>
-            <a
-              href={LEGAL_DOC_ROUTES[document.type]}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={translate("View live page")}
-              aria-label={`${translate("View live page")} ${translate("(opens in a new tab)")}`}
-              className="flex size-6 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken hover:text-ink pointer-coarse:size-11"
-            >
-              <ExternalLink className="size-3.5" aria-hidden="true" />
-            </a>
           </span>
           <span className="text-[12.5px] leading-[normal] text-ink-muted">
             {publishedBy

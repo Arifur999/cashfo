@@ -4,10 +4,11 @@ import { LEGAL_DOC_TYPES } from "@/types/legalDocument.types";
 import { banglaState, LEGAL_DOC_LABELS, LEGAL_DOC_ROUTES, legalEditorHeadingId, sectionCount } from "./legalDocumentLabels";
 
 describe("legal document labels", () => {
-  it("names and links every document to a page people can open", () => {
+  it("names every document, and links the ones with a page to a page people can open", () => {
     for (const type of LEGAL_DOC_TYPES) {
       expect(LEGAL_DOC_LABELS[type], type).toBeTruthy();
-      expect(LEGAL_ROUTES, type).toContain(LEGAL_DOC_ROUTES[type]);
+      const route = LEGAL_DOC_ROUTES[type];
+      if (route) expect(LEGAL_ROUTES, type).toContain(route);
     }
   });
 

@@ -6,10 +6,13 @@ export const LEGAL_DOC_LABELS: Record<LegalDocType, string> = {
   PRIVACY_POLICY: "Privacy Policy",
   REFUND_POLICY: "Refund Policy",
   FAQ: "FAQ",
+  COOKIE_POLICY: "Cookie policy",
+  COMMUNITY_RULES: "Community rules",
 };
 
 // Where people read each document (the (legal) pages, LEGAL_ROUTES).
-export const LEGAL_DOC_ROUTES: Record<LegalDocType, string> = {
+// Only the documents with a public page of their own.
+export const LEGAL_DOC_ROUTES: Partial<Record<LegalDocType, string>> = {
   TERMS_OF_SERVICE: "/terms",
   PRIVACY_POLICY: "/privacy",
   REFUND_POLICY: "/refund-policy",
