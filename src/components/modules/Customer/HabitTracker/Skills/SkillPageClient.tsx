@@ -171,15 +171,15 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
     );
   }
 
+  // No refresh here: the page would read the skill as missing and lose its
+  // Undo. My skills is a moment away anyway.
   function removeSkill() {
-    run(
-      () => deleteSkillAction(skill.id),
-      "Failed to remove skill",
-      () => {
-        setConfirmDelete(false);
-        setDeleted(true);
-      },
-    );
+    startTransition(async () => {
+      const result = await deleteSkillAction(skill.id);
+      if (!result.success) return void toast.error(actionError(result.message, "Failed to remove skill", t, fmt));
+      setConfirmDelete(false);
+      setDeleted(true);
+    });
   }
 
   function undoDelete() {
