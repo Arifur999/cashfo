@@ -262,11 +262,11 @@ export function MyBooksPageClient({ overview, reminders: savedReminders, openAdd
                   : shelfRows.map(({ shelf: s, mine }) => (
                       <section key={s.id} aria-label={shelfName(s)} className="mb-6.5">
                         <div className="mb-2.5 flex items-center gap-2.5">
-                          <span aria-hidden="true" className="h-5.5 w-2.5 rounded-[3px]" style={{ background: paletteFor(s.color).from }} />
-                          <h3 className="text-[16px] font-bold text-shelf-ink">{shelfName(s)}</h3>
-                          <span className="rounded-full bg-shelf-chip px-2.25 py-0.5 text-[12px] font-semibold text-shelf-chip-ink">{t(mine.length === 1 ? "{count} book" : "{count} books", { count: count(mine.length) })}</span>
+                          <span aria-hidden="true" className="h-5.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: paletteFor(s.color).from }} />
+                          <h3 className="min-w-0 truncate text-[16px] font-bold text-shelf-ink">{shelfName(s)}</h3>
+                          <span className="shrink-0 rounded-full bg-shelf-chip px-2.25 py-0.5 text-[12px] font-semibold whitespace-nowrap text-shelf-chip-ink">{t(mine.length === 1 ? "{count} book" : "{count} books", { count: count(mine.length) })}</span>
                           <span className="flex-1" />
-                          <button type="button" onClick={() => setForm({ shelf: s.id })} className="h-7.5 rounded-[8px] px-2.5 text-[13px] font-semibold text-emerald hover:bg-surface/60">
+                          <button type="button" onClick={() => setForm({ shelf: s.id })} className="h-7.5 shrink-0 rounded-[8px] px-2.5 text-[13px] font-semibold whitespace-nowrap text-emerald hover:bg-surface/60 max-sm:px-1">
                             + {t("Add a book here")}
                           </button>
                         </div>
@@ -297,7 +297,7 @@ export function MyBooksPageClient({ overview, reminders: savedReminders, openAdd
                                     authorClassName="text-[10.5px]"
                                   >
                                     {notes > 0 && (
-                                      <span className="inline-flex h-4.5 items-center gap-0.75 self-start rounded-full bg-white/92 px-1.5 text-[10.5px] font-bold text-shelf-ink">
+                                      <span className="inline-flex h-4.5 items-center gap-0.75 self-start rounded-full bg-white/92 px-1.5 text-[10.5px] font-bold text-shelf-ink dark:bg-surface dark:text-white">
                                         <Pencil className="size-2.5" strokeWidth={2.5} aria-hidden="true" />
                                         {count(notes)}
                                       </span>

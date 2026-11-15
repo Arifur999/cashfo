@@ -606,16 +606,18 @@
   --paper-ink: #ece4d2;
   --paper-muted: #b3a88c;
   --paper-faint: #8c8268;
-  --shelf-wall: #16130f;
-  --shelf-wall-end: #1b1712;
-  --shelf-back: #29231a;
-  --shelf-back-end: #231e16;
-  --shelf-plank: #7a5a3a;
-  --shelf-plank-mid: #6a4c30;
-  --shelf-plank-end: #563c25;
-  --shelf-ink: #efe3d0;
-  --shelf-chip: #3a3226;
-  --shelf-chip-ink: #d6c4a8;
+  /* LibraryBooks' dark board: grey-green shelves on the card, the light
+     wood plank kept. */
+  --shelf-wall: var(--surface);
+  --shelf-wall-end: var(--surface);
+  --shelf-back: #2b322e;
+  --shelf-back-end: #2a302d;
+  --shelf-plank: #d9b48a;
+  --shelf-plank-mid: #c39466;
+  --shelf-plank-end: #a97a4e;
+  --shelf-ink: #a7a19c;
+  --shelf-chip: #2b312e;
+  --shelf-chip-ink: #bcb4ab;
   --shelf-slot: #6b5c46;
   --shelf-slot-ink: #b7a383;
   --mark-yellow: #6b5a0a;

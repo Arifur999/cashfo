@@ -97,7 +97,7 @@ export function PracticeDialog({ open, onClose, skill, entries: given, pace, tod
   if (!skill) return null;
   const unit = UNITS[skill.unit];
   const hours = skill.unit === "HOURS";
-  const { color, dark, soft } = skillColors(skill);
+  const { color, ink, soft } = skillColors(skill);
   const existing = entries?.find((e) => e.date === day) ?? null;
   const logged = (entries ?? []).reduce((sum, e) => sum + e.amount, 0);
   // Done before this day's entry: what came before tracking, and every other day.
@@ -285,7 +285,7 @@ export function PracticeDialog({ open, onClose, skill, entries: given, pace, tod
           <ArrowRight className="size-5" strokeWidth={2.25} />
         </span>
         <label className={cn("flex min-w-0 cursor-text flex-col gap-1 rounded-[12px] border-[1.5px] p-3.5", error && !dayError && "border-expense")} style={{ background: soft, ...(error && !dayError ? {} : { borderColor: color }) }}>
-          <span className="text-[12.5px] font-semibold" style={{ color: dark }}>
+          <span className="text-[12.5px] font-semibold" style={{ color: ink }}>
             {isToday ? t("Today I did") : t("On this day I did")}
           </span>
           <span className="flex items-baseline gap-1.5">

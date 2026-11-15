@@ -170,7 +170,7 @@ export function SkillNoteViewDialog({ open, onClose, skill, notes, noteId, onMov
   const { t, fmt } = useLocale();
   const index = notes.findIndex((note) => note.id === noteId);
   const note = index >= 0 ? notes[index] : null;
-  const { color, dark } = skillColors(skill);
+  const { color, ink } = skillColors(skill);
   if (!note) return null;
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
@@ -178,7 +178,7 @@ export function SkillNoteViewDialog({ open, onClose, skill, notes, noteId, onMov
         <div className="flex shrink-0 items-start gap-3 border-t-5 border-b border-b-line px-6 pt-5 pb-4" style={{ borderTopColor: color }}>
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <span className="flex min-w-0 items-center gap-2 text-[13px] text-ink-muted">
-              <span className="truncate font-semibold" style={{ color: dark }}>
+              <span className="truncate font-semibold" style={{ color: ink }}>
                 {skill.name}
               </span>
               <span>·</span>
@@ -346,7 +346,7 @@ export function SkillResourceDialog({ open, onClose, skill, editing, onSaved }: 
 // SkillCongrats: a skill completed, its sessions, the days it took and its total.
 export function SkillCongratsDialog({ open, onClose, skill, stats, onNext }: { open: boolean; onClose: () => void; skill: Skill; stats: { value: string; label: string }[]; onNext: () => void }) {
   const { t } = useLocale();
-  const { color, dark, soft } = skillColors(skill);
+  const { color, dark, ink, soft } = skillColors(skill);
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent showCloseButton={false} className="w-120 max-w-[calc(100vw-32px)] gap-0 overflow-hidden rounded-[20px] border-0 bg-surface p-0 text-center text-ink shadow-overlay ring-0 sm:max-w-[calc(100vw-32px)]">
@@ -358,7 +358,7 @@ export function SkillCongratsDialog({ open, onClose, skill, stats, onNext }: { o
           <span aria-hidden="true" className="mx-auto mb-3.5 flex size-19 items-center justify-center rounded-full text-white" style={{ background: `linear-gradient(145deg, ${color} 0%, ${dark} 100%)`, boxShadow: `0 12px 28px ${color}55` }}>
             <Trophy className="size-9" strokeWidth={1.9} />
           </span>
-          <span className="block text-[13px] font-bold tracking-[0.04em]" style={{ color: dark }}>
+          <span className="block text-[13px] font-bold tracking-[0.04em]" style={{ color: ink }}>
             {t("CONGRATULATIONS")}
           </span>
           <DialogTitle className="mt-1.5 mb-1.5 text-[24px] leading-[1.3] font-bold">{t("You completed {name}!", { name: skill.name })}</DialogTitle>

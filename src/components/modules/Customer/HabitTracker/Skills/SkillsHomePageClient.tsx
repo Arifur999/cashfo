@@ -339,10 +339,10 @@ export function SkillsHomePageClient({ overview, today }: SkillsHomePageClientPr
           <p className="max-w-130 text-[14px] leading-[1.6] text-ink-muted">{wants.length ? t("Pick one of the skills you want to learn and start today, or add a new one.") : t("Add a skill you want to learn, set a target and practise a little every day.")}</p>
           <div className="mt-1.5 flex flex-wrap justify-center gap-2.5">
             {wants.map((skill) => {
-              const { color, dark, soft, line } = skillColors(skill);
+              const { color, dark, ink, soft, line } = skillColors(skill);
               const resume = stateOf(skill) === "paused";
               return (
-                <button key={skill.id} type="button" disabled={busy === skill.id} onClick={() => move(skill, "learning", t(resume ? "Resumed {name}. Welcome back!" : "Now learning {name}. Good luck!", { name: skill.name }))} className="inline-flex h-10 items-center gap-2 rounded-[8px] border px-4 text-[14px] font-semibold" style={{ borderColor: line, background: soft, color: dark }}>
+                <button key={skill.id} type="button" disabled={busy === skill.id} onClick={() => move(skill, "learning", t(resume ? "Resumed {name}. Welcome back!" : "Now learning {name}. Good luck!", { name: skill.name }))} className="inline-flex h-10 items-center gap-2 rounded-[8px] border px-4 text-[14px] font-semibold" style={{ borderColor: line, background: soft, color: ink }}>
                   <span aria-hidden="true" className="flex size-5.5 items-center justify-center rounded-[7px] text-white" style={{ background: `linear-gradient(155deg, ${color} 0%, ${dark} 100%)` }}>
                     <CategoryIcon category={skill.category} className="size-3.25" strokeWidth={2.25} />
                   </span>

@@ -19,7 +19,8 @@ export function CategoryIcon({ category, className, strokeWidth = 2 }: { categor
 // A skill's two colours, for gradients and tints.
 export const skillColors = (skill: Pick<Skill, "color">) => {
   const palette = paletteFor(skill.color);
-  return { color: palette.from, dark: palette.to, soft: `color-mix(in srgb, ${palette.from} 9%, var(--surface))`, line: `color-mix(in srgb, ${palette.from} 30%, var(--surface))` };
+  // `ink` is the colour as text: darker on light, lighter on dark.
+  return { color: palette.from, dark: palette.to, ink: `color-mix(in srgb, ${palette.from} 68%, var(--ink))`, soft: `color-mix(in srgb, ${palette.from} 9%, var(--surface))`, line: `color-mix(in srgb, ${palette.from} 30%, var(--surface))` };
 };
 
 // The rounded square in the skill's colour with its category's icon.

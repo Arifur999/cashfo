@@ -121,7 +121,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
 
   const state = stateOf(skill);
   const cat = categoryOf(skill.category);
-  const { color, dark, soft } = skillColors(skill);
+  const { color, dark, ink, soft } = skillColors(skill);
   const progress = progressOf(skill);
   const asRows = logs.map((log) => ({ skillId: skill.id, date: log.date, amount: log.amount }));
   const pace = pace14(asRows, today);
@@ -400,7 +400,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
           </div>
         </div>
         <div className="grid grid-cols-[minmax(0,1.55fr)_repeat(4,minmax(0,1fr))] border-t border-divider max-lg:grid-cols-2">
-          <div className="flex min-w-0 items-center gap-3.5 px-5 py-3.5">
+          <div className="flex min-w-0 items-center gap-3.5 px-5 py-3.5 max-sm:col-span-2 max-sm:border-b max-sm:border-divider">
             <span className="relative size-16 shrink-0">
               <svg viewBox="0 0 36 36" className="size-16 -rotate-90" aria-hidden="true">
                 <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--surface-sunken)" strokeWidth="3.6" />
@@ -512,7 +512,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
               </div>
               <div className="grid grid-cols-4 gap-2.5 max-sm:grid-cols-2">
                 {[
-                  { label: t("Total practice"), value: amount(total84), sub: t("in 12 weeks"), tone: "", style: { background: soft, color: dark } },
+                  { label: t("Total practice"), value: amount(total84), sub: t("in 12 weeks"), tone: "", style: { background: soft, color: ink } },
                   { label: t("Days practised"), value: dayWord(active84), sub: t("out of 84"), tone: "bg-page text-ink" },
                   { label: t("Best day"), value: best ? amount(best.v) : "–", sub: best ? longDay(best.day, fmt) : t("No practice yet"), tone: "bg-page text-ink" },
                   { label: t("Longest streak"), value: dayWord(longest), sub: `${t("Now:")} ${dayWord(streak)}`, tone: "bg-orange-soft/60 text-orange" },
@@ -556,7 +556,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
                         <span className="truncate text-[14px] font-semibold text-ink">{dayText(log.date, fmt, "dayMonthYY")}</span>
                         {ago < 7 && <span className="text-[12px] text-ink-faint">{agoText(log.date, today, t, fmt)}</span>}
                       </span>
-                      <span className="justify-self-start rounded-full px-2.5 py-0.75 text-[13px] font-bold whitespace-nowrap tabular-nums" style={{ background: soft, color: dark }}>
+                      <span className="justify-self-start rounded-full px-2.5 py-0.75 text-[13px] font-bold whitespace-nowrap tabular-nums" style={{ background: soft, color: ink }}>
                         +{amount(log.amount)}
                       </span>
                       {log.note ? <span className="truncate text-[13.5px] text-ink-2 max-md:hidden">{log.note}</span> : <span className="text-[13px] text-ink-faint italic max-md:hidden">{t("No note")}</span>}
@@ -637,7 +637,7 @@ export function SkillPageClient({ detail, skills, today, reminders: savedReminde
                     >
                       {step.done && <Check className="size-3.5 text-white" strokeWidth={3.5} aria-hidden="true" />}
                     </button>
-                    <span className={cn("flex size-6 items-center justify-center rounded-full text-[12px] font-bold tabular-nums", step.done && "bg-success-soft text-tint-green-ink")} style={step.done ? undefined : { background: soft, color: dark }}>
+                    <span className={cn("flex size-6 items-center justify-center rounded-full text-[12px] font-bold tabular-nums", step.done && "bg-success-soft text-tint-green-ink")} style={step.done ? undefined : { background: soft, color: ink }}>
                       {count(i + 1)}
                     </span>
                     {editing && editStep ? (

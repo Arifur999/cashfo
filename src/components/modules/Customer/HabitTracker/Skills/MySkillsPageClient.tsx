@@ -168,7 +168,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
   const actions = (skill: Skill, compact: boolean) => {
     const state = stateOf(skill);
     const next = nextMove(state);
-    const { color, dark } = skillColors(skill);
+    const { color, ink } = skillColors(skill);
     const Icon = next.icon;
     const stop = (event: React.MouseEvent) => event.stopPropagation();
     return (
@@ -177,7 +177,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
           <button type="button" onClick={(event) => {
               stop(event);
               move(skill, next.to);
-            }} disabled={isPending} title={t(next.label)} aria-label={t(next.label)} className="flex size-7.5 items-center justify-center rounded-[8px] hover:bg-surface-sunken" style={next.tone ? undefined : { color: dark }}>
+            }} disabled={isPending} title={t(next.label)} aria-label={t(next.label)} className="flex size-7.5 items-center justify-center rounded-[8px] hover:bg-surface-sunken" style={next.tone ? undefined : { color: ink }}>
             <Icon className={cn("size-3.75", next.tone && "text-ink-soft")} fill={state === "done" ? "none" : "currentColor"} aria-hidden="true" />
           </button>
         ) : (
@@ -190,7 +190,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
             disabled={isPending}
             title={t(next.label)}
             className={cn("inline-flex h-7.5 min-w-0 items-center gap-1.5 overflow-hidden rounded-[8px] px-2.5 text-[12.5px] font-semibold whitespace-nowrap hover:brightness-96", next.tone)}
-            style={next.tone ? undefined : { background: `color-mix(in srgb, ${color} 10%, var(--surface))`, color: dark }}
+            style={next.tone ? undefined : { background: `color-mix(in srgb, ${color} 10%, var(--surface))`, color: ink }}
           >
             <Icon className="size-3.5 shrink-0" fill={state === "done" ? "none" : "currentColor"} aria-hidden="true" />
             <span className="truncate">{t(next.label)}</span>
@@ -223,7 +223,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
 
   const card = (skill: Skill) => {
     const state = stateOf(skill);
-    const { color, dark } = skillColors(skill);
+    const { color, dark, ink } = skillColors(skill);
     const light = `color-mix(in srgb, ${color} 55%, var(--surface))`;
     const progress = progressOf(skill);
     const week = skillWeek(logsOf(logs, skill.id), today);
@@ -289,7 +289,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
               <span className="truncate text-ink-soft tabular-nums">
                 {doneText(skill, fmt)} / {totalText(skill, t, fmt)}
               </span>
-              <span className={cn("font-bold tabular-nums", state === "done" ? "text-tint-green-ink" : !progress.pct && "text-ink-faint")} style={state !== "done" && progress.pct ? { color: dark } : undefined}>
+              <span className={cn("font-bold tabular-nums", state === "done" ? "text-tint-green-ink" : !progress.pct && "text-ink-faint")} style={state !== "done" && progress.pct ? { color: ink } : undefined}>
                 {count(progress.pct)}%
               </span>
             </span>
@@ -471,7 +471,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
                     listItems.map((skill) => {
                       const state = stateOf(skill);
                       const cat = categoryOf(skill.category);
-                      const { color, dark } = skillColors(skill);
+                      const { color, dark, ink } = skillColors(skill);
                       const light = `color-mix(in srgb, ${color} 55%, var(--surface))`;
                       const progress = progressOf(skill);
                       const lastDay = summaries[skill.id]?.lastPractised ?? null;
@@ -500,7 +500,7 @@ export function MySkillsPageClient({ overview, today, reminders: savedReminders,
                             </span>
                             <span className="truncate text-[12px] text-ink-soft tabular-nums">
                               {doneText(skill, fmt)} / {totalText(skill, t, fmt)} ·{" "}
-                              <b className={cn(state === "done" ? "text-tint-green-ink" : !progress.pct && "text-ink-faint")} style={state !== "done" && progress.pct ? { color: dark } : undefined}>
+                              <b className={cn(state === "done" ? "text-tint-green-ink" : !progress.pct && "text-ink-faint")} style={state !== "done" && progress.pct ? { color: ink } : undefined}>
                                 {count(progress.pct)}%
                               </b>
                             </span>

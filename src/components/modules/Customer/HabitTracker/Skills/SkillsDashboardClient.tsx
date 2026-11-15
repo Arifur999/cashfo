@@ -329,7 +329,7 @@ export function SkillsDashboardClient({ overview, yearLogs, period, today }: Ski
 
       <section aria-labelledby="skb-ct" className={cn(LB_CARD, "box-border flex h-47.5 flex-col gap-1.25 px-4 pt-2.5 pb-2.25")}>
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex shrink-0 items-center gap-2.5">
             <h2 id="skb-ct" className="text-[15px] font-semibold whitespace-nowrap text-ink">
               {t("Practice by month")}
             </h2>
@@ -343,7 +343,7 @@ export function SkillsDashboardClient({ overview, yearLogs, period, today }: Ski
               </button>
             </span>
           </div>
-          <span className="truncate text-[12px] text-ink-muted">{yearDays ? t("{count} practice {days} in {year} · tap a month to see it", { count: count(yearDays), days: dayWord(yearDays), year: toLocaleDigits(String(period.year), fmt) }) : t("Tap a month to see it")}</span>
+          <span className="min-w-0 truncate text-[12px] text-ink-muted">{yearDays ? t("{count} practice {days} in {year} · tap a month to see it", { count: count(yearDays), days: dayWord(yearDays), year: toLocaleDigits(String(period.year), fmt) }) : t("Tap a month to see it")}</span>
         </div>
         <div role="group" aria-label={t("Practice days each month in {year}", { year: toLocaleDigits(String(period.year), fmt) })} className="relative flex min-h-0 flex-1 items-end gap-2 border-b border-line max-sm:gap-1">
           {chartMonths.map((month) => {
