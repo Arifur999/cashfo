@@ -79,7 +79,7 @@ const AnnouncementsTable = ({ canManage }: { canManage: boolean }) => {
           </span>
           <span className="flex min-w-0 flex-1 basis-80 flex-col gap-0.5">
             <span className="text-[14.5px] font-semibold text-ink">{translate("Everything you send lands in the bell in every user's app at once")}</span>
-            <span className="text-[13px] text-ink-muted">{translate("Delete one here and it disappears from every app straight away.")}</span>
+            <span className="text-[13px] text-ink-muted">{translate("Delete one here and it disappears from every app straight away. Users can also delete one from their own bell, which only hides it for them.")}</span>
           </span>
           {data && (
             <span className="flex shrink-0 gap-2">

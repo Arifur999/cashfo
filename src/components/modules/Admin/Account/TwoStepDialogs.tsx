@@ -94,7 +94,7 @@ export function BackupCodes({ codes, email }: { codes: string[]; email: string }
 function Foot({ busy, label, disabled, onCancel, cancelLabel = "Cancel" }: { busy: boolean; label?: string; disabled?: boolean; onCancel: () => void; cancelLabel?: string }) {
   const { translate } = useLocale();
   return (
-    <div className="-mx-6 -mb-5 mt-5 flex items-center justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
+    <div className="-mx-6 -mb-4.5 mt-5 flex items-center justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
       <Button type="button" variant={label ? "secondary" : "action"} size="md" onClick={onCancel} disabled={busy}>
         {translate(cancelLabel)}
       </Button>

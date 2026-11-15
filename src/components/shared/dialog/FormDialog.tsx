@@ -6,6 +6,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, Di
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { focusFirstField } from "./focusFirstField";
 
 // The design's dialogs: 480 (change password), 520 (refund, reset), and a
 // wide one for long forms.
@@ -43,15 +44,7 @@ const FormDialog = ({ open, onOpenChange, title, description, trigger, size = "m
         showCloseButton={false}
         className={cn("max-h-[90vh] gap-0 overflow-hidden rounded-[20px] border-line bg-surface p-0 shadow-overlay ring-0", SIZE_CLASSES[size], className)}
         onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
-        // The form's first field takes the focus, as the boards show it, not
-        // the close button.
-        onOpenAutoFocus={(event) => {
-          const first = (event.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>("input:not([type=hidden]):not([disabled]), textarea:not([disabled])");
-          if (first) {
-            event.preventDefault();
-            first.focus();
-          }
-        }}
+        onOpenAutoFocus={focusFirstField}
       >
         {/* The design's dialog head: 18px title, the explanation under it,
             the round close button on the right. */}

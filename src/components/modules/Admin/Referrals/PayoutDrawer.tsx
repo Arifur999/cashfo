@@ -139,7 +139,7 @@ const Fact = ({ label, children }: { label: string; children: React.ReactNode })
 // The foot of a drawer that only shows something: Reject on the left when
 // it still can be, Close on the right, and the step's own button.
 const ViewFoot = ({ left, right }: { left?: React.ReactNode; right?: React.ReactNode }) => (
-  <div className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-5 flex items-center gap-2.5 border-t border-line bg-surface px-6 py-3.5">
+  <div className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-4.5 flex items-center gap-2.5 border-t border-line bg-surface px-6 py-3.5">
     {left}
     <span className="grow" />
     {right}

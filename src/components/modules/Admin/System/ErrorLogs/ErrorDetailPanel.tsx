@@ -152,7 +152,7 @@ const ErrorDetailPanel = ({ group, inDrawer = false, onFixed }: ErrorDetailPanel
         </div>
         {facts}
         {stack}
-        <div className="-mx-6 mt-auto -mb-5 flex flex-wrap justify-end gap-2 border-t border-line bg-strip px-6 py-4">{actions}</div>
+        <div className="-mx-6 mt-auto -mb-4.5 flex flex-wrap justify-end gap-2 border-t border-line bg-strip px-6 py-4">{actions}</div>
       </section>
     );
   }

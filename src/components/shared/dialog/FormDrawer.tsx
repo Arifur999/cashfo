@@ -6,6 +6,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, Dia
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { focusFirstField } from "./focusFirstField";
 
 // The design's drawers: 480 for a coupon, 500 for a plan, 520 for an
 // announcement, 560 to pay a referral payout, 820 to review one line by
@@ -65,21 +66,22 @@ const FormDrawer = ({ open, onOpenChange, title, description, aside, trigger, wi
           showCloseButton={false}
           className={cn("flex max-h-[calc(100dvh-48px)] w-full flex-col gap-0 overflow-hidden rounded-[18px] border-0 bg-surface p-0 text-ink shadow-overlay ring-0", CENTERED_WIDTH_CLASSES[width])}
           onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
+          onOpenAutoFocus={focusFirstField}
         >
-          <div className="flex shrink-0 flex-row items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+          <div className="flex shrink-0 flex-row items-center justify-between gap-3 border-b border-line px-6 py-4.5">
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <DialogTitle className="text-h3 text-ink">{translate(title)}</DialogTitle>
               <DialogDescription className={description ? "text-small text-ink-muted" : "sr-only"}>{shownDescription ?? translate(title)}</DialogDescription>
             </div>
             {aside && <div className="mt-0.5 shrink-0">{aside}</div>}
             <DialogClose asChild>
-              <Button variant="ghost" size="icon-xs" aria-label={translate("Close")} className="-my-0.5 -mr-1.5 size-8.5 text-ink-muted">
+              <Button variant="ghost" size="icon-xs" aria-label={translate("Close")} className="-mr-1.5 size-8.5 shrink-0 text-ink-muted">
                 <X className="size-4.5" aria-hidden="true" />
               </Button>
             </DialogClose>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="flex min-h-full flex-col px-6 py-5">{children}</div>
+            <div className="flex min-h-full flex-col px-6 py-4.5">{children}</div>
           </div>
         </DialogContent>
       </Dialog>
@@ -93,21 +95,22 @@ const FormDrawer = ({ open, onOpenChange, title, description, aside, trigger, wi
         showCloseButton={false}
         className={cn("w-full! gap-0 border-l-0 bg-surface p-0 text-ink shadow-drawer", WIDTH_CLASSES[width])}
         onInteractOutside={closeOnOutsideClick ? undefined : (event) => event.preventDefault()}
+        onOpenAutoFocus={focusFirstField}
       >
-        <SheetHeader className="flex-row items-start justify-between gap-3 border-b border-line px-6 py-4.5">
+        <SheetHeader className="flex-row items-center justify-between gap-3 border-b border-line px-6 py-4.5">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <SheetTitle className="text-h3 text-ink">{translate(title)}</SheetTitle>
             <SheetDescription className={description ? "text-small text-ink-muted" : "sr-only"}>{shownDescription ?? translate(title)}</SheetDescription>
           </div>
           {aside && <div className="mt-0.5 shrink-0">{aside}</div>}
           <SheetClose asChild>
-            <Button variant="ghost" size="icon-xs" aria-label={translate("Close")} className="-my-0.5 -mr-1.5 size-8.5 text-ink-muted">
+            <Button variant="ghost" size="icon-xs" aria-label={translate("Close")} className="-mr-1.5 size-8.5 shrink-0 text-ink-muted">
               <X className="size-4.5" aria-hidden="true" />
             </Button>
           </SheetClose>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="flex min-h-full flex-col px-6 py-5">{children}</div>
+          <div className="flex min-h-full flex-col px-6 py-4.5">{children}</div>
         </div>
       </SheetContent>
     </Sheet>

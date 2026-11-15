@@ -24,7 +24,7 @@ const FormDialogFooter = ({ isPending, submitLabel, pendingLabel, variant, disab
   const { translate } = useLocale();
   return (
     // The design's dialog foot: a strip across the bottom of the card.
-    <DialogFooter className={cn("-mx-6 -mb-5 items-center border-t border-line bg-strip px-6 py-3.5 sm:justify-between", pinned ? "sticky bottom-0 z-10 mt-auto" : "mt-4")}>
+    <DialogFooter className={cn("-mx-6 -mb-4.5 items-center border-t border-line bg-strip px-6 py-3.5 sm:justify-between", pinned ? "sticky bottom-0 z-10 mt-auto" : "mt-4")}>
       <div>{extra}</div>
       <div className="flex flex-col-reverse gap-2.5 sm:flex-row">
         {/* The secondary button ConfirmDialog's Cancel is: white, the

@@ -111,7 +111,7 @@ const InviteAdminForm = ({ onDone, onCreated, onLink }: { onDone: () => void; on
           .
         </p>
       )}
-      <DialogFooter className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-5 flex-row justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
+      <DialogFooter className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-4.5 flex-row justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
         <DialogClose asChild>
           <Button type="button" variant="secondary" size="md" disabled={isPending}>
             <T>Cancel</T>

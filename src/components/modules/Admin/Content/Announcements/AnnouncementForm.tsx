@@ -251,7 +251,7 @@ const AnnouncementForm = ({ defaultValues, announcement, onDone }: AnnouncementF
       </form.Subscribe>
       <form.Subscribe selector={(state) => [state.values.targetPlan, state.isSubmitting] as const}>
         {([targetPlan, isSubmitting]) => (
-          <DialogFooter className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-5 flex-row items-center justify-between gap-2.5 border-t border-line bg-strip px-6 py-3.5">
+          <DialogFooter className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-4.5 flex-row items-center justify-between gap-2.5 border-t border-line bg-strip px-6 py-3.5">
             <div>
               {announcement && (
                 <Button
