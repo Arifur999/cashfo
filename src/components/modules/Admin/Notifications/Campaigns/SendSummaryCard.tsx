@@ -39,7 +39,7 @@ const SendSummaryCard = () => {
 
   return (
     <aside className="flex flex-col gap-4">
-      <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+      <Card padding="none" className="flex flex-col gap-2.5 px-4.5 py-4">
         <h2 className="text-body font-semibold text-ink"><T>Last 24 hours</T></h2>
         {/* Figures that failed to load say so, not an empty card. */}
         {!stats && query.isError && (
@@ -51,7 +51,7 @@ const SendSummaryCard = () => {
           </div>
         )}
         {rows.map((row) => (
-          <div key={row.label} className="flex items-center gap-3 text-body">
+          <div key={row.label} className="flex items-center gap-2.5 text-[13.5px] leading-[normal]">
             <span className={cn("size-2 rounded-full", row.dot)} aria-hidden="true" />
             <span className="grow text-ink">
               <T>{row.label}</T>
@@ -64,7 +64,7 @@ const SendSummaryCard = () => {
           <T>Full send history</T>
         </Link>
       </Card>
-      <Card padding="none" className="flex flex-col gap-2 px-5 py-4">
+      <Card padding="none" className="flex flex-col gap-1.5 px-4.5 py-4">
         <h2 className="text-body font-semibold text-ink"><T>SMS costs money</T></h2>
         <span className="text-small leading-relaxed text-ink-2"><T>Each SMS is paid for. Use email or in-app for offers, and keep SMS for payments and security.</T></span>
       </Card>
