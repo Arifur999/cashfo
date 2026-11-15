@@ -405,7 +405,7 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
         title={confirm?.kind === "book" ? t("Delete this book?") : t("Delete this note?")}
         description={
           confirm?.kind === "book"
-            ? t("{title} and its {count} notes and summary will be deleted. This cannot be undone.", { title: book.title, count: count(notes.length) })
+            ? t(notes.length === 1 ? "{title} and its {count} note and summary will be deleted. This cannot be undone." : "{title} and its {count} notes and summary will be deleted. This cannot be undone.", { title: book.title, count: count(notes.length) })
             : confirm
               ? t("The note for page {page} will be removed. You can undo it right after.", { page: confirm.note.page === null ? "–" : count(confirm.note.page) })
               : ""
@@ -414,7 +414,7 @@ export function BookPageClient({ detail, today, reminders: savedReminders, openS
       />
 
       {congrats && (
-        <div role="status" className="fixed bottom-7 left-1/2 z-50 flex w-130 max-w-[calc(100%-48px)] -translate-x-1/2 flex-wrap items-center gap-3.5 rounded-[14px] border border-success-line/70 bg-surface px-4 py-3.5 shadow-overlay">
+        <div role="status" className="fixed bottom-7 left-1/2 z-50 flex w-138.5 max-w-[calc(100%-48px)] -translate-x-1/2 flex-wrap items-center gap-3.5 rounded-[14px] border border-success-line/70 bg-surface px-4 py-3.5 shadow-overlay">
           <span aria-hidden="true" className="flex size-10.5 shrink-0 items-center justify-center rounded-[12px] bg-success-soft">
             <Trophy className="size-5.5 text-tint-green-ink" />
           </span>

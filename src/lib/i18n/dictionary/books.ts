@@ -171,6 +171,7 @@ export const booksDictionary: Record<string, string> = {
   "Delete this book?": "বইটা মুছে ফেলবেন?",
   "Delete this note?": "নোটটা ডিলিট করবেন?",
   "{title} and its {count} notes and summary will be deleted. This cannot be undone.": "{title} আর এর {count}টি নোট ও সারসংক্ষেপ মুছে যাবে। এটা আর ফেরানো যাবে না।",
+  "{title} and its {count} note and summary will be deleted. This cannot be undone.": "{title} আর এর {count}টি নোট ও সারসংক্ষেপ মুছে যাবে। এটা আর ফেরানো যাবে না।",
   "The note for page {page} will be removed. You can undo it right after.": "পৃষ্ঠা {page}-এর নোটটা মুছে যাবে। মোছার পরপরই চাইলে ফিরিয়ে আনতে পারবেন।",
   "Delete book": "বই মুছুন",
   "Delete note": "নোট ডিলিট করুন",
