@@ -56,11 +56,12 @@ const FeatureFlagsBoard = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4.5">
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedControl<FlagSwitchView>
           label="Show"
           variant="pill"
+          className="bg-page"
           value={view}
           onChange={setView}
           // Counts only once the flags are in: a failed read isn't "0".
@@ -82,7 +83,7 @@ const FeatureFlagsBoard = () => {
           data={data ? shown : undefined}
           columns={columns}
           // The density scale's relaxed row: a name over its description.
-          layout={{ gap: 16, rowHeight: 66, headPadding: 12 }}
+          layout={{ gap: 14, rowHeight: 66, headPadding: 10 }}
           getRowId={(row) => row.id}
           isLoading={isLoading}
           isFetching={isFetching}
