@@ -420,7 +420,8 @@ export function SkillFormDialog({ open, onClose, editing, hasPractice = false, s
         <textarea id="sf-why" rows={2} maxLength={200} value={why} onChange={(event) => setWhy(event.target.value)} placeholder={t("A line to keep you going, e.g. Take freelance work")} className={cn(LB_AREA, "resize-none leading-[1.55]")} />
       </div>
 
-      {reminders && <ReminderSection kind="SKILL" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to sit down and practise.")} />}
+      {/* Not on the SkillAdd board: kept on Edit so a reminder already set stays in reach. */}
+      {editing && reminders && <ReminderSection kind="SKILL" targetKey={editing?.id ?? null} book={reminders} draft={reminder} onDraftChange={setReminder} description={t("A nudge to sit down and practise.")} />}
     </PopupDialog>
   );
 }
