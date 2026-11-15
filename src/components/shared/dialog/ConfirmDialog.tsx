@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { fillNodes } from "@/lib/i18n/fill";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
+import { focusFirstField } from "./focusFirstField";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -147,7 +148,8 @@ const ConfirmDialog = ({ open, onOpenChange, title, description, icon, isPending
         if (!isPending) onOpenChange(nextOpen);
       }}
     >
-      <AlertDialogContent className={cn("max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-[20px] bg-surface p-0 text-ink shadow-overlay ring-0", wide ? "sm:max-w-130!" : "sm:max-w-125!")}>
+      {/* A typed confirmation takes the focus, as the boards show it; otherwise Cancel does. */}
+      <AlertDialogContent onOpenAutoFocus={focusFirstField} className={cn("max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-[20px] bg-surface p-0 text-ink shadow-overlay ring-0", wide ? "sm:max-w-130!" : "sm:max-w-125!")}>
         <div className="flex gap-3.5 px-6 pt-5.5 pb-2">
           <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-field", destructive ? "bg-expense-soft text-expense" : "bg-mint-50 text-emerald")}>
             <Icon className="size-5.5" aria-hidden="true" />
