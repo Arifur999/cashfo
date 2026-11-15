@@ -24,7 +24,7 @@ const VARIANTS = {
     group: "rounded-full bg-surface-sunken p-0.75",
     item: "h-7.5 rounded-full px-3 text-small font-medium [&[lang=bn]]:text-body",
     on: LIFT,
-    off: "text-ink-soft hover:text-ink",
+    off: "text-ink-2 hover:text-ink",
   },
   // Filter tabs inside a toolbar (AdminUsers' status, Transactions' type):
   // a strip track with a line round it and 9px corners.
