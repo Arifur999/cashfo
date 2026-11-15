@@ -77,12 +77,12 @@ const PaymentDetailsCard = async ({ payment }: { payment: IPaymentDetail }) => {
   ];
 
   return (
-    <Card asChild padding="md" className="flex flex-col gap-4">
+    <Card asChild padding="none" className="flex flex-col gap-3.5 px-5 py-4.5">
       <section aria-labelledby="payment-details">
         <h2 id="payment-details" className="text-title text-ink">
           <T>Details</T>
         </h2>
-        <dl className="grid gap-x-4 gap-y-3 text-body sm:grid-cols-[160px_minmax(0,1fr)]">
+        <dl className="grid gap-x-4 gap-y-2.5 text-[13.5px] leading-4 sm:grid-cols-[160px_minmax(0,1fr)]">
           {rows.map((row) => (
             <div key={row.label} className="contents">
               <dt className="text-ink-muted">{t(row.label)}</dt>

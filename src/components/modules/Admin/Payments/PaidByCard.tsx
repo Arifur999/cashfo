@@ -30,7 +30,7 @@ const PaidByCard = async ({ payment }: { payment: IPaymentDetail }) => {
   const person = payment.platformUser;
   const { t, locale } = await getTranslator("admin");
   return (
-    <Card asChild padding="none" className="flex flex-col gap-3 px-5 py-4">
+    <Card asChild padding="none" className="flex flex-col gap-2.5 px-4.5 py-4">
       <section aria-labelledby="paid-by">
         <h2 id="paid-by" className="text-title text-ink">
           <T>Paid by</T>

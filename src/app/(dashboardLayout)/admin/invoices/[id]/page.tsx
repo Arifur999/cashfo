@@ -32,7 +32,7 @@ const InvoiceDetailPage = async ({ params, searchParams }: PageProps<"/admin/inv
   ]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4.5">
       <BreadcrumbTitle title={invoice.invoiceNumber} />
       {/* The section's header and tabs over the sheet, as the board draws
           it: the Invoices tab is the way back to the list. */}

@@ -11,7 +11,7 @@ import { getTranslator } from "@/lib/i18n/locale";
 import { OTHER_PAYMENTS_SHOWN, PAYMENTS_LIST_HREF, paymentHref } from "./paymentsDisplay";
 
 // The list rows' recipe, at the card's 20px edge.
-const ROW = cn("flex items-center gap-3 border-t px-5 py-3 text-small", LIST_DIVIDER, LIST_HOVER);
+const ROW = cn("flex items-center gap-2.5 border-t px-4.5 py-2.5 text-small", LIST_DIVIDER, LIST_HOVER);
 
 interface OtherPaymentsCardProps {
   payments: IOtherPayment[];
@@ -28,15 +28,15 @@ const OtherPaymentsCard = async ({ payments, email, back }: OtherPaymentsCardPro
   return (
     <Card asChild padding="none" className="overflow-hidden">
       <section aria-labelledby="other-payments">
-        <h2 id="other-payments" className="px-5 py-4 text-title text-ink">
+        <h2 id="other-payments" className="px-4.5 py-3.5 text-title text-ink">
           <T>Their other payments</T>
         </h2>
         {payments.length === 0 ? (
-          <p className="border-t border-divider px-5 py-3 text-small text-ink-muted"><T>This is their only payment.</T></p>
+          <p className="border-t border-divider px-4.5 py-2.5 text-small text-ink-muted"><T>This is their only payment.</T></p>
         ) : (
           payments.map((payment) => (
             <Link key={payment.id} href={paymentHref(payment.id, back)} className={ROW}>
-              <code className="font-mono font-semibold text-ink">{shortPaymentId(payment.id)}</code>
+              <code className="font-mono text-[12.5px] font-semibold text-ink">{shortPaymentId(payment.id)}</code>
               <span className="grow text-ink-muted">
                 {formatDate(payment.createdAt, "d MMM yyyy", "—", locale)}
                 {payment.status !== "SUCCESS" && (

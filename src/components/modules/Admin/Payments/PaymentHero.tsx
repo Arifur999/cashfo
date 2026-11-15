@@ -21,11 +21,11 @@ const PaymentHero = async ({ payment, actions }: PaymentHeroProps) => {
   const { t, locale } = await getTranslator("admin");
   const partlyRefunded = refundExtent(payment.amount, payment.refund) === "part";
   return (
-    <Card asChild padding="md" className="flex flex-col gap-4 lg:flex-row lg:items-center">
+    <Card asChild padding="none" className="flex flex-col gap-4.5 px-5 py-4.5 lg:flex-row lg:items-center">
       <section aria-label={t("Payment {id}", { id: shortPaymentId(payment.id) })}>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-mono text-h2 text-ink">{shortPaymentId(payment.id)}</h1>
+            <h1 className="font-mono text-[22px] leading-[1.3] font-semibold tracking-[-0.02em] text-ink">{shortPaymentId(payment.id)}</h1>
             {/* Amber while waiting; a partial refund keeps "Refunded" with its own chip. */}
             <StatusBadgeCell status={payment.status} label={PAYMENT_STATUS_LABEL[payment.status]} tone={paymentBadge({ status: payment.status }).tone} dot />
             {partlyRefunded && payment.refund && (
@@ -39,9 +39,9 @@ const PaymentHero = async ({ payment, actions }: PaymentHeroProps) => {
               </Chip>
             )}
           </div>
-          <p className="text-body text-ink-2">{paymentLine(payment, t, locale)}</p>
+          <p className="text-[13.5px] leading-[normal] text-ink-2">{paymentLine(payment, t, locale)}</p>
         </div>
-        <span className="text-h1 text-ink tabular-nums">{formatAmount(payment.amount, payment.currency, locale)}</span>
+        <span className="text-[30px] leading-[normal] font-bold text-ink tabular-nums">{formatAmount(payment.amount, payment.currency, locale)}</span>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </section>
     </Card>

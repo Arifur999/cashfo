@@ -32,7 +32,7 @@ const PaymentDetailPage = async ({ params, searchParams }: PageProps<"/admin/pay
   const [payment, admin] = await Promise.all([fetchOrNotFound(getPaymentById(id)), getUserInfo()]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4.5">
       <BackLink href={paymentsListHref(fromList)}><T>All payments</T></BackLink>
       <PaymentHero payment={payment} actions={<PaymentDetailActions payment={payment} canManage={canManage(admin?.role, "payments")} />} />
       {payment.duplicateOfId && <DuplicateNote payment={payment} back={fromList} />}
