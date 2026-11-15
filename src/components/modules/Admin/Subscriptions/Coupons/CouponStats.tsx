@@ -25,7 +25,7 @@ const CouponStats = ({ month }: { month: string }) => {
   const activeCodes = codesLine(stats.active.codes, translate, locale);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
       <Kpi size="sm" label="Active coupons" value={formatCount(stats.active.count, locale)} note={activeCodes} />
       <Kpi
         size="sm"

@@ -161,6 +161,7 @@ export const adminSubscriptionsDictionary: Record<string, string> = {
   "A coupon with this code already exists": "এই কোডের একটি কুপন আগে থেকেই আছে",
   "Coupon not found": "কুপন পাওয়া যায়নি",
   "Letters and numbers, no spaces. People type it at checkout.": "অক্ষর ও সংখ্যা, ফাঁকা ছাড়া। পেমেন্টের সময় মানুষ এটি লেখেন।",
+  "Letters and numbers only. People type it at checkout.": "শুধু অক্ষর ও সংখ্যা। পেমেন্টের সময় মানুষ এটি লেখেন।",
   "Make one up": "একটি বানিয়ে দিন",
   "Discount type": "ছাড়ের ধরন",
   Percent: "শতাংশ",

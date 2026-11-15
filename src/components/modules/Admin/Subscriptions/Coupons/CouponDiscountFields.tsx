@@ -30,7 +30,7 @@ const CouponDiscountFields = ({ form }: { form: CouponFormApi }) => {
             placeholder="PUJA15"
             className="font-mono font-bold tracking-wider uppercase"
             autoComplete="off"
-            description="Letters and numbers, no spaces. People type it at checkout."
+            description="Letters and numbers only. People type it at checkout."
             aside={
               <button type="button" className="text-small font-semibold text-emerald hover:underline" onClick={() => field.handleChange(randomCouponCode())}>
                 <T>Make one up</T>

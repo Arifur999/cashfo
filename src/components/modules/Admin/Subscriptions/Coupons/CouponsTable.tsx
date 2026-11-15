@@ -85,7 +85,7 @@ const CouponsTable = ({ canManage }: { canManage: boolean }) => {
         // The actions column fits "Who used it" and its menu in Bangla too.
         // The board's grid: the code takes what is left, every other column its
         // own px (the actions fit "Who used it" in Bangla too).
-        layout={{ gap: 12, rowHeight: 62, headPadding: 12, actionsWidth: 150, flexMinWidth: 140 }}
+        layout={{ gap: 14, rowHeight: 62, headPadding: 10, actionsWidth: 120, flexMinWidth: 140 }}
         getRowId={(row) => row.id}
         isLoading={couponsRead.isLoading}
         isFetching={couponsRead.isFetching}
