@@ -39,7 +39,7 @@ export function LanguageSwitch({ app = "money", className }: { app?: NavApp; cla
               "h-7.5 min-w-0 whitespace-nowrap transition-colors",
               habit ? "rounded-[6px]" : "rounded-full",
               option.value === "bn" ? "font-bn text-body" : "text-small",
-              on ? "bg-surface font-semibold text-ink shadow-button" : "font-medium text-ink-soft hover:text-ink",
+              on ? "bg-surface font-semibold text-ink shadow-button" : "font-medium text-ink-2 hover:text-ink",
             )}
           >
             {option.label}

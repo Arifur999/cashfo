@@ -6,16 +6,17 @@ describe("getPasswordStrength", () => {
     expect(getPasswordStrength("")).toBe(0);
   });
 
-  it("rates anything the backend would refuse as too weak", () => {
-    expect(getPasswordStrength("abc1")).toBe(1);
-    expect(getPasswordStrength("abcdefghijkl")).toBe(1);
+  it("rates a password the backend would refuse by how many rules it meets", () => {
+    expect(getPasswordStrength("abc")).toBe(1);
+    expect(getPasswordStrength("abc1")).toBe(2);
+    expect(getPasswordStrength("abcdefghijkl")).toBe(2);
   });
 
-  it("rewards length and variety once the rule is met", () => {
-    expect(getPasswordStrength("abcd1234")).toBe(2);
-    expect(getPasswordStrength("abcd1234efgh")).toBe(3);
-    expect(getPasswordStrength("Abcd1234")).toBe(3);
-    expect(getPasswordStrength("abcd-1234")).toBe(3);
+  it("rates the rule met as good, and length or variety on top as strong", () => {
+    expect(getPasswordStrength("taka2026")).toBe(3);
+    expect(getPasswordStrength("abcd1234efgh")).toBe(4);
+    expect(getPasswordStrength("Abcd1234")).toBe(4);
+    expect(getPasswordStrength("abcd-1234")).toBe(4);
     expect(getPasswordStrength("Abcd1234efgh!")).toBe(4);
   });
 });

@@ -48,7 +48,7 @@ const PHONE_BUTTON = "max-md:h-11 max-md:w-9.5 max-md:rounded-full max-md:border
 // The wider screens' icon buttons: white pills on the Money Tracker's page
 // ground, outlined 8px squares on the Habit Tracker's white bar.
 const ICON_BUTTON = {
-  money: cn("md:size-9.5 md:rounded-full md:bg-surface md:shadow-control", PHONE_BUTTON),
+  money: cn("md:size-9.5 md:rounded-full md:bg-surface md:text-ink-2 md:shadow-control", PHONE_BUTTON),
   habit: cn("md:size-9.5 md:rounded-sm md:border md:border-line md:bg-surface", PHONE_BUTTON),
 };
 // The count on an icon: the primary on a ring of the ground behind it.
@@ -224,8 +224,10 @@ function Topbar() {
         title={switchLabel}
         className={cn(
           "flex shrink-0 items-center justify-center text-emerald transition-colors max-md:order-2 max-md:h-11 max-md:w-9.5",
-          "md:h-9.5 md:gap-2 md:border md:border-emerald-line md:bg-emerald-soft md:px-3.5 md:text-body md:font-semibold md:whitespace-nowrap md:hover:border-emerald",
-          habit ? "md:rounded-sm" : "md:rounded-full",
+          "md:h-9.5 md:gap-2 md:border md:border-emerald-line md:px-3.5 md:text-body md:font-semibold md:whitespace-nowrap md:hover:border-emerald",
+          // AppTopbar: the primary lifted 90% towards white (nav-on); the
+          // Habit Tracker keeps its own soft tint.
+          habit ? "md:rounded-sm md:bg-emerald-soft" : "md:rounded-full md:bg-nav-on",
         )}
       >
         <SwitchIcon className="size-5 md:size-4" strokeWidth={2.25} aria-hidden="true" />

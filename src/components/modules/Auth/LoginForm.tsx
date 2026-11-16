@@ -119,7 +119,7 @@ const LoginForm = ({ redirectTo, onStep, notice }: LoginFormProps) => {
       <AuthCheckbox checked={keepSignedIn} onChange={setKeepSignedIn} label="Keep me signed in on this device" className="hidden md:flex" />
 
       {waiting ? (
-        <Button type="button" size="lg" disabled className="w-full bg-surface-sunken text-[15px] text-ink-muted shadow-none disabled:opacity-100" aria-live="polite">
+        <Button type="button" size="lg" disabled className="w-full bg-line text-[15px] text-ink-muted shadow-none disabled:opacity-100" aria-live="polite">
           {t("Try again in {time}", { time: toLocaleDigits(clock(waitLeft), locale) })}
         </Button>
       ) : (
