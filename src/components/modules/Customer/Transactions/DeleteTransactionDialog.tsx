@@ -7,8 +7,7 @@ import { IEConfirmDialog } from "@/components/modules/Customer/IncomeExpense/IEC
 import AmountText from "@/components/smartly/AmountText";
 import { ieCategoryInk } from "@/lib/customer/categoryTone";
 import { formatDate } from "@/lib/customer/date";
-import { restoreTransactionAction, voidTransactionAction } from "@/lib/customer/transactionActions";
-import { DELETED_REASON } from "@/lib/customer/transactionDisplay";
+import { deleteTransactionAction, restoreTransactionAction } from "@/lib/customer/transactionActions";
 import { categoryLabel, rowTitle, type TransactionRow } from "@/lib/customer/transactionRows";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -24,8 +23,8 @@ interface DeleteTransactionDialogProps {
 const UNDO_MS = 6000;
 
 // Transactions' Delete (design: TxnDelete): the row it removes, then the
-// toast with Undo. Underneath it is a void with DELETED_REASON, the one
-// reason the backend lets its owner take back.
+// toast with Undo. Underneath it is the backend's delete, a void that only
+// the person who made it can take back.
 export function DeleteTransactionDialog({ row, businessId, currency, onClose }: DeleteTransactionDialogProps) {
   const { t, fmt } = useLocale();
   const router = useRouter();
@@ -49,7 +48,7 @@ export function DeleteTransactionDialog({ row, businessId, currency, onClose }: 
     if (isPending) return;
     const id = row.transaction.id;
     startTransition(async () => {
-      const result = await voidTransactionAction(businessId, id, DELETED_REASON);
+      const result = await deleteTransactionAction(businessId, id);
       if (!result.success) {
         toast.error(t(result.message ?? "Failed to delete the transaction"));
         return;
