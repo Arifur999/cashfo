@@ -1,7 +1,7 @@
 // Settings › Data & privacy: server-only readers. The page saves through
 // dataPrivacyActions.ts.
 import "server-only";
-import { getAllWorkspaceUnlocks } from "@/lib/tokenUtils";
+import { getAllWorkspaceUnlocks, getJournalUnlock } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 import type { BackupsPage, DataPrivacyPage, ImportContext, PrintableExport } from "./dataPrivacyTypes";
 import { emptyUnlessOutage } from "./readFallback";
@@ -37,8 +37,9 @@ export async function getImportContext(businessId: string): Promise<ImportContex
 // with its PIN on this device comes in; the others are named, left out.
 export async function getPrintableExport(query: URLSearchParams): Promise<PrintableExport | null> {
   try {
-    const unlocks = await getAllWorkspaceUnlocks();
-    return (await customerApi.get<PrintableExport>(`/api/account/export/printable?${query.toString()}`, { headers: unlocks ? { "x-workspace-unlock": unlocks } : undefined })).data;
+    const [unlocks, diaryUnlock] = await Promise.all([getAllWorkspaceUnlocks(), getJournalUnlock()]);
+    const headers = { ...(unlocks && { "x-workspace-unlock": unlocks }), ...(diaryUnlock && { "x-journal-unlock": diaryUnlock }) };
+    return (await customerApi.get<PrintableExport>(`/api/account/export/printable?${query.toString()}`, { headers })).data;
   } catch (error) {
     return emptyUnlessOutage(error, null);
   }
