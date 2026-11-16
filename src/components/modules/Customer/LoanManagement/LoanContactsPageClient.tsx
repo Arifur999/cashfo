@@ -81,7 +81,6 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
     .filter((contact) => contactMatches(contact.name, contact.phone, search))
     // Biggest balance first, either way, as the board lists them.
     .sort((a, b) => Math.abs(Number(b.currentBalance)) - Math.abs(Number(a.currentBalance)));
-  const filtered = currentTab !== "ALL" || kind !== "" || search.trim() !== "";
   const shownPawna = shown.reduce((sum, contact) => sum + Math.max(0, Number(contact.currentBalance)), 0);
   const shownDena = shown.reduce((sum, contact) => sum + Math.max(0, -Number(contact.currentBalance)), 0);
 
@@ -90,12 +89,6 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   const filterKey = `${currentTab}|${kind}|${search.trim()}`;
   const [grown, setGrown] = useState({ key: filterKey, count: STEP });
   const visible = grown.key === filterKey ? grown.count : STEP;
-
-  function clearFilters() {
-    setTab("ALL");
-    setKind("");
-    setSearch("");
-  }
 
   // Back on the active list, the entry form and the counts.
   function restore(contact: Contact) {
@@ -162,7 +155,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
 
   const counted = (label: string, count: number) => (
     <>
-      {label} <span className="text-ink-faint in-aria-pressed:text-emerald">{formatCount(count, fmt)}</span>
+      {label} <span className="text-ink-faint in-aria-pressed:text-income">{formatCount(count, fmt)}</span>
     </>
   );
   const tabs = [
@@ -190,7 +183,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
   };
 
   return (
-    <PageFrame className="gap-5 md:min-h-full">
+    <PageFrame className="gap-5 md:min-h-full md:pb-8">
       <PageHeader
         eyebrow={t("Loans")}
         tone="loans"
@@ -218,7 +211,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2.5">
-            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} size="coarse" className="border-line-card p-1 max-md:w-full max-md:overflow-x-auto" itemClassName="gap-1.5 aria-pressed:bg-emerald-soft aria-pressed:text-emerald" />
+            <SegmentedControl variant="soft" options={tabs} value={currentTab} onChange={setTab} label={t("Balance")} size="coarse" className="border-line-card p-1 max-md:w-full max-md:overflow-x-auto" itemClassName="gap-1.5 not-aria-pressed:text-ink-2 aria-pressed:bg-emerald-soft aria-pressed:text-income" />
             <NativeSelect size="sm" frameClassName="[&_svg]:right-2.5" value={kind} onChange={(event) => setKind(event.target.value as ContactType | "")} aria-label={t("Kind")} className="h-10 pr-7.5 pl-2.5 text-small pointer-coarse:h-11">
               <option value="">{t("All types")}</option>
               {LOAN_KINDS.map((option) => (
@@ -236,14 +229,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
           </div>
 
           {shown.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-body text-ink-muted">{t("No one matches")}</p>
-              {filtered && (
-                <Button variant="secondary" size="sm" onClick={clearFilters} className="pointer-coarse:h-11">
-                  {t("Clear search and filters")}
-                </Button>
-              )}
-            </div>
+            <div className="rounded-[18px] border border-line-card bg-surface p-10 text-center text-[14px] text-ink-muted">{t("No contacts match your search or filters.")}</div>
           ) : view === "table" ? (
             <div className="max-md:hidden md:flex md:flex-1 md:flex-col">
               <LoanContactsTable
@@ -252,7 +238,7 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 canManage={canManage}
                 busy={isPending}
                 lastOf={lastOf}
-                subOf={(contact) => (institution(contact) && contact.notes) || null}
+                subOf={(contact) => contact.notes || null}
                 pawna={shownPawna}
                 dena={shownDena}
                 onEdit={(contact) => setDrawer(contact)}
@@ -267,22 +253,21 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                 const direction = loanDirection(contact.currentBalance);
                 const meta = DIRECTION_META[direction];
                 const isArchived = contact.status === "ARCHIVED";
-                const settled = direction === "SETTLED";
                 return (
-                  <Card key={contact.id} padding="none" className={cn("flex min-w-0 flex-col gap-3.5 p-4.5", isArchived && "opacity-60")}>
+                  <Card key={contact.id} padding="none" className={cn("flex min-w-0 flex-col gap-3.5 rounded-[18px] p-4.5 leading-[normal]", isArchived && "opacity-60")}>
                     <div className="flex items-center gap-3">
-                      <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} initials={wordInitials(contact.name)} />
+                      <PersonAvatar name={contact.name} src={contact.photoUrl} kind={contact.type} size={44} initials={wordInitials(contact.name)} className="text-[15px]" />
                       <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                         <span className="flex min-w-0 items-center gap-2">
                           <Link href={`/loan-management/ledger?contactId=${contact.id}`} title={t("Open statement for {name}", { name: contact.name })} className="truncate text-[15px] font-semibold text-ink hover:text-emerald hover:underline">
                             {contact.name}
                           </Link>
-                          <Chip tone="neutral" size="sm" className="font-semibold">
+                          <Chip tone="neutral" size="sm" className="h-auto bg-page py-px font-semibold">
                             {isArchived ? t("Archived") : t(LOAN_KIND_LABELS[contact.type])}
                           </Chip>
                         </span>
-                        {/* A bank or NGO by what the loan is ("House loan"), a person by their number. */}
-                        <span className="truncate text-caption font-normal text-ink-muted">{(institution(contact) && contact.notes) || contact.phone || contact.email || contact.address || contact.notes || t("No contact info")}</span>
+                        {/* The number, else what the loan is ("House loan"), as the board has it. */}
+                        {(contact.phone || contact.notes) && <span className="truncate text-[12px] text-ink-muted">{contact.phone || contact.notes}</span>}
                       </span>
                       {canManage && (
                         <span className="flex shrink-0 gap-1.5">
@@ -301,17 +286,17 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                         </span>
                       )}
                     </div>
-                    <div className={cn("flex items-end justify-between gap-3 rounded-field px-3.5 py-3", meta.box)}>
+                    <div className={cn("flex items-end justify-between gap-3 rounded-[10px] px-3.5 py-3", meta.box)}>
                       <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className={cn("text-caption font-normal", settled ? "text-ink-muted" : meta.text)}>{t(meta.label)}</span>
-                        <span className={cn("truncate text-[22px] leading-[normal] font-bold tracking-[-0.01em] tabular-nums", settled ? "text-ink-faint" : meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency, fmt)}</span>
+                        <span className={cn("text-[12px]", meta.ink)}>{t(meta.label)}</span>
+                        <span className={cn("truncate text-[22px] leading-[normal] font-bold tracking-[-0.01em] tabular-nums", meta.text)}>{formatCurrency(Math.abs(Number(contact.currentBalance)), currency, fmt)}</span>
                       </span>
                       {/* A white pill, as the board draws it: the tone's own fill is the tile's colour. */}
-                      <Chip tone={meta.chip} size="sm" className="bg-surface font-bold">
+                      <Chip tone={meta.chip} size="sm" className={cn("h-auto bg-surface py-0.5 font-bold", meta.status)}>
                         {t(meta.name)}
                       </Chip>
                     </div>
-                    <div className="truncate text-caption font-normal text-ink-muted">{lastOf(contact)}</div>
+                    <div className="truncate text-[12px] text-ink-muted">{lastOf(contact)}</div>
                   </Card>
                 );
               })}
@@ -358,13 +343,10 @@ export function LoanContactsPageClient({ businessId, contacts, currency, canMana
                   count: formatCount(activityOf.get(deleting.id)?.entries ?? 0, fmt),
                   amount: formatCurrency(Math.abs(Number(deleting.currentBalance)), currency, fmt),
                 }),
-                instead: { href: `/loan-management/transactions?contactId=${deleting.id}&period=all`, label: t("See transactions") },
+                instead: { href: `/loan-management/transactions?contactId=${deleting.id}&period=all`, label: t("Open Transactions") },
               })}
         />
       )}
     </PageFrame>
   );
 }
-
-// A bank or an NGO: its card names the loan rather than a phone number.
-const institution = (contact: Contact) => contact.type === "BANK" || contact.type === "NGO";

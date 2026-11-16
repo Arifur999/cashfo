@@ -71,6 +71,7 @@ export default async function LoanLedgerPage({ searchParams }: PageProps<"/loan-
       statement={statement}
       activity={activity}
       periodFrom={dateFrom}
+      periodEnd={dateTo}
       // A period still running closes today.
       periodTo={dateTo && dateTo < today ? dateTo : today}
     />

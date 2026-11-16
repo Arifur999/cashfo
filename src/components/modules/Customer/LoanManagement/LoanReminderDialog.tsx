@@ -63,12 +63,12 @@ export function LoanReminderDialog({ open, onClose, name, phone, owed, currency,
       onClose={onClose}
       width={540}
       headClassName="items-start pt-4.5 pr-5 pb-3.5 pl-6"
-      titleClassName="text-[18px] font-bold leading-[normal]"
-      closeClassName="my-0 bg-surface-sunken text-ink-soft hover:bg-line"
+      titleClassName="text-[18px] font-bold! leading-[normal]"
+      closeClassName="my-0 bg-page text-ink-soft hover:bg-line"
       bodyClassName="gap-3.5 px-6 py-4.5 leading-[normal]"
       footerClassName="px-6"
       title={t("Send a reminder")}
-      sub={<span className="text-[13.5px] text-ink-soft">{t("{name} owes you {amount}.", { name, amount: formatCurrency(owed, currency, fmt) })}</span>}
+      sub={<span className="text-[13.5px] text-ink-2">{t("{name} owes you {amount}.", { name, amount: formatCurrency(owed, currency, fmt) })}</span>}
       footer={
         <div className="flex w-full flex-wrap items-center gap-2.5">
           <Button type="button" variant="secondary" onClick={copy} className="h-10.5 text-[13.5px]">
@@ -95,7 +95,7 @@ export function LoanReminderDialog({ open, onClose, name, phone, owed, currency,
         </div>
       }
     >
-      <div className="flex items-center gap-3.5 rounded-[14px] bg-emerald-soft px-3.5 py-3">
+      <div className="flex items-center gap-3.5 rounded-[14px] bg-pawna-wash px-3.5 py-3">
         <span className="flex-1 text-[13px] text-brand-ink">{t("Still owed to you")}</span>
         <span className="text-[20px] font-bold text-emerald tabular-nums">{formatCurrency(owed, currency, fmt)}</span>
       </div>
@@ -112,6 +112,8 @@ export function LoanReminderDialog({ open, onClose, name, phone, owed, currency,
             setEdited(null);
           }}
           label={t("Message language")}
+          className="rounded-full border-0 bg-page p-0.75"
+          itemClassName="h-8 px-3.5 text-[13px] not-aria-pressed:text-ink-2"
         />
       </div>
       <label className="flex flex-col gap-1.5">
