@@ -69,7 +69,15 @@ export async function voidTransactionAction(businessId: string, id: string, reas
   }, "Failed to void transaction");
 }
 
-// Undo of a delete (a void with DELETED_REASON) made minutes ago.
+// Transactions' Delete: a void the person who made it can take back with
+// restoreTransactionAction for a few minutes (a plain void can't be).
+export async function deleteTransactionAction(businessId: string, id: string): Promise<ActionResult> {
+  return callApi(async () => {
+    await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}/delete`, {}, { headers: await authHeaders() });
+  }, "Failed to delete the transaction");
+}
+
+// Undo of a delete (deleteTransactionAction) made minutes ago.
 export async function restoreTransactionAction(businessId: string, id: string): Promise<ActionResult> {
   return callApi(async () => {
     await customerApi.post(`${API_BASE_URL}/api/businesses/${businessId}/transactions/${id}/restore`, {}, { headers: await authHeaders() });

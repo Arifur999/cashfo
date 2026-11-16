@@ -654,6 +654,8 @@ export const incomeExpenseDictionary: Record<string, string> = {
   "Hide voided": "বাতিল হওয়াগুলো লুকান",
   "Only a transaction deleted from Transactions can be brought back": "শুধু লেনদেন পেজ থেকে ডিলিট করা লেনদেনই ফেরানো যায়",
   "A delete can be undone for 10 minutes only": "ডিলিট শুধু ১০ মিনিটের মধ্যে ফেরানো যায়",
+  "An edit can be undone for 10 minutes only": "পরিবর্তন শুধু ১০ মিনিটের মধ্যে ফেরানো যায়",
+  "A wallet or account this entry uses has been archived. Restore it first, then bring the entry back": "এই এন্ট্রির একটি ওয়ালেট বা অ্যাকাউন্ট আর্কাইভ করা হয়েছে। আগে সেটি ফেরান, তারপর এন্ট্রিটি ফেরান",
   "Only the person who deleted it can undo the delete": "যিনি ডিলিট করেছেন শুধু তিনিই এটা ফেরাতে পারবেন",
   "Bring back the entry this charge was paid with first": "আগে যে এন্ট্রির সাথে এই চার্জ দেওয়া হয়েছিল সেটি ফেরান",
   "This transaction is back already": "এই লেনদেনটি আগেই ফিরে এসেছে",

@@ -27,8 +27,8 @@ import { formatDate } from "@/lib/customer/date";
 import { DIRECTION_META, loanDirection, loanLongDate, loanRowDate, loanEditOf, loanPaymentRow, loanTotals, wordInitials, type LoanEdit } from "@/lib/customer/loanDisplay";
 import { toEnglishDigits } from "@/lib/customer/money";
 import { periodHref, type PickedPeriod } from "@/lib/customer/period";
-import { restoreTransactionAction, voidTransactionAction } from "@/lib/customer/transactionActions";
-import { DELETED_REASON, TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
+import { deleteTransactionAction, restoreTransactionAction } from "@/lib/customer/transactionActions";
+import { TRANSACTION_TYPE_LABELS } from "@/lib/customer/transactionDisplay";
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { paginate } from "@/lib/table/paginate";
@@ -221,7 +221,7 @@ export function LoanTransactionsPageClient({ businessId, transactions, complete,
   function deleteEntry(transaction: Transaction) {
     startDeleting(async () => {
       try {
-        const result = await voidTransactionAction(businessId, transaction.id, DELETED_REASON);
+        const result = await deleteTransactionAction(businessId, transaction.id);
         if (!result.success) {
           toast.error(t(result.message ?? "Couldn't delete the entry"));
           return;

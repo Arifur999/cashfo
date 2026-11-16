@@ -19,9 +19,8 @@ export function isCancelled(transaction: Pick<Transaction, "status" | "reversalO
   return transaction.status === "VOIDED" || !!transaction.reversalOfId;
 }
 
-// The reason Transactions' Delete voids with: the backend lets the person
-// who deleted take back only a void with this reason (transactions.service
-// DELETED_REASON), for 10 minutes.
+// The reason the backend's delete voids with (transactions.service
+// DELETED_REASON); also the label of a void that undoes an entry just made.
 export const DELETED_REASON = "Deleted from Transactions";
 
 // Why a transaction was voided, in the reader's language when the app wrote
