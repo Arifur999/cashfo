@@ -49,4 +49,9 @@ describe("billingHistoryCsv", () => {
     expect(lines[0]).toBe('"Date","Invoice","Plan","Paid with","Amount (BDT)","Status"');
     expect(lines[1]).toBe('"2026-11-01","INV-2026-000413","Monthly ""Pro""","bKash","199.00","success"');
   });
+
+  it("keeps a plan name that looks like a formula as text", () => {
+    const row = { id: "p1", planName: "=1+1", gateway: "BKASH", amount: "199.00", status: "SUCCESS", createdAt: "2026-11-01T04:00:00Z", paidAt: null, invoice: null } as BillingPayment;
+    expect(billingHistoryCsv([row], (iso) => iso.slice(0, 10)).split("\r\n")[1]).toContain(`"'=1+1"`);
+  });
 });

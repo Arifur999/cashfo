@@ -142,6 +142,20 @@ describe("the CSV", () => {
     expect(csv.endsWith("Closing balance,50.00")).toBe(true);
   });
 
+  it("keeps typed text that looks like a formula as text, and the amounts' minus sign", () => {
+    const csv = ledgerCsv({
+      account: "=HYPERLINK(1)",
+      period: "p",
+      opening: "-100.00",
+      closing: "-50.00",
+      heads: { account: "Account", period: "Period", opening: "Opening balance", closing: "Closing balance", columns: ["Date"] },
+      rows: [{ date: "2026-11-01", kind: "Expense", direction: "Sent", party: "@SUM(A1)", note: "+cmd", reference: "-ref", in: "", out: "50.00", balance: "-50.00" }],
+    });
+    expect(csv).toContain("Account,'=HYPERLINK(1)");
+    expect(csv).toContain("2026-11-01,Expense,Sent,'@SUM(A1),'+cmd,'-ref,,50.00,-50.00");
+    expect(csv).toContain("Opening balance,-100.00");
+  });
+
   it("names the file after the account", () => {
     expect(ledgerFileName("Islami Bank!", "2026-11-02")).toBe("ledger-islami-bank-2026-11-02.csv");
     expect(ledgerFileName("নগদ", "2026-11-02")).toBe("ledger-account-2026-11-02.csv");
