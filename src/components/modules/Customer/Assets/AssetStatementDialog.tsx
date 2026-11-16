@@ -188,8 +188,11 @@ export function AssetStatementDialog({ asset, onClose, onUpdate, onChanged, busi
     if (!doc) return frame.remove();
     const styles = [...document.querySelectorAll('link[rel="stylesheet"], style')].map((node) => node.outerHTML).join("");
     doc.open();
-    doc.write(`<!doctype html><html class="${document.documentElement.className}"><head><meta charset="utf-8"><title>${statementTitle}</title>${styles}<style>@page{size:A4;margin:12mm}body{margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}article{width:auto!important;min-height:0!important;box-shadow:none!important;padding:0!important}tr{break-inside:avoid}thead{display:table-header-group}</style></head><body>${page.outerHTML}</body></html>`);
+    doc.write(`<!doctype html><html class="${document.documentElement.className}"><head><meta charset="utf-8">${styles}<style>@page{size:A4;margin:12mm}body{margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}article{width:auto!important;min-height:0!important;box-shadow:none!important;padding:0!important}tr{break-inside:avoid}thead{display:table-header-group}</style></head><body>${page.outerHTML}</body></html>`);
     doc.close();
+    // Set as text, never written into the HTML: the title is translated, and
+    // Bangla edited in Admin › Content › Translations must not become markup.
+    doc.title = statementTitle;
     setTimeout(() => {
       try {
         frame.contentWindow?.focus();

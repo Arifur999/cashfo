@@ -202,6 +202,12 @@ const csvCell = (value: string | number | null | undefined): string => {
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 };
 
+// Text someone typed (a party, a note, a reference, the wallet's name; in a
+// shared workspace another member's): one starting with = + - @ is kept as
+// text with a leading ', so a spreadsheet never runs it as a formula. The
+// amount columns are the app's own and keep their minus sign.
+const typedText = (value: string): string => (/^[=+\-@\t\r]/.test(value) ? `'${value}` : value);
+
 export interface LedgerCsvInput {
   account: string;
   period: string;
@@ -216,12 +222,12 @@ export interface LedgerCsvInput {
 // Excel read the Bangla.
 export function ledgerCsv(input: LedgerCsvInput): string {
   const lines: (string | number)[][] = [
-    [input.heads.account, input.account],
+    [input.heads.account, typedText(input.account)],
     [input.heads.period, input.period],
     [input.heads.opening, input.opening],
     [],
     input.heads.columns,
-    ...input.rows.map((row) => [row.date, row.kind, row.direction, row.party, row.note, row.reference, row.in, row.out, row.balance]),
+    ...input.rows.map((row) => [row.date, row.kind, row.direction, typedText(row.party), typedText(row.note), typedText(row.reference), row.in, row.out, row.balance]),
     [],
     [input.heads.closing, input.closing],
   ];

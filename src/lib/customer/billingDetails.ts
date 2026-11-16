@@ -48,7 +48,13 @@ export function phoneBoxText(phone: string | null): string {
 // "+880 1811-000000", or null.
 export const phoneShown = (phone: string | null) => (phone ? `+880 ${phoneBoxText(phone)}` : null);
 
-const cell = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+// Quoted, and a text cell starting with = + - @ kept as text with a leading '
+// (the plan's name and the invoice number come from elsewhere), so a
+// spreadsheet never runs one as a formula.
+const cell = (value: string | number) => {
+  const text = typeof value === "string" && /^[=+\-@\t\r]/.test(value) ? `'${value}` : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+};
 
 // Billing history as a CSV file (Download CSV), newest first, in English
 // like the receipts.
