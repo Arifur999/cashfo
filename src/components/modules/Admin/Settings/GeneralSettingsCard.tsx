@@ -59,14 +59,14 @@ const GeneralSettingsCard = ({ settings, canManage }: { settings: IPlatformSetti
             )}
           </form.Field>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3">
-          <span className="text-small text-ink-muted">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3 sm:flex-nowrap">
+          <span className="min-w-0 flex-1 basis-60 text-[12.5px] text-ink-muted">
             {lastChangeText(settings.lastChange, translate, locale)} <T>{canManage ? "Every save goes to the audit log." : "Only super admins can change these."}</T>
           </span>
           {canManage && (
             <form.Subscribe selector={(state) => [state.isDirty, state.isSubmitting] as const}>
               {([isDirty, isSubmitting]) => (
-                <span className="ml-auto flex gap-2">
+                <span className="ml-auto flex shrink-0 gap-2">
                   <Button variant="secondary" size="md" disabled={!isDirty || isSubmitting} onClick={() => form.reset()}>
                     <T>Discard</T>
                   </Button>

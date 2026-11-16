@@ -27,9 +27,7 @@ import ErrorDetailPanel from "./ErrorDetailPanel";
 import ErrorGroupRow from "./ErrorGroupRow";
 import { groupBoardErrors } from "./errorOrigin";
 import {
-  CUSTOMER_APP,
   DEFAULT_ERROR_FILTERS,
-  type ErrorApp,
   type ErrorFilters,
   type ErrorStatus,
   errorsQueryString,
@@ -44,9 +42,8 @@ const STATUS_OPTIONS = [
   { value: "fixed", label: "Fixed" },
 ];
 // The customer app reports under the admin panel's source, so that choice
-// covers both; App narrows to the customer app alone.
+// covers both (?app=customer still narrows to it, from a link).
 const SOURCE_OPTIONS = ERROR_SOURCES.map((value) => ({ value, label: value === "ADMIN_FRONTEND" ? "Admin panel or customer app" : ERROR_SOURCE_LABEL[value] }));
-const APP_OPTIONS = [{ value: CUSTOMER_APP, label: "Customer app" }];
 
 // The detail panel sits beside the list from xl (1280px); below that a
 // picked group opens in a drawer, not in a panel far under a long list.
@@ -156,13 +153,6 @@ const ErrorsBoard = () => {
           selected={filters.source ? [filters.source] : []}
           emptyLabel="Anywhere"
           onChange={(values) => update({ source: values[0] as ErrorSource | undefined })}
-        />
-        <DataTableFacetedFilter
-          title="App"
-          options={APP_OPTIONS}
-          selected={filters.app ? [filters.app] : []}
-          emptyLabel="All"
-          onChange={(values) => update({ app: values[0] as ErrorApp | undefined })}
         />
         <DataTableFacetedFilter
           title="Severity"

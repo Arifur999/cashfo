@@ -1,9 +1,7 @@
 "use client";
 
-import { UserCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import ConfirmDialog from "@/components/shared/dialog/ConfirmDialog";
-import Button from "@/components/smartly/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { asStatus } from "@/lib/i18n/message";
 import { humanizeEnum } from "@/lib/statusBadge";
@@ -24,7 +22,7 @@ const CATEGORY_OPTIONS = TICKET_CATEGORIES.map((category) => ({ value: category,
 interface TicketControlsProps {
   controls: TicketControlsState;
   admins: IAdminOption[];
-  // The reader, named "(you)" in the list, and for "Assign to me".
+  // The reader, named "(you)" in the list.
   currentAdminId: string | null;
 }
 
@@ -36,7 +34,6 @@ const TicketControls = ({ controls, admins, currentAdminId }: TicketControlsProp
   const { translate } = useLocale();
   const closingCopy = closingStatus ? CLOSING_STATUSES[closingStatus] : undefined;
   // Taking a ticket is one tap, not a hunt through the roster.
-  const me = admins.find((admin) => admin.id === currentAdminId);
 
   const assigneeOptions = useMemo(() => {
     const options: TicketSelectOption<string>[] = [
@@ -73,12 +70,6 @@ const TicketControls = ({ controls, admins, currentAdminId }: TicketControlsProp
           onValueChange={(adminId) => setAssignee(admins.find((admin) => admin.id === adminId) ?? null)}
           disabled={isPending}
         />
-        {me && ticket.assignedToAdminId !== me.id && (
-          <Button variant="ghost" size="xs" className="self-start px-2 text-emerald pointer-coarse:h-11" disabled={isPending} onClick={() => setAssignee(me)}>
-            <UserCheck aria-hidden="true" />
-            {translate("Assign to me")}
-          </Button>
-        )}
       </div>
 
       <ConfirmDialog

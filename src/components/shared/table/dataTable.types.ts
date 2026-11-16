@@ -49,7 +49,12 @@ export type DataTableFilterConfig = (
   // "end" puts the filter at the far right of the toolbar, beside the table
   // tools ("When: Last 24 hours", "Sensitive only").
   align?: "start" | "end";
+  // The chip's shape, as each board draws it: 34px with 10px corners by
+  // default, "compact" 32px (Users), "pill" 34px and round (Payments).
+  chip?: FilterChipShape;
 };
+
+export type FilterChipShape = "default" | "compact" | "pill";
 
 export interface DateRangeValue {
   from?: string;
@@ -111,9 +116,9 @@ export interface DataTableSimplePager {
 // between columns, the rows' height, the heads' padding and the actions
 // column's width. Column widths are each column's meta.width.
 export interface DataTableLayout {
-  gap?: 12 | 16;
+  gap?: 12 | 14 | 16;
   rowHeight?: number;
-  headPadding?: 8 | 12;
+  headPadding?: 8 | 9 | 10 | 12;
   actionsWidth?: number;
   // The card's width on the 1440 board (1136, or less beside a side card):
   // columns keep their share of it at any screen width.
@@ -137,7 +142,7 @@ export interface DataTableExportColumn<TData> {
 export interface DataTableSearchConfig {
   placeholder?: string;
   // "sm" is the 240px box the design draws when tabs share the row.
-  width?: "sm" | "md";
+  width?: "sm" | "md" | 280 | 340;
   initialValue?: string;
   debounceMs?: number;
   // Present = server-side search (the URL drives the query); absent = the

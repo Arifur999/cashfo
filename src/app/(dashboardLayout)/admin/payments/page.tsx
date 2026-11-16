@@ -38,7 +38,7 @@ const PaymentsPage = async ({ searchParams }: PageProps<"/admin/payments">) => {
   exportQuery.delete("limit");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader {...PAYMENTS_PAGE} actions={<ExportLink href={`${PAYMENTS_LIST_HREF}/export${exportQuery.size ? `?${exportQuery}` : ""}`} />} />
       <PaymentsTabs showRevenue={canManage(admin?.role, "revenue")} />
       <QueryPrefetch

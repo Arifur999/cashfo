@@ -45,9 +45,10 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
     <>
       {/* Two across on a phone: the figures are short, and four full-width
           tiles would push the list a screen down. */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-3.5 xl:grid-cols-4">
         <Kpi
           size="sm"
+          figure={23}
           label={translate("Collected in {month}", { month: last })}
           value={money(stats.lastMonth.collected, locale)}
           note={
@@ -63,6 +64,7 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
         />
         <Kpi
           size="sm"
+          figure={23}
           label={translate("{month} so far", { month: translate(formatMonthName(stats.thisMonth.month)) })}
           value={money(stats.thisMonth.collected, locale)}
           note={translate("{payments} in {days}", {
@@ -73,6 +75,7 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
         {/* The failures open the failed payments of those days: the card is the link. */}
         <Kpi
           size="sm"
+          figure={23}
           href={`${PAYMENTS_LIST_HREF}?status=FAILED&dateFrom=${failedSince}`}
           label="Failed, last 7 days"
           value={count(stats.failedLast7Days.count)}
@@ -82,12 +85,13 @@ const PaymentStats = ({ failedSince }: PaymentStatsProps) => {
             day it was refunded, so no filter shows a month's refunds. */}
         <Kpi
           size="sm"
+          figure={23}
           label={translate("Refunds in {month}", { month: last })}
           value={count(stats.refundsLastMonth.count)}
           note={<span className={stats.refundsLastMonth.count > 0 ? "text-warning" : undefined}>{translate("{amount} sent back", { amount: money(stats.refundsLastMonth.amount, locale) })}</span>}
         />
       </div>
-      <Card padding="none" className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:gap-4">
+      <Card padding="none" className="flex flex-col gap-3 px-4.5 py-3.5 lg:flex-row lg:items-center lg:gap-4">
         <h2 className="text-body font-semibold whitespace-nowrap text-ink">{translate("How people paid in {month}", { month: last })}</h2>
         {gatewayTotal === 0 ? (
           <span className="text-small text-ink-muted"><T>No payments came in.</T></span>

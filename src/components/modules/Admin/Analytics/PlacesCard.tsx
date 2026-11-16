@@ -28,21 +28,21 @@ const PlacesCard = ({ data, query, inPeriod }: { data: Geography | undefined; qu
   const most = Math.max(1, ...rows.map((row) => row.count));
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-2.5 px-5 py-4">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-title text-ink">
           <T>Where they are</T>
         </h2>
         {query.status === "ready" && (
-          <span className="text-small text-ink-muted">{people > 0 ? <T values={{ count: formatCount(people, locale), period: inPeriod }}>{"{count} active people {period}"}</T> : <T values={{ period: inPeriod }}>{"Nobody was active {period}"}</T>}</span>
+          <span className="text-[12.5px] leading-[normal] text-ink-muted">{people > 0 ? <T values={{ count: formatCount(people, locale), period: inPeriod }}>{"{count} active people {period}"}</T> : <T values={{ period: inPeriod }}>{"Nobody was active {period}"}</T>}</span>
         )}
       </div>
       {query.status === "pending" && <ListPlaceholder rows={4} />}
       {query.status === "error" && <ReportError onRetry={query.retry} />}
       {query.status === "ready" && rows.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2.5">
           {rows.map((row) => (
-            <li key={row.name} className="grid grid-cols-[96px_minmax(0,1fr)_72px] items-center gap-3 text-small">
+            <li key={row.name} className="grid grid-cols-[96px_minmax(0,1fr)_72px] items-center gap-2.5 text-small">
               <span className="truncate text-ink">
                 <T>{row.name}</T>
               </span>

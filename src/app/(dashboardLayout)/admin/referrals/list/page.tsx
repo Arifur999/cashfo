@@ -17,7 +17,7 @@ const ReferralsListPage = async ({ searchParams }: PageProps<"/admin/referrals/l
   const queryString = buildTableQueryString(params, REFERRALS_TABLE_BASE_CONFIG);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <div className="flex flex-col gap-3">
         <PageHeader title={REFERRALS_PAGE_TITLE} description={REFERRALS_PAGE_DESCRIPTION.referrals} />
         <ReferralsTabs />

@@ -63,7 +63,7 @@ const DataTable = <TData,>(props: DataTableProps<TData>) => {
   useTableExport(table, { exportFileName, exportAll, exportHref, exportColumns, getRowId });
 
   return (
-    <section id={listId} className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+    <section id={listId} className="overflow-hidden rounded-card border border-line-card bg-surface shadow-card">
       {!hideToolbar && (
         <DataTableToolbar
           table={table}

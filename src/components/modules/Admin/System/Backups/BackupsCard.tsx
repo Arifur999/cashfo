@@ -48,11 +48,11 @@ const resultNote = (backup: IBackupRecord, t: Translate, locale: Locale) => {
 // One figure over the runs. Stacked on phones, each with a line under it;
 // side by side from sm, with a line between.
 const SummaryCell = ({ label, value, sub, valueClassName }: { label: string; value: string; sub?: string; valueClassName?: string }) => (
-  <div className="flex flex-col gap-0.5 border-b border-divider px-4 py-3 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0 md:px-6">
-    <span className="text-small text-ink-muted">
+  <div className="flex flex-col gap-0.5 border-b border-divider px-4 py-3 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0 md:px-5">
+    <span className="text-[12.5px] text-ink-muted">
       <T>{label}</T>
     </span>
-    <span className={cn("text-h3 font-bold tabular-nums", valueClassName ?? "text-ink")}>{value}</span>
+    <span className={cn("text-[18px] font-bold tabular-nums", valueClassName ?? "text-ink")}>{value}</span>
     {sub && (
       <span className="text-caption text-ink-muted">
         <T>{sub}</T>
@@ -81,12 +81,12 @@ const BackupsCard = () => {
   const failed = (summaryQuery.isError && !summaryQuery.data) || (runsQuery.isError && !runsQuery.data);
 
   const titleRow = (
-    <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between md:px-6">
+    <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between md:px-5">
       <div className="flex min-w-0 flex-col gap-0.5">
         <h2 className="text-title text-ink">
           <T>Backups</T>
         </h2>
-        <span className="text-small text-ink-muted">
+        <span className="text-[12.5px] text-ink-muted">
           <T>Not automated yet: nothing backs the database up at night. Runs recorded so far show here.</T>
         </span>
       </div>

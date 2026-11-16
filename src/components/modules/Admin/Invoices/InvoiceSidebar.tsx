@@ -2,7 +2,6 @@ import Link from "next/link";
 import Card from "@/components/smartly/Card";
 import { LIST_DIVIDER, LIST_HOVER } from "@/components/smartly/list/recipes";
 import { Download } from "lucide-react";
-import PrintButton from "@/components/shared/PrintButton";
 import Button from "@/components/smartly/Button";
 import { formatDate } from "@/lib/date";
 import InvoiceEmailButton from "./InvoiceEmailButton";
@@ -33,7 +32,7 @@ const InvoiceSidebar = async ({ invoice, recent, back, canEmail = false }: Invoi
   const firstName = splitIssuedTo(invoice.issuedTo).name.split(/\s+/)[0] || null;
   return (
     <div className="flex flex-col gap-3 print:hidden">
-      <Card asChild padding="none" className="flex flex-col gap-3 px-5 py-4">
+      <Card asChild padding="none" className="flex flex-col gap-2.5 px-4.5 py-4">
         <section aria-label={t("Invoice actions")}>
           <h2 className="text-title text-ink">{invoice.invoiceNumber}</h2>
           {invoice.payment && <span className="text-small text-ink-2">{t("Made automatically when {id} was paid.", { id: shortPaymentId(invoice.payment.id) })}</span>}
@@ -46,20 +45,17 @@ const InvoiceSidebar = async ({ invoice, recent, back, canEmail = false }: Invoi
           </Button>
           {canEmail && <InvoiceEmailButton invoiceId={invoice.id} firstName={firstName} />}
           {invoice.emailedAt && <span className="text-caption text-ink-muted">{t("Last emailed {date}", { date: formatDate(invoice.emailedAt, "d MMM yyyy, h:mm aaa", "—", locale) })}</span>}
-          <span className="flex items-center justify-between gap-2">
-            {invoice.payment && (
-              <Link href={`/admin/payments/${invoice.payment.id}`} className="text-small font-semibold text-emerald hover:underline">
-                <T>Open the payment</T>
-              </Link>
-            )}
-            <PrintButton label="Print" variant="link" className="text-small" />
-          </span>
+          {invoice.payment && (
+            <Link href={`/admin/payments/${invoice.payment.id}`} className="w-fit text-small font-semibold text-emerald hover:underline">
+              <T>Open the payment</T>
+            </Link>
+          )}
         </section>
       </Card>
       {recent.length > 0 && (
         <Card asChild padding="none" className="overflow-hidden">
-          <section aria-labelledby="recent-invoices">
-            <h2 id="recent-invoices" className="px-5 py-3 text-body font-semibold text-ink">
+          <section aria-labelledby="recent-invoices" className="pb-2.5">
+            <h2 id="recent-invoices" className="px-4.5 pt-4 pb-2 text-body font-semibold text-ink">
               <T>Recent invoices</T>
             </h2>
             {recent.map((item) => {
@@ -69,7 +65,7 @@ const InvoiceSidebar = async ({ invoice, recent, back, canEmail = false }: Invoi
                   key={item.id}
                   href={invoiceHref(item.id, back)}
                   aria-current={current ? "page" : undefined}
-                  className={cn("flex justify-between gap-2 border-t px-5 py-2.5 text-small text-ink", LIST_DIVIDER, current ? "bg-mint-50" : LIST_HOVER)}
+                  className={cn("flex justify-between gap-2 border-t px-4.5 py-1.5 text-[12.5px] leading-[normal] text-ink", LIST_DIVIDER, current ? "bg-mint-50" : LIST_HOVER)}
                 >
                   <span className="flex min-w-0 flex-col">
                     <code className={cn("font-mono", current ? "font-bold" : "font-medium")}>{item.invoiceNumber}</code>

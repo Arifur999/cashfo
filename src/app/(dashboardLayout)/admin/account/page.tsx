@@ -9,7 +9,7 @@ export const generateMetadata = adminPageTitle("My account");
 // Every admin's own page, whatever their role.
 const MyAccountPage = () => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <PageHeader title="My account" description="Your own sign-in details. Every change here is written to the audit log." />
       <QueryPrefetch
         prefetch={(client) =>

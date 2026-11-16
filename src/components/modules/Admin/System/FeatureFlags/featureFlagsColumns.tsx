@@ -87,7 +87,7 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     accessorFn: (row) => (row.isEnabled ? "On" : "Off"),
     header: "On",
     cell: ({ row }) => <FeatureFlagSwitch flag={row.original} targets={targetsOf(row.original, planNames)} />,
-    meta: { width: 78 },
+    meta: { width: 64 },
   },
   {
     id: "rolloutPercent",
@@ -128,6 +128,6 @@ export const buildFeatureFlagsColumns = ({ planNames, adminNames, onEdit }: Feat
     cell: ({ row }) => <EditButton flag={row.original} onEdit={onEdit} />,
     enableSorting: false,
     enableHiding: false,
-    meta: { width: 64 },
+    meta: { width: 56 },
   },
 ];

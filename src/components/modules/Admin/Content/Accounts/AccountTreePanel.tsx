@@ -69,17 +69,18 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
   const renderAccount = (template: IAccountTemplate, depth: 1 | 2) => {
     const Icon = template.children?.length ? Folder : Circle;
     return (
-      <li key={template.id} className={cn(ROW, "group/row pr-1 font-medium", !template.isActive && "text-ink-muted line-through")} style={{ paddingLeft: depth * 22 }}>
+      <li key={template.id} className={cn(ROW, "group/row relative font-medium", !template.isActive && "text-ink-muted line-through")} style={{ paddingLeft: depth * 22 }}>
         <Icon className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
         <span className="truncate">{localName(locale, template)}</span>
-        <span className="ml-auto text-caption font-normal text-ink-muted">{translate(accountKindLabel(template))}</span>
+        {/* The kind sits at the card's edge, as the board draws it; the row's menu takes its place under a mouse. */}
+        <span className={cn("ml-auto text-caption font-normal text-ink-muted", canManage && "pointer-fine:group-focus-within/row:invisible pointer-fine:group-hover/row:invisible")}>{translate(accountKindLabel(template))}</span>
         {canManage && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-xs"
-                className="text-ink-muted opacity-0 group-hover/row:opacity-100 hover:text-ink focus-visible:opacity-100 data-[state=open]:opacity-100 pointer-coarse:size-11 pointer-coarse:opacity-100"
+                className="absolute top-1/2 right-0 -translate-y-1/2 text-ink-muted opacity-0 group-hover/row:opacity-100 hover:text-ink focus-visible:opacity-100 data-[state=open]:opacity-100 pointer-coarse:static pointer-coarse:size-11 pointer-coarse:translate-y-0 pointer-coarse:opacity-100"
                 aria-label={translate("More for {name}", { name: localName(locale, template) })}
               >
                 <MoreHorizontal aria-hidden="true" />
@@ -116,7 +117,7 @@ const AccountTreePanel = ({ canManage }: { canManage: boolean }) => {
   };
 
   return (
-    <Card padding="none" className="flex flex-col gap-3 px-5 py-4">
+    <Card padding="none" className="flex flex-col gap-3 px-4.5 py-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-title text-ink"><T>Starting wallets and accounts</T></h2>

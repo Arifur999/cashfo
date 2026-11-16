@@ -34,7 +34,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   return (
     <LocaleProvider initialLocale={locale} overrides={overrides} scope="admin">
       <BreadcrumbProvider>
-        <div className="flex h-screen overflow-hidden bg-page print:block print:h-auto print:overflow-visible">
+        {/* The boards set no line height: text the panel sizes by hand (text-[13px]) sits on the font's own, not the page's 1.5. */}
+        <div className="flex h-screen overflow-hidden bg-page leading-[normal] print:block print:h-auto print:overflow-visible">
           <DashboardSidebar />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
             <DashboardNavbar />

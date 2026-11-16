@@ -15,7 +15,7 @@ import { ReportError, type ReportQuery } from "./ReportState";
 
 // The table keeps its columns on a phone and scrolls sideways instead.
 const COLUMNS = "grid-cols-[120px_80px_repeat(6,minmax(0,1fr))]";
-const ROW = "min-w-160 gap-x-2";
+const ROW = "min-w-160 gap-x-1.5 px-5 md:px-5";
 
 // A cell's green deepens with the share that came back, in the five steps
 // cohortShade keeps readable; the month that is still running is drawn
@@ -60,13 +60,22 @@ const ComeBackCard = ({ rows, query, currentMonth }: { rows: ICohortRow[] | unde
   return (
     <ListCard
       label={translate("Monthly groups of new people")}
-      title={<T>Do they come back?</T>}
-      description={<T>Share of each month&apos;s new people who used the app in later months. Month 1 is the month they joined.</T>}
-      actions={
-        <span className="flex items-center gap-2 text-caption text-ink-muted">
-          <span aria-hidden="true" className="size-3.5 rounded-xs border-[1.5px] border-dashed border-mint-300 bg-mint-50" />
-          {translate("{month} so far", { month: translate(formatMonthName(currentMonth)) })}
-        </span>
+      header={
+        // The board heads it 16px 20px 12px, with no rule: the table head draws one.
+        <div className="flex flex-col gap-3 px-5 pt-4 pb-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h2 className="text-title text-ink">
+              <T>Do they come back?</T>
+            </h2>
+            <p className="text-[12.5px] leading-[normal] text-ink-muted">
+              <T>Share of each month&apos;s new people who used the app in later months. Month 1 is the month they joined.</T>
+            </p>
+          </div>
+          <span className="flex shrink-0 items-center gap-1.5 text-caption whitespace-nowrap text-ink-muted">
+            <span aria-hidden="true" className="size-3.5 rounded-xs border-[1.5px] border-dashed border-mint-300 bg-mint-50" />
+            {translate("{month} so far", { month: translate(formatMonthName(currentMonth)) })}
+          </span>
+        </div>
       }
       scrollable={filled}
       tableClassName={filled ? "overflow-x-auto" : undefined}

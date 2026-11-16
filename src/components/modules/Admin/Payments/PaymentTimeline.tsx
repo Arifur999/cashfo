@@ -17,7 +17,7 @@ const PaymentTimeline = async ({ payment }: { payment: IPaymentDetail }) => {
   const steps = paymentSteps(payment, t, locale);
   const firstAt = steps[0]?.at ?? payment.createdAt;
   return (
-    <Card asChild padding="md" className="flex flex-col gap-3">
+    <Card asChild padding="none" className="flex flex-col gap-3 px-5 py-4.5">
       <section aria-labelledby="payment-timeline">
         <h2 id="payment-timeline" className="text-title text-ink">
           <T>What happened</T>
@@ -29,7 +29,7 @@ const PaymentTimeline = async ({ payment }: { payment: IPaymentDetail }) => {
                 <span className={cn("mt-0.75 size-3 shrink-0 rounded-full", DOT[step.tone])} aria-hidden="true" />
                 {index < steps.length - 1 && <span className="w-0.5 grow bg-line" aria-hidden="true" />}
               </span>
-              <span className="flex grow justify-between gap-3 text-body">
+              <span className="flex grow justify-between gap-3 text-[13.5px] leading-[normal]">
                 <span className="text-ink">{step.what}</span>
                 <time dateTime={step.at} className="whitespace-nowrap text-ink-muted tabular-nums">
                   {formatDate(step.at, stepTimePattern(step.at, firstAt), "—", locale)}

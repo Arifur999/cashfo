@@ -77,6 +77,8 @@ const AppField = ({
           readOnly={readOnly}
           lang={lang}
           className={className}
+          // The boards' form fields read at 16px (a toolbar's 38px box keeps 14px).
+          frameClassName={size === "sm" ? undefined : "text-body-lg"}
         />
       )}
     </FormFieldShell>

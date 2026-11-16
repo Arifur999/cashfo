@@ -45,8 +45,8 @@ const DataTableToolbar = <TData,>({ table, title, search, filters, toolbarAction
   // chips on the left; the end-placed filters, the search and the toolbar's
   // own action on the right, all inside the card.
   return (
-    <div className="px-5 py-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="px-4.5 py-3">
+      <div className="flex flex-wrap items-center gap-2.5">
         {title && <h2 className="text-title text-ink">{translate(title)}</h2>}
         {draw(tabConfigs)}
         {!splitRows && draw(chipConfigs)}

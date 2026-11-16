@@ -69,24 +69,32 @@ const AnalyticsKpis = ({ summary, summaryQuery, featureUsage, featureQuery, peri
     <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
       <Kpi
         size="sm"
+        figure={24}
+        noteSize={12.5}
         label={activeLabel}
         value={summaryValue(summary?.activeInPeriod)}
         note={summaryNote(summary && <Note>{digits(shareOfAccounts(summary.activeInPeriod, summary.accounts, translate))}</Note>)}
       />
       <Kpi
         size="sm"
+        figure={24}
+        noteSize={12.5}
         label={running || !summary ? translate("Active in the last 7 days") : translate("Active in the 7 days to {day}", { day: day(summary.to) })}
         value={summaryValue(summary?.activeLast7d)}
         note={summaryNote(change && <Note className={CHANGE_TONE[change.tone]}>{digits(change.text)}</Note>)}
       />
       <Kpi
         size="sm"
+        figure={24}
+        noteSize={12.5}
         label={running || !summary ? translate("Active yesterday") : translate("Active on {day}", { day: day(summary.lastDay) })}
         value={summaryValue(summary?.activeLastDay)}
         note={summaryNote(summary && <Note>{digits(shareOfWeek(summary.activeLastDay, summary.activeLast7d, translate))}</Note>)}
       />
       <Kpi
         size="sm"
+        figure={24}
+        noteSize={12.5}
         label="Income and expenses added"
         value={featureQuery.status === "pending" ? <PendingValue /> : added === undefined ? "—" : formatCount(added, locale)}
         note={featureQuery.status === "error" ? <FailedNote onRetry={featureQuery.retry} /> : <Note>{periodLabel(period, translate, fmt)}</Note>}

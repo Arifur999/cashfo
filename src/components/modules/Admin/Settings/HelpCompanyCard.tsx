@@ -209,8 +209,8 @@ function CompanyForm({ titleId, company, lastChange, canManage }: { titleId: str
         </div>
         <span className="text-[12px] text-ink-muted">{translate('Times are Dhaka time. The Help page shows "Open now" or "Closed now" from these hours.')}</span>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3">
-        <span className="min-w-0 text-[12.5px] text-ink-muted">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-strip px-5 py-3 sm:flex-nowrap">
+        <span className="min-w-0 flex-1 basis-60 text-[12.5px] text-ink-muted">
           {lastChangeText(lastChange, translate, locale, true)} <T>{canManage ? "Users see changes right away." : "Only super admins can change these."}</T>
         </span>
         {canManage && (

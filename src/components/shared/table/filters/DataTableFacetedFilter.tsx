@@ -15,17 +15,21 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { formatCount } from "@/lib/i18n/digits";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-import type { DataTableFilterOption } from "../dataTable.types";
+import type { DataTableFilterOption, FilterChipShape } from "../dataTable.types";
 import { asStatus } from "@/lib/i18n/message";
 
 // The chip the design draws for a filter: "Plan: All plans". It goes on the
 // smartly secondary button: 32px, plain weight, sunken while open.
 // design-v4 AdminUsers: a 32px button with the field edge and 10px corners,
 // the filter's name muted and its value in semibold ink.
-export const FILTER_CHIP_CLASS = "h-8 gap-1.5 rounded-field border-input bg-surface px-2.5 text-small font-normal text-ink-muted hover:bg-surface-sunken data-[state=open]:border-focus-ring data-[state=open]:bg-surface";
+export const FILTER_CHIP_CLASS = "h-8.5 gap-1.5 rounded-field border-input bg-surface px-2.5 text-small font-normal text-ink-muted hover:bg-surface-sunken data-[state=open]:border-focus-ring data-[state=open]:bg-surface";
+
+export const filterChipClass = (shape: FilterChipShape = "default") =>
+  cn(FILTER_CHIP_CLASS, shape === "compact" && "h-8", shape === "pill" && "rounded-full");
 
 interface DataTableFacetedFilterProps {
   title: string;
+  chip?: FilterChipShape;
   options: DataTableFilterOption[];
   selected: string[];
   onChange: (values: string[]) => void;
@@ -38,7 +42,7 @@ interface DataTableFacetedFilterProps {
   defaultValue?: string;
 }
 
-const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple = false, emptyLabel = "All", facets, defaultValue }: DataTableFacetedFilterProps) => {
+const DataTableFacetedFilter = ({ title, chip, options, selected, onChange, multiple = false, emptyLabel = "All", facets, defaultValue }: DataTableFacetedFilterProps) => {
   const { translate, locale } = useLocale();
   // A status word in the reader's language; a record's own name as it is.
   const optionLabel = (option: DataTableFilterOption) => (option.raw ? option.label : translate(asStatus(option.label)));
@@ -55,7 +59,7 @@ const DataTableFacetedFilter = ({ title, options, selected, onChange, multiple =
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="secondary" size="sm" className={FILTER_CHIP_CLASS}>
+        <Button variant="secondary" size="sm" className={filterChipClass(chip)}>
           <span>{translate(title)}:</span>
           <b className="font-semibold text-ink">
             {selected.length === 0

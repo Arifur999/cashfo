@@ -26,11 +26,11 @@ const AppSwitchField = ({ field, label, description, disabled, className }: AppS
   const descriptionId = description ? `${controlId}-description` : undefined;
 
   return (
-    <div className={cn("flex items-center justify-between gap-3 border-b border-divider py-3", className)}>
+    <div className={cn("flex items-center justify-between gap-3 border-b border-divider py-2.5", className)}>
       <Label htmlFor={controlId} className="flex grow cursor-pointer flex-col items-start gap-px">
         <span className="text-body font-medium text-ink">{translate(label)}</span>
         {description && (
-          <span id={descriptionId} className="text-small font-normal text-ink-muted">
+          <span id={descriptionId} className="text-[12.5px] leading-[normal] font-normal text-ink-muted">
             {typeof description === "string" ? translate(description) : description}
           </span>
         )}

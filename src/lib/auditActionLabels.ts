@@ -40,6 +40,8 @@ const ACTION_LABELS: Record<string, string> = {
   NOTIFICATION_TEMPLATE_UPDATED: "Updated a notification template",
   CAMPAIGN_CANCELLED: "Cancelled a notification campaign",
   CAMPAIGN_DELETED: "Deleted a notification campaign",
+  ANNOUNCEMENT_CREATED: "Made an announcement",
+  ANNOUNCEMENT_UPDATED: "Changed an announcement",
   ANNOUNCEMENT_DELETED: "Deleted an announcement",
   PLATFORM_SETTINGS_UPDATED: "Updated platform settings",
   SECURITY_CHECK_RUN: "Ran a security check",

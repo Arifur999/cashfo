@@ -49,7 +49,7 @@ const SavedReplyForm = ({ reply, onDone }: SavedReplyFormProps) => {
       <form.Field name="bodyBn" validators={{ onChange: shape.bodyBn }}>
         {(field) => <AppTextareaField field={field} label="Reply, বাংলা" rows={5} lang="bn" className="font-bn" description="Optional. Without it the English is used." />}
       </form.Field>
-      <div className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-5 flex justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
+      <div className="sticky bottom-0 z-10 -mx-6 mt-auto -mb-4.5 flex justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
         <Button variant="secondary" disabled={isPending} onClick={onDone}>
           {translate("Back")}
         </Button>

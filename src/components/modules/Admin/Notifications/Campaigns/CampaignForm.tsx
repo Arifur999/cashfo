@@ -71,7 +71,7 @@ const ChoiceCard = ({ value, title, sub, disabled = false }: { value: string; ti
 );
 
 // The rule rows' selects: 36px, the field edge.
-const RULE_SELECT = "h-9 border-input text-small text-ink";
+const RULE_SELECT = "h-9 border-input text-small text-ink data-[size=sm]:h-9";
 
 interface CampaignFormProps {
   // A draft's name, message, channel and audience, when the campaign starts
@@ -295,7 +295,7 @@ const CampaignForm = ({ defaultValues = NEW_CAMPAIGN_DEFAULTS, audienceNote, onD
         isPending={isPending}
         submitLabel={when === "now" ? "Send now" : "Schedule campaign"}
         pendingLabel={when === "now" ? "Sending..." : "Saving..."}
-        extra={
+        secondary={
           <Button variant="secondary" size="md" disabled={isPending} onClick={() => submitAs("draft")}>
             <T>Save as draft</T>
           </Button>

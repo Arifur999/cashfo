@@ -18,7 +18,7 @@ const RelatedTicketsCard = async ({ tickets }: { tickets: IRelatedTicket[] }) =>
   return (
     <Card asChild padding="none" className="overflow-hidden">
       <section aria-labelledby="related-tickets">
-        <h2 id="related-tickets" className="px-5 py-4 text-title text-ink">
+        <h2 id="related-tickets" className="px-4.5 py-3.5 text-title text-ink">
           <T>Their billing tickets</T>
         </h2>
         {tickets.map((ticket) => (

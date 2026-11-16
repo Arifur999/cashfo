@@ -22,9 +22,10 @@ const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           size="sm"
+          figure={23}
           label="MRR"
           value={money(overview.mrr, locale)}
           note={
@@ -37,9 +38,10 @@ const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
             )
           }
         />
-        <Kpi size="sm" label="ARR" value={money(overview.arr, locale)} note="MRR × 12" />
+        <Kpi size="sm" figure={23} label="ARR" value={money(overview.arr, locale)} note="MRR × 12" />
         <Kpi
           size="sm"
+          figure={23}
           label="Paid people"
           value={count(paidPeople.now)}
           note={t("{change} in {month}: {joined} joined, {left} left", {
@@ -51,6 +53,7 @@ const RevenueKpis = async ({ overview }: { overview: IRevenueOverview }) => {
         />
         <Kpi
           size="sm"
+          figure={23}
           label={t("Churn, {month}", { month })}
           value={toLocaleDigits(formatPercent(churn.churnRatePercent), locale)}
           note={

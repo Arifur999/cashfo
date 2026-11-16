@@ -6,7 +6,8 @@ export type BadgeTone = "success" | "info" | "warning" | "danger" | "neutral" | 
 // The design's soft tiles: a pale fill with its ink (dark mode comes from
 // the tokens themselves).
 export const BADGE_TONE_CLASSES: Record<BadgeTone, string> = {
-  success: "bg-mint-50 text-emerald",
+  // The admin boards' "good" chip: #DCEDE9 under #155C51.
+  success: "bg-mint-50 text-brand-ink",
   info: "bg-info-soft text-info",
   warning: "bg-warning-soft text-warning",
   danger: "bg-expense-soft text-expense",

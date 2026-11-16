@@ -25,13 +25,12 @@ export const buildPaymentsTableConfig = (plans: IPlanOption[], statusCounts?: Re
   // without PAY-), the person's name or email, the invoice number and any
   // gateway's reference. The 240px box keeps it on the tabs' row, so the
   // placeholder stays short enough not to clip in either language.
-  search: { placeholder: "ID, name, email or ref", width: "sm" },
+  search: { placeholder: "Payment ID, name or bKash ref", width: "sm" },
   filters: [
     { id: "status", type: "tabs", label: "Status", options: STATUS_TABS.map((value) => ({ value, label: PAYMENT_STATUS_LABEL[value], count: statusCounts?.[value] })) },
-    { id: "gateway", type: "single-select", label: "Gateway", options: enumOptions(PAYMENT_GATEWAYS), align: "end" },
+    { id: "gateway", type: "single-select", label: "Gateway", options: enumOptions(PAYMENT_GATEWAYS), align: "end", chip: "pill" },
     // Plan names are the plans' own, shown as they are.
-    { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name, raw: true })), align: "end" },
-    { id: "createdAt", type: "date-range", label: "Date", align: "end" },
+    { id: "planId", type: "single-select", label: "Plan", options: plans.map((plan) => ({ value: plan.id, label: plan.name, raw: true })), align: "end", chip: "pill" },
   ],
 });
 

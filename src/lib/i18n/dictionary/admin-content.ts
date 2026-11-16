@@ -75,6 +75,8 @@ export const adminContentDictionary: Record<string, string> = {
   "Terms of Service": "সেবার শর্তাবলি",
   "Privacy Policy": "গোপনীয়তা নীতি",
   "Refund Policy": "ফেরত নীতি",
+  "Cookie policy": "কুকি নীতি",
+  "Community rules": "কমিউনিটির নিয়ম",
   FAQ: "সাধারণ প্রশ্ন",
   "Updated {date}": "হালনাগাদ {date}",
   // Whether a Bangla text exists, not whether it follows the latest English.
@@ -393,6 +395,7 @@ export const adminContentDictionary: Record<string, string> = {
   "How announcements reach users": "ঘোষণা যেভাবে ব্যবহারকারীদের কাছে যায়",
   "Everything you send lands in the bell in every user's app at once": "আপনি যা পাঠান তা সঙ্গে সঙ্গে প্রতিটি ব্যবহারকারীর অ্যাপের বেলে পৌঁছায়",
   "Delete one here and it disappears from every app straight away.": "এখানে মুছে দিলে সঙ্গে সঙ্গে প্রতিটি অ্যাপ থেকে সরে যায়।",
+  "Delete one here and it disappears from every app straight away. Users can also delete one from their own bell, which only hides it for them.": "এখানে মুছে দিলে সঙ্গে সঙ্গে প্রতিটি অ্যাপ থেকে সরে যায়। ব্যবহারকারীরাও নিজের বেল থেকে একটি মুছতে পারেন, তাতে শুধু তাঁর কাছ থেকেই লুকায়।",
   "{count} in apps now": "এখন অ্যাপে {count}টি",
   "{count} scheduled": "{count}টি নির্ধারিত",
   "No announcements": "কোনো ঘোষণা নেই",

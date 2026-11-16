@@ -25,7 +25,7 @@ const HealthAndBackupsPage = () => {
         ])
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-4.5">
         <HealthCards />
         <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
           <BackupsCard />

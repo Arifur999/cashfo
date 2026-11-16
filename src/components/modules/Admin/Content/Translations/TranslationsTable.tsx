@@ -69,7 +69,7 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
       <DataTable
         data={data?.data}
         columns={columns}
-        layout={{ gap: 16, rowHeight: 52 }}
+        layout={{ gap: 14, rowHeight: 52 }}
         getRowId={(row) => row.id}
         defaultHiddenColumns={TRANSLATIONS_HIDDEN_COLUMNS}
         initialPageSize={25}
@@ -81,7 +81,7 @@ const TranslationsTable = ({ canManage }: { canManage: boolean }) => {
         onRetry={() => void query.refetch()}
         errorTitle="Couldn't load the translations"
         errorDescription="Try again in a moment."
-        search={{ placeholder: "Search a key or a word", width: "sm" }}
+        search={{ placeholder: "Search a key or a word", width: 280 }}
         filters={{ configs: filters }}
         footer={
           <T values={{ example: "{{name}}" }}>

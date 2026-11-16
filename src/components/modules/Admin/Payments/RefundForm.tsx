@@ -74,7 +74,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
 
   return (
     <AppForm onSubmit={form.handleSubmit}>
-      <p className="flex flex-col gap-1 text-body leading-relaxed text-ink-2">
+      <p className="flex flex-col gap-1 text-body leading-[1.5] text-ink-2">
         <span>
           <T
             values={{
@@ -103,7 +103,7 @@ const RefundForm = ({ payment, onDone }: { payment: IPaymentDetail; onDone: () =
       </p>
       {/* One radio group: Tab reaches the chosen card, the arrow keys, Home
           and End move between them. */}
-      <ChoiceCardGroup aria-label={translate("How much")} className="grid gap-3 sm:grid-cols-2">
+      <ChoiceCardGroup aria-label={translate("How much")} className="grid gap-2.5 sm:grid-cols-2">
         {options.map((option) => (
           <ChoiceCard key={option.value} checked={howMuch === option.value} onSelect={() => choose(option.value)} title={<T>{option.title}</T>} sub={<T>{option.sub}</T>} />
         ))}

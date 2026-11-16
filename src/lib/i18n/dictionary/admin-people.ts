@@ -138,7 +138,9 @@ export const adminPeopleDictionary: Record<string, string> = {
 
   // Users, a person's page, owners and My account, design-v4
   "Search name, email, phone or workspace": "নাম, ইমেইল, ফোন বা ওয়ার্কস্পেস খুঁজুন",
+  "Search name, email or phone": "নাম, ইমেইল বা ফোন খুঁজুন",
   "Search by name, business, email, phone": "নাম, ব্যবসা, ইমেইল, ফোন দিয়ে খুঁজুন",
+  "Search by name, email, phone": "নাম, ইমেইল, ফোন দিয়ে খুঁজুন",
   "Last active, newest first": "শেষ সক্রিয়, নতুনগুলো আগে",
   "Last login": "শেষ লগইন",
   "Manage owners": "মালিক ব্যবস্থাপনা",

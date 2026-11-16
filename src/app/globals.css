@@ -83,6 +83,9 @@
   --expense-soft: #fee2e2;
   /* The border of an over-budget card or a red outline button. */
   --expense-line: #fecaca;
+  /* The admin boards' danger ink (--sm-danger) and a red pill's line. */
+  --danger-ink: #b91c1c;
+  --danger-line-strong: #fca5a5;
   --warning: #b45309;
   --warning-fill: #f59e0b;
   --warning-soft: #fef3c7;
@@ -473,6 +476,8 @@
   --expense-fill: #f87171;
   --expense-soft: #3a1a1c;
   --expense-line: #5a2326;
+  --danger-ink: #f87171;
+  --danger-line-strong: #5a2326;
   --warning: #fbbf24;
   --warning-fill: #f2b84b;
   --warning-soft: #2e2410;
@@ -976,6 +981,8 @@ html:not(.dark) [data-app="habit"] {
   --color-expense-fill: var(--expense-fill);
   --color-expense-soft: var(--expense-soft);
   --color-expense-line: var(--expense-line);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-line-strong: var(--danger-line-strong);
   --color-warning: var(--warning);
   --color-warning-fill: var(--warning-fill);
   --color-warning-soft: var(--warning-soft);
@@ -1243,7 +1250,7 @@ html:not(.dark) [data-app="habit"] {
   --spacing-control-md: 44px;
   --spacing-control-lg: 52px;
   --spacing-sidebar: 264px;
-  --spacing-sidebar-admin: 272px;
+  --spacing-sidebar-admin: 240px;
   --spacing-topbar: 64px;
   --spacing-topbar-mobile: 56px;
 }

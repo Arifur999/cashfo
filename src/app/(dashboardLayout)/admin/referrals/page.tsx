@@ -31,7 +31,7 @@ const ReferralPayoutsPage = async ({ searchParams }: PageProps<"/admin/referrals
   ) : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4.5">
       <div className="flex flex-col gap-3">
         <PageHeader title={REFERRALS_PAGE_TITLE} description={REFERRALS_PAGE_DESCRIPTION.payouts} actions={rules} />
         <ReferralsTabs />

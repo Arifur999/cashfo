@@ -24,12 +24,12 @@ const FeatureUsageCard = ({ data, query, rangeLabel }: FeatureUsageCardProps) =>
   const most = Math.max(1, ...rows.map((row) => row.count));
 
   return (
-    <Card aria-busy={query.updating || undefined} className={cn("flex flex-col gap-3", updatingClass(query))}>
+    <Card aria-busy={query.updating || undefined} className={cn("flex flex-col gap-3 px-5 py-4", updatingClass(query))}>
       <div className="flex flex-col gap-0.5">
         <h2 className="text-title text-ink">
           <T>What people do</T>
         </h2>
-        <span className="text-small text-ink-muted">{rangeLabel}</span>
+        <span className="text-[12.5px] leading-[normal] text-ink-muted">{rangeLabel}</span>
       </div>
       {query.status === "pending" ? (
         <ListPlaceholder rows={4} />
@@ -42,7 +42,7 @@ const FeatureUsageCard = ({ data, query, rangeLabel }: FeatureUsageCardProps) =>
       ) : (
         <ul className="flex flex-col gap-3">
           {rows.map((row) => (
-            <li key={row.eventType} className="grid grid-cols-[150px_minmax(0,1fr)_70px] items-center gap-3 text-body">
+            <li key={row.eventType} className="grid grid-cols-[150px_minmax(0,1fr)_70px] items-center gap-3 text-[13.5px] leading-[normal]">
               <span className="truncate text-ink">
                 <T>{featureLabel(row.eventType)}</T>
               </span>
@@ -54,7 +54,7 @@ const FeatureUsageCard = ({ data, query, rangeLabel }: FeatureUsageCardProps) =>
           ))}
         </ul>
       )}
-      <span className="text-small text-ink-muted">
+      <span className="text-[12.5px] leading-[normal] text-ink-faint">
         <T>{"The password manager isn't counted yet."}</T>
       </span>
     </Card>

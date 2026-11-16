@@ -128,7 +128,7 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
 
   return (
     <div className="flex flex-1 flex-col gap-4.5">
-      <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3.5 gap-y-2.5 text-[13.5px]">
+      <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3.5 gap-y-2.5 text-[13.5px] leading-4">
         <dt className="text-ink-muted">
           <T>Admin</T>
         </dt>
@@ -174,7 +174,7 @@ const EntryBody = ({ entry }: { entry: IAuditLogEntry }) => {
         <pre className="max-h-64 overflow-auto rounded-field bg-ink px-3.5 py-3 font-mono text-caption leading-[1.6] whitespace-pre-wrap text-line">{saved}</pre>
       </section>
 
-      <div className="sticky bottom-0 -mx-6 mt-auto -mb-5 flex flex-wrap justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
+      <div className="sticky bottom-0 -mx-6 mt-auto -mb-4.5 flex flex-wrap justify-end gap-2.5 border-t border-line bg-strip px-6 py-3.5">
         <CopyButton value={saved} label="the entry as JSON" text="Copy as JSON" size="md" />
         {href && (
           <Button asChild size="md">

@@ -13,7 +13,6 @@ import { earlierTicketsText } from "@/lib/tickets";
 import { ticketRequesterQuery } from "@/queries/ticket.queries";
 import type { ISupportTicketDetail } from "@/types/ticket.types";
 import T from "@/components/shared/T";
-import { requesterTicketsHref } from "../ticketLinks";
 
 // Who asked, as GET /admin/tickets/:id says it: their customer account
 // (isCustomer) or an older ticket's own record of the person. Optional,
@@ -89,11 +88,6 @@ const TicketRequesterCard = ({ ticket }: { ticket: TicketWithRequester }) => {
             ) : (
               <Link href={`/admin/users?search=${encodeURIComponent(user.email)}`} className={linkClass}>
                 <T>Find in Users</T>
-              </Link>
-            )}
-            {history.total > 0 && (
-              <Link href={requesterTicketsHref(user.email, history)} className={linkClass}>
-                <T>Find their tickets</T>
               </Link>
             )}
           </div>
