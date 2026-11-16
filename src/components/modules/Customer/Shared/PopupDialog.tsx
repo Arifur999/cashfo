@@ -27,6 +27,8 @@ interface PopupDialogProps {
   bodyClassName?: string;
   // The head row and its title, for a board that draws them its own way.
   headClassName?: string;
+  // A head drawn in the record's own colour (a book's tint).
+  headStyle?: React.CSSProperties;
   // Where focus starts (the dialog's first field by default).
   onOpenAutoFocus?: (event: Event) => void;
   titleClassName?: string;
@@ -45,7 +47,7 @@ interface PopupDialogProps {
 // The boards' centred popup (Savings first, then Zakat and Balance): a head
 // with the title and X over a line, the body, and a grey strip with the
 // buttons. On a phone it fills the width less a margin and scrolls.
-export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, titleClassName, subClassName, closeClassName, onOpenAutoFocus, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
+export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, width = 560, footer, footerClassName, children, bodyClassName, headClassName, headStyle, titleClassName, subClassName, closeClassName, onOpenAutoFocus, busy = false, onSubmit, plain = false, className }: PopupDialogProps) {
   const { t } = useLocale();
   const close = (
     <button type="button" onClick={onClose} disabled={busy} aria-label={t("Close")} className={cn("-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunken disabled:opacity-50 pointer-coarse:size-11", closeClassName)}>
@@ -64,7 +66,7 @@ export function PopupDialog({ open, onClose, title, sub, lead, aside, actions, w
     </div>
   ) : (
     <>
-      <div className={cn("flex shrink-0 items-start gap-3 border-b border-line px-6 py-4", headClassName)}>
+      <div className={cn("flex shrink-0 items-start gap-3 border-b border-line px-6 py-4", headClassName)} style={headStyle}>
         {lead}
         <div className="flex min-w-0 flex-1 flex-col gap-1 self-center">
           <div className="flex min-w-0 flex-wrap items-center gap-2.5">

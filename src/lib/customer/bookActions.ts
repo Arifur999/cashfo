@@ -1,7 +1,7 @@
 "use server";
 
 import axios from "axios";
-import { API_BASE_URL, getApiErrorMessage, type Book, type BookNote, type BookStatus } from "./api";
+import { API_BASE_URL, getApiErrorMessage, type Book, type BookNote, type BookNoteKind, type BookShelf, type BookStatus, type BookWithSummary, type NoteMark, type ReadingDayRange } from "./api";
 import { getAccessToken } from "@/lib/tokenUtils";
 import { customerApi } from "./apiClient";
 
@@ -38,6 +38,12 @@ export interface BookInput {
   color?: string;
   // Put a book being read down for now, or take it up again.
   paused?: boolean;
+  // Taka; null clears it.
+  price?: number | null;
+  // A built-in shelf key or the id of one of the reader's own shelves.
+  shelf?: string;
+  // The summary of the whole book; '' clears it.
+  summary?: string;
 }
 
 export async function createBookAction(input: BookInput): Promise<ActionResult<Book>> {
@@ -49,9 +55,9 @@ export async function createBookAction(input: BookInput): Promise<ActionResult<B
 
 // The same route edits the details, records progress (pagesRead) and moves a
 // book between shelves (status).
-export async function updateBookAction(id: string, input: Partial<BookInput>): Promise<ActionResult<Book>> {
+export async function updateBookAction(id: string, input: Partial<BookInput>): Promise<ActionResult<BookWithSummary>> {
   return callApi(async () => {
-    const res = await customerApi.patch<Book>(`${API_BASE_URL}/api/books/${id}`, input, { headers: await authHeaders() });
+    const res = await customerApi.patch<BookWithSummary>(`${API_BASE_URL}/api/books/${id}`, input, { headers: await authHeaders() });
     return res.data;
   }, "Failed to save book");
 }
@@ -63,7 +69,40 @@ export async function deleteBookAction(id: string): Promise<ActionResult<{ id: s
   }, "Failed to remove book");
 }
 
-export async function addBookNoteAction(bookId: string, input: { text: string; page?: number }): Promise<ActionResult<BookNote>> {
+export interface BookNoteInput {
+  page: number;
+  date: string; // YYYY-MM-DD
+  kind: BookNoteKind;
+  line: string;
+  text: string;
+  // Highlights, when a deleted note is put back.
+  marks?: NoteMark[];
+}
+
+// Reading now's "Log today's reading": read up to `toPage` on `date`.
+export async function logReadingAction(bookId: string, input: { date: string; toPage: number; finish: boolean }): Promise<ActionResult<{ book: Book; day: ReadingDayRange }>> {
+  return callApi(async () => {
+    const res = await customerApi.post<{ book: Book; day: ReadingDayRange }>(`${API_BASE_URL}/api/books/${bookId}/reading`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the reading");
+}
+
+export async function createBookShelfAction(name: string): Promise<ActionResult<BookShelf>> {
+  return callApi(async () => {
+    const res = await customerApi.post<BookShelf>(`${API_BASE_URL}/api/books/shelves`, { name }, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to make the shelf");
+}
+
+// An edit of a note, or of its highlights alone (`marks`).
+export async function updateBookNoteAction(bookId: string, noteId: string, input: Partial<BookNoteInput>): Promise<ActionResult<BookNote>> {
+  return callApi(async () => {
+    const res = await customerApi.patch<BookNote>(`${API_BASE_URL}/api/books/${bookId}/notes/${noteId}`, input, { headers: await authHeaders() });
+    return res.data;
+  }, "Failed to save the note");
+}
+
+export async function addBookNoteAction(bookId: string, input: BookNoteInput): Promise<ActionResult<BookNote>> {
   return callApi(async () => {
     const res = await customerApi.post<BookNote>(`${API_BASE_URL}/api/books/${bookId}/notes`, input, { headers: await authHeaders() });
     return res.data;

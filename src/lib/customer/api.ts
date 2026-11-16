@@ -1745,14 +1745,34 @@ export interface Book {
   totalPages: number;
   pagesRead: number;
   status: BookStatus;
-  color: string; // key into components/habit-tracker/books/bookPalette.ts
+  color: string; // key into components/modules/Customer/HabitTracker/Books/bookPalette.ts
   startedAt: string | null;
   finishedAt: string | null;
   finishedYear: number | null;
   // Put down for now while being read (still READING, its page kept).
   pausedAt?: string | null;
+  // What the reader paid, in taka; null when they didn't say.
+  price?: number | null;
+  // A built-in shelf key (libraryBoard.ts BUILT_IN_SHELVES) or the id of one
+  // of the reader's own shelves.
+  shelf?: string;
+  // Whether a summary is written (the text comes with the book page).
+  hasSummary?: boolean;
+  summaryAt?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// The book page's book: the summary itself too.
+export interface BookWithSummary extends Book {
+  summary: string;
+}
+
+// A shelf of the reader's own on My books ("Poetry").
+export interface BookShelf {
+  id: string;
+  name: string;
+  color: string; // a bookPalette key
 }
 
 // Library › Dashboard: one Asia/Dhaka year of reading, month by month
@@ -1764,14 +1784,41 @@ export interface BookYear {
   years: number[];
   months: number[];
   bookMonths: Record<string, number[]>;
+  // Every month ('YYYY-MM') with reading in it or a book started or finished.
+  activeMonths?: string[];
 }
 
-// A note on a book, or a line the reader liked, with its page.
+// The pages read from one day to another (both in), in all and per book.
+export interface BookPages {
+  from: string;
+  to: string;
+  total: number;
+  byBook: Record<string, number>;
+}
+
+// What a note is: a line the reader loved, a point marked to remember, or
+// a thought of their own.
+export type BookNoteKind = "HIGHLIGHT" | "UNDERLINE" | "THOUGHT";
+export type NoteMarkColor = "yellow" | "green" | "pink";
+
+// Words highlighted while reading a note: [s, e) character offsets into its text.
+export interface NoteMark {
+  s: number;
+  e: number;
+  c: NoteMarkColor;
+}
+
+// A note on a page of a book: the line from the book ('' when none) and the
+// reader's words, on a day they pick.
 export interface BookNote {
   id: string;
   bookId: string;
   page: number | null;
+  kind?: BookNoteKind;
+  line?: string;
   text: string;
+  date?: string; // YYYY-MM-DD
+  marks?: NoteMark[];
   createdAt: string;
 }
 
@@ -1779,6 +1826,13 @@ export interface BookNote {
 export interface ReadingDay {
   date: string; // YYYY-MM-DD
   pages: number;
+}
+
+// A book's latest day of reading: the day and the page it began and ended on.
+export interface ReadingDayRange {
+  date: string;
+  from: number;
+  to: number;
 }
 
 export interface BooksOverview {
@@ -1793,13 +1847,28 @@ export interface BooksOverview {
   pagesToday: Record<string, number>;
   // The notes on each book being read, oldest first, by book id.
   notes: Record<string, BookNote[]>;
+  // The reader's own shelves, oldest first.
+  shelves?: BookShelf[];
+  // Every book with notes: how many, and the days of the first and last.
+  noteStats?: Record<string, { count: number; first: string; last: string }>;
+  // The pages read in each book on each of the last seven days.
+  lastWeek?: { bookId: string; date: string; pages: number }[];
+  // Each book being read: its latest day of reading, and the day before it.
+  lastLogs?: Record<string, { latest: ReadingDayRange; before: string | null }>;
+}
+
+// The book page: the book with its summary, every note, the shelves.
+export interface BookDetail {
+  book: BookWithSummary;
+  notes: BookNote[];
+  shelves: BookShelf[];
 }
 
 // Habit Tracker -> Skills (the "Course" category): something being learned,
-// counted in lessons (a course) or hours (any skill). `target` and `progress`
-// are in the skill's unit -- HOURS are MINUTES (the UI shows hours). `status`
-// is settled server-side from progress (SkillsService.settle).
-export type SkillUnit = "LESSONS" | "HOURS";
+// counted in lessons or chapters (a course) or hours (any skill). `target`,
+// `progress` and `base` are in the skill's unit -- HOURS are MINUTES (the UI
+// shows hours). progress = base + every day logged, the target once completed.
+export type SkillUnit = "LESSONS" | "HOURS" | "CHAPTERS";
 export type SkillStatus = "WANT_TO_LEARN" | "LEARNING" | "COMPLETED";
 
 export interface Skill {
@@ -1810,8 +1879,15 @@ export interface Skill {
   target: number;
   progress: number;
   status: SkillStatus;
-  color: string; // key into components/habit-tracker/skills/skillPalette.ts
+  color: string; // key into components/modules/Customer/HabitTracker/Skills/skillPalette.ts
   icon: string; // same
+  // The v16 Skills pages (optional while an older backend answers).
+  category?: string; // skillsBoard.ts SKILL_CATEGORIES
+  link?: string;
+  why?: string;
+  targetDate?: string | null; // YYYY-MM-DD
+  pausedAt?: string | null; // learning, but put down for now
+  base?: number; // done before it was tracked here
   startedAt: string | null;
   completedAt: string | null;
   completedYear: number | null;
@@ -1822,16 +1898,79 @@ export interface Skill {
 export interface SkillWeekDay {
   date: string; // 'YYYY-MM-DD', Asia/Dhaka
   minutes: number; // learned that day in HOURS skills
-  lessons: number; // learned that day in LESSONS skills
+  lessons: number; // learned that day in LESSONS and CHAPTERS skills
   bySkill: Record<string, number>; // that day's amount per skill id, in the skill's unit
+}
+
+// What the list pages show of each skill beyond its row.
+export interface SkillSummary {
+  sessions: number; // days with practice
+  logged: number; // in the unit
+  lastPractised: string | null;
+  steps: { done: number; total: number; next: string | null };
+  lastNote: { title: string; text: string; date: string } | null;
+  notes?: number;
+  resources?: number;
+}
+
+// One day's practice of one skill.
+export interface SkillLogRow {
+  skillId: string;
+  date: string;
+  amount: number;
 }
 
 export interface SkillsOverview {
   year: number; // the current Asia/Dhaka year
   goalTarget: number | null; // this year's "complete N skills" goal
   streak: number; // consecutive days with activity, up to today
+  bestStreak?: number; // the longest run ever
   week: SkillWeekDay[]; // the last 7 days, oldest first, ending today
   skills: Skill[];
+  summaries?: Record<string, SkillSummary>;
+  // Every day of practice in the last 400 days, oldest first.
+  logs?: SkillLogRow[];
+}
+
+export interface PracticeEntry {
+  date: string;
+  amount: number;
+  note: string;
+}
+
+export interface SkillStep {
+  id: string;
+  title: string;
+  position: number;
+  done: boolean;
+  doneOn: string | null;
+}
+
+export interface SkillNote {
+  id: string;
+  date: string;
+  title: string;
+  text: string;
+  createdAt: string;
+}
+
+export type SkillResourceKind = "COURSE" | "VIDEO" | "BOOK" | "LINK";
+
+export interface SkillResource {
+  id: string;
+  kind: SkillResourceKind;
+  title: string;
+  url: string;
+}
+
+// The skill page: the skill, every day of practice (newest first), the
+// roadmap, the notes (newest first) and the resources.
+export interface SkillDetail {
+  skill: Skill;
+  logs: PracticeEntry[];
+  steps: SkillStep[];
+  notes: SkillNote[];
+  resources: SkillResource[];
 }
 
 // One month sheet (Namaz), one Ramadan, or one named challenge ("Others" --

@@ -55,12 +55,14 @@ export const hoursInput = (minutes: number): string => String(Number((minutes / 
 export const QUICK_ADD: Record<SkillUnit, { amount: number; label: string; short: string }> = {
   LESSONS: { amount: 1, label: "+1 lesson", short: "1 lesson" },
   HOURS: { amount: 30, label: "+30 min", short: "30 min" },
+  CHAPTERS: { amount: 1, label: "+1 chapter", short: "1 chapter" },
 };
 
 // "2 lessons", "1 lesson", "1.5 hours", "1 hour", "30 min", each one
 // sentence with the number in the reader's digits.
 export function amountText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   if (unit === "LESSONS") return t(amount === 1 ? "{count} lesson" : "{count} lessons", { count: formatCount(amount, locale) });
+  if (unit === "CHAPTERS") return t(amount === 1 ? "{count} chapter" : "{count} chapters", { count: formatCount(amount, locale) });
   if (amount < 60) return t("{count} min", { count: formatCount(amount, locale) });
   const hours = hoursText(amount);
   return t(hours === "1" ? "{count} hour" : "{count} hours", { count: toLocaleDigits(hours, locale) });
@@ -69,12 +71,13 @@ export function amountText(unit: SkillUnit, amount: number, t: Translate = inEng
 // What a week cell says: "2", "1.5h", "30m", or nothing for an empty day.
 export function cellText(unit: SkillUnit, amount: number, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
   if (amount <= 0) return "";
-  if (unit === "LESSONS") return formatCount(amount, locale);
+  if (unit !== "HOURS") return formatCount(amount, locale);
   return amount >= 60 ? t("{count}h", { count: toLocaleDigits(hoursText(amount), locale) }) : t("{count}m", { count: formatCount(amount, locale) });
 }
 
 // "18 of 40 lessons", "12 of 30 hours".
 export function progressText(skill: Pick<Skill, "unit" | "progress" | "target">, t: Translate = inEnglish, locale: FormatLocale = "en"): string {
+  if (skill.unit === "CHAPTERS") return t("{done} of {total} chapters", { done: formatCount(skill.progress, locale), total: formatCount(skill.target, locale) });
   return skill.unit === "LESSONS"
     ? t("{done} of {total} lessons", { done: formatCount(skill.progress, locale), total: formatCount(skill.target, locale) })
     : t("{done} of {total} hours", { done: toLocaleDigits(hoursText(skill.progress), locale), total: toLocaleDigits(hoursText(skill.target), locale) });

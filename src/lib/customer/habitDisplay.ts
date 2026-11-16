@@ -55,7 +55,7 @@ const EN_MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
 // How a day is written: "full" Wednesday, 21 October 2026 · "long"
 // Wednesday, 21 Oct · "short" Wed, 21 Oct · "shortYear" Wed, 21 Oct 2026 ·
 // "dayMonth" 21 Oct · "dayMonthYear" 21 Oct 2026 · "weekday" Wednesday.
-export type DayStyle = "full" | "long" | "short" | "shortYear" | "dayMonth" | "dayMonthYear" | "weekday";
+export type DayStyle = "full" | "long" | "short" | "shortYear" | "dayMonth" | "dayMonthYear" | "dayMonthYY" | "weekday";
 
 const EN_DAY: Record<DayStyle, string> = {
   full: "EEEE, d MMMM yyyy",
@@ -64,6 +64,8 @@ const EN_DAY: Record<DayStyle, string> = {
   shortYear: "EEE, d MMM yyyy",
   dayMonth: "d MMM",
   dayMonthYear: "d MMM yyyy",
+  // The boards' table dates: "18 Sep 26".
+  dayMonthYY: "d MMM yy",
   weekday: "EEEE",
 };
 
